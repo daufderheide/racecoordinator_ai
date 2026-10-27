@@ -4,6 +4,10 @@ import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format
 import { FinishMethod } from "@app/models/heat_scoring";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
+import {
+  formatTimerDisplay,
+  TimerFormatOptions,
+} from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -103,6 +107,21 @@ export class RacedayProgressGaugeComponent {
     return !d || RacedayFormatUtils.isEmptyDriver(d);
   }
 
+  get isTimedFinish(): boolean {
+    const parent = this.parent();
+    const finishMethod =
+      parent?.finishMethod ??
+      parent?.race?.heat_scoring?.finishMethod ??
+      (parent?.race as any)?.heatScoring?.finishMethod ??
+      FinishMethod.Lap;
+    return (
+      finishMethod === FinishMethod.Timed ||
+      finishMethod === "Timed" ||
+      finishMethod === "TIMED" ||
+      finishMethod === 1
+    );
+  }
+
   get percentage(): number {
     if (this.effectiveGaugeType === "fuel") {
       if (this.isEmptyDriver) return 0;
@@ -126,13 +145,8 @@ export class RacedayProgressGaugeComponent {
       (parent?.race as any)?.heatScoring?.finishValue ??
       0;
     if (!finishValue) return 0;
-    const finishMethod =
-      parent?.finishMethod ??
-      parent?.race?.heat_scoring?.finishMethod ??
-      (parent?.race as any)?.heatScoring?.finishMethod ??
-      FinishMethod.Lap;
 
-    if (finishMethod === FinishMethod.Timed || finishMethod === "Timed") {
+    if (this.isTimedFinish) {
       const time = parent?.time ?? 0;
       return Math.min(100, Math.max(0, (time / finishValue) * 100));
     } else {
@@ -146,26 +160,45 @@ export class RacedayProgressGaugeComponent {
       return this.isEmptyDriver ? "--%" : `${Math.round(this.percentage)}%`;
     }
 
+    if (this.isEmptyDriver) return "--";
+
     const parent = this.parent();
     const finishValue =
       parent?.finishValue ??
       parent?.race?.heat_scoring?.finishValue ??
       (parent?.race as any)?.heatScoring?.finishValue ??
       0;
-    const finishMethod =
-      parent?.finishMethod ??
-      parent?.race?.heat_scoring?.finishMethod ??
-      (parent?.race as any)?.heatScoring?.finishMethod ??
-      FinishMethod.Lap;
 
-    if (finishMethod === FinishMethod.Timed || finishMethod === "Timed") {
+    if (this.isTimedFinish) {
       const time = parent?.time ?? 0;
-      return `${Math.round(time)}`;
+      const timerOpts: TimerFormatOptions = {
+        format:
+          (this.effectiveSettings["timeDisplayFormat"] as any) || "dynamic",
+        subsecondMode:
+          (this.effectiveSettings["timeSubsecondMode"] as any) || "threshold",
+        subsecondThreshold:
+          this.effectiveSettings["timeSubsecondThreshold"] ?? 10,
+        subsecondDecimals: this.effectiveSettings["timeSubsecondDecimals"] ?? 2,
+      };
+      return formatTimerDisplay(time, timerOpts);
     }
 
-    if (this.isEmptyDriver) return "--";
     const laps = this.targetDriver?.lapCount || 0;
-    return `${Math.max(0, finishValue - laps)}`;
+    const remaining = Math.max(0, finishValue - laps);
+    const lapDecimals = Math.max(
+      0,
+      Math.min(3, this.effectiveSettings["lapDecimalPlaces"] ?? 0),
+    );
+    return remaining.toFixed(lapDecimals);
+  }
+
+  get effectiveFontSize(): number | null {
+    const custom = this.effectiveSettings["fontSize"];
+    return custom && custom > 0 ? custom : null;
+  }
+
+  get effectiveFontFamily(): string | null {
+    return this.effectiveSettings["fontFamily"] || null;
   }
 
   get effectiveFillColor(): string {

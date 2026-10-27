@@ -630,6 +630,14 @@ export class RacedayLaneColumnComponent
     return all;
   }
 
+  get hasTeamName(): boolean {
+    return Boolean(
+      isNameOrNicknameProperty(this.columnKey) &&
+      this.targetDriver?.participant?.team?.name &&
+      !this.isEmptyDriver,
+    );
+  }
+
   fitContent(force = false): void {
     const cardEl = this.cardRef()?.nativeElement;
     if (!cardEl) return;
@@ -647,6 +655,7 @@ export class RacedayLaneColumnComponent
       headerLabel: this.headerLabel,
       lastLapsLength: this.getLastLaps().length,
       isVerticalLapsFlow: this.isVerticalLapsFlow,
+      hasTeamName: this.hasTeamName,
       setMaxVisibleLaps: (count) => this.maxVisibleLaps.set(count),
       onFitTextValue: (el) => this.fitTextValue(el),
     });
@@ -667,6 +676,8 @@ export class RacedayLaneColumnComponent
       this.effectiveInsetFontSize,
       explicitW,
       explicitH,
+      this.widget()?.textScaleFactor ?? 1,
+      this.hasTeamName,
     );
   }
 

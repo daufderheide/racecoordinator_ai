@@ -21,6 +21,7 @@ export interface LaneColumnFitContext {
   headerLabel: string;
   lastLapsLength: number;
   isVerticalLapsFlow: boolean;
+  hasTeamName?: boolean;
   setMaxVisibleLaps: (count: number | undefined) => void;
   onFitTextValue: (cardEl: HTMLElement) => void;
 }
@@ -35,6 +36,7 @@ export class LaneColumnFitHelper {
   private lastFittedValueFontSize?: number;
   private lastFittedValueFontFamily?: string;
   private lastFittedScaleMode?: string;
+  private lastFittedHasTeamName?: boolean;
 
   public fitContent(
     cardEl: HTMLElement | undefined,
@@ -43,9 +45,10 @@ export class LaneColumnFitHelper {
   ): void {
     if (!cardEl) return;
 
+    const explicitW = ctx.cachedWidth || cardEl.clientWidth;
+    const explicitH = ctx.cachedHeight || cardEl.clientHeight;
+
     if (ctx.isHeaderWidget) {
-      const explicitW = ctx.cachedWidth || cardEl.clientWidth;
-      const explicitH = ctx.cachedHeight || cardEl.clientHeight;
       fitLaneColumnHeaderText(
         cardEl,
         ctx.settings,
@@ -55,6 +58,17 @@ export class LaneColumnFitHelper {
         explicitH,
       );
       return;
+    }
+
+    if (ctx.settings.showHeader !== false) {
+      fitLaneColumnHeaderText(
+        cardEl,
+        ctx.settings,
+        ctx.widget,
+        ctx.headerLabel,
+        explicitW,
+        explicitH,
+      );
     }
 
     if (ctx.isLastLaps) {
@@ -79,6 +93,7 @@ export class LaneColumnFitHelper {
       const valSize = ctx.settings.valueFontSize ?? 0;
       const valFamily = ctx.settings.valueFontFamily || "";
       const scaleMode = ctx.widget?.scaleMode || "";
+      const hasTeamName = Boolean(ctx.hasTeamName);
       if (
         !force &&
         w > 0 &&
@@ -89,7 +104,8 @@ export class LaneColumnFitHelper {
         insetsKey === this.lastFittedInsets &&
         valSize === this.lastFittedValueFontSize &&
         valFamily === this.lastFittedValueFontFamily &&
-        scaleMode === this.lastFittedScaleMode
+        scaleMode === this.lastFittedScaleMode &&
+        hasTeamName === this.lastFittedHasTeamName
       ) {
         return;
       }
@@ -100,6 +116,7 @@ export class LaneColumnFitHelper {
       this.lastFittedValueFontSize = valSize;
       this.lastFittedValueFontFamily = valFamily;
       this.lastFittedScaleMode = scaleMode;
+      this.lastFittedHasTeamName = hasTeamName;
 
       ctx.onFitTextValue(cardEl);
     }

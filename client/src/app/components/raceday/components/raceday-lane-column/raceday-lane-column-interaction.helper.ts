@@ -11,14 +11,13 @@ import { TranslationService } from "@app/services/translation.service";
 import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
-  DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE,
-  DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE,
   extractDroppedColumnKey,
   fitColumnLastLaps,
   formatAdjustedLapValue,
   getSharedCanvasContext,
   isOverallOrSeedDataSource,
   isParentRaceOver,
+  resolveEffectiveHeaderFontSize,
 } from "./raceday-lane-column.utils";
 
 export function isLaneColumnLapCountClickable(
@@ -230,12 +229,9 @@ export function fitLaneColumnHeaderText(
   const cardH =
     explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
 
-  const isGrid = Boolean(settings.gridId || widget?.customSettings?.["gridId"]);
   const baseFontSize =
     widget?.scaleMode === "auto"
-      ? isGrid
-        ? DEFAULT_GRID_LANE_COLUMN_HEADER_FONT_SIZE
-        : DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE
+      ? resolveEffectiveHeaderFontSize(settings, widget, cardEl, explicitHeight)
       : Number(
           settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
         );
@@ -245,17 +241,27 @@ export function fitLaneColumnHeaderText(
   const ctx = getSharedCanvasContext();
   if (!ctx) return;
 
-  const family =
+  const rawFamily =
     settings.headerFontFamily ||
     (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
       ? window.getComputedStyle(headerEl).fontFamily
       : "") ||
     "sans-serif";
+  const family =
+    rawFamily
+      .replace(/-apple-system|BlinkMacSystemFont/gi, "")
+      .replace(/,\s*,/g, ",")
+      .replace(/^[\s,]+|[\s,]+$/g, "")
+      .trim() || "sans-serif";
   ctx.font = `700 ${baseFontSize}px ${family}`;
   const textWidth = ctx.measureText(headerLabel || "").width || 1;
 
   if (widget?.scaleMode !== undefined && widget?.scaleMode !== "auto") {
     headerEl.style.fontSize = `${baseFontSize}px`;
+    cardEl.style.setProperty(
+      "--lane-col-header-font-size",
+      `${baseFontSize}px`,
+    );
     return;
   }
 
@@ -269,28 +275,10 @@ export function fitLaneColumnHeaderText(
 
   const fittedSize = Math.max(10, Math.floor(baseFontSize * scale));
   headerEl.style.fontSize = `${fittedSize}px`;
+  cardEl.style.setProperty("--lane-col-header-font-size", `${fittedSize}px`);
 }
 
-export function resolveEffectiveHeaderFontSize(
-  settings: LaneColumnWidgetSettings,
-  widget: AbsoluteWidgetNode | null,
-  cardEl?: HTMLElement | null,
-  cachedHeight?: number,
-): number {
-  const custom = settings.headerFontSize;
-  if (widget?.scaleMode === "auto") {
-    const cardH =
-      cachedHeight && cachedHeight > 0
-        ? cachedHeight
-        : cardEl?.clientHeight ||
-          (widget?.height && widget.height > 0 ? widget.height : 0);
-    if (cardH > 0) {
-      const autoSize = Math.round(cardH * 0.18);
-      return Math.max(10, Math.min(28, autoSize));
-    }
-  }
-  return custom && custom > 0 ? custom : 14;
-}
+export { resolveEffectiveHeaderFontSize };
 
 export function resolveEffectiveInsetFontSize(
   settings: LaneColumnWidgetSettings,

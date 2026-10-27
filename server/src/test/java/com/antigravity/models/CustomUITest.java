@@ -88,6 +88,8 @@ public class CustomUITest {
     assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-flag"));
     assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-fuel"));
     assertTrue(driverStationUi.getLayoutJson().contains("\"lapDecimalPlaces\":0"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"timeDisplayFormat\":\"dynamic\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"scaleMode\":\"auto\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"customLabel\":\"GAP LEADER\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"baseWidth\":1080"));
     assertTrue(driverStationUi.getLayoutJson().contains("\"baseHeight\":1920"));

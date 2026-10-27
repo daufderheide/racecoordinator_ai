@@ -18,10 +18,13 @@ import {
   isLaneColumnImageProperty,
   isOverallDataSource,
   isParentRaceOver,
+  resolveCardFontFamily,
   resolveColumnHeaderLabel,
+  resolveEffectiveHeaderFontSize,
   resolveHeatGridDriver,
   resolveLaneColumnImageUrl,
   resolveOverallGridDriver,
+  safeguardTextOverflow,
 } from "./raceday-lane-column.utils";
 
 describe("raceday-lane-column.utils", () => {
@@ -1064,7 +1067,7 @@ describe("raceday-lane-column.utils", () => {
         "--lane-col-value-font-size",
       );
       const numSize = parseInt(sizeVar, 10);
-      expect(numSize).toBe(36);
+      expect(numSize).toBe(28);
     });
 
     it("should auto-scale grid column font size up to 54 in auto mode even when valueFontSize is set small", () => {
@@ -1096,6 +1099,112 @@ describe("raceday-lane-column.utils", () => {
       expect(numSize).toBe(54);
     });
 
+    it("should scale driver station cards to balanced readable proportions (value 84px, header 38px)", () => {
+      const dsCardEl = document.createElement("div");
+      Object.defineProperty(dsCardEl, "clientWidth", {
+        value: 410,
+        configurable: true,
+      });
+      Object.defineProperty(dsCardEl, "clientHeight", {
+        value: 290,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        dsCardEl,
+        "42",
+        { showHeader: true } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = dsCardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(84);
+
+      const headerFont = resolveEffectiveHeaderFontSize(
+        { showHeader: true } as any,
+        { scaleMode: "auto" } as any,
+        dsCardEl,
+      );
+      expect(headerFont).toBe(38);
+    });
+
+    it("should cap grid column font sizes to 54 for value and 24 for header on main raceday page", () => {
+      const gridCardEl = document.createElement("div");
+      Object.defineProperty(gridCardEl, "clientWidth", {
+        value: 250,
+        configurable: true,
+      });
+      Object.defineProperty(gridCardEl, "clientHeight", {
+        value: 180,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        gridCardEl,
+        "42",
+        { gridId: "grid-heat-data", showHeader: true } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = gridCardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(54);
+
+      const headerFont = resolveEffectiveHeaderFontSize(
+        { gridId: "grid-heat-data", showHeader: true } as any,
+        { scaleMode: "auto" } as any,
+        gridCardEl,
+      );
+      expect(headerFont).toBe(24);
+    });
+
+    it("should respect textScaleFactor in auto mode", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { valueFontSize: 12 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        undefined,
+        undefined,
+        0.5,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBe(16);
+    });
+
     it("should use explicitWidth and explicitHeight without reading card dimensions", () => {
       // cardEl has no clientWidth or clientHeight defined
       fitColumnTextValue(
@@ -1118,7 +1227,7 @@ describe("raceday-lane-column.utils", () => {
       expect(sizeVar).toBeTruthy();
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeGreaterThanOrEqual(10);
-      expect(numSize).toBeLessThanOrEqual(36);
+      expect(numSize).toBe(22);
     });
 
     it("should allow two-digit numbers (10+) to maintain a large legible font size without excessive shrinkage compared to single digits", () => {
@@ -1193,6 +1302,179 @@ describe("raceday-lane-column.utils", () => {
       // Previously "Uncle Jon" collapsed all the way down to 10px due to 32px padding deduction!
       // Now it should stay comfortably above 18px and fill the available cell space.
       expect(numSize).toBeGreaterThanOrEqual(18);
+    });
+
+    it("should reduce font size when hasTeamName is true to allocate space for team name badge", () => {
+      const cardWithoutTeam = document.createElement("div");
+      const cardWithTeam = document.createElement("div");
+
+      fitColumnTextValue(
+        cardWithoutTeam,
+        "The Girls",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        180,
+        50,
+        1,
+        false,
+      );
+
+      fitColumnTextValue(
+        cardWithTeam,
+        "The Girls",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        180,
+        50,
+        1,
+        true,
+      );
+
+      const sizeWithoutTeam = parseInt(
+        cardWithoutTeam.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+      const sizeWithTeam = parseInt(
+        cardWithTeam.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+
+      expect(sizeWithTeam).toBeLessThan(sizeWithoutTeam);
+    });
+  });
+
+  describe("resolveCardFontFamily", () => {
+    it("should return settings.valueFontFamily when explicitly configured", () => {
+      const card = document.createElement("div");
+      const family = resolveCardFontFamily(card, {
+        valueFontFamily: "Impact, fantasy",
+      } as any);
+      expect(family).toBe("Impact, fantasy");
+    });
+
+    it("should fallback to 'Inter', sans-serif when no custom family is set", () => {
+      const card = document.createElement("div");
+      const family = resolveCardFontFamily(card, {} as any);
+      expect(family).toContain("Inter");
+    });
+
+    it("should respect inline card style fontFamily if set", () => {
+      const card = document.createElement("div");
+      card.style.fontFamily = "Courier, monospace";
+      const family = resolveCardFontFamily(card, {} as any);
+      expect(family).toBe("Courier, monospace");
+    });
+
+    it("should resolve computed style font-family when element is connected to DOM", () => {
+      const parent = document.createElement("div");
+      parent.style.fontFamily = "Tahoma, sans-serif";
+      const card = document.createElement("div");
+      parent.appendChild(card);
+      document.body.appendChild(parent);
+
+      const family = resolveCardFontFamily(card, {} as any);
+      document.body.removeChild(parent);
+
+      expect(family).toContain("Tahoma");
+    });
+  });
+
+  describe("safeguardTextOverflow", () => {
+    it("should return early when value element is missing or has zero width", () => {
+      const card = document.createElement("div");
+      safeguardTextOverflow(card, 30, 10);
+      expect(card.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "",
+      );
+    });
+
+    it("should not reduce font size when text fits within container width", () => {
+      const card = document.createElement("div");
+      const valueEl = document.createElement("div");
+      valueEl.className = "lane-col-value";
+      const textEl = document.createElement("span");
+      textEl.className = "lane-col-text";
+      card.appendChild(valueEl);
+      valueEl.appendChild(textEl);
+
+      Object.defineProperty(valueEl, "clientWidth", { value: 150 });
+      Object.defineProperty(textEl, "scrollWidth", { value: 120 });
+
+      card.style.setProperty("--lane-col-value-font-size", "40px");
+      safeguardTextOverflow(card, 40, 10);
+      expect(card.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "40px",
+      );
+    });
+
+    it("should reduce font size proportionally when text overflows container width", () => {
+      const card = document.createElement("div");
+      const valueEl = document.createElement("div");
+      valueEl.className = "lane-col-value";
+      const textEl = document.createElement("span");
+      textEl.className = "lane-col-text";
+      card.appendChild(valueEl);
+      valueEl.appendChild(textEl);
+
+      Object.defineProperty(valueEl, "clientWidth", { value: 100 });
+      Object.defineProperty(textEl, "scrollWidth", { value: 125 });
+
+      card.style.setProperty("--lane-col-value-font-size", "50px");
+      safeguardTextOverflow(card, 50, 10);
+      expect(card.style.getPropertyValue("--lane-col-value-font-size")).toBe(
+        "40px",
+      );
+    });
+
+    it("should dynamically scale down font size in real DOM when text overflows container width", () => {
+      const cardEl = document.createElement("div");
+      cardEl.style.width = "180px";
+      cardEl.style.fontFamily = "Tahoma, sans-serif";
+      cardEl.style.fontWeight = "700";
+
+      const valueEl = document.createElement("div");
+      valueEl.className = "lane-col-value";
+      valueEl.style.width = "100%";
+      valueEl.style.fontSize = "var(--lane-col-value-font-size, 54px)";
+      valueEl.style.display = "flex";
+      valueEl.style.alignItems = "center";
+      valueEl.style.overflow = "hidden";
+      valueEl.style.whiteSpace = "nowrap";
+
+      const textEl = document.createElement("span");
+      textEl.className = "lane-col-text";
+      textEl.style.display = "inline-block";
+      textEl.style.maxWidth = "100%";
+      textEl.style.overflow = "hidden";
+      textEl.style.textOverflow = "ellipsis";
+      textEl.style.whiteSpace = "nowrap";
+      textEl.textContent = "Driver 1";
+
+      valueEl.appendChild(textEl);
+      cardEl.appendChild(valueEl);
+      document.body.appendChild(cardEl);
+
+      cardEl.style.setProperty("--lane-col-value-font-size", "54px");
+      safeguardTextOverflow(cardEl, 54, 10);
+      const resultingSize = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      const scrollAfter = textEl.scrollWidth;
+      const clientAfter = valueEl.clientWidth;
+
+      document.body.removeChild(cardEl);
+      expect(parseInt(resultingSize, 10)).toBeLessThan(54);
+      expect(scrollAfter).toBeLessThanOrEqual(clientAfter);
     });
   });
 

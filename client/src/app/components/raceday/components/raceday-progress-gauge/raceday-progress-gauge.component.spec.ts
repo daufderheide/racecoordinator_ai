@@ -82,6 +82,99 @@ describe("RacedayProgressGaugeComponent", () => {
       expect(component.labelText).toBe("15");
     });
 
+    it("should format timed race using mm_ss format and subsecond decimals", () => {
+      mockParent.finishMethod = FinishMethod.Timed;
+      mockParent.finishValue = 120;
+      mockParent.time = 69.544;
+
+      const widget = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+          timeDisplayFormat: "mm_ss",
+          timeSubsecondMode: "always",
+          timeSubsecondDecimals: 2,
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      // time = 69.544 -> formatted as mm_ss with 2 decimals is "01:09.54"
+      expect(component.labelText).toBe("01:09.54");
+    });
+
+    it("should format lap-based race with configured lapDecimalPlaces", () => {
+      const driverWithFractionalLaps = new DriverHeatData(
+        "d-fractional",
+        { objectId: "p-fractional" } as any,
+        0,
+        { entity_id: "e-fractional", name: "Driver Fractional" } as any,
+      );
+      spyOnProperty(
+        driverWithFractionalLaps,
+        "lapCount",
+        "get",
+      ).and.returnValue(10.35);
+
+      mockParent.heatDrivers = [driverWithFractionalLaps];
+      mockParent.driverData = driverWithFractionalLaps;
+
+      const widget = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+          lapDecimalPlaces: 2,
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      // 20 - 10.35 = 9.65
+      expect(component.labelText).toBe("9.65");
+    });
+
+    it("should round fractional laps when lapDecimalPlaces is 0", () => {
+      const driverWithFractionalLaps = new DriverHeatData(
+        "d-fractional-round",
+        { objectId: "p-fractional-round" } as any,
+        0,
+        {
+          entity_id: "e-fractional-round",
+          name: "Driver Fractional Round",
+        } as any,
+      );
+      spyOnProperty(
+        driverWithFractionalLaps,
+        "lapCount",
+        "get",
+      ).and.returnValue(10.7);
+
+      mockParent.heatDrivers = [driverWithFractionalLaps];
+      mockParent.driverData = driverWithFractionalLaps;
+
+      const widget = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+          lapDecimalPlaces: 0,
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      // 20 - 10.7 = 9.3 -> toFixed(0) is "9"
+      expect(component.labelText).toBe("9");
+    });
+
     it("should return 0 percentage and -- label when driver is empty", () => {
       mockParent.isEmptyDriver = true;
       fixture.componentRef.setInput("parent", mockParent);
@@ -234,6 +327,24 @@ describe("RacedayProgressGaugeComponent", () => {
 
       expect(component.effectiveFillColor).toBe("#000000");
       expect(component.effectiveForegroundColor).toBe("#000000");
+    });
+
+    it("should resolve effectiveFontSize and effectiveFontFamily from customSettings", () => {
+      const widget = {
+        id: "w1",
+        widgetType: "progress-gauge",
+        customSettings: {
+          fontSize: 16,
+          fontFamily: "Orbitron",
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.effectiveFontSize).toBe(16);
+      expect(component.effectiveFontFamily).toBe("Orbitron");
     });
   });
 });

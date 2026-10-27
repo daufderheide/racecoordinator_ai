@@ -19,7 +19,12 @@
     ></div>
   </div>
   @if (showLabel) {
-    <div class="thermometer-label" [style.color]="effectiveForegroundColor">
+    <div
+      class="thermometer-label"
+      [style.color]="effectiveForegroundColor"
+      [style.font-size.px]="effectiveFontSize"
+      [style.font-family]="effectiveFontFamily"
+    >
       <span>{{ labelText }}</span>
     </div>
   }

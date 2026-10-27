@@ -708,6 +708,7 @@ export class Settings {
       {
         id: "widget-ds-progress",
         widgetType: "progress-gauge",
+        scaleMode: "auto",
         x: 20,
         y: 20,
         width: 80,
@@ -718,11 +719,17 @@ export class Settings {
           gaugeStyle: "thermometer",
           orientation: "vertical",
           bindingMode: "hostLane",
+          timeDisplayFormat: "dynamic",
+          timeSubsecondMode: "threshold",
+          timeSubsecondThreshold: 10,
+          timeSubsecondDecimals: 2,
+          lapDecimalPlaces: 0,
         },
       },
       {
         id: "widget-ds-nickname",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 120,
         y: 20,
         width: 640,
@@ -743,6 +750,7 @@ export class Settings {
       {
         id: "widget-ds-lane-number",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 780,
         y: 20,
         width: 180,
@@ -763,6 +771,7 @@ export class Settings {
       {
         id: "widget-ds-rank-heat",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 120,
         y: 330,
         width: 410,
@@ -783,6 +792,7 @@ export class Settings {
       {
         id: "widget-ds-rank-overall",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 550,
         y: 330,
         width: 410,
@@ -803,6 +813,7 @@ export class Settings {
       {
         id: "widget-ds-lap-count",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 120,
         y: 640,
         width: 410,
@@ -825,6 +836,7 @@ export class Settings {
       {
         id: "widget-ds-last-lap-time",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 550,
         y: 640,
         width: 410,
@@ -845,6 +857,7 @@ export class Settings {
       {
         id: "widget-ds-gap-leader",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 120,
         y: 950,
         width: 840,
@@ -866,6 +879,7 @@ export class Settings {
       {
         id: "widget-ds-best-lap-time",
         widgetType: "lane-column",
+        scaleMode: "auto",
         x: 120,
         y: 1260,
         width: 840,
@@ -886,6 +900,7 @@ export class Settings {
       {
         id: "widget-ds-flag",
         widgetType: "flag",
+        scaleMode: "auto",
         x: 120,
         y: 1570,
         width: 840,
@@ -898,6 +913,7 @@ export class Settings {
       {
         id: "widget-ds-fuel",
         widgetType: "progress-gauge",
+        scaleMode: "auto",
         x: 980,
         y: 20,
         width: 80,
