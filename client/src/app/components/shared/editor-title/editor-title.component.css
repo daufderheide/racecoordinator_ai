@@ -1,5 +1,12 @@
 :host {
   display: block;
+  position: relative;
+  z-index: 2000;
+}
+
+:host(:has(.custom-select-container.open)),
+.header:has(.custom-select-container.open) {
+  z-index: 2000000 !important;
 }
 
 .header {
@@ -32,6 +39,12 @@
   align-items: center;
   gap: 15px;
   flex-shrink: 0;
+}
+
+.header-custom-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .page-title {
@@ -69,6 +82,7 @@
 }
 
 .editor-title-select {
+  display: inline-block;
   min-width: 200px;
   max-width: 340px;
   font-size: 1.25rem;

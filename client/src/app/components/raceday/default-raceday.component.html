@@ -108,8 +108,7 @@
           <div
             class="raceday-grid-container"
             [class.customizing-unselected]="
-              (isLayoutCustomizing || isUIEditorMode()) &&
-              gridSession()?.gridId !== grid.gridId
+              isLayoutCustomizing && gridSession()?.gridId !== grid.gridId
             "
             (pointerdown)="onGridContainerPointerDown($event, grid.gridId)"
             [style.left.px]="grid.bounds.x"

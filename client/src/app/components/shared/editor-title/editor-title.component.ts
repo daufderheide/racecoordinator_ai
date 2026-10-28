@@ -41,6 +41,18 @@ export class EditorTitleComponent implements AfterViewChecked {
     return name && name.trim() ? name.trim() : "";
   });
   items = input<{ id: string; name: string }[]>([]);
+  longestItemName = computed(() => {
+    const list = this.items();
+    if (!list || list.length === 0) return "";
+    let longest = "";
+    for (const item of list) {
+      const name = item?.name ? item.name.trim() : "";
+      if (name.length > longest.length) {
+        longest = name;
+      }
+    }
+    return longest;
+  });
   selectedId = input<string | undefined>(undefined);
   isEditMode = input(false);
   showEdit = input(false);
@@ -75,6 +87,14 @@ export class EditorTitleComponent implements AfterViewChecked {
   disabledImport = input(false);
   disabledImportRc1 = input(false);
   disabledExport = input(false);
+  showReset = input(false);
+  resetTitleKey = input("UI_EDITOR_RESET_LAYOUT_DEFAULTS");
+  resetDisabledTooltipKey = input("");
+  disabledReset = input(false);
+  showClear = input(false);
+  clearTitleKey = input("UI_EDITOR_CLEAR_LAYOUT");
+  clearDisabledTooltipKey = input("");
+  disabledClear = input(false);
   marginTop = input<number>(0);
   marginBottom = input<number>(0);
   isSaving = input(false);
@@ -95,6 +115,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   import = output<void>();
   importRc1 = output<void>();
   export = output<void>();
+  reset = output<void>();
+  clear = output<void>();
   zoomLevelChange = output<number>();
   selectedIdChange = output<string>();
   edit = output<void>();
@@ -253,6 +275,14 @@ export class EditorTitleComponent implements AfterViewChecked {
 
   onExport() {
     this.export.emit();
+  }
+
+  onReset() {
+    this.reset.emit();
+  }
+
+  onClear() {
+    this.clear.emit();
   }
 
   onZoomLevelChange(level: number) {

@@ -55,6 +55,13 @@
               <hr class="setup-menu-dropdown-divider" />
               <div
                 class="setup-menu-dropdown-item"
+                (click)="openLayoutEditor()"
+              >
+                {{ "RDS_MENU_LAYOUT_EDITOR" | translate }}
+              </div>
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item"
                 (click)="openAssetManager()"
               >
                 {{ "RDS_MENU_ASSETS" | translate }}

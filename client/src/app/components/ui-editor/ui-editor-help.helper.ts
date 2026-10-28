@@ -71,32 +71,19 @@ export function getGeneralAndCustomUisHelpSteps(
     {
       selector: "#help-custom-uis",
       title: translationService.translate("UE_HEADER_CUSTOM_UI_LAYOUTS"),
-      content: translationService.translate("UE_HELP_RACEDAY_UI"),
+      content: translationService.translate("UE_LAYOUTS_LINK_DESC"),
       position: "bottom",
       onEnter: () => {
         sectionsExpanded["customUIs"] = true;
       },
     },
     {
-      selector: "#help-custom-uis-add",
-      title: translationService.translate("UE_BTN_CREATE_CUSTOM_UI"),
-      content: translationService.translate("UE_HELP_CREATE_CUSTOM_UI_BTN"),
+      selector: "#btn-open-layout-editor",
+      title: translationService.translate("UE_BTN_OPEN_LAYOUT_EDITOR"),
+      content: translationService.translate("UE_LAYOUTS_LINK_DESC"),
       position: "bottom",
       onEnter: () => {
         sectionsExpanded["customUIs"] = true;
-      },
-    },
-    {
-      selector: "#help-default-ui",
-      title: translationService.translate("UE_LABEL_DEFAULT_UI"),
-      content: translationService.translate("UE_HELP_DEFAULT_UI"),
-      position: "bottom",
-      onEnter: () => {
-        sectionsExpanded["customUIs"] = true;
-        const defaultUi = ctx.getDefaultCustomUi();
-        if (defaultUi) {
-          sectionsExpanded[`ui_${defaultUi.entity_id}`] = true;
-        }
       },
     },
   ];
@@ -502,7 +489,6 @@ export function getAudioSettingsHelpSteps(
 export function getUiEditorHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
   return [
     ...getGeneralAndCustomUisHelpSteps(ctx),
-    ...getRacedayLayoutHelpSteps(ctx),
     ...getThemesHelpSteps(ctx),
     ...getAudioHelpSteps(ctx),
     ...getCustomUiConfigHelpSteps(ctx),

@@ -272,6 +272,9 @@ describe("ui-editor-resolution.helper", () => {
 
     setLayoutZoomHelper(zoomMap, "target1", 10);
     expect(getLayoutZoomHelper(zoomMap, "target1")).toBe(75);
+
+    setLayoutZoomHelper(zoomMap, "target1", 10, undefined, 10);
+    expect(getLayoutZoomHelper(zoomMap, "target1")).toBe(10);
   });
 
   it("should calculate canvas viewport and inspector heights", () => {

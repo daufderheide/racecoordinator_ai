@@ -3058,16 +3058,7 @@ describe("UIEditorComponent", () => {
       const selectors = steps.map((s) => s.selector).filter(Boolean);
 
       expect(selectors).toContain("#help-custom-uis");
-      expect(selectors).toContain("#help-custom-uis-add");
-      expect(selectors).toContain("#help-default-ui");
-      expect(selectors).toContain("#help-raceday-zoom");
-      expect(selectors).toContain("#help-raceday-sort");
-      expect(selectors).toContain("#help-raceday-highlight");
-      expect(selectors).toContain("#help-raceday-reset");
-      expect(selectors).toContain("#help-raceday-clear");
-      expect(selectors).toContain("#help-raceday-import-export");
-      expect(selectors).toContain("#help-raceday-canvas");
-      expect(selectors).toContain("#help-widget-inspector");
+      expect(selectors).toContain("#btn-open-layout-editor");
       expect(selectors).toContain("#help-themes");
       expect(selectors).toContain("#help-themes-add");
       expect(selectors).toContain("#help-default-theme");
@@ -3105,13 +3096,14 @@ describe("UIEditorComponent", () => {
       component.activeCustomUiId = "custom_ui_1";
 
       const steps = component.getHelpSteps();
-      const inspectorStep = steps.find(
-        (s) => s.selector === "#help-widget-inspector",
+      const openLayoutEditorStep = steps.find(
+        (s) => s.selector === "#btn-open-layout-editor",
       );
-      expect(inspectorStep).toBeDefined();
+      expect(openLayoutEditorStep).toBeDefined();
 
-      inspectorStep?.onEnter?.();
-      expect(component.selectedWidgetId).toBe("w-lane-view");
+      component.sectionsExpanded["customUIs"] = false;
+      openLayoutEditorStep?.onEnter?.();
+      expect(component.sectionsExpanded["customUIs"]).toBeTrue();
     });
   });
 
@@ -3651,24 +3643,18 @@ describe("UIEditorComponent", () => {
       expect(window.alert).toHaveBeenCalledWith("UE_ERROR_UI_NAME_EXISTS");
     });
 
-    it("should show Add button on UI Layouts header toolbar and not on individual layouts", () => {
+    it("should show open layout editor button and navigate to layout editor", () => {
       component.sectionsExpanded["customUIs"] = true;
       fixture.detectChanges();
 
-      const headerToolbar = fixture.debugElement.query(
-        By.css("#help-custom-uis .custom-ui-toolbar-container app-toolbar"),
-      );
-      expect(headerToolbar.componentInstance.showAdd()).toBeTrue();
+      const btn = fixture.debugElement.query(By.css("#btn-open-layout-editor"));
+      expect(btn).toBeTruthy();
 
-      const itemToolbars = fixture.debugElement.queryAll(
-        By.css(
-          ".custom-ui-sub-section .custom-ui-toolbar-container app-toolbar",
-        ),
-      );
-      expect(itemToolbars.length).toBeGreaterThan(0);
-      itemToolbars.forEach((toolbar) => {
-        expect(toolbar.componentInstance.showAdd()).toBeFalse();
-        expect(toolbar.componentInstance.showDelete()).toBeTrue();
+      spyOn(component, "navigateToLayoutEditor").and.callThrough();
+      btn.nativeElement.click();
+      expect(component.navigateToLayoutEditor).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/layout-editor"], {
+        queryParams: { returnUrl: "/ui-editor" },
       });
     });
 
@@ -4097,69 +4083,29 @@ describe("UIEditorComponent", () => {
         widgets: [laneViewWidget, timerWidget],
       };
 
-      // Select lane-view widget -> inspector should be visible
+      // Select lane-view widget
       component.onWidgetSelected("lv1");
-      fixture.detectChanges();
+      expect(component.selectedWidget?.id).toBe("lv1");
 
-      let inspector = fixture.debugElement.query(
-        By.css("#help-widget-inspector"),
-      );
-      expect(inspector).toBeTruthy();
-      expect(
-        inspector.nativeElement.classList.contains("widget-inspector-panel"),
-      ).toBeTrue();
-
-      // Select timer widget -> inspector should remain open displaying timer settings
+      // Select timer widget
       component.onWidgetSelected("t1");
-      fixture.detectChanges();
+      expect(component.selectedWidget?.id).toBe("t1");
 
-      inspector = fixture.debugElement.query(By.css("#help-widget-inspector"));
-      expect(inspector).toBeTruthy();
-      expect(
-        inspector.nativeElement.classList.contains("widget-inspector-panel"),
-      ).toBeTrue();
-
-      // Ensure calling onWidgetSelected(null) retains active widget selection
+      // Ensure calling onWidgetSelected(null) falls back to default layout widget
       component.onWidgetSelected(null);
-      fixture.detectChanges();
-
-      inspector = fixture.debugElement.query(By.css("#help-widget-inspector"));
-      expect(inspector).toBeTruthy();
+      expect(component.selectedWidget?.id).toBe("lv1");
     });
 
-    it("should render widget library at workspace level above canvas and widget configuration", () => {
-      component.activeCustomUiId = "default_ui_layout_rc_ai";
-      component.sectionsExpanded["ui_default_ui_layout_rc_ai"] = true;
-      component.editingSettings.racedayLayout = {
-        baseWidth: 1920,
-        baseHeight: 1080,
-        widgets: [{ id: "lv1", widgetType: "lane-view" } as any],
-      };
+    it("should render open layout editor action card in custom UIs section", () => {
+      component.sectionsExpanded["customUIs"] = true;
       fixture.detectChanges();
 
-      const toolbox = fixture.debugElement.query(
-        By.css(".layout-customizer-toolbox-wrapper"),
+      const helpCard = fixture.debugElement.query(By.css("#help-custom-uis"));
+      expect(helpCard).toBeTruthy();
+      const openBtn = fixture.debugElement.query(
+        By.css("#btn-open-layout-editor"),
       );
-      expect(toolbox).toBeTruthy();
-
-      // Select widget to show inspector
-      component.onWidgetSelected("lv1");
-      fixture.detectChanges();
-
-      const inspector = fixture.debugElement.query(
-        By.css("#help-widget-inspector"),
-      );
-      expect(inspector).toBeTruthy();
-
-      const workspace = fixture.debugElement.query(
-        By.css(".raceday-editor-workspace"),
-      );
-      expect(workspace).toBeTruthy();
-
-      // Verify toolbox wrapper is inside the workspace alongside canvas and inspector
-      expect(
-        workspace.nativeElement.contains(toolbox.nativeElement),
-      ).toBeTrue();
+      expect(openBtn).toBeTruthy();
     });
 
     it("should select replacement widget when currently selected widget is removed", () => {
@@ -5216,56 +5162,15 @@ describe("UIEditorComponent", () => {
         expect(widget.height).toBe(50);
       });
 
-      it("should include password manager ignore attributes on inspector geometry inputs", () => {
-        component.sectionsExpanded["customUIs"] = true;
-        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
-        fixture.detectChanges();
-        const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
-        const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
-        const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
-        const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
-
-        expect(xInput).toBeTruthy();
-        expect(yInput).toBeTruthy();
-        expect(wInput).toBeTruthy();
-        expect(hInput).toBeTruthy();
-
-        for (const input of [xInput, yInput, wInput, hInput]) {
-          expect(input.getAttribute("autocomplete")).toBe("off");
-          expect(input.getAttribute("data-dashlane-ignore")).toBe("true");
-          expect(input.getAttribute("data-1p-ignore")).toBe("true");
-          expect(input.getAttribute("data-lpignore")).toBe("true");
-          expect(input.getAttribute("data-bwignore")).toBe("true");
-          expect(input.getAttribute("data-form-type")).toBe("other");
-        }
-      });
-
-      it("should not render .delete-widget-btn at bottom of inspector and should delete widget via .inspector-delete-btn", () => {
-        component.sectionsExpanded["customUIs"] = true;
-        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
-        fixture.detectChanges();
-
-        const deleteWidgetBtn =
-          fixture.nativeElement.querySelector(".delete-widget-btn");
-        expect(deleteWidgetBtn).toBeNull();
-
-        const inspectorDeleteBtn = fixture.nativeElement.querySelector(
-          ".inspector-delete-btn",
-        );
-        expect(inspectorDeleteBtn).toBeTruthy();
-
+      it("should remove selected widget via removeSelectedWidget", () => {
         spyOn(component, "removeSelectedWidget");
-        inspectorDeleteBtn.click();
+        component.removeSelectedWidget(testCustomUi);
         expect(component.removeSelectedWidget).toHaveBeenCalledWith(
           testCustomUi,
         );
       });
 
-      it("should disable height/y inputs for vertical grid widgets and width/x for horizontal grid widgets", () => {
-        component.sectionsExpanded["customUIs"] = true;
-        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
-        fixture.detectChanges();
-
+      it("should report auto-calculated dimensions for vertical grid widgets and horizontal grid widgets", () => {
         const layoutObj = JSON.parse(testCustomUi.layoutJson);
         const widget = layoutObj.widgets.find(
           (w: any) => w.id === component.selectedWidgetId,
@@ -5274,29 +5179,12 @@ describe("UIEditorComponent", () => {
           gridId: "test-grid-spec",
           gridDirection: "vertical",
         };
-        testCustomUi.layoutJson = JSON.stringify(layoutObj);
-        component.parsedLayouts.set(testCustomUi.entity_id, layoutObj);
-        fixture.detectChanges();
-
-        const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
-        const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
-        const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
-        const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
-
-        expect(hInput.disabled).toBeTrue();
-        expect(yInput.disabled).toBeTrue();
-        expect(wInput.disabled).toBeFalse();
-        expect(xInput.disabled).toBeFalse();
+        expect(component.isWidgetHeightAutoCalculated(widget)).toBeTrue();
+        expect(component.isWidgetWidthAutoCalculated(widget)).toBeFalse();
 
         widget.customSettings.gridDirection = "horizontal";
-        testCustomUi.layoutJson = JSON.stringify(layoutObj);
-        component.parsedLayouts.set(testCustomUi.entity_id, layoutObj);
-        fixture.detectChanges();
-
-        expect(hInput.disabled).toBeFalse();
-        expect(yInput.disabled).toBeFalse();
-        expect(wInput.disabled).toBeTrue();
-        expect(xInput.disabled).toBeTrue();
+        expect(component.isWidgetHeightAutoCalculated(widget)).toBeFalse();
+        expect(component.isWidgetWidthAutoCalculated(widget)).toBeTrue();
       });
 
       it("should update selectedAnchor and selectedWidgetId on onAnchorSelected", () => {

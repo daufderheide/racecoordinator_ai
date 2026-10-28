@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   padding: 0 10px;
-  z-index: 1000;
+  z-index: 10000;
   font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
 }
@@ -55,7 +55,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   min-width: 180px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-  z-index: 1100;
+  z-index: 999999;
   border-radius: 8px;
   padding: 4px;
 }
@@ -96,6 +96,7 @@
   margin-top: -6px;
   /* Offset to align with parent item */
   margin-left: -1px;
+  z-index: 1000000;
 }
 
 .submenu-arrow {

@@ -2654,6 +2654,11 @@ describe("DefaultRacedaySetupComponent", () => {
       component.openTrackManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
+      component.openLayoutEditor();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/layout-editor"], {
+        queryParams: { returnUrl: "/raceday-setup" },
+      });
+
       (component as any).isRaceRunning = true;
       component.openTrackManager();
       expect(component.showTrackEditorPrompt).toBeTrue();

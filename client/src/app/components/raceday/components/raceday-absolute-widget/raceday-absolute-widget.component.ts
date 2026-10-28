@@ -193,19 +193,21 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   get isGridMirrored(): boolean {
+    const session = this.parentComponent()?.gridSession?.();
+    if (!session) return false;
     const s = this.widget().customSettings;
     if (s?.["isHeaderWidget"]) return false;
-    const session = this.parentComponent()?.gridSession?.();
+    if (s?.["gridId"] !== session.gridId) return false;
+
     const isHoriz =
-      session?.direction === "horizontal" ||
-      session?.layoutOrientation === "horizontal" ||
+      session.direction === "horizontal" ||
+      session.layoutOrientation === "horizontal" ||
       s?.["gridDirection"] === "horizontal" ||
       s?.["layoutOrientation"] === "horizontal";
     const isLanesMirrored = isHoriz
-      ? s?.["linkColumns"] !== false && session?.linkColumns !== false
-      : s?.["mirrorRows"] !== false && session?.mirrorRows !== false;
+      ? s?.["linkColumns"] !== false && session.linkColumns !== false
+      : s?.["mirrorRows"] !== false && session.mirrorRows !== false;
     if (!isLanesMirrored) return false;
-    if (session && s?.["gridId"] !== session.gridId) return false;
 
     const masterId = s?.["gridMasterId"];
     if (masterId) {
@@ -216,13 +218,9 @@ export class RacedayAbsoluteWidgetComponent
       if (!masterExists) {
         return false;
       }
-      if (!session) {
-        return true;
-      }
     }
 
     return (
-      session != null &&
       Number(s?.["gridLane"] ?? s?.["targetIndex"]) !== session.sourceLaneIndex
     );
   }
@@ -272,7 +270,7 @@ export class RacedayAbsoluteWidgetComponent
     if (w.widgetType === "countdown") {
       return Math.max(100000, (w.zIndex || 2000) + 100000);
     }
-    if (!this.isCustomizing() && w.widgetType === "menu-bar") {
+    if (w.widgetType === "menu-bar") {
       return 99999;
     }
     return w.zIndex || 100;
@@ -663,7 +661,13 @@ export class RacedayAbsoluteWidgetComponent
           ? parent.hasWidgetId(masterId)
           : (parent?.layout?.widgets || []).some((w: any) => w.id === masterId)
         : false;
-      if (this.isGridMirrored && masterId && masterExists) {
+      const shouldTargetMaster = Boolean(
+        masterId &&
+        masterExists &&
+        (this.isGridMirrored ||
+          this.widget().customSettings?.["mirrorRows"] !== false),
+      );
+      if (shouldTargetMaster) {
         this.parentComponent().bringToFront(masterId);
       } else {
         this.parentComponent().bringToFront(this.widget().id);

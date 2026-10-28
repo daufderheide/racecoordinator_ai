@@ -4818,6 +4818,16 @@ describe("DefaultRacedayComponent", () => {
         },
       });
     });
+
+    it("should navigate to /layout-editor when CUSTOMIZE_LAYOUT is selected in options menu", () => {
+      (mockRouter as any).url = "/raceday?someParam=true";
+      component.onOptionsSelect("CUSTOMIZE_LAYOUT");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/layout-editor"], {
+        queryParams: {
+          returnUrl: "/raceday",
+        },
+      });
+    });
   });
 
   describe("canDeactivate", () => {

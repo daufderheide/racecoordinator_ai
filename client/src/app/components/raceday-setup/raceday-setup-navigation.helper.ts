@@ -213,6 +213,16 @@ export class RacedaySetupNavigationHelper {
     }
   }
 
+  static openLayoutEditor(host: any): void {
+    host.closeConfigDropdown();
+    const returnUrl = host.router?.url
+      ? host.router.url.split("?")[0]
+      : "/raceday-setup";
+    host.router.navigate(["/layout-editor"], {
+      queryParams: { returnUrl },
+    });
+  }
+
   static onConfirmTrackEditor(host: any): void {
     host.showTrackEditorPrompt = false;
     host.dataService.endRace().subscribe({

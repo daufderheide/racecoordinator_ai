@@ -35,12 +35,6 @@ test.describe("UI Editor Visuals", () => {
     await editor.waitFor({ state: "visible" });
 
     const _harness = new UIEditorHarnessE2e(editor);
-    const previewContainer = page.locator(".raceday-preview-container").first();
-    await previewContainer.waitFor({ state: "visible" });
-    await previewContainer
-      .locator("app-raceday-lane-column")
-      .first()
-      .waitFor({ state: "visible" });
     await TestSetupHelper.waitForImagesLoaded(editor);
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
     await page.evaluate(() => new Promise(requestAnimationFrame));
@@ -237,7 +231,7 @@ test.describe("UI Editor Visuals", () => {
     );
   });
 
-  test("should display practice raceday layout section correctly", async ({
+  test("should display custom ui layouts navigation section correctly", async ({
     page,
   }) => {
     await TestSetupHelper.waitForLocalization(
@@ -247,40 +241,21 @@ test.describe("UI Editor Visuals", () => {
     );
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
-    // Expand Practice UI Layout sub-section inside Custom UIs
-    const practiceUiSection = page.locator(
-      '.custom-ui-sub-section[data-ui-id="practice_ui_layout_rc_ai"]',
-    );
-    await practiceUiSection.waitFor({ state: "visible" });
+    const customUisSection = page.locator("#help-custom-uis");
+    await customUisSection.waitFor({ state: "visible" });
+    await customUisSection.scrollIntoViewIfNeeded();
 
-    const expander = practiceUiSection.locator(".expander-icon").first();
-    await expander.waitFor({ state: "visible" });
-    await expander.scrollIntoViewIfNeeded();
-    await page.evaluate(() => new Promise(requestAnimationFrame));
-    await expander.click();
+    const openBtn = customUisSection.locator("#btn-open-layout-editor");
+    await openBtn.waitFor({ state: "visible" });
+    await TestSetupHelper.waitForImagesLoaded(customUisSection);
 
-    // Wait for the practice section content to be visible
-    const practiceLayoutSection = practiceUiSection.locator(
-      ".raceday-layout-section",
-    );
-    await practiceLayoutSection.waitFor({ state: "visible" });
-
-    // Wait for column toolbox to be visible inside the section
-    const columnToolbox = practiceUiSection
-      .locator(".layout-customizer-toolbox")
-      .first();
-    await columnToolbox.waitFor({ state: "visible" });
-    await TestSetupHelper.waitForImagesLoaded(practiceUiSection);
-
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.evaluate(() => new Promise(requestAnimationFrame));
     await page.mouse.move(0, 0);
 
-    await expect(page).toHaveScreenshot(
-      "ui-editor-practice-layout-section.png",
+    await expect(customUisSection).toHaveScreenshot(
+      "ui-editor-custom-uis-section.png",
       {
         maxDiffPixelRatio: 0.05,
-        maxDiffPixels: 10000,
+        maxDiffPixels: 5000,
         animations: "disabled",
       },
     );

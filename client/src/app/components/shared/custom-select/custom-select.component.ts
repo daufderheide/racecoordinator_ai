@@ -75,6 +75,8 @@ export class CustomSelectComponent
   );
   extendToPageBottom = input(false, { transform: booleanAttribute });
   maxDropdownHeight = input<number | string | undefined>(undefined);
+  fitWidestOption = input(false, { transform: booleanAttribute });
+  widestLabel = input<string>("");
   readonly change = output<any>();
 
   @ContentChildren(CustomOptionComponent)
@@ -144,6 +146,22 @@ export class CustomSelectComponent
     return `${count} selected`;
   }
 
+  get resolvedWidestLabel(): string {
+    const manual = this.widestLabel();
+    if (manual) return manual;
+    if (!this.fitWidestOption()) return "";
+    let longest = this.placeholder() || "";
+    if (this.customOptions) {
+      for (const opt of this.customOptions) {
+        const label = opt.label || "";
+        if (label.length > longest.length) {
+          longest = label;
+        }
+      }
+    }
+    return longest;
+  }
+
   isEmptyValue(val: any): boolean {
     return val === "" || val === undefined || val === null;
   }
@@ -162,6 +180,9 @@ export class CustomSelectComponent
       }
       if (isEmpty) return false;
       return val.some((item: any) => fn(optValue, item));
+    }
+    if (this.isEmptyValue(optValue) && this.isEmptyValue(this.value())) {
+      return true;
     }
     return fn(optValue, this.value());
   }

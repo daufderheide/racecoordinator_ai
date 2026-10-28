@@ -435,7 +435,7 @@ app-default-raceday {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20000;
+  z-index: 1000000 !important;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -443,7 +443,7 @@ app-default-raceday {
   border: 1px solid #3b82f6;
   border-radius: 24px;
   padding: 6px 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
   pointer-events: auto;
 }
 

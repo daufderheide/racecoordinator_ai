@@ -9,6 +9,7 @@ test.describe("Lane View Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       columnEditorMinimized: true,
@@ -17,6 +18,8 @@ test.describe("Lane View Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         preserveLegacyHeatView: true,
         widgets: [
@@ -48,9 +51,9 @@ test.describe("Lane View Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the lane-view widget by dispatching pointerdown
     const laneViewWidget = page
@@ -72,8 +75,12 @@ test.describe("Lane View Inspector Visuals", () => {
     await harness.setTimeDecimalPlaces(1);
     await harness.setLapDecimalPlaces(0);
 
-    // Blur any active element and move mouse to remove hover states
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so lane view fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-lane-view-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await page.mouse.move(0, 0);
 
     // Take screenshot of the inspector panel

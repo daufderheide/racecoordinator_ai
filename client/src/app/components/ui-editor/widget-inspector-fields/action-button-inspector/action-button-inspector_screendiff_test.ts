@@ -7,8 +7,11 @@ test.describe("Action Button Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: [
           {
@@ -37,9 +40,9 @@ test.describe("Action Button Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the action button widget by dispatching pointerdown
     const actionButtonWidget = page
@@ -67,6 +70,8 @@ test.describe("Action Button Inspector Visuals", () => {
     page,
   }) => {
     await TestSetupHelper.setupSettings(page, {
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: [
           {
@@ -89,9 +94,9 @@ test.describe("Action Button Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the action button widget by dispatching pointerdown
     const actionButtonWidget = page

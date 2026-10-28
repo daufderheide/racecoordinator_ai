@@ -912,6 +912,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     RacedaySetupNavigationHelper.openTrackManager(this);
   }
 
+  openLayoutEditor() {
+    RacedaySetupNavigationHelper.openLayoutEditor(this);
+  }
+
   onConfirmTrackEditor() {
     RacedaySetupNavigationHelper.onConfirmTrackEditor(this);
   }

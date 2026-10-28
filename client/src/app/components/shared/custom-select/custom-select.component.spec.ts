@@ -682,6 +682,100 @@ describe("CustomSelectComponent", () => {
       expect(select.value()).toEqual(["opt1"]);
     });
   });
+
+  describe("fitWidestOption and widestLabel", () => {
+    let hostFixture: ComponentFixture<FitWidestTestHostComponent>;
+    let hostComponent: FitWidestTestHostComponent;
+
+    beforeEach(async () => {
+      hostFixture = TestBed.createComponent(FitWidestTestHostComponent);
+      hostComponent = hostFixture.componentInstance;
+      hostFixture.detectChanges();
+    });
+
+    it("should compute resolvedWidestLabel from customOptions when fitWidestOption is true", () => {
+      const select = hostFixture.debugElement.children[0]
+        .componentInstance as CustomSelectComponent;
+      const hostElement = hostFixture.nativeElement as HTMLElement;
+
+      expect(select.resolvedWidestLabel).toBe("Very Long Option Label Here");
+
+      const triggerEl = hostElement.querySelector(".custom-select-trigger");
+      expect(triggerEl?.classList.contains("fit-widest")).toBeTrue();
+
+      const sizerEl = hostElement.querySelector(".custom-select-sizer");
+      expect(sizerEl).toBeTruthy();
+      expect(sizerEl?.textContent?.trim()).toBe("Very Long Option Label Here");
+      expect(sizerEl?.getAttribute("aria-hidden")).toBe("true");
+
+      const selectedEl = hostElement.querySelector(".selected-text");
+      expect(selectedEl?.textContent?.trim()).toBe("Short");
+    });
+
+    it("should prioritize widestLabel when explicitly provided", () => {
+      hostComponent.customWidestLabel = "Super Extended Custom Label Override";
+      hostFixture.detectChanges();
+
+      const select = hostFixture.debugElement.children[0]
+        .componentInstance as CustomSelectComponent;
+      const hostElement = hostFixture.nativeElement as HTMLElement;
+
+      expect(select.resolvedWidestLabel).toBe(
+        "Super Extended Custom Label Override",
+      );
+      const sizerEl = hostElement.querySelector(".custom-select-sizer");
+      expect(sizerEl?.textContent?.trim()).toBe(
+        "Super Extended Custom Label Override",
+      );
+    });
+
+    it("should not render sizer or apply fit-widest class when fitWidestOption is false and widestLabel is empty", () => {
+      hostComponent.fitWidest = false;
+      hostComponent.customWidestLabel = "";
+      hostFixture.detectChanges();
+
+      const select = hostFixture.debugElement.children[0]
+        .componentInstance as CustomSelectComponent;
+      const hostElement = hostFixture.nativeElement as HTMLElement;
+
+      expect(select.resolvedWidestLabel).toBe("");
+      const triggerEl = hostElement.querySelector(".custom-select-trigger");
+      expect(triggerEl?.classList.contains("fit-widest")).toBeFalse();
+      expect(hostElement.querySelector(".custom-select-sizer")).toBeNull();
+    });
+
+    it("should select empty option when single select value is undefined or empty string", () => {
+      const hostFixture = TestBed.createComponent(EmptyOptionTestHostComponent);
+      const hostComponent = hostFixture.componentInstance;
+      hostFixture.detectChanges();
+
+      const select = hostFixture.debugElement.children[0]
+        .componentInstance as CustomSelectComponent;
+      const hostElement = hostFixture.nativeElement as HTMLElement;
+
+      // When val is undefined, empty option ("") matches
+      expect(select.selectedLabel).toBe("Default Option");
+      expect(
+        hostElement.querySelector(".selected-text")?.textContent?.trim(),
+      ).toBe("Default Option");
+
+      // When val is "", empty option matches
+      hostComponent.val = "";
+      hostFixture.detectChanges();
+      expect(select.selectedLabel).toBe("Default Option");
+      expect(
+        hostElement.querySelector(".selected-text")?.textContent?.trim(),
+      ).toBe("Default Option");
+
+      // When val is a specific value, specific option matches
+      hostComponent.val = "opt1";
+      hostFixture.detectChanges();
+      expect(select.selectedLabel).toBe("Option 1");
+      expect(
+        hostElement.querySelector(".selected-text")?.textContent?.trim(),
+      ).toBe("Option 1");
+    });
+  });
 });
 
 @Component({
@@ -724,4 +818,41 @@ class DynamicLabelTestHostComponent {
 class MultiSelectTestHostComponent {
   val: string[] = [];
   onChange = jasmine.createSpy("onChange");
+}
+
+@Component({
+  standalone: true,
+  imports: [CustomSelectComponent, CustomOptionComponent],
+  template: `
+    <app-custom-select
+      [fitWidestOption]="fitWidest"
+      [widestLabel]="customWidestLabel"
+      [value]="val"
+    >
+      <app-custom-option value="short">Short</app-custom-option>
+      <app-custom-option value="long"
+        >Very Long Option Label Here</app-custom-option
+      >
+      <app-custom-option value="medium">Medium Label</app-custom-option>
+    </app-custom-select>
+  `,
+})
+class FitWidestTestHostComponent {
+  fitWidest = true;
+  customWidestLabel = "";
+  val = "short";
+}
+
+@Component({
+  standalone: true,
+  imports: [CustomSelectComponent, CustomOptionComponent],
+  template: `
+    <app-custom-select [value]="val">
+      <app-custom-option value="">Default Option</app-custom-option>
+      <app-custom-option value="opt1">Option 1</app-custom-option>
+    </app-custom-select>
+  `,
+})
+class EmptyOptionTestHostComponent {
+  val?: string = undefined;
 }

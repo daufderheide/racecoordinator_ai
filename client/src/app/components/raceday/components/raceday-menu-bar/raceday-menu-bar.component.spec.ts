@@ -570,6 +570,26 @@ describe("RacedayMenuBarComponent", () => {
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
 
+    it("should emit optionsMenuSelect with CUSTOMIZE_LAYOUT when Layout Editor is clicked", () => {
+      spyOn(component.optionsMenuSelect, "emit");
+      component.isOptionsMenuOpen = true;
+      fixture.detectChanges();
+
+      const layoutItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RDS_MENU_LAYOUT_EDITOR"),
+      ) as HTMLElement;
+
+      expect(layoutItem).toBeTruthy();
+      layoutItem.click();
+
+      expect(component.optionsMenuSelect.emit).toHaveBeenCalledWith(
+        "CUSTOMIZE_LAYOUT",
+      );
+      expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+
     it("should emit languageSelected when language is selected", () => {
       spyOn(component.languageSelected, "emit");
       component.isOptionsMenuOpen = true;
@@ -648,6 +668,39 @@ describe("RacedayMenuBarComponent", () => {
       );
       brandingEl.click();
       expect(component.onBrandingClick).toHaveBeenCalled();
+    });
+
+    it("should return false for hasOpenMenu when no menu is open", () => {
+      expect(component.hasOpenMenu).toBeFalse();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.classList.contains("has-open-menu"),
+      ).toBeFalse();
+    });
+
+    it("should return true for hasOpenMenu and apply has-open-menu class when a menu is open", () => {
+      component.isFileMenuOpen = true;
+      expect(component.hasOpenMenu).toBeTrue();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.classList.contains("has-open-menu"),
+      ).toBeTrue();
+
+      component.isFileMenuOpen = false;
+      component.isMenuOpen = true;
+      expect(component.hasOpenMenu).toBeTrue();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.classList.contains("has-open-menu"),
+      ).toBeTrue();
+
+      component.isMenuOpen = false;
+      component.isOptionsMenuOpen = true;
+      expect(component.hasOpenMenu).toBeTrue();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.classList.contains("has-open-menu"),
+      ).toBeTrue();
     });
   });
 });

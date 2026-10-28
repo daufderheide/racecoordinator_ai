@@ -1088,6 +1088,7 @@ export class DefaultRacedayComponent
   // Layout customization state
   isUIEditorMode = input<boolean>(false);
   isPracticeLayoutEditor = input<boolean>(false);
+  layoutCustomizing = input<boolean | undefined>(undefined);
   inputLaneIndex = input<number | undefined>(undefined);
   inputDriverId = input<string | undefined>(undefined);
   routeLaneIndex?: number;
@@ -1145,7 +1146,16 @@ export class DefaultRacedayComponent
   layoutChanged = output<LayoutConfig>();
   columnsChanged = output<void>();
   requestAbout = output<void>();
-  isLayoutCustomizing = false;
+  private _isLayoutCustomizing = false;
+  get isLayoutCustomizing(): boolean {
+    if (this.layoutCustomizing() !== undefined) {
+      return this.layoutCustomizing()!;
+    }
+    return this._isLayoutCustomizing;
+  }
+  set isLayoutCustomizing(val: boolean) {
+    this._isLayoutCustomizing = val;
+  }
 
   @HostBinding("style.overflow")
   get overflowStyle() {
@@ -1184,6 +1194,7 @@ export class DefaultRacedayComponent
             this.layout.widgets,
           );
       }
+      this.loadColumns();
       this.cdr.markForCheck();
     }
   }
@@ -1798,7 +1809,9 @@ export class DefaultRacedayComponent
     this.initHelpStepSubscription();
 
     if (this.isUIEditorMode()) {
-      this.isLayoutCustomizing = true;
+      if (this.layoutCustomizing() === undefined) {
+        this.isLayoutCustomizing = true;
+      }
       this.setupMockDataForEditor();
       return;
     }
@@ -4145,6 +4158,8 @@ export class DefaultRacedayComponent
         nextState.url.includes("/driver-editor") ||
         nextState.url.includes("/driver-manager") ||
         nextState.url.includes("/ui-editor") ||
+        nextState.url.includes("/layout-editor") ||
+        nextState.url.includes("/layout-manager") ||
         nextState.url.includes("/driver-station") ||
         nextState.url.includes("/driver-view")
       ) {
@@ -5901,13 +5916,20 @@ export class DefaultRacedayComponent
     });
   }
 
+  navigateToLayoutEditor() {
+    const returnUrl = this.router.url.split("?")[0];
+    this.router.navigate(["/layout-editor"], {
+      queryParams: { returnUrl },
+    });
+  }
+
   onOptionsSelect(action: string) {
     this.logger.debug("Options menu action:", action);
     this.isOptionsMenuOpen = false;
     if (action === "CUSTOMIZE_UI") {
       this.navigateToUiEditor();
     } else if (action === "CUSTOMIZE_LAYOUT") {
-      this.toggleLayoutCustomize();
+      this.navigateToLayoutEditor();
     }
   }
 

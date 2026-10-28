@@ -131,6 +131,10 @@
   border-radius: 50%;
 }
 
+.widget-wrapper:not(.selected) .resize-handle {
+  display: none !important;
+}
+
 .resize-handle.n {
   top: -4px;
   left: calc(50% - 4px);
@@ -188,8 +192,20 @@
   z-index: 9999 !important;
 }
 
-.widget-wrapper:has(app-raceday-menu-bar):not(.edit-mode) {
+.widget-wrapper:has(app-raceday-menu-bar) {
   z-index: 99999 !important;
+}
+
+.widget-wrapper.edit-mode:has(app-raceday-menu-bar).selected {
+  z-index: 99999 !important;
+}
+
+.widget-wrapper:has(app-raceday-menu-bar.has-open-menu),
+.widget-content:has(app-raceday-menu-bar.has-open-menu),
+.widget-wrapper:has(app-raceday-menu-bar .menu-dropdown),
+.widget-content:has(app-raceday-menu-bar .menu-dropdown) {
+  z-index: 999999 !important;
+  overflow: visible !important;
 }
 
 /* Selected state outline */

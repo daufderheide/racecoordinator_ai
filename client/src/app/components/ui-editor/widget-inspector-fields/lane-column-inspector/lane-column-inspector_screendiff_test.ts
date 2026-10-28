@@ -301,11 +301,14 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: testWidgets,
       },
@@ -322,9 +325,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the first grid cell widget within the grid container
     const gridWidget = page
@@ -368,9 +371,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the first grid cell widget within the grid container
     const gridWidget = page
@@ -414,9 +417,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the first grid cell widget within the grid container
     const gridWidget = page
@@ -460,9 +463,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the standalone widget outside the grid container
     const standaloneWidget = page
@@ -505,9 +508,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     const previewContainer = page.locator(".raceday-preview-container").first();
     await previewContainer.waitFor({ state: "visible" });
@@ -547,6 +550,8 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: topWidgets,
       },
@@ -555,9 +560,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     const previewContainer = page.locator(".raceday-preview-container").first();
     await previewContainer.waitFor({ state: "visible" });
@@ -605,6 +610,8 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: noneWidgets,
       },
@@ -613,9 +620,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     const previewContainer = page.locator(".raceday-preview-container").first();
     await previewContainer.waitFor({ state: "visible" });
@@ -654,6 +661,8 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: topWidgets,
       },
@@ -662,9 +671,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     const previewContainer = page.locator(".raceday-preview-container").first();
     await previewContainer.waitFor({ state: "visible" });
@@ -731,6 +740,8 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: topWidgets,
       },
@@ -739,9 +750,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     const gridWidget = page
       .locator(".raceday-grid-scroll-content .widget-wrapper")
@@ -793,6 +804,8 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: noneWidgets,
       },
@@ -801,9 +814,9 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     const gridWidget = page
       .locator(".raceday-grid-scroll-content .widget-wrapper")

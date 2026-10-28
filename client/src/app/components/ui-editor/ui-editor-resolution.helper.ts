@@ -333,7 +333,10 @@ export function saveLayoutZoomToStorage(
   }
 }
 
-export function loadLayoutZoomFromStorage(logger?: any): Map<string, number> {
+export function loadLayoutZoomFromStorage(
+  logger?: any,
+  minZoom: number = 75,
+): Map<string, number> {
   const map = new Map<string, number>();
   try {
     if (typeof localStorage !== "undefined") {
@@ -343,7 +346,7 @@ export function loadLayoutZoomFromStorage(logger?: any): Map<string, number> {
         if (parsed && typeof parsed === "object") {
           Object.entries(parsed).forEach(([key, val]) => {
             if (typeof val === "number" && !isNaN(val)) {
-              map.set(key, Math.min(Math.max(Math.round(val), 75), 500));
+              map.set(key, Math.min(Math.max(Math.round(val), minZoom), 500));
             }
           });
         }
@@ -367,8 +370,9 @@ export function setLayoutZoomHelper(
   targetId: string,
   zoom: number,
   logger?: any,
+  minZoom: number = 75,
 ): void {
-  const clamped = Math.min(Math.max(Math.round(zoom), 75), 500);
+  const clamped = Math.min(Math.max(Math.round(zoom), minZoom), 500);
   layoutZoomMap.set(targetId, clamped);
   saveLayoutZoomToStorage(layoutZoomMap, logger);
 }

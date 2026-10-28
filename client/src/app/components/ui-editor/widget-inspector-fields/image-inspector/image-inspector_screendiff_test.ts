@@ -9,6 +9,7 @@ test.describe("Image Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       columnEditorMinimized: true,
@@ -17,6 +18,8 @@ test.describe("Image Inspector Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: [
           {
@@ -46,9 +49,9 @@ test.describe("Image Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the image widget by dispatching pointerdown
     const imageWidget = page
@@ -67,8 +70,12 @@ test.describe("Image Inspector Visuals", () => {
 
     const _harness = new ImageInspectorHarnessE2e(inspectorFields);
 
-    // Blur any active element and move mouse to remove hover states
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so image fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-image-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await TestSetupHelper.waitForImagesLoaded(inspectorPanel);
     await page.mouse.move(0, 0);
 

@@ -458,6 +458,50 @@ describe("ToolbarComponent", () => {
         "RM_RESET_ADMIN_ONLY_TOOLTIP",
       );
     });
+
+    it("should emit reset event when clicked", () => {
+      fixture.componentRef.setInput("showReset", true);
+      fixture.detectChanges();
+
+      spyOn(component.reset, "emit");
+      const resetBtn = fixture.nativeElement.querySelector("#reset-btn");
+      resetBtn.click();
+      expect(component.reset.emit).toHaveBeenCalled();
+    });
+  });
+
+  describe("Clear Button State and Tooltip", () => {
+    it("should render clear button with default title when enabled and emit clear when clicked", () => {
+      fixture.componentRef.setInput("showClear", true);
+      fixture.componentRef.setInput("disabledClear", false);
+      fixture.componentRef.setInput("clearTitleKey", "UI_EDITOR_CLEAR_LAYOUT");
+      fixture.detectChanges();
+
+      const clearBtn = fixture.nativeElement.querySelector("#clear-btn");
+      expect(clearBtn).toBeTruthy();
+      expect(clearBtn.disabled).toBeFalse();
+      expect(clearBtn.getAttribute("title")).toBe("UI_EDITOR_CLEAR_LAYOUT");
+
+      spyOn(component.clear, "emit");
+      clearBtn.click();
+      expect(component.clear.emit).toHaveBeenCalled();
+    });
+
+    it("should render clear button with disabled tooltip when disabled and tooltip key provided", () => {
+      fixture.componentRef.setInput("showClear", true);
+      fixture.componentRef.setInput("disabledClear", true);
+      fixture.componentRef.setInput("clearTitleKey", "UI_EDITOR_CLEAR_LAYOUT");
+      fixture.componentRef.setInput(
+        "clearDisabledTooltipKey",
+        "CLEAR_DISABLED_TOOLTIP",
+      );
+      fixture.detectChanges();
+
+      const clearBtn = fixture.nativeElement.querySelector("#clear-btn");
+      expect(clearBtn).toBeTruthy();
+      expect(clearBtn.disabled).toBeTrue();
+      expect(clearBtn.getAttribute("title")).toBe("CLEAR_DISABLED_TOOLTIP");
+    });
   });
 
   describe("Zooming", () => {
@@ -645,6 +689,34 @@ describe("ToolbarComponent", () => {
       expect(importIndex).toBeGreaterThanOrEqual(0);
       expect(exportIndex).toBe(importIndex + 1);
       expect(deleteIndex).toBe(exportIndex + 1);
+    });
+
+    it("should place reset and clear directly to the left of delete and to the right of export when enabled", () => {
+      fixture.componentRef.setInput("showCopy", true);
+      fixture.componentRef.setInput("showAdd", true);
+      fixture.componentRef.setInput("showImport", true);
+      fixture.componentRef.setInput("showExport", true);
+      fixture.componentRef.setInput("showReset", true);
+      fixture.componentRef.setInput("showClear", true);
+      fixture.componentRef.setInput("showDelete", true);
+      fixture.detectChanges();
+
+      const buttons = Array.from(
+        fixture.nativeElement.querySelectorAll("button"),
+      ) as HTMLButtonElement[];
+      const buttonIds = buttons.map((b) => b.id).filter(Boolean);
+
+      const importIndex = buttonIds.indexOf("import-btn");
+      const exportIndex = buttonIds.indexOf("export-btn");
+      const resetIndex = buttonIds.indexOf("reset-btn");
+      const clearIndex = buttonIds.indexOf("clear-btn");
+      const deleteIndex = buttonIds.indexOf("delete-track-btn");
+
+      expect(importIndex).toBeGreaterThanOrEqual(0);
+      expect(exportIndex).toBe(importIndex + 1);
+      expect(resetIndex).toBe(exportIndex + 1);
+      expect(clearIndex).toBe(resetIndex + 1);
+      expect(deleteIndex).toBe(clearIndex + 1);
     });
   });
 });

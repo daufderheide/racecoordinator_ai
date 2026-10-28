@@ -62,6 +62,7 @@ nav:
     - Team Editor: team-editor.md
     - Track Editor: track-editor.md
     - Race Editor: race-editor.md
+    - Layout Editor: layout-editor.md
     - Asset Manager: asset-manager.md
   - Racing:
     - Race Day Operation: raceday-operation.md

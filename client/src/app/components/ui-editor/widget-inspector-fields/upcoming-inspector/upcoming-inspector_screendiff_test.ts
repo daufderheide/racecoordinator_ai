@@ -7,6 +7,7 @@ test.describe("Upcoming Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       flagRacing: "/api/assets/download?filename=img1.png",
@@ -14,6 +15,8 @@ test.describe("Upcoming Inspector Visuals", () => {
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: [
           {
@@ -33,6 +36,15 @@ test.describe("Upcoming Inspector Visuals", () => {
             width: 384,
             height: 239,
             zIndex: 100,
+            scaleMode: "",
+            customSettings: {
+              titleFontFamily: "",
+              titleFontSize: 24,
+              titleTextColor: "",
+              laneFontFamily: "",
+              laneFontSize: 18,
+              laneTextColor: "",
+            },
           },
           {
             id: "widget-on-deck",
@@ -42,6 +54,15 @@ test.describe("Upcoming Inspector Visuals", () => {
             width: 384,
             height: 239,
             zIndex: 100,
+            scaleMode: "",
+            customSettings: {
+              titleFontFamily: "",
+              titleFontSize: 24,
+              titleTextColor: "",
+              laneFontFamily: "",
+              laneFontSize: 18,
+              laneTextColor: "",
+            },
           },
         ],
       },
@@ -58,14 +79,14 @@ test.describe("Upcoming Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the next heat widget by dispatching pointerdown
     const nextHeatWidget = page
       .locator(".widget-wrapper")
-      .filter({ hasText: "next-heat" })
+      .filter({ has: page.locator("app-raceday-next-heat") })
       .first();
     await nextHeatWidget.dispatchEvent("pointerdown");
 
@@ -76,14 +97,6 @@ test.describe("Upcoming Inspector Visuals", () => {
     // Verify inspector contains upcoming-specific fields
     const inspectorFields = page.locator("app-upcoming-inspector");
     await inspectorFields.waitFor({ state: "visible" });
-
-    // Switch to custom scaling mode to enable font size sliders
-    const scaleSelect = page
-      .locator(".inspector-section")
-      .filter({ hasText: "Scaling Mode" })
-      .locator("app-custom-select");
-    await scaleSelect.locator(".custom-select-trigger").click();
-    await scaleSelect.locator('.custom-select-option[data-value=""]').click();
 
     const sliders = inspectorFields.locator("input[type='range']");
     const colorPickers = inspectorFields.locator("input[type='color']");
@@ -100,8 +113,12 @@ test.describe("Upcoming Inspector Visuals", () => {
       el.dispatchEvent(new Event("change", { bubbles: true }));
     }); // Lane text color to Green
 
-    // Blur any active element and move mouse to remove hover states
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so upcoming fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-upcoming-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await page.mouse.move(0, 0);
 
     // Take screenshot of the inspector panel
@@ -119,14 +136,14 @@ test.describe("Upcoming Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the on deck widget by dispatching pointerdown
     const onDeckWidget = page
       .locator(".widget-wrapper")
-      .filter({ hasText: "on-deck" })
+      .filter({ has: page.locator("app-raceday-on-deck") })
       .first();
     await onDeckWidget.dispatchEvent("pointerdown");
 
@@ -138,8 +155,12 @@ test.describe("Upcoming Inspector Visuals", () => {
     const inspectorFields = page.locator("app-upcoming-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
-    // Blur any active element and move mouse to remove hover states
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so upcoming fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-upcoming-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await page.mouse.move(0, 0);
 
     // Take screenshot of the inspector panel

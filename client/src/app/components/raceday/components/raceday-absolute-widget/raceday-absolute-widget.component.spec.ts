@@ -376,7 +376,7 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(deleteAnchorStyle.pointerEvents).toBe("auto");
   });
 
-  it("should apply widget zIndex for menu-bar when isCustomizing is true", () => {
+  it("should apply 99999 zIndex for menu-bar when isCustomizing is true", () => {
     mockWidget.widgetType = "menu-bar";
     mockWidget.zIndex = 105;
     fixture.componentRef.setInput("widget", { ...mockWidget });
@@ -384,7 +384,7 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     fixture.detectChanges();
 
     const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
-    expect(wrapper.style.zIndex).toBe("105");
+    expect(wrapper.style.zIndex).toBe("99999");
   });
 
   it("should apply 99999 zIndex for menu-bar when isCustomizing is false", () => {
@@ -831,6 +831,46 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       };
       fixture.componentRef.setInput("widget", nonMirroredRowWidget);
       expect(component.isGridMirrored).toBeFalse();
+
+      // Inactive grid session (null) should never report mirrored even if gridMasterId exists
+      mockParent.gridSession = () => null;
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+      fixture.componentRef.setInput("widget", mirroredWidget);
+      expect(component.isGridMirrored).toBeFalse();
+
+      // Session for a different grid should never report mirrored
+      mockParent.gridSession = () => ({
+        gridId: "g-different",
+        sourceLaneIndex: 0,
+        mirrorRows: true,
+      });
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+      fixture.componentRef.setInput("widget", mirroredWidget);
+      expect(component.isGridMirrored).toBeFalse();
+    });
+
+    it("should redirect bringToFront to masterId for mirrored child rows even when gridSession is null", () => {
+      mockParent.gridSession = () => null;
+      mockParent.hasWidgetId = (id: string) => id === "master-1";
+      mockParent.layout = {
+        widgets: [{ id: "master-1", customSettings: { gridId: "g1" } }],
+      };
+      fixture.componentRef.setInput("parentComponent", { ...mockParent });
+
+      const mirroredWidget = {
+        id: "mirror-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "g1",
+          gridMasterId: "master-1",
+          gridLane: 1,
+          targetIndex: 1,
+        },
+      };
+      fixture.componentRef.setInput("widget", mirroredWidget);
+
+      component.bringToFront();
+      expect(mockParent.bringToFront).toHaveBeenCalledWith("master-1");
     });
 
     it("should correctly compute isSameGridColumn and isSameGridRow", () => {

@@ -167,19 +167,6 @@
     </button>
   }
 
-  <!-- Delete -->
-  @if (showDelete()) {
-    <button
-      id="delete-track-btn"
-      class="toolbar-btn danger"
-      (click)="onDelete()"
-      [disabled]="isSaving() || disabledDelete()"
-      [title]="'TM_DELETE' | translate"
-    >
-      <span class="material-icons">delete</span>
-    </button>
-  }
-
   <!-- Reset -->
   @if (showReset()) {
     <button
@@ -190,6 +177,32 @@
       [title]="getResetTooltip()"
     >
       <span class="material-icons">restart_alt</span>
+    </button>
+  }
+
+  <!-- Clear -->
+  @if (showClear()) {
+    <button
+      id="clear-btn"
+      class="toolbar-btn danger"
+      (click)="onClear()"
+      [disabled]="isSaving() || disabledClear()"
+      [title]="getClearTooltip()"
+    >
+      <span class="material-icons">delete_sweep</span>
+    </button>
+  }
+
+  <!-- Delete -->
+  @if (showDelete()) {
+    <button
+      id="delete-track-btn"
+      class="toolbar-btn danger"
+      (click)="onDelete()"
+      [disabled]="isSaving() || disabledDelete()"
+      [title]="'TM_DELETE' | translate"
+    >
+      <span class="material-icons">delete</span>
     </button>
   }
 

@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, input, output } from "@angular/core";
+import { Component, effect, input, output } from "@angular/core";
 import { CustomUI } from "@app/models/custom-ui";
 import { AbsoluteWidgetNode, Settings } from "@app/models/settings";
 
@@ -58,6 +58,15 @@ export class WidgetInspectorFieldsComponent {
   deleteGrid = output<string>();
   reMirrorGrid = output<string>();
   bringGridToFront = output<string>();
+
+  constructor() {
+    effect(() => {
+      const w = this.widget();
+      if (w && !w.customSettings) {
+        w.customSettings = {};
+      }
+    });
+  }
 
   isCustomWidget(type: string | undefined): boolean {
     return type?.startsWith("custom:") ?? false;

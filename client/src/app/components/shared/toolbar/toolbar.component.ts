@@ -77,10 +77,21 @@ export class ToolbarComponent implements OnInit {
         : this.resetTitleKey();
     return this.translationService.translate(key);
   }
+  showClear = input(false);
+  clearTitleKey = input("UI_EDITOR_CLEAR_LAYOUT");
+  clearDisabledTooltipKey = input("");
+  getClearTooltip(): string {
+    const key =
+      this.disabledClear() && this.clearDisabledTooltipKey()
+        ? this.clearDisabledTooltipKey()
+        : this.clearTitleKey();
+    return this.translationService.translate(key);
+  }
   disabledImport = input(false);
   disabledImportRc1 = input(false);
   disabledExport = input(false);
   disabledReset = input(false);
+  disabledClear = input(false);
   showRegenerate = input(false);
   disabledRegenerate = input(false);
   showLaneCheck = input(false);
@@ -141,6 +152,7 @@ export class ToolbarComponent implements OnInit {
   importRc1 = output<void>();
   export = output<void>();
   reset = output<void>();
+  clear = output<void>();
   regenerate = output<void>();
   laneCheck = output<void>();
   zoomLevelChange = output<number>();
@@ -183,6 +195,10 @@ export class ToolbarComponent implements OnInit {
 
   onReset() {
     this.reset.emit();
+  }
+
+  onClear() {
+    this.clear.emit();
   }
 
   onRegenerate() {

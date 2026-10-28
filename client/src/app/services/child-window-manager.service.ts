@@ -171,6 +171,8 @@ export class ChildWindowManagerService {
       cleanUrl === "/raceday" ||
       cleanUrl === "/default-raceday" ||
       cleanUrl.startsWith("/ui-editor") ||
+      cleanUrl.startsWith("/layout-editor") ||
+      cleanUrl.startsWith("/layout-manager") ||
       cleanUrl.startsWith("/modify-heats") ||
       cleanUrl.startsWith("/driver-station") ||
       cleanUrl.startsWith("/driver-view") ||

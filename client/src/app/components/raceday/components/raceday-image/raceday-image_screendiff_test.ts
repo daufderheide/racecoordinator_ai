@@ -9,6 +9,7 @@ test.describe("Raceday Image Widget Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       columnEditorMinimized: true,
@@ -17,6 +18,8 @@ test.describe("Raceday Image Widget Visuals", () => {
       layoutEditorMinimized: true,
       layoutEditorPositionX: 9999,
       layoutEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: [
           {
@@ -46,9 +49,9 @@ test.describe("Raceday Image Widget Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Verify widget is visible
     const widget = page.locator("app-raceday-image");

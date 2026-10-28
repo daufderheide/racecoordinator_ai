@@ -190,7 +190,7 @@ export interface LaneColumnWidgetSettings {
   gridLabelBorderRadius?: number;
 }
 
-export type LayoutScaleMode = "letterbox" | "stretch";
+export type LayoutScaleMode = "letterbox" | "stretch" | "fit-width";
 
 export interface LayoutConfig {
   widgets: AbsoluteWidgetNode[];
@@ -258,6 +258,7 @@ export class Settings {
   raceEditorHelpShown: boolean = false;
   databaseManagerHelpShown: boolean = false;
   uiEditorHelpShown: boolean = false;
+  layoutEditorHelpShown: boolean = false;
   layoutEditorMinimized: boolean = false;
   layoutEditorPositionX: number = 0;
   layoutEditorPositionY: number = 0;

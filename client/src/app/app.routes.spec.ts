@@ -95,4 +95,15 @@ describe("app.routes and racedayTitleResolver", () => {
     );
     expect(title).toBe("RaceCoordinator AI");
   });
+
+  it("should configure layout-editor and layout-manager routes correctly", () => {
+    const layoutEditorRoute = routes.find((r) => r.path === "layout-editor");
+    expect(layoutEditorRoute).toBeDefined();
+    expect(layoutEditorRoute?.title).toBe("Layout Editor");
+    expect(layoutEditorRoute?.data?.["animation"]).toBe("LayoutEditorPage");
+
+    const layoutManagerRoute = routes.find((r) => r.path === "layout-manager");
+    expect(layoutManagerRoute).toBeDefined();
+    expect(layoutManagerRoute?.redirectTo).toBe("layout-editor");
+  });
 });

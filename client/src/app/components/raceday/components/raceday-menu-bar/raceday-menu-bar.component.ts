@@ -33,6 +33,9 @@ import { TranslationService } from "@app/services/translation.service";
   styleUrls: ["./raceday-menu-bar.component.css"],
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, LanguageSelectorComponent, TranslatePipe],
+  host: {
+    "[class.has-open-menu]": "hasOpenMenu",
+  },
 })
 export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   track = input<Track | undefined>(undefined);
@@ -95,6 +98,20 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   isOptionsMenuOpen = false;
   isHelpMenuOpen = false;
   isTrackPowerMenuOpen = false;
+
+  get hasOpenMenu(): boolean {
+    return (
+      this.isFileMenuOpen ||
+      this.isMenuOpen ||
+      this.isDriversStationOpen ||
+      this.isDriversViewOpen ||
+      this.isThemesOpen ||
+      this.isWindowsMenuOpen ||
+      this.isOptionsMenuOpen ||
+      this.isHelpMenuOpen ||
+      this.isTrackPowerMenuOpen
+    );
+  }
 
   themes: Theme[] = [];
 

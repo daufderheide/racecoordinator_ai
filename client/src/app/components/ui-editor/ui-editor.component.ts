@@ -190,7 +190,6 @@ import {
   UIEditorState,
 } from "./ui-editor-helpers";
 import { StackedColumnsController } from "./ui-editor-stacked-columns.helper";
-import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
 
 export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
 
@@ -209,8 +208,6 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     ConfirmationModalComponent,
     TranslatePipe,
     AcknowledgementModalComponent,
-    DefaultRacedayComponent,
-    WidgetInspectorFieldsComponent,
     ThemeTemplateModalComponent,
     TemplateVariablesModalComponent,
     EnterPathModalComponent,
@@ -828,6 +825,15 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.isNavigationApproved = true;
     this.router.navigate([this.backTargetUrl()], {
       queryParams: this.backQueryParams(),
+    });
+  }
+
+  navigateToLayoutEditor(): void {
+    const returnUrl = this.router.url
+      ? this.router.url.split("?")[0]
+      : "/ui-editor";
+    this.router.navigate(["/layout-editor"], {
+      queryParams: { returnUrl },
     });
   }
 

@@ -9,6 +9,7 @@ test.describe("Text Info Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       flagRacing: "/api/assets/download?filename=img1.png",
@@ -16,6 +17,39 @@ test.describe("Text Info Inspector Visuals", () => {
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
+      racedayLayout: {
+        widgets: [
+          {
+            id: "widget-menu-bar",
+            widgetType: "menu-bar",
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 54,
+            zIndex: 100,
+          },
+          {
+            id: "widget-heat-info",
+            widgetType: "heat-info",
+            x: 640,
+            y: 54,
+            width: 200,
+            height: 18,
+            zIndex: 100,
+            scaleMode: "",
+            customSettings: {
+              labelFontFamily: "",
+              labelFontSize: 17,
+              labelTextColor: "",
+              valueFontFamily: "",
+              valueFontSize: 19,
+              valueTextColor: "",
+            },
+          },
+        ],
+      },
     });
 
     await TestSetupHelper.setupFileSystemMock(page, {});
@@ -29,9 +63,9 @@ test.describe("Text Info Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the heat-info widget by dispatching pointerdown
     const heatInfoWidget = page
@@ -47,14 +81,6 @@ test.describe("Text Info Inspector Visuals", () => {
     // Verify inspector contains records-specific fields
     const inspectorFields = page.locator("app-text-info-inspector");
     await inspectorFields.waitFor({ state: "visible" });
-
-    // Switch to custom scaling mode to enable font size sliders
-    const scaleSelect = page
-      .locator(".inspector-section")
-      .filter({ hasText: "Scaling Mode" })
-      .locator("app-custom-select");
-    await scaleSelect.locator(".custom-select-trigger").click();
-    await scaleSelect.locator('.custom-select-option[data-value=""]').click();
 
     const harness = new TextInfoInspectorHarnessE2e(inspectorFields);
     // Interact with options to show they work and are displayed properly

@@ -1,0 +1,542 @@
+<div
+  class="page-container"
+  [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'"
+>
+  <app-editor-title
+    titleKey="LE_TITLE"
+    [items]="layoutSelectItems"
+    [selectedId]="selectedLayoutId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
+    [showCopy]="true"
+    [showDelete]="true"
+    [disabledCopy]="isSaving || !isConfigValid()"
+    [disabledDelete]="isSaving || !editingLayout"
+    [copyDisabledTooltipKey]="'LE_TOOLTIP_COPY_DISABLED'"
+    [showImport]="true"
+    [disabledImport]="!isEditMode"
+    [importTitleKey]="'UE_BTN_IMPORT_LAYOUT'"
+    [showExport]="true"
+    [exportTitleKey]="'UE_BTN_EXPORT_LAYOUT'"
+    [showReset]="true"
+    [disabledReset]="!isEditMode"
+    [resetTitleKey]="'UI_EDITOR_RESET_LAYOUT_DEFAULTS'"
+    [showClear]="true"
+    [disabledClear]="!isEditMode"
+    [clearTitleKey]="'UI_EDITOR_CLEAR_LAYOUT'"
+    [isSaving]="isSaving"
+    [undoManager]="undoManager"
+    [helpSteps]="getHelpSteps()"
+    [helpRecordName]="'layoutEditorHelpShown'"
+    (selectedIdChange)="onSelectLayoutById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewLayout()"
+    (copy)="onCopyLayout()"
+    (delete)="onDeleteLayout()"
+    (import)="layoutFileInput.click()"
+    (export)="exportLayout()"
+    (reset)="onResetLayout()"
+    (clear)="onClearLayout()"
+  >
+    <div
+      title-actions
+      class="layout-title-actions"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        id="help-raceday-countdown-preview"
+        type="button"
+        class="layout-title-btn"
+        [class.active]="isCountdownPreviewActive()"
+        (click)="toggleCountdownPreview()"
+        [title]="
+          (isCountdownPreviewActive()
+            ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+            : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+          ) | translate
+        "
+      >
+        <span class="material-icons">{{
+          isCountdownPreviewActive() ? "visibility" : "visibility_off"
+        }}</span>
+      </button>
+      <input
+        #layoutFileInput
+        type="file"
+        accept=".json,.txt"
+        style="display: none"
+        (change)="onImportLayout($event)"
+      />
+    </div>
+  </app-editor-title>
+
+  @if (!isLoading && editingLayout) {
+    <div class="layout-editor-content">
+      <!-- Controls Bar -->
+      <div class="layout-controls-bar">
+        <div class="layout-controls-left">
+          <!-- Layout Name Input -->
+          <div class="layout-control-group">
+            <label class="layout-control-label">{{
+              "LE_LAYOUT_NAME" | translate
+            }}</label>
+            <input
+              type="text"
+              class="layout-name-input"
+              [class.invalid]="!isConfigValid()"
+              [(ngModel)]="editingLayout.name"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+              [appAutoSelectDefault]="defaultUiNames[editingLayout.entity_id]"
+              autocomplete="off"
+            />
+          </div>
+
+          <!-- Zoom Controls -->
+          <div id="help-raceday-zoom" class="layout-control-group">
+            <label class="layout-control-label">{{
+              "UE_LABEL_ZOOM" | translate
+            }}</label>
+            <span
+              class="material-icons zoom-icon-btn"
+              (click)="stepZoom(-10)"
+              [title]="'UE_BTN_ZOOM_OUT' | translate"
+              >remove</span
+            >
+            <input
+              type="range"
+              class="zoom-slider"
+              [min]="getMinLayoutZoom()"
+              max="500"
+              step="5"
+              [value]="getLayoutZoom()"
+              (input)="onZoomInput($event)"
+            />
+            <span
+              class="material-icons zoom-icon-btn"
+              (click)="stepZoom(10)"
+              [title]="'UE_BTN_ZOOM_IN' | translate"
+              >add</span
+            >
+            <button
+              type="button"
+              class="zoom-value-btn"
+              (click)="resetLayoutZoom()"
+              [title]="'UE_BTN_RESET_ZOOM' | translate"
+            >
+              {{ getLayoutZoom() }}%
+            </button>
+          </div>
+
+          <!-- Aspect Ratio Dropdown -->
+          <div id="help-raceday-aspect-ratio" class="layout-control-group">
+            <label class="layout-control-label">{{
+              "UI_EDITOR_LAYOUT_ASPECT_RATIO" | translate
+            }}</label>
+            <div class="control-select-aspect-ratio">
+              <app-custom-select
+                [value]="getLayoutAspectRatio()"
+                [disabled]="!isEditMode"
+                (change)="setLayoutAspectRatio($event)"
+              >
+                @for (
+                  option of getLayoutAspectRatioOptions();
+                  track option.ratio
+                ) {
+                  <app-custom-option
+                    [value]="option.ratio"
+                    [separator]="!!option.separator"
+                  >
+                    {{ option.label | translate }}
+                  </app-custom-option>
+                }
+              </app-custom-select>
+            </div>
+          </div>
+
+          <!-- Scale Mode Dropdown -->
+          <div id="help-raceday-scale-mode" class="layout-control-group">
+            <label class="layout-control-label">{{
+              "UI_EDITOR_LAYOUT_SCALE_MODE" | translate
+            }}</label>
+            <div class="control-select-scale-mode">
+              <app-custom-select
+                [value]="getLayoutScaleMode()"
+                [disabled]="!isEditMode"
+                (change)="setLayoutScaleMode($event)"
+              >
+                <app-custom-option value="letterbox">
+                  {{ "UI_EDITOR_SCALE_MODE_LETTERBOX" | translate }}
+                </app-custom-option>
+                <app-custom-option value="fit-width">
+                  {{ "UI_EDITOR_SCALE_MODE_FIT_WIDTH" | translate }}
+                </app-custom-option>
+                <app-custom-option value="stretch">
+                  {{ "UI_EDITOR_SCALE_MODE_STRETCH" | translate }}
+                </app-custom-option>
+              </app-custom-select>
+            </div>
+          </div>
+
+          <!-- Select Widget Dropdown -->
+          <div id="help-raceday-widget-selector" class="layout-control-group">
+            <label class="layout-control-label">{{
+              "UE_LABEL_SELECT_WIDGET" | translate
+            }}</label>
+            <div class="control-select-widget">
+              <app-custom-select
+                [value]="isEditMode ? getSelectedWidgetId() : ''"
+                [disabled]="!isEditMode"
+                (change)="onWidgetDropdownSelect($event)"
+              >
+                <app-custom-option value="">
+                  -- {{ "UE_SELECT_WIDGET_PLACEHOLDER" | translate }} --
+                </app-custom-option>
+                @for (w of getLayoutWidgets(); track w.id) {
+                  <app-custom-option [value]="w.id">
+                    {{ getWidgetDisplayName(w) }}
+                  </app-custom-option>
+                }
+              </app-custom-select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Migration / Stacked Columns Banners -->
+      @if (isMigratedLayout()) {
+        <div class="migration-notice-banner">
+          <div class="migration-notice-info">
+            <span class="material-icons migration-icon">auto_awesome</span>
+            <div class="migration-notice-text">
+              <span class="migration-notice-title">{{
+                "UE_MIGRATION_BANNER_TITLE" | translate
+              }}</span>
+              <span class="migration-notice-desc">{{
+                "UE_MIGRATION_BANNER_DESC" | translate
+              }}</span>
+            </div>
+          </div>
+          <div class="migration-notice-actions">
+            <button
+              type="button"
+              class="migration-btn"
+              (click)="restorePreMigrationBackup()"
+            >
+              <span class="material-icons">restore</span>
+              {{ "UE_MIGRATION_RESTORE_BACKUP_BTN" | translate }}
+            </button>
+            <button
+              type="button"
+              class="migration-btn"
+              (click)="exportMigrationDiagnostics()"
+            >
+              <span class="material-icons">bug_report</span>
+              {{ "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN" | translate }}
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (hasStackedColumns()) {
+        <div class="migration-notice-banner">
+          <div class="migration-notice-info">
+            <span class="material-icons migration-icon warning-icon"
+              >layers_clear</span
+            >
+            <div class="migration-notice-text">
+              <span class="migration-notice-title">{{
+                "UE_STACKED_COLUMNS_BANNER_TITLE" | translate
+              }}</span>
+              <span class="migration-notice-desc">{{
+                getStackedColumnsBannerDesc()
+              }}</span>
+            </div>
+          </div>
+          <div class="migration-notice-actions">
+            <button
+              type="button"
+              class="migration-btn"
+              (click)="openReviewStackedColumnsModal()"
+            >
+              <span class="material-icons">visibility</span>
+              {{ "UE_STACKED_COLUMNS_REVIEW_BTN" | translate }}
+            </button>
+            <button
+              type="button"
+              class="migration-btn"
+              (click)="quickFixStackedColumns()"
+            >
+              <span class="material-icons">auto_fix_high</span>
+              {{ "UE_STACKED_COLUMNS_QUICK_FIX_BTN" | translate }}
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Workspace with Canvas and Inspector -->
+      <div class="raceday-editor-workspace raceday-layout-section">
+        <div
+          id="help-raceday-canvas"
+          class="raceday-canvas-viewport"
+          [class.read-only-canvas]="!isEditMode"
+        >
+          <div
+            class="raceday-preview-container"
+            [style.width.px]="getPreviewContainerWidth()"
+            [style.height.px]="getPreviewContainerHeight()"
+          >
+            <div
+              class="raceday-preview-scaler"
+              [style.width.px]="getLayoutBaseWidth()"
+              [style.height.px]="getLayoutBaseHeight()"
+              [style.transform]="getPreviewScale()"
+            >
+              <app-default-raceday
+                #racedayComp
+                [isUIEditorMode]="true"
+                [layoutCustomizing]="isEditMode"
+                [isPracticeLayoutEditor]="isCurrentLayoutPractice"
+                [editingSettings]="editingSettings"
+                [activeCustomUi]="editingLayout"
+                [uiScale]="getPreviewScaleNumber()"
+                [selectedWidgetId]="isEditMode ? getSelectedWidgetId() : null"
+                [selectedAnchor]="isEditMode ? selectedAnchor : null"
+                [isCountdownPreviewActive]="isCountdownPreviewActive()"
+                [gridSession]="isEditMode ? activeGridSession : null"
+                (widgetSelected)="onWidgetSelected($event)"
+                (anchorSelected)="onAnchorSelected($event)"
+                (layoutChanged)="onLayoutChanged($event)"
+                (columnsChanged)="onColumnsChanged()"
+                (finishGrid)="finishGridSession()"
+                (deleteGrid)="onDeleteGrid($event)"
+                (gridBoundsChange)="onGridBoundsChange($event)"
+              >
+              </app-default-raceday>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget Configuration Inspector -->
+        @if (currentSelectedWidget && isEditMode) {
+          <div id="help-widget-inspector" class="widget-inspector-panel">
+            <div class="inspector-header">
+              <div class="inspector-title-group">
+                <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                <div class="inspector-widget-subtitle">
+                  {{ getWidgetDisplayName(currentSelectedWidget) }}
+                </div>
+              </div>
+              <button
+                type="button"
+                class="inspector-delete-btn"
+                (click)="removeSelectedWidget()"
+                [title]="'UE_BTN_DELETE_WIDGET' | translate"
+              >
+                <span class="material-icons">delete</span>
+              </button>
+            </div>
+
+            <div class="inspector-body">
+              <!-- General Section -->
+              <div class="inspector-geometry-title" style="margin-top: 0">
+                {{ "UE_INSPECTOR_GENERAL" | translate }}
+              </div>
+              <div class="inspector-section">
+                <label class="inspector-label">{{
+                  "UE_INSPECTOR_WIDGET_TYPE" | translate
+                }}</label>
+                <div class="inspector-value-readonly">
+                  {{
+                    getWidgetTypeLabelKey(currentSelectedWidget.widgetType)
+                      | translate
+                  }}
+                </div>
+              </div>
+              @if (
+                !isCustomWidget(currentSelectedWidget.widgetType) &&
+                currentSelectedWidget.widgetType !== "branding" &&
+                currentSelectedWidget.widgetType !== "qr" &&
+                currentSelectedWidget.widgetType !== "flag" &&
+                currentSelectedWidget.widgetType !== "countdown"
+              ) {
+                <div class="inspector-section">
+                  <label class="inspector-label">{{
+                    "UE_INSPECTOR_SCALING_MODE" | translate
+                  }}</label>
+                  <div class="select-container select-sm">
+                    <app-custom-select
+                      [(ngModel)]="currentSelectedWidget.scaleMode"
+                      (change)="onWidgetInspectorChange(currentSelectedWidget)"
+                    >
+                      <app-custom-option value="">
+                        {{ "UE_INSPECTOR_SCALING_DEFAULT" | translate }}
+                      </app-custom-option>
+                      <app-custom-option value="auto">
+                        {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
+                      </app-custom-option>
+                    </app-custom-select>
+                  </div>
+                </div>
+              }
+
+              <!-- Geometry Section -->
+              <div class="inspector-geometry-title">
+                {{ "UE_INSPECTOR_GEOMETRY" | translate }}
+              </div>
+              <div class="inspector-row-grid">
+                <div class="inspector-section">
+                  <label class="inspector-label">{{
+                    "UE_INSPECTOR_POS_X" | translate
+                  }}</label>
+                  <input
+                    id="inspector-pos-x"
+                    type="number"
+                    class="inspector-input"
+                    [disabled]="
+                      isWidgetWidthAutoCalculated(currentSelectedWidget)
+                    "
+                    [ngModel]="currentSelectedWidget.x"
+                    (ngModelChange)="onWidgetXChange($event)"
+                    min="0"
+                    [max]="getLayoutBaseWidth() - currentSelectedWidget.width"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="inspector-section">
+                  <label class="inspector-label">{{
+                    "UE_INSPECTOR_POS_Y" | translate
+                  }}</label>
+                  <input
+                    id="inspector-pos-y"
+                    type="number"
+                    class="inspector-input"
+                    [disabled]="
+                      isWidgetHeightAutoCalculated(currentSelectedWidget)
+                    "
+                    [ngModel]="currentSelectedWidget.y"
+                    (ngModelChange)="onWidgetYChange($event)"
+                    min="0"
+                    [max]="getLayoutBaseHeight() - currentSelectedWidget.height"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+              <div class="inspector-row-grid">
+                <div class="inspector-section">
+                  <label class="inspector-label">{{
+                    "UE_INSPECTOR_WIDTH" | translate
+                  }}</label>
+                  <input
+                    id="inspector-pos-w"
+                    type="number"
+                    class="inspector-input"
+                    [disabled]="
+                      isWidgetWidthAutoCalculated(currentSelectedWidget)
+                    "
+                    [ngModel]="currentSelectedWidget.width"
+                    (ngModelChange)="onWidgetWidthChange($event)"
+                    min="50"
+                    [max]="getLayoutBaseWidth()"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="inspector-section">
+                  <label class="inspector-label">{{
+                    "UE_INSPECTOR_HEIGHT" | translate
+                  }}</label>
+                  <input
+                    id="inspector-pos-h"
+                    type="number"
+                    class="inspector-input"
+                    [disabled]="
+                      isWidgetHeightAutoCalculated(currentSelectedWidget)
+                    "
+                    [ngModel]="currentSelectedWidget.height"
+                    (ngModelChange)="onWidgetHeightChange($event)"
+                    min="20"
+                    [max]="getLayoutBaseHeight()"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <hr class="inspector-divider" />
+
+              <app-widget-inspector-fields
+                [widget]="currentSelectedWidget"
+                [globalSettings]="editingSettings"
+                [customUi]="editingLayout"
+                [availableColumns]="availableColumns"
+                [isPracticeMode]="isCurrentLayoutPractice"
+                [selectedAnchor]="selectedAnchor"
+                (anchorChange)="onSelectedAnchorChange($event)"
+                (change)="onWidgetInspectorChange($event)"
+                (requestReplicate)="openReplicateLaneModal()"
+                (replicate)="onReplicateLanes($event)"
+                (editGrid)="onEditGridTemplate($event)"
+                (detachGrid)="onDetachGrid($event)"
+                (deleteGrid)="onDeleteGrid($event)"
+                (reMirrorGrid)="onReMirrorGrid($event)"
+                (bringGridToFront)="onBringGridToFront($event)"
+              >
+              </app-widget-inspector-fields>
+            </div>
+          </div>
+        }
+
+        <!-- Toolbox Template Outlet -->
+        <ng-container
+          *ngTemplateOutlet="isEditMode ? racedayComp?.toolboxTemplate : null"
+        ></ng-container>
+      </div>
+    </div>
+  }
+
+  <!-- Discard Confirmation Modal -->
+  @if (showDiscardConfirm) {
+    <app-confirmation-modal
+      [visible]="showDiscardConfirm"
+      title="UE_CONFIRM_DISCARD_TITLE"
+      [message]="discardMessage"
+      (confirm)="onConfirmDiscard()"
+      (cancel)="onCancelDiscard()"
+    >
+    </app-confirmation-modal>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showDeleteConfirm"
+    title="LE_CONFIRM_DELETE_TITLE"
+    message="LE_CONFIRM_DELETE_MSG"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmDeleteLayout()"
+    (cancel)="onCancelDeleteLayout()"
+  >
+  </app-confirmation-modal>
+
+  <!-- Replicate Lane Dialog -->
+  <app-replicate-lane-dialog
+    [visible]="showReplicateModal"
+    [bindingMode]="replicateBindingMode"
+    [sourceIndex]="replicateSourceIndex"
+    [defaultCount]="replicateDefaultCount"
+    (confirm)="onReplicateLanes($event)"
+    (cancel)="showReplicateModal = false"
+  >
+  </app-replicate-lane-dialog>
+
+  <!-- Review Stacked Columns Modal -->
+  <app-review-stacked-columns-modal
+    [visible]="showReviewStackedColumnsModal"
+    [issues]="detectedStackedIssues"
+    [layoutName]="editingLayout?.name || ''"
+    [availableColumns]="availableColumns"
+    (fix)="quickFixStackedColumns()"
+    (cancel)="showReviewStackedColumnsModal = false"
+  >
+  </app-review-stacked-columns-modal>
+</div>

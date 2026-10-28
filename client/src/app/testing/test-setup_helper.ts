@@ -31,6 +31,7 @@ export interface SetupOptions {
   raceManagerHelpShown?: boolean;
   raceEditorHelpShown?: boolean;
   uiEditorHelpShown?: boolean;
+  layoutEditorHelpShown?: boolean;
   recentRaceIds?: string[];
   selectedDriverIds?: string[];
   driverLabels?: any[];
@@ -171,6 +172,7 @@ export class TestSetupHelper {
       raceManagerHelpShown: options.raceManagerHelpShown ?? true,
       raceEditorHelpShown: options.raceEditorHelpShown ?? true,
       uiEditorHelpShown: options.uiEditorHelpShown ?? true,
+      layoutEditorHelpShown: options.layoutEditorHelpShown ?? true,
       recentRaceIds: options.recentRaceIds ?? ["r1", "r2"],
       selectedDriverIds: options.selectedDriverIds ?? ["d1", "d2"],
 
@@ -2497,6 +2499,7 @@ export class TestSetupHelper {
   }
 
   static async setupCustomUiMocks(page: Page, customUIsList?: any[]) {
+    const defaultSettings = new Settings();
     await page.route("**/api/custom-ui", async (route) => {
       const customUIs = customUIsList ?? [
         {
@@ -2505,6 +2508,12 @@ export class TestSetupHelper {
           is_default: true,
           layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
+          columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
+          columnVisibilityJson: JSON.stringify(
+            defaultSettings.columnVisibility,
+          ),
+          columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
+          columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
         },
         {
           entity_id: "practice_ui_layout_rc_ai",
@@ -2512,6 +2521,18 @@ export class TestSetupHelper {
           is_default: true,
           layoutJson: JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_PRACTICE_COLUMNS),
+          columnLayoutsJson: JSON.stringify(
+            defaultSettings.practiceColumnLayouts,
+          ),
+          columnVisibilityJson: JSON.stringify(
+            defaultSettings.practiceColumnVisibility,
+          ),
+          columnWidthsJson: JSON.stringify(
+            defaultSettings.practiceColumnWidths,
+          ),
+          columnAnchorsJson: JSON.stringify(
+            defaultSettings.practiceColumnAnchors,
+          ),
         },
         {
           entity_id: "default_fuel_ui_layout_rc_ai",
@@ -2519,6 +2540,25 @@ export class TestSetupHelper {
           is_default: true,
           layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
+          columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
+          columnVisibilityJson: JSON.stringify(
+            defaultSettings.columnVisibility,
+          ),
+          columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
+          columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
+        },
+        {
+          entity_id: "driver_station_ui_layout_rc_ai",
+          name: "Driver Station",
+          is_default: true,
+          layoutJson: JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT),
+          columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
+          columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
+          columnVisibilityJson: JSON.stringify(
+            defaultSettings.columnVisibility,
+          ),
+          columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
+          columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
         },
         {
           entity_id: "custom_ui_1",
@@ -2526,6 +2566,12 @@ export class TestSetupHelper {
           is_default: false,
           layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
+          columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
+          columnVisibilityJson: JSON.stringify(
+            defaultSettings.columnVisibility,
+          ),
+          columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
+          columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
         },
       ];
       await route.fulfill({
@@ -2685,7 +2731,7 @@ export class TestSetupHelper {
         }
       }
 
-      const newSettings = { ...preserved, ...s };
+      const newSettings = { ...parsedExisting, ...preserved, ...s };
       newSettings.serverPort = parseInt(window.location.port) || 4250;
       localStorage.setItem(
         "racecoordinator_settings",

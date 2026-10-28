@@ -22,6 +22,14 @@ class MockToolbarComponent {
   showAdd = input<boolean>(false);
   showDelete = input<boolean>(false);
   showCopy = input<boolean>(false);
+  showReset = input<boolean>(false);
+  resetTitleKey = input<string>("DBM_BTN_RESET");
+  resetDisabledTooltipKey = input<string>("");
+  disabledReset = input<boolean>(false);
+  showClear = input<boolean>(false);
+  clearTitleKey = input<string>("UI_EDITOR_CLEAR_LAYOUT");
+  clearDisabledTooltipKey = input<string>("");
+  disabledClear = input<boolean>(false);
   isSaving = input<boolean>(false);
   undoManager = input<any>();
   helpSteps = input<any[]>([]);
@@ -34,6 +42,8 @@ class MockToolbarComponent {
   add = output<void>();
   delete = output<void>();
   copy = output<void>();
+  reset = output<void>();
+  clear = output<void>();
   expandCollapse = output<void>();
 }
 
@@ -176,6 +186,30 @@ describe("EditorTitleComponent", () => {
       const selectComponent =
         selectDebug.componentInstance as CustomSelectComponent;
       expect(selectComponent.extendToPageBottom()).toBeTrue();
+    });
+
+    it("should configure custom select with fitWidestOption and widestLabel matching longest item", () => {
+      const selectDebug = fixture.debugElement.query(
+        By.css("#editor-object-selector"),
+      );
+      const selectComponent =
+        selectDebug.componentInstance as CustomSelectComponent;
+      expect(selectComponent.fitWidestOption()).toBeTrue();
+      expect(selectComponent.widestLabel()).toBe("Item 1");
+
+      fixture.componentRef.setInput("items", [
+        { id: "i1", name: "Short" },
+        { id: "i2", name: "Super Extended Track Name Championship" },
+        { id: "i3", name: "Medium Item" },
+      ]);
+      fixture.detectChanges();
+
+      expect(component.longestItemName()).toBe(
+        "Super Extended Track Name Championship",
+      );
+      expect(selectComponent.widestLabel()).toBe(
+        "Super Extended Track Name Championship",
+      );
     });
 
     it("should display prev/next buttons and item counter", async () => {
@@ -508,6 +542,17 @@ describe("EditorTitleComponent", () => {
       } finally {
         document.body.removeChild(mockContainer);
       }
+    });
+
+    it("should emit reset and clear events from component", () => {
+      spyOn(component.reset, "emit");
+      spyOn(component.clear, "emit");
+
+      component.onReset();
+      expect(component.reset.emit).toHaveBeenCalled();
+
+      component.onClear();
+      expect(component.clear.emit).toHaveBeenCalled();
     });
   });
 });

@@ -28,6 +28,8 @@
             [value]="selectedId()"
             [disabled]="isEditMode()"
             [extendToPageBottom]="true"
+            [fitWidestOption]="true"
+            [widestLabel]="longestItemName()"
             (change)="onSelectionChange($event)"
             [title]="
               (isEditMode() ? 'EDITOR_LOCKED_SELECTOR_TOOLTIP' : '') | translate
@@ -73,6 +75,9 @@
     </h1>
   </div>
   <div class="header-right">
+    <div class="header-custom-actions">
+      <ng-content select="[title-actions]"></ng-content>
+    </div>
     <app-toolbar
       [showEdit]="showEdit()"
       [disabledEdit]="disabledEdit()"
@@ -106,6 +111,14 @@
       [disabledImport]="disabledImport()"
       [disabledImportRc1]="disabledImportRc1()"
       [disabledExport]="disabledExport()"
+      [showReset]="showReset()"
+      [resetTitleKey]="resetTitleKey()"
+      [resetDisabledTooltipKey]="resetDisabledTooltipKey()"
+      [disabledReset]="disabledReset()"
+      [showClear]="showClear()"
+      [clearTitleKey]="clearTitleKey()"
+      [clearDisabledTooltipKey]="clearDisabledTooltipKey()"
+      [disabledClear]="disabledClear()"
       [isSaving]="isSaving()"
       [showZoom]="showZoom()"
       [zoomLevel]="zoomLevel()"
@@ -125,6 +138,8 @@
       (import)="onImport()"
       (importRc1)="onImportRc1()"
       (export)="onExport()"
+      (reset)="onReset()"
+      (clear)="onClear()"
     >
       <div toolbar-left>
         <ng-content select="[toolbar-left]"></ng-content>

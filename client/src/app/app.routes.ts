@@ -8,6 +8,7 @@ import { DriverEditorComponent } from "@app/components/driver-editor/driver-edit
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { EventEditorComponent } from "@app/components/event-editor/event-editor.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
+import { LayoutEditorComponent } from "@app/components/layout-editor/layout-editor.component";
 import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
 import { RaceResultsComponent } from "@app/components/race-results/race-results.component";
@@ -217,6 +218,20 @@ export const routes: Routes = [
     runGuardsAndResolvers: "always",
     title: "UI Editor",
     data: { animation: "UIEditorPage", requiredRole: Role.VIEWER },
+  },
+  {
+    path: "layout-editor",
+    component: LayoutEditorComponent,
+    canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
+    title: "Layout Editor",
+    data: { animation: "LayoutEditorPage", requiredRole: Role.VIEWER },
+  },
+  {
+    path: "layout-manager",
+    redirectTo: "layout-editor",
+    pathMatch: "full",
   },
   {
     path: "driver-station/:lane",

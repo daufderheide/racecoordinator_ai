@@ -9,6 +9,7 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
       flagRacing: "/api/assets/download?filename=img1.png",
@@ -16,6 +17,43 @@ test.describe("Leaderboard Inspector Visuals", () => {
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
+      racedayLayout: {
+        widgets: [
+          {
+            id: "widget-menu-bar",
+            widgetType: "menu-bar",
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 54,
+            zIndex: 100,
+          },
+          {
+            id: "widget-leaderboard",
+            widgetType: "leaderboard",
+            x: 1536,
+            y: 90,
+            width: 384,
+            height: 239,
+            zIndex: 100,
+            scaleMode: "",
+            customSettings: {
+              decimalPlaces: 0,
+              titleFontFamily: "",
+              titleFontSize: 24,
+              titleTextColor: "",
+              overallLeaderFontFamily: "",
+              overallLeaderFontSize: 20,
+              overallLeaderTextColor: "",
+              restFontFamily: "",
+              restFontSize: 16,
+              restTextColor: "",
+            },
+          },
+        ],
+      },
     });
 
     await TestSetupHelper.setupFileSystemMock(page, {});
@@ -29,14 +67,14 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the leaderboard widget by dispatching pointerdown
     const leaderboardWidget = page
       .locator(".widget-wrapper")
-      .filter({ hasText: "leaderboard" })
+      .filter({ has: page.locator("app-raceday-leaderboard") })
       .first();
     await leaderboardWidget.dispatchEvent("pointerdown");
 
@@ -48,14 +86,6 @@ test.describe("Leaderboard Inspector Visuals", () => {
     const inspectorFields = page.locator("app-leaderboard-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
-    // Switch to custom scaling mode to enable font size sliders
-    const scaleSelect1 = page
-      .locator(".inspector-section")
-      .filter({ hasText: "Scaling Mode" })
-      .locator("app-custom-select");
-    await scaleSelect1.locator(".custom-select-trigger").click();
-    await scaleSelect1.locator('.custom-select-option[data-value=""]').click();
-
     const harness = new LeaderboardInspectorHarnessE2e(inspectorFields);
     // Interact with options to show they work and are displayed properly
     await harness.setDecimalPlaces(1);
@@ -63,12 +93,13 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await harness.setOverallLeaderFontSize(24);
     await harness.setRestFontSize(20);
 
-    // Blur any active element and move mouse to remove hover states
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so leaderboard fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-leaderboard-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await page.mouse.move(0, 0);
-
-    // Scroll the inspector panel back to the top to ensure consistent screenshot
-    await inspectorPanel.evaluate((el) => el.scrollTo(0, 0));
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(
@@ -89,6 +120,8 @@ test.describe("Leaderboard Inspector Visuals", () => {
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,
+      layoutEditorHelpShown: true,
+      uiEditorHelpShown: true,
       racedayLayout: {
         widgets: [
           {
@@ -108,6 +141,22 @@ test.describe("Leaderboard Inspector Visuals", () => {
             width: 384,
             height: 239,
             zIndex: 100,
+            scaleMode: "",
+            customSettings: {
+              decimalPlaces: 0,
+              titleFontFamily: "",
+              titleFontSize: 24,
+              titleTextColor: "",
+              subtitleFontFamily: "",
+              subtitleFontSize: 18,
+              subtitleTextColor: "",
+              overallLeaderFontFamily: "",
+              overallLeaderFontSize: 20,
+              overallLeaderTextColor: "",
+              restFontFamily: "",
+              restFontSize: 16,
+              restTextColor: "",
+            },
           },
         ],
       },
@@ -116,14 +165,14 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/ui-editor"),
+      page.goto("/layout-editor?edit=true"),
     );
-    await page.locator(".ue-container").waitFor({ state: "visible" });
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
 
     // Select the group-leaderboard widget by dispatching pointerdown
     const groupLeaderboardWidget = page
       .locator(".widget-wrapper")
-      .filter({ hasText: "group-leaderboard" })
+      .filter({ has: page.locator("app-raceday-group-leaderboard") })
       .first();
     await groupLeaderboardWidget.dispatchEvent("pointerdown");
 
@@ -134,14 +183,6 @@ test.describe("Leaderboard Inspector Visuals", () => {
     // Verify inspector contains leaderboard-specific title
     const inspectorFields = page.locator("app-leaderboard-inspector");
     await inspectorFields.waitFor({ state: "visible" });
-
-    // Switch to custom scaling mode to enable font size sliders
-    const scaleSelect2 = page
-      .locator(".inspector-section")
-      .filter({ hasText: "Scaling Mode" })
-      .locator("app-custom-select");
-    await scaleSelect2.locator(".custom-select-trigger").click();
-    await scaleSelect2.locator('.custom-select-option[data-value=""]').click();
 
     // Verify subtitle fields are present in the inspector (since it's a group leaderboard)
     const subtitleTitle = inspectorFields.locator(
@@ -190,14 +231,13 @@ test.describe("Leaderboard Inspector Visuals", () => {
       el.dispatchEvent(new Event("change", { bubbles: true }));
     });
 
-    // Blur any active element to remove focus rings
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    // Blur any active element, clear hover, and scroll inspector panel so leaderboard fields are at the top
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const fields = document.querySelector("app-leaderboard-inspector");
+      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
     await page.mouse.move(0, 0);
-
-    // Ensure the DOM and Angular have settled
-
-    // Scroll the inspector panel back to the top to ensure consistent screenshot
-    await inspectorPanel.evaluate((el) => el.scrollTo(0, 0));
 
     // Take screenshot of the inspector panel
     await expect(inspectorPanel).toHaveScreenshot(

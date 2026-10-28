@@ -201,6 +201,11 @@ describe("ChildWindowManagerService", () => {
       expect(service.isRacePreservingRoute("/raceday")).toBeTrue();
       expect(service.isRacePreservingRoute("/default-raceday")).toBeTrue();
       expect(service.isRacePreservingRoute("/ui-editor")).toBeTrue();
+      expect(service.isRacePreservingRoute("/layout-editor")).toBeTrue();
+      expect(service.isRacePreservingRoute("/layout-manager")).toBeTrue();
+      expect(
+        service.isRacePreservingRoute("/layout-editor?id=layout1"),
+      ).toBeTrue();
       expect(
         service.isRacePreservingRoute("/ui-editor?returnUrl=%2Fraceday"),
       ).toBeTrue();
