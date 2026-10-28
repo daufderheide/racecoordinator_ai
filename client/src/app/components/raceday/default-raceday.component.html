@@ -4,12 +4,6 @@
   [class.driver-station-mode]="isDriverStation"
   [class.driver-view-mode]="isDriverView"
   [class.ui-editor-mode]="isUIEditorMode()"
-  [style.background-color]="
-    isDriverStation && !isUIEditorMode() ? activeLaneBackgroundColor : null
-  "
-  [style.color]="
-    isDriverStation && !isUIEditorMode() ? activeLaneForegroundColor : null
-  "
   [style.overflow]="isUIEditorMode() ? 'visible' : 'hidden'"
   (dragover)="onCanvasDragOver($event)"
   (drop)="onCanvasDrop($event)"

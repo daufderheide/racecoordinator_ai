@@ -1172,14 +1172,6 @@ export class DefaultRacedayComponent
     return this.isDriverView && !this.isUIEditorMode();
   }
 
-  @HostBinding("style.background")
-  get hostBackgroundStyle(): string | null {
-    if (this.isDriverStation && !this.isUIEditorMode()) {
-      return this.activeLaneBackgroundColor;
-    }
-    return null;
-  }
-
   isLayoutEditorMinimized = false;
   layoutEditorPosition = { x: 0, y: 0 };
   layout!: LayoutConfig;

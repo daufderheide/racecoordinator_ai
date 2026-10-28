@@ -11,6 +11,7 @@ import {
   getLayoutUnsavedReasons,
   isCustomUiDefault,
   isLayoutNameUnique,
+  LAYOUT_AVAILABLE_COLUMNS,
 } from "./layout-editor.helper";
 
 describe("layout-editor.helper", () => {
@@ -254,6 +255,24 @@ describe("layout-editor.helper", () => {
           is_default: false,
         }),
       ).toBeFalse();
+    });
+  });
+
+  describe("LAYOUT_AVAILABLE_COLUMNS", () => {
+    it("should include lastLaps and comprehensive column definitions", () => {
+      expect(
+        LAYOUT_AVAILABLE_COLUMNS.some((c) => c.key === "lastLaps"),
+      ).toBeTrue();
+      expect(
+        LAYOUT_AVAILABLE_COLUMNS.some((c) => c.key === "lastLapTime"),
+      ).toBeTrue();
+      expect(
+        LAYOUT_AVAILABLE_COLUMNS.some((c) => c.key === "bestLapTime"),
+      ).toBeTrue();
+      expect(
+        LAYOUT_AVAILABLE_COLUMNS.some((c) => c.key === "driver.name"),
+      ).toBeTrue();
+      expect(LAYOUT_AVAILABLE_COLUMNS.length).toBeGreaterThan(20);
     });
   });
 });

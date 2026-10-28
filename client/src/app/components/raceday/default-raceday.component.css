@@ -810,25 +810,11 @@ app-default-raceday.driver-station-host {
   background: transparent;
 }
 
-.dashboard-wrapper.driver-station-mode {
-  transition: background-color 0.3s, color 0.3s;
-}
-
 .driver-station-nav {
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 1000;
-}
-
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .raceday-lane-column-card,
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .lane-col-header,
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .lane-col-value,
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .lane-col-text,
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .inset-cell,
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .card-inset,
-.dashboard-wrapper.driver-station-mode:not(.ui-editor-mode) app-raceday-lane-column .team-name {
-  color: inherit !important;
 }
 
 app-default-raceday.driver-view-host:not(.driver-station-host) {

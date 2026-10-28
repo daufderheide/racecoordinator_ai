@@ -483,13 +483,6 @@ export function resolveLaneColumnBackgroundColor(
   targetIndex: number,
 ): string {
   if (settings.useLaneColors === false) {
-    if (
-      bindingMode === "hostLane" &&
-      parent?.isDriverStation &&
-      !parent?.isUIEditorMode?.()
-    ) {
-      return settings.backgroundColor || "transparent";
-    }
     return settings.backgroundColor || "#000000";
   }
   if (
@@ -507,13 +500,6 @@ export function resolveLaneColumnBackgroundColor(
     trackLanesCount != null &&
     targetIndex >= trackLanesCount &&
     (!hd || RacedayFormatUtils.isEmptyDriver(hd))
-  ) {
-    return settings.backgroundColor || "transparent";
-  }
-  if (
-    bindingMode === "hostLane" &&
-    parent?.isDriverStation &&
-    !parent?.isUIEditorMode?.()
   ) {
     return settings.backgroundColor || "transparent";
   }
@@ -550,20 +536,7 @@ export function resolveLaneColumnForegroundColor(
   targetIndex: number,
 ): string {
   if (settings.useLaneColors === false) {
-    if (
-      (bindingMode === "hostLane" || parent?.isDriverStation) &&
-      !settings.textColor &&
-      parent?.activeLaneForegroundColor
-    ) {
-      return parent.activeLaneForegroundColor;
-    }
-    return (
-      settings.textColor ||
-      (parent?.isDriverStation
-        ? parent?.activeLaneForegroundColor
-        : undefined) ||
-      "#ffffff"
-    );
+    return settings.textColor || "#ffffff";
   }
   if (
     isOverallOrSeedDataSource(settings, parent, bindingMode) &&
@@ -608,7 +581,9 @@ export function resolveLaneColumnForegroundColor(
   return (
     trackLaneFg ||
     settings.textColor ||
-    (parent?.isDriverStation ? parent?.activeLaneForegroundColor : undefined) ||
+    (bindingMode === "hostLane"
+      ? parent?.activeLaneForegroundColor
+      : undefined) ||
     "#ffffff"
   );
 }

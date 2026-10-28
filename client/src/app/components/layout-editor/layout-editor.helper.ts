@@ -1,3 +1,4 @@
+import { BASE_AVAILABLE_COLUMNS } from "@app/components/ui-editor/ui-editor-constants";
 import {
   generateUniqueCustomUiName,
   getCustomUiDisplayNameKey,
@@ -11,17 +12,8 @@ import { deepCopy } from "@app/utils/clone.utils";
 import { isEntityNameUnique, SelectItem } from "@app/utils/editor-utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
-export const LAYOUT_AVAILABLE_COLUMNS = [
-  { key: "driver.name", label: "UE_COL_DRIVER_NAME" },
-  { key: "driver.nickname", label: "UE_COL_DRIVER_NICKNAME" },
-  { key: "lapCount", label: "UE_COL_LAP_COUNT" },
-  { key: "lapTime", label: "UE_COL_LAP_TIME" },
-  { key: "fastLapTime", label: "UE_COL_FAST_LAP" },
-  { key: "medianLapTime", label: "UE_COL_MEDIAN_LAP" },
-  { key: "gap", label: "UE_COL_GAP" },
-  { key: "position", label: "UE_COL_POSITION" },
-  { key: "fuelLevel", label: "UE_COL_FUEL_LEVEL" },
-  { key: "pitCount", label: "UE_COL_PIT_COUNT" },
+export const LAYOUT_AVAILABLE_COLUMNS: { key: string; label: string }[] = [
+  ...BASE_AVAILABLE_COLUMNS,
 ];
 
 export function createFallbackDefaultLayouts(

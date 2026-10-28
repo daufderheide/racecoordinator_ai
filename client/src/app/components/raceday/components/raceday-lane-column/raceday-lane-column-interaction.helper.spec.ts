@@ -760,7 +760,7 @@ describe("raceday-lane-column-interaction.helper", () => {
       ).toBe("#ffffff");
     });
 
-    it("should return transparent background for hostLane in driver station mode outside UI editor when backgroundColor is not set", () => {
+    it("should return activeLaneBackgroundColor for hostLane in driver station mode when useLaneColors is true", () => {
       const parent = {
         activeLaneForegroundColor: "#000000",
         activeLaneBackgroundColor: "#ffffff",
@@ -775,7 +775,7 @@ describe("raceday-lane-column-interaction.helper", () => {
           "hostLane",
           0,
         ),
-      ).toBe("transparent");
+      ).toBe("#ffffff");
       expect(
         resolveLaneColumnForegroundColor(
           {} as any,
@@ -787,7 +787,7 @@ describe("raceday-lane-column-interaction.helper", () => {
       ).toBe("#000000");
     });
 
-    it("should preserve custom backgroundColor for hostLane in driver station mode", () => {
+    it("should preserve custom backgroundColor for hostLane when useLaneColors is false", () => {
       const parent = {
         activeLaneForegroundColor: "#000000",
         activeLaneBackgroundColor: "#ffffff",
@@ -795,6 +795,7 @@ describe("raceday-lane-column-interaction.helper", () => {
         isUIEditorMode: () => false,
       };
       const settings = {
+        useLaneColors: false,
         backgroundColor: "rgba(255,255,255,0.1)",
       };
       expect(
@@ -808,7 +809,7 @@ describe("raceday-lane-column-interaction.helper", () => {
       ).toBe("rgba(255,255,255,0.1)");
     });
 
-    it("should inherit activeLaneForegroundColor in driver station mode even when useLaneColors is false if textColor is unset", () => {
+    it("should return default text color when useLaneColors is false and textColor is unset", () => {
       const parent = {
         activeLaneForegroundColor: "#000000",
         activeLaneBackgroundColor: "#ffffff",
@@ -827,7 +828,7 @@ describe("raceday-lane-column-interaction.helper", () => {
           "hostLane",
           0,
         ),
-      ).toBe("#000000");
+      ).toBe("#ffffff");
       expect(
         resolveLaneColumnBackgroundColor(
           settings as any,
