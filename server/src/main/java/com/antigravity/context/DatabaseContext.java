@@ -3,6 +3,7 @@ package com.antigravity.context;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
+import com.antigravity.util.DatabaseRepairUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
@@ -115,6 +116,7 @@ public class DatabaseContext {
       this.configService.setLastActiveDatabase(databaseName);
     }
     logger.info("Switched SQLite context to database: {}", databaseName);
+    DatabaseRepairUtils.repairCustomRotationReferences(this);
   }
 
   public synchronized void ensureTable(String tableName) {
@@ -678,6 +680,7 @@ public class DatabaseContext {
     }
 
     new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
+    DatabaseRepairUtils.repairCustomRotationReferences(this);
   }
 
   private void importJsonTableEntry(ZipInputStream zis, String entryName) throws IOException {

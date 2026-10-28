@@ -293,4 +293,16 @@ describe("RaceConverter", () => {
     expect(resultCustom.start_time).toBe(3.0);
     expect(resultCustom.restart_time).toBe(2.0);
   });
+
+  it("should map custom rotation asset name when provided as customRotationAssetName or custom_rotation_asset_name", () => {
+    const mockProto: any = {
+      model: { entityId: "r20" },
+      name: "Custom Rotation Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      customRotationAssetName: "Llany Rotations",
+    };
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.custom_rotation_asset_id).toBe("Llany Rotations");
+    expect(result.custom_rotation_asset_name).toBe("Llany Rotations");
+  });
 });

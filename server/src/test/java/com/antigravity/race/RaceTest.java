@@ -135,6 +135,161 @@ public class RaceTest {
     }
 
     @Test
+    public void testCustomRotationsLoadedByName() {
+      com.antigravity.service.AssetService assetService =
+          new com.antigravity.service.AssetService(
+              dbContext,
+              java.nio.file.Paths.get(
+                      dbContext.getDataRoot(), dbContext.getCurrentDatabaseName(), "assets")
+                  .toString());
+
+      com.antigravity.proto.CustomHeat heat1 =
+          com.antigravity.proto.CustomHeat.newBuilder()
+              .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
+              .setGroup(0)
+              .build();
+      com.antigravity.proto.CustomRotation rot1 =
+          com.antigravity.proto.CustomRotation.newBuilder()
+              .setNumDrivers(4)
+              .addHeats(heat1)
+              .build();
+
+      assetService.saveCustomRotation(
+          "llany-rot-uuid", "Llany Rotations", 4, java.util.Collections.singletonList(rot1));
+
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+      when(model.getCustomRotationAssetId()).thenReturn("Llany Rotations");
+      when(model.getHeatScoring()).thenReturn(new HeatScoring());
+      when(model.getOverallScoring()).thenReturn(new OverallScoring());
+
+      Track track = mock(Track.class);
+      when(track.getLanes())
+          .thenReturn(
+              java.util.Arrays.asList(
+                  new Lane("#FFFFFF", "#FF0000", 50),
+                  new Lane("#FFFFFF", "#00FF00", 50),
+                  new Lane("#FFFFFF", "#0000FF", 50),
+                  new Lane("#FFFFFF", "#FFFF00", 50)));
+
+      List<RaceParticipant> drivers = new ArrayList<>();
+      for (int i = 1; i <= 4; i++) {
+        drivers.add(
+            new RaceParticipant(
+                new Driver(
+                    "d" + i,
+                    "Driver " + i,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "d" + i,
+                    null),
+                "p" + i));
+      }
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .drivers(drivers)
+              .track(track)
+              .databaseContext(dbContext)
+              .isDemoMode(true)
+              .build();
+
+      assertNotNull(race);
+      assertEquals("Llany Rotations", race.getCustomRotationAssetName());
+      assertFalse(race.getCustomRotations().isEmpty());
+      assertEquals(1, race.getCustomRotations().size());
+      assertEquals(4, race.getCustomRotations().get(0).getNumDrivers());
+      assertNotNull(race.getHeats());
+      assertFalse(race.getHeats().isEmpty());
+    }
+
+    @Test
+    public void testCustomRotationsFallbackByLaneCount_WhenAssetIdOrphaned() {
+      com.antigravity.service.AssetService assetService =
+          new com.antigravity.service.AssetService(
+              dbContext,
+              java.nio.file.Paths.get(
+                      dbContext.getDataRoot(), dbContext.getCurrentDatabaseName(), "assets")
+                  .toString());
+
+      com.antigravity.proto.CustomHeat heat1 =
+          com.antigravity.proto.CustomHeat.newBuilder()
+              .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
+              .setGroup(0)
+              .build();
+      com.antigravity.proto.CustomRotation rot1 =
+          com.antigravity.proto.CustomRotation.newBuilder()
+              .setNumDrivers(4)
+              .addHeats(heat1)
+              .build();
+
+      assetService.saveCustomRotation(
+          "llany-rot-uuid", "Llany Rotations", 4, java.util.Collections.singletonList(rot1));
+
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+      when(model.getCustomRotationAssetId()).thenReturn("orphaned-uuid-999");
+      when(model.getCustomRotationAssetName()).thenReturn(null);
+      when(model.getHeatScoring()).thenReturn(new HeatScoring());
+      when(model.getOverallScoring()).thenReturn(new OverallScoring());
+
+      Track track = mock(Track.class);
+      when(track.getLanes())
+          .thenReturn(
+              java.util.Arrays.asList(
+                  new Lane("#FFFFFF", "#FF0000", 50),
+                  new Lane("#FFFFFF", "#00FF00", 50),
+                  new Lane("#FFFFFF", "#0000FF", 50),
+                  new Lane("#FFFFFF", "#FFFF00", 50)));
+
+      List<RaceParticipant> drivers = new ArrayList<>();
+      for (int i = 1; i <= 2; i++) {
+        drivers.add(
+            new RaceParticipant(
+                new Driver(
+                    "d" + i,
+                    "Driver " + i,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "d" + i,
+                    null),
+                "p" + i));
+      }
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .drivers(drivers)
+              .track(track)
+              .databaseContext(dbContext)
+              .isDemoMode(true)
+              .build();
+
+      assertNotNull(race);
+      assertEquals("Llany Rotations", race.getCustomRotationAssetName());
+      assertFalse(race.getCustomRotations().isEmpty());
+      assertEquals(1, race.getCustomRotations().size());
+      assertEquals(4, race.getCustomRotations().get(0).getNumDrivers());
+      assertNotNull(race.getHeats());
+      assertFalse(race.getHeats().isEmpty());
+    }
+
+    @Test
     public void testSetTheme_UpdatesTheme() {
       Race model = mock(Race.class);
       when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);

@@ -48,6 +48,8 @@ export class Race implements Model {
   readonly customRotationSequence?: number[];
   readonly custom_rotation_asset_id?: string;
   readonly customRotationAssetId?: string;
+  readonly custom_rotation_asset_name?: string;
+  readonly customRotationAssetName?: string;
   readonly custom_rotations: any[];
   readonly customRotations?: any[];
 
@@ -89,6 +91,7 @@ export class Race implements Model {
     theme_id?: string,
     season_scoring?: SeasonScoring,
     start_time_millis?: number,
+    custom_rotation_asset_name?: string,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -111,7 +114,11 @@ export class Race implements Model {
     this.restart_randomizer = restart_randomizer;
     this.solo_lane_index = solo_lane_index;
     this.custom_rotation_sequence = custom_rotation_sequence;
-    this.custom_rotation_asset_id = custom_rotation_asset_id;
+    this.custom_rotation_asset_id =
+      custom_rotation_asset_id || custom_rotation_asset_name;
+    this.customRotationAssetId = this.custom_rotation_asset_id;
+    this.custom_rotation_asset_name = custom_rotation_asset_name;
+    this.customRotationAssetName = custom_rotation_asset_name;
     this.custom_rotations = custom_rotations;
     this.heat_times_through = heat_times_through;
     this.reverse_heats = reverse_heats;

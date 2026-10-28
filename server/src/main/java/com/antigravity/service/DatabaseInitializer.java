@@ -22,6 +22,7 @@ import com.antigravity.proto.AssetMessage;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.repository.SqliteRepository;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -47,7 +48,8 @@ public class DatabaseInitializer {
     try (InputStream is = getClass().getResourceAsStream("/defaults/factory_default.zip")) {
       if (is != null) {
         context.importDatabase(dbName, is);
-        new AssetService(context, context.getDataRoot() + dbName + "/assets").backfillDefaults();
+        new AssetService(context, Paths.get(context.getDataRoot(), dbName, "assets").toString())
+            .backfillDefaults();
         backfillCustomUIs(context);
         backfillDrivers(context);
         logger.info("Database reset to factory complete.");
@@ -59,7 +61,9 @@ public class DatabaseInitializer {
     }
 
     // Backfill assets first so drivers can find sound and helmet assets
-    new AssetService(context, context.getDataRoot() + context.getCurrentDatabaseName() + "/assets")
+    new AssetService(
+            context,
+            Paths.get(context.getDataRoot(), context.getCurrentDatabaseName(), "assets").toString())
         .backfillDefaults();
 
     resetDrivers(context);
@@ -79,7 +83,9 @@ public class DatabaseInitializer {
 
     AssetService assetService =
         new AssetService(
-            context, context.getDataRoot() + context.getCurrentDatabaseName() + "/assets");
+            context,
+            Paths.get(context.getDataRoot(), context.getCurrentDatabaseName(), "assets")
+                .toString());
     List<AssetMessage> allAssets = assetService.getAllAssets();
 
     List<AssetMessage> helmetAssets =
@@ -819,7 +825,9 @@ public class DatabaseInitializer {
 
     AssetService assetService =
         new AssetService(
-            context, context.getDataRoot() + context.getCurrentDatabaseName() + "/assets");
+            context,
+            Paths.get(context.getDataRoot(), context.getCurrentDatabaseName(), "assets")
+                .toString());
     List<AssetMessage> allAssets = assetService.getAllAssets();
     List<AssetMessage> helmetAssets =
         allAssets.stream()

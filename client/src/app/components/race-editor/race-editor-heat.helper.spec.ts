@@ -229,11 +229,43 @@ describe("RaceEditorHeatHelper", () => {
       expect(mockHost.selectedCustomRotationAssetId).toBe("");
     });
 
+    it("should resolve custom rotation asset when referenced by name", () => {
+      mockHost.editingRace.heat_rotation_type = "Custom";
+      mockHost.editingRace.custom_rotation_asset_id = "Llany Rotations";
+      mockHost.customRotationAssets = [
+        {
+          model: { entityId: "uuid-llany-123" },
+          name: "Llany Rotations",
+          numLanes: 4,
+        },
+      ];
+      mockHost.filteredCustomRotationAssets = mockHost.customRotationAssets;
+
+      RaceEditorHeatHelper.syncSelectedCustomRotationAsset(mockHost);
+      expect(mockHost.selectedCustomRotationAssetId).toBe("uuid-llany-123");
+      expect(mockHost.editingRace.custom_rotation_asset_id).toBe(
+        "uuid-llany-123",
+      );
+      expect((mockHost.editingRace as any).custom_rotation_asset_name).toBe(
+        "Llany Rotations",
+      );
+    });
+
     it("should handle onCustomRotationAssetChange", () => {
+      mockHost.filteredCustomRotationAssets = [
+        {
+          model: { entityId: "asset_2" },
+          name: "Sprint Rotations",
+          numLanes: 4,
+        },
+      ];
       mockHost.selectedCustomRotationAssetId = "asset_2";
       mockHost.editingRace.custom_rotations = [{}];
       RaceEditorHeatHelper.onCustomRotationAssetChange(mockHost);
       expect(mockHost.editingRace.custom_rotation_asset_id).toBe("asset_2");
+      expect((mockHost.editingRace as any).custom_rotation_asset_name).toBe(
+        "Sprint Rotations",
+      );
       expect(mockHost.editingRace.custom_rotations).toBeUndefined();
       expect(mockHost.captureState).toHaveBeenCalled();
     });

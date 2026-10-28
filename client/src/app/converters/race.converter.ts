@@ -131,7 +131,12 @@ export class RaceConverter {
         0.0,
       proto.soloLaneIndex || 0,
       p.customRotationSequence || p.custom_rotation_sequence || [],
-      p.customRotationAssetId || p.custom_rotation_asset_id,
+      p.customRotationAssetId ||
+        p.custom_rotation_asset_id ||
+        p.customRotationAssetName ||
+        p.custom_rotation_asset_name ||
+        p.customRotationName ||
+        p.custom_rotation_name,
       p.customRotations || p.custom_rotations || [],
       p.heatTimesThrough || p.heat_times_through || 1,
       p.reverseHeats || p.reverse_heats || false,
@@ -145,6 +150,13 @@ export class RaceConverter {
       p.practice || false,
       p.adjustDriftLaps ?? p.adjust_drift_laps ?? false,
       p.themeId || p.theme_id || undefined,
+      p.seasonScoring || p.season_scoring || undefined,
+      p.startTimeMillis || p.start_time_millis || undefined,
+      p.customRotationAssetName ||
+        p.custom_rotation_asset_name ||
+        p.customRotationName ||
+        p.custom_rotation_name ||
+        undefined,
     );
   }
 

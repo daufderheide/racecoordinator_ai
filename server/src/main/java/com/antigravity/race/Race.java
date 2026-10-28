@@ -49,6 +49,7 @@ import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.SleepPreventionService;
 import com.google.protobuf.GeneratedMessageV3;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -146,36 +147,8 @@ public class Race implements ProtocolListener {
     this.heatManager = new RaceHeatManager(this);
     this.hardwareManager = new RaceHardwareManager(this);
 
-    if (this.model != null
-        && this.customRotations.isEmpty()
-        && this.model.getHeatRotationType() == HeatRotationType.Custom) {
-      List<CustomRotation> resolved = resolveCustomRotations(this.model.getCustomRotationAssetId());
-      if (resolved != null) {
-        this.customRotations.addAll(resolved);
-      }
-    }
-
-    if (builder.heats == null) {
-      for (int i = 0; i < this.drivers.size(); i++) {
-        this.drivers.get(i).setSeed(i + 1);
-      }
-      int numLanes = this.track.getLanes().size();
-      while (this.drivers.size() < numLanes) {
-        this.drivers.add(new RaceParticipant(Driver.EMPTY_DRIVER));
-      }
-      this.heats = HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
-      this.currentHeat = this.heats.get(0);
-      recordsManager.resetHeatRecords();
-    } else {
-      this.heats = new ArrayList<>(builder.heats);
-      linkDriverReferences();
-
-      if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
-        this.currentHeat = this.heats.get(builder.currentHeatIndex);
-      } else if (!this.heats.isEmpty()) {
-        this.currentHeat = this.heats.get(0);
-      }
-    }
+    initCustomRotations();
+    initializeHeats(builder);
 
     this.accumulatedRaceTime = builder.accumulatedRaceTime;
     this.lanePower = new boolean[this.track.getLanes().size()];
@@ -242,6 +215,56 @@ public class Race implements ProtocolListener {
             this.recordsManager.loadOverallRaceRecords(existingRecords.getOverall());
           }
         }
+      }
+    }
+  }
+
+  private void initCustomRotations() {
+    if (this.model != null && this.model.getHeatRotationType() == HeatRotationType.Custom) {
+      int numLanes =
+          this.track != null && this.track.getLanes() != null ? this.track.getLanes().size() : 0;
+      if (this.customRotations.isEmpty()) {
+        List<CustomRotation> resolved =
+            resolveCustomRotations(this.model.getCustomRotationAssetId(), numLanes);
+        if (resolved == null && this.model.getCustomRotationAssetName() != null) {
+          resolved = resolveCustomRotations(this.model.getCustomRotationAssetName(), numLanes);
+        }
+        if (resolved == null && numLanes > 0) {
+          resolved = resolveCustomRotations(null, numLanes);
+        }
+        if (resolved != null) {
+          this.customRotations.addAll(resolved);
+        }
+      } else if (this.customRotationAssetName == null) {
+        String assetId = this.model.getCustomRotationAssetId();
+        if (assetId == null || assetId.isEmpty()) {
+          assetId = this.model.getCustomRotationAssetName();
+        }
+        resolveCustomRotations(assetId, numLanes);
+      }
+    }
+  }
+
+  private void initializeHeats(Builder builder) {
+    if (builder.heats == null) {
+      for (int i = 0; i < this.drivers.size(); i++) {
+        this.drivers.get(i).setSeed(i + 1);
+      }
+      int numLanes = this.track.getLanes().size();
+      while (this.drivers.size() < numLanes) {
+        this.drivers.add(new RaceParticipant(Driver.EMPTY_DRIVER));
+      }
+      this.heats = HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
+      this.currentHeat = this.heats.get(0);
+      recordsManager.resetHeatRecords();
+    } else {
+      this.heats = new ArrayList<>(builder.heats);
+      linkDriverReferences();
+
+      if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
+        this.currentHeat = this.heats.get(builder.currentHeatIndex);
+      } else if (!this.heats.isEmpty()) {
+        this.currentHeat = this.heats.get(0);
       }
     }
   }
@@ -766,29 +789,54 @@ public class Race implements ProtocolListener {
     if (this.customRotationAssetName != null && !this.customRotationAssetName.isEmpty()) {
       return this.customRotationAssetName;
     }
-    if (this.model == null
-        || this.model.getCustomRotationAssetId() == null
-        || this.model.getCustomRotationAssetId().isEmpty()) {
-      return null;
-    }
+    String assetId = this.model != null ? this.model.getCustomRotationAssetId() : null;
     if (databaseContext == null) {
+      if (this.model != null && this.model.getCustomRotationAssetName() != null) {
+        this.customRotationAssetName = this.model.getCustomRotationAssetName();
+        return this.customRotationAssetName;
+      }
       return null;
     }
     try {
       AssetService assetService =
           new AssetService(
               databaseContext,
-              databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
-      AssetMessage asset = assetService.getAssetById(this.model.getCustomRotationAssetId());
+              Paths.get(
+                      databaseContext.getDataRoot(),
+                      databaseContext.getCurrentDatabaseName(),
+                      "assets")
+                  .toString());
+      AssetMessage asset = null;
+      if (assetId != null && !assetId.isEmpty()) {
+        asset = assetService.getAssetById(assetId);
+        if (asset == null) {
+          asset = assetService.getAssetByNameAndType(assetId, "custom_rotation");
+        }
+        if (asset == null) {
+          asset = assetService.getAssetByName(assetId);
+        }
+      }
+      if (asset == null && this.model != null && this.model.getCustomRotationAssetName() != null) {
+        asset =
+            assetService.getAssetByNameAndType(
+                this.model.getCustomRotationAssetName(), "custom_rotation");
+        if (asset == null) {
+          asset = assetService.getAssetByName(this.model.getCustomRotationAssetName());
+        }
+      }
+      if (asset == null && this.track != null && this.track.getLanes() != null) {
+        asset = assetService.getCustomRotationAssetForLanes(this.track.getLanes().size());
+      }
       if (asset != null && asset.getName() != null && !asset.getName().isEmpty()) {
         this.customRotationAssetName = asset.getName();
         return this.customRotationAssetName;
       }
     } catch (Exception e) {
-      logger.warn(
-          "Failed to resolve custom rotation asset name for ID {}",
-          this.model.getCustomRotationAssetId(),
-          e);
+      logger.warn("Failed to resolve custom rotation asset name for ID {}", assetId, e);
+    }
+    if (this.model != null && this.model.getCustomRotationAssetName() != null) {
+      this.customRotationAssetName = this.model.getCustomRotationAssetName();
+      return this.customRotationAssetName;
     }
     return null;
   }
@@ -841,13 +889,29 @@ public class Race implements ProtocolListener {
     this.hardwareManager.initializeHardwareState();
   }
 
-  private List<CustomRotation> resolveCustomRotations(String assetId) {
-    if (assetId == null || assetId.isEmpty() || databaseContext == null) return null;
+  private List<CustomRotation> resolveCustomRotations(String assetId, int numLanes) {
+    if (databaseContext == null) return null;
     AssetService assetService =
         new AssetService(
             databaseContext,
-            databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
-    AssetMessage asset = assetService.getAssetById(assetId);
+            Paths.get(
+                    databaseContext.getDataRoot(),
+                    databaseContext.getCurrentDatabaseName(),
+                    "assets")
+                .toString());
+    AssetMessage asset = null;
+    if (assetId != null && !assetId.isEmpty()) {
+      asset = assetService.getAssetById(assetId);
+      if (asset == null) {
+        asset = assetService.getAssetByNameAndType(assetId, "custom_rotation");
+      }
+      if (asset == null) {
+        asset = assetService.getAssetByName(assetId);
+      }
+    }
+    if (asset == null && numLanes > 0) {
+      asset = assetService.getCustomRotationAssetForLanes(numLanes);
+    }
     if (asset == null) return null;
     if (asset.getName() != null && !asset.getName().isEmpty()) {
       this.customRotationAssetName = asset.getName();

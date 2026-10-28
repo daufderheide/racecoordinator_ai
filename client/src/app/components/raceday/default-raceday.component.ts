@@ -7302,6 +7302,8 @@ export class DefaultRacedayComponent
       scoring || this.race?.heat_scoring || (this.race as any)?.heatScoring;
     const finishMethod = sc?.finishMethod ?? sc?.finish_method;
     const finishValue = sc?.finishValue ?? sc?.finish_value;
+    // TODO(aufderheide): Why are we chacking finishMethod in all these ways?
+    // if it's truly needed we need a helper function for it.
     if (
       (finishMethod === FinishMethod.Lap ||
         finishMethod === "Lap" ||

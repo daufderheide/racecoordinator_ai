@@ -83,11 +83,11 @@ public class AssetService {
   }
 
   public AssetMessage getAssetById(String id) {
-    if (id == null) return null;
+    if (id == null || id.trim().isEmpty()) return null;
     databaseContext.ensureTable("assets");
     String sql = "SELECT json_data FROM assets WHERE entity_id = ?";
     try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
-      pstmt.setString(1, id);
+      pstmt.setString(1, id.trim());
       try (ResultSet rs = pstmt.executeQuery()) {
         if (rs.next()) {
           String json = rs.getString("json_data");
@@ -99,7 +99,83 @@ public class AssetService {
     } catch (Exception e) {
       logger.error("Error getting asset by id {}", id, e);
     }
+    AssetMessage asset = getAssetByNameAndType(id, "custom_rotation");
+    if (asset != null) {
+      return asset;
+    }
+    return getAssetByName(id);
+  }
+
+  public AssetMessage getAssetByName(String name) {
+    return getAssetByNameAndType(name, null);
+  }
+
+  public AssetMessage getAssetByNameAndType(String name, String type) {
+    if (name == null || name.trim().isEmpty()) {
+      return null;
+    }
+    String trimmed = name.trim();
+    String normalizedType =
+        (type != null && !type.trim().isEmpty()) ? AssetType.normalize(type) : null;
+    databaseContext.ensureTable("assets");
+    String sql = "SELECT json_data FROM assets";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          JsonNode node = objectMapper.readTree(json);
+          if (!node.has("deleted") || !node.get("deleted").asBoolean()) {
+            if (node.has("name") && trimmed.equalsIgnoreCase(node.get("name").asText().trim())) {
+              if (normalizedType == null) {
+                return jsonToAsset(node);
+              }
+              String nodeType =
+                  node.has("type") ? AssetType.normalize(node.get("type").asText()) : "";
+              if (normalizedType.equalsIgnoreCase(nodeType)) {
+                return jsonToAsset(node);
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error finding asset by name {} and type {}", name, type, e);
+    }
     return null;
+  }
+
+  public AssetMessage getCustomRotationAssetForLanes(int numLanes) {
+    databaseContext.ensureTable("assets");
+    String sql = "SELECT json_data FROM assets";
+    AssetMessage firstFallback = null;
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          JsonNode node = objectMapper.readTree(json);
+          if (node.has("deleted") && node.get("deleted").asBoolean()) {
+            continue;
+          }
+          String type = node.has("type") ? node.get("type").asText() : "";
+          if ("custom_rotation".equalsIgnoreCase(type)) {
+            AssetMessage asset = jsonToAsset(node);
+            if (asset != null && asset.getCustomRotationsCount() > 0) {
+              if (firstFallback == null) {
+                firstFallback = asset;
+              }
+              if (numLanes > 0 && asset.getNumLanes() == numLanes) {
+                return asset;
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error executing getCustomRotationAssetForLanes", e);
+    }
+    return firstFallback;
   }
 
   public static String calculateSha256(byte[] data) {
@@ -489,10 +565,7 @@ public class AssetService {
   }
 
   private AssetMessage jsonToAsset(JsonNode node) {
-    String id =
-        node.has("_id")
-            ? node.get("_id").asText()
-            : (node.has("entity_id") ? node.get("entity_id").asText() : "");
+    String id = extractId(node);
     AssetMessage.Builder builder =
         AssetMessage.newBuilder()
             .setModel(Model.newBuilder().setEntityId(id).build())
@@ -505,6 +578,37 @@ public class AssetService {
       builder.setHash(node.get("hash").asText());
     }
 
+    parseImages(node, builder);
+    parseAudioEntries(node, builder);
+
+    if (node.has("num_lanes")) {
+      builder.setNumLanes(node.get("num_lanes").asInt());
+    } else if (node.has("numLanes")) {
+      builder.setNumLanes(node.get("numLanes").asInt());
+    }
+
+    parseCustomRotations(node, builder);
+
+    return builder.build();
+  }
+
+  private String extractId(JsonNode node) {
+    if (node.has("entity_id")
+        && !node.get("entity_id").isNull()
+        && !node.get("entity_id").asText().isEmpty()) {
+      return node.get("entity_id").asText();
+    }
+    if (node.has("_id")) {
+      JsonNode idNode = node.get("_id");
+      if (idNode.isObject() && idNode.has("$oid")) {
+        return idNode.get("$oid").asText();
+      }
+      return idNode.asText();
+    }
+    return "";
+  }
+
+  private void parseImages(JsonNode node, AssetMessage.Builder builder) {
     if (node.has("images") && node.get("images").isArray()) {
       for (JsonNode img : node.get("images")) {
         builder.addImages(
@@ -516,7 +620,9 @@ public class AssetService {
                 .build());
       }
     }
+  }
 
+  private void parseAudioEntries(JsonNode node, AssetMessage.Builder builder) {
     if (node.has("audio_entries") && node.get("audio_entries").isArray()) {
       for (JsonNode audio : node.get("audio_entries")) {
         builder.addAudioEntries(
@@ -536,22 +642,41 @@ public class AssetService {
                 .build());
       }
     }
+  }
 
-    if (node.has("num_lanes")) {
-      builder.setNumLanes(node.get("num_lanes").asInt());
+  private void parseCustomRotations(JsonNode node, AssetMessage.Builder builder) {
+    JsonNode rotationsNode = null;
+    if (node.has("custom_rotations") && node.get("custom_rotations").isArray()) {
+      rotationsNode = node.get("custom_rotations");
+    } else if (node.has("customRotations") && node.get("customRotations").isArray()) {
+      rotationsNode = node.get("customRotations");
+    } else if (node.has("rotations") && node.get("rotations").isArray()) {
+      rotationsNode = node.get("rotations");
     }
 
-    if (node.has("custom_rotations") && node.get("custom_rotations").isArray()) {
-      for (JsonNode rot : node.get("custom_rotations")) {
-        CustomRotation.Builder rotBuilder =
-            CustomRotation.newBuilder()
-                .setNumDrivers(rot.has("num_drivers") ? rot.get("num_drivers").asInt() : 0);
+    if (rotationsNode != null) {
+      for (JsonNode rot : rotationsNode) {
+        int numDrivers = 0;
+        if (rot.has("num_drivers")) {
+          numDrivers = rot.get("num_drivers").asInt();
+        } else if (rot.has("numDrivers")) {
+          numDrivers = rot.get("numDrivers").asInt();
+        }
+        CustomRotation.Builder rotBuilder = CustomRotation.newBuilder().setNumDrivers(numDrivers);
 
         if (rot.has("heats") && rot.get("heats").isArray()) {
           for (JsonNode heat : rot.get("heats")) {
             CustomHeat.Builder heatBuilder = CustomHeat.newBuilder();
+            JsonNode driverIndicesNode = null;
             if (heat.has("driver_indices") && heat.get("driver_indices").isArray()) {
-              for (JsonNode d : heat.get("driver_indices")) {
+              driverIndicesNode = heat.get("driver_indices");
+            } else if (heat.has("driverIndices") && heat.get("driverIndices").isArray()) {
+              driverIndicesNode = heat.get("driverIndices");
+            } else if (heat.has("drivers") && heat.get("drivers").isArray()) {
+              driverIndicesNode = heat.get("drivers");
+            }
+            if (driverIndicesNode != null) {
+              for (JsonNode d : driverIndicesNode) {
                 heatBuilder.addDriverIndices(d.asInt());
               }
             }
@@ -562,8 +687,6 @@ public class AssetService {
         builder.addCustomRotations(rotBuilder.build());
       }
     }
-
-    return builder.build();
   }
 
   static String humanReadableByteCountBin(long bytes) {

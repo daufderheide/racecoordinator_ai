@@ -16,6 +16,7 @@ import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.repository.SqliteRepository;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
@@ -76,7 +77,8 @@ public class DatabaseInitializerTest {
     List<Theme> themes = themeRepo.findAll();
     assertEquals(4, themes.size());
 
-    AssetService assetService = new AssetService(context, context.getDataRoot() + "test_db/assets");
+    AssetService assetService =
+        new AssetService(context, Paths.get(context.getDataRoot(), "test_db", "assets").toString());
     assertNotNull(assetService.getAssetById("default_pit_in"));
     assertNotNull(assetService.getAssetById("default_fuel_empty"));
     assertNotNull(assetService.getAssetById("default_fuel_low"));

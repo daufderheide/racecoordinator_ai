@@ -268,4 +268,99 @@ public class AssetServiceTest {
     // Should backfill to "remaining" when not specified
     assertEquals("remaining", loaded.getAudioEntries(2).getTriggerMode());
   }
+
+  @Test
+  public void testResolveCustomRotationByNameAndType() throws Exception {
+    com.antigravity.proto.CustomHeat heat1 =
+        com.antigravity.proto.CustomHeat.newBuilder()
+            .addAllDriverIndices(java.util.Arrays.asList(0, 1, 2, 3))
+            .setGroup(0)
+            .build();
+    com.antigravity.proto.CustomRotation rot1 =
+        com.antigravity.proto.CustomRotation.newBuilder().setNumDrivers(4).addHeats(heat1).build();
+
+    AssetMessage created =
+        assetService.saveCustomRotation(
+            "custom-rot-uuid-1", "Llany Rotations", 4, java.util.Collections.singletonList(rot1));
+    assertNotNull(created);
+    assertEquals("custom-rot-uuid-1", created.getModel().getEntityId());
+    assertEquals("Llany Rotations", created.getName());
+
+    // 1) Direct lookup by UUID
+    AssetMessage byId = assetService.getAssetById("custom-rot-uuid-1");
+    assertNotNull(byId);
+    assertEquals("Llany Rotations", byId.getName());
+
+    // 2) Lookup by name using getAssetById (fallback resolution)
+    AssetMessage byNameFallback = assetService.getAssetById("Llany Rotations");
+    assertNotNull(byNameFallback);
+    assertEquals("custom-rot-uuid-1", byNameFallback.getModel().getEntityId());
+    assertEquals(1, byNameFallback.getCustomRotationsCount());
+
+    // 3) Lookup by name using getAssetByName
+    AssetMessage byName = assetService.getAssetByName("Llany Rotations");
+    assertNotNull(byName);
+    assertEquals("custom-rot-uuid-1", byName.getModel().getEntityId());
+
+    // 4) Lookup by name and matching type
+    AssetMessage byNameAndType =
+        assetService.getAssetByNameAndType("Llany Rotations", "custom_rotation");
+    assertNotNull(byNameAndType);
+    assertEquals("custom-rot-uuid-1", byNameAndType.getModel().getEntityId());
+
+    // 5) Lookup by name and non-matching type returns null
+    AssetMessage nonMatchingType = assetService.getAssetByNameAndType("Llany Rotations", "image");
+    assertNull(nonMatchingType);
+  }
+
+  @Test
+  public void testJsonToAssetWithCamelCaseAndMongoOid() throws Exception {
+    String jsonDoc =
+        "{"
+            + "\"_id\": {\"$oid\": \"mongo-rot-999\"},"
+            + "\"name\": \"CamelCase Rotations\","
+            + "\"type\": \"custom_rotation\","
+            + "\"numLanes\": 4,"
+            + "\"customRotations\": [{"
+            + "  \"numDrivers\": 4,"
+            + "  \"heats\": [{\"driverIndices\": [0, 1, 2, 3], \"group\": 1}]"
+            + "}]"
+            + "}";
+
+    databaseContext.ensureTable("assets");
+    String sql =
+        "INSERT INTO assets (entity_id, sequence_id, json_data) VALUES ('mongo-rot-999', NULL, ?)";
+    try (java.sql.PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, jsonDoc);
+      pstmt.executeUpdate();
+    }
+
+    AssetMessage asset = assetService.getAssetById("mongo-rot-999");
+    assertNotNull(asset);
+    assertEquals("mongo-rot-999", asset.getModel().getEntityId());
+    assertEquals("CamelCase Rotations", asset.getName());
+    assertEquals(4, asset.getNumLanes());
+    assertEquals(1, asset.getCustomRotationsCount());
+    assertEquals(4, asset.getCustomRotations(0).getNumDrivers());
+    assertEquals(4, asset.getCustomRotations(0).getHeats(0).getDriverIndicesCount());
+    assertEquals(0, asset.getCustomRotations(0).getHeats(0).getDriverIndices(0));
+    assertEquals(3, asset.getCustomRotations(0).getHeats(0).getDriverIndices(3));
+    assertEquals(1, asset.getCustomRotations(0).getHeats(0).getGroup());
+
+    // Also verify resolution by name
+    AssetMessage byName = assetService.getAssetById("CamelCase Rotations");
+    assertNotNull(byName);
+    assertEquals("mongo-rot-999", byName.getModel().getEntityId());
+
+    // Verify resolution by lanes fallback
+    AssetMessage byLanes = assetService.getCustomRotationAssetForLanes(4);
+    assertNotNull(byLanes);
+    assertEquals("mongo-rot-999", byLanes.getModel().getEntityId());
+    assertEquals(4, byLanes.getNumLanes());
+
+    // For non-matching lanes with fallback available
+    AssetMessage fallback = assetService.getCustomRotationAssetForLanes(6);
+    assertNotNull(fallback);
+    assertEquals("mongo-rot-999", fallback.getModel().getEntityId());
+  }
 }

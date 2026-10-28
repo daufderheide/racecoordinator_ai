@@ -22,6 +22,7 @@ import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -119,6 +120,7 @@ public class RaceHeatTaskHandler {
               .withSoloLaneIndex(race.getSoloLaneIndex())
               .withCustomRotationSequence(race.getCustomRotationSequence())
               .withCustomRotationAssetId(race.getCustomRotationAssetId())
+              .withCustomRotationAssetName(race.getCustomRotationAssetName())
               .withCustomRotations(race.getCustomRotations())
               .withHeatTimesThrough(race.getHeatTimesThrough())
               .withReverseHeats(race.isReverseHeats())
@@ -306,9 +308,6 @@ public class RaceHeatTaskHandler {
       customRotationAssetId = (String) body.get("customRotationAssetId");
     }
 
-    List<CustomRotation> customRotations =
-        resolveCustomRotationsFromBody(body, customRotationAssetId);
-
     Number heatTimesThroughNum = (Number) body.get("heatTimesThrough");
     if (heatTimesThroughNum == null) {
       heatTimesThroughNum = (Number) body.get("heat_times_through");
@@ -341,6 +340,10 @@ public class RaceHeatTaskHandler {
       ctx.status(404).result("Track not found");
       return;
     }
+
+    int numLanes = track.getLanes() != null ? track.getLanes().size() : 0;
+    List<CustomRotation> customRotations =
+        resolveCustomRotationsFromBody(body, customRotationAssetId, numLanes);
 
     HeatRotationType rotationTypeEnum;
     try {
@@ -443,9 +446,28 @@ public class RaceHeatTaskHandler {
 
   @SuppressWarnings("unchecked")
   private List<CustomRotation> resolveCustomRotationsFromBody(
-      Map<String, Object> body, String customRotationAssetId) {
+      Map<String, Object> body, String customRotationAssetId, int numLanes) {
     if (customRotationAssetId != null && !customRotationAssetId.isEmpty()) {
-      return resolveCustomRotations(customRotationAssetId);
+      List<CustomRotation> rotations = resolveCustomRotations(customRotationAssetId, numLanes);
+      if (rotations != null && !rotations.isEmpty()) {
+        return rotations;
+      }
+    }
+    String customRotationAssetName = (String) body.get("custom_rotation_asset_name");
+    if (customRotationAssetName == null) {
+      customRotationAssetName = (String) body.get("customRotationAssetName");
+    }
+    if (customRotationAssetName != null && !customRotationAssetName.isEmpty()) {
+      List<CustomRotation> rotations = resolveCustomRotations(customRotationAssetName, numLanes);
+      if (rotations != null && !rotations.isEmpty()) {
+        return rotations;
+      }
+    }
+    if (numLanes > 0) {
+      List<CustomRotation> rotations = resolveCustomRotations(null, numLanes);
+      if (rotations != null && !rotations.isEmpty()) {
+        return rotations;
+      }
     }
     List<Map<String, Object>> customRotationsRaw =
         (List<Map<String, Object>>) body.get("custom_rotations");
@@ -542,16 +564,28 @@ public class RaceHeatTaskHandler {
         }
       }
     } else if (race.getHeatRotationType() == HeatRotationType.Custom) {
+      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
+      int numLanes = track != null && track.getLanes() != null ? track.getLanes().size() : 0;
       String assetId = race.getCustomRotationAssetId();
-      if (assetId == null || assetId.isEmpty()) {
-        throw new IllegalArgumentException("Custom rotation asset is required");
+      if ((assetId == null || assetId.isEmpty()) && race.getCustomRotationAssetName() != null) {
+        assetId = race.getCustomRotationAssetName();
       }
-      List<CustomRotation> rotations = resolveCustomRotations(assetId);
+      List<CustomRotation> rotations = null;
+      if (assetId != null && !assetId.isEmpty()) {
+        rotations = resolveCustomRotations(assetId, numLanes);
+      }
+      if (rotations == null || rotations.isEmpty()) {
+        if (race.getCustomRotationAssetName() != null
+            && !race.getCustomRotationAssetName().equals(assetId)) {
+          rotations = resolveCustomRotations(race.getCustomRotationAssetName(), numLanes);
+        }
+      }
+      if (rotations == null || rotations.isEmpty()) {
+        rotations = resolveCustomRotations(null, numLanes);
+      }
       if (rotations == null || rotations.isEmpty()) {
         throw new IllegalArgumentException("Custom rotation asset not found or empty");
       }
-      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      int numLanes = track != null ? track.getLanes().size() : 0;
 
       Set<Integer> driverCounts = new HashSet<>();
       for (CustomRotation rot : rotations) {
@@ -593,14 +627,34 @@ public class RaceHeatTaskHandler {
   }
 
   public List<CustomRotation> resolveCustomRotations(String assetId) {
-    if (assetId == null || assetId.isEmpty()) {
+    return resolveCustomRotations(assetId, 0);
+  }
+
+  public List<CustomRotation> resolveCustomRotations(String assetId, int numLanes) {
+    if (databaseContext == null) {
       return null;
     }
     AssetService assetService =
         new AssetService(
             databaseContext,
-            databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
-    AssetMessage asset = assetService.getAssetById(assetId);
+            Paths.get(
+                    databaseContext.getDataRoot(),
+                    databaseContext.getCurrentDatabaseName(),
+                    "assets")
+                .toString());
+    AssetMessage asset = null;
+    if (assetId != null && !assetId.isEmpty()) {
+      asset = assetService.getAssetById(assetId);
+      if (asset == null) {
+        asset = assetService.getAssetByNameAndType(assetId, "custom_rotation");
+      }
+      if (asset == null) {
+        asset = assetService.getAssetByName(assetId);
+      }
+    }
+    if (asset == null && numLanes > 0) {
+      asset = assetService.getCustomRotationAssetForLanes(numLanes);
+    }
     if (asset == null || asset.getCustomRotationsCount() == 0) {
       return null;
     }
@@ -629,7 +683,7 @@ public class RaceHeatTaskHandler {
       if (numDriversObj == null) {
         numDriversObj = rotMap.get("num_drivers");
       }
-      int numDrivers = ((Number) numDriversObj).intValue();
+      int numDrivers = numDriversObj instanceof Number ? ((Number) numDriversObj).intValue() : 0;
       List<Map<String, Object>> heatsRaw = (List<Map<String, Object>>) rotMap.get("heats");
       List<CustomHeat> heats = new ArrayList<>();
       if (heatsRaw != null) {
@@ -638,7 +692,13 @@ public class RaceHeatTaskHandler {
           if (driverIndicesObj == null) {
             driverIndicesObj = heatMap.get("driver_indices");
           }
-          List<Integer> driverIndices = (List<Integer>) driverIndicesObj;
+          if (driverIndicesObj == null) {
+            driverIndicesObj = heatMap.get("drivers");
+          }
+          List<Integer> driverIndices =
+              driverIndicesObj instanceof List
+                  ? (List<Integer>) driverIndicesObj
+                  : new ArrayList<>();
           Object groupObj = heatMap.get("group");
           int group = groupObj != null ? ((Number) groupObj).intValue() : 0;
           heats.add(new CustomHeat(driverIndices, group));

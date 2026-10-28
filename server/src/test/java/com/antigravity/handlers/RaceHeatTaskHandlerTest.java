@@ -307,4 +307,97 @@ public class RaceHeatTaskHandlerTest {
       }
     }
   }
+
+  @Test
+  public void testValidateRace_WithCustomRotationResolvedByName() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_custom_rot").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      // 1. Create a 4-lane track
+      com.antigravity.repository.SqliteRepository<com.antigravity.models.Track> trackRepo =
+          new com.antigravity.repository.SqliteRepository<>(
+              dbCtx, "tracks", com.antigravity.models.Track.class);
+      com.antigravity.models.Track track =
+          new com.antigravity.models.Track.Builder()
+              .name("4 Lane Track")
+              .entityId("track_4_lane")
+              .lanes(
+                  java.util.Arrays.asList(
+                      new com.antigravity.models.Lane("#FFFFFF", "#FF0000", 50),
+                      new com.antigravity.models.Lane("#FFFFFF", "#00FF00", 50),
+                      new com.antigravity.models.Lane("#FFFFFF", "#0000FF", 50),
+                      new com.antigravity.models.Lane("#FFFFFF", "#FFFF00", 50)))
+              .build();
+      trackRepo.insert(track);
+
+      // 2. Save Custom Rotation asset with name "Llany Rotations"
+      com.antigravity.service.AssetService assetService =
+          new com.antigravity.service.AssetService(
+              dbCtx,
+              java.nio.file.Paths.get(dbCtx.getDataRoot(), dbCtx.getCurrentDatabaseName(), "assets")
+                  .toString());
+
+      com.antigravity.proto.CustomHeat heat1 =
+          com.antigravity.proto.CustomHeat.newBuilder()
+              .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
+              .setGroup(0)
+              .build();
+      com.antigravity.proto.CustomRotation rot1 =
+          com.antigravity.proto.CustomRotation.newBuilder()
+              .setNumDrivers(4)
+              .addHeats(heat1)
+              .build();
+
+      assetService.saveCustomRotation(
+          "llany-rot-uuid", "Llany Rotations", 4, java.util.Collections.singletonList(rot1));
+
+      // 3. Test resolveCustomRotations with "Llany Rotations" directly
+      List<com.antigravity.models.CustomRotation> resolved =
+          realHandler.resolveCustomRotations("Llany Rotations");
+      org.junit.Assert.assertNotNull(resolved);
+      org.junit.Assert.assertEquals(1, resolved.size());
+      org.junit.Assert.assertEquals(4, resolved.get(0).getNumDrivers());
+
+      // 4. Validate Race referencing custom rotation by name in customRotationAssetId
+      Race raceByName =
+          new Race.Builder()
+              .withName("Custom Rotation Race")
+              .withTrackEntityId("track_4_lane")
+              .withHeatRotationType(HeatRotationType.Custom)
+              .withCustomRotationAssetId("Llany Rotations")
+              .build();
+
+      realHandler.validateRace(raceByName);
+
+      // 5. Validate Race referencing custom rotation in customRotationAssetName
+      Race raceByNameField =
+          new Race.Builder()
+              .withName("Custom Rotation Race 2")
+              .withTrackEntityId("track_4_lane")
+              .withHeatRotationType(HeatRotationType.Custom)
+              .withCustomRotationAssetName("Llany Rotations")
+              .build();
+
+      realHandler.validateRace(raceByNameField);
+
+      // 6. Validate Race with completely orphaned asset ID, falling back to track lanes
+      Race raceOrphaned =
+          new Race.Builder()
+              .withName("Custom Rotation Orphaned")
+              .withTrackEntityId("track_4_lane")
+              .withHeatRotationType(HeatRotationType.Custom)
+              .withCustomRotationAssetId("orphaned-uuid-missing")
+              .build();
+
+      realHandler.validateRace(raceOrphaned);
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
 }

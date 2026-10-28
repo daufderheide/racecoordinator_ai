@@ -79,6 +79,10 @@ public class Race extends Model {
   @JsonAlias("customRotationAssetId")
   private final String customRotationAssetId;
 
+  @JsonProperty("custom_rotation_asset_name")
+  @JsonAlias({"customRotationAssetName", "custom_rotation_name", "customRotationName"})
+  private final String customRotationAssetName;
+
   @JsonProperty("custom_rotations")
   @JsonAlias("customRotations")
   private final List<CustomRotation> customRotations;
@@ -164,6 +168,9 @@ public class Race extends Model {
           List<Integer> customRotationSequence,
       @JsonProperty("custom_rotation_asset_id") @JsonAlias("customRotationAssetId")
           String customRotationAssetId,
+      @JsonProperty("custom_rotation_asset_name")
+          @JsonAlias({"customRotationAssetName", "custom_rotation_name", "customRotationName"})
+          String customRotationAssetName,
       @JsonProperty("custom_rotations") @JsonAlias("customRotations")
           List<CustomRotation> customRotations,
       @JsonProperty("heat_times_through") @JsonAlias("heatTimesThrough") Integer heatTimesThrough,
@@ -211,7 +218,14 @@ public class Race extends Model {
     this.soloLaneIndex = soloLaneIndex != null ? soloLaneIndex : 0;
     this.customRotationSequence =
         customRotationSequence != null ? customRotationSequence : new ArrayList<>();
-    this.customRotationAssetId = customRotationAssetId;
+    this.customRotationAssetId =
+        (customRotationAssetId != null && !customRotationAssetId.isEmpty())
+            ? customRotationAssetId
+            : customRotationAssetName;
+    this.customRotationAssetName =
+        (customRotationAssetName != null && !customRotationAssetName.isEmpty())
+            ? customRotationAssetName
+            : null;
     this.customRotations = customRotations != null ? customRotations : new ArrayList<>();
     this.heatTimesThrough = heatTimesThrough != null ? heatTimesThrough : 1;
     this.reverseHeats = reverseHeats != null ? reverseHeats : false;
@@ -251,6 +265,7 @@ public class Race extends Model {
     private int soloLaneIndex = 0;
     private List<Integer> customRotationSequence = new ArrayList<>();
     private String customRotationAssetId;
+    private String customRotationAssetName;
     private List<CustomRotation> customRotations = new ArrayList<>();
     private int heatTimesThrough = 1;
     private boolean reverseHeats = false;
@@ -290,6 +305,7 @@ public class Race extends Model {
       this.soloLaneIndex = other.getSoloLaneIndex();
       this.customRotationSequence = other.getCustomRotationSequence();
       this.customRotationAssetId = other.getCustomRotationAssetId();
+      this.customRotationAssetName = other.getCustomRotationAssetName();
       this.customRotations = other.getCustomRotations();
       this.heatTimesThrough = other.getHeatTimesThrough();
       this.reverseHeats = other.isReverseHeats();
@@ -418,6 +434,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCustomRotationAssetName(String customRotationAssetName) {
+      this.customRotationAssetName = customRotationAssetName;
+      return this;
+    }
+
     public Builder withCustomRotations(List<CustomRotation> customRotations) {
       this.customRotations = customRotations;
       return this;
@@ -518,6 +539,7 @@ public class Race extends Model {
           soloLaneIndex,
           customRotationSequence,
           customRotationAssetId,
+          customRotationAssetName,
           customRotations,
           heatTimesThrough,
           reverseHeats,
@@ -622,6 +644,10 @@ public class Race extends Model {
 
   public String getCustomRotationAssetId() {
     return customRotationAssetId;
+  }
+
+  public String getCustomRotationAssetName() {
+    return customRotationAssetName;
   }
 
   public List<CustomRotation> getCustomRotations() {

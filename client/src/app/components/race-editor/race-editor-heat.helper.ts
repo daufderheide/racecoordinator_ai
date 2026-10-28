@@ -138,17 +138,29 @@ export class RaceEditorHeatHelper {
     }
 
     const filtered = host.filteredCustomRotationAssets;
+    const targetRef =
+      host.editingRace.custom_rotation_asset_id ||
+      (host.editingRace as any).custom_rotation_asset_name ||
+      (host.editingRace as any).customRotationAssetName;
 
-    if (host.editingRace.custom_rotation_asset_id) {
-      if (
-        host.customRotationAssets.length === 0 ||
-        filtered.some(
+    if (targetRef) {
+      if (host.customRotationAssets.length === 0) {
+        host.selectedCustomRotationAssetId = targetRef;
+        return;
+      }
+      let match = filtered.find((a) => a.model?.entityId === targetRef);
+      if (!match) {
+        match = filtered.find(
           (a) =>
-            a.model?.entityId === host.editingRace.custom_rotation_asset_id,
-        )
-      ) {
-        host.selectedCustomRotationAssetId =
-          host.editingRace.custom_rotation_asset_id;
+            a.name &&
+            a.name.trim().toLowerCase() === targetRef.trim().toLowerCase(),
+        );
+      }
+      if (match) {
+        host.selectedCustomRotationAssetId = match.model?.entityId || "";
+        host.editingRace.custom_rotation_asset_id = match.model?.entityId;
+        (host.editingRace as any).custom_rotation_asset_name = match.name;
+        (host.editingRace as any).customRotationAssetName = match.name;
         return;
       }
     }
@@ -168,13 +180,19 @@ export class RaceEditorHeatHelper {
         match = filtered[0];
         host.editingRace.custom_rotation_asset_id = match.model?.entityId;
         host.selectedCustomRotationAssetId = match.model?.entityId || "";
+        (host.editingRace as any).custom_rotation_asset_name = match.name;
+        (host.editingRace as any).customRotationAssetName = match.name;
       } else {
         host.editingRace.custom_rotation_asset_id = undefined;
         host.selectedCustomRotationAssetId = "";
+        delete (host.editingRace as any).custom_rotation_asset_name;
+        delete (host.editingRace as any).customRotationAssetName;
       }
     } else {
       host.selectedCustomRotationAssetId = match.model?.entityId || "";
       host.editingRace.custom_rotation_asset_id = match.model?.entityId;
+      (host.editingRace as any).custom_rotation_asset_name = match.name;
+      (host.editingRace as any).customRotationAssetName = match.name;
     }
   }
 
@@ -182,6 +200,16 @@ export class RaceEditorHeatHelper {
     if (host.editingRace) {
       host.editingRace.custom_rotation_asset_id =
         host.selectedCustomRotationAssetId || undefined;
+      const match = host.filteredCustomRotationAssets?.find(
+        (a) => a.model?.entityId === host.selectedCustomRotationAssetId,
+      );
+      if (match) {
+        (host.editingRace as any).custom_rotation_asset_name = match.name;
+        (host.editingRace as any).customRotationAssetName = match.name;
+      } else {
+        delete (host.editingRace as any).custom_rotation_asset_name;
+        delete (host.editingRace as any).customRotationAssetName;
+      }
       delete host.editingRace.custom_rotations;
       host.captureState();
     }
