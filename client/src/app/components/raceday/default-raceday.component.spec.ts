@@ -10886,6 +10886,105 @@ describe("DefaultRacedayComponent", () => {
         expect(w.customSettings?.["backgroundColor"]).toBe("#1e1e1e");
       });
     });
+
+    it("should invalidate non-grid cache and return newly dropped widgets in getNonGridWidgets after clearing layout", () => {
+      component.isLayoutCustomizing = true;
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      // Prime empty non-grid cache
+      const initialNonGrid = component.getNonGridWidgets();
+      expect(initialNonGrid.length).toBe(0);
+
+      // Drop name widget (lane-col:driver.name)
+      component.draggedWidgetType = "lane-col:driver.name";
+      const event1 = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 200,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event1);
+
+      // Verify that getNonGridWidgets is updated with the dropped name widget
+      const afterNameDrop = component.getNonGridWidgets();
+      expect(afterNameDrop.length).toBe(1);
+      expect(afterNameDrop[0].widgetType).toBe("lane-column");
+      expect(afterNameDrop[0].customSettings?.["columnKey"]).toBe(
+        "driver.name",
+      );
+
+      // Drop nickname widget (lane-col:driver.nickname)
+      component.draggedWidgetType = "lane-col:driver.nickname";
+      const event2 = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 400,
+        clientY: 200,
+      } as any;
+      component.onCanvasDrop(event2);
+
+      // Verify that getNonGridWidgets contains both widgets
+      const afterNicknameDrop = component.getNonGridWidgets();
+      expect(afterNicknameDrop.length).toBe(2);
+      expect(afterNicknameDrop[1].widgetType).toBe("lane-column");
+      expect(afterNicknameDrop[1].customSettings?.["columnKey"]).toBe(
+        "driver.nickname",
+      );
+    });
+
+    it("should invalidate grid cache and return newly dropped grid in getGrids after clearing layout", () => {
+      component.isLayoutCustomizing = true;
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      // Prime cachedGrids with empty layout
+      const initialGrids = component.getGrids();
+      expect(initialGrids.length).toBe(0);
+
+      // Drop grid onto canvas
+      component.draggedWidgetType = "grid";
+      const dropEvent = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 100,
+        clientY: 100,
+      } as any;
+      component.onCanvasDrop(dropEvent);
+
+      // Verify getGrids returns newly created grid descriptor
+      const afterGridDrop = component.getGrids();
+      expect(afterGridDrop.length).toBe(1);
+    });
   });
 
   describe("Printing", () => {

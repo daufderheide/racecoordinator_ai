@@ -313,6 +313,8 @@ export function onWidgetSelected(widget: any, comp: any): void {
 
 export function removeSelectedWidget(ui: CustomUI, comp: any): void {
   handleRemoveSelectedWidget(comp, ui);
+  const layout = parseLayoutConfig(ui);
+  comp.syncRacedayPreview?.(layout);
 }
 
 export function onWidgetXChange(

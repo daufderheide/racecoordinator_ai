@@ -1062,8 +1062,10 @@ export class DefaultRacedayComponent
   private lapHighlightTimers: Map<string, any> = new Map();
   private cachedNonGridWidgets: any[] = [];
   private cachedNonGridWidgetsRef: any[] | null = null;
+  private cachedNonGridWidgetsLength = -1;
   private cachedGrids: RacedayGridDescriptor[] = [];
   private cachedGridsWidgetsRef: any[] | null = null;
+  private cachedGridsWidgetsLength = -1;
   private cachedGridsDataCounts: string = "";
   private cachedGridsParticipantsCount = -1;
   private cachedGridsHeatDriversCount = -1;
@@ -4650,7 +4652,9 @@ export class DefaultRacedayComponent
 
   invalidateGridCache(): void {
     this.cachedGridsWidgetsRef = null;
+    this.cachedGridsWidgetsLength = -1;
     this.cachedNonGridWidgetsRef = null;
+    this.cachedNonGridWidgetsLength = -1;
     this.cachedGridsDataCounts = "";
     this.cachedGridsParticipantsCount = -1;
     this.cachedGridsHeatDriversCount = -1;
@@ -4793,10 +4797,14 @@ export class DefaultRacedayComponent
 
   getNonGridWidgets(): any[] {
     const widgets = this.getWidgets();
-    if (widgets === this.cachedNonGridWidgetsRef) {
+    if (
+      widgets === this.cachedNonGridWidgetsRef &&
+      widgets?.length === this.cachedNonGridWidgetsLength
+    ) {
       return this.cachedNonGridWidgets;
     }
     this.cachedNonGridWidgetsRef = widgets;
+    this.cachedNonGridWidgetsLength = widgets?.length ?? 0;
     this.cachedNonGridWidgets = widgets.filter(
       (w: any) => !w.customSettings?.["gridId"],
     );
@@ -4808,6 +4816,7 @@ export class DefaultRacedayComponent
     if (!widgets || widgets.length === 0) {
       this.cachedGrids = [];
       this.cachedGridsWidgetsRef = null;
+      this.cachedGridsWidgetsLength = -1;
       this.cachedGridsDataCounts = "";
       this.cachedGridsParticipantsCount = -1;
       this.cachedGridsHeatDriversCount = -1;
@@ -4820,6 +4829,7 @@ export class DefaultRacedayComponent
 
     if (
       widgets === this.cachedGridsWidgetsRef &&
+      widgets.length === this.cachedGridsWidgetsLength &&
       participantsCount === this.cachedGridsParticipantsCount &&
       heatDriversCount === this.cachedGridsHeatDriversCount
     ) {
@@ -4865,6 +4875,7 @@ export class DefaultRacedayComponent
 
     this.cachedGrids = descriptors;
     this.cachedGridsWidgetsRef = widgets;
+    this.cachedGridsWidgetsLength = widgets.length;
     this.cachedGridsDataCounts = dataCountsKey;
     this.cachedGridsParticipantsCount = participantsCount;
     this.cachedGridsHeatDriversCount = heatDriversCount;
@@ -9207,7 +9218,8 @@ export class DefaultRacedayComponent
       this.layout = this.getDefaultLayout();
     }
     if (!this.layout.widgets) this.layout.widgets = [];
-    this.layout.widgets.push(...widgets);
+    this.layout.widgets = [...this.layout.widgets, ...widgets];
+    this.invalidateGridCache();
 
     const master = widgets.find((w) =>
       LaneGridReplicationHelper.isMasterWidget(w, session),
@@ -9381,7 +9393,7 @@ export class DefaultRacedayComponent
       this.layout = this.getDefaultLayout();
     }
     if (!this.layout.widgets) this.layout.widgets = [];
-    this.layout.widgets.push(newWidget);
+    this.layout.widgets = [...this.layout.widgets, newWidget];
 
     if (this.gridSession()) {
       const session = this.gridSession()!;
@@ -9407,6 +9419,7 @@ export class DefaultRacedayComponent
       }
     }
 
+    this.invalidateGridCache();
     this.draggedWidgetType = null;
     this.layoutChanged.emit(this.layout);
     this.widgetSelected.emit(newWidget.id);
@@ -9687,6 +9700,7 @@ export class DefaultRacedayComponent
         this.finishGrid.emit();
       }
     }
+    this.invalidateGridCache();
     this.layoutChanged.emit(this.layout);
     const resolvedMasterId =
       widgetToRemove?.customSettings?.["gridMasterId"] || id;
@@ -9725,6 +9739,7 @@ export class DefaultRacedayComponent
       },
     );
     this.layout.widgets = updated;
+    this.invalidateGridCache();
     this.layoutChanged.emit(this.layout);
     this.cdr.markForCheck();
   }
@@ -10088,8 +10103,11 @@ export class DefaultRacedayComponent
     } else {
       const idx = this.layout.widgets.findIndex((w: any) => w.id === widget.id);
       if (idx >= 0) {
-        this.layout.widgets[idx] = widget;
+        const nextWidgets = [...this.layout.widgets];
+        nextWidgets[idx] = widget;
+        this.layout.widgets = nextWidgets;
       }
+      this.invalidateGridCache();
       this.layoutChanged.emit(this.layout);
       this.cdr.markForCheck();
     }

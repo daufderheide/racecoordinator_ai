@@ -322,6 +322,10 @@ export class LayoutEditorComponent
         equalizer: (a: CustomUI, b: CustomUI) => areLayoutsEqual(a, b),
         applier: (item: CustomUI) => {
           this.editingLayout = cloneLayout(item);
+          if (this.editingLayout) {
+            const layout = parseLayoutConfig(this.editingLayout);
+            this.syncRacedayPreview(layout);
+          }
           this.cdr.markForCheck();
         },
       },

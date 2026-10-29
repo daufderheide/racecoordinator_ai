@@ -818,6 +818,27 @@ describe("LayoutEditorComponent", () => {
       );
     });
 
+    it("should sync preview when removeSelectedWidget is executed", () => {
+      spyOn(component, "syncRacedayPreview");
+      component.onToggleEditMode();
+      const mockWidget = {
+        id: "w-delete-test",
+        widgetType: "timer",
+        x: 10,
+        y: 10,
+        width: 100,
+        height: 50,
+      };
+      component.editingLayout!.layoutJson = JSON.stringify({
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [mockWidget],
+      });
+      component.selectedWidgetId = "w-delete-test";
+      component.removeSelectedWidget();
+      expect(component.syncRacedayPreview).toHaveBeenCalled();
+    });
+
     it("should maintain canvas aspect ratio and fill width regardless of scaleMode setting", () => {
       const baseW = component.getLayoutBaseWidth();
       const baseH = component.getLayoutBaseHeight();
