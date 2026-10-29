@@ -63,6 +63,7 @@ export class DataSocketHelper {
       serverPort: number;
       wsProtocol: string;
     },
+    private delegate?: any,
   ) {}
 
   public clearRaceData() {
@@ -96,13 +97,13 @@ export class DataSocketHelper {
       this.raceSubscriptionStartedAt =
         typeof performance !== "undefined" ? performance.now() : Date.now();
     } else {
-      this.clearRaceData();
+      (this.delegate || this).clearRaceData();
     }
     if (
       this.raceDataSocket &&
       this.raceDataSocket.readyState === WebSocket.OPEN
     ) {
-      this.sendRaceSubscriptionRequest(subscribe);
+      (this.delegate || this).sendRaceSubscriptionRequest(subscribe);
     } else {
       this.logger.warn(
         "Race Data WebSocket not open. Triggering connection check and queuing subscription.",
@@ -283,7 +284,7 @@ export class DataSocketHelper {
       this.logger.info("Connected to Race WebSocket");
       this.socketConnectedSubject.next(true);
       if (this.shouldSubscribeToRaceData) {
-        this.sendRaceSubscriptionRequest(true);
+        (this.delegate || this).sendRaceSubscriptionRequest(true);
       }
     };
 

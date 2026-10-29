@@ -1,7 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
-import { Reader } from "protobufjs/minimal";
-import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
+import { Observable } from "rxjs";
 import {
   DriverImportCommitRequest,
   DriverImportPreview,
@@ -27,7 +26,6 @@ import {
   ILap,
   InitializeInterfaceResponse,
   InitializeRaceResponse,
-  InterfaceEvent,
   IOverallStandingsUpdate,
   IPhidgetDeviceInfo,
   IRace,
@@ -42,10 +40,8 @@ import {
   IStartRaceResponse,
   ITeamModel,
   ModifyHeatsResponse,
-  RaceData,
   RaceFlag,
   RaceState,
-  RaceSubscriptionRequest,
   RegenerateHeatsResponse,
   SetInterfacePinStateResponse,
   SetInterfaceRgbLedStateResponse,
@@ -57,6 +53,7 @@ import { DataEntityCrudHelper } from "@app/services/data/data-entity-crud.helper
 import { DataHistoryStatsHelper } from "@app/services/data/data-history-stats.helper";
 import { DataInterfaceHelper } from "@app/services/data/data-interface.helper";
 import { DataRaceControlHelper } from "@app/services/data/data-race-control.helper";
+import { DataSocketHelper } from "@app/services/data/data-socket.helper";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
@@ -95,16 +92,16 @@ export class DataService {
   }
 
   private connectionIntent = "";
-  private lastRaceTimeReceivedAt = 0;
-  private raceSubscriptionStartedAt = 0;
 
   private assetHelper: DataAssetHelper;
   private interfaceHelper: DataInterfaceHelper;
   private raceControlHelper: DataRaceControlHelper;
   private historyStatsHelper: DataHistoryStatsHelper;
   private crudHelper: DataEntityCrudHelper;
+  private socketHelper: DataSocketHelper;
 
   public assets$: Observable<IAssetMessage[]>;
+  public socketConnected$: Observable<boolean>;
 
   constructor(
     private http: HttpClient,
@@ -154,6 +151,17 @@ export class DataService {
       () => this.baseUrl,
     );
     this.crudHelper = new DataEntityCrudHelper(this.http, () => this.baseUrl);
+    this.socketHelper = new DataSocketHelper(
+      this.ngZone,
+      this.logger,
+      () => ({
+        serverIp: this.serverIp,
+        serverPort: this.serverPort,
+        wsProtocol: this.wsProtocol,
+      }),
+      this,
+    );
+    this.socketConnected$ = this.socketHelper.socketConnected$;
   }
 
   public setServerAddress(ip: string, port: number) {
@@ -162,10 +170,7 @@ export class DataService {
     }
     this.serverIp = ip;
     this.serverPort = port;
-    if (this.raceDataSocket) {
-      this.raceDataSocket.close();
-      this.raceDataSocket = undefined;
-    }
+    this.socketHelper.disconnectFromRaceDataSocket();
   }
 
   public setConnectionIntent(intent: string) {
@@ -658,430 +663,170 @@ export class DataService {
     return this.assetHelper.renameAsset(id, newName);
   }
 
-  private raceDataSocket?: WebSocket;
-  private interfaceDataSocket?: WebSocket;
-  private raceTimeSubject = new BehaviorSubject<IRaceTime>({
-    time: 0,
-  });
-  private lapSubject = new Subject<ILap>();
-  private standingsSubject = new ReplaySubject<IStandingsUpdate>(1);
-  private overallStandingsSubject = new ReplaySubject<IOverallStandingsUpdate>(
-    1,
-  );
-  private groupStandingsSubject = new ReplaySubject<IGroupStandingsUpdate>(1);
-  private raceUpdateSubject = new ReplaySubject<IRace>(1);
-  private interfaceEventSubject = new Subject<IInterfaceEvent>();
-  private carDataSubject = new Subject<ICarData>();
-  private segmentSubject = new Subject<ISegment>();
-  private raceStateSubject = new BehaviorSubject<RaceState>(
-    RaceState.UNKNOWN_STATE,
-  );
-  private flagSubject = new BehaviorSubject<RaceFlag>(RaceFlag.UNKNOWN_FLAG);
-  private recordDataSubject = new ReplaySubject<IRecordData>(1);
-  private heatSubject = new Subject<IHeat>();
-  private systemStateSubject = new BehaviorSubject<SystemState | null>(null);
-  private socketConnectedSubject = new BehaviorSubject<boolean>(false);
-  public socketConnected$ = this.socketConnectedSubject.asObservable();
-
-  private shouldSubscribeToRaceData = false;
-  private isInterfaceSocketExplicitlyDisconnected = false;
-  private isRaceDataSocketExplicitlyDisconnected = false;
-
-  public clearRaceData() {
-    this.raceStateSubject.next(RaceState.UNKNOWN_STATE);
-    this.flagSubject.next(RaceFlag.UNKNOWN_FLAG);
-    this.raceTimeSubject.next({ time: 0 });
-    this.lastRaceTimeReceivedAt = 0;
-    this.raceSubscriptionStartedAt = 0;
-
-    const clearReplay = (subject: any) => {
-      if (subject && Array.isArray(subject._buffer)) {
-        subject._buffer.length = 0;
-      }
-    };
-    clearReplay(this.standingsSubject);
-    clearReplay(this.overallStandingsSubject);
-    clearReplay(this.groupStandingsSubject);
-    clearReplay(this.raceUpdateSubject);
-    clearReplay(this.recordDataSubject);
+  public get raceDataSocket(): WebSocket | undefined {
+    return this.socketHelper.raceDataSocket;
+  }
+  public set raceDataSocket(val: WebSocket | undefined) {
+    this.socketHelper.raceDataSocket = val;
+  }
+  public get interfaceDataSocket(): WebSocket | undefined {
+    return this.socketHelper.interfaceDataSocket;
+  }
+  public set interfaceDataSocket(val: WebSocket | undefined) {
+    this.socketHelper.interfaceDataSocket = val;
+  }
+  public get isInterfaceSocketExplicitlyDisconnected(): boolean {
+    return this.socketHelper.isInterfaceSocketExplicitlyDisconnected;
+  }
+  public set isInterfaceSocketExplicitlyDisconnected(val: boolean) {
+    this.socketHelper.isInterfaceSocketExplicitlyDisconnected = val;
+  }
+  public get isRaceDataSocketExplicitlyDisconnected(): boolean {
+    return this.socketHelper.isRaceDataSocketExplicitlyDisconnected;
+  }
+  public set isRaceDataSocketExplicitlyDisconnected(val: boolean) {
+    this.socketHelper.isRaceDataSocketExplicitlyDisconnected = val;
+  }
+  public get shouldSubscribeToRaceData(): boolean {
+    return this.socketHelper.shouldSubscribeToRaceData;
+  }
+  public set shouldSubscribeToRaceData(val: boolean) {
+    this.socketHelper.shouldSubscribeToRaceData = val;
+  }
+  public get lastRaceTimeReceivedAt(): number {
+    return this.socketHelper.lastRaceTimeReceivedAt;
+  }
+  public set lastRaceTimeReceivedAt(val: number) {
+    this.socketHelper.lastRaceTimeReceivedAt = val;
+  }
+  public get raceSubscriptionStartedAt(): number {
+    return this.socketHelper.raceSubscriptionStartedAt;
+  }
+  public set raceSubscriptionStartedAt(val: number) {
+    this.socketHelper.raceSubscriptionStartedAt = val;
   }
 
+  public get raceTimeSubject() {
+    return this.socketHelper.raceTimeSubject;
+  }
+  public get lapSubject() {
+    return this.socketHelper.lapSubject;
+  }
+  public get standingsSubject() {
+    return this.socketHelper.standingsSubject;
+  }
+  public get overallStandingsSubject() {
+    return this.socketHelper.overallStandingsSubject;
+  }
+  public get groupStandingsSubject() {
+    return this.socketHelper.groupStandingsSubject;
+  }
+  public get raceUpdateSubject() {
+    return this.socketHelper.raceUpdateSubject;
+  }
+  public get interfaceEventSubject() {
+    return this.socketHelper.interfaceEventSubject;
+  }
+  public get carDataSubject() {
+    return this.socketHelper.carDataSubject;
+  }
+  public get segmentSubject() {
+    return this.socketHelper.segmentSubject;
+  }
+  public get raceStateSubject() {
+    return this.socketHelper.raceStateSubject;
+  }
+  public get flagSubject() {
+    return this.socketHelper.flagSubject;
+  }
+  public get recordDataSubject() {
+    return this.socketHelper.recordDataSubject;
+  }
+  public get heatSubject() {
+    return this.socketHelper.heatSubject;
+  }
+  public get systemStateSubject() {
+    return this.socketHelper.systemStateSubject;
+  }
+  public get socketConnectedSubject() {
+    return this.socketHelper.socketConnectedSubject;
+  }
+
+  public clearRaceData(): void {
+    this.socketHelper.clearRaceData();
+  }
   public resetSocketState(): void {
-    this.shouldSubscribeToRaceData = false;
-    this.isInterfaceSocketExplicitlyDisconnected = false;
-    this.isRaceDataSocketExplicitlyDisconnected = false;
+    this.socketHelper.resetSocketState();
   }
-
-  public updateRaceSubscription(subscribe: boolean) {
-    this.shouldSubscribeToRaceData = subscribe;
-    if (subscribe) {
-      this.raceSubscriptionStartedAt =
-        typeof performance !== "undefined" ? performance.now() : Date.now();
-    } else {
-      this.clearRaceData();
-    }
-    if (
-      this.raceDataSocket &&
-      this.raceDataSocket.readyState === WebSocket.OPEN
-    ) {
-      this.sendRaceSubscriptionRequest(subscribe);
-    } else {
-      this.logger.warn(
-        "Race Data WebSocket not open. Triggering connection check and queuing subscription.",
-      );
-      // If we are completely disconnected, rely on the reconnect loop or trigger one now
-      this.connectToRaceDataSocket();
-      // Subscription will be sent on open
-    }
+  public updateRaceSubscription(subscribe: boolean): void {
+    this.socketHelper.updateRaceSubscription(subscribe);
   }
-
-  private sendRaceSubscriptionRequest(subscribe: boolean) {
-    if (
-      !this.raceDataSocket ||
-      this.raceDataSocket.readyState !== WebSocket.OPEN
-    ) {
-      return;
-    }
-
-    const request = RaceSubscriptionRequest.create({
-      subscribe,
-    });
-    const buffer = RaceSubscriptionRequest.encode(request).finish();
-    this.raceDataSocket.send(buffer);
-    this.logger.info(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
+  public sendRaceSubscriptionRequest(subscribe: boolean): void {
+    this.socketHelper.sendRaceSubscriptionRequest(subscribe);
   }
-
-  private handleRaceDataMessage(event: MessageEvent) {
-    this.ngZone.run(() => {
-      try {
-        const now =
-          typeof performance !== "undefined" ? performance.now() : Date.now();
-        const dispatchDelay =
-          event &&
-          typeof event.timeStamp === "number" &&
-          event.timeStamp > 0 &&
-          event.timeStamp <= now
-            ? Math.round(now - event.timeStamp)
-            : -1;
-
-        if (dispatchDelay > 100) {
-          this.logger.warn(
-            `[PERF] Browser main-thread freeze: message dispatch delayed by ${dispatchDelay}ms (UI rendering or long task blocked event loop)`,
-          );
-        }
-
-        const arrayBuffer = event.data as ArrayBuffer;
-        const raceData = RaceData.decode(
-          Reader.create(new Uint8Array(arrayBuffer)),
-        );
-
-        const previousState = this.raceStateSubject.value;
-        let newState = previousState;
-        if (raceData.raceState) {
-          this.logger.debug("WS: Received RaceState", raceData.raceState);
-          newState = raceData.raceState;
-          this.raceStateSubject.next(raceData.raceState);
-        }
-        if (raceData.race) {
-          this.logger.debug("WS: Received Race", raceData.race);
-          this.raceUpdateSubject.next(raceData.race);
-          if (raceData.race.state) {
-            newState = raceData.race.state;
-            this.raceStateSubject.next(raceData.race.state);
-          }
-          if (raceData.race.flag) {
-            this.flagSubject.next(raceData.race.flag);
-          }
-          if (raceData.race.currentHeat) {
-            this.heatSubject.next(raceData.race.currentHeat);
-          }
-        }
-        if (newState !== previousState) {
-          this.lastRaceTimeReceivedAt = 0;
-        }
-        if (raceData.raceTime) {
-          this.handleRaceTimeMessage(
-            raceData.raceTime,
-            newState,
-            now,
-            dispatchDelay,
-          );
-        }
-        this.dispatchTelemetryUpdates(raceData);
-      } catch (e) {
-        this.logger.error("Error parsing race data message", e);
-      }
-    });
+  public handleRaceDataMessage(event: MessageEvent): void {
+    this.socketHelper.handleRaceDataMessage(event);
   }
-
-  private handleRaceTimeMessage(
-    raceTime: IRaceTime,
-    raceState: RaceState,
-    now: number,
-    dispatchDelay: number,
-  ): void {
-    const isTicking =
-      raceState === RaceState.STARTING ||
-      raceState === RaceState.RACING ||
-      (raceTime.autoStartRemaining ?? 0) > 0 ||
-      (raceTime.autoAdvanceRemaining ?? 0) > 0;
-
-    if (isTicking && this.lastRaceTimeReceivedAt > 0) {
-      const isHydrationGracePeriod =
-        this.raceSubscriptionStartedAt > 0 &&
-        now - this.raceSubscriptionStartedAt < 3000;
-      const gap = Math.round(now - this.lastRaceTimeReceivedAt);
-      if (gap > 450 && !isHydrationGracePeriod) {
-        const delayInfo =
-          dispatchDelay >= 0
-            ? `, browser dispatch delay: ${dispatchDelay}ms`
-            : "";
-        this.logger.warn(
-          `[PERF] RaceTime WebSocket interval lag: ${gap}ms (expected ~100ms${delayInfo})`,
-        );
-      }
-    }
-    this.lastRaceTimeReceivedAt = isTicking ? now : 0;
-    this.raceTimeSubject.next(raceTime);
+  public connectToRaceDataSocket(): void {
+    this.socketHelper.connectToRaceDataSocket();
   }
-
-  private dispatchTelemetryUpdates(raceData: RaceData): void {
-    if (raceData.standingsUpdate) {
-      this.standingsSubject.next(raceData.standingsUpdate);
-    }
-    if (raceData.overallStandingsUpdate) {
-      this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-    }
-    if (raceData.groupStandingsUpdate) {
-      this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
-    }
-    if (raceData.lap) {
-      this.lapSubject.next(raceData.lap);
-    }
-    if (raceData.carData) {
-      this.carDataSubject.next(raceData.carData);
-    }
-    if (raceData.segment) {
-      this.segmentSubject.next(raceData.segment);
-    }
-    if (raceData.flag) {
-      this.logger.debug("WS: Received RaceFlag", raceData.flag);
-      this.flagSubject.next(raceData.flag);
-    }
-    if (raceData.recordData) {
-      this.recordDataSubject.next(raceData.recordData);
-    }
-    if (raceData.heat) {
-      this.logger.debug("WS: Received Heat", raceData.heat);
-      this.heatSubject.next(raceData.heat);
-    }
-    if (raceData.systemState) {
-      this.systemStateSubject.next(raceData.systemState as SystemState);
-    }
+  public connectToInterfaceDataSocket(): void {
+    this.socketHelper.connectToInterfaceDataSocket();
   }
-
-  public connectToRaceDataSocket() {
-    if (
-      this.raceDataSocket &&
-      (this.raceDataSocket.readyState === WebSocket.OPEN ||
-        this.raceDataSocket.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-
-    this.isRaceDataSocketExplicitlyDisconnected = false;
-
-    if (this.raceDataSocket) {
-      try {
-        this.raceDataSocket.close();
-      } catch (e) {}
-    }
-
-    const wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/race-data`;
-    this.logger.debug(`Connecting to Race WebSocket: ${wsUrl}`);
-    this.raceDataSocket = new WebSocket(wsUrl);
-    this.raceDataSocket.binaryType = "arraybuffer";
-
-    this.raceDataSocket.onopen = () => {
-      this.logger.info("Connected to Race WebSocket");
-      this.socketConnectedSubject.next(true);
-      if (this.shouldSubscribeToRaceData) {
-        this.sendRaceSubscriptionRequest(true);
-      }
-    };
-
-    this.raceDataSocket.onmessage = (event) => {
-      this.handleRaceDataMessage(event);
-    };
-
-    this.raceDataSocket.onerror = (error) => {
-      this.logger.error("Race WebSocket error", error);
-    };
-
-    this.raceDataSocket.onclose = () => {
-      this.logger.info("Race WebSocket closed");
-      this.raceDataSocket = undefined;
-      this.socketConnectedSubject.next(false);
-      if (!this.isRaceDataSocketExplicitlyDisconnected) {
-        setTimeout(() => {
-          if (!this.isRaceDataSocketExplicitlyDisconnected) {
-            this.connectToRaceDataSocket();
-          }
-        }, 2000);
-      }
-    };
+  public disconnectFromInterfaceDataSocket(): void {
+    this.socketHelper.disconnectFromInterfaceDataSocket();
   }
-
-  public connectToInterfaceDataSocket() {
-    if (
-      this.interfaceDataSocket &&
-      (this.interfaceDataSocket.readyState === WebSocket.OPEN ||
-        this.interfaceDataSocket.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-
-    this.isInterfaceSocketExplicitlyDisconnected = false;
-
-    if (this.interfaceDataSocket) {
-      try {
-        this.interfaceDataSocket.close();
-      } catch (e) {}
-    }
-
-    const wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/interface-data`;
-    this.logger.debug(`Connecting to Interface WebSocket: ${wsUrl}`);
-    this.interfaceDataSocket = new WebSocket(wsUrl);
-    this.interfaceDataSocket.binaryType = "arraybuffer";
-
-    this.interfaceDataSocket.onopen = () => {
-      this.logger.info("Connected to Interface WebSocket");
-    };
-
-    this.interfaceDataSocket.onmessage = (event) => {
-      this.ngZone.run(() => {
-        try {
-          const data = event.data;
-          let uint8Array: Uint8Array;
-
-          if (data instanceof ArrayBuffer) {
-            uint8Array = new Uint8Array(data);
-          } else if (typeof data === "string") {
-            try {
-              const trimmed = data.trim().replace(/^"|"$/g, "");
-              const binaryString = atob(trimmed);
-              uint8Array = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
-                uint8Array[i] = binaryString.charCodeAt(i);
-              }
-            } catch (e) {
-              this.logger.error(
-                "Failed to decode Base64 WebSocket message. Data was:",
-                data,
-                e,
-              );
-              return;
-            }
-          } else {
-            this.logger.warn(
-              "Received unknown data type from Interface WebSocket",
-              typeof data,
-            );
-            return;
-          }
-
-          const msg = InterfaceEvent.decode(Reader.create(uint8Array));
-          this.interfaceEventSubject.next(msg);
-        } catch (e) {
-          this.logger.error("Error decoding Interface WebSocket message", e);
-        }
-      });
-    };
-
-    this.interfaceDataSocket.onerror = (error) => {
-      this.logger.error("Interface WebSocket error", error);
-    };
-
-    this.interfaceDataSocket.onclose = () => {
-      this.logger.info("Interface WebSocket closed");
-      this.interfaceDataSocket = undefined;
-      if (!this.isInterfaceSocketExplicitlyDisconnected) {
-        this.logger.info("Reconnecting Interface WebSocket in 2 seconds...");
-        setTimeout(() => {
-          if (!this.isInterfaceSocketExplicitlyDisconnected) {
-            this.connectToInterfaceDataSocket();
-          }
-        }, 2000);
-      }
-    };
+  public disconnectFromRaceDataSocket(): void {
+    this.socketHelper.disconnectFromRaceDataSocket();
   }
-
-  public disconnectFromInterfaceDataSocket() {
-    this.isInterfaceSocketExplicitlyDisconnected = true;
-    if (this.interfaceDataSocket) {
-      this.interfaceDataSocket.close();
-      this.interfaceDataSocket = undefined;
-    }
-  }
-
-  public disconnectFromRaceDataSocket() {
-    this.isRaceDataSocketExplicitlyDisconnected = true;
-    if (this.raceDataSocket) {
-      this.raceDataSocket.close();
-      this.raceDataSocket = undefined;
-      this.socketConnectedSubject.next(false);
-    }
-  }
-
-  public disconnectAllSockets() {
+  public disconnectAllSockets(): void {
     this.disconnectFromInterfaceDataSocket();
     this.disconnectFromRaceDataSocket();
   }
-
   public getRaceTime(): Observable<IRaceTime> {
-    return this.raceTimeSubject.asObservable();
+    return this.socketHelper.getRaceTime();
   }
   public getLaps(): Observable<ILap> {
-    return this.lapSubject.asObservable();
+    return this.socketHelper.getLaps();
   }
   public getStandingsUpdate(): Observable<IStandingsUpdate> {
-    return this.standingsSubject.asObservable();
+    return this.socketHelper.getStandingsUpdate();
   }
   public getOverallStandingsUpdate(): Observable<IOverallStandingsUpdate> {
-    return this.overallStandingsSubject.asObservable();
+    return this.socketHelper.getOverallStandingsUpdate();
   }
   public getGroupStandingsUpdate(): Observable<IGroupStandingsUpdate> {
-    return this.groupStandingsSubject.asObservable();
+    return this.socketHelper.getGroupStandingsUpdate();
   }
   public getRaceUpdate(): Observable<IRace> {
-    return this.raceUpdateSubject.asObservable();
+    return this.socketHelper.getRaceUpdate();
   }
   public getInterfaceEvents(): Observable<IInterfaceEvent> {
-    return this.interfaceEventSubject.asObservable();
+    return this.socketHelper.getInterfaceEvents();
   }
   public getRaceState(): Observable<RaceState> {
-    return this.raceStateSubject.asObservable();
+    return this.socketHelper.getRaceState();
   }
   public getRaceFlag(): Observable<RaceFlag> {
-    return this.flagSubject.asObservable();
+    return this.socketHelper.getRaceFlag();
   }
   public getCarData(): Observable<ICarData> {
-    return this.carDataSubject.asObservable();
+    return this.socketHelper.getCarData();
   }
   public getSegments(): Observable<ISegment> {
-    return this.segmentSubject.asObservable();
+    return this.socketHelper.getSegments();
   }
   public getRecordData(): Observable<IRecordData> {
-    return this.recordDataSubject.asObservable();
+    return this.socketHelper.getRecordData();
   }
   public getHeats(): Observable<IHeat> {
-    return this.heatSubject.asObservable();
+    return this.socketHelper.getHeats();
   }
   public getSystemState(): Observable<SystemState | null> {
-    return this.systemStateSubject.asObservable();
+    return this.socketHelper.getSystemState();
   }
   public getSystemStateValue(): SystemState | null {
-    return this.systemStateSubject.value;
+    return this.socketHelper.getSystemStateValue();
   }
 
   public resetLaneHeatData(lane: number | string): Observable<boolean> {
