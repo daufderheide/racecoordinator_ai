@@ -1,3 +1,4 @@
+import { firstValueFrom } from "rxjs";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridRepairHelper } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
@@ -51,6 +52,12 @@ import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, LayoutScaleMode, Settings } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
+
+import {
+  buildDuplicateLayoutTemplate,
+  buildNewLayoutTemplate,
+} from "./layout-editor.helper";
 
 export function parseLayoutConfig(
   ui: CustomUI | null | undefined,
@@ -561,6 +568,99 @@ export function canUpgradeLegacyHeatView(ui: CustomUI): boolean {
   if (!ui?.entity_id) return false;
   const layout = parseLayoutConfig(ui);
   return LaneViewMigrationHelper.canUpgradeLegacyHeatView(layout, ui?.name);
+}
+
+export async function handleStartNewLayout(comp: any): Promise<void> {
+  comp.isSaving = true;
+  try {
+    const template = buildNewLayoutTemplate(
+      comp.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME") ||
+        "New UI Layout",
+      comp.allLayouts,
+    );
+    const created: CustomUI = await firstValueFrom(
+      comp.dataService.createCustomUI(template),
+    );
+    if (created) {
+      comp.allLayouts.push(created);
+      comp.selectLayoutById(created.entity_id);
+      comp.isEditMode = true;
+    }
+  } catch (err) {
+    comp.logger.error("Failed to create layout", err);
+  } finally {
+    comp.isSaving = false;
+    comp.cdr.markForCheck();
+  }
+}
+
+export async function handleDuplicateCurrentLayout(comp: any): Promise<void> {
+  if (!comp.editingLayout) return;
+  comp.isSaving = true;
+  try {
+    const template = buildDuplicateLayoutTemplate(
+      comp.editingLayout,
+      comp.allLayouts,
+    );
+    const created: CustomUI = await firstValueFrom(
+      comp.dataService.createCustomUI(template),
+    );
+    if (created) {
+      comp.allLayouts.push(created);
+      comp.selectLayoutById(created.entity_id);
+      comp.isEditMode = true;
+    }
+  } catch (err) {
+    comp.logger.error("Failed to duplicate layout", err);
+  } finally {
+    comp.isSaving = false;
+    comp.cdr.markForCheck();
+  }
+}
+
+export async function handleDeleteCurrentLayout(comp: any): Promise<void> {
+  if (!comp.editingLayout) return;
+  const idToDelete = comp.editingLayout.entity_id;
+  comp.showDeleteConfirm = false;
+  comp.isSaving = true;
+  try {
+    await firstValueFrom(comp.dataService.deleteCustomUI(idToDelete));
+    const next = getNextSelectionAfterDelete(comp.allLayouts, idToDelete);
+    comp.allLayouts = comp.allLayouts.filter(
+      (u: any) => u.entity_id !== idToDelete,
+    );
+    comp.isEditMode = false;
+    if (next) {
+      comp.selectLayoutById(next.entity_id);
+    }
+  } catch (err) {
+    comp.logger.error("Failed to delete layout", err);
+  } finally {
+    comp.isSaving = false;
+    comp.cdr.markForCheck();
+  }
+}
+
+export function handleOpenReviewStackedColumnsModal(comp: any): void {
+  if (comp.editingLayout) {
+    const layout = parseLayoutConfig(comp.editingLayout);
+    const res = LaneGridRepairHelper.detectStackedColumns(
+      layout,
+      comp.availableColumns,
+    );
+    comp.detectedStackedIssues = res.issues || [];
+  }
+  comp.showReviewStackedColumnsModal = true;
+}
+
+export function handleRestorePreMigrationBackup(comp: any): void {
+  if (comp.editingLayout) {
+    const res = restorePreMigrationLayout(comp.editingLayout, comp.allLayouts);
+    if (res.restored) {
+      comp.captureState();
+      comp.cdr.markForCheck();
+    }
+  }
 }
 
 export {

@@ -73,8 +73,16 @@ module.exports = function (config) {
         var suiteTimes = {};
         var currentSuite = "";
         var currentSuiteStart = Date.now();
+        var failedSpecs = [];
 
         this.onSpecComplete = function (browser, result) {
+          if (!result.success) {
+            failedSpecs.push({
+              suite: (result.suite || []).join(" > "),
+              description: result.description,
+              log: result.log || [],
+            });
+          }
           var suiteName = (result.suite && result.suite[0]) || "unknown";
           if (suiteName !== currentSuite) {
             if (currentSuite) {
@@ -115,6 +123,23 @@ module.exports = function (config) {
           console.log(
             "====================================================================\n",
           );
+
+          if (failedSpecs.length > 0) {
+            console.log(
+              "\n======================== ❌ FAILED SPECS ❌ ========================",
+            );
+            failedSpecs.forEach(function (f) {
+              console.log("FAIL: " + f.suite + " > " + f.description);
+              if (f.log && f.log.length > 0) {
+                f.log.forEach(function (line) {
+                  console.log("  " + line);
+                });
+              }
+            });
+            console.log(
+              "====================================================================\n",
+            );
+          }
         };
       },
     ],

@@ -13,4 +13,14 @@ export interface DirtyComponent {
    * Optional method returning translation keys for reasons why changes could not be saved.
    */
   getUnsavedReasons?(): string[];
+
+  /**
+   * Optional confirmation method returning a Promise or boolean to prompt custom confirmation modal.
+   */
+  confirmDiscard?(): Promise<boolean> | boolean;
+
+  /**
+   * Optional deactivation hook returning a Promise or boolean.
+   */
+  canDeactivate?(): Promise<boolean> | boolean;
 }

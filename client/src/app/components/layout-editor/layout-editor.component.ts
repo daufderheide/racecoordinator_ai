@@ -13,10 +13,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { catchError, firstValueFrom, of, Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
-import {
-  LaneGridRepairHelper,
-  StackedColumnIssue,
-} from "@app/components/raceday/utils/lane-grid-repair.helper";
+import { StackedColumnIssue } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import { LaneGridSession } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -44,16 +41,11 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import {
-  getNextSelectionAfterDelete,
-  SelectItem,
-} from "@app/utils/editor-utils";
+import { SelectItem } from "@app/utils/editor-utils";
 
 import {
   areLayoutsEqual,
-  buildDuplicateLayoutTemplate,
   buildLayoutSelectItems,
-  buildNewLayoutTemplate,
   cloneLayout,
   createFallbackDefaultLayouts,
   getLayoutUnsavedReasons,
@@ -84,11 +76,16 @@ import {
   getStackedColumnsBannerDesc,
   getWidgetDisplayName,
   getWidgetTypeLabelKey,
+  handleDeleteCurrentLayout,
+  handleDuplicateCurrentLayout,
   handleGridBringToFront,
   handleGridDelete,
   handleGridDetach,
   handleGridReMirror,
   handleGridTemplateEdit,
+  handleOpenReviewStackedColumnsModal,
+  handleRestorePreMigrationBackup,
+  handleStartNewLayout,
   hasStackedColumns,
   isCountdownPreviewActive,
   isCustomWidget,
@@ -112,7 +109,6 @@ import {
   removeSelectedWidget,
   resetLayout,
   resetLayoutZoom,
-  restorePreMigrationLayout,
   saveLayoutZoomToStorage,
   setLayoutAspectRatio,
   setLayoutScaleMode,
@@ -157,6 +153,7 @@ export class LayoutEditorComponent
   isEditMode = false;
   isLoading = true;
   isSaving = false;
+  isAutoSaving = false;
 
   undoManager!: UndoManager<CustomUI>;
   lifecycle!: EditorLifecycleHelper;
@@ -209,6 +206,7 @@ export class LayoutEditorComponent
   defaultUiNames: { [id: string]: string } = {};
   parsedLayouts = new Map<string, LayoutConfig>();
 
+  private subscriptions: Subscription[] = [];
   private queryParamSub?: Subscription;
 
   public navigationService = inject(NavigationService, { optional: true });
@@ -286,6 +284,7 @@ export class LayoutEditorComponent
   }
 
   ngOnDestroy(): void {
+    this.subscriptions.forEach((s) => s.unsubscribe());
     this.queryParamSub?.unsubscribe();
     this.raceConnectionService?.disconnect();
 
@@ -336,6 +335,18 @@ export class LayoutEditorComponent
       },
       () => (this.editingLayout ? cloneLayout(this.editingLayout) : undefined),
     );
+
+    this.subscriptions.push(
+      this.undoManager.stateCommitted$.subscribe((event) => {
+        if (
+          event.type === "push" ||
+          event.type === "undo" ||
+          event.type === "redo"
+        ) {
+          this.autoSaveLayout();
+        }
+      }),
+    );
   }
 
   private initLifecycle(): void {
@@ -364,6 +375,8 @@ export class LayoutEditorComponent
       hasChanges: () => this.isDirtyState(),
       isSaveValid: () => this.isConfigValid(),
       isSaving: () => this.isSaving,
+      onAutoSave: () => this.saveCurrentLayout(true),
+      autoSaveOnDiscard: true,
       logger: this.logger,
     });
   }
@@ -497,7 +510,7 @@ export class LayoutEditorComponent
     }
     return (
       !areLayoutsEqual(this.editingLayout, this.originalLayout) ||
-      this.undoManager.canUndo()
+      (this.undoManager ? this.undoManager.hasChanges() : false)
     );
   }
 
@@ -512,9 +525,13 @@ export class LayoutEditorComponent
     );
   }
 
+  confirmDiscard(): Promise<boolean> {
+    return this.lifecycle.confirmDiscard();
+  }
+
   canDeactivate(): Promise<boolean> | boolean {
     if (this.isDirtyState()) {
-      return this.lifecycle.confirmDiscard();
+      return this.confirmDiscard();
     }
     return true;
   }
@@ -525,6 +542,12 @@ export class LayoutEditorComponent
 
   onCancelDiscard(): void {
     this.lifecycle.onCancelDiscard();
+  }
+
+  autoSaveLayout(): Promise<any> {
+    if (!this.editingLayout || !this.isEditMode) return Promise.resolve();
+    if (!this.isConfigValid()) return Promise.resolve();
+    return this.lifecycle.scheduleAutoSave(() => this.saveCurrentLayout(true));
   }
 
   captureState(): void {
@@ -560,9 +583,14 @@ export class LayoutEditorComponent
     }
   }
 
-  async saveCurrentLayout(): Promise<void> {
+  async saveCurrentLayout(isAutoSave = false): Promise<any> {
     if (!this.editingLayout) return;
-    this.isSaving = true;
+    if (this.isSaving) return;
+    if (isAutoSave) {
+      this.isAutoSaving = true;
+    } else {
+      this.isSaving = true;
+    }
     try {
       const saved = await firstValueFrom(
         this.dataService.updateCustomUI(
@@ -578,14 +606,26 @@ export class LayoutEditorComponent
           this.allLayouts[index] = cloneLayout(this.editingLayout);
         }
         this.originalLayout = cloneLayout(this.editingLayout);
-        this.undoManager.initialize(this.editingLayout);
-        this.isEditMode = false;
+        if (isAutoSave) {
+          this.undoManager.resetTracking(this.editingLayout);
+        } else {
+          this.undoManager.initialize(this.editingLayout);
+          this.isEditMode = false;
+        }
       }
+      return saved;
     } catch (err) {
       this.logger.error("Failed to save layout", err);
-      alert(this.translationService.translate("UE_ERROR_SAVE_FAILED"));
+      if (!isAutoSave) {
+        alert(this.translationService.translate("UE_ERROR_SAVE_FAILED"));
+      }
+      throw err;
     } finally {
-      this.isSaving = false;
+      if (isAutoSave) {
+        this.isAutoSaving = false;
+      } else {
+        this.isSaving = false;
+      }
       this.cdr.markForCheck();
     }
   }
@@ -602,28 +642,8 @@ export class LayoutEditorComponent
     }
   }
 
-  async startNewLayout(): Promise<void> {
-    this.isSaving = true;
-    try {
-      const template = buildNewLayoutTemplate(
-        this.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME") ||
-          "New UI Layout",
-        this.allLayouts,
-      );
-      const created = await firstValueFrom(
-        this.dataService.createCustomUI(template),
-      );
-      if (created) {
-        this.allLayouts.push(created);
-        this.selectLayoutById(created.entity_id);
-        this.isEditMode = true;
-      }
-    } catch (err) {
-      this.logger.error("Failed to create layout", err);
-    } finally {
-      this.isSaving = false;
-      this.cdr.markForCheck();
-    }
+  startNewLayout(): Promise<void> {
+    return handleStartNewLayout(this);
   }
 
   onCopyLayout(): void {
@@ -639,28 +659,8 @@ export class LayoutEditorComponent
     }
   }
 
-  async duplicateCurrentLayout(): Promise<void> {
-    if (!this.editingLayout) return;
-    this.isSaving = true;
-    try {
-      const template = buildDuplicateLayoutTemplate(
-        this.editingLayout,
-        this.allLayouts,
-      );
-      const created = await firstValueFrom(
-        this.dataService.createCustomUI(template),
-      );
-      if (created) {
-        this.allLayouts.push(created);
-        this.selectLayoutById(created.entity_id);
-        this.isEditMode = true;
-      }
-    } catch (err) {
-      this.logger.error("Failed to duplicate layout", err);
-    } finally {
-      this.isSaving = false;
-      this.cdr.markForCheck();
-    }
+  duplicateCurrentLayout(): Promise<void> {
+    return handleDuplicateCurrentLayout(this);
   }
 
   onDeleteLayout(): void {
@@ -668,27 +668,8 @@ export class LayoutEditorComponent
     this.showDeleteConfirm = true;
   }
 
-  async onConfirmDeleteLayout(): Promise<void> {
-    if (!this.editingLayout) return;
-    const idToDelete = this.editingLayout.entity_id;
-    this.showDeleteConfirm = false;
-    this.isSaving = true;
-    try {
-      await firstValueFrom(this.dataService.deleteCustomUI(idToDelete));
-      const next = getNextSelectionAfterDelete(this.allLayouts, idToDelete);
-      this.allLayouts = this.allLayouts.filter(
-        (u) => u.entity_id !== idToDelete,
-      );
-      this.isEditMode = false;
-      if (next) {
-        this.selectLayoutById(next.entity_id);
-      }
-    } catch (err) {
-      this.logger.error("Failed to delete layout", err);
-    } finally {
-      this.isSaving = false;
-      this.cdr.markForCheck();
-    }
+  onConfirmDeleteLayout(): Promise<void> {
+    return handleDeleteCurrentLayout(this);
   }
 
   onCancelDeleteLayout(): void {
@@ -1081,15 +1062,7 @@ export class LayoutEditorComponent
   }
 
   openReviewStackedColumnsModal(): void {
-    if (this.editingLayout) {
-      const layout = parseLayoutConfig(this.editingLayout);
-      const res = LaneGridRepairHelper.detectStackedColumns(
-        layout,
-        this.availableColumns,
-      );
-      this.detectedStackedIssues = res.issues || [];
-    }
-    this.showReviewStackedColumnsModal = true;
+    handleOpenReviewStackedColumnsModal(this);
   }
 
   quickFixStackedColumns(): void {
@@ -1103,16 +1076,7 @@ export class LayoutEditorComponent
   }
 
   restorePreMigrationBackup(): void {
-    if (this.editingLayout) {
-      const res = restorePreMigrationLayout(
-        this.editingLayout,
-        this.allLayouts,
-      );
-      if (res.restored) {
-        this.captureState();
-        this.cdr.markForCheck();
-      }
-    }
+    handleRestorePreMigrationBackup(this);
   }
 
   exportMigrationDiagnostics(): void {

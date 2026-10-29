@@ -18,6 +18,9 @@ export class DirtyCheckGuard implements CanDeactivate<DirtyComponent> {
       if ((component as any).confirmDiscard) {
         return (component as any).confirmDiscard();
       }
+      if ((component as any).canDeactivate) {
+        return (component as any).canDeactivate();
+      }
 
       const reasons = component.getUnsavedReasons?.() || [];
       const message = formatUnsavedChangesMessage(

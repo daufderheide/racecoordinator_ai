@@ -462,6 +462,50 @@ describe("LayoutEditorComponent", () => {
       expect(component.lifecycle.confirmDiscard).toHaveBeenCalled();
     });
 
+    it("confirmDiscard should delegate to lifecycle.confirmDiscard", () => {
+      spyOn(component.lifecycle, "confirmDiscard").and.returnValue(
+        Promise.resolve(true),
+      );
+      component.confirmDiscard();
+      expect(component.lifecycle.confirmDiscard).toHaveBeenCalled();
+    });
+
+    it("autoSaveLayout should save layout in background without exiting edit mode", async () => {
+      component.onSelectLayoutById("custom_ui_1");
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeTrue();
+
+      mockDataService.updateCustomUI.calls.reset();
+      component.editingLayout!.name = "Auto Saved Name";
+      component.captureState();
+
+      await (component as any).lifecycle.activeSavePromise;
+
+      expect(mockDataService.updateCustomUI).toHaveBeenCalledWith(
+        "custom_ui_1",
+        jasmine.objectContaining({ name: "Auto Saved Name" }),
+      );
+      expect(component.isEditMode).toBeTrue();
+      expect(component.isDirtyState()).toBeFalse();
+    });
+
+    it("canDeactivate should auto-save dirty layout before navigation", async () => {
+      component.onSelectLayoutById("custom_ui_1");
+      component.onToggleEditMode();
+
+      component.editingLayout!.name = "Nav Save Name";
+
+      mockDataService.updateCustomUI.calls.reset();
+      const allowed = await component.canDeactivate();
+
+      expect(allowed).toBeTrue();
+      expect(mockDataService.updateCustomUI).toHaveBeenCalledWith(
+        "custom_ui_1",
+        jasmine.objectContaining({ name: "Nav Save Name" }),
+      );
+      expect(component.isDirtyState()).toBeFalse();
+    });
+
     it("onBeforeUnload should prevent default when dirty", () => {
       const event: any = {
         preventDefault: jasmine.createSpy("preventDefault"),

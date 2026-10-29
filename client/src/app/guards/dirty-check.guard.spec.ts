@@ -44,6 +44,16 @@ describe("DirtyCheckGuard", () => {
     expect(component.confirmDiscard).toHaveBeenCalled();
   });
 
+  it("should delegate to canDeactivate if confirmDiscard is not provided", () => {
+    const component: DirtyComponent & { canDeactivate: () => boolean } = {
+      hasChanges: () => true,
+      isNavigationApproved: false,
+      canDeactivate: jasmine.createSpy("canDeactivate").and.returnValue(true),
+    };
+    expect(guard.canDeactivate(component)).toBeTrue();
+    expect(component.canDeactivate).toHaveBeenCalled();
+  });
+
   it("should fallback to window.confirm with formatted unsaved reasons", () => {
     const confirmSpy = spyOn(window, "confirm").and.returnValue(true);
     const component: DirtyComponent = {
