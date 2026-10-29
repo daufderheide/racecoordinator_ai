@@ -57,6 +57,7 @@ import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
 import {
   buildDuplicateLayoutTemplate,
   buildNewLayoutTemplate,
+  clearLastEditedLayoutId,
 } from "./layout-editor.helper";
 
 export function parseLayoutConfig(
@@ -632,6 +633,8 @@ export async function handleDeleteCurrentLayout(comp: any): Promise<void> {
     comp.isEditMode = false;
     if (next) {
       comp.selectLayoutById(next.entity_id);
+    } else {
+      clearLastEditedLayoutId(comp.navigationService);
     }
   } catch (err) {
     comp.logger.error("Failed to delete layout", err);

@@ -210,6 +210,11 @@ describe("LayoutEditorComponent", () => {
     mockNavigationService = {
       canGoBack: jasmine.createSpy("canGoBack").and.returnValue(false),
       goBack: jasmine.createSpy("goBack"),
+      setLastEditedId: jasmine.createSpy("setLastEditedId"),
+      getLastEditedId: jasmine
+        .createSpy("getLastEditedId")
+        .and.returnValue(null),
+      clearLastEditedId: jasmine.createSpy("clearLastEditedId"),
     };
 
     TestBed.overrideComponent(LayoutEditorComponent, {
@@ -239,6 +244,10 @@ describe("LayoutEditorComponent", () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    localStorage.removeItem("rc.last_edited_layout_id");
   });
 
   it("should initialize and load default layout", () => {
@@ -962,6 +971,82 @@ describe("LayoutEditorComponent", () => {
       component.onPageHide();
       expect(mockRaceConnectionService.disconnect).toHaveBeenCalled();
       expect(mockChildWindowManagerService.closeAllWindows).toHaveBeenCalled();
+    });
+  });
+
+  describe("Last Edited Layout Selection", () => {
+    it("should set lastEditedId in NavigationService when layout is initialized from query params", () => {
+      expect(mockNavigationService.setLastEditedId).toHaveBeenCalledWith(
+        "layout",
+        "default_ui_layout_rc_ai",
+      );
+    });
+
+    it("should update lastEditedId in NavigationService when selecting another layout", () => {
+      component.selectLayoutById("practice_ui_layout_rc_ai");
+      expect(mockNavigationService.setLastEditedId).toHaveBeenCalledWith(
+        "layout",
+        "practice_ui_layout_rc_ai",
+      );
+    });
+
+    it("should select last edited layout from NavigationService when navigating without id query param", async () => {
+      mockNavigationService.getLastEditedId.and.callFake((type: string) =>
+        type === "layout" ? "custom_ui_1" : null,
+      );
+      component.route.queryParams = of({});
+      await component.loadData();
+      expect(component.selectedLayoutId).toBe("custom_ui_1");
+    });
+
+    it("should fallback to localStorage when NavigationService returns null and query param is omitted", async () => {
+      mockNavigationService.getLastEditedId.and.returnValue(null);
+      localStorage.setItem(
+        "rc.last_edited_layout_id",
+        "practice_ui_layout_rc_ai",
+      );
+      component.route.queryParams = of({});
+      await component.loadData();
+      expect(component.selectedLayoutId).toBe("practice_ui_layout_rc_ai");
+    });
+
+    it("should fallback to first layout when no query param and no last edited layout exists", async () => {
+      mockNavigationService.getLastEditedId.and.returnValue(null);
+      localStorage.removeItem("rc.last_edited_layout_id");
+      component.route.queryParams = of({});
+      await component.loadData();
+      expect(component.selectedLayoutId).toBe("default_ui_layout_rc_ai");
+    });
+
+    it("should fallback to last edited layout when query param id does not exist", async () => {
+      mockNavigationService.getLastEditedId.and.callFake((type: string) =>
+        type === "layout" ? "custom_ui_1" : null,
+      );
+      component.route.queryParams = of({ id: "non_existent_layout" });
+      await component.loadData();
+      expect(component.selectedLayoutId).toBe("custom_ui_1");
+    });
+
+    it("should update lastEditedId when saving layout", async () => {
+      component.selectLayoutById("custom_ui_1");
+      mockNavigationService.setLastEditedId.calls.reset();
+      component.isEditMode = true;
+      await component.saveCurrentLayout();
+      expect(mockNavigationService.setLastEditedId).toHaveBeenCalledWith(
+        "layout",
+        "custom_ui_1",
+      );
+    });
+
+    it("should clear lastEditedId when the last remaining layout is deleted", async () => {
+      const soleLayout = component.allLayouts[0];
+      component.selectLayoutById(soleLayout.entity_id);
+      component.allLayouts = [soleLayout];
+      mockDataService.deleteCustomUI.and.returnValue(of(true));
+      await component.onConfirmDeleteLayout();
+      expect(mockNavigationService.clearLastEditedId).toHaveBeenCalledWith(
+        "layout",
+      );
     });
   });
 });

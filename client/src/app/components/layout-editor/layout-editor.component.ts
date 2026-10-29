@@ -48,10 +48,13 @@ import {
   buildLayoutSelectItems,
   cloneLayout,
   createFallbackDefaultLayouts,
+  getLastEditedLayoutId,
   getLayoutUnsavedReasons,
   isCustomUiDefault,
   isLayoutNameUnique,
   LAYOUT_AVAILABLE_COLUMNS,
+  resolveInitialLayout,
+  setLastEditedLayoutId,
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
 import {
@@ -418,10 +421,12 @@ export class LayoutEditorComponent
 
       this.queryParamSub = this.route.queryParams.subscribe((params) => {
         const targetId = params["id"] || params["layoutId"];
-        const found = targetId
-          ? this.allLayouts.find((u) => u.entity_id === targetId)
-          : null;
-        const initial = found || this.allLayouts[0];
+        const lastEditedId = getLastEditedLayoutId(this.navigationService);
+        const initial = resolveInitialLayout(
+          targetId,
+          this.allLayouts,
+          lastEditedId,
+        );
         if (initial && initial.entity_id !== this.selectedLayoutId) {
           this.selectLayoutById(initial.entity_id, false);
         }
@@ -441,6 +446,7 @@ export class LayoutEditorComponent
     const layout = this.allLayouts.find((u) => u.entity_id === id);
     if (!layout) return;
     this.selectedLayoutId = id;
+    setLastEditedLayoutId(id, this.navigationService);
     this.editingLayout = cloneLayout(layout);
     this.originalLayout = cloneLayout(layout);
     this.defaultUiNames[id] = layout.name;
@@ -599,6 +605,10 @@ export class LayoutEditorComponent
         ),
       );
       if (saved) {
+        setLastEditedLayoutId(
+          this.editingLayout.entity_id,
+          this.navigationService,
+        );
         const index = this.allLayouts.findIndex(
           (u) => u.entity_id === this.editingLayout!.entity_id,
         );

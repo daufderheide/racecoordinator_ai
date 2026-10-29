@@ -7,6 +7,7 @@ import {
 import { getDefaultLayoutResetData } from "@app/components/ui-editor/ui-editor-io.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
+import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { isEntityNameUnique, SelectItem } from "@app/utils/editor-utils";
@@ -257,6 +258,76 @@ export function getLayoutUnsavedReasons(
   }
 
   return reasons;
+}
+
+export const LAYOUT_LAST_EDITED_STORAGE_KEY = "rc.last_edited_layout_id";
+
+export function getLastEditedLayoutId(
+  navigationService?: NavigationService | null,
+): string | null {
+  const navId = navigationService?.getLastEditedId?.("layout");
+  if (navId) {
+    return navId;
+  }
+  if (typeof localStorage !== "undefined") {
+    try {
+      return localStorage.getItem(LAYOUT_LAST_EDITED_STORAGE_KEY) || null;
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+  return null;
+}
+
+export function setLastEditedLayoutId(
+  id: string,
+  navigationService?: NavigationService | null,
+): void {
+  if (!id) return;
+  navigationService?.setLastEditedId?.("layout", id);
+  if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(LAYOUT_LAST_EDITED_STORAGE_KEY, id);
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+}
+
+export function clearLastEditedLayoutId(
+  navigationService?: NavigationService | null,
+): void {
+  navigationService?.clearLastEditedId?.("layout");
+  if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.removeItem(LAYOUT_LAST_EDITED_STORAGE_KEY);
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+}
+
+export function resolveInitialLayout(
+  paramsId: string | null | undefined,
+  allLayouts: CustomUI[],
+  lastEditedId?: string | null,
+): CustomUI | null {
+  if (!allLayouts || allLayouts.length === 0) {
+    return null;
+  }
+  if (paramsId) {
+    const found = allLayouts.find((u) => u.entity_id === paramsId);
+    if (found) {
+      return found;
+    }
+  }
+  if (lastEditedId) {
+    const foundLast = allLayouts.find((u) => u.entity_id === lastEditedId);
+    if (foundLast) {
+      return foundLast;
+    }
+  }
+  return allLayouts[0];
 }
 
 export { isCustomUiDefault };

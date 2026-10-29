@@ -1,4 +1,5 @@
 import { CustomUI } from "@app/models/custom-ui";
+import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
@@ -6,12 +7,17 @@ import {
   buildDuplicateLayoutTemplate,
   buildLayoutSelectItems,
   buildNewLayoutTemplate,
+  clearLastEditedLayoutId,
   cloneLayout,
+  getLastEditedLayoutId,
   getLayoutDisplayName,
   getLayoutUnsavedReasons,
   isCustomUiDefault,
   isLayoutNameUnique,
   LAYOUT_AVAILABLE_COLUMNS,
+  LAYOUT_LAST_EDITED_STORAGE_KEY,
+  resolveInitialLayout,
+  setLastEditedLayoutId,
 } from "./layout-editor.helper";
 
 describe("layout-editor.helper", () => {
@@ -273,6 +279,150 @@ describe("layout-editor.helper", () => {
         LAYOUT_AVAILABLE_COLUMNS.some((c) => c.key === "driver.name"),
       ).toBeTrue();
       expect(LAYOUT_AVAILABLE_COLUMNS.length).toBeGreaterThan(20);
+    });
+  });
+
+  describe("resolveInitialLayout", () => {
+    const l1: CustomUI = {
+      entity_id: "layout_1",
+      name: "Layout 1",
+      is_default: false,
+    };
+    const l2: CustomUI = {
+      entity_id: "layout_2",
+      name: "Layout 2",
+      is_default: false,
+    };
+    const l3: CustomUI = {
+      entity_id: "layout_3",
+      name: "Layout 3",
+      is_default: false,
+    };
+    const layouts = [l1, l2, l3];
+
+    it("should return null for empty or null layouts array", () => {
+      expect(resolveInitialLayout("layout_1", [])).toBeNull();
+      expect(resolveInitialLayout(undefined, [] as any)).toBeNull();
+    });
+
+    it("should select layout matching paramsId first", () => {
+      const result = resolveInitialLayout("layout_2", layouts, "layout_3");
+      expect(result).toBe(l2);
+    });
+
+    it("should fallback to lastEditedId when paramsId does not match any layout", () => {
+      const result = resolveInitialLayout("non_existent", layouts, "layout_3");
+      expect(result).toBe(l3);
+    });
+
+    it("should select lastEditedId when paramsId is omitted", () => {
+      const result = resolveInitialLayout(undefined, layouts, "layout_2");
+      expect(result).toBe(l2);
+    });
+
+    it("should fallback to first layout when neither paramsId nor lastEditedId match", () => {
+      const result = resolveInitialLayout(undefined, layouts, "non_existent");
+      expect(result).toBe(l1);
+    });
+
+    it("should fallback to first layout when paramsId and lastEditedId are not provided", () => {
+      const result = resolveInitialLayout(undefined, layouts, undefined);
+      expect(result).toBe(l1);
+    });
+  });
+
+  describe("getLastEditedLayoutId / setLastEditedLayoutId / clearLastEditedLayoutId", () => {
+    let mockNav: jasmine.SpyObj<NavigationService>;
+
+    beforeEach(() => {
+      localStorage.removeItem(LAYOUT_LAST_EDITED_STORAGE_KEY);
+      mockNav = jasmine.createSpyObj<NavigationService>("NavigationService", [
+        "getLastEditedId",
+        "setLastEditedId",
+        "clearLastEditedId",
+      ]);
+    });
+
+    afterEach(() => {
+      localStorage.removeItem(LAYOUT_LAST_EDITED_STORAGE_KEY);
+    });
+
+    it("should retrieve ID from NavigationService if available", () => {
+      mockNav.getLastEditedId.and.returnValue("layout_from_nav");
+      expect(getLastEditedLayoutId(mockNav)).toBe("layout_from_nav");
+      expect(mockNav.getLastEditedId).toHaveBeenCalledWith("layout");
+    });
+
+    it("should fallback to localStorage if NavigationService returns null", () => {
+      mockNav.getLastEditedId.and.returnValue(null);
+      localStorage.setItem(
+        LAYOUT_LAST_EDITED_STORAGE_KEY,
+        "layout_from_storage",
+      );
+      expect(getLastEditedLayoutId(mockNav)).toBe("layout_from_storage");
+    });
+
+    it("should retrieve ID from localStorage when NavigationService is null", () => {
+      localStorage.setItem(
+        LAYOUT_LAST_EDITED_STORAGE_KEY,
+        "layout_from_storage_direct",
+      );
+      expect(getLastEditedLayoutId(null)).toBe("layout_from_storage_direct");
+    });
+
+    it("should return null if neither NavigationService nor localStorage has an ID", () => {
+      mockNav.getLastEditedId.and.returnValue(null);
+      expect(getLastEditedLayoutId(mockNav)).toBeNull();
+      expect(getLastEditedLayoutId(null)).toBeNull();
+    });
+
+    it("should set ID in NavigationService and localStorage", () => {
+      setLastEditedLayoutId("layout_42", mockNav);
+      expect(mockNav.setLastEditedId).toHaveBeenCalledWith(
+        "layout",
+        "layout_42",
+      );
+      expect(localStorage.getItem(LAYOUT_LAST_EDITED_STORAGE_KEY)).toBe(
+        "layout_42",
+      );
+    });
+
+    it("should not set ID if ID is empty", () => {
+      setLastEditedLayoutId("", mockNav);
+      expect(mockNav.setLastEditedId).not.toHaveBeenCalled();
+      expect(localStorage.getItem(LAYOUT_LAST_EDITED_STORAGE_KEY)).toBeNull();
+    });
+
+    it("should clear ID in NavigationService and localStorage", () => {
+      localStorage.setItem(LAYOUT_LAST_EDITED_STORAGE_KEY, "layout_to_clear");
+      clearLastEditedLayoutId(mockNav);
+      expect(mockNav.clearLastEditedId).toHaveBeenCalledWith("layout");
+      expect(localStorage.getItem(LAYOUT_LAST_EDITED_STORAGE_KEY)).toBeNull();
+    });
+
+    it("should gracefully handle localStorage errors when reading", () => {
+      mockNav.getLastEditedId.and.returnValue(null);
+      spyOn(localStorage, "getItem").and.throwError("Storage error");
+      expect(getLastEditedLayoutId(mockNav)).toBeNull();
+    });
+
+    it("should gracefully handle localStorage errors when writing", () => {
+      const spy = spyOn(localStorage, "setItem").and.throwError("Storage full");
+      expect(() => setLastEditedLayoutId("layout_err", mockNav)).not.toThrow();
+      expect(mockNav.setLastEditedId).toHaveBeenCalledWith(
+        "layout",
+        "layout_err",
+      );
+      spy.and.callThrough();
+    });
+
+    it("should gracefully handle localStorage errors when clearing", () => {
+      const spy = spyOn(localStorage, "removeItem").and.throwError(
+        "Storage error",
+      );
+      expect(() => clearLastEditedLayoutId(mockNav)).not.toThrow();
+      expect(mockNav.clearLastEditedId).toHaveBeenCalledWith("layout");
+      spy.and.callThrough();
     });
   });
 });
