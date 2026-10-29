@@ -134,8 +134,10 @@ Para consultar as fórmulas matemáticas completas e as especificações de cron
 O widget **Últimas Voltas** (`lastLaps`) exibe os tempos das voltas recentes completadas pelo piloto na bateria ativa:
 
 - **Últimas voltas a exibir**: Configura quantas voltas recentes renderizar no widget (controle deslizante 1–20, campo numérico 1–50). O padrão é `5`.
+- **Separação de voltas e bordas**: Configura como as voltas individuais são separadas. As opções incluem estilo de borda (sólido, tracejado, pontilhado, duplo), cor da borda, largura da borda (1–10px), raio dos cantos (0–32px) e modo de separação (linha divisória entre as voltas ou caixa de borda ao redor de cada volta).
+- **Destaque da melhor volta**: Destaca se uma volta na lista representa o melhor tempo do piloto. As opções incluem cor do texto, cor de fundo do emblema, peso da fonte (normal, negrito, mais negrito/900), sublinhado, itálico e bordas de destaque exclusivas para a melhor volta.
 - **Ajuste e dimensionamento dinâmicos**: O cartão ajusta automaticamente os tamanhos de fonte e espaçamento para encaixar perfeitamente a quantidade configurada de voltas na geometria da coluna.
-- **Sincronização na grade**: Em grades de pistas, configurar ou aplicar formatos de tempo sincroniza o total de últimas voltas em todas as pistas concorrentes.
+- **Sincronização na grade**: Em grades de pistas, configurar ou aplicar formatos de tempo sincroniza o total de últimas voltas e sua estilização em todas as pistas concorrentes.
 
 ### Ordenação da Grade e Matriz de Interação
 

@@ -5,6 +5,8 @@ import {
   buildSyntheticInsetWidgetInputs,
   buildSyntheticMainWidgetInputs,
   computeHeatDataLastLaps,
+  computeLastLapItemStyle,
+  computeLastLapTimeStyle,
   extractDroppedColumnKey,
   fitColumnLastLaps,
   fitColumnTextValue,
@@ -1604,6 +1606,259 @@ describe("raceday-lane-column.utils", () => {
       );
       expect(fitHorizontal.maxLaps).toBeLessThanOrEqual(4);
       expect(fitHorizontal.fontSize).toBeGreaterThanOrEqual(12);
+    });
+  });
+
+  describe("computeLastLapItemStyle", () => {
+    const regularLap = {
+      lapNumber: 2,
+      lapTime: "8.500",
+      isBest: false,
+      segments: [],
+    };
+    const bestLap = {
+      lapNumber: 1,
+      lapTime: "7.200",
+      isBest: true,
+      segments: [],
+    };
+
+    it("should return no separator borders when lastLapsShowBorder is false", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        { lastLapsShowBorder: false },
+        true,
+        "#ffffff",
+      );
+      expect(styles["border-bottom"]).toBeUndefined();
+      expect(styles["border-right"]).toBeUndefined();
+      expect(styles["border"]).toBeUndefined();
+    });
+
+    it("should apply separator border in vertical flow when not last", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+          lastLapsBorderStyle: "dashed",
+          lastLapsBorderWidth: 2,
+          lastLapsBorderColor: "#38bdf8",
+        },
+        true,
+        "#ffffff",
+      );
+      expect(styles["border-bottom"]).toBe("2px dashed #38bdf8");
+      expect(styles["border-right"]).toBeUndefined();
+    });
+
+    it("should apply separator border in horizontal flow when not last", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+          lastLapsBorderStyle: "dotted",
+          lastLapsBorderWidth: 1,
+        },
+        false,
+        "#f8fafc",
+      );
+      expect(styles["border-right"]).toBe("1px dotted #f8fafc");
+      expect(styles["border-bottom"]).toBeUndefined();
+    });
+
+    it("should not apply separator border to the last item", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        true,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+        },
+        true,
+        "#ffffff",
+      );
+      expect(styles["border-bottom"]).toBeUndefined();
+      expect(styles["border-right"]).toBeUndefined();
+    });
+
+    it("should apply box border around every item in box mode", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        true,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "box",
+          lastLapsBorderStyle: "solid",
+          lastLapsBorderWidth: 2,
+          lastLapsBorderColor: "#10b981",
+          lastLapsBorderRadius: 8,
+        },
+        true,
+        "#ffffff",
+      );
+      expect(styles["border"]).toBe("2px solid #10b981");
+      expect(styles["border-radius"]).toBe("8px");
+      expect(styles["padding"]).toBe("2px 6px");
+    });
+
+    it("should apply best lap styling when lap is best and highlight is enabled", () => {
+      const styles = computeLastLapItemStyle(
+        bestLap,
+        false,
+        {
+          lastLapsBestLapHighlight: true,
+          lastLapsBestLapTextColor: "#10b981",
+          lastLapsBestLapBackgroundColor: "rgba(16, 185, 129, 0.2)",
+          lastLapsBestLapBorderRadius: 6,
+          lastLapsBestLapShowBorder: true,
+          lastLapsBestLapBorderColor: "#059669",
+          lastLapsBestLapBorderStyle: "double",
+          lastLapsBestLapBorderWidth: 3,
+        },
+        true,
+        "#ffffff",
+      );
+      expect(styles["color"]).toBe("#10b981");
+      expect(styles["background-color"]).toBe("rgba(16, 185, 129, 0.2)");
+      expect(styles["border"]).toBe("3px double #059669");
+      expect(styles["border-radius"]).toBe("6px");
+      expect(styles["padding"]).toBe("2px 6px");
+    });
+
+    it("should ignore best lap styling when lastLapsBestLapHighlight is false", () => {
+      const styles = computeLastLapItemStyle(
+        bestLap,
+        false,
+        {
+          lastLapsBestLapHighlight: false,
+          lastLapsBestLapTextColor: "#10b981",
+          lastLapsBestLapBackgroundColor: "rgba(16, 185, 129, 0.2)",
+        },
+        true,
+        "#ffffff",
+      );
+      expect(styles["color"]).toBeUndefined();
+      expect(styles["background-color"]).toBeUndefined();
+    });
+
+    it("should default border settings to column borders when lastLaps settings are omitted", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          showBorder: true,
+          borderColor: "#ffffff",
+          borderStyle: "dashed",
+          borderWidth: 3,
+          borderRadius: 12,
+        },
+        true,
+        "#000000", // effectiveValueTextColor is black, but column border is white
+        "#ffffff",
+      );
+      // Border should match the column border (3px dashed #ffffff), not the black text color
+      expect(styles["border-bottom"]).toBe("3px dashed #ffffff");
+    });
+
+    it("should default border color to columnBorderColor parameter when neither lastLapsBorderColor nor borderColor is set", () => {
+      const styles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+        },
+        true,
+        "#000000",
+        "#ffffff", // columnBorderColor passed
+      );
+      expect(styles["border-bottom"]).toBe("1px solid #ffffff");
+    });
+
+    it("should support custom valueAlignment start and end", () => {
+      const stylesStart = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          valueAlignment: "start",
+        },
+        true,
+        "#ffffff",
+      );
+      expect(stylesStart["justify-content"]).toBe("flex-start");
+      expect(stylesStart["padding-left"]).toBe("6px");
+
+      const stylesEnd = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          valueAlignment: "end",
+        },
+        true,
+        "#ffffff",
+      );
+      expect(stylesEnd["justify-content"]).toBe("flex-end");
+      expect(stylesEnd["padding-right"]).toBe("6px");
+    });
+  });
+
+  describe("computeLastLapTimeStyle", () => {
+    const regularLap = {
+      lapNumber: 2,
+      lapTime: "8.500",
+      isBest: false,
+      segments: [],
+    };
+    const bestLap = {
+      lapNumber: 1,
+      lapTime: "7.200",
+      isBest: true,
+      segments: [],
+    };
+
+    it("should return empty object for regular lap", () => {
+      const styles = computeLastLapTimeStyle(regularLap, {
+        lastLapsBestLapTextColor: "#10b981",
+      });
+      expect(styles).toEqual({});
+    });
+
+    it("should return empty object for best lap when highlight is disabled", () => {
+      const styles = computeLastLapTimeStyle(bestLap, {
+        lastLapsBestLapHighlight: false,
+        lastLapsBestLapTextColor: "#10b981",
+      });
+      expect(styles).toEqual({});
+    });
+
+    it("should return configured best lap typography styles", () => {
+      const styles = computeLastLapTimeStyle(bestLap, {
+        lastLapsBestLapHighlight: true,
+        lastLapsBestLapTextColor: "#eab308",
+        lastLapsBestLapFontWeight: "bolder",
+        lastLapsBestLapUnderline: true,
+        lastLapsBestLapItalic: true,
+      });
+      expect(styles["color"]).toBe("#eab308");
+      expect(styles["font-weight"]).toBe("900");
+      expect(styles["text-decoration"]).toBe("underline");
+      expect(styles["font-style"]).toBe("italic");
+    });
+
+    it("should handle normal font weight and no underline", () => {
+      const styles = computeLastLapTimeStyle(bestLap, {
+        lastLapsBestLapHighlight: true,
+        lastLapsBestLapFontWeight: "normal",
+        lastLapsBestLapUnderline: false,
+      });
+      expect(styles["font-weight"]).toBe("normal");
+      expect(styles["text-decoration"]).toBe("none");
+      expect(styles["font-style"]).toBeUndefined();
     });
   });
 });

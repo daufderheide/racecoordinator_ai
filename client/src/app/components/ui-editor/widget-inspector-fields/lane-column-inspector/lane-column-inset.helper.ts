@@ -763,6 +763,34 @@ export class LaneColumnInsetHelper {
       currentSettings["lastLapsCount"] =
         !isNaN(parsed) && parsed > 0 ? Math.max(1, Math.round(parsed)) : 5;
     }
+    if (currentSettings["lastLapsBorderWidth"] !== undefined) {
+      const parsed = Number(currentSettings["lastLapsBorderWidth"]);
+      currentSettings["lastLapsBorderWidth"] =
+        !isNaN(parsed) && parsed >= 0
+          ? Math.min(10, Math.max(0, Math.round(parsed)))
+          : (currentSettings["borderWidth"] ?? 1);
+    }
+    if (currentSettings["lastLapsBorderRadius"] !== undefined) {
+      const parsed = Number(currentSettings["lastLapsBorderRadius"]);
+      currentSettings["lastLapsBorderRadius"] =
+        !isNaN(parsed) && parsed >= 0
+          ? Math.min(32, Math.max(0, Math.round(parsed)))
+          : (currentSettings["borderRadius"] ?? 8);
+    }
+    if (currentSettings["lastLapsBestLapBorderWidth"] !== undefined) {
+      const parsed = Number(currentSettings["lastLapsBestLapBorderWidth"]);
+      currentSettings["lastLapsBestLapBorderWidth"] =
+        !isNaN(parsed) && parsed >= 0
+          ? Math.min(10, Math.max(0, Math.round(parsed)))
+          : 1;
+    }
+    if (currentSettings["lastLapsBestLapBorderRadius"] !== undefined) {
+      const parsed = Number(currentSettings["lastLapsBestLapBorderRadius"]);
+      currentSettings["lastLapsBestLapBorderRadius"] =
+        !isNaN(parsed) && parsed >= 0
+          ? Math.min(32, Math.max(0, Math.round(parsed)))
+          : 4;
+    }
   }
 
   public static getPlacedInsetAnchors(

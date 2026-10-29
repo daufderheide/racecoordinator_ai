@@ -1254,7 +1254,7 @@
 
     @if (isLastLapsColumn) {
       <hr class="inspector-divider" />
-      <div class="inspector-geometry-title">
+      <div class="inspector-geometry-title" id="last-laps-inspector-section">
         <span class="material-icons">history</span>
         {{ "UE_INSPECTOR_LAST_LAPS_SECTION" | translate }}
       </div>
@@ -1292,6 +1292,505 @@
           />
         </div>
       </div>
+
+      <!-- Lap Separation / Borders -->
+      <div class="inspector-section">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [(ngModel)]="currentSettings['lastLapsShowBorder']"
+            (change)="onFieldChange()"
+          />
+          <span>{{ "UE_INSPECTOR_LAST_LAPS_SHOW_BORDER" | translate }}</span>
+        </label>
+      </div>
+
+      @if (currentSettings["lastLapsShowBorder"]) {
+        <!-- Separation Mode -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAST_LAPS_BORDER_MODE" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="currentSettings['lastLapsBorderMode'] || 'separator'"
+              (ngModelChange)="
+                currentSettings['lastLapsBorderMode'] = $event; onFieldChange()
+              "
+            >
+              <app-custom-option value="separator">
+                {{ "UE_INSPECTOR_LAST_LAPS_BORDER_MODE_SEPARATOR" | translate }}
+              </app-custom-option>
+              <app-custom-option value="box">
+                {{ "UE_INSPECTOR_LAST_LAPS_BORDER_MODE_BOX" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+
+        <!-- Border Style -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_BORDER_STYLE" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="
+                currentSettings['lastLapsBorderStyle'] ||
+                currentSettings['borderStyle'] ||
+                'solid'
+              "
+              (ngModelChange)="
+                currentSettings['lastLapsBorderStyle'] = $event; onFieldChange()
+              "
+            >
+              <app-custom-option value="solid">
+                {{ "UE_INSPECTOR_BORDER_STYLE_SOLID" | translate }}
+              </app-custom-option>
+              <app-custom-option value="dashed">
+                {{ "UE_INSPECTOR_BORDER_STYLE_DASHED" | translate }}
+              </app-custom-option>
+              <app-custom-option value="dotted">
+                {{ "UE_INSPECTOR_BORDER_STYLE_DOTTED" | translate }}
+              </app-custom-option>
+              <app-custom-option value="double">
+                {{ "UE_INSPECTOR_BORDER_STYLE_DOUBLE" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+
+        <!-- Border Color -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_BORDER_COLOR" | translate
+          }}</label>
+          <div
+            class="color-picker-wrapper"
+            [class.is-null]="!currentSettings['lastLapsBorderColor']"
+          >
+            <input
+              type="color"
+              [value]="
+                toValidHexColor(
+                  currentSettings['lastLapsBorderColor'] ||
+                    currentSettings['borderColor'],
+                  '#ffffff'
+                )
+              "
+              (change)="onColorChange('lastLapsBorderColor', $event)"
+              (input)="onColorChange('lastLapsBorderColor', $event)"
+              class="color-picker-input"
+            />
+            @if (!currentSettings["lastLapsBorderColor"]) {
+              <span class="color-picker-placeholder">{{
+                "UE_INSPECTOR_COLOR_DEFAULT" | translate
+              }}</span>
+            }
+            @if (currentSettings["lastLapsBorderColor"]) {
+              <button
+                type="button"
+                class="color-reset-btn"
+                (click)="resetColor('lastLapsBorderColor')"
+                [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+              >
+                <span class="material-icons">restart_alt</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Border Width -->
+        <div class="inspector-section">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_WIDTH" | translate
+            }}</label>
+            <span class="inspector-val-badge"
+              >{{
+                currentSettings["lastLapsBorderWidth"] ??
+                  currentSettings["borderWidth"] ??
+                  1
+              }}px</span
+            >
+          </div>
+          <input
+            type="range"
+            min="1"
+            max="10"
+            [ngModel]="
+              currentSettings['lastLapsBorderWidth'] ??
+              currentSettings['borderWidth'] ??
+              1
+            "
+            (ngModelChange)="
+              currentSettings['lastLapsBorderWidth'] = $event; onFieldChange()
+            "
+            class="inspector-slider"
+          />
+        </div>
+
+        <!-- Border Radius (when box mode) -->
+        @if (currentSettings["lastLapsBorderMode"] === "box") {
+          <div class="inspector-section">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_BORDER_RADIUS" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{
+                  currentSettings["lastLapsBorderRadius"] ??
+                    currentSettings["borderRadius"] ??
+                    8
+                }}px</span
+              >
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="32"
+              [ngModel]="
+                currentSettings['lastLapsBorderRadius'] ??
+                currentSettings['borderRadius'] ??
+                8
+              "
+              (ngModelChange)="
+                currentSettings['lastLapsBorderRadius'] = $event;
+                onFieldChange()
+              "
+              class="inspector-slider"
+            />
+          </div>
+        }
+      }
+
+      <!-- Best Lap Highlight Section -->
+      <div class="inspector-section-header mt-3">
+        <label
+          class="inspector-label font-weight-bold"
+          style="display: flex; align-items: center; gap: 4px"
+        >
+          <span class="material-icons" style="font-size: 16px"
+            >emoji_events</span
+          >
+          {{ "UE_INSPECTOR_LAST_LAPS_BEST_LAP_SECTION" | translate }}
+        </label>
+      </div>
+
+      <div class="inspector-section">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [ngModel]="currentSettings['lastLapsBestLapHighlight'] !== false"
+            (ngModelChange)="
+              currentSettings['lastLapsBestLapHighlight'] = $event;
+              onFieldChange()
+            "
+          />
+          <span>{{
+            "UE_INSPECTOR_LAST_LAPS_BEST_LAP_ENABLE" | translate
+          }}</span>
+        </label>
+      </div>
+
+      @if (currentSettings["lastLapsBestLapHighlight"] !== false) {
+        <!-- Best Lap Text Color -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAST_LAPS_BEST_LAP_TEXT_COLOR" | translate
+          }}</label>
+          <div
+            class="color-picker-wrapper"
+            [class.is-null]="!currentSettings['lastLapsBestLapTextColor']"
+          >
+            <input
+              type="color"
+              [value]="
+                toValidHexColor(
+                  currentSettings['lastLapsBestLapTextColor'],
+                  '#10b981'
+                )
+              "
+              (change)="onColorChange('lastLapsBestLapTextColor', $event)"
+              (input)="onColorChange('lastLapsBestLapTextColor', $event)"
+              class="color-picker-input"
+            />
+            @if (!currentSettings["lastLapsBestLapTextColor"]) {
+              <span class="color-picker-placeholder">{{
+                "UE_INSPECTOR_COLOR_DEFAULT" | translate
+              }}</span>
+            }
+            @if (currentSettings["lastLapsBestLapTextColor"]) {
+              <button
+                type="button"
+                class="color-reset-btn"
+                (click)="resetColor('lastLapsBestLapTextColor')"
+                [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+              >
+                <span class="material-icons">restart_alt</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Best Lap Background Color -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAST_LAPS_BEST_LAP_BG_COLOR" | translate
+          }}</label>
+          <div
+            class="color-picker-wrapper"
+            [class.is-null]="!currentSettings['lastLapsBestLapBackgroundColor']"
+          >
+            <input
+              type="color"
+              [value]="
+                toValidHexColor(
+                  currentSettings['lastLapsBestLapBackgroundColor'],
+                  '#047857'
+                )
+              "
+              (change)="onColorChange('lastLapsBestLapBackgroundColor', $event)"
+              (input)="onColorChange('lastLapsBestLapBackgroundColor', $event)"
+              class="color-picker-input"
+            />
+            @if (!currentSettings["lastLapsBestLapBackgroundColor"]) {
+              <span class="color-picker-placeholder">{{
+                "UE_INSPECTOR_COLOR_DEFAULT" | translate
+              }}</span>
+            }
+            @if (currentSettings["lastLapsBestLapBackgroundColor"]) {
+              <button
+                type="button"
+                class="color-reset-btn"
+                (click)="resetColor('lastLapsBestLapBackgroundColor')"
+                [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+              >
+                <span class="material-icons">restart_alt</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Best Lap Font Weight -->
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_LAST_LAPS_BEST_LAP_FONT_WEIGHT" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="currentSettings['lastLapsBestLapFontWeight'] || 'bold'"
+              (ngModelChange)="
+                currentSettings['lastLapsBestLapFontWeight'] = $event;
+                onFieldChange()
+              "
+            >
+              <app-custom-option value="normal">
+                {{ "UE_INSPECTOR_FONT_WEIGHT_NORMAL" | translate }}
+              </app-custom-option>
+              <app-custom-option value="bold">
+                {{ "UE_INSPECTOR_FONT_BOLD" | translate }}
+              </app-custom-option>
+              <app-custom-option value="bolder">
+                {{ "UE_INSPECTOR_FONT_WEIGHT_BOLDER" | translate }}
+              </app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+
+        <!-- Formatting options (Underline, Italic) -->
+        <div class="inspector-section" style="display: flex; gap: 16px">
+          <label class="form-check-label">
+            <input
+              type="checkbox"
+              class="form-checkbox"
+              [(ngModel)]="currentSettings['lastLapsBestLapUnderline']"
+              (change)="onFieldChange()"
+            />
+            <span>{{
+              "UE_INSPECTOR_LAST_LAPS_BEST_LAP_UNDERLINE" | translate
+            }}</span>
+          </label>
+          <label class="form-check-label">
+            <input
+              type="checkbox"
+              class="form-checkbox"
+              [(ngModel)]="currentSettings['lastLapsBestLapItalic']"
+              (change)="onFieldChange()"
+            />
+            <span>{{ "UE_INSPECTOR_FONT_ITALIC" | translate }}</span>
+          </label>
+        </div>
+
+        <!-- Best Lap Border -->
+        <div class="inspector-section">
+          <label class="form-check-label">
+            <input
+              type="checkbox"
+              class="form-checkbox"
+              [(ngModel)]="currentSettings['lastLapsBestLapShowBorder']"
+              (change)="onFieldChange()"
+            />
+            <span>{{
+              "UE_INSPECTOR_LAST_LAPS_BEST_LAP_SHOW_BORDER" | translate
+            }}</span>
+          </label>
+        </div>
+
+        @if (currentSettings["lastLapsBestLapShowBorder"]) {
+          <!-- Best Lap Border Style -->
+          <div class="inspector-section">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_STYLE" | translate
+            }}</label>
+            <div class="select-container select-sm">
+              <app-custom-select
+                [ngModel]="
+                  currentSettings['lastLapsBestLapBorderStyle'] || 'solid'
+                "
+                (ngModelChange)="
+                  currentSettings['lastLapsBestLapBorderStyle'] = $event;
+                  onFieldChange()
+                "
+              >
+                <app-custom-option value="solid">
+                  {{ "UE_INSPECTOR_BORDER_STYLE_SOLID" | translate }}
+                </app-custom-option>
+                <app-custom-option value="dashed">
+                  {{ "UE_INSPECTOR_BORDER_STYLE_DASHED" | translate }}
+                </app-custom-option>
+                <app-custom-option value="dotted">
+                  {{ "UE_INSPECTOR_BORDER_STYLE_DOTTED" | translate }}
+                </app-custom-option>
+                <app-custom-option value="double">
+                  {{ "UE_INSPECTOR_BORDER_STYLE_DOUBLE" | translate }}
+                </app-custom-option>
+              </app-custom-select>
+            </div>
+          </div>
+
+          <!-- Best Lap Border Color -->
+          <div class="inspector-section">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_COLOR" | translate
+            }}</label>
+            <div
+              class="color-picker-wrapper"
+              [class.is-null]="!currentSettings['lastLapsBestLapBorderColor']"
+            >
+              <input
+                type="color"
+                [value]="
+                  toValidHexColor(
+                    currentSettings['lastLapsBestLapBorderColor'],
+                    currentSettings['lastLapsBestLapTextColor'] ||
+                      currentSettings['lastLapsBorderColor'] ||
+                      currentSettings['borderColor'] ||
+                      '#10b981'
+                  )
+                "
+                (change)="onColorChange('lastLapsBestLapBorderColor', $event)"
+                (input)="onColorChange('lastLapsBestLapBorderColor', $event)"
+                class="color-picker-input"
+              />
+              @if (!currentSettings["lastLapsBestLapBorderColor"]) {
+                <span class="color-picker-placeholder">{{
+                  "UE_INSPECTOR_COLOR_DEFAULT" | translate
+                }}</span>
+              }
+              @if (currentSettings["lastLapsBestLapBorderColor"]) {
+                <button
+                  type="button"
+                  class="color-reset-btn"
+                  (click)="resetColor('lastLapsBestLapBorderColor')"
+                  [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+                >
+                  <span class="material-icons">restart_alt</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Best Lap Border Width -->
+          <div class="inspector-section">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_BORDER_WIDTH" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{
+                  currentSettings["lastLapsBestLapBorderWidth"] ??
+                    currentSettings["lastLapsBorderWidth"] ??
+                    currentSettings["borderWidth"] ??
+                    1
+                }}px</span
+              >
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              [ngModel]="
+                currentSettings['lastLapsBestLapBorderWidth'] ??
+                currentSettings['lastLapsBorderWidth'] ??
+                currentSettings['borderWidth'] ??
+                1
+              "
+              (ngModelChange)="
+                currentSettings['lastLapsBestLapBorderWidth'] = $event;
+                onFieldChange()
+              "
+              class="inspector-slider"
+            />
+          </div>
+
+          <!-- Best Lap Border Radius -->
+          <div class="inspector-section">
+            <div class="inspector-label-row">
+              <label class="inspector-label">{{
+                "UE_INSPECTOR_BORDER_RADIUS" | translate
+              }}</label>
+              <span class="inspector-val-badge"
+                >{{
+                  currentSettings["lastLapsBestLapBorderRadius"] ??
+                    (currentSettings["lastLapsBorderMode"] === "box" ? 4 : 0)
+                }}px</span
+              >
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="32"
+              [ngModel]="
+                currentSettings['lastLapsBestLapBorderRadius'] ??
+                (currentSettings['lastLapsBorderMode'] === 'box' ? 4 : 0)
+              "
+              (ngModelChange)="
+                currentSettings['lastLapsBestLapBorderRadius'] = $event;
+                onFieldChange()
+              "
+              class="inspector-slider"
+            />
+          </div>
+        }
+      }
+
+      @if (currentSettings["gridId"]) {
+        <div class="inspector-section">
+          <button
+            type="button"
+            class="btn btn-sm btn-secondary w-100"
+            (click)="applyLastLapsStyleToAll()"
+          >
+            <span class="material-icons me-1" style="font-size: 14px"
+              >format_paint</span
+            >
+            {{ "UE_GRID_APPLY_LAST_LAPS_TO_ALL" | translate }}
+          </button>
+        </div>
+      }
     }
 
     @if (isTotalTimeColumn || isTimeColumn || isLapColumn) {
@@ -2009,6 +2508,33 @@
   </div>
 
   @if (currentSettings["showBorder"]) {
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_STYLE" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [ngModel]="currentSettings['borderStyle'] || 'solid'"
+          (ngModelChange)="
+            currentSettings['borderStyle'] = $event; onFieldChange()
+          "
+        >
+          <app-custom-option value="solid">
+            {{ "UE_INSPECTOR_BORDER_STYLE_SOLID" | translate }}
+          </app-custom-option>
+          <app-custom-option value="dashed">
+            {{ "UE_INSPECTOR_BORDER_STYLE_DASHED" | translate }}
+          </app-custom-option>
+          <app-custom-option value="dotted">
+            {{ "UE_INSPECTOR_BORDER_STYLE_DOTTED" | translate }}
+          </app-custom-option>
+          <app-custom-option value="double">
+            {{ "UE_INSPECTOR_BORDER_STYLE_DOUBLE" | translate }}
+          </app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
     <div class="inspector-section">
       <label class="inspector-label">{{
         "UE_INSPECTOR_BORDER_COLOR" | translate

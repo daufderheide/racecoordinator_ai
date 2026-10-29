@@ -294,6 +294,68 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
         layoutOrientation: "vertical",
       },
     },
+    // Standalone Last Laps Widget - Separator Mode
+    {
+      id: "standalone-last-laps-sep",
+      widgetType: "lane-column",
+      x: 600,
+      y: 200,
+      width: 340,
+      height: 140,
+      zIndex: 10,
+      scaleMode: "auto",
+      customSettings: {
+        columnKey: "lastLaps",
+        bindingMode: "lane",
+        targetIndex: 0,
+        showHeader: true,
+        layoutOrientation: "vertical",
+        lastLapsCount: 5,
+        lastLapsShowBorder: true,
+        lastLapsBorderMode: "separator",
+        lastLapsBorderColor: "#38bdf8",
+        lastLapsBorderWidth: 1,
+        lastLapsBestLapHighlight: true,
+        lastLapsBestLapTextColor: "#fbbf24",
+        lastLapsBestLapBackgroundColor: "rgba(245, 158, 11, 0.2)",
+        lastLapsBestLapShowBorder: true,
+        lastLapsBestLapBorderColor: "#f59e0b",
+        lastLapsBestLapBorderWidth: 2,
+        lastLapsBestLapFontWeight: "bold",
+      },
+    },
+    // Standalone Last Laps Widget - Box Mode
+    {
+      id: "standalone-last-laps-box",
+      widgetType: "lane-column",
+      x: 600,
+      y: 360,
+      width: 340,
+      height: 140,
+      zIndex: 10,
+      scaleMode: "auto",
+      customSettings: {
+        columnKey: "lastLaps",
+        bindingMode: "lane",
+        targetIndex: 0,
+        showHeader: true,
+        layoutOrientation: "vertical",
+        lastLapsCount: 4,
+        lastLapsShowBorder: true,
+        lastLapsBorderMode: "box",
+        lastLapsBorderColor: "#334155",
+        lastLapsBorderWidth: 1,
+        lastLapsBorderRadius: 6,
+        lastLapsBestLapHighlight: true,
+        lastLapsBestLapTextColor: "#38bdf8",
+        lastLapsBestLapBackgroundColor: "rgba(56, 189, 248, 0.15)",
+        lastLapsBestLapShowBorder: true,
+        lastLapsBestLapBorderColor: "#0284c7",
+        lastLapsBestLapBorderWidth: 2,
+        lastLapsBestLapBorderRadius: 6,
+        lastLapsBestLapFontWeight: "bold",
+      },
+    },
   ];
 
   test.beforeEach(async ({ page }) => {
@@ -841,6 +903,96 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
 
     await expect(inspectorPanel).toHaveScreenshot(
       "lane-column-inspector-header-none-options.png",
+      {
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display lane-column inspector with last laps separator configuration", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/layout-editor?edit=true"),
+    );
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
+
+    // Select the standalone last laps separator widget
+    const lastLapsSepWidget = page
+      .locator(
+        ".raceday-absolute-layout-root-wrapper > app-raceday-absolute-widget .widget-wrapper",
+      )
+      .filter({ has: page.locator(".column-last-laps") })
+      .first();
+    await lastLapsSepWidget.dispatchEvent("pointerdown");
+
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    const inspectorFields = page.locator("app-lane-column-inspector");
+    await inspectorFields.waitFor({ state: "visible" });
+
+    const lastLapsSection = inspectorPanel.locator(
+      "#last-laps-inspector-section",
+    );
+    await lastLapsSection.waitFor({ state: "visible" });
+
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const el = document.querySelector("#last-laps-inspector-section");
+      el?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
+    await page.mouse.move(0, 0);
+
+    await expect(inspectorPanel).toHaveScreenshot(
+      "lane-column-inspector-last-laps-separator.png",
+      {
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display lane-column inspector with last laps box mode configuration", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/layout-editor?edit=true"),
+    );
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
+
+    // Select the standalone last laps box widget
+    const lastLapsBoxWidget = page
+      .locator(
+        ".raceday-absolute-layout-root-wrapper > app-raceday-absolute-widget .widget-wrapper",
+      )
+      .filter({ has: page.locator(".column-last-laps") })
+      .nth(1);
+    await lastLapsBoxWidget.dispatchEvent("pointerdown");
+
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    const inspectorFields = page.locator("app-lane-column-inspector");
+    await inspectorFields.waitFor({ state: "visible" });
+
+    const lastLapsSection = inspectorPanel.locator(
+      "#last-laps-inspector-section",
+    );
+    await lastLapsSection.waitFor({ state: "visible" });
+
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      const el = document.querySelector("#last-laps-inspector-section");
+      el?.scrollIntoView({ block: "start", inline: "nearest" });
+    });
+    await page.mouse.move(0, 0);
+
+    await expect(inspectorPanel).toHaveScreenshot(
+      "lane-column-inspector-last-laps-box.png",
       {
         animations: "disabled",
       },

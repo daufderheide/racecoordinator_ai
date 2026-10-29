@@ -104,7 +104,13 @@ export function syncLayoutSettingsWithDefaults(
     const defaultUi = layouts.find(
       (u) => u.entity_id === "default_ui_layout_rc_ai",
     );
-    if (defaultUi) {
+    if (
+      defaultUi &&
+      (!defaultUi.layoutJson ||
+        defaultUi.layoutJson === "{}" ||
+        defaultUi.layoutJson === "[]" ||
+        defaultUi.layoutJson === JSON.stringify(Settings.DEFAULT_LAYOUT))
+    ) {
       defaultUi.layoutJson = JSON.stringify(racedayLayout);
     }
   }
@@ -112,7 +118,14 @@ export function syncLayoutSettingsWithDefaults(
     const practiceUi = layouts.find(
       (u) => u.entity_id === "practice_ui_layout_rc_ai",
     );
-    if (practiceUi) {
+    if (
+      practiceUi &&
+      (!practiceUi.layoutJson ||
+        practiceUi.layoutJson === "{}" ||
+        practiceUi.layoutJson === "[]" ||
+        practiceUi.layoutJson ===
+          JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT))
+    ) {
       practiceUi.layoutJson = JSON.stringify(practiceRacedayLayout);
     }
   }

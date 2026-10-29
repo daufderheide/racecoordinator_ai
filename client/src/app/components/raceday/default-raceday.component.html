@@ -531,30 +531,64 @@
               >
               {{ "UE_LABEL_LAYOUT_EDITOR" | translate }}
             </div>
-            <button
-              class="minimize-btn"
-              (click)="toggleLayoutEditorMinimize($event)"
-              [title]="
-                (isLayoutEditorMinimized ? 'UE_BTN_EXPAND' : 'UE_BTN_MINIMIZE')
-                  | translate
-              "
+            <div
               style="
-                background: none;
-                border: none;
-                color: #000;
-                cursor: pointer;
                 display: flex;
                 align-items: center;
-                padding: 2px;
+                gap: 4px;
                 margin-left: auto;
               "
             >
-              <span class="material-icons" style="font-size: 18px">{{
-                isLayoutEditorMinimized
-                  ? "keyboard_arrow_down"
-                  : "keyboard_arrow_up"
-              }}</span>
-            </button>
+              <button
+                type="button"
+                class="toolbox-reset-btn"
+                (click)="resetLayoutEditorPosition($event)"
+                [title]="'UE_BTN_RESET_POSITION' | translate"
+                style="
+                  background: none;
+                  border: none;
+                  color: #000;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 2px;
+                  border-radius: 4px;
+                "
+              >
+                <span class="material-icons" style="font-size: 18px"
+                  >restart_alt</span
+                >
+              </button>
+              <button
+                type="button"
+                class="minimize-btn"
+                (click)="toggleLayoutEditorMinimize($event)"
+                [title]="
+                  (isLayoutEditorMinimized
+                    ? 'UE_BTN_EXPAND'
+                    : 'UE_BTN_MINIMIZE'
+                  ) | translate
+                "
+                style="
+                  background: none;
+                  border: none;
+                  color: #000;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  padding: 2px;
+                  border-radius: 4px;
+                "
+              >
+                <span class="material-icons" style="font-size: 18px">{{
+                  isLayoutEditorMinimized
+                    ? "keyboard_arrow_down"
+                    : "keyboard_arrow_up"
+                }}</span>
+              </button>
+            </div>
           </div>
 
           @if (!isLayoutEditorMinimized) {

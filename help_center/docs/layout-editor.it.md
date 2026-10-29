@@ -30,7 +30,7 @@ La barra degli strumenti superiore fornisce azioni di gestione standardizzate:
 - **Aggiungi Layout (<span class="material-icons">add</span>)**: Crea un nuovo modello di layout basato sul layout predefinito di sistema.
 - **Copia Layout (<span class="material-icons">content_copy</span>)**: Duplica il layout attualmente selezionato con un nome univoco (ad es. *Nome Layout (Copia)*).
 - **Elimina Layout (<span class="material-icons">delete</span>)**: Elimina il layout personalizzato corrente previa conferma. I layout di sistema predefiniti sono protetti e non possono essere eliminati.
-- **Guida Interattiva (<span class="material-icons">help_outline</span>)**: Avvia un tour guidato interattivo che evidenzia il selettore layout, le azioni di testata, il canvas e l'ispettore dei widget.
+- **Guida Interattiva (<span class="material-icons">help_outline</span>)**: Avvia un tour guidato interattivo che evidenzia il selettore layout, le azioni di testata, il canvas, la libreria dei widget e l'ispettore dei widget.
 
 ---
 
@@ -46,13 +46,18 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 - **Allunga per Adattare**: Allunga i widget indipendentemente in larghezza e altezza.
 - **Fisso / Mappatura Pixel 1:1**: Mantiene le dimensioni esatte delle coordinate senza ridimensionamento.
 
-### Controlli Zoom
+### Controles Zoom
 - Regolare lo zoom in modo continuo dal **25%** al **400%** utilizzando i pulsanti **-** e **+** o digitando direttamente una percentuale.
 - Fare clic su **Reimposta Zoom** per ripristinare il 100%.
 - Le impostazioni di zoom vengono memorizzate nel browser per ogni layout.
 
 ### Anteprima Semaforo di Partenza
 - Fare clic su **Anteprima Luci** (<span class="material-icons">timer</span>) per visualizzare in anteprima la sequenza delle luci del conto alla rovescia sul canvas senza avviare una gara reale.
+
+### Libreria dei widget e casella degli strumenti
+- **Libreria dei widget (<span class="material-icons">widgets</span>)**: Attiva/disattiva la visibilità della casella degli strumenti mobile. Un clic ripristina la casella se è ridotta a icona o posizionata fuori dallo schermo visibile.
+- **Ripristina posizione (<span class="material-icons">restart_alt</span>)**: Situato nell'intestazione della casella mobile per riportarla istantaneamente all'origine `(0, 0)` in alto a sinistra.
+- **Riduci (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Comprime la casella degli strumenti in una barra del titolo compatta per liberare spazio sul canvas.
 
 ---
 

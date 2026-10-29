@@ -319,14 +319,52 @@ describe("DefaultRacedayComponent", () => {
       expect(clamped.y).toBe(1040);
     });
 
-    it("should not restrict position in UI editor mode, as it relies on cdkDragBoundary", () => {
+    it("should clamp position in UI editor mode within visible boundary bounds", () => {
       spyOn(component, "isUIEditorMode").and.returnValue(true);
       spyOn(component, "uiScale").and.returnValue(0.5);
 
       const pos = { x: 2000, y: 1000 };
       const clamped = (component as any).clampLayoutEditorPosition(pos);
 
+      // In UI editor mode without .raceday-layout-section, falls back to window (1920x1080)
+      // toolboxWidth = 260, toolboxHeight = 400 -> maxX = 1660, maxY = 680
+      expect(clamped.x).toBe(1660);
+      expect(clamped.y).toBe(680);
+    });
+
+    it("should preserve off-screen sentinel positions (>= 9000) in UI editor mode for screendiffs", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(true);
+      const pos = { x: 9999, y: 9999 };
+      const clamped = (component as any).clampLayoutEditorPosition(pos);
+
       expect(clamped).toEqual(pos);
+    });
+
+    it("should unminimize and clamp position when ensureToolboxVisible is called", () => {
+      component.isLayoutEditorMinimized = true;
+      component.layoutEditorPosition = { x: 2000, y: 1000 };
+      spyOn(component, "isUIEditorMode").and.returnValue(false);
+
+      component.ensureToolboxVisible();
+
+      expect(component.isLayoutEditorMinimized).toBeFalse();
+      expect(component.layoutEditorPosition.x).toBeLessThanOrEqual(1660);
+      expect(component.layoutEditorPosition.y).toBeLessThanOrEqual(680);
+    });
+
+    it("should reset position to (0,0) and unminimize on resetLayoutEditorPosition", () => {
+      component.isLayoutEditorMinimized = true;
+      component.layoutEditorPosition = { x: 500, y: 400 };
+      const mockEvent = jasmine.createSpyObj("MouseEvent", ["stopPropagation"]);
+
+      component.resetLayoutEditorPosition(mockEvent);
+
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(component.isLayoutEditorMinimized).toBeFalse();
+      expect(component.layoutEditorPosition).toEqual({ x: 0, y: 0 });
+      expect(
+        (component as any).settingsService.saveSettings,
+      ).toHaveBeenCalled();
     });
 
     it("should not clamp if position is perfectly within bounds", () => {

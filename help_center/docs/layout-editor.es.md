@@ -30,7 +30,7 @@ La barra de herramientas superior proporciona acciones de gestión estandarizada
 - **Añadir Diseño (<span class="material-icons">add</span>)**: Crea una nueva plantilla de diseño basada en el diseño predeterminado del sistema.
 - **Copiar Diseño (<span class="material-icons">content_copy</span>)**: Duplica el diseño seleccionado actualmente con un nombre único (por ejemplo, *Nombre del Diseño (Copia)*).
 - **Eliminar Diseño (<span class="material-icons">delete</span>)**: Elimina el diseño personalizado actual tras confirmación. Los diseños predeterminados del sistema están protegidos y no se pueden eliminar.
-- **Visita Guiada (<span class="material-icons">help_outline</span>)**: Inicia una visita interactiva guiada que resalta el selector de diseños, las acciones del encabezado, el lienzo de día de carrera y el inspector de widgets.
+- **Visita Guiada (<span class="material-icons">help_outline</span>)**: Inicia una visita interactiva guiada que resalta el selector de diseños, las acciones del encabezado, el lienzo de día de carrera, la biblioteca de widgets y el inspector de widgets.
 
 ---
 
@@ -53,6 +53,11 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 
 ### Vista Previa de la Cuenta Regresiva de Salida
 - Haga clic en **Vista Previa de Luces** (<span class="material-icons">timer</span>) para alternar una vista previa de la secuencia de luces de salida en el lienzo sin iniciar una carrera real.
+
+### Biblioteca de widgets y cuadro de herramientas
+- **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
+- **Restablecer posición (<span class="material-icons">restart_alt</span>)**: Ubicado en el encabezado del cuadro flotante para devolverlo instantáneamente a su origen predeterminado `(0, 0)` arriba a la izquierda.
+- **Minimizar (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Contrae el cuadro de herramientas a una barra de título compacta para liberar espacio en el lienzo.
 
 ---
 

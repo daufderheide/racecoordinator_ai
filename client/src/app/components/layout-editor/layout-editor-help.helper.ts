@@ -25,6 +25,12 @@ export function buildLayoutEditorHelpSteps(
       position: "top",
     },
     {
+      selector: "#help-raceday-widget-library",
+      title: translationService.translate("LE_HELP_WIDGET_LIBRARY_TITLE"),
+      content: translationService.translate("LE_HELP_WIDGET_LIBRARY_CONTENT"),
+      position: "bottom",
+    },
+    {
       selector: "#help-widget-inspector",
       title: translationService.translate("LE_HELP_INSPECTOR_TITLE"),
       content: translationService.translate("LE_HELP_INSPECTOR_CONTENT"),

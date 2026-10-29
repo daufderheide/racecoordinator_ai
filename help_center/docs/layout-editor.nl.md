@@ -30,7 +30,7 @@ De bovenste werkbalk biedt gestandaardiseerde beheeracties:
 - **Lay-out Toevoegen (<span class="material-icons">add</span>)**: Maakt een nieuwe lay-outsjabloon op basis van de standaardsysteemlay-out.
 - **Lay-out Kopiëren (<span class="material-icons">content_copy</span>)**: Dupliceert de momenteel geselecteerde lay-out onder een unieke naam (bijv. *Lay-out Naam (Kopie)*).
 - **Lay-out Verwijderen (<span class="material-icons">delete</span>)**: Verwijdert de huidige aangepaste lay-out na bevestiging. Standaardsysteemlay-outs zijn beveiligd en kunnen niet worden verwijderd.
-- **Rondleiding (<span class="material-icons">help_outline</span>)**: Start een interactieve rondleiding die de lay-outkiezer, acties in de header, het canvas en de widget-inspector toelicht.
+- **Rondleiding (<span class="material-icons">help_outline</span>)**: Start een interactieve rondleiding die de lay-outkiezer, acties in de header, het canvas, de widgetbibliotheek en de widget-inspector toelicht.
 
 ---
 
@@ -53,6 +53,11 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 
 ### Startlichten Voorvertoning
 - Klik op **Startlichten Voorvertoning** (<span class="material-icons">timer</span>) om een live voorvertoning van de startlichtenvolgorde op het canvas te bekijken zonder een race te starten.
+
+### Widgetbibliotheek & gereedschapskist
+- **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit. Een klik herstelt de gereedschapskist ook als deze geminimaliseerd is of buiten het zichtbare scherm is verplaatst.
+- **Positie resetten (<span class="material-icons">restart_alt</span>)**: Geplaatst in de koptekst van de zwevende gereedschapskist om deze direct terug te zetten naar de standaardpositie linksboven `(0, 0)`.
+- **Minimaliseren (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Klapt de gereedschapskist in tot een compacte titelbalk om werkruimte op het canvas vrij te maken.
 
 ---
 

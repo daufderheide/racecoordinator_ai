@@ -2501,12 +2501,21 @@ export class TestSetupHelper {
   static async setupCustomUiMocks(page: Page, customUIsList?: any[]) {
     const defaultSettings = new Settings();
     await page.route("**/api/custom-ui", async (route) => {
+      const mockSettings = (page as any).__customSettings;
+      const defaultLayoutJson = mockSettings?.racedayLayout?.widgets?.length
+        ? JSON.stringify(mockSettings.racedayLayout)
+        : JSON.stringify(Settings.DEFAULT_LAYOUT);
+      const practiceLayoutJson = mockSettings?.practiceRacedayLayout?.widgets
+        ?.length
+        ? JSON.stringify(mockSettings.practiceRacedayLayout)
+        : JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT);
+
       const customUIs = customUIsList ?? [
         {
           entity_id: "default_ui_layout_rc_ai",
           name: "RaceCoordinator AI",
           is_default: true,
-          layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
+          layoutJson: defaultLayoutJson,
           columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
           columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
           columnVisibilityJson: JSON.stringify(
@@ -2519,7 +2528,7 @@ export class TestSetupHelper {
           entity_id: "practice_ui_layout_rc_ai",
           name: "RaceCoordinator AI (Practice)",
           is_default: true,
-          layoutJson: JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
+          layoutJson: practiceLayoutJson,
           columnsJson: JSON.stringify(Settings.DEFAULT_PRACTICE_COLUMNS),
           columnLayoutsJson: JSON.stringify(
             defaultSettings.practiceColumnLayouts,
@@ -2716,6 +2725,10 @@ export class TestSetupHelper {
    * Raceday component reads settings directly from localStorage via SettingsService.
    */
   static async setupSettings(page: Page, settings: any) {
+    (page as any).__customSettings = {
+      ...((page as any).__customSettings || {}),
+      ...settings,
+    };
     await page.addInitScript((s) => {
       const existing = localStorage.getItem("racecoordinator_settings");
       const parsedExisting = existing ? JSON.parse(existing) : {};

@@ -134,8 +134,10 @@ For complete mathematical formulas, finish type adaptations, and timing specific
 The **Last Laps** (`lastLaps`) widget displays recent lap times completed by the driver in the active heat:
 
 - **Last Laps to Display**: Configures how many recent laps to render within the widget (slider range 1–20, input range 1–50). Defaults to `5`.
+- **Lap Separation & Borders**: Configures how individual laps are separated. Options include border style (solid, dashed, dotted, double), border color, border width (1–10px), corner radius (0–32px), and separation mode (a divider line between laps or an individual border box around each lap).
+- **Best Lap Highlighting**: Highlights if a lap in the list is the driver's best lap time. Options include custom text color, background badge color, font weight (normal, bold, bolder/900), underline, italic, and dedicated best lap accent borders.
 - **Dynamic Sizing & Fit**: The card automatically scales font sizes and line heights to fit the configured number of laps cleanly within the allocated column geometry.
-- **Cross-Grid Synchronization**: In lane grids, configuring or applying time formats synchronizes the last laps display count across all competing lanes.
+- **Cross-Grid Synchronization**: In lane grids, configuring or applying time formats synchronizes the last laps display count and styling across all competing lanes.
 
 ### Grid Sorting & Interaction Matrix
 

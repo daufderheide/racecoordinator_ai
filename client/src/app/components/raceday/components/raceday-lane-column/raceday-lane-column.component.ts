@@ -38,6 +38,8 @@ import { isColorLight } from "@app/utils/color.utils";
 import {
   checkCustomWidgetReload,
   computeHeatDataLastLaps,
+  computeLastLapItemStyle,
+  computeLastLapTimeStyle,
   fitColumnTextValue,
   getSvgPreserveAspectRatio,
   HeatDataLapItem,
@@ -581,6 +583,17 @@ export class RacedayLaneColumnComponent
     return this.foregroundColor;
   }
 
+  get columnBorderColor(): string {
+    if (this.settings.borderColor) return this.settings.borderColor;
+    if (
+      this.settings.showBorder !== false &&
+      this.borderColor !== "transparent"
+    ) {
+      return this.borderColor;
+    }
+    return this.foregroundColor || "#ffffff";
+  }
+
   get headerLabel(): string {
     return resolveColumnHeaderLabel(
       this.columnKey,
@@ -662,6 +675,30 @@ export class RacedayLaneColumnComponent
       return all.slice(0, max);
     }
     return all;
+  }
+
+  get isBestLapHighlightEnabled(): boolean {
+    return this.settings.lastLapsBestLapHighlight !== false;
+  }
+
+  getLastLapItemStyle(
+    lap: HeatDataLapItem,
+    isLast: boolean,
+  ): Record<string, string | number | null> {
+    return computeLastLapItemStyle(
+      lap,
+      isLast,
+      this.settings,
+      this.isVerticalLapsFlow,
+      this.effectiveValueTextColor,
+      this.columnBorderColor,
+    );
+  }
+
+  getLastLapTimeStyle(
+    lap: HeatDataLapItem,
+  ): Record<string, string | number | null> {
+    return computeLastLapTimeStyle(lap, this.settings);
   }
 
   get hasTeamName(): boolean {

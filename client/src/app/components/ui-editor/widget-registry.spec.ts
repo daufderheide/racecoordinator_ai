@@ -124,5 +124,12 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["timeDisplayFormat"]).toBe("dynamic");
     expect(laneColumnSettings["timeSubsecondMode"]).toBe("never");
     expect(laneColumnSettings["lastLapsCount"]).toBe(5);
+    expect(laneColumnSettings["borderStyle"]).toBe("solid");
+    expect(laneColumnSettings["lastLapsShowBorder"]).toBe(false);
+    expect(laneColumnSettings["lastLapsBorderMode"]).toBe("separator");
+    expect(laneColumnSettings["lastLapsBorderStyle"]).toBe("solid");
+    expect(laneColumnSettings["lastLapsBestLapHighlight"]).toBe(true);
+    expect(laneColumnSettings["lastLapsBestLapFontWeight"]).toBe("bold");
+    expect(laneColumnSettings["lastLapsBestLapUnderline"]).toBe(false);
   });
 });

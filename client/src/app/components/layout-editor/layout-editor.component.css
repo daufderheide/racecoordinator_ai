@@ -97,6 +97,48 @@ app-editor-title:has(.custom-select-container.open) {
   gap: 8px;
 }
 
+.layout-widget-library-btn {
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+.layout-widget-library-btn .material-icons {
+  font-size: 18px;
+}
+
+.layout-widget-library-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.layout-widget-library-btn.active {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.layout-widget-library-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(148, 163, 184, 0.15);
+}
+
 .layout-control-label {
   color: #94a3b8;
   font-size: 14px;

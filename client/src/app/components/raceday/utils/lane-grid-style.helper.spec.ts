@@ -51,13 +51,153 @@ describe("LaneGridStyleHelper", () => {
     const updated = LaneGridStyleHelper.syncCrossColumnProperty(
       gridId,
       "time",
-      { timeDecimalPlaces: 3, lastLapsCount: 7 },
+      {
+        timeDecimalPlaces: 3,
+        lastLapsCount: 7,
+        lastLapsShowBorder: true,
+        lastLapsBorderStyle: "dashed",
+        lastLapsBestLapTextColor: "#10b981",
+      },
       widgets,
     );
     expect(updated[0].customSettings?.["timeDecimalPlaces"]).toBe(3);
     expect(updated[0].customSettings?.["lastLapsCount"]).toBe(7);
+    expect(updated[0].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[0].customSettings?.["lastLapsBorderStyle"]).toBe("dashed");
+    expect(updated[0].customSettings?.["lastLapsBestLapTextColor"]).toBe(
+      "#10b981",
+    );
     expect(updated[1].customSettings?.["timeDecimalPlaces"]).toBe(3);
     expect(updated[1].customSettings?.["lastLapsCount"]).toBe(7);
+    expect(updated[1].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[1].customSettings?.["lastLapsBorderStyle"]).toBe("dashed");
+    expect(updated[1].customSettings?.["lastLapsBestLapTextColor"]).toBe(
+      "#10b981",
+    );
+  });
+
+  it("should only sync time properties to widgets with matching masterId when forceAll is false", () => {
+    const multiColumnWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "col-lastlaps-lane0",
+        widgetType: "lane-column",
+        zIndex: 1,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          columnKey: "lastLaps",
+          gridMasterId: "col-lastlaps-lane0",
+          lastLapsCount: 5,
+        },
+      },
+      {
+        id: "col-lastlaps-lane1",
+        widgetType: "lane-column",
+        zIndex: 1,
+        x: 0,
+        y: 50,
+        width: 100,
+        height: 50,
+        customSettings: {
+          gridId,
+          gridLane: 1,
+          columnKey: "lastLaps",
+          gridMasterId: "col-lastlaps-lane0",
+          lastLapsCount: 5,
+        },
+      },
+      {
+        id: "col-laptime-lane0",
+        widgetType: "lane-column",
+        zIndex: 1,
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 50,
+        customSettings: {
+          gridId,
+          gridLane: 0,
+          columnKey: "lapTime",
+          gridMasterId: "col-laptime-lane0",
+          timeDecimalPlaces: 2,
+        },
+      },
+    ];
+
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "time",
+      {
+        columnKey: "lastLaps",
+        gridMasterId: "col-lastlaps-lane0",
+        lastLapsCount: 8,
+        lastLapsShowBorder: true,
+      },
+      multiColumnWidgets,
+      "col-lastlaps-lane0",
+    );
+
+    expect(updated[0].customSettings?.["lastLapsCount"]).toBe(8);
+    expect(updated[0].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[1].customSettings?.["lastLapsCount"]).toBe(8);
+    expect(updated[1].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[2].customSettings?.["lastLapsCount"]).toBeUndefined();
+    expect(updated[2].customSettings?.["lastLapsShowBorder"]).toBeUndefined();
+  });
+
+  it("should not overwrite lastLaps properties on lastLaps column when non-lastLaps column syncs time properties", () => {
+    const multiColumnWidgets: AbsoluteWidgetNode[] = [
+      {
+        id: "col-lastlaps",
+        widgetType: "lane-column",
+        zIndex: 1,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
+        customSettings: {
+          gridId,
+          columnKey: "lastLaps",
+          lastLapsCount: 8,
+          lastLapsShowBorder: true,
+        },
+      },
+      {
+        id: "col-laptime",
+        widgetType: "lane-column",
+        zIndex: 1,
+        x: 100,
+        y: 0,
+        width: 100,
+        height: 50,
+        customSettings: {
+          gridId,
+          columnKey: "lapTime",
+          timeDecimalPlaces: 2,
+        },
+      },
+    ];
+
+    const updated = LaneGridStyleHelper.syncCrossColumnProperty(
+      gridId,
+      "time",
+      {
+        _forceAllColumns: true,
+        columnKey: "lapTime",
+        timeDecimalPlaces: 3,
+      },
+      multiColumnWidgets,
+      "col-laptime",
+    );
+
+    expect(updated[0].customSettings?.["lastLapsCount"]).toBe(8);
+    expect(updated[0].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[0].customSettings?.["timeDecimalPlaces"]).toBe(3);
+    expect(updated[1].customSettings?.["timeDecimalPlaces"]).toBe(3);
   });
 
   it("should sync scaleMode when sourceScaleMode is provided to syncCrossColumnProperty", () => {

@@ -802,6 +802,53 @@ describe("RacedayLaneColumnComponent", () => {
     const laps = component.getLastLaps();
     expect(laps.length).toBe(2);
     expect(laps[0].lapNumber).toBe(24);
+    expect(
+      fixture.nativeElement
+        .querySelector(".raceday-lane-column-card")
+        .classList.contains("column-last-laps"),
+    ).toBeTrue();
+  });
+
+  it("should resolve columnBorderColor and pass it to getLastLapItemStyle", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "lastLaps",
+        gridDirection: "horizontal",
+        showBorder: true,
+        borderColor: "#ffffff",
+        borderStyle: "dashed",
+        borderWidth: 2,
+        lastLapsShowBorder: true,
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(component.columnBorderColor).toBe("#ffffff");
+    const style = component.getLastLapItemStyle(
+      { lapNumber: 1, lapTime: "9.123", isBest: false, segments: [] },
+      false,
+    );
+    expect(style["border-bottom"]).toBe("2px dashed #ffffff");
+  });
+
+  it("should apply box-mode class when lastLapsBorderMode is box", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "lastLaps",
+        lastLapsShowBorder: true,
+        lastLapsBorderMode: "box",
+      }),
+    );
+    fixture.detectChanges();
+
+    const lastLapsEl = fixture.nativeElement.querySelector(
+      ".lane-col-last-laps",
+    );
+    expect(lastLapsEl?.classList.contains("box-mode")).toBeTrue();
   });
 
   it("should detect image properties and resolve URLs", () => {
@@ -1149,6 +1196,163 @@ describe("RacedayLaneColumnComponent", () => {
     ) as HTMLElement;
     expect(lastLapsEl).toBeTruthy();
     expect(lastLapsEl.style.fontFamily).toBe("");
+  });
+
+  it("should not render individual lap separator underlines by default", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 5.0,
+      lapTimes: [5.0, 5.2],
+      lapsWithDetails: [],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+      lastLapsCount: 2,
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lapItems = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    expect(lapItems.length).toBe(2);
+    expect(lapItems[0].style.borderBottom).toBe("");
+    expect(lapItems[1].style.borderBottom).toBe("");
+  });
+
+  it("should apply configured separator borders when lastLapsShowBorder is enabled", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 5.0,
+      lapTimes: [5.0, 5.2],
+      lapsWithDetails: [],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = {
+      ...createWidget({
+        columnKey: "lastLaps",
+        targetIndex: 0,
+        lastLapsCount: 2,
+        lastLapsShowBorder: true,
+        lastLapsBorderMode: "separator",
+        lastLapsBorderStyle: "dashed",
+        lastLapsBorderWidth: 2,
+        lastLapsBorderColor: "#38bdf8",
+        gridDirection: "horizontal",
+      }),
+      scaleMode: "none" as const,
+    };
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lapItems = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    expect(lapItems.length).toBe(2);
+    expect(lapItems[0].style.borderBottom).toContain("2px dashed");
+    // Last lap item has no separator border
+    expect(lapItems[1].style.borderBottom).toBe("");
+  });
+
+  it("should apply box borders around each lap when lastLapsBorderMode is box", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 5.0,
+      lapTimes: [5.0, 5.2],
+      lapsWithDetails: [],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+      lastLapsCount: 2,
+      lastLapsShowBorder: true,
+      lastLapsBorderMode: "box",
+      lastLapsBorderStyle: "dotted",
+      lastLapsBorderWidth: 1,
+      lastLapsBorderColor: "#10b981",
+      lastLapsBorderRadius: 8,
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lapItems = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    expect(lapItems.length).toBe(2);
+    expect(lapItems[0].style.border).toContain("1px dotted");
+    expect(lapItems[0].style.borderRadius).toBe("8px");
+    expect(lapItems[1].style.border).toContain("1px dotted");
+    expect(lapItems[1].style.borderRadius).toBe("8px");
+  });
+
+  it("should apply custom best lap styling to driver best lap", () => {
+    const driverWithLaps = {
+      ...mockDrivers[0],
+      bestLapTime: 5.123,
+      lapTimes: [5.123, 5.5],
+      lapsWithDetails: [],
+    };
+    mockParent.heatDrivers = [driverWithLaps];
+    mockParent.heat.heatDrivers = [driverWithLaps];
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLaps",
+      targetIndex: 0,
+      lastLapsCount: 2,
+      lastLapsBestLapHighlight: true,
+      lastLapsBestLapTextColor: "#eab308",
+      lastLapsBestLapBackgroundColor: "rgba(234, 179, 8, 0.2)",
+      lastLapsBestLapFontWeight: "bolder",
+      lastLapsBestLapUnderline: true,
+      lastLapsBestLapItalic: true,
+      lastLapsBestLapShowBorder: true,
+      lastLapsBestLapBorderStyle: "solid",
+      lastLapsBestLapBorderWidth: 2,
+      lastLapsBestLapBorderColor: "#ca8a04",
+      lastLapsBestLapBorderRadius: 6,
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const lapItems = fixture.nativeElement.querySelectorAll(".last-lap-item");
+    // Lap 1 is at index 0
+    const bestLapEl = lapItems[0] as HTMLElement;
+    expect(bestLapEl.classList.contains("best-lap")).toBeTrue();
+    expect(bestLapEl.style.color).toBe("rgb(234, 179, 8)");
+    expect(bestLapEl.style.backgroundColor).toContain("rgba(234, 179, 8, 0.2)");
+    expect(bestLapEl.style.border).toContain("2px solid");
+    expect(bestLapEl.style.borderRadius).toBe("6px");
+
+    const bestLapTimeEl = bestLapEl.querySelector(
+      ".last-lap-time",
+    ) as HTMLElement;
+    expect(bestLapTimeEl.style.fontWeight).toBe("900");
+    expect(bestLapTimeEl.style.textDecoration).toBe("underline");
+    expect(bestLapTimeEl.style.fontStyle).toBe("italic");
+
+    // Regular lap (index 1) should not have best lap border/bg
+    const regularLapEl = lapItems[1] as HTMLElement;
+    expect(regularLapEl.style.border).toBe("");
+    expect(regularLapEl.style.backgroundColor).toBe("");
+  });
+
+  it("should apply configured borderStyle on the column card", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const widget = createWidget({
+      columnKey: "lastLapTime",
+      showBorder: true,
+      borderStyle: "dashed",
+    });
+    fixture.componentRef.setInput("widget", widget);
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".raceday-lane-column-card",
+    ) as HTMLElement;
+    expect(cardEl.style.borderStyle).toBe("dashed");
   });
 
   it("should scale header text down for header widgets when width is constrained", () => {

@@ -10,6 +10,7 @@
     (!isExtraGridRow || emptyRowsMode !== 'blank')
   "
   [class.header-widget-card]="isHeaderWidget"
+  [class.column-last-laps]="isLastLaps()"
   [class.highlight]="isHighlighted"
   [class.highlight-style-full-glow]="
     isHighlighted && highlightLapStyle === 'full-glow'
@@ -43,7 +44,9 @@
   [style.border-radius.px]="
     settings.borderRadius != null ? settings.borderRadius : 8
   "
-  [style.border-style]="settings.showBorder !== false ? 'solid' : 'none'"
+  [style.border-style]="
+    settings.showBorder !== false ? settings.borderStyle || 'solid' : 'none'
+  "
   [style.color]="foregroundColor"
   [style.--lane-col-header-border]="
     settings.showBorder !== false && borderColor
@@ -606,6 +609,7 @@
               #lastLapsContainer
               [class.vertical-laps]="isVerticalLapsFlow"
               [class.horizontal-laps]="!isVerticalLapsFlow"
+              [class.box-mode]="settings.lastLapsBorderMode === 'box'"
               [style.color]="effectiveValueTextColor"
               [style.font-family]="settings.valueFontFamily || null"
             >
@@ -615,21 +619,14 @@
                 @for (lap of getVisibleLastLaps(); track $index) {
                   <div
                     class="last-lap-item"
-                    [class.best-lap]="lap.isBest"
-                    [style.border-bottom]="
-                      !$last && isVerticalLapsFlow
-                        ? '1px solid ' +
-                          (effectiveValueTextColor || 'currentColor')
-                        : null
-                    "
-                    [style.border-right]="
-                      !$last && !isVerticalLapsFlow
-                        ? '1px solid ' +
-                          (effectiveValueTextColor || 'currentColor')
-                        : null
-                    "
+                    [class.best-lap]="lap.isBest && isBestLapHighlightEnabled"
+                    [ngStyle]="getLastLapItemStyle(lap, $last)"
                   >
-                    <span class="last-lap-time">{{ lap.lapTime }}</span>
+                    <span
+                      class="last-lap-time"
+                      [ngStyle]="getLastLapTimeStyle(lap)"
+                      >{{ lap.lapTime }}</span
+                    >
                     @if (lap.segments && lap.segments.length > 0) {
                       <div class="last-lap-segments">
                         @for (seg of lap.segments; track $index) {

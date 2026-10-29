@@ -134,8 +134,10 @@ Per consultare le formule matematiche complete e le specifiche di cronometraggio
 Il widget **Ultimi Giri** (`lastLaps`) visualizza i tempi dei giri recenti completati dal pilota nella manche attiva:
 
 - **Ultimi giri da visualizzare**: Configura quanti giri recenti mostrare all'interno del widget (cursore 1–20, inserimento numerico 1–50). Il valore predefinito è `5`.
+- **Separazione dei giri e bordi**: Configura come separare i singoli giri. Le opzioni includono stile del bordo (continuo, tratteggiato, puntinato, doppio), colore del bordo, spessore (1–10px), raggio angoli (0–32px) e modalità di separazione (linea divisoria tra i giri o riquadro attorno a ciascun giro).
+- **Evidenziazione del miglior giro**: Evidenzia se un giro nell'elenco corrisponde al miglior tempo del pilota. Le opzioni includono colore del testo, colore di sfondo del badge, spessore carattere (normale, grassetto, molto grassetto/900), sottolineato, corsivo e bordi dedicati per il miglior giro.
 - **Ridimensionamento e adattamento dinamico**: La scheda scala automaticamente le dimensioni dei caratteri e le spaziature per adattare ordinatamente il numero configurato di giri nella geometria della colonna.
-- **Sincronizzazione della griglia**: Nelle griglie di corsia, la configurazione o l'applicazione dei formati orari sincronizza il conteggio degli ultimi giri su tutte le corsie in gara.
+- **Sincronizzazione della griglia**: Nelle griglie di corsia, la configurazione o l'applicazione dei formati orari sincronizza il conteggio degli ultimi giri e il relativo stile su tutte le corsie in gara.
 
 ### Ordinamento Griglia e Matrice di Interazione
 

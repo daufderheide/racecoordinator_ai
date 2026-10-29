@@ -30,7 +30,7 @@ A barra de ferramentas superior oferece ações de gerenciamento padronizadas:
 - **Adicionar Layout (<span class="material-icons">add</span>)**: Cria um novo modelo de layout baseado no layout padrão do sistema.
 - **Copiar Layout (<span class="material-icons">content_copy</span>)**: Duplica o layout atualmente selecionado com um nome exclusivo (por exemplo, *Nome do Layout (Cópia)*).
 - **Excluir Layout (<span class="material-icons">delete</span>)**: Exclui o layout personalizado atual após confirmação. Layouts padrão do sistema são protegidos e não podem ser excluídos.
-- **Tour Guiado (<span class="material-icons">help_outline</span>)**: Inicia um tour guiado interativo destacando o seletor de layout, ações do cabeçalho, a tela e o inspetor de widgets.
+- **Tour Guiado (<span class="material-icons">help_outline</span>)**: Inicia um tour guiado interativo destacando o seletor de layout, ações do cabeçalho, a tela, a biblioteca de widgets e o inspetor de widgets.
 
 ---
 
@@ -53,6 +53,11 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 
 ### Pré-visualização da Contagem Regressiva de Largada
 - Clique em **Pré-visualizar Luzes** (<span class="material-icons">timer</span>) para alternar uma prévia ao vivo da sequência de luzes de largada na tela sem iniciar uma corrida real.
+
+### Biblioteca de widgets e caixa de ferramentas
+- **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante. Um clique também a restaura se estiver minimizada ou fora da tela visível.
+- **Redefinir posição (<span class="material-icons">restart_alt</span>)**: Localizado no cabeçalho da caixa de ferramentas para retorná-la instantaneamente à origem padrão `(0, 0)` no canto superior esquerdo.
+- **Minimizar (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Recolhe a caixa de ferramentas para uma barra de título compacta para liberar espaço na tela.
 
 ---
 

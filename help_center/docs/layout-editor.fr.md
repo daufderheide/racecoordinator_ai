@@ -30,7 +30,7 @@ La barre d'outils supérieure fournit des actions de gestion standardisées :
 - **Ajouter une Disposition (<span class="material-icons">add</span>)** : Crée un nouveau modèle de disposition basé sur la disposition système par défaut.
 - **Copier la Disposition (<span class="material-icons">content_copy</span>)** : Duplique la disposition actuellement sélectionnée sous un nom unique (par exemple, *Nom de Disposition (Copie)*).
 - **Supprimer la Disposition (<span class="material-icons">delete</span>)** : Supprime la disposition personnalisée actuelle après confirmation. Les dispositions système par défaut sont protégées et ne peuvent pas être supprimées.
-- **Visite Guidée (<span class="material-icons">help_outline</span>)** : Lance une visite guidée interactive mettant en valeur le sélecteur de disposition, les actions de la barre d'outils, le canevas et l'inspecteur de widgets.
+- **Visite Guidée (<span class="material-icons">help_outline</span>)** : Lance une visite guidée interactive mettant en valeur le sélecteur de disposition, les actions de la barre d'outils, le canevas, la bibliothèque de widgets et l'inspecteur de widgets.
 
 ---
 
@@ -53,6 +53,11 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 
 ### Aperçu du Compte à Rebours de Départ
 - Cliquez sur **Aperçu des Feux** (<span class="material-icons">timer</span>) pour prévisualiser la séquence de feux de départ sur le canevas sans démarrer une vraie course.
+
+### Bibliothèque de widgets & boîte à outils
+- **Bibliothèque de widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante. Un clic la restaure également si elle est réduite ou hors de l'écran visible.
+- **Réinitialiser la position (<span class="material-icons">restart_alt</span>)** : Situé dans l'en-tête de la boîte à outils flottante pour la replacer instantanément à l'origine `(0, 0)` en haut à gauche.
+- **Réduire (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)** : Replie la boîte à outils sous forme de barre de titre compacte pour libérer de l'espace sur le canevas.
 
 ---
 

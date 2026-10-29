@@ -551,6 +551,11 @@ app-raceday-absolute-widget:has(.custom-select-container.open),
   user-select: none;
 }
 
+.toolbox-title .toolbox-reset-btn:hover,
+.toolbox-title .minimize-btn:hover {
+  background: rgba(0, 0, 0, 0.12) !important;
+}
+
 .toolbox-subtitle {
   padding: 8px 16px 4px 16px;
   font-size: 12px;

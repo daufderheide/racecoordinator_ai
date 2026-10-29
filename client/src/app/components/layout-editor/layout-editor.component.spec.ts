@@ -1,4 +1,10 @@
-import { Component, input, output } from "@angular/core";
+import {
+  Component,
+  input,
+  output,
+  TemplateRef,
+  ViewChild,
+} from "@angular/core";
 import {
   ComponentFixture,
   fakeAsync,
@@ -31,6 +37,12 @@ import { LayoutEditorComponent } from "./layout-editor.component";
   standalone: true,
 })
 class MockDefaultRacedayComponent {
+  @ViewChild("toolboxTemplate", { static: true })
+  toolboxTemplate?: TemplateRef<any>;
+  isLayoutEditorMinimized = false;
+  layoutEditorPosition = { x: 0, y: 0 };
+  ensureToolboxVisible = jasmine.createSpy("ensureToolboxVisible");
+  resetLayoutEditorPosition = jasmine.createSpy("resetLayoutEditorPosition");
   isUIEditorMode = input<boolean>(false);
   layoutCustomizing = input<boolean>(false);
   isPracticeLayoutEditor = input<boolean>(false);
@@ -634,6 +646,7 @@ describe("LayoutEditorComponent", () => {
     it("should reset and clear layout in edit mode", () => {
       component.racedayComp = jasmine.createSpyObj("DefaultRacedayComponent", [
         "syncLayoutFromEditor",
+        "ensureToolboxVisible",
       ]);
       component.onToggleEditMode();
 
@@ -791,6 +804,78 @@ describe("LayoutEditorComponent", () => {
       expect(inspectorStep).toBeDefined();
       inspectorStep?.onEnter?.();
       expect(component.currentSelectedWidget).toBeTruthy();
+    });
+
+    it("should include widget library step in guide help", () => {
+      const steps = component.getHelpSteps();
+      const widgetLibStep = steps.find(
+        (s) => s.selector === "#help-raceday-widget-library",
+      );
+      expect(widgetLibStep).toBeDefined();
+    });
+
+    it("should handle toggleWidgetLibrary across visibility and minimized states", () => {
+      const mockRaceday = {
+        ensureToolboxVisible: jasmine.createSpy("ensureToolboxVisible"),
+        resetLayoutEditorPosition: jasmine.createSpy(
+          "resetLayoutEditorPosition",
+        ),
+        isLayoutEditorMinimized: false,
+        layoutEditorPosition: { x: 50, y: 50 },
+      };
+      component.racedayComp = mockRaceday as any;
+
+      // When not in edit mode, toggleWidgetLibrary does nothing
+      component.isEditMode = false;
+      component.isWidgetLibraryVisible = false;
+      component.toggleWidgetLibrary();
+      expect(component.isWidgetLibraryVisible).toBeFalse();
+      expect(mockRaceday.ensureToolboxVisible).not.toHaveBeenCalled();
+
+      // In edit mode: if hidden, make visible and call ensureToolboxVisible
+      component.isEditMode = true;
+      component.isWidgetLibraryVisible = false;
+      component.toggleWidgetLibrary();
+      expect(component.isWidgetLibraryVisible).toBeTrue();
+      expect(mockRaceday.ensureToolboxVisible).toHaveBeenCalled();
+
+      // If visible but minimized, unminimize via ensureToolboxVisible
+      mockRaceday.ensureToolboxVisible.calls.reset();
+      mockRaceday.isLayoutEditorMinimized = true;
+      component.toggleWidgetLibrary();
+      expect(component.isWidgetLibraryVisible).toBeTrue();
+      expect(mockRaceday.ensureToolboxVisible).toHaveBeenCalled();
+
+      // If visible and not minimized but positioned off-screen (>= 9000), reset position
+      mockRaceday.isLayoutEditorMinimized = false;
+      mockRaceday.layoutEditorPosition = { x: 9999, y: 9999 };
+      component.toggleWidgetLibrary();
+      expect(component.isWidgetLibraryVisible).toBeTrue();
+      expect(mockRaceday.resetLayoutEditorPosition).toHaveBeenCalled();
+
+      // If visible, not minimized, and valid position, toggles to hidden
+      mockRaceday.layoutEditorPosition = { x: 50, y: 50 };
+      component.toggleWidgetLibrary();
+      expect(component.isWidgetLibraryVisible).toBeFalse();
+    });
+
+    it("should render widget library toggle button and reflect edit mode and click interactions", () => {
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector(
+        "#toggle-widget-library-btn",
+      );
+      expect(btn).toBeTruthy();
+      expect(btn.disabled).toBeTrue();
+
+      component.onToggleEditMode();
+      fixture.detectChanges();
+
+      expect(btn.disabled).toBeFalse();
+      expect(btn.classList.contains("active")).toBeTrue();
+
+      spyOn(component, "toggleWidgetLibrary").and.callThrough();
+      btn.click();
+      expect(component.toggleWidgetLibrary).toHaveBeenCalled();
     });
 
     it("should render inspector panel and geometry inputs with autocomplete off in edit mode", () => {
@@ -1085,6 +1170,76 @@ describe("LayoutEditorComponent", () => {
       mockDataService.deleteCustomUI.and.returnValue(of(true));
       await component.onConfirmDeleteLayout();
       expect(mockCustomUiService.initialize).toHaveBeenCalled();
+    });
+
+    it("should update editingSettings.racedayLayout and save to settingsService when saving default layout", async () => {
+      component.selectLayoutById("default_ui_layout_rc_ai");
+      mockSettingsService.saveSettings.calls.reset();
+      component.isEditMode = true;
+      component.editingLayout!.layoutJson = JSON.stringify({
+        widgets: [
+          {
+            id: "last-laps-col",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "lastLaps",
+              lastLapsCount: 8,
+              lastLapsShowBorder: true,
+            },
+          },
+        ],
+      });
+      await component.saveCurrentLayout();
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+      expect(
+        component.editingSettings.racedayLayout?.widgets?.[0]?.customSettings?.[
+          "lastLapsCount"
+        ],
+      ).toBe(8);
+      expect(
+        component.editingSettings.racedayLayout?.widgets?.[0]?.customSettings?.[
+          "lastLapsShowBorder"
+        ],
+      ).toBe(true);
+    });
+
+    it("should update editingSettings.practiceRacedayLayout and save to settingsService when saving practice layout", async () => {
+      component.selectLayoutById("practice_ui_layout_rc_ai");
+      mockSettingsService.saveSettings.calls.reset();
+      component.isEditMode = true;
+      component.editingLayout!.layoutJson = JSON.stringify({
+        widgets: [
+          {
+            id: "practice-last-laps",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "lastLaps",
+              lastLapsCount: 12,
+            },
+          },
+        ],
+      });
+      await component.saveCurrentLayout();
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+      expect(
+        component.editingSettings.practiceRacedayLayout?.widgets?.[0]
+          ?.customSettings?.["lastLapsCount"],
+      ).toBe(12);
+    });
+
+    it("should sync editingSettings from loaded default and practice UIs during loadData", async () => {
+      mockSettingsService.saveSettings.calls.reset();
+      await component.loadData();
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+      expect(component.editingSettings.racedayLayout?.widgets?.[0]?.id).toBe(
+        "w1",
+      );
+      expect(
+        component.editingSettings.practiceRacedayLayout?.widgets?.[0]?.id,
+      ).toBe("w2");
     });
   });
 });

@@ -78,7 +78,13 @@ export class LaneGridStyleHelper {
           "useLaneColors",
         ];
       case "border":
-        return ["showBorder", "borderColor", "borderWidth", "borderRadius"];
+        return [
+          "showBorder",
+          "borderColor",
+          "borderStyle",
+          "borderWidth",
+          "borderRadius",
+        ];
       case "highlight":
         return ["highlightRowOnLap", "highlightLapStyle"];
       case "time":
@@ -89,6 +95,23 @@ export class LaneGridStyleHelper {
           "timeSubsecondThreshold",
           "timeSubsecondDecimals",
           "lastLapsCount",
+          "lastLapsShowBorder",
+          "lastLapsBorderMode",
+          "lastLapsBorderStyle",
+          "lastLapsBorderColor",
+          "lastLapsBorderWidth",
+          "lastLapsBorderRadius",
+          "lastLapsBestLapHighlight",
+          "lastLapsBestLapTextColor",
+          "lastLapsBestLapBackgroundColor",
+          "lastLapsBestLapFontWeight",
+          "lastLapsBestLapUnderline",
+          "lastLapsBestLapItalic",
+          "lastLapsBestLapShowBorder",
+          "lastLapsBestLapBorderColor",
+          "lastLapsBestLapBorderStyle",
+          "lastLapsBestLapBorderWidth",
+          "lastLapsBestLapBorderRadius",
         ];
     }
   }
@@ -129,6 +152,14 @@ export class LaneGridStyleHelper {
       Boolean(w.customSettings?.["isHeaderWidget"]);
 
     if (!isHorizontal) {
+      if (
+        propertyGroup === "time" &&
+        !forceAll &&
+        sourceMasterId &&
+        wMasterId !== sourceMasterId
+      ) {
+        return true;
+      }
       if (!forceAll && sourceSettings["linkColumns"] === false) {
         if (sourceMasterId && wMasterId !== sourceMasterId) return true;
       }
@@ -140,6 +171,14 @@ export class LaneGridStyleHelper {
         return true;
       }
     } else {
+      if (
+        propertyGroup === "time" &&
+        !forceAll &&
+        sourceMasterId &&
+        wMasterId !== sourceMasterId
+      ) {
+        return true;
+      }
       if (
         !forceAll &&
         sourceSettings["linkColumns"] === false &&
@@ -167,6 +206,14 @@ export class LaneGridStyleHelper {
   ): AbsoluteWidgetNode {
     const nextSettings = { ...(w.customSettings || {}) };
     for (const k of targetKeys) {
+      if (
+        k.startsWith("lastLaps") &&
+        sourceSettings["columnKey"] &&
+        sourceSettings["columnKey"] !== "lastLaps" &&
+        w.customSettings?.["columnKey"] === "lastLaps"
+      ) {
+        continue;
+      }
       if (sourceSettings[k] !== undefined) {
         nextSettings[k] = sourceSettings[k];
       } else if (sourceSettings["_reset_" + k]) {
@@ -506,8 +553,33 @@ export class LaneGridStyleHelper {
       "timeSubsecondThreshold",
       "timeSubsecondDecimals",
       "lastLapsCount",
+      "lastLapsShowBorder",
+      "lastLapsBorderMode",
+      "lastLapsBorderStyle",
+      "lastLapsBorderColor",
+      "lastLapsBorderWidth",
+      "lastLapsBorderRadius",
+      "lastLapsBestLapHighlight",
+      "lastLapsBestLapTextColor",
+      "lastLapsBestLapBackgroundColor",
+      "lastLapsBestLapFontWeight",
+      "lastLapsBestLapUnderline",
+      "lastLapsBestLapItalic",
+      "lastLapsBestLapShowBorder",
+      "lastLapsBestLapBorderColor",
+      "lastLapsBestLapBorderStyle",
+      "lastLapsBestLapBorderWidth",
+      "lastLapsBestLapBorderRadius",
     ];
     for (const key of copyKeys) {
+      if (
+        key.startsWith("lastLaps") &&
+        refSettings["columnKey"] &&
+        refSettings["columnKey"] !== "lastLaps" &&
+        target["columnKey"] === "lastLaps"
+      ) {
+        continue;
+      }
       if (refSettings[key] !== undefined) {
         target[key] = refSettings[key];
       }

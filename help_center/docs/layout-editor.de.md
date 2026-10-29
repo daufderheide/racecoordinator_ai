@@ -30,7 +30,7 @@ Die obere Symbolleiste bietet standardisierte Verwaltungsaktionen:
 - **Layout hinzufügen (<span class="material-icons">add</span>)**: Erstellt eine neue Layout-Vorlage basierend auf dem System-Standardlayout.
 - **Layout kopieren (<span class="material-icons">content_copy</span>)**: Dupliziert das aktuell ausgewählte Layout unter einem eindeutigen Namen (z. B. *Layout-Name (Kopie)*).
 - **Layout löschen (<span class="material-icons">delete</span>)**: Löscht das aktuelle benutzerdefinierte Layout nach Bestätigung. Standard-Systemlayouts sind geschützt und können nicht gelöscht werden.
-- **Geführte Tour (<span class="material-icons">help_outline</span>)**: Startet eine interaktive geführte Tour zur Erklärung der Layoutauswahl, Symbolleiste, Arbeitsfläche und des Widget-Inspectors.
+- **Geführte Tour (<span class="material-icons">help_outline</span>)**: Startet eine interaktive geführte Tour zur Erklärung der Layoutauswahl, Symbolleiste, Arbeitsfläche, Widget-Bibliothek und des Widget-Inspectors.
 
 ---
 
@@ -53,6 +53,11 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 
 ### Start-Countdown-Vorschau
 - Klicken Sie auf **Startampel-Vorschau** (<span class="material-icons">timer</span>), um eine Live-Vorschau der Startampel-Sequenz auf dem Canvas zu testen, ohne ein echtes Rennen zu starten.
+
+### Widget-Bibliothek & Werkzeugkasten
+- **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.
+- **Position zurücksetzen (<span class="material-icons">restart_alt</span>)**: Setzt den Werkzeugkasten über die Schaltfläche in der Kopfzeile sofort an die Standardursprungsposition `(0, 0)` oben links zurück.
+- **Minimieren (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Klappt den Werkzeugkasten auf eine kompakte Titelleiste zusammen, um Platz auf der Arbeitsfläche freizugeben.
 
 ---
 

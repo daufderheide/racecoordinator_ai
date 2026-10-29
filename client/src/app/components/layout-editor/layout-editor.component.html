@@ -201,6 +201,22 @@
               </app-custom-select>
             </div>
           </div>
+
+          <!-- Widget Library Toggle Button -->
+          <div id="help-raceday-widget-library" class="layout-control-group">
+            <button
+              id="toggle-widget-library-btn"
+              type="button"
+              class="layout-widget-library-btn"
+              [class.active]="isEditMode && isWidgetLibraryVisible"
+              [disabled]="!isEditMode"
+              (click)="toggleWidgetLibrary()"
+              [title]="'UE_LABEL_LAYOUT_EDITOR' | translate"
+            >
+              <span class="material-icons">widgets</span>
+              <span>{{ "UE_LABEL_LAYOUT_EDITOR" | translate }}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -489,7 +505,11 @@
 
         <!-- Toolbox Template Outlet -->
         <ng-container
-          *ngTemplateOutlet="isEditMode ? racedayComp?.toolboxTemplate : null"
+          *ngTemplateOutlet="
+            isEditMode && isWidgetLibraryVisible
+              ? racedayComp?.toolboxTemplate
+              : null
+          "
         ></ng-container>
       </div>
     </div>

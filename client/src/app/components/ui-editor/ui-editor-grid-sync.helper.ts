@@ -373,6 +373,14 @@ export function handleCrossColumnLiveSync(
       targetWidget.id,
       targetWidget.scaleMode,
     );
+    layout.widgets = LaneGridReplicationHelper.syncCrossColumnProperty(
+      gridId,
+      "time",
+      targetWidget.customSettings,
+      layout.widgets,
+      targetWidget.id,
+      targetWidget.scaleMode,
+    );
   }
 }
 

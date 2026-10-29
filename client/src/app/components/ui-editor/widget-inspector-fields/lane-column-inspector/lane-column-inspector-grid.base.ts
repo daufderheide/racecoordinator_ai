@@ -308,6 +308,12 @@ export abstract class LaneColumnInspectorGridBase {
     this.onFieldChange();
   }
 
+  applyLastLapsStyleToAll(): void {
+    this.currentSettings["_forceAllColumns"] = true;
+    this.currentSettings["_syncAction"] = "time";
+    this.onFieldChange();
+  }
+
   get gridHighlightLapStyle(): HighlightLapStyle {
     return this.highlightLapStyle;
   }

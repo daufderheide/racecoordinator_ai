@@ -10,7 +10,6 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
-import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { DriverAudioConfigComponent } from "@app/components/shared/driver-audio-config/driver-audio-config.component";
 import { DriverExportModalComponent } from "@app/components/shared/driver-export-modal/driver-export-modal.component";
@@ -94,7 +93,6 @@ export { DriverAudioSlot } from "./driver-editor.helper";
     EditorSectionComponent,
     ImageSelectorComponent,
     FormsModule,
-    AudioSelectorComponent,
     DriverAudioConfigComponent,
     TranslatePipe,
     ConfirmationModalComponent,

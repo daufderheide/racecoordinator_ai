@@ -30,7 +30,7 @@ The top toolbar provides standardized management actions:
 - **Add Layout (<span class="material-icons">add</span>)**: Creates a new layout template based on the default system layout.
 - **Copy Layout (<span class="material-icons">content_copy</span>)**: Duplicates the currently selected layout under a unique name (e.g. *Layout Name (Copy)*).
 - **Delete Layout (<span class="material-icons">delete</span>)**: Deletes the current custom layout after confirmation. System default layouts are protected and cannot be deleted.
-- **Help Tour (<span class="material-icons">help_outline</span>)**: Launches an interactive guided tour highlighting the layout selector, header actions, raceday canvas, and widget inspector.
+- **Help Tour (<span class="material-icons">help_outline</span>)**: Launches an interactive guided tour highlighting the layout selector, header actions, raceday canvas, widget library, and widget inspector.
 
 ---
 
@@ -53,6 +53,11 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 
 ### Start Countdown Preview
 - Click **Preview Lights** (<span class="material-icons">timer</span>) to toggle a live countdown light sequence preview on the canvas without starting an actual race.
+
+### Widget Library & Toolbox Controls
+- **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox. Clicking also unminimizes the toolbox and ensures it is clamped within the visible screen area if previously moved off-screen.
+- **Reset Position (<span class="material-icons">restart_alt</span>)**: Located in the floating toolbox header to instantly return the toolbox to its default top-left origin `(0, 0)`.
+- **Minimize (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Collapses the toolbox to a compact header bar to free up canvas workspace while keeping the library immediately accessible.
 
 ---
 

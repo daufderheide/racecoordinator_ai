@@ -1,5 +1,6 @@
 import {
   handleColumnGapSettingsSync,
+  handleCrossColumnLiveSync,
   handleCustomLabelSync,
   handleGridBindingModeSync,
   handleGridColumnStructureChanges,
@@ -389,6 +390,66 @@ describe("ui-editor-grid-sync.helper", () => {
 
       expect(masterWidget.customSettings.gapMode).toBe("laps_and_time");
       expect(masterWidget.customSettings.gapTarget).toBe("position");
+    });
+  });
+
+  describe("handleCrossColumnLiveSync", () => {
+    it("should synchronize time properties including lastLaps configuration across columns", () => {
+      masterWidget.customSettings.columnKey = "lastLaps";
+      masterWidget.customSettings.lastLapsCount = 8;
+      masterWidget.customSettings.lastLapsShowBorder = true;
+      masterWidget.customSettings.lastLapsBorderMode = "box";
+      masterWidget.customSettings.lastLapsBorderStyle = "dashed";
+      masterWidget.customSettings.lastLapsBorderColor = "#3b82f6";
+      masterWidget.customSettings.lastLapsBorderWidth = 2;
+      masterWidget.customSettings.lastLapsBorderRadius = 6;
+      masterWidget.customSettings.lastLapsBestLapHighlight = true;
+      masterWidget.customSettings.lastLapsBestLapTextColor = "#10b981";
+
+      childWidget.customSettings.columnKey = "lastLaps";
+
+      handleCrossColumnLiveSync(mockLayout, masterWidget, "grid-1");
+
+      const updatedChild = mockLayout.widgets[1];
+      expect(updatedChild.customSettings.lastLapsCount).toBe(8);
+      expect(updatedChild.customSettings.lastLapsShowBorder).toBe(true);
+      expect(updatedChild.customSettings.lastLapsBorderMode).toBe("box");
+      expect(updatedChild.customSettings.lastLapsBorderStyle).toBe("dashed");
+      expect(updatedChild.customSettings.lastLapsBorderColor).toBe("#3b82f6");
+      expect(updatedChild.customSettings.lastLapsBorderWidth).toBe(2);
+      expect(updatedChild.customSettings.lastLapsBorderRadius).toBe(6);
+      expect(updatedChild.customSettings.lastLapsBestLapHighlight).toBe(true);
+      expect(updatedChild.customSettings.lastLapsBestLapTextColor).toBe(
+        "#10b981",
+      );
+    });
+
+    it("should return early when linkColumns is false and mirrorRows is false", () => {
+      masterWidget.customSettings.linkColumns = false;
+      masterWidget.customSettings.mirrorRows = false;
+      masterWidget.customSettings.columnKey = "lastLaps";
+      masterWidget.customSettings.lastLapsCount = 10;
+      childWidget.customSettings.columnKey = "lastLaps";
+      childWidget.customSettings.lastLapsCount = 5;
+
+      handleCrossColumnLiveSync(mockLayout, masterWidget, "grid-1");
+
+      expect(mockLayout.widgets[1].customSettings.lastLapsCount).toBe(5);
+    });
+
+    it("should sync header and border properties when widget is a header widget", () => {
+      masterWidget.customSettings.isHeaderWidget = true;
+      childWidget.customSettings.isHeaderWidget = true;
+      masterWidget.customSettings.headerTextColor = "#ff00ff";
+      masterWidget.customSettings.showBorder = true;
+      masterWidget.customSettings.borderColor = "#00ffff";
+
+      handleCrossColumnLiveSync(mockLayout, masterWidget, "grid-1");
+
+      const updatedChild = mockLayout.widgets[1];
+      expect(updatedChild.customSettings.headerTextColor).toBe("#ff00ff");
+      expect(updatedChild.customSettings.showBorder).toBe(true);
+      expect(updatedChild.customSettings.borderColor).toBe("#00ffff");
     });
   });
 });

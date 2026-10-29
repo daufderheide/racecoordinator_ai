@@ -664,6 +664,104 @@ describe("LaneColumnInspectorComponent", () => {
       expect(numberInput.nativeElement.value).toBe("7");
     });
 
+    it("should render lap separation and best lap configuration sections when isLastLapsColumn is true", async () => {
+      mockSettings.columnKey = "lastLaps";
+      mockSettings.lastLapsShowBorder = true;
+      mockSettings.lastLapsBorderMode = "box";
+      mockSettings.lastLapsBorderStyle = "dashed";
+      mockSettings.lastLapsBorderColor = "#38bdf8";
+      mockSettings.lastLapsBorderWidth = 3;
+      mockSettings.lastLapsBorderRadius = 8;
+      mockSettings.lastLapsBestLapHighlight = true;
+      mockSettings.lastLapsBestLapShowBorder = true;
+      mockSettings.lastLapsBestLapTextColor = "#10b981";
+      mockSettings.lastLapsBestLapBackgroundColor = "#047857";
+      mockSettings.lastLapsBestLapFontWeight = "bolder";
+      mockSettings.lastLapsBestLapUnderline = true;
+      mockSettings.lastLapsBestLapItalic = true;
+      mockSettings.lastLapsBestLapBorderColor = "#059669";
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const labels = fixture.debugElement.queryAll(
+        By.css(".inspector-label, .form-check-label"),
+      );
+      const labelTexts = labels.map((l) => l.nativeElement.textContent.trim());
+
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_SHOW_BORDER"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BORDER_MODE"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BEST_LAP_SECTION"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BEST_LAP_ENABLE"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BEST_LAP_TEXT_COLOR"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BEST_LAP_BG_COLOR"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BEST_LAP_FONT_WEIGHT"),
+        ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) =>
+          t.includes("UE_INSPECTOR_LAST_LAPS_BEST_LAP_SHOW_BORDER"),
+        ),
+      ).toBeTrue();
+    });
+
+    it("should call applyLastLapsStyleToAll and trigger sync", () => {
+      mockSettings.gridId = "grid-1";
+      mockSettings.columnKey = "lastLaps";
+      spyOn(component, "onFieldChange");
+      component.applyLastLapsStyleToAll();
+      expect(mockSettings._forceAllColumns).toBeTrue();
+      expect(mockSettings._syncAction).toBe("time");
+      expect(component.onFieldChange).toHaveBeenCalled();
+    });
+
+    it("should default last laps border settings from column borders and set time sync action", () => {
+      mockSettings.columnKey = "lastLaps";
+      mockSettings.showBorder = true;
+      mockSettings.borderColor = "#ffffff";
+      mockSettings.borderStyle = "solid";
+      mockSettings.borderWidth = 2;
+      mockSettings.lastLapsShowBorder = true;
+      delete mockSettings.lastLapsBorderColor;
+
+      component.onColorChange("lastLapsBorderColor", {
+        target: { value: "#ffffff" },
+      } as any);
+      expect(mockSettings.lastLapsBorderColor).toBe("#ffffff");
+      expect(mockSettings._syncAction).toBe("time");
+
+      component.resetColor("lastLapsBorderColor");
+      expect(mockSettings.lastLapsBorderColor).toBeUndefined();
+      expect(mockSettings._reset_lastLapsBorderColor).toBeTrue();
+      expect(mockSettings._syncAction).toBe("time");
+    });
+
     it("should handle inset gap column configuration including legacy keys", () => {
       mockSettings.insets = {};
       expect(component.isInsetGapColumn("top-right")).toBeFalse();

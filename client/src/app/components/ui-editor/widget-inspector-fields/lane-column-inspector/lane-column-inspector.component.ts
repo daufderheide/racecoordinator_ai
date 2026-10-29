@@ -953,6 +953,8 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     delete this.currentSettings["_reset_" + field];
     if (field.startsWith("header")) {
       this.currentSettings["_syncAction"] = "header";
+    } else if (field.startsWith("lastLaps")) {
+      this.currentSettings["_syncAction"] = "time";
     }
     this.onFieldChange();
   }
@@ -962,6 +964,8 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     this.currentSettings["_reset_" + field] = true;
     if (field.startsWith("header")) {
       this.currentSettings["_syncAction"] = "header";
+    } else if (field.startsWith("lastLaps")) {
+      this.currentSettings["_syncAction"] = "time";
     } else {
       this.currentSettings["_syncAction"] = "value";
     }

@@ -18,6 +18,7 @@ import {
   LAYOUT_LAST_EDITED_STORAGE_KEY,
   resolveInitialLayout,
   setLastEditedLayoutId,
+  syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
 
 describe("layout-editor.helper", () => {
@@ -423,6 +424,116 @@ describe("layout-editor.helper", () => {
       expect(() => clearLastEditedLayoutId(mockNav)).not.toThrow();
       expect(mockNav.clearLastEditedId).toHaveBeenCalledWith("layout");
       spy.and.callThrough();
+    });
+  });
+
+  describe("syncLayoutSettingsWithDefaults", () => {
+    it("should populate layoutJson when defaultUi layoutJson is empty or uninitialized", () => {
+      const layouts: CustomUI[] = [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "Default",
+          is_default: true,
+        },
+        {
+          entity_id: "practice_ui_layout_rc_ai",
+          name: "Practice",
+          is_default: true,
+        },
+      ];
+      const raceday = { widgets: [{ id: "w1" }] } as any;
+      const practice = { widgets: [{ id: "w2" }] } as any;
+
+      syncLayoutSettingsWithDefaults(layouts, raceday, practice);
+
+      expect(layouts[0].layoutJson).toBe(JSON.stringify(raceday));
+      expect(layouts[1].layoutJson).toBe(JSON.stringify(practice));
+    });
+
+    it("should preserve existing non-empty layoutJson and not overwrite with defaults", () => {
+      const customRacedayJson = JSON.stringify({
+        widgets: [
+          {
+            id: "custom-w1",
+            customSettings: { lastLapsShowBorder: true, lastLapsCount: 8 },
+          },
+        ],
+      });
+      const customPracticeJson = JSON.stringify({
+        widgets: [
+          {
+            id: "custom-w2",
+            customSettings: { lastLapsCount: 12 },
+          },
+        ],
+      });
+      const layouts: CustomUI[] = [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "Default",
+          is_default: true,
+          layoutJson: customRacedayJson,
+        },
+        {
+          entity_id: "practice_ui_layout_rc_ai",
+          name: "Practice",
+          is_default: true,
+          layoutJson: customPracticeJson,
+        },
+      ];
+      const raceday = { widgets: [{ id: "default-w1" }] } as any;
+      const practice = { widgets: [{ id: "default-w2" }] } as any;
+
+      syncLayoutSettingsWithDefaults(layouts, raceday, practice);
+
+      expect(layouts[0].layoutJson).toBe(customRacedayJson);
+      expect(layouts[1].layoutJson).toBe(customPracticeJson);
+    });
+
+    it("should populate layoutJson when layoutJson is '{}' or '[]'", () => {
+      const layouts: CustomUI[] = [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "Default",
+          is_default: true,
+          layoutJson: "{}",
+        },
+        {
+          entity_id: "practice_ui_layout_rc_ai",
+          name: "Practice",
+          is_default: true,
+          layoutJson: "[]",
+        },
+      ];
+      const raceday = { widgets: [{ id: "w1" }] } as any;
+      const practice = { widgets: [{ id: "w2" }] } as any;
+
+      syncLayoutSettingsWithDefaults(layouts, raceday, practice);
+
+      expect(layouts[0].layoutJson).toBe(JSON.stringify(raceday));
+      expect(layouts[1].layoutJson).toBe(JSON.stringify(practice));
+    });
+
+    it("should do nothing if racedayLayout or practiceRacedayLayout have no widgets", () => {
+      const layouts: CustomUI[] = [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "Default",
+          is_default: true,
+        },
+        {
+          entity_id: "practice_ui_layout_rc_ai",
+          name: "Practice",
+          is_default: true,
+        },
+      ];
+
+      syncLayoutSettingsWithDefaults(layouts, undefined, {
+        widgets: [],
+      } as any);
+
+      expect(layouts[0].layoutJson).toBeUndefined();
+      expect(layouts[1].layoutJson).toBeUndefined();
     });
   });
 });
