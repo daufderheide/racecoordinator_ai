@@ -63,6 +63,17 @@ export class ToolboxGroupHelper {
     "media-custom",
   ];
 
+  /**
+   * Set of widget types that are restricted to a single instance on the canvas.
+   * Currently empty so all widgets can be placed multiple times.
+   */
+  public static readonly SINGLETON_WIDGET_TYPES: Set<string> =
+    new Set<string>();
+
+  public static isSingletonWidget(widgetType: string): boolean {
+    return ToolboxGroupHelper.SINGLETON_WIDGET_TYPES.has(widgetType);
+  }
+
   public static readonly RC_AI_ROOT_WIDGETS: {
     type: WidgetType;
     icon: string;
@@ -623,6 +634,27 @@ export class ToolboxGroupHelper {
     );
   }
 
+  private static filterAvailableWidgets(
+    widgets: { type: WidgetType; icon: string; labelKey: string }[],
+    usedWidgetTypes: Set<string>,
+    term: string,
+    translateFn?: (key: string) => string,
+  ): ToolboxWidgetItem[] {
+    return widgets
+      .filter(
+        (w) =>
+          !ToolboxGroupHelper.isSingletonWidget(w.type) ||
+          !usedWidgetTypes.has(w.type),
+      )
+      .filter((w) => ToolboxGroupHelper.matchesSearch(w, term, translateFn))
+      .map((w) => ({
+        type: w.type,
+        labelKey: w.labelKey,
+        icon: w.icon,
+      }))
+      .sort((a, b) => ToolboxGroupHelper.compareWidgets(a, b, translateFn));
+  }
+
   private static buildRcAiGroup(
     usedWidgetTypes: Set<string>,
     term: string,
@@ -632,30 +664,23 @@ export class ToolboxGroupHelper {
     availableColumnsList?: { key: string; label: string }[],
   ): ToolboxGroup | null {
     const rcRootWidgets: ToolboxWidgetItem[] =
-      ToolboxGroupHelper.RC_AI_ROOT_WIDGETS.filter(
-        (w) => !usedWidgetTypes.has(w.type),
-      )
-        .filter((w) => ToolboxGroupHelper.matchesSearch(w, term, translateFn))
-        .map((w) => ({
-          type: w.type,
-          labelKey: w.labelKey,
-          icon: w.icon,
-        }))
-        .sort((a, b) => ToolboxGroupHelper.compareWidgets(a, b, translateFn));
+      ToolboxGroupHelper.filterAvailableWidgets(
+        ToolboxGroupHelper.RC_AI_ROOT_WIDGETS,
+        usedWidgetTypes,
+        term,
+        translateFn,
+      );
 
     const rcSubgroups: ToolboxSubgroup[] = [];
     for (const sg of ToolboxGroupHelper.RC_AI_SUBGROUPS) {
-      const unusedWidgets = sg.widgets
-        .filter((w) => !usedWidgetTypes.has(w.type))
-        .filter((w) => ToolboxGroupHelper.matchesSearch(w, term, translateFn))
-        .map((w) => ({
-          type: w.type,
-          labelKey: w.labelKey,
-          icon: w.icon,
-        }))
-        .sort((a, b) => ToolboxGroupHelper.compareWidgets(a, b, translateFn));
+      const availableWidgets = ToolboxGroupHelper.filterAvailableWidgets(
+        sg.widgets,
+        usedWidgetTypes,
+        term,
+        translateFn,
+      );
 
-      if (unusedWidgets.length > 0) {
+      if (availableWidgets.length > 0) {
         const isSgExpanded = term
           ? true
           : subgroupExpandedStates.has(sg.id)
@@ -666,7 +691,7 @@ export class ToolboxGroupHelper {
           id: sg.id,
           nameKey: sg.nameKey,
           icon: sg.icon,
-          widgets: unusedWidgets,
+          widgets: availableWidgets,
           expanded: isSgExpanded,
         });
       }
@@ -739,7 +764,12 @@ export class ToolboxGroupHelper {
     const customByGroup = new Map<string, CustomWidgetDefinition[]>();
     for (const cw of customWidgets) {
       const fullType = `custom:${cw.manifest.id}`;
-      if (usedWidgetTypes.has(fullType) && !cw.manifest.allowMultiple) continue;
+      if (
+        ToolboxGroupHelper.isSingletonWidget(fullType) &&
+        usedWidgetTypes.has(fullType)
+      ) {
+        continue;
+      }
 
       const groupName = cw.group || ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID;
       if (!customByGroup.has(groupName)) {

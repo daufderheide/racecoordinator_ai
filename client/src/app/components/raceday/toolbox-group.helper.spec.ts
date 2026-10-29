@@ -51,7 +51,7 @@ describe("ToolboxGroupHelper", () => {
     expect(rcAiGroup.totalCount).toBe(121);
   });
 
-  it("should exclude used widgets from root and subgroups", () => {
+  it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
     const used = new Set<string>([
       "leaderboard",
       "action-start-resume",
@@ -68,26 +68,76 @@ describe("ToolboxGroupHelper", () => {
     );
     expect(
       standingsSg?.widgets.find((w) => w.type === "leaderboard"),
-    ).toBeUndefined();
-    expect(standingsSg?.widgets.length).toBe(9);
+    ).toBeDefined();
+    expect(standingsSg?.widgets.length).toBe(10);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
     expect(
       actionsSg?.widgets.find((w) => w.type === "action-start-resume"),
-    ).toBeUndefined();
-    expect(actionsSg?.widgets.length).toBe(20);
+    ).toBeDefined();
+    expect(actionsSg?.widgets.length).toBe(21);
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
     expect(
       titlesSg?.widgets.find((w) => w.type === "event-name"),
-    ).toBeUndefined();
-    expect(titlesSg?.widgets.length).toBe(7);
+    ).toBeDefined();
+    expect(titlesSg?.widgets.length).toBe(8);
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
-    expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
-    expect(mediaSg?.widgets.length).toBe(3);
+    expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
+    expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(117);
+    expect(rcAiGroup.totalCount).toBe(121);
+  });
+
+  it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
+    try {
+      ToolboxGroupHelper.SINGLETON_WIDGET_TYPES.add("leaderboard");
+      ToolboxGroupHelper.SINGLETON_WIDGET_TYPES.add("action-start-resume");
+      ToolboxGroupHelper.SINGLETON_WIDGET_TYPES.add("custom:single-widget");
+
+      const used = new Set<string>([
+        "leaderboard",
+        "action-start-resume",
+        "custom:single-widget",
+        "timer",
+      ]);
+      const customWidgets: CustomWidgetDefinition[] = [
+        {
+          folderName: "single-widget",
+          group: "custom-root",
+          manifest: { id: "single-widget", name: "Single Widget" },
+        },
+      ];
+
+      const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
+      const rcAiGroup = groups.find(
+        (g) => g.id === ToolboxGroupHelper.RC_AI_GROUP_ID,
+      )!;
+      const standingsSg = rcAiGroup.subgroups.find(
+        (sg) => sg.id === "standings-heats",
+      )!;
+      expect(
+        standingsSg.widgets.find((w) => w.type === "leaderboard"),
+      ).toBeUndefined();
+
+      const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions")!;
+      expect(
+        actionsSg.widgets.find((w) => w.type === "action-start-resume"),
+      ).toBeUndefined();
+
+      const titlesSg = rcAiGroup.subgroups.find(
+        (sg) => sg.id === "titles-info",
+      )!;
+      expect(titlesSg.widgets.find((w) => w.type === "timer")).toBeDefined();
+
+      const customRoot = groups.find(
+        (g) => g.id === ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID,
+      );
+      expect(customRoot).toBeUndefined();
+    } finally {
+      ToolboxGroupHelper.SINGLETON_WIDGET_TYPES.clear();
+    }
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {
@@ -138,7 +188,7 @@ describe("ToolboxGroupHelper", () => {
     expect(groups[3].subgroups[0].widgets[0].type).toBe("custom:sample-delta");
   });
 
-  it("should keep custom widgets in toolbox if allowMultiple is true even when used", () => {
+  it("should keep custom widgets in toolbox even when used so they can be placed multiple times", () => {
     const used = new Set<string>([
       "custom:single-widget",
       "custom:multi-widget",
@@ -150,7 +200,6 @@ describe("ToolboxGroupHelper", () => {
         manifest: {
           id: "single-widget",
           name: "Single Widget",
-          allowMultiple: false,
         },
       },
       {
@@ -159,7 +208,6 @@ describe("ToolboxGroupHelper", () => {
         manifest: {
           id: "multi-widget",
           name: "Multi Widget",
-          allowMultiple: true,
         },
       },
     ];
@@ -170,9 +218,11 @@ describe("ToolboxGroupHelper", () => {
     );
 
     expect(customRoot).toBeDefined();
-    // single-widget should be filtered out, multi-widget should remain
-    expect(customRoot?.rootWidgets.length).toBe(1);
-    expect(customRoot?.rootWidgets[0].type).toBe("custom:multi-widget");
+    expect(customRoot?.rootWidgets.length).toBe(2);
+    expect(customRoot?.rootWidgets.map((w) => w.type)).toEqual([
+      "custom:multi-widget",
+      "custom:single-widget",
+    ]);
   });
 
   it("should filter widgets across groups and subgroups by search term", () => {
