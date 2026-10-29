@@ -54,8 +54,8 @@ public class AppInstanceCoordinatorTest {
 
   @Test
   public void testIsRaceCoordinatorRunningTrue() throws Exception {
-    int port = findFreePort();
-    HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    int port = server.getAddress().getPort();
     server.createContext(
         "/api/version",
         exchange -> {
@@ -84,8 +84,8 @@ public class AppInstanceCoordinatorTest {
 
   @Test
   public void testIsRaceCoordinatorRunningFalseWhenNon200() throws Exception {
-    int port = findFreePort();
-    HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    int port = server.getAddress().getPort();
     server.createContext(
         "/api/version",
         exchange -> {
@@ -104,19 +104,19 @@ public class AppInstanceCoordinatorTest {
 
   @Test
   public void testIsPortAvailable() throws Exception {
-    int port = findFreePort();
-    assertTrue("Unused port should be available", AppInstanceCoordinator.isPortAvailable(port));
-
-    try (ServerSocket ss = new ServerSocket(port)) {
+    int port;
+    try (ServerSocket ss = new ServerSocket(0)) {
+      port = ss.getLocalPort();
       assertFalse(
           "Occupied port should not be available", AppInstanceCoordinator.isPortAvailable(port));
     }
+    assertTrue("Unused port should be available", AppInstanceCoordinator.isPortAvailable(port));
   }
 
   @Test
   public void testQueryServerStatusWithStatusEndpoint() throws Exception {
-    int port = findFreePort();
-    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    int port = server.getAddress().getPort();
     server.createContext(
         "/api/server/status",
         exchange -> {
@@ -145,8 +145,8 @@ public class AppInstanceCoordinatorTest {
 
   @Test
   public void testQueryServerStatusFallbackToVersionEndpoint() throws Exception {
-    int port = findFreePort();
-    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    int port = server.getAddress().getPort();
     server.createContext(
         "/api/version",
         exchange -> {
@@ -274,8 +274,8 @@ public class AppInstanceCoordinatorTest {
 
   @Test
   public void testHandleAlreadyRunningLayer3OpenBrowserWhenExistingAlive() throws Exception {
-    int port = findFreePort();
-    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    int port = server.getAddress().getPort();
     server.createContext(
         "/api/version",
         exchange -> {
@@ -422,9 +422,9 @@ public class AppInstanceCoordinatorTest {
 
   @Test
   public void testDefaultInstanceStopperWithShutdownEndpoint() throws Exception {
-    int port = findFreePort();
     AtomicBoolean shutdownCalled = new AtomicBoolean(false);
-    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    int port = server.getAddress().getPort();
     server.createContext(
         "/api/server/shutdown",
         exchange -> {
