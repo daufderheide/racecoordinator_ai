@@ -29,6 +29,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { DriverAudioConfigComponent } from "@app/components/shared/driver-audio-config/driver-audio-config.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
@@ -120,6 +121,7 @@ import {
   handleDetachGrid,
   handleDetachTheme,
   handleDownloadTemplate,
+  handleDriverAudioOverrideChange,
   handleDuplicateCustomUi,
   handleDuplicateTheme,
   handleEditGridTemplate,
@@ -130,6 +132,7 @@ import {
   handlePageTransitionChange,
   handleReMirrorGrid,
   handleRemoveSelectedWidget,
+  handleResetDriverAudioOverrides,
   handleSetLayoutAspectRatio,
   handleSetLayoutScaleMode,
   handleStartGridSession,
@@ -216,6 +219,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     CustomSelectComponent,
     CustomOptionComponent,
     AutoSelectDefaultDirective,
+    DriverAudioConfigComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -964,6 +968,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     field: "type" | "url" | "text",
     value: any,
   ) => handleThemeAudioChange(this, theme, slot, field, value);
+
+  onDriverAudioOverrideChange = (
+    theme: Theme,
+    event: { key: string; config: AudioConfig | null },
+  ) => handleDriverAudioOverrideChange(this, theme, event);
+
+  onResetDriverAudioOverrides = (theme: Theme) =>
+    handleResetDriverAudioOverrides(this, theme);
 
   onAudioAssetSelected = (theme: Theme, slot: string, asset: any) => {
     this.onAudioConfigChanged(theme, slot, "url", extractAssetId(asset));

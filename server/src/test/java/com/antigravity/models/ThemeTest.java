@@ -297,4 +297,60 @@ public class ThemeTest {
     emptySlotsTheme.prewarmFlagCache(null);
     assertEquals(RaceFlag.RED, emptySlotsTheme.resolveFlag("flag.heat_over", RaceFlag.RED, null));
   }
+
+  @Test
+  public void testDriverAudioOverrides_GettersAndBuilder() {
+    Map<String, AudioConfig> overrides = new HashMap<>();
+    overrides.put("lapAudio", new AudioConfig("preset", "custom_beep.wav", null));
+    overrides.put("penaltyAudio", new AudioConfig("none", null, null));
+    overrides.put(
+        "bestLapAudio", new AudioConfig("tts", null, "New best lap for {driver.nickname}"));
+
+    Theme theme =
+        new Theme.Builder().withName("Override Theme").withDriverAudioOverrides(overrides).build();
+
+    assertNotNull(theme.getDriverAudioOverrides());
+    assertEquals(3, theme.getDriverAudioOverrides().size());
+    assertEquals("custom_beep.wav", theme.getDriverAudioOverrides().get("lapAudio").getUrl());
+    assertEquals("none", theme.getDriverAudioOverrides().get("penaltyAudio").getType());
+    assertEquals("tts", theme.getDriverAudioOverrides().get("bestLapAudio").getType());
+
+    Theme copied = Theme.Builder.from(theme).build();
+    assertNotNull(copied.getDriverAudioOverrides());
+    assertEquals(3, copied.getDriverAudioOverrides().size());
+    assertEquals("custom_beep.wav", copied.getDriverAudioOverrides().get("lapAudio").getUrl());
+
+    // Modifying the map afterwards should not mutate the existing theme
+    overrides.put("driftLapAudio", new AudioConfig("preset", "drift.wav", null));
+    assertEquals(3, theme.getDriverAudioOverrides().size());
+  }
+
+  @Test
+  public void testDriverAudioOverrides_JsonSerialization() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+
+    Map<String, AudioConfig> overrides = new HashMap<>();
+    overrides.put("lapAudio", new AudioConfig("preset", "beep.wav", null));
+    overrides.put("driftLapAudio", new AudioConfig("tts", null, "Nice drift!"));
+
+    Theme theme =
+        new Theme.Builder()
+            .withName("Serialized Theme")
+            .withDriverAudioOverrides(overrides)
+            .build();
+
+    String json = mapper.writeValueAsString(theme);
+    assertTrue(json.contains("driver_audio_overrides"));
+    assertTrue(json.contains("beep.wav"));
+
+    Theme deserialized = mapper.readValue(json, Theme.class);
+    assertNotNull(deserialized.getDriverAudioOverrides());
+    assertEquals(2, deserialized.getDriverAudioOverrides().size());
+    assertEquals("preset", deserialized.getDriverAudioOverrides().get("lapAudio").getType());
+    assertEquals("beep.wav", deserialized.getDriverAudioOverrides().get("lapAudio").getUrl());
+    assertEquals("tts", deserialized.getDriverAudioOverrides().get("driftLapAudio").getType());
+    assertEquals(
+        "Nice drift!", deserialized.getDriverAudioOverrides().get("driftLapAudio").getText());
+  }
 }

@@ -122,6 +122,7 @@ export const DEFAULT_SECTIONS_EXPANDED: Record<string, boolean> = {
   countdown: false,
   fuelGauge: false,
   audio: false,
+  driverAudioOverrides: false,
 };
 
 export const MAIN_AUDIO_SLOTS: {

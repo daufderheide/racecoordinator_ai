@@ -56,11 +56,14 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   ttsPitch = input<number | undefined>(undefined);
   ttsVolume = input<number | undefined>(undefined);
   masterVolume = input<number | undefined>(undefined);
+  allowOverride = input<boolean>(false);
+  isOverridden = input<boolean>(true);
 
   typeChange = output<"preset" | "tts" | "none" | "audio_set">();
   urlChange = output<string | undefined>();
   textChange = output<string | undefined>();
   assetSelected = output<any>();
+  overrideChange = output<boolean>();
   change = output<{
     type: "preset" | "tts" | "none" | "audio_set";
     url?: string;
@@ -331,6 +334,11 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.errorTimeout = null;
     }
     this.stop();
+  }
+
+  toggleOverride(): void {
+    if (this.readonly()) return;
+    this.overrideChange.emit(!this.isOverridden());
   }
 
   onTypeChange(newType: "preset" | "tts" | "none" | "audio_set") {

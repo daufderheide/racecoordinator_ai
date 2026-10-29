@@ -27,3 +27,17 @@ Les thèmes vous permettent de personnaliser les effets sonores et annonces voca
 - **Alertes d'infraction :** Tonalités en cas de temps au tour trop court (`audio.min_lap_time`).
 
 Pour plus de détails sur l'atténuation automatique, les priorités et le filtrage multi-écrans, consultez la documentation du [Système Audio](audio.md).
+
+## Remplacements audio du pilote
+
+Les thèmes peuvent remplacer les paramètres audio individuels des pilotes pour tous les participants lorsque le thème est actif. Par défaut, les sons personnalisés de chaque pilote (configurés dans l'[Éditeur de pilotes](driver-editor.md)) sont joués pendant leurs événements de course. Cependant, un thème peut remplacer sélectivement l'un des 13 événements audio du pilote :
+
+- **Sons de tours personnels :** Tour effectué (`lapAudio`), Meilleur tour personnel (`bestLapAudio`).
+- **Sons de tours de course :** Meilleur tour de course (`raceBestLapAudio`), Meilleur tour de voie de course (`raceLaneBestLapAudio`), Meilleur tour de manche (`heatBestLapAudio`), Nouveau meneur de course (`newRaceLeaderAudio`), Nouveau meneur de manche (`newHeatLeaderAudio`).
+- **Sons de meilleur tour général :** Meilleur tour général (`overallBestLapAudio`), Meilleur tour de voie général (`overallLaneBestLapAudio`).
+- **Sons d'événements :** Arrêt au stand (`pitInAudio`), Niveau de carburant (`fuelAudio`), Faux départ / Pénalité (`penaltyAudio`), Tour de drift (`driftLapAudio`).
+
+### Hiérarchie de remplacement et configuration
+- **Désactivé (Par défaut) :** Le thème ne modifie pas l'emplacement ; la configuration individuelle du pilote est utilisée.
+- **Remplacement activé :** Le thème prend la priorité pour cet événement sonore spécifique pour tous les pilotes sous ce thème. Vous pouvez le configurer comme un **Son prédéfini**, un **Fichier audio importé**, une phrase de **Synthèse vocale (TTS)** personnalisée ou **Aucun** (pour désactiver le son sur tout le thème).
+- **Réinitialiser tous les remplacements :** Efface rapidement tous les remplacements actifs du thème, redonnant le contrôle total aux paramètres de chaque pilote.

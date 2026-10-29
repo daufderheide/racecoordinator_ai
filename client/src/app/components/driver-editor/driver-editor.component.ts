@@ -12,6 +12,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { DriverAudioConfigComponent } from "@app/components/shared/driver-audio-config/driver-audio-config.component";
 import { DriverExportModalComponent } from "@app/components/shared/driver-export-modal/driver-export-modal.component";
 import { DriverLabelManagerModalComponent } from "@app/components/shared/driver-label-manager-modal/driver-label-manager-modal.component";
 import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
@@ -94,6 +95,7 @@ export { DriverAudioSlot } from "./driver-editor.helper";
     ImageSelectorComponent,
     FormsModule,
     AudioSelectorComponent,
+    DriverAudioConfigComponent,
     TranslatePipe,
     ConfirmationModalComponent,
     ImportModalComponent,
@@ -699,6 +701,15 @@ export class DriverEditorComponent
     if (!this.editingDriver) return;
     updateDriverAudioText(this.editingDriver, slot, text);
     this.onInputChange();
+    this.cdr.markForCheck();
+  }
+
+  onDriverAudioConfigChange(_event: {
+    key: string;
+    field: "type" | "url" | "text";
+    value: any;
+  }) {
+    this.captureState();
     this.cdr.markForCheck();
   }
 

@@ -13,6 +13,7 @@ export interface Theme extends Model {
   is_default: boolean;
   slots: { [key: string]: string }; // image slot key → asset entity ID
   audio_slots: { [key: string]: AudioConfig }; // audio slot key → AudioConfig
+  driver_audio_overrides?: { [key: string]: AudioConfig }; // driver audio property key → AudioConfig override
 
   uiId?: string;
   driver_station_theme_id?: string;
@@ -56,4 +57,21 @@ export const THEME_SLOT_KEYS = {
   AUDIO_HEAT_OVER: "audio.heat_over",
   AUDIO_RACE_OVER: "audio.race_over",
   AUDIO_MIN_LAP_TIME: "audio.min_lap_time",
+} as const;
+
+/** All driver audio slot keys that can be overridden by a theme. */
+export const THEME_DRIVER_AUDIO_SLOTS = {
+  LAP: "lapAudio",
+  BEST_LAP: "bestLapAudio",
+  PENALTY: "penaltyAudio",
+  HEAT_BEST_LAP: "heatBestLapAudio",
+  RACE_BEST_LAP: "raceBestLapAudio",
+  RACE_LANE_BEST_LAP: "raceLaneBestLapAudio",
+  NEW_HEAT_LEADER: "newHeatLeaderAudio",
+  NEW_RACE_LEADER: "newRaceLeaderAudio",
+  OVERALL_BEST_LAP: "overallBestLapAudio",
+  OVERALL_LANE_BEST_LAP: "overallLaneBestLapAudio",
+  PIT_IN: "pitInAudio",
+  FUEL: "fuelAudio",
+  DRIFT_LAP: "driftLapAudio",
 } as const;

@@ -219,6 +219,17 @@ export class ThemeService {
     return config;
   }
 
+  /**
+   * Resolves the effective audio configuration for a driver slot,
+   * checking the active theme's driver audio overrides first.
+   */
+  resolveDriverAudio(driver: any, slotKey: string): AudioConfig | undefined {
+    if (this.activeTheme?.driver_audio_overrides?.[slotKey] !== undefined) {
+      return this.activeTheme.driver_audio_overrides[slotKey];
+    }
+    return driver?.[slotKey];
+  }
+
   // --- Per-Race Theme Support ---
 
   /**

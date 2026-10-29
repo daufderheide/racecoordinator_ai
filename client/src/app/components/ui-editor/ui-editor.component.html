@@ -703,6 +703,51 @@
                         </div>
                       }
                     </div>
+                    <!-- Driver Audio Overrides Section -->
+                    <div
+                      class="config-section sub-section"
+                      data-sub-section="driverAudioOverrides"
+                    >
+                      <div
+                        class="section-header"
+                        [attr.id]="
+                          theme.entity_id === editingSettings.activeThemeId
+                            ? 'help-theme-driver-audio-overrides'
+                            : null
+                        "
+                        (click)="toggleSection('driverAudioOverrides')"
+                      >
+                        <span
+                          class="expander-icon"
+                          [class.collapsed]="
+                            !sectionsExpanded['driverAudioOverrides']
+                          "
+                          >▼</span
+                        >
+                        <h1>
+                          {{ "UE_HEADER_DRIVER_AUDIO_OVERRIDES" | translate }}
+                        </h1>
+                      </div>
+                      @if (sectionsExpanded["driverAudioOverrides"]) {
+                        <div class="section-content">
+                          <app-driver-audio-config
+                            [overrides]="theme.driver_audio_overrides || {}"
+                            [isOverrideMode]="true"
+                            [readonly]="false"
+                            [assets]="soundAssets"
+                            [ttsContext]="previewTTSContext"
+                            idPrefix="theme"
+                            (overrideChange)="
+                              onDriverAudioOverrideChange(theme, $event)
+                            "
+                            (resetAllOverrides)="
+                              onResetDriverAudioOverrides(theme)
+                            "
+                          >
+                          </app-driver-audio-config>
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
               </div>

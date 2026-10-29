@@ -5,7 +5,9 @@ import {
   applyAudioConfigUpdate,
   applyThemeSlotUpdate,
   handleCreateTheme,
+  handleDriverAudioOverrideChange,
   handleDuplicateTheme,
+  handleResetDriverAudioOverrides,
   removeThemeFromUndoHistory,
   sortThemesForDisplay,
 } from "./ui-editor-theme.helper";
@@ -370,5 +372,64 @@ describe("ui-editor-theme.helper", () => {
       "theme_1",
       "theme_1_copy",
     );
+  });
+
+  describe("driverAudioOverrides", () => {
+    it("should set, update, and remove a driver audio override", () => {
+      const theme: Theme = {
+        entity_id: "t1",
+        name: "Test",
+        is_default: false,
+        slots: {},
+        audio_slots: {},
+      };
+      const comp: any = {
+        captureState: jasmine.createSpy("captureState"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+
+      handleDriverAudioOverrideChange(comp, theme, {
+        key: "lapAudio",
+        config: { type: "preset", url: "beep.wav", text: "" },
+      });
+
+      expect(theme.driver_audio_overrides?.["lapAudio"]).toEqual({
+        type: "preset",
+        url: "beep.wav",
+        text: "",
+      });
+      expect(comp.captureState).toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+
+      // Clear override when config is null
+      handleDriverAudioOverrideChange(comp, theme, {
+        key: "lapAudio",
+        config: null,
+      });
+      expect(theme.driver_audio_overrides?.["lapAudio"]).toBeUndefined();
+    });
+
+    it("should reset all driver audio overrides", () => {
+      const theme: Theme = {
+        entity_id: "t1",
+        name: "Test",
+        is_default: false,
+        slots: {},
+        audio_slots: {},
+        driver_audio_overrides: {
+          lapAudio: { type: "preset", url: "beep.wav", text: "" },
+          fuelAudio: { type: "none" },
+        },
+      };
+      const comp: any = {
+        captureState: jasmine.createSpy("captureState"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+
+      handleResetDriverAudioOverrides(comp, theme);
+      expect(theme.driver_audio_overrides).toEqual({});
+      expect(comp.captureState).toHaveBeenCalled();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
   });
 });

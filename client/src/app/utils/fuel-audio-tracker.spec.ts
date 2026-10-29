@@ -350,4 +350,49 @@ describe("FuelAudioTracker", () => {
 
     expect(mockPlayer.playCallout).not.toHaveBeenCalled();
   });
+
+  it("should respect theme driver audio overrides for pitInAudio", () => {
+    const heat = createMockHeat();
+    const race = createMockRace(true);
+    const assets = createMockAssets();
+    tracker.reset(heat, false, race);
+
+    const theme = {
+      name: "Override Theme",
+      driver_audio_overrides: {
+        pitInAudio: { type: "preset", url: "theme_pit_in.wav" },
+      },
+    };
+
+    // First update: start refueling
+    tracker.updateLaneFuel(
+      0,
+      50,
+      true,
+      heat,
+      true,
+      race,
+      undefined,
+      assets,
+      true,
+      theme as any,
+    );
+    // Second update: fuel gained >= 0.099 triggers pit in
+    tracker.updateLaneFuel(
+      0,
+      60,
+      true,
+      heat,
+      true,
+      race,
+      undefined,
+      assets,
+      true,
+      theme as any,
+    );
+
+    expect(mockPlayer.playCallout).toHaveBeenCalled();
+    const playedConfig = mockPlayer.playCallout.calls.mostRecent().args[0];
+    expect(playedConfig?.url).toBe("theme_pit_in.wav");
+  });
 });

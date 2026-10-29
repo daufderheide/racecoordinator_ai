@@ -27,3 +27,17 @@ Designs ermöglichen die Anpassung systemweiter Soundeffekte und Sprachansagen f
 - **Regelverstöße:** Töne bei Unterschreitung der Mindestrundenzeit (`audio.min_lap_time`).
 
 Ausführliche Informationen zu Audio-Ducking, Prioritäten und Multi-Display-Filterung finden Sie in der Dokumentation zum [Audiosystem](audio.md).
+
+## Fahrer-Audio-Überschreibungen
+
+Themes können individuelle Fahreraudio-Einstellungen für alle Teilnehmer überschreiben, wenn das Theme aktiv ist. Standardmäßig werden die im [Fahrer-Editor](driver-editor.md) konfigurierten Töne der Fahrer abgespielt. Ein Theme kann jedoch selektiv jedes der 13 Fahrer-Audioereignisse überschreiben:
+
+- **Persönliche Rundentöne:** Runde absolviert (`lapAudio`), Persönliche Bestzeit (`bestLapAudio`).
+- **Renn-Rundentöne:** Beste Rennrunde (`raceBestLapAudio`), Beste Renn-Spurrunde (`raceLaneBestLapAudio`), Beste Durchgangsrunde (`heatBestLapAudio`), Neue Rennführung (`newRaceLeaderAudio`), Neue Durchgangsführung (`newHeatLeaderAudio`).
+- **Gesamte Bestzeittöne:** Gesamt-Bestzeit (`overallBestLapAudio`), Gesamt-Spurbestzeit (`overallLaneBestLapAudio`).
+- **Ereignistöne:** Boxeneinfahrt (`pitInAudio`), Kraftstoffstand (`fuelAudio`), Fehlstart / Strafe (`penaltyAudio`), Driftrunde (`driftLapAudio`).
+
+### Überschreibungshierarchie & Konfiguration
+- **Deaktiviert (Standard):** Das Theme lässt den Slot unberührt; die individuelle Konfiguration des Fahrers wird verwendet.
+- **Aktivierte Überschreibung:** Das Theme hat für dieses spezifische Audioereignis bei allen Fahrern Vorrang. Es kann als **Voreingestellter Sound**, **Eigene Audiodatei**, **Text-zu-Sprache (TTS)** oder **Keine** (zur themenweiten Stummschaltung) konfiguriert werden.
+- **Alle Überschreibungen zurücksetzen:** Entfernt alle aktiven Überschreibungen im Theme und stellt die Steuerung über die Fahrereinstellungen wieder her.

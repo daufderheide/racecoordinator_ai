@@ -2,6 +2,7 @@ import {
   createTTSContext,
   dispatchLapAudio,
   getDefaultAudioName,
+  getEffectiveDriver,
   getLapAudioConfig,
   interpolate,
   mockTTSContext,
@@ -1135,6 +1136,115 @@ describe("playSound Utility", () => {
 
       expect(mockPlayer.playCallout).toHaveBeenCalled();
       expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should respect theme driver audio overrides when passed", () => {
+      const theme = {
+        name: "Test Theme",
+        driver_audio_overrides: {
+          lapAudio: { type: "preset" as const, url: "theme_beep.wav" },
+          bestLapAudio: { type: "none" as const },
+        },
+      };
+
+      // When theme overrides lapAudio to theme_beep.wav
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        0,
+        false,
+        false,
+        false,
+        undefined,
+        undefined,
+        false,
+        theme as any,
+      );
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("theme_beep.wav");
+
+      // When theme overrides bestLapAudio to none, no sound plays
+      mockPlayer.playSfx.calls.reset();
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        1,
+        true,
+        false,
+        false,
+        undefined,
+        undefined,
+        false,
+        theme as any,
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+
+      // When theme overrides bestLapAudio to a custom preset sound
+      const themeWithBest = {
+        name: "Test Theme",
+        driver_audio_overrides: {
+          bestLapAudio: { type: "preset" as const, url: "theme_best.wav" },
+        },
+      };
+      mockPlayer.playSfx.calls.reset();
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        1,
+        true,
+        false,
+        false,
+        undefined,
+        undefined,
+        false,
+        themeWithBest as any,
+      );
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("theme_best.wav");
+    });
+  });
+
+  describe("getEffectiveDriver", () => {
+    it("should return null/undefined when driver is not provided", () => {
+      expect(getEffectiveDriver(null)).toBeNull();
+      expect(getEffectiveDriver(undefined)).toBeUndefined();
+    });
+
+    it("should return driver unchanged when no theme or empty overrides", () => {
+      const driver = {
+        name: "Alice",
+        lapAudio: { type: "preset", url: "beep.wav" },
+      };
+      expect(getEffectiveDriver(driver, null)).toBe(driver);
+      expect(getEffectiveDriver(driver, { name: "No Overrides" } as any)).toBe(
+        driver,
+      );
+      expect(
+        getEffectiveDriver(driver, {
+          name: "Empty",
+          driver_audio_overrides: {},
+        } as any),
+      ).toBe(driver);
+    });
+
+    it("should apply theme overrides on top of driver properties", () => {
+      const driver = {
+        name: "Alice",
+        lapAudio: { type: "preset", url: "beep.wav" },
+        bestLapAudio: { type: "preset", url: "driveby.wav" },
+      };
+      const theme = {
+        name: "Custom Theme",
+        driver_audio_overrides: {
+          lapAudio: { type: "preset" as const, url: "custom_theme_beep.wav" },
+          bestLapAudio: { type: "none" as const },
+        },
+      };
+
+      const effective = getEffectiveDriver(driver, theme as any);
+      expect(effective.name).toBe("Alice");
+      expect(effective.lapAudio.url).toBe("custom_theme_beep.wav");
+      expect(effective.bestLapAudio.type).toBe("none");
+      // Original driver is not mutated
+      expect(driver.lapAudio.url).toBe("beep.wav");
     });
   });
 

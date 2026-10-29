@@ -27,3 +27,17 @@ Los temas le permiten personalizar los efectos de sonido y avisos de voz globale
 - **Alertas de infracción:** Tonos por tiempo de vuelta inferior al mínimo (`audio.min_lap_time`).
 
 Para más detalles sobre la atenuación de audio, niveles de prioridad y relevancia multipantalla, consulte la documentación del [Sistema de Audio](audio.md).
+
+## Anulaciones de audio del conductor
+
+Los temas pueden anular la configuración de audio individual de cada conductor para todos los participantes cuando el tema esté activo. De forma predeterminada, se reproducen los sonidos personalizados de cada conductor (configurados en el [Editor de conductores](driver-editor.md)). Sin embargo, un tema puede anular selectivamente cualquiera de los 13 eventos de audio del conductor:
+
+- **Sonidos personales de vuelta:** Vuelta completada (`lapAudio`), Mejor vuelta personal (`bestLapAudio`).
+- **Sonidos de vuelta de carrera:** Mejor vuelta de carrera (`raceBestLapAudio`), Mejor vuelta de carril de carrera (`raceLaneBestLapAudio`), Mejor vuelta de manga (`heatBestLapAudio`), Nuevo líder de carrera (`newRaceLeaderAudio`), Nuevo líder de manga (`newHeatLeaderAudio`).
+- **Sonidos de mejor vuelta general:** Mejor vuelta general (`overallBestLapAudio`), Mejor vuelta de carril general (`overallLaneBestLapAudio`).
+- **Sonidos de eventos:** Entrada a boxes (`pitInAudio`), Nivel de combustible (`fuelAudio`), Salida en falso / Sanción (`penaltyAudio`), Vuelta derrape (`driftLapAudio`).
+
+### Jerarquía de anulación y configuración
+- **Deshabilitado (Predeterminado):** El tema no modifica la ranura; se reproduce la configuración individual del conductor.
+- **Anulación habilitada:** El tema tiene prioridad para ese evento de sonido específico en todos los conductores que utilicen este tema. Puede configurarlo como un **Sonido predeterminado**, un **Archivo de audio cargado**, una frase de **Texto a voz (TTS)** personalizada o **Ninguno** (para silenciar el evento en todo el tema).
+- **Restablecer todas las anulaciones:** Borra rápidamente todas las anulaciones activas en el tema, devolviendo el control total a la configuración de cada conductor.

@@ -112,7 +112,18 @@ public class ThemeTaskHandler {
     }
 
     if (updated) {
-      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
+      Theme newTheme =
+          new Theme(
+              name,
+              t.isDefault(),
+              s,
+              as,
+              t.getDriverAudioOverrides(),
+              uiId,
+              t.getDriverStationThemeId(),
+              t.getDriverViewThemeId(),
+              entityId,
+              t.getId());
       themeRepository.save(newTheme);
     }
   }
@@ -208,6 +219,7 @@ public class ThemeTaskHandler {
             true,
             slots,
             audioSlots,
+            new HashMap<>(),
             uiId,
             Theme.DRIVER_STATION_THEME_ID,
             Theme.DRIVER_STATION_THEME_ID,
@@ -418,6 +430,7 @@ public class ThemeTaskHandler {
         false,
         slots,
         audioSlots,
+        new HashMap<>(),
         CustomUI.DEFAULT_UI_ID,
         Theme.DRIVER_STATION_THEME_ID,
         Theme.DRIVER_STATION_THEME_ID,
@@ -473,6 +486,7 @@ public class ThemeTaskHandler {
                 false,
                 theme.getSlots(),
                 theme.getAudioSlots(),
+                theme.getDriverAudioOverrides(),
                 theme.getUiId(),
                 theme.getDriverStationThemeId(),
                 theme.getDriverViewThemeId(),
@@ -539,6 +553,9 @@ public class ThemeTaskHandler {
               current.isDefault(),
               theme.getSlots(),
               theme.getAudioSlots(),
+              theme.getDriverAudioOverrides() != null
+                  ? theme.getDriverAudioOverrides()
+                  : current.getDriverAudioOverrides(),
               theme.getUiId(),
               theme.getDriverStationThemeId() != null
                   ? theme.getDriverStationThemeId()
@@ -669,6 +686,7 @@ public class ThemeTaskHandler {
               false,
               source.getSlots(),
               source.getAudioSlots(),
+              source.getDriverAudioOverrides(),
               source.getUiId(),
               source.getDriverStationThemeId(),
               source.getDriverViewThemeId(),

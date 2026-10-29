@@ -44,3 +44,17 @@ Themes allow you to customize system-wide sound effects and voice callouts for r
 
 Each audio slot can be configured as a preset sound effect, a custom uploaded audio asset, or a Text-to-Speech (TTS) phrase. For full details on audio ducking, priority tiers, and multi-display relevance, see the [Audio System](audio.md) documentation.
 
+## Driver Audio Overrides
+
+Themes can override individual driver audio settings across all participants when the theme is active. By default, each driver's customized sounds (configured in the [Driver Editor](driver-editor.md)) are played during their race events. However, a theme can selectively override any of the 13 driver audio events:
+
+- **Personal Lap Sounds:** Lap Completed (`lapAudio`), Personal Best Lap (`bestLapAudio`).
+- **Race Lap Sounds:** Race Best Lap (`raceBestLapAudio`), Race Lane Best Lap (`raceLaneBestLapAudio`), Heat Best Lap (`heatBestLapAudio`), New Race Leader (`newRaceLeaderAudio`), New Heat Leader (`newHeatLeaderAudio`).
+- **Overall Best Lap Sounds:** Overall Best Lap (`overallBestLapAudio`), Overall Lane Best Lap (`overallLaneBestLapAudio`).
+- **Event Sounds:** Pit In (`pitInAudio`), Fuel Level (`fuelAudio`), False Start / Penalty (`penaltyAudio`), Drift Lap (`driftLapAudio`).
+
+### Override Hierarchy & Configuration
+- **Disabled (Default):** The theme leaves the slot untouched, playing the driver's individual configuration (or the system default if unconfigured).
+- **Enabled Override:** The theme takes precedence for that specific sound event across all drivers running under this theme. You can configure it as a **Preset Sound**, an **Uploaded Audio File**, a custom **Text-to-Speech (TTS)** phrase, or **None** (to mute the event theme-wide).
+- **Reset All Overrides:** Quickly clears all active overrides on the theme, returning control entirely to each driver's individual settings.
+

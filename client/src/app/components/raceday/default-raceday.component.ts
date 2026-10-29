@@ -121,6 +121,7 @@ import { TranslationService } from "@app/services/translation.service";
 import {
   createTTSContext,
   dispatchLapAudio,
+  getEffectiveDriver,
   isAudioConfigured,
   resolveAudioUrl,
   resolveLapAudio,
@@ -2632,6 +2633,9 @@ export class DefaultRacedayComponent
           d.driver?.entity_id === driver?.entity_id ||
           d.laneIndex === lap.lane,
       );
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const effectiveDriver = getEffectiveDriver(driver, activeTheme);
+
     const association: AudioAssociation = {
       widgetType: "lane-view",
       laneIndex: hd?.laneIndex,
@@ -2640,7 +2644,8 @@ export class DefaultRacedayComponent
     };
 
     if (lap.type === LapType.FALSE_START) {
-      const audio = driver?.falseStartAudio || driver?.penaltyAudio;
+      const audio =
+        effectiveDriver?.falseStartAudio || effectiveDriver?.penaltyAudio;
       if (
         audio?.type &&
         audio.type !== "none" &&
@@ -2669,7 +2674,7 @@ export class DefaultRacedayComponent
     }
 
     if (lap.isDrift) {
-      const audio = driver?.driftLapAudio;
+      const audio = effectiveDriver?.driftLapAudio;
       if (
         audio?.type &&
         audio.type !== "none" &&
@@ -2690,10 +2695,10 @@ export class DefaultRacedayComponent
       return;
     }
 
-    if (driver) {
+    if (effectiveDriver) {
       dispatchLapAudio(
         this.audioService,
-        driver,
+        effectiveDriver,
         lap.recordTier,
         isBestLap,
         lap.isNewRaceLeader,
@@ -2701,6 +2706,7 @@ export class DefaultRacedayComponent
         ttsContext,
         association,
         lap.isDrift,
+        activeTheme,
       );
     }
   }
@@ -3370,6 +3376,7 @@ export class DefaultRacedayComponent
       this.track,
       this.assets,
       canPlayAudio,
+      this.themeService?.getActiveTheme?.(),
     );
   }
 

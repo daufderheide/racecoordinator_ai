@@ -5409,5 +5409,35 @@ describe("UIEditorComponent", () => {
         });
       });
     });
+
+    describe("Theme Driver Audio Overrides", () => {
+      it("should handle onDriverAudioOverrideChange and onResetDriverAudioOverrides", () => {
+        const theme: Theme = {
+          entity_id: "test_theme",
+          name: "Test Theme",
+          is_default: false,
+          slots: {},
+          audio_slots: {},
+        };
+        component.editingState = {
+          settings: component.editingSettings,
+          themes: [theme],
+        };
+
+        component.onDriverAudioOverrideChange(theme, {
+          key: "lapAudio",
+          config: { type: "preset", url: "override_lap.wav", text: "" },
+        });
+
+        expect(theme.driver_audio_overrides?.["lapAudio"]).toEqual({
+          type: "preset",
+          url: "override_lap.wav",
+          text: "",
+        });
+
+        component.onResetDriverAudioOverrides(theme);
+        expect(theme.driver_audio_overrides).toEqual({});
+      });
+    });
   });
 });

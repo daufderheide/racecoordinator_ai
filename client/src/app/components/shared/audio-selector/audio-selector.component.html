@@ -8,8 +8,27 @@
   (drop)="onDrop($event)"
 >
   <div class="audio-header">
-    <label>{{ label() }}</label>
-    @if (!readonly()) {
+    <div class="audio-label-wrapper">
+      @if (allowOverride()) {
+        <button
+          type="button"
+          class="btn-override-toggle"
+          [class.active]="isOverridden()"
+          [disabled]="readonly()"
+          (click)="toggleOverride()"
+          [attr.aria-pressed]="isOverridden()"
+        >
+          <span class="material-icons">{{
+            isOverridden() ? "check_box" : "check_box_outline_blank"
+          }}</span>
+          <span class="override-text">{{
+            "DAC_OVERRIDE_ENABLED" | translate
+          }}</span>
+        </button>
+      }
+      <label>{{ label() }}</label>
+    </div>
+    @if (!readonly() && (!allowOverride() || isOverridden())) {
       <div class="toggle-group">
         @if (mode() === "single") {
           <span
@@ -41,126 +60,133 @@
     }
   </div>
 
-  <!-- Regular Editing Mode -->
-  @if (
-    !readonly() &&
-    (effectiveType() === "preset" || effectiveType() === "audio_set")
-  ) {
-    <div class="audio-controls">
-      <div
-        class="dm-select trigger-div"
-        [class.dragging]="isDragging"
-        (click)="openItemSelector()"
-      >
-        @if (isUploading) {
-          <span class="uploading-state">
-            <span class="spinner-small"></span>
-            {{ "IS_UPLOADING" | translate }}
-          </span>
-        } @else if (isDragging) {
-          <span class="dragging-hint">{{
-            "AS_HINT_DRAG_AUDIO" | translate
-          }}</span>
-        } @else {
-          {{ selectedAssetName() }}
-        }
+  @if (allowOverride() && !isOverridden()) {
+    <div class="driver-default-hint">
+      <span class="material-icons">person</span>
+      <span>{{ "DAC_USING_DRIVER_SETTING" | translate }}</span>
+    </div>
+  } @else {
+    <!-- Regular Editing Mode -->
+    @if (
+      !readonly() &&
+      (effectiveType() === "preset" || effectiveType() === "audio_set")
+    ) {
+      <div class="audio-controls">
+        <div
+          class="dm-select trigger-div"
+          [class.dragging]="isDragging"
+          (click)="openItemSelector()"
+        >
+          @if (isUploading) {
+            <span class="uploading-state">
+              <span class="spinner-small"></span>
+              {{ "IS_UPLOADING" | translate }}
+            </span>
+          } @else if (isDragging) {
+            <span class="dragging-hint">{{
+              "AS_HINT_DRAG_AUDIO" | translate
+            }}</span>
+          } @else {
+            {{ selectedAssetName() }}
+          }
+        </div>
+        <button class="btn-play" (click)="play()">
+          @if (!isPlaying) {
+            <span class="btn-play-content">
+              <span class="material-icons">play_arrow</span>
+              <span>{{ "AS_BTN_PLAY" | translate }}</span>
+            </span>
+          }
+          @if (isPlaying) {
+            <span class="btn-play-content">
+              <span class="material-icons">stop</span>
+              <span>{{ "AS_BTN_STOP" | translate }}</span>
+            </span>
+          }
+        </button>
       </div>
-      <button class="btn-play" (click)="play()">
-        @if (!isPlaying) {
-          <span class="btn-play-content">
-            <span class="material-icons">play_arrow</span>
-            <span>{{ "AS_BTN_PLAY" | translate }}</span>
-          </span>
-        }
-        @if (isPlaying) {
-          <span class="btn-play-content">
-            <span class="material-icons">stop</span>
-            <span>{{ "AS_BTN_STOP" | translate }}</span>
-          </span>
-        }
-      </button>
-    </div>
-  }
+    }
 
-  <!-- Active drag or upload placeholder when in None or TTS mode -->
-  @if (
-    !readonly() &&
-    (effectiveType() === "none" || effectiveType() === "tts") &&
-    (isDragging || isUploading)
-  ) {
-    <div class="audio-controls drop-placeholder-controls">
-      <div class="dm-select trigger-div" [class.dragging]="isDragging">
-        @if (isUploading) {
-          <span class="uploading-state">
-            <span class="spinner-small"></span>
-            {{ "IS_UPLOADING" | translate }}
-          </span>
-        } @else {
-          <span class="dragging-hint">{{
-            "AS_HINT_DRAG_AUDIO" | translate
-          }}</span>
-        }
+    <!-- Active drag or upload placeholder when in None or TTS mode -->
+    @if (
+      !readonly() &&
+      (effectiveType() === "none" || effectiveType() === "tts") &&
+      (isDragging || isUploading)
+    ) {
+      <div class="audio-controls drop-placeholder-controls">
+        <div class="dm-select trigger-div" [class.dragging]="isDragging">
+          @if (isUploading) {
+            <span class="uploading-state">
+              <span class="spinner-small"></span>
+              {{ "IS_UPLOADING" | translate }}
+            </span>
+          } @else {
+            <span class="dragging-hint">{{
+              "AS_HINT_DRAG_AUDIO" | translate
+            }}</span>
+          }
+        </div>
       </div>
-    </div>
-  }
+    }
 
-  @if (errorMessage) {
-    <div class="audio-error-text">{{ errorMessage | translate }}</div>
-  }
+    @if (errorMessage) {
+      <div class="audio-error-text">{{ errorMessage | translate }}</div>
+    }
 
-  @if (
-    !readonly() && effectiveType() === "tts" && !isDragging && !isUploading
-  ) {
-    <div class="audio-controls">
-      <input
-        type="text"
-        [ngModel]="effectiveText()"
-        (ngModelChange)="onTextChange($event)"
-        class="dm-input"
-        [placeholder]="'AS_PLACEHOLDER_TEXT' | translate"
-        autocomplete="off"
-        data-dashlane-ignore="true"
-        data-1p-ignore="true"
-        data-lpignore="true"
-        data-bwignore="true"
-        data-form-type="other"
-      />
-      <button class="btn-play" (click)="play()">
-        @if (!isPlaying) {
-          <span>▶ {{ "AS_BTN_PLAY" | translate }}</span>
-        }
-        @if (isPlaying) {
-          <span>■ {{ "AS_BTN_STOP" | translate }}</span>
-        }
-      </button>
-    </div>
-  }
-
-  <!-- Readonly Mode -->
-  @if (readonly()) {
-    <div class="audio-controls readonly-controls">
-      <div class="dm-select readonly-text">
-        {{
-          effectiveType() === "none" ||
-          effectiveType() === "preset" ||
-          effectiveType() === "audio_set"
-            ? selectedAssetName()
-            : effectiveText() || ("AS_OPTION_NONE" | translate)
-        }}
+    @if (
+      !readonly() && effectiveType() === "tts" && !isDragging && !isUploading
+    ) {
+      <div class="audio-controls">
+        <input
+          type="text"
+          [ngModel]="effectiveText()"
+          (ngModelChange)="onTextChange($event)"
+          class="dm-input"
+          [placeholder]="'AS_PLACEHOLDER_TEXT' | translate"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+        />
+        <button class="btn-play" (click)="play()">
+          @if (!isPlaying) {
+            <span>▶ {{ "AS_BTN_PLAY" | translate }}</span>
+          }
+          @if (isPlaying) {
+            <span>■ {{ "AS_BTN_STOP" | translate }}</span>
+          }
+        </button>
       </div>
-      <button
-        class="btn-play"
-        [disabled]="effectiveType() === 'none'"
-        (click)="play()"
-      >
-        @if (!isPlaying) {
-          <span>▶ {{ "AS_BTN_PLAY" | translate }}</span>
-        }
-        @if (isPlaying) {
-          <span>■ {{ "AS_BTN_STOP" | translate }}</span>
-        }
-      </button>
-    </div>
+    }
+
+    <!-- Readonly Mode -->
+    @if (readonly()) {
+      <div class="audio-controls readonly-controls">
+        <div class="dm-select readonly-text">
+          {{
+            effectiveType() === "none" ||
+            effectiveType() === "preset" ||
+            effectiveType() === "audio_set"
+              ? selectedAssetName()
+              : effectiveText() || ("AS_OPTION_NONE" | translate)
+          }}
+        </div>
+        <button
+          class="btn-play"
+          [disabled]="effectiveType() === 'none'"
+          (click)="play()"
+        >
+          @if (!isPlaying) {
+            <span>▶ {{ "AS_BTN_PLAY" | translate }}</span>
+          }
+          @if (isPlaying) {
+            <span>■ {{ "AS_BTN_STOP" | translate }}</span>
+          }
+        </button>
+      </div>
+    }
   }
 
   <app-item-selector

@@ -421,4 +421,139 @@ test.describe("UI Editor Visuals", () => {
       },
     );
   });
+
+  test("should display theme driver audio overrides expander correctly", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Wait for themes to load
+    await page.locator("#help-default-theme").waitFor({ state: "visible" });
+
+    // Expand Custom Theme
+    const customThemeSection = page.locator(
+      '.theme-sub-section[data-theme-id="custom_theme_1"]',
+    );
+    await customThemeSection.waitFor({ state: "visible" });
+
+    const themeExpander = customThemeSection.locator(".expander-icon").first();
+    await themeExpander.waitFor({ state: "visible" });
+    await themeExpander.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await themeExpander.click();
+
+    // Expand Driver Audio Overrides sub-section
+    const driverAudioSection = customThemeSection.locator(
+      '.config-section.sub-section[data-sub-section="driverAudioOverrides"]',
+    );
+    await driverAudioSection.waitFor({ state: "visible" });
+
+    const subExpander = driverAudioSection.locator(".section-header").first();
+    await subExpander.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await subExpander.click();
+
+    // Wait for driver audio config component to be rendered
+    const driverAudioConfig = driverAudioSection.locator(
+      "app-driver-audio-config",
+    );
+    await driverAudioConfig.waitFor({ state: "visible" });
+    await driverAudioConfig
+      .locator("app-audio-selector")
+      .nth(12)
+      .waitFor({ state: "attached" });
+
+    await TestSetupHelper.waitForImagesLoaded(driverAudioSection);
+    await driverAudioSection.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await page.mouse.move(0, 0);
+
+    await expect(driverAudioSection).toHaveScreenshot(
+      "ui-editor-theme-driver-audio-overrides.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display driver audio overrides with active override toggled", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Wait for themes to load
+    await page.locator("#help-default-theme").waitFor({ state: "visible" });
+
+    // Expand Custom Theme
+    const customThemeSection = page.locator(
+      '.theme-sub-section[data-theme-id="custom_theme_1"]',
+    );
+    await customThemeSection.waitFor({ state: "visible" });
+
+    const themeExpander = customThemeSection.locator(".expander-icon").first();
+    await themeExpander.waitFor({ state: "visible" });
+    await themeExpander.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await themeExpander.click();
+
+    // Expand Driver Audio Overrides sub-section
+    const driverAudioSection = customThemeSection.locator(
+      '.config-section.sub-section[data-sub-section="driverAudioOverrides"]',
+    );
+    await driverAudioSection.waitFor({ state: "visible" });
+
+    const subExpander = driverAudioSection.locator(".section-header").first();
+    await subExpander.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await subExpander.click();
+
+    // Wait for driver audio config component
+    const driverAudioConfig = driverAudioSection.locator(
+      "app-driver-audio-config",
+    );
+    await driverAudioConfig.waitFor({ state: "visible" });
+    await driverAudioConfig
+      .locator("app-audio-selector")
+      .nth(12)
+      .waitFor({ state: "attached" });
+
+    // Toggle override on first audio selector (Lap Audio)
+    const firstAudioSelector = driverAudioConfig
+      .locator("app-audio-selector")
+      .first();
+    const overrideBtn = firstAudioSelector.locator(".btn-override-toggle");
+    await overrideBtn.waitFor({ state: "visible" });
+    await overrideBtn.click();
+
+    // Wait for active override selector UI (toggle-group pills) to be visible
+    await firstAudioSelector
+      .locator(".toggle-group")
+      .waitFor({ state: "visible" });
+
+    await TestSetupHelper.waitForImagesLoaded(driverAudioSection);
+    await driverAudioSection.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await page.mouse.move(0, 0);
+
+    await expect(driverAudioSection).toHaveScreenshot(
+      "ui-editor-theme-driver-audio-overrides-active.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
 });

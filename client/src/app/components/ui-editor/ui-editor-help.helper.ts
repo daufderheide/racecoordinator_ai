@@ -265,6 +265,15 @@ export function getThemesHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
       position: "bottom",
       onEnter: () => expandThemeSection(ctx, "audio"),
     },
+    {
+      selector: "#help-theme-driver-audio-overrides",
+      title: translationService.translate("UE_HEADER_DRIVER_AUDIO_OVERRIDES"),
+      content: translationService.translate(
+        "UE_HELP_THEME_DRIVER_AUDIO_OVERRIDES",
+      ),
+      position: "bottom",
+      onEnter: () => expandThemeSection(ctx, "driverAudioOverrides"),
+    },
   ];
 }
 
@@ -506,6 +515,7 @@ export function handleUiEditorHelpStep(
     "#help-raceday-": "racedayLayout",
     "#help-practice-ui": "practiceRacedayLayout",
     "#help-themes": "themes",
+    "#help-theme-": "themes",
     "#help-custom-ui": "config",
     "#help-export-template": "config",
     "#help-page-transition": "config",

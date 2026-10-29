@@ -1,0 +1,53 @@
+@if (isOverrideMode()) {
+  <div class="driver-audio-toolbar">
+    <div class="toolbar-info">
+      <span class="info-text">{{
+        "DAC_OVERRIDE_DESCRIPTION" | translate
+      }}</span>
+    </div>
+    @if (!readonly() && hasAnyOverrides()) {
+      <button
+        type="button"
+        class="btn-reset-overrides"
+        (click)="onResetAll()"
+        [title]="'DAC_RESET_ALL_TOOLTIP' | translate"
+      >
+        <span class="material-icons">restart_alt</span>
+        <span>{{ "UE_BTN_RESET_DRIVER_OVERRIDES" | translate }}</span>
+      </button>
+    }
+  </div>
+}
+
+@for (group of groups; track group.groupId) {
+  <div class="audio-group" [id]="getGroupId(group)">
+    <div class="audio-group-header">
+      <h2>{{ group.titleKey | translate }}</h2>
+    </div>
+    <div class="audio-grid">
+      @for (item of group.items; track item.key) {
+        <div class="audio-section" [id]="getElementId(item)">
+          <app-audio-selector
+            [readonly]="readonly()"
+            [label]="item.labelKey | translate"
+            [mode]="item.mode || 'single'"
+            [fallbackName]="getFallbackName(item.slot)"
+            [assets]="assets()"
+            [type]="getConfig(item).type"
+            (typeChange)="onTypeChange(item, $event)"
+            [url]="getConfig(item).url"
+            (urlChange)="onUrlChange(item, $event)"
+            (assetSelected)="assetSelected.emit($event)"
+            [text]="getConfig(item).text"
+            (textChange)="onTextChange(item, $event)"
+            [context]="ttsContext()"
+            [allowOverride]="isOverrideMode()"
+            [isOverridden]="isOverridden(item.key)"
+            (overrideChange)="onToggleOverride(item, $event)"
+          >
+          </app-audio-selector>
+        </div>
+      }
+    </div>
+  </div>
+}

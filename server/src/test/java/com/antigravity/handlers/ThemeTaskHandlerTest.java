@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AudioConfig;
 import com.antigravity.models.CustomUI;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
@@ -21,6 +22,7 @@ import io.javalin.http.Context;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -529,5 +531,80 @@ public class ThemeTaskHandlerTest {
     Theme duplicated = (Theme) dupCaptor.getValue();
     assertEquals("updated-ds-theme", duplicated.getDriverStationThemeId());
     assertEquals("updated-dv-theme", duplicated.getDriverViewThemeId());
+  }
+
+  @Test
+  public void testCreateAndUpdateTheme_WithDriverAudioOverrides() {
+    Map<String, AudioConfig> overrides = new HashMap<>();
+    overrides.put("lapAudio", new AudioConfig("preset", "theme_lap_sound.wav", null));
+    overrides.put("penaltyAudio", new AudioConfig("none", null, null));
+
+    Theme themeRequest =
+        new Theme(
+            "Driver Audio Override Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            overrides,
+            "ui-main",
+            Theme.DRIVER_STATION_THEME_ID,
+            Theme.DRIVER_STATION_THEME_ID,
+            "new",
+            null);
+    org.mockito.Mockito.doReturn(themeRequest).when(handler).getBody(any(), eq(Theme.class));
+
+    org.mockito.ArgumentCaptor<Object> createCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.createTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), createCaptor.capture());
+
+    Theme created = (Theme) createCaptor.getValue();
+    assertNotNull(created.getDriverAudioOverrides());
+    assertEquals(2, created.getDriverAudioOverrides().size());
+    assertEquals("theme_lap_sound.wav", created.getDriverAudioOverrides().get("lapAudio").getUrl());
+
+    // Update with new audio overrides
+    Map<String, AudioConfig> updatedOverrides = new HashMap<>(overrides);
+    updatedOverrides.put("bestLapAudio", new AudioConfig("tts", null, "Fastest lap!"));
+    Theme updateRequest =
+        new Theme(
+            "Driver Audio Override Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            updatedOverrides,
+            "ui-main",
+            Theme.DRIVER_STATION_THEME_ID,
+            Theme.DRIVER_STATION_THEME_ID,
+            created.getEntityId(),
+            null);
+    org.mockito.Mockito.doReturn(created.getEntityId()).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(updateRequest).when(handler).getBody(any(), eq(Theme.class));
+
+    org.mockito.ArgumentCaptor<Object> updateCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.updateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), updateCaptor.capture());
+
+    Theme updated = (Theme) updateCaptor.getValue();
+    assertNotNull(updated.getDriverAudioOverrides());
+    assertEquals(3, updated.getDriverAudioOverrides().size());
+    assertEquals("tts", updated.getDriverAudioOverrides().get("bestLapAudio").getType());
+
+    // Duplicate theme preserves driverAudioOverrides
+    org.mockito.Mockito.doReturn(created.getEntityId()).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(new HashMap<>())
+        .when(handler)
+        .getBody(any(), eq(java.util.Map.class));
+    org.mockito.ArgumentCaptor<Object> dupCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.duplicateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), dupCaptor.capture());
+
+    Theme duplicated = (Theme) dupCaptor.getValue();
+    assertNotNull(duplicated.getDriverAudioOverrides());
+    assertEquals(3, duplicated.getDriverAudioOverrides().size());
+    assertEquals(
+        "theme_lap_sound.wav", duplicated.getDriverAudioOverrides().get("lapAudio").getUrl());
   }
 }

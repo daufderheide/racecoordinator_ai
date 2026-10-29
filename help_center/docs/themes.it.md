@@ -27,3 +27,17 @@ I temi consentono di personalizzare gli effetti sonori e gli annunci vocali per 
 - **Avvisi di infrazione:** Toni per tempo sul giro inferiore al minimo (`audio.min_lap_time`).
 
 Per maggiori dettagli su attenuazione automatica, priorità e rilevanza multischermo, consultare la documentazione del [Sistema Audio](audio.md).
+
+## Sostituzioni audio del pilota
+
+I temi possono sostituire le impostazioni audio individuali dei piloti per tutti i partecipanti quando il tema è attivo. Per impostazione predefinita, vengono riprodotti i suoni personalizzati di ciascun pilota (configurati nell'[Editor piloti](driver-editor.md)). Tuttavia, un tema può sostituire selettivamente uno qualsiasi dei 13 eventi audio del pilota:
+
+- **Suoni personali sul giro:** Giro completato (`lapAudio`), Miglior giro personale (`bestLapAudio`).
+- **Suoni di gara sul giro:** Miglior giro di gara (`raceBestLapAudio`), Miglior giro su corsia di gara (`raceLaneBestLapAudio`), Miglior giro di manche (`heatBestLapAudio`), Nuovo leader di gara (`newRaceLeaderAudio`), Nuovo leader di manche (`newHeatLeaderAudio`).
+- **Suoni del miglior giro generale:** Miglior giro generale (`overallBestLapAudio`), Miglior giro corsia generale (`overallLaneBestLapAudio`).
+- **Suoni degli eventi:** Ingresso ai box (`pitInAudio`), Livello carburante (`fuelAudio`), Falsa partenza / Penalità (`penaltyAudio`), Giro in derapata (`driftLapAudio`).
+
+### Gerarchia di sostituzione e configurazione
+- **Disabilitato (Predefinito):** Il tema lascia lo slot inalterato; viene riprodotta la configurazione del pilota.
+- **Sostituzione abilitata:** Il tema ha la precedenza per quello specifico evento sonoro su tutti i piloti che utilizzano questo tema. Puoi configurarlo come **Suono predefinito**, **File audio caricato**, frase **Sintesi vocale (TTS)** personalizzata o **Nessuno** (per disattivare l'audio a livello di tema).
+- **Ripristina tutte le sostituzioni:** Rimuove rapidamente tutte le sostituzioni attive nel tema, restituendo il controllo completo alle impostazioni di ciascun pilota.

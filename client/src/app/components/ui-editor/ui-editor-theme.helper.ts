@@ -304,6 +304,31 @@ export function handleThemeAudioChange(
   comp.cdr.markForCheck();
 }
 
+export function handleDriverAudioOverrideChange(
+  comp: any,
+  theme: Theme,
+  event: { key: string; config: AudioConfig | null },
+): void {
+  if (!theme) return;
+  if (!theme.driver_audio_overrides) {
+    theme.driver_audio_overrides = {};
+  }
+  if (event.config) {
+    theme.driver_audio_overrides[event.key] = event.config;
+  } else {
+    delete theme.driver_audio_overrides[event.key];
+  }
+  comp.captureState();
+  comp.cdr.markForCheck();
+}
+
+export function handleResetDriverAudioOverrides(comp: any, theme: Theme): void {
+  if (!theme) return;
+  theme.driver_audio_overrides = {};
+  comp.captureState();
+  comp.cdr.markForCheck();
+}
+
 export function handleDetachTheme(comp: any): void {
   comp.themeService.detachToSettings(comp.assets);
   comp.editingState.settings = cloneSettings(

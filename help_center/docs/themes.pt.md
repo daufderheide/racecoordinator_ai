@@ -27,3 +27,17 @@ Os temas permitem personalizar efeitos sonoros globais e avisos de voz para even
 - **Alertas de infração:** Sons para violação do tempo mínimo por volta (`audio.min_lap_time`).
 
 Para informações completas sobre atenuação de áudio, prioridades e relevância multiecrã, consulte a documentação do [Sistema de Áudio](audio.md).
+
+## Substituições de áudio do piloto
+
+Os temas podem substituir as configurações de áudio individuais dos pilotos para todos os participantes quando o tema estiver ativo. Por padrão, os sons personalizados de cada piloto (configurados no [Editor de Pilotos](driver-editor.md)) são reproduzidos. No entanto, um tema pode substituir seletivamente qualquer um dos 13 eventos de áudio do piloto:
+
+- **Sons pessoais de volta:** Volta concluída (`lapAudio`), Melhor volta pessoal (`bestLapAudio`).
+- **Sons de volta de corrida:** Melhor volta da corrida (`raceBestLapAudio`), Melhor volta da pista da corrida (`raceLaneBestLapAudio`), Melhor volta da bateria (`heatBestLapAudio`), Novo líder da corrida (`newRaceLeaderAudio`), Novo líder da bateria (`newHeatLeaderAudio`).
+- **Sons de melhor volta geral:** Melhor volta geral (`overallBestLapAudio`), Melhor volta da pista geral (`overallLaneBestLapAudio`).
+- **Sons de eventos:** Entrada nas boxes (`pitInAudio`), Nível de combustível (`fuelAudio`), Falsa partida / Penalidade (`penaltyAudio`), Volta de drift (`driftLapAudio`).
+
+### Hierarquia de substituição e configuração
+- **Desativado (Padrão):** O tema não altera o slot; a configuração individual do piloto é reproduzida.
+- **Substituição ativada:** O tema tem precedência para esse evento de som específico em todos os pilotos que usam este tema. Pode configurá-lo como um **Som predefinido**, um **Ficheiro de áudio carregado**, uma frase de **Conversão de texto em voz (TTS)** personalizada ou **Nenhum** (para silenciar o evento em todo o tema).
+- **Redefinir todas as substituições:** Limpa rapidamente todas as substituições ativas no tema, devolvendo o controlo total às configurações de cada piloto.

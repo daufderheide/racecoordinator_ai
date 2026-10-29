@@ -75,6 +75,7 @@ public class Theme extends Model {
   private final boolean isDefault;
   private final Map<String, String> slots;
   private final Map<String, AudioConfig> audioSlots;
+  private final Map<String, AudioConfig> driverAudioOverrides;
   private final String uiId;
   private final String driverStationThemeId;
   private final String driverViewThemeId;
@@ -86,6 +87,8 @@ public class Theme extends Model {
       @JsonProperty("is_default") boolean isDefault,
       @JsonProperty("slots") Map<String, String> slots,
       @JsonProperty("audio_slots") Map<String, AudioConfig> audioSlots,
+      @JsonProperty("driver_audio_overrides") @JsonAlias({"driverAudioOverrides"})
+          Map<String, AudioConfig> driverAudioOverrides,
       @JsonProperty("uiId") @JsonAlias({"ui_id", "ui_layout_id", "custom_ui_id"}) String uiId,
       @JsonProperty("driver_station_theme_id") @JsonAlias({"driverStationThemeId"})
           String driverStationThemeId,
@@ -98,6 +101,8 @@ public class Theme extends Model {
     this.isDefault = isDefault;
     this.slots = slots != null ? slots : new HashMap<>();
     this.audioSlots = audioSlots != null ? audioSlots : new HashMap<>();
+    this.driverAudioOverrides =
+        driverAudioOverrides != null ? new HashMap<>(driverAudioOverrides) : new HashMap<>();
     this.uiId = uiId;
     this.driverStationThemeId =
         (driverStationThemeId != null && !driverStationThemeId.trim().isEmpty())
@@ -107,6 +112,29 @@ public class Theme extends Model {
         (driverViewThemeId != null && !driverViewThemeId.trim().isEmpty())
             ? driverViewThemeId
             : DRIVER_STATION_THEME_ID;
+  }
+
+  public Theme(
+      String name,
+      boolean isDefault,
+      Map<String, String> slots,
+      Map<String, AudioConfig> audioSlots,
+      String uiId,
+      String driverStationThemeId,
+      String driverViewThemeId,
+      String entityId,
+      String id) {
+    this(
+        name,
+        isDefault,
+        slots,
+        audioSlots,
+        new HashMap<>(),
+        uiId,
+        driverStationThemeId,
+        driverViewThemeId,
+        entityId,
+        id);
   }
 
   public Theme(
@@ -182,6 +210,11 @@ public class Theme extends Model {
     return driverViewThemeId;
   }
 
+  @JsonProperty("driver_audio_overrides")
+  public Map<String, AudioConfig> getDriverAudioOverrides() {
+    return driverAudioOverrides;
+  }
+
   public static class Builder {
     private String id;
     private String entityId;
@@ -189,6 +222,7 @@ public class Theme extends Model {
     private boolean isDefault;
     private Map<String, String> slots = new HashMap<>();
     private Map<String, AudioConfig> audioSlots = new HashMap<>();
+    private Map<String, AudioConfig> driverAudioOverrides = new HashMap<>();
     private String uiId;
     private String driverStationThemeId = DRIVER_STATION_THEME_ID;
     private String driverViewThemeId = DRIVER_STATION_THEME_ID;
@@ -203,6 +237,10 @@ public class Theme extends Model {
         b.slots = other.getSlots() != null ? new HashMap<>(other.getSlots()) : new HashMap<>();
         b.audioSlots =
             other.getAudioSlots() != null ? new HashMap<>(other.getAudioSlots()) : new HashMap<>();
+        b.driverAudioOverrides =
+            other.getDriverAudioOverrides() != null
+                ? new HashMap<>(other.getDriverAudioOverrides())
+                : new HashMap<>();
         b.uiId = other.getUiId();
         b.driverStationThemeId = other.getDriverStationThemeId();
         b.driverViewThemeId = other.getDriverViewThemeId();
@@ -240,6 +278,11 @@ public class Theme extends Model {
       return this;
     }
 
+    public Builder withDriverAudioOverrides(Map<String, AudioConfig> driverAudioOverrides) {
+      this.driverAudioOverrides = driverAudioOverrides;
+      return this;
+    }
+
     public Builder withUiId(String uiId) {
       this.uiId = uiId;
       return this;
@@ -261,6 +304,7 @@ public class Theme extends Model {
           isDefault,
           slots,
           audioSlots,
+          driverAudioOverrides,
           uiId,
           driverStationThemeId,
           driverViewThemeId,

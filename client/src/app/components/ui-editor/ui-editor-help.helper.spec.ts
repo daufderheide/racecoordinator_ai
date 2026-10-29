@@ -117,6 +117,18 @@ describe("ui-editor-help.helper", () => {
     const themeStep = steps.find((s) => s.selector === "#help-themes");
     themeStep?.onEnter?.();
     expect(sectionsExpanded["themes"]).toBeTrue();
+
+    const driverAudioOverridesStep = steps.find(
+      (s) => s.selector === "#help-theme-driver-audio-overrides",
+    );
+    expect(driverAudioOverridesStep).toBeDefined();
+    expect(driverAudioOverridesStep?.title).toBe(
+      "UE_HEADER_DRIVER_AUDIO_OVERRIDES",
+    );
+    driverAudioOverridesStep?.onEnter?.();
+    expect(sectionsExpanded["themes"]).toBeTrue();
+    expect(sectionsExpanded["theme_default_classic_rc_ai"]).toBeTrue();
+    expect(sectionsExpanded["driverAudioOverrides"]).toBeTrue();
   });
 
   it("should return custom UI config steps", () => {

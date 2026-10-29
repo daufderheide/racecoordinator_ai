@@ -13,6 +13,63 @@
     margin-bottom: 8px;
 }
 
+.audio-label-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.btn-override-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #94a3b8;
+    padding: 3px 8px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-override-toggle:hover:not(:disabled) {
+    border-color: rgba(0, 255, 255, 0.5);
+    color: #00ffff;
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.btn-override-toggle.active {
+    background: rgba(0, 255, 255, 0.15);
+    border-color: #00ffff;
+    color: #00ffff;
+    font-weight: 600;
+}
+
+.btn-override-toggle .material-icons {
+    font-size: 15px;
+}
+
+.driver-default-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px dashed rgba(0, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-style: italic;
+}
+
+.driver-default-hint .material-icons {
+    font-size: 18px;
+    color: #38bdf8;
+}
+
 .audio-header label {
     color: #00ffff;
     font-weight: bold;

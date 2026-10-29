@@ -27,3 +27,17 @@ Thema's stellen u in staat om systeembrede geluidseffecten en spraakmeldingen vo
 - **Overtredingsmeldingen:** Signalen bij onderschrijding van de minimale rondetijd (`audio.min_lap_time`).
 
 Voor alle details over automatische geluidsdemping, prioriteitsniveaus en schermfiltering, zie de documentatie van het [Audiosysteem](audio.md).
+
+## Coureuraudio-overschrijvingen
+
+Thema's kunnen individuele audio-instellingen van coureurs overschrijven voor alle deelnemers wanneer het thema actief is. Standaard worden de aangepaste geluiden van elke coureur (geconfigureerd in de [Coureureditor](driver-editor.md)) afgespeeld. Een thema kan echter selectief elk van de 13 coureuraudio-gebeurtenissen overschrijven:
+
+- **Persoonlijke rondegeluiden:** Ronde voltooid (`lapAudio`), Persoonlijk ronderecord (`bestLapAudio`).
+- **Race rondegeluiden:** Ronderecord van de race (`raceBestLapAudio`), Baanrecord van de race (`raceLaneBestLapAudio`), Ronderecord van de heat (`heatBestLapAudio`), Nieuwe raceleider (`newRaceLeaderAudio`), Nieuwe heatleider (`newHeatLeaderAudio`).
+- **Algemene recordgeluiden:** Algemeen ronderecord (`overallBestLapAudio`), Algemeen baanrecord (`overallLaneBestLapAudio`).
+- **Gebeurtenisgeluiden:** Pitstop inrijden (`pitInAudio`), Brandstofniveau (`fuelAudio`), Valse start / Straf (`penaltyAudio`), Drift-ronde (`driftLapAudio`).
+
+### Overschrijvingshiërarchie en configuratie
+- **Uitgeschakeld (Standaard):** Het thema wijzigt het slot niet; de individuele configuratie van de coureur wordt afgespeeld.
+- **Ingeschakelde overschrijving:** Het thema krijgt voorrang voor die specifieke audiogebeurtenis voor alle coureurs onder dit thema. U kunt dit instellen als een **Vooraf ingesteld geluid**, een **Geüpload audiobestand**, een aangepaste **Tekst-naar-spraak (TTS)**-zin of **Geen** (om de gebeurtenis themabreed te dempen).
+- **Alle overschrijvingen herstellen:** Wist snel alle actieve overschrijvingen op het thema, waardoor de controle volledig terugkeert naar de instellingen van elke individuele coureur.

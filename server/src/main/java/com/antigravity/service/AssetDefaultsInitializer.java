@@ -840,6 +840,7 @@ public class AssetDefaultsInitializer {
               t.isDefault(),
               s,
               as,
+              t.getDriverAudioOverrides(),
               uiId,
               driverStationThemeId,
               driverViewThemeId,

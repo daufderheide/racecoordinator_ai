@@ -1,8 +1,13 @@
 import { AudioConfig } from "@app/models/driver";
 import { Race } from "@app/models/race";
+import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { Heat } from "@app/race/heat";
-import { AudioPlayer, createTTSContext } from "@app/utils/audio";
+import {
+  AudioPlayer,
+  createTTSContext,
+  getEffectiveDriver,
+} from "@app/utils/audio";
 
 export interface LaneFuelAudioState {
   lastFuelLevel: number;
@@ -99,6 +104,7 @@ export class FuelAudioTracker {
     track?: Track,
     assets?: any[],
     canPlayAudio: boolean = true,
+    theme?: Theme | null,
   ): void {
     if (lane == null) return;
     if (!this.isFuelRace(race, track)) return;
@@ -107,12 +113,13 @@ export class FuelAudioTracker {
       (heat?.heatDrivers && lane < heat.heatDrivers.length
         ? heat.heatDrivers[lane]
         : undefined);
-    const driver =
+    const rawDriver =
       hd?.actualDriver ||
       hd?.participant?.driver ||
       (hd?.driver as any)?.driver ||
       hd?.driver;
-    if (!driver) return;
+    if (!rawDriver) return;
+    const driver = theme ? getEffectiveDriver(rawDriver, theme) : rawDriver;
 
     let state = this.laneFuelAudioStates.get(lane);
     if (!state) {

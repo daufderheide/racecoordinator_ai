@@ -4,6 +4,7 @@ export interface TTSDriverData {
 }
 
 import { AudioConfig } from "@app/models/driver";
+import { Theme } from "@app/models/theme";
 import type {
   AudioAssociation,
   AudioPriority,
@@ -75,6 +76,25 @@ export function isAudioConfigured(config?: AudioConfig | null): boolean {
 }
 
 /**
+ * Returns an effective driver with theme-level driver audio overrides applied.
+ * If no theme or no overrides are present, returns the driver object unchanged.
+ */
+export function getEffectiveDriver(driver: any, theme?: Theme | null): any {
+  if (!driver) return driver;
+  const overrides = theme?.driver_audio_overrides;
+  if (!overrides || Object.keys(overrides).length === 0) {
+    return driver;
+  }
+  const effective: any = { ...driver };
+  for (const [key, config] of Object.entries(overrides)) {
+    if (config !== undefined && config !== null) {
+      effective[key] = config;
+    }
+  }
+  return effective;
+}
+
+/**
  * Resolves which audio configuration, voice status, and priority should be played for a lap
  * based on record tiers, leader status, and personal best status.
  *
@@ -92,50 +112,48 @@ export function isAudioConfigured(config?: AudioConfig | null): boolean {
  * If the highest priority sound is configured as 'none' (or unconfigured), the system
  * cascades to the next highest priority sound triggered by that lap, and so on.
  */
-export function resolveLapAudio(
-  driver: any,
+interface RecordTiers {
+  isTier6: boolean;
+  isTier5: boolean;
+  isTier4: boolean;
+  isTier3: boolean;
+  isTier2: boolean;
+  isTier1: boolean;
+}
+
+function parseRecordTiers(
   recordTier?: number | string | null,
   isBestLap?: boolean | null,
-  isNewRaceLeader?: boolean | null,
-  isNewHeatLeader?: boolean | null,
-  isDrift?: boolean | null,
-): LapAudioCalloutInfo | undefined {
-  if (!driver) return undefined;
-
-  // 0. Drift Lap (urgent)
-  if (isDrift && isAudioConfigured(driver.driftLapAudio)) {
-    return {
-      config: driver.driftLapAudio,
-      isVoice: true,
-      priority: "urgent",
-    };
-  }
-
+): RecordTiers {
   const tier =
     typeof recordTier === "string"
       ? parseInt(recordTier, 10)
       : (recordTier ?? 0);
 
-  const isTier6 = tier === 6 || recordTier === "RECORD_TIER_OVERALL_BEST";
-  const isTier5 = tier === 5 || recordTier === "RECORD_TIER_OVERALL_LANE_BEST";
-  const isTier4 = tier === 4 || recordTier === "RECORD_TIER_RACE_BEST";
-  const isTier3 = tier === 3 || recordTier === "RECORD_TIER_RACE_LANE_BEST";
-  const isTier2 = tier === 2 || recordTier === "RECORD_TIER_HEAT_BEST";
-  const isTier1 =
-    tier === 1 || recordTier === "RECORD_TIER_PERSONAL_BEST" || !!isBestLap;
+  return {
+    isTier6: tier === 6 || recordTier === "RECORD_TIER_OVERALL_BEST",
+    isTier5: tier === 5 || recordTier === "RECORD_TIER_OVERALL_LANE_BEST",
+    isTier4: tier === 4 || recordTier === "RECORD_TIER_RACE_BEST",
+    isTier3: tier === 3 || recordTier === "RECORD_TIER_RACE_LANE_BEST",
+    isTier2: tier === 2 || recordTier === "RECORD_TIER_HEAT_BEST",
+    isTier1:
+      tier === 1 || recordTier === "RECORD_TIER_PERSONAL_BEST" || !!isBestLap,
+  };
+}
 
-  // 1. Overall Best (Tier 6)
-  if (isTier6 && isAudioConfigured(driver.overallBestLapAudio)) {
+function resolveOverallRecordAudio(
+  driver: any,
+  tiers: RecordTiers,
+): LapAudioCalloutInfo | undefined {
+  if (tiers.isTier6 && isAudioConfigured(driver.overallBestLapAudio)) {
     return {
       config: driver.overallBestLapAudio,
       isVoice: true,
       priority: "high",
     };
   }
-
-  // 2. Overall Lane Best (Tier 5 or Tier 6)
   if (
-    (isTier5 || isTier6) &&
+    (tiers.isTier5 || tiers.isTier6) &&
     isAudioConfigured(driver.overallLaneBestLapAudio)
   ) {
     return {
@@ -144,8 +162,14 @@ export function resolveLapAudio(
       priority: "high",
     };
   }
+  return undefined;
+}
 
-  // 3. New Race Leader
+function resolveLeaderAudio(
+  driver: any,
+  isNewRaceLeader?: boolean | null,
+  isNewHeatLeader?: boolean | null,
+): LapAudioCalloutInfo | undefined {
   if (isNewRaceLeader && isAudioConfigured(driver.newRaceLeaderAudio)) {
     return {
       config: driver.newRaceLeaderAudio,
@@ -153,8 +177,6 @@ export function resolveLapAudio(
       priority: "high",
     };
   }
-
-  // 4. New Heat Leader
   if (isNewHeatLeader && isAudioConfigured(driver.newHeatLeaderAudio)) {
     return {
       config: driver.newHeatLeaderAudio,
@@ -162,8 +184,15 @@ export function resolveLapAudio(
       priority: "normal",
     };
   }
+  return undefined;
+}
 
-  // 5. Race Best (Tier 4 or Tier 6)
+function resolveSubRecordAudio(
+  driver: any,
+  tiers: RecordTiers,
+): LapAudioCalloutInfo | undefined {
+  const { isTier6, isTier5, isTier4, isTier3, isTier2, isTier1 } = tiers;
+
   if ((isTier4 || isTier6) && isAudioConfigured(driver.raceBestLapAudio)) {
     return {
       config: driver.raceBestLapAudio,
@@ -171,8 +200,6 @@ export function resolveLapAudio(
       priority: "high",
     };
   }
-
-  // 6. Race Lane Best (Tier 3, 4, 5, or 6)
   if (
     (isTier3 || isTier4 || isTier5 || isTier6) &&
     isAudioConfigured(driver.raceLaneBestLapAudio)
@@ -183,8 +210,6 @@ export function resolveLapAudio(
       priority: "normal",
     };
   }
-
-  // 7. Heat Best (Tier 2, 4, or 6)
   if (
     (isTier2 || isTier4 || isTier6) &&
     isAudioConfigured(driver.heatBestLapAudio)
@@ -195,8 +220,6 @@ export function resolveLapAudio(
       priority: "normal",
     };
   }
-
-  // 8. Personal Best (Tier 1..6 or isBestLap)
   if (
     (isTier1 || isTier2 || isTier3 || isTier4 || isTier5 || isTier6) &&
     isAudioConfigured(driver.bestLapAudio)
@@ -206,8 +229,46 @@ export function resolveLapAudio(
     const priority = isTier6 || isTier5 || isTier4 ? "high" : "normal";
     return { config, isVoice, priority };
   }
-
   return undefined;
+}
+
+export function resolveLapAudio(
+  driver: any,
+  recordTier?: number | string | null,
+  isBestLap?: boolean | null,
+  isNewRaceLeader?: boolean | null,
+  isNewHeatLeader?: boolean | null,
+  isDrift?: boolean | null,
+  theme?: Theme | null,
+): LapAudioCalloutInfo | undefined {
+  if (!driver) return undefined;
+  const resolvedDriver = theme ? getEffectiveDriver(driver, theme) : driver;
+
+  // 0. Drift Lap (urgent)
+  if (isDrift && isAudioConfigured(resolvedDriver.driftLapAudio)) {
+    return {
+      config: resolvedDriver.driftLapAudio,
+      isVoice: true,
+      priority: "urgent",
+    };
+  }
+
+  const tiers = parseRecordTiers(recordTier, isBestLap);
+
+  // 1-2. Overall Record audio (Tier 6, 5)
+  const overallAudio = resolveOverallRecordAudio(resolvedDriver, tiers);
+  if (overallAudio) return overallAudio;
+
+  // 3-4. Leader audio
+  const leaderAudio = resolveLeaderAudio(
+    resolvedDriver,
+    isNewRaceLeader,
+    isNewHeatLeader,
+  );
+  if (leaderAudio) return leaderAudio;
+
+  // 5-8. Sub-record audio (Tier 4, 3, 2, 1)
+  return resolveSubRecordAudio(resolvedDriver, tiers);
 }
 
 /**
@@ -221,6 +282,7 @@ export function getLapAudioConfig(
   isNewRaceLeader?: boolean | null,
   isNewHeatLeader?: boolean | null,
   isDrift?: boolean | null,
+  theme?: Theme | null,
 ): AudioConfig | undefined {
   return resolveLapAudio(
     driver,
@@ -229,6 +291,7 @@ export function getLapAudioConfig(
     isNewRaceLeader,
     isNewHeatLeader,
     isDrift,
+    theme,
   )?.config;
 }
 
@@ -266,12 +329,14 @@ export function dispatchLapAudio(
   ttsContext?: any,
   association?: AudioAssociation,
   isDrift?: boolean | null,
+  theme?: Theme | null,
 ): void {
   if (!driver) return;
+  const resolvedDriver = theme ? getEffectiveDriver(driver, theme) : driver;
 
   let played = false;
   const specialAudio = resolveLapAudio(
-    driver,
+    resolvedDriver,
     recordTier,
     isBestLap,
     isNewRaceLeader,
@@ -312,15 +377,17 @@ export function dispatchLapAudio(
 
   // If the sound for that lap wasn't played (either because of priority, set to none, or missing),
   // fallback to personal best lap sound (if isBestLap) or normal lap sound.
-  let fallbackAudio = isBestLap ? driver.bestLapAudio : driver.lapAudio;
+  let fallbackAudio = isBestLap
+    ? resolvedDriver.bestLapAudio
+    : resolvedDriver.lapAudio;
 
   // If the special audio that failed WAS the bestLapAudio, we should fallback to the normal lapAudio instead
   if (
     specialAudio &&
     specialAudio.config === fallbackAudio &&
-    fallbackAudio === driver.bestLapAudio
+    fallbackAudio === resolvedDriver.bestLapAudio
   ) {
-    fallbackAudio = driver.lapAudio;
+    fallbackAudio = resolvedDriver.lapAudio;
   }
 
   // Make sure we don't try to fallback to the exact same audio that just got dropped
