@@ -3536,6 +3536,8 @@ export class DefaultRacedayComponent
     if (this.isUIEditorMode()) {
       return;
     }
+    this.parsedThemeLayouts.clear();
+    this.invalidateGridCache();
     if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
       this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
     } else {
@@ -4678,7 +4680,7 @@ export class DefaultRacedayComponent
   isGridOverall(gridId?: string): boolean {
     if (!gridId) return false;
     const session = this.gridSession();
-    if (session) {
+    if (session && (!session.gridId || session.gridId === gridId)) {
       if (session.gridType === "overall") return true;
       if (session.gridType === "heat") return false;
     }
@@ -4733,7 +4735,7 @@ export class DefaultRacedayComponent
   isGridSeed(gridId?: string): boolean {
     if (!gridId) return false;
     const session = this.gridSession();
-    if (session) {
+    if (session && (!session.gridId || session.gridId === gridId)) {
       if (session.bindingMode === "seed") return true;
     }
 
@@ -4930,6 +4932,10 @@ export class DefaultRacedayComponent
       (gridWidgets.find((w: any) => w.customSettings?.["emptyRowsMode"])
         ?.customSettings?.["emptyRowsMode"] as "remove" | "empty" | "blank") ||
       this.getGridEmptyRowsMode(gridId);
+    const startRowOffset = Math.max(
+      1,
+      Number(first.customSettings?.["startRowOffset"]) || 1,
+    );
 
     const session: LaneGridSession = {
       gridId,
@@ -4959,6 +4965,7 @@ export class DefaultRacedayComponent
         labelWidget?.customSettings?.["gridLabelBorderRadius"] != null
           ? Number(labelWidget.customSettings["gridLabelBorderRadius"])
           : 4,
+      startRowOffset,
     };
 
     return { session, labelWidget };

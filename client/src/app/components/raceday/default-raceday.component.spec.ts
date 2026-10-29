@@ -14035,6 +14035,88 @@ describe("DefaultRacedayComponent", () => {
       expect(grid.cellWidgets.length).toBe(10);
     });
 
+    it("should preserve startRowOffset in buildGridSession and cellWidgets on raceday", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      const offsetWidgets = Array.from({ length: 8 }, (_, i) => ({
+        id: `grid-w-offset-${i}`,
+        widgetType: "lane-column",
+        x: 1536,
+        y: 195 + i * 111,
+        width: 384,
+        height: 111,
+        customSettings: {
+          gridId: "overall-offset-grid",
+          gridLane: i,
+          targetIndex: i,
+          gridTotalLanes: 8,
+          gridDirection: "vertical",
+          gridType: "overall",
+          bindingMode: "overallPosition",
+          columnKey: "rankOverall",
+          startRowOffset: 9,
+          emptyRowsMode: "empty",
+        },
+      })) as any[];
+
+      (component as any).layout = { widgets: offsetWidgets };
+      (component as any).track = { lanes: [{}, {}, {}, {}] };
+      (component as any).race = {
+        track: (component as any).track,
+        participants: [
+          { objectId: "p1", rank: 1 },
+          { objectId: "p2", rank: 2 },
+        ],
+      } as any;
+      component.invalidateGridCache();
+
+      const grids = component.getGrids();
+      expect(grids.length).toBe(1);
+      const grid = grids[0];
+      expect(grid.cellWidgets.length).toBe(8);
+      expect(grid.cellWidgets[0]?.customSettings?.["startRowOffset"]).toBe(9);
+      expect(grid.cellWidgets[1]?.customSettings?.["startRowOffset"]).toBe(9);
+    });
+
+    it("should only use gridSession in isGridOverall and isGridSeed when session.gridId matches", () => {
+      fixture.componentRef.setInput("gridSession", {
+        gridId: "active-heat-grid",
+        gridType: "heat",
+        bindingMode: "lane",
+      } as any);
+
+      (component as any).layout = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "other-overall-grid",
+              gridType: "overall",
+              bindingMode: "overallPosition",
+            },
+          },
+          {
+            id: "w2",
+            widgetType: "lane-column",
+            customSettings: {
+              gridId: "other-seed-grid",
+              bindingMode: "seed",
+            },
+          },
+        ],
+      };
+      (component as any).cachedOverallGridWidgetsRef = null;
+      (component as any).cachedSeedGridWidgetsRef = null;
+
+      // active-heat-grid matches session -> false for overall
+      expect(component.isGridOverall("active-heat-grid")).toBeFalse();
+      // other-overall-grid does not match session -> resolves from widgets -> true
+      expect(component.isGridOverall("other-overall-grid")).toBeTrue();
+
+      // other-seed-grid does not match session -> resolves from widgets -> true
+      expect(component.isGridSeed("other-seed-grid")).toBeTrue();
+    });
+
     it("should preserve getGrids and getNonGridWidgets caching when isLayoutCustomizing is true", () => {
       const masterWidget = {
         id: "grid-m1",

@@ -225,6 +225,16 @@ export abstract class LaneColumnInspectorGridBase {
     );
   }
 
+  get startRowOffset(): number {
+    return LaneColumnGridHelper.getStartRowOffset(this.currentSettings);
+  }
+
+  onStartRowOffsetChange(val: number): void {
+    LaneColumnGridHelper.setStartRowOffset(this.currentSettings, val, () =>
+      this.onFieldChange(),
+    );
+  }
+
   get gridDirection(): "horizontal" | "vertical" {
     return LaneColumnGridHelper.getGridDirection(this.currentSettings);
   }

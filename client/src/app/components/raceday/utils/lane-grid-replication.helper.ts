@@ -37,6 +37,7 @@ export interface LaneGridSession {
   headerWidth?: number;
   linkColumns?: boolean;
   mirrorRows?: boolean;
+  startRowOffset?: number;
   sortByBindingMode?: boolean;
   layoutOrientation?: "vertical" | "horizontal";
   useLaneColors?: boolean;
@@ -202,6 +203,10 @@ export class LaneGridReplicationHelper {
       clonedSettings["showHeader"] = showHeader;
       clonedSettings["isHeaderWidget"] = false;
       clonedSettings["gridType"] = session.gridType || "heat";
+      clonedSettings["startRowOffset"] =
+        updatedMaster.customSettings?.["startRowOffset"] ??
+        session.startRowOffset ??
+        1;
 
       if (!isLanesMirrored && existingIndex >= 0) {
         const existing = result[existingIndex];
@@ -216,6 +221,10 @@ export class LaneGridReplicationHelper {
             targetIndex: k,
             gridLane: k,
             mirrorRows: session.mirrorRows !== false,
+            startRowOffset:
+              updatedMaster.customSettings?.["startRowOffset"] ??
+              session.startRowOffset ??
+              1,
             linkColumns: session.linkColumns !== false,
             bindingMode: effectiveBindingMode,
             showHeader,
@@ -675,6 +684,10 @@ export class LaneGridReplicationHelper {
             headerWidth: session.headerWidth ?? 200,
             linkColumns: session.linkColumns ?? true,
             mirrorRows: session.mirrorRows !== false,
+            startRowOffset:
+              session.startRowOffset ??
+              w.customSettings?.["startRowOffset"] ??
+              1,
             emptyRowsMode:
               session.emptyRowsMode ||
               w.customSettings?.["emptyRowsMode"] ||
@@ -736,6 +749,18 @@ export class LaneGridReplicationHelper {
     link: boolean,
   ): AbsoluteWidgetNode[] {
     return LaneGridStyleHelper.updateGridLinkColumns(allWidgets, gridId, link);
+  }
+
+  public static updateGridStartRowOffset(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    startRowOffset: number,
+  ): AbsoluteWidgetNode[] {
+    return LaneGridStyleHelper.updateGridStartRowOffset(
+      allWidgets,
+      gridId,
+      startRowOffset,
+    );
   }
 
   public static updateGridSortByBindingMode(

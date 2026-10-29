@@ -2865,6 +2865,8 @@
   "UE_INSPECTOR_TARGET_DRIVER_BY": "Identifier le Pilote Par",
   "UE_GRID_MIRRORED_ROWS": "Lignes dupliquées",
   "UE_GRID_MIRRORED_COLUMNS": "Colonnes dupliquées",
+  "UE_GRID_START_ROW_OFFSET": "Décalage de ligne de départ",
+  "UE_GRID_START_COLUMN_OFFSET": "Décalage de colonne de départ",
   "UE_GRID_MIRRORED_COUNT": "Lignes/Colonnes dupliquées",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Appliquer le style d'en-tête à toutes les colonnes",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Appliquer le style de valeur à toutes les colonnes",

@@ -34,6 +34,7 @@ import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, LayoutScaleMode, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { CustomUiService } from "@app/services/custom-ui.service";
 import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -219,6 +220,7 @@ export class LayoutEditorComponent
   public childWindowManagerService = inject(ChildWindowManagerService, {
     optional: true,
   });
+  public customUiService = inject(CustomUiService, { optional: true });
 
   constructor(
     public dataService: DataService,
@@ -605,6 +607,7 @@ export class LayoutEditorComponent
         ),
       );
       if (saved) {
+        this.customUiService?.initialize();
         setLastEditedLayoutId(
           this.editingLayout.entity_id,
           this.navigationService,

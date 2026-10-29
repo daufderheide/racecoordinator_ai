@@ -447,6 +447,49 @@ describe("LaneGridScrollHelper", () => {
       expect(lanes).toEqual([0, 1, 2, 3, 4]);
     });
 
+    it("should respect startRowOffset when omitting rows for offset overall grids", () => {
+      // 10-row overall grid with startRowOffset 11 (showing drivers 11-20)
+      const offsetWidgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `w-offset-row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId,
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            startRowOffset: 11,
+            gridType: "overall",
+          },
+        }),
+      );
+
+      // When there are 15 drivers, rows 0..4 (drivers 11..15) are kept, rows 5..9 (drivers 16..20) are omitted
+      const result15 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        offsetWidgets,
+        gridId,
+        15,
+      );
+      expect(result15.length).toBe(5);
+      expect(result15.map((w) => w.customSettings?.["gridLane"])).toEqual([
+        0, 1, 2, 3, 4,
+      ]);
+
+      // When there are only 10 drivers, all rows (drivers 11..20) are omitted
+      const result10 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        offsetWidgets,
+        gridId,
+        10,
+      );
+      expect(result10.length).toBe(0);
+    });
+
     it("should return only header widgets and 0 data rows when dataCount is 0 for overall grids", () => {
       const widgetsWithHeader: AbsoluteWidgetNode[] = [
         {

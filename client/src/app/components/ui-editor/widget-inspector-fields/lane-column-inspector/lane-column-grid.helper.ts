@@ -506,6 +506,24 @@ export class LaneColumnGridHelper {
     onFieldChange();
   }
 
+  public static getStartRowOffset(currentSettings: any): number {
+    return Math.max(
+      1,
+      Math.round(Number(currentSettings["startRowOffset"]) || 1),
+    );
+  }
+
+  public static setStartRowOffset(
+    currentSettings: any,
+    val: number,
+    onFieldChange: () => void,
+  ): void {
+    const offset = Math.max(1, Math.round(Number(val) || 1));
+    currentSettings["startRowOffset"] = offset;
+    currentSettings["_startRowOffsetChanged"] = true;
+    onFieldChange();
+  }
+
   public static getGridDirection(
     currentSettings: any,
   ): "horizontal" | "vertical" {

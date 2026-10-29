@@ -245,6 +245,14 @@ describe("LaneColumnGridHelper", () => {
       expect(LaneColumnGridHelper.getGridTotalLanes(settings, 6)).toBe(8);
       expect(settings._gridTotalLanesChanged).toBeTrue();
 
+      expect(LaneColumnGridHelper.getStartRowOffset(settings)).toBe(1);
+      LaneColumnGridHelper.setStartRowOffset(settings, 11, onChange);
+      expect(LaneColumnGridHelper.getStartRowOffset(settings)).toBe(11);
+      expect(settings._startRowOffsetChanged).toBeTrue();
+
+      LaneColumnGridHelper.setStartRowOffset(settings, 0, onChange);
+      expect(LaneColumnGridHelper.getStartRowOffset(settings)).toBe(1);
+
       expect(LaneColumnGridHelper.getGridDirection(settings)).toBe("vertical");
       settings.gridDirection = "horizontal";
       expect(LaneColumnGridHelper.getGridDirection(settings)).toBe(

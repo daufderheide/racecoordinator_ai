@@ -583,6 +583,7 @@ export async function handleStartNewLayout(comp: any): Promise<void> {
       comp.dataService.createCustomUI(template),
     );
     if (created) {
+      comp.customUiService?.initialize();
       comp.allLayouts.push(created);
       comp.selectLayoutById(created.entity_id);
       comp.isEditMode = true;
@@ -607,6 +608,7 @@ export async function handleDuplicateCurrentLayout(comp: any): Promise<void> {
       comp.dataService.createCustomUI(template),
     );
     if (created) {
+      comp.customUiService?.initialize();
       comp.allLayouts.push(created);
       comp.selectLayoutById(created.entity_id);
       comp.isEditMode = true;
@@ -626,6 +628,7 @@ export async function handleDeleteCurrentLayout(comp: any): Promise<void> {
   comp.isSaving = true;
   try {
     await firstValueFrom(comp.dataService.deleteCustomUI(idToDelete));
+    comp.customUiService?.initialize();
     const next = getNextSelectionAfterDelete(comp.allLayouts, idToDelete);
     comp.allLayouts = comp.allLayouts.filter(
       (u: any) => u.entity_id !== idToDelete,

@@ -45,7 +45,9 @@ export class LaneGridAnimationHelper {
     const mode = s["bindingMode"] || "lane";
     if (mode !== "position" && mode !== "overallPosition") return null;
 
-    const targetIndex = Number(s["targetIndex"] ?? s["gridLane"] ?? 0);
+    const rawTargetIndex = Number(s["targetIndex"] ?? s["gridLane"] ?? 0);
+    const startRowOffset = Math.max(1, Number(s["startRowOffset"]) || 1);
+    const targetIndex = rawTargetIndex + (startRowOffset - 1);
     const targetRank = targetIndex + 1;
     const isOverallGrid =
       s["gridType"] === "overall" ||

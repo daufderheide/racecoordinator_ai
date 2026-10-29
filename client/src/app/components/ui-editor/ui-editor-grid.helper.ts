@@ -97,6 +97,10 @@ function createInitialGridSession(
     headerHeight: options.headerHeight ?? 36,
     linkColumns: options.linkColumns ?? true,
     mirrorRows: options.mirrorRows !== false,
+    startRowOffset: Math.max(
+      1,
+      Number(options.startRowOffset || cs["startRowOffset"]) || 1,
+    ),
     useLaneColors: options.useLaneColors ?? cs["useLaneColors"] ?? true,
     backgroundColor: options.backgroundColor || cs["backgroundColor"],
     textColor: options.textColor || cs["textColor"],
@@ -283,27 +287,10 @@ export function handleFinishGridSession(comp: any, ui?: CustomUI): void {
   comp.cdr.markForCheck();
 }
 
-function buildEditGridSession(
-  gridId: string,
-  bounds: LaneGridBounds,
+function resolveEditGridType(
   gridWidgets: any[],
-  maxLanes: number,
-): LaneGridSession {
-  const first = gridWidgets[0];
-  const totalLanes =
-    Number(first.customSettings?.["gridTotalLanes"]) || maxLanes || 4;
-  const direction = first.customSettings?.["gridDirection"] || "vertical";
-  const positionWidget = gridWidgets.find(
-    (w: any) => w.customSettings?.["bindingMode"] === "position",
-  );
-  const bindingMode = positionWidget
-    ? "position"
-    : first.customSettings?.["bindingMode"] || "lane";
-  const headerPlacement =
-    first.customSettings?.["headerPlacement"] || "individual";
-  const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
-  const linkColumns = first.customSettings?.["linkColumns"] !== false;
-
+  first: any,
+): "heat" | "overall" {
   const anyHeat = gridWidgets.some(
     (w: any) => w.customSettings?.["gridType"] === "heat",
   );
@@ -316,44 +303,17 @@ function buildEditGridSession(
       w.customSettings?.["bindingMode"] === "overallPosition",
   );
 
-  let gridType: "heat" | "overall";
-  if (anyOverall) {
-    gridType = "overall";
-  } else if (anyHeat) {
-    gridType = "heat";
-  } else if (anyLegacyOverallColumn) {
-    gridType = "overall";
-  } else {
-    gridType = first.customSettings?.["gridType"] || "heat";
+  if (anyOverall || anyLegacyOverallColumn) {
+    return "overall";
   }
+  if (anyHeat) {
+    return "heat";
+  }
+  return first.customSettings?.["gridType"] || "heat";
+}
 
-  const dataWidget = gridWidgets.find(
-    (w: any) => !w.customSettings?.["isHeaderWidget"],
-  );
-  const useLaneColors =
-    dataWidget?.customSettings?.["useLaneColors"] !== undefined
-      ? Boolean(dataWidget.customSettings["useLaneColors"])
-      : true;
-  const backgroundColor = dataWidget?.customSettings?.["backgroundColor"];
-  const textColor = dataWidget?.customSettings?.["textColor"];
-
+function extractDefaultGridLabelSettings(first: any) {
   return {
-    gridId,
-    bounds,
-    totalLanes,
-    direction,
-    sourceLaneIndex: 0,
-    gridType,
-    bindingMode,
-    headerPlacement,
-    headerHeight,
-    linkColumns,
-    mirrorRows: first.customSettings?.["mirrorRows"] !== false,
-    useLaneColors,
-    backgroundColor,
-    textColor,
-    layoutOrientation:
-      first.customSettings?.["layoutOrientation"] || "vertical",
     gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
     gridLabelText: first.customSettings?.["gridLabelText"] || "",
     gridLabelSize:
@@ -385,6 +345,63 @@ function buildEditGridSession(
       first.customSettings?.["gridLabelBorderRadius"] != null
         ? Number(first.customSettings["gridLabelBorderRadius"])
         : 4,
+  };
+}
+
+function buildEditGridSession(
+  gridId: string,
+  bounds: LaneGridBounds,
+  gridWidgets: any[],
+  maxLanes: number,
+): LaneGridSession {
+  const first = gridWidgets[0];
+  const totalLanes =
+    Number(first.customSettings?.["gridTotalLanes"]) || maxLanes || 4;
+  const direction = first.customSettings?.["gridDirection"] || "vertical";
+  const positionWidget = gridWidgets.find(
+    (w: any) => w.customSettings?.["bindingMode"] === "position",
+  );
+  const bindingMode = positionWidget
+    ? "position"
+    : first.customSettings?.["bindingMode"] || "lane";
+  const headerPlacement =
+    first.customSettings?.["headerPlacement"] || "individual";
+  const headerHeight = Number(first.customSettings?.["headerHeight"]) || 36;
+  const linkColumns = first.customSettings?.["linkColumns"] !== false;
+  const gridType = resolveEditGridType(gridWidgets, first);
+
+  const dataWidget = gridWidgets.find(
+    (w: any) => !w.customSettings?.["isHeaderWidget"],
+  );
+  const useLaneColors =
+    dataWidget?.customSettings?.["useLaneColors"] !== undefined
+      ? Boolean(dataWidget.customSettings["useLaneColors"])
+      : true;
+  const backgroundColor = dataWidget?.customSettings?.["backgroundColor"];
+  const textColor = dataWidget?.customSettings?.["textColor"];
+
+  return {
+    gridId,
+    bounds,
+    totalLanes,
+    direction,
+    sourceLaneIndex: 0,
+    gridType,
+    bindingMode,
+    headerPlacement,
+    headerHeight,
+    linkColumns,
+    mirrorRows: first.customSettings?.["mirrorRows"] !== false,
+    startRowOffset: Math.max(
+      1,
+      Number(first.customSettings?.["startRowOffset"]) || 1,
+    ),
+    useLaneColors,
+    backgroundColor,
+    textColor,
+    layoutOrientation:
+      first.customSettings?.["layoutOrientation"] || "vertical",
+    ...extractDefaultGridLabelSettings(first),
   };
 }
 
@@ -730,6 +747,12 @@ export function handleSyncActiveGridSessionFromLayout(comp: any): void {
           : comp.activeGridSession.headerHeight,
       linkColumns: cs["linkColumns"] !== false,
       mirrorRows: cs["mirrorRows"] !== false,
+      startRowOffset: Math.max(
+        1,
+        Number(cs["startRowOffset"]) ||
+          comp.activeGridSession.startRowOffset ||
+          1,
+      ),
       layoutOrientation:
         cs["layoutOrientation"] || comp.activeGridSession.layoutOrientation,
       ...extractGridLabelSessionSettings(cs, comp.activeGridSession),

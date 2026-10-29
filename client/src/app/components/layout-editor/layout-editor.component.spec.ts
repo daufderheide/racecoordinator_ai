@@ -15,6 +15,7 @@ import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { CustomUiService } from "@app/services/custom-ui.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -62,6 +63,7 @@ describe("LayoutEditorComponent", () => {
   let mockNavigationService: any;
   let mockRaceConnectionService: any;
   let mockChildWindowManagerService: any;
+  let mockCustomUiService: any;
 
   let testCustomUIs: CustomUI[];
   let testSettings: Settings;
@@ -198,6 +200,12 @@ describe("LayoutEditorComponent", () => {
       closeAllWindows: jasmine.createSpy("closeAllWindows"),
     };
 
+    mockCustomUiService = {
+      initialize: jasmine
+        .createSpy("initialize")
+        .and.returnValue(Promise.resolve()),
+    };
+
     mockActivatedRoute = {
       queryParams: of({ id: "default_ui_layout_rc_ai" }),
       snapshot: {
@@ -237,6 +245,7 @@ describe("LayoutEditorComponent", () => {
           provide: ChildWindowManagerService,
           useValue: mockChildWindowManagerService,
         },
+        { provide: CustomUiService, useValue: mockCustomUiService },
       ],
     }).compileComponents();
 
@@ -1047,6 +1056,35 @@ describe("LayoutEditorComponent", () => {
       expect(mockNavigationService.clearLastEditedId).toHaveBeenCalledWith(
         "layout",
       );
+    });
+
+    it("should re-initialize CustomUiService when saving layout", async () => {
+      component.selectLayoutById("custom_ui_1");
+      mockCustomUiService.initialize.calls.reset();
+      component.isEditMode = true;
+      await component.saveCurrentLayout();
+      expect(mockCustomUiService.initialize).toHaveBeenCalled();
+    });
+
+    it("should re-initialize CustomUiService when starting a new layout", async () => {
+      mockCustomUiService.initialize.calls.reset();
+      await component.startNewLayout();
+      expect(mockCustomUiService.initialize).toHaveBeenCalled();
+    });
+
+    it("should re-initialize CustomUiService when duplicating current layout", async () => {
+      component.selectLayoutById("custom_ui_1");
+      mockCustomUiService.initialize.calls.reset();
+      await component.duplicateCurrentLayout();
+      expect(mockCustomUiService.initialize).toHaveBeenCalled();
+    });
+
+    it("should re-initialize CustomUiService when deleting layout", async () => {
+      component.selectLayoutById("custom_ui_1");
+      mockCustomUiService.initialize.calls.reset();
+      mockDataService.deleteCustomUI.and.returnValue(of(true));
+      await component.onConfirmDeleteLayout();
+      expect(mockCustomUiService.initialize).toHaveBeenCalled();
     });
   });
 });

@@ -246,6 +246,22 @@ export function handleGridColumnStructureChanges(
     }
   }
 
+  if (targetWidget.customSettings?.["_startRowOffsetChanged"]) {
+    delete targetWidget.customSettings["_startRowOffsetChanged"];
+    const newOffset = Math.max(
+      1,
+      Math.round(Number(targetWidget.customSettings?.["startRowOffset"]) || 1),
+    );
+    layout.widgets = LaneGridReplicationHelper.updateGridStartRowOffset(
+      layout.widgets,
+      gridId,
+      newOffset,
+    );
+    if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+      comp.activeGridSession.startRowOffset = newOffset;
+    }
+  }
+
   if (targetWidget.customSettings?.["_gridSortOrderChanged"]) {
     delete targetWidget.customSettings["_gridSortOrderChanged"];
     const sortOrder = targetWidget.customSettings?.["bindingMode"] || "lane";

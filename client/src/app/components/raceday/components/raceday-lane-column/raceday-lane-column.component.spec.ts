@@ -3760,6 +3760,22 @@ describe("RacedayLaneColumnComponent", () => {
         expect(component.isOverallNoDataRow).toBeFalse();
       });
 
+      it("should apply startRowOffset when looking up target driver", () => {
+        fixture.componentRef.setInput("parent", mockParent);
+        // Lane 0 with startRowOffset: 2 looks up lane 1 (Driver Two)
+        fixture.componentRef.setInput(
+          "widget",
+          createWidget({
+            gridId: "grid-test",
+            bindingMode: "lane",
+            targetIndex: 0,
+            startRowOffset: 2,
+          }),
+        );
+        fixture.detectChanges();
+        expect(component.targetDriver?.driver?.name).toBe("Driver Two");
+      });
+
       it("should format values and insets according to emptyRowsMode for extra grid rows", () => {
         fixture.componentRef.setInput("parent", mockParent);
 

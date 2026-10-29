@@ -2865,6 +2865,8 @@
   "UE_INSPECTOR_TARGET_DRIVER_BY": "Identificar Piloto Por",
   "UE_GRID_MIRRORED_ROWS": "Filas reflejadas",
   "UE_GRID_MIRRORED_COLUMNS": "Columnas reflejadas",
+  "UE_GRID_START_ROW_OFFSET": "Desplazamiento de fila inicial",
+  "UE_GRID_START_COLUMN_OFFSET": "Desplazamiento de columna inicial",
   "UE_GRID_MIRRORED_COUNT": "Filas/Columnas reflejadas",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Aplicar estilo de encabezado a todas las columnas",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Aplicar estilo de valor a todas las columnas",

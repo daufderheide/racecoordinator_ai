@@ -13,6 +13,7 @@ import {
   isParentGridOverall,
   isParentGridSeed,
   isParentRaceOver,
+  LaneColumnDriverCache,
   resolveHeatDriverByPosition,
   resolveHeatGridDriver,
   resolveOverallGridDriver,
@@ -505,6 +506,55 @@ describe("raceday-lane-column-driver.helper", () => {
       expect(d?.objectId).toBe("d2");
     });
 
+    it("should apply startRowOffset when resolving grid drivers", () => {
+      mockParent.isGridOverall = () => true;
+      // targetIndex 0 with startRowOffset 2 should look up rank 2 (d3)
+      const settingsRank2 = {
+        gridId: "grid-1",
+        bindingMode: "overallPosition",
+        targetIndex: 0,
+        startRowOffset: 2,
+      } as any;
+      const dRank2 = resolveTargetDriver(
+        settingsRank2,
+        "lastLapTime",
+        mockParent,
+        (p) => p,
+      );
+      expect(dRank2?.objectId).toBe("d3");
+
+      // targetIndex 0 with startRowOffset 3 should look up rank 3 (d1)
+      const settingsRank3 = {
+        gridId: "grid-1",
+        bindingMode: "overallPosition",
+        targetIndex: 0,
+        startRowOffset: 3,
+      } as any;
+      const dRank3 = resolveTargetDriver(
+        settingsRank3,
+        "lastLapTime",
+        mockParent,
+        (p) => p,
+      );
+      expect(dRank3?.objectId).toBe("d1");
+
+      // In heat grid with lane binding, targetIndex 0 with startRowOffset 2 looks up lane 1 (d2)
+      mockParent.isGridOverall = () => false;
+      const settingsLane = {
+        gridId: "grid-1",
+        bindingMode: "lane",
+        targetIndex: 0,
+        startRowOffset: 2,
+      } as any;
+      const dLane = resolveTargetDriver(
+        settingsLane,
+        "lastLapTime",
+        mockParent,
+        (p) => p,
+      );
+      expect(dLane?.objectId).toBe("d2");
+    });
+
     it("should route to resolveHeatGridDriver when grid is heat", () => {
       mockParent.isGridOverall = () => false;
       const settings = {
@@ -607,6 +657,31 @@ describe("raceday-lane-column-driver.helper", () => {
       expect(
         isOverallOrSeedDataSource({ gridType: "heat" } as any),
       ).toBeFalse();
+    });
+  });
+
+  describe("LaneColumnDriverCache", () => {
+    it("should cache resolved driver and invalidate when startRowOffset changes", () => {
+      const cache = new LaneColumnDriverCache();
+      mockParent.isGridOverall = () => true;
+      const settings = {
+        gridId: "grid-1",
+        bindingMode: "overallPosition",
+        targetIndex: 0,
+        startRowOffset: 1,
+      } as any;
+
+      const d1 = cache.resolve(settings, "lastLapTime", mockParent);
+      expect(d1?.objectId).toBe("d2"); // rank 1
+
+      // Same call returns cached reference
+      const d1Cached = cache.resolve(settings, "lastLapTime", mockParent);
+      expect(d1Cached).toBe(d1);
+
+      // Invalidate by changing startRowOffset in place
+      settings.startRowOffset = 2;
+      const d2 = cache.resolve(settings, "lastLapTime", mockParent);
+      expect(d2?.objectId).toBe("d3"); // rank 2
     });
   });
 });

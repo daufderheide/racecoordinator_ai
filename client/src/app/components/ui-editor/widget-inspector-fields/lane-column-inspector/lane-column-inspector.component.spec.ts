@@ -1425,6 +1425,22 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mockSettings.gridTotalLanes).toBe(32);
     });
 
+    it("should handle startRowOffset getter, clamping and onStartRowOffsetChange", () => {
+      spyOn(component.change, "emit");
+      delete mockSettings.startRowOffset;
+      expect(component.startRowOffset).toBe(1);
+
+      component.onStartRowOffsetChange(11);
+      expect(mockSettings.startRowOffset).toBe(11);
+      expect(mockSettings._startRowOffsetChanged).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+      expect(component.startRowOffset).toBe(11);
+
+      // Clamp lower bound
+      component.onStartRowOffsetChange(0);
+      expect(mockSettings.startRowOffset).toBe(1);
+    });
+
     it("should return gridDirection and gridTotalLanes from settings", () => {
       delete mockSettings.gridDirection;
       expect(component.gridDirection).toBe("vertical");

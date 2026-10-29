@@ -2865,6 +2865,8 @@
   "UE_INSPECTOR_TARGET_DRIVER_BY": "Identifica Pilota Per",
   "UE_GRID_MIRRORED_ROWS": "Righe duplicate",
   "UE_GRID_MIRRORED_COLUMNS": "Colonne duplicate",
+  "UE_GRID_START_ROW_OFFSET": "Offset riga iniziale",
+  "UE_GRID_START_COLUMN_OFFSET": "Offset colonna iniziale",
   "UE_GRID_MIRRORED_COUNT": "Righe/Colonne duplicate",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Applica stile intestazione a tutte le colonne",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Applica stile valore a tutte le colonne",

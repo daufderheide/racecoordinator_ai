@@ -2865,6 +2865,8 @@
   "UE_INSPECTOR_TARGET_DRIVER_BY": "Fahrer identifizieren nach",
   "UE_GRID_MIRRORED_ROWS": "Gespiegelte Zeilen",
   "UE_GRID_MIRRORED_COLUMNS": "Gespiegelte Spalten",
+  "UE_GRID_START_ROW_OFFSET": "Startzeilen-Offset",
+  "UE_GRID_START_COLUMN_OFFSET": "Startspalten-Offset",
   "UE_GRID_MIRRORED_COUNT": "Gespiegelte Zeilen/Spalten",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Kopfzeilenstil auf alle Spalten anwenden",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Wertstil auf alle Spalten anwenden",

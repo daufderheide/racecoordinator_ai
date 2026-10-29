@@ -131,6 +131,24 @@ describe("ui-editor-grid-sync.helper", () => {
       expect(mockComp.activeGridSession.mirrorRows).toBeFalse();
     });
 
+    it("should handle _startRowOffsetChanged", () => {
+      masterWidget.customSettings._startRowOffsetChanged = true;
+      masterWidget.customSettings.startRowOffset = 11;
+
+      handleGridColumnStructureChanges(
+        mockComp,
+        mockLayout,
+        masterWidget,
+        "grid-1",
+      );
+
+      expect(
+        masterWidget.customSettings._startRowOffsetChanged,
+      ).toBeUndefined();
+      expect(childWidget.customSettings.startRowOffset).toBe(11);
+      expect(mockComp.activeGridSession.startRowOffset).toBe(11);
+    });
+
     it("should handle _gridTypeChanged", () => {
       masterWidget.customSettings._gridTypeChanged = true;
       masterWidget.customSettings.gridType = "overall";

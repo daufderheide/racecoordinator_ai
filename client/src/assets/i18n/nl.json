@@ -2865,6 +2865,8 @@
   "UE_INSPECTOR_TARGET_DRIVER_BY": "Identificeer Coureur Op",
   "UE_GRID_MIRRORED_ROWS": "Gespiegelde rijen",
   "UE_GRID_MIRRORED_COLUMNS": "Gespiegelde kolommen",
+  "UE_GRID_START_ROW_OFFSET": "Startrij-offset",
+  "UE_GRID_START_COLUMN_OFFSET": "Startkolom-offset",
   "UE_GRID_MIRRORED_COUNT": "Gespiegelde rijen/kolommen",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Kopstijl toepassen op alle kolommen",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Waardestijl toepassen op alle kolommen",

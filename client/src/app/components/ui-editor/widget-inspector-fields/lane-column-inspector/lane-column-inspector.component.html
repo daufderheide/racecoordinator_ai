@@ -259,6 +259,43 @@
         </div>
       </div>
 
+      <!-- Start Row Offset Control -->
+      <div class="inspector-section" style="margin-bottom: 8px">
+        <label class="inspector-label">{{
+          (isGridHorizontal
+            ? "UE_GRID_START_COLUMN_OFFSET"
+            : "UE_GRID_START_ROW_OFFSET"
+          ) | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="1"
+            max="100"
+            step="1"
+            [ngModel]="startRowOffset"
+            (ngModelChange)="onStartRowOffsetChange($event)"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="1"
+            max="100"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="startRowOffset"
+            (ngModelChange)="onStartRowOffsetChange($event)"
+            class="inspector-number-input"
+          />
+        </div>
+      </div>
+
       <!-- Layout Orientation for the Grid -->
       <div class="inspector-section" style="margin-bottom: 8px">
         <label class="inspector-label">{{

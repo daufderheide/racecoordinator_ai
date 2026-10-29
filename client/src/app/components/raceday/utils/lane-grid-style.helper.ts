@@ -203,6 +203,30 @@ export class LaneGridStyleHelper {
     });
   }
 
+  public static updateGridStartRowOffset(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    startRowOffset: number,
+  ): AbsoluteWidgetNode[] {
+    if (!gridId || !allWidgets) return allWidgets || [];
+    const offset = Math.max(1, Math.round(Number(startRowOffset) || 1));
+    return allWidgets.map((w) => {
+      if (w.customSettings?.["gridId"] === gridId) {
+        if (w.customSettings) {
+          w.customSettings["startRowOffset"] = offset;
+        }
+        return {
+          ...w,
+          customSettings: {
+            ...(w.customSettings || {}),
+            startRowOffset: offset,
+          },
+        };
+      }
+      return w;
+    });
+  }
+
   public static updateGridSortByBindingMode(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,
@@ -533,6 +557,10 @@ export class LaneGridStyleHelper {
       headerHeight: Number(first.customSettings?.["headerHeight"]) || 36,
       linkColumns: first.customSettings?.["linkColumns"] !== false,
       mirrorRows: first.customSettings?.["mirrorRows"] !== false,
+      startRowOffset: Math.max(
+        1,
+        Number(first.customSettings?.["startRowOffset"]) || 1,
+      ),
       sortByBindingMode: first.customSettings?.["sortByBindingMode"] !== false,
       layoutOrientation:
         first.customSettings?.["layoutOrientation"] ||

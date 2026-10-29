@@ -2865,6 +2865,8 @@
   "UE_INSPECTOR_TARGET_DRIVER_BY": "Identify Driver By",
   "UE_GRID_MIRRORED_ROWS": "Mirrored Rows",
   "UE_GRID_MIRRORED_COLUMNS": "Mirrored Columns",
+  "UE_GRID_START_ROW_OFFSET": "Start Row Offset",
+  "UE_GRID_START_COLUMN_OFFSET": "Start Column Offset",
   "UE_GRID_MIRRORED_COUNT": "Mirrored Rows/Columns",
   "UE_GRID_APPLY_HEADER_TO_ALL": "Apply Header Style to All Columns",
   "UE_GRID_APPLY_VALUE_TO_ALL": "Apply Value Style to All Columns",

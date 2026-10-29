@@ -142,6 +142,7 @@ export interface LaneColumnWidgetSettings {
   gridDirection?: "vertical" | "horizontal";
   gridLane?: number;
   gridTotalLanes?: number;
+  startRowOffset?: number;
   gridMasterId?: string;
   headerPlacement?: "top" | "left" | "individual" | "none";
   headerHeight?: number;

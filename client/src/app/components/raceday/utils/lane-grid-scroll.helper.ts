@@ -195,7 +195,12 @@ export class LaneGridScrollHelper {
           w.customSettings?.["targetIndex"] ??
           0,
       );
-      return lane < dataCount;
+      const startRowOffset = Math.max(
+        1,
+        Number(w.customSettings?.["startRowOffset"]) || 1,
+      );
+      const effectiveIndex = lane + (startRowOffset - 1);
+      return effectiveIndex < dataCount;
     });
   }
 
@@ -250,6 +255,10 @@ export class LaneGridScrollHelper {
       headerHeight,
       gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",
       gridLabelSize: Number(first.customSettings?.["gridLabelSize"]) || 40,
+      startRowOffset: Math.max(
+        1,
+        Number(first.customSettings?.["startRowOffset"]) || 1,
+      ),
     };
     const dataBounds = LaneGridLabelHelper.computeGridDataBounds(sessionLike);
 
@@ -309,11 +318,17 @@ export class LaneGridScrollHelper {
         ?.customSettings?.["emptyRowsMode"] as "remove" | "empty" | "blank") ||
       defaultMode;
 
-    if (emptyRowsMode === "remove" && dataCount < gridTotalLanes) {
+    const startRowOffset = Math.max(
+      1,
+      Number(first.customSettings?.["startRowOffset"]) || 1,
+    );
+    const offset = startRowOffset - 1;
+
+    if (emptyRowsMode === "remove" && dataCount < offset + gridTotalLanes) {
       return this.filterOverallGridRows(gridWidgets, dataCount);
     }
 
-    if (dataCount <= gridTotalLanes) {
+    if (dataCount <= offset + gridTotalLanes) {
       return gridWidgets;
     }
 
@@ -369,6 +384,10 @@ export class LaneGridScrollHelper {
       master.customSettings?.["showHeader"] !== false;
     clonedSettings["isHeaderWidget"] = false;
     clonedSettings["gridTotalLanes"] = gridTotalLanes;
+    clonedSettings["startRowOffset"] = Math.max(
+      1,
+      Number(master.customSettings?.["startRowOffset"]) || 1,
+    );
 
     return {
       ...deepCopy(master),

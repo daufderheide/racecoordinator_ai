@@ -372,6 +372,10 @@ export class LaneGridRepairHelper {
     }
     const linkColumns = first.customSettings?.["linkColumns"] !== false;
     const mirrorRows = first.customSettings?.["mirrorRows"] !== false;
+    const startRowOffset = Math.max(
+      1,
+      Number(first.customSettings?.["startRowOffset"]) || 1,
+    );
 
     return {
       gridId,
@@ -385,6 +389,7 @@ export class LaneGridRepairHelper {
       headerHeight,
       linkColumns,
       mirrorRows,
+      startRowOffset,
       layoutOrientation:
         first.customSettings?.["layoutOrientation"] || "vertical",
       gridLabelPosition: first.customSettings?.["gridLabelPosition"] || "none",

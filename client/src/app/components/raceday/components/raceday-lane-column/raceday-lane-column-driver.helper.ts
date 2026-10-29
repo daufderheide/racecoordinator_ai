@@ -755,6 +755,10 @@ export function resolveOverallGridDriver(
     match = sorted[targetIndex];
   }
 
+  if (!match && isEditorMode(parent) && participants.length > 0) {
+    match = participants[targetIndex % participants.length];
+  }
+
   if (!match) return undefined;
   if (isParentRaceOver(parent)) {
     return getOrCreateSyntheticDriver(match);
@@ -783,7 +787,11 @@ export function resolveTargetDriver(
 
   const isGrid = Boolean(settings.gridId);
   const bindingMode = settings.bindingMode || "lane";
-  const targetIndex = settings.targetIndex ?? 0;
+  const rawTargetIndex = settings.targetIndex ?? 0;
+  const startRowOffset = Math.max(1, Number(settings.startRowOffset) || 1);
+  const targetIndex = isGrid
+    ? rawTargetIndex + (startRowOffset - 1)
+    : rawTargetIndex;
 
   const isOverallGrid =
     isGrid &&
@@ -827,6 +835,10 @@ export function resolveTargetDriver(
 export class LaneColumnDriverCache {
   private cachedTargetDriver?: DriverHeatData;
   private lastSettings?: LaneColumnWidgetSettings;
+  private lastTargetIndex?: number;
+  private lastStartRowOffset?: number;
+  private lastBindingMode?: string;
+  private lastGridId?: string;
   private lastColumnKey?: string;
   private lastParent?: any;
   private lastParticipants?: any;
@@ -865,10 +877,18 @@ export class LaneColumnDriverCache {
     const standings = parent?.heat?.standings;
     const raceState = parent?.raceState;
     const heatId = parent?.heat?.objectId;
+    const targetIndex = settings.targetIndex ?? 0;
+    const startRowOffset = settings.startRowOffset ?? 1;
+    const bindingMode = settings.bindingMode || "lane";
+    const gridId = settings.gridId;
 
     if (
       this.cachedTargetDriver !== undefined &&
       this.lastSettings === settings &&
+      this.lastTargetIndex === targetIndex &&
+      this.lastStartRowOffset === startRowOffset &&
+      this.lastBindingMode === bindingMode &&
+      this.lastGridId === gridId &&
       this.lastColumnKey === columnKey &&
       this.lastParent === parent &&
       this.lastParticipants === participants &&
@@ -882,6 +902,10 @@ export class LaneColumnDriverCache {
     }
 
     this.lastSettings = settings;
+    this.lastTargetIndex = targetIndex;
+    this.lastStartRowOffset = startRowOffset;
+    this.lastBindingMode = bindingMode;
+    this.lastGridId = gridId;
     this.lastColumnKey = columnKey;
     this.lastParent = parent;
     this.lastParticipants = participants;

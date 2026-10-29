@@ -1252,6 +1252,13 @@ describe("LaneGridReplicationHelper", () => {
       );
       expect(updatedLinks[0].customSettings?.["linkColumns"]).toBeFalse();
 
+      const updatedOffset = LaneGridReplicationHelper.updateGridStartRowOffset(
+        widgets,
+        "grid-top-headers",
+        11,
+      );
+      expect(updatedOffset[0].customSettings?.["startRowOffset"]).toBe(11);
+
       const updatedHeight = LaneGridReplicationHelper.updateGridHeaderHeight(
         widgets,
         "grid-top-headers",
