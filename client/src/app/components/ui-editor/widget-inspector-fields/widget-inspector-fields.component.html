@@ -4,6 +4,7 @@
     [widget]="widget()"
     [availableColumns]="availableColumns()"
     [disableFontSizes]="widget().scaleMode === 'auto'"
+    [totalLanes]="totalLanes()"
     [selectedAnchor]="selectedAnchor()"
     (anchorChange)="onAnchorChange($event)"
     (change)="onSettingsChange()"
@@ -56,6 +57,7 @@
         [settings]="widget().customSettings"
         [widget]="widget()"
         [disableFontSizes]="widget().scaleMode === 'auto'"
+        [totalLanes]="totalLanes()"
         (change)="onSettingsChange()"
       ></app-progress-gauge-inspector>
     }
@@ -96,6 +98,7 @@
         [widget]="widget()"
         [availableColumns]="availableColumns()"
         [disableFontSizes]="widget().scaleMode === 'auto'"
+        [totalLanes]="totalLanes()"
         [selectedAnchor]="selectedAnchor()"
         (anchorChange)="onAnchorChange($event)"
         (change)="onSettingsChange()"

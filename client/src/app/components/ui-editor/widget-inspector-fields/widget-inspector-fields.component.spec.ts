@@ -164,11 +164,15 @@ describe("WidgetInspectorFieldsComponent", () => {
       },
     };
     fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.componentRef.setInput("totalLanes", 6);
     fixture.detectChanges();
+
+    expect(component.totalLanes()).toBe(6);
 
     spyOn(component.requestReplicate, "emit");
     const laneColComp =
       fixture.debugElement.children[0].children[0].componentInstance;
+    expect(laneColComp.totalLanes()).toBe(6);
     laneColComp.requestReplicate.emit();
     expect(component.requestReplicate.emit).toHaveBeenCalled();
   });

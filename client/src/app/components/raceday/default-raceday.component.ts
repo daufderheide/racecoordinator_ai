@@ -358,7 +358,7 @@ export class DefaultRacedayComponent
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
-  protected track?: Track;
+  public track?: Track;
   public race!: Race;
   protected columns: ColumnDefinition[];
   protected errorMessage?: string;

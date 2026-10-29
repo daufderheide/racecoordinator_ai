@@ -11,7 +11,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { firstValueFrom, Subscription } from "rxjs";
+import { catchError, firstValueFrom, of, Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import {
   LaneGridRepairHelper,
@@ -194,7 +194,12 @@ export class LayoutEditorComponent
     "lane";
   replicateSourceIndex = 0;
   replicateDefaultCount = 4;
+  maxTrackLanes = 4;
   detectedStackedIssues: StackedColumnIssue[] = [];
+
+  get totalTrackLanes(): number {
+    return this.racedayComp?.track?.lanes?.length || this.maxTrackLanes || 4;
+  }
 
   countdownPreviewState: { [id: string]: boolean } = {};
   layoutZoom = new Map<string, number>();
@@ -382,6 +387,21 @@ export class LayoutEditorComponent
         this.editingSettings.practiceRacedayLayout,
       );
       this.availableColumns = LAYOUT_AVAILABLE_COLUMNS;
+
+      try {
+        const tracks = await firstValueFrom(
+          this.dataService.getTracks().pipe(catchError(() => of([]))),
+        );
+        if (tracks && tracks.length > 0) {
+          this.maxTrackLanes =
+            tracks.reduce(
+              (max: number, t: any) => Math.max(max, t?.lanes?.length || 0),
+              0,
+            ) || 4;
+        }
+      } catch (_e) {
+        // Ignore track loading errors in layout editor
+      }
 
       this.queryParamSub = this.route.queryParams.subscribe((params) => {
         const targetId = params["id"] || params["layoutId"];

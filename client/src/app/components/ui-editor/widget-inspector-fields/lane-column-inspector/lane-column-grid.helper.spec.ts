@@ -339,6 +339,79 @@ describe("LaneColumnGridHelper", () => {
       expect(hostDriverIndices.length).toBe(0);
     });
 
+    it("should correctly identify heat related targets", () => {
+      expect(LaneColumnGridHelper.isHeatRelatedTarget("lane")).toBeTrue();
+      expect(LaneColumnGridHelper.isHeatRelatedTarget("position")).toBeTrue();
+      expect(LaneColumnGridHelper.isHeatRelatedTarget(undefined)).toBeTrue();
+      expect(
+        LaneColumnGridHelper.isHeatRelatedTarget("overallPosition"),
+      ).toBeFalse();
+      expect(LaneColumnGridHelper.isHeatRelatedTarget("seed")).toBeFalse();
+      expect(LaneColumnGridHelper.isHeatRelatedTarget("hostLane")).toBeFalse();
+    });
+
+    it("should return max target value limited to track lanes for heat targets, undefined for overall/seed", () => {
+      expect(LaneColumnGridHelper.getMaxTargetValue("lane", 4)).toBe(4);
+      expect(LaneColumnGridHelper.getMaxTargetValue("lane", 8)).toBe(8);
+      expect(LaneColumnGridHelper.getMaxTargetValue("position", 6)).toBe(6);
+      expect(
+        LaneColumnGridHelper.getMaxTargetValue("position", undefined),
+      ).toBe(4);
+      expect(
+        LaneColumnGridHelper.getMaxTargetValue("overallPosition", 4),
+      ).toBeUndefined();
+      expect(LaneColumnGridHelper.getMaxTargetValue("seed", 4)).toBeUndefined();
+      expect(
+        LaneColumnGridHelper.getMaxTargetValue("hostLane", 4),
+      ).toBeUndefined();
+    });
+
+    it("should compute 1-based targetValue from targetIndex", () => {
+      expect(LaneColumnGridHelper.getTargetValue(0)).toBe(1);
+      expect(LaneColumnGridHelper.getTargetValue(3)).toBe(4);
+      expect(LaneColumnGridHelper.getTargetValue(undefined)).toBe(1);
+      expect(LaneColumnGridHelper.getTargetValue(-1)).toBe(1);
+    });
+
+    it("should convert 1-based spinner value to 0-based targetIndex with clamping", () => {
+      // Heat targets clamped to totalLanes
+      expect(LaneColumnGridHelper.getTargetIndexFromValue(1, "lane", 4)).toBe(
+        0,
+      );
+      expect(LaneColumnGridHelper.getTargetIndexFromValue(4, "lane", 4)).toBe(
+        3,
+      );
+      expect(LaneColumnGridHelper.getTargetIndexFromValue(5, "lane", 4)).toBe(
+        3,
+      ); // Clamped to 4 -> index 3
+      expect(LaneColumnGridHelper.getTargetIndexFromValue(0, "lane", 4)).toBe(
+        0,
+      ); // Min 1 -> index 0
+      expect(
+        LaneColumnGridHelper.getTargetIndexFromValue(-5, "position", 6),
+      ).toBe(0); // Min 1 -> index 0
+      expect(
+        LaneColumnGridHelper.getTargetIndexFromValue(6, "position", 6),
+      ).toBe(5);
+      expect(
+        LaneColumnGridHelper.getTargetIndexFromValue(10, "position", 6),
+      ).toBe(5); // Clamped to 6 -> index 5
+
+      // Overall and seed targets unlimited
+      expect(
+        LaneColumnGridHelper.getTargetIndexFromValue(1, "overallPosition", 4),
+      ).toBe(0);
+      expect(
+        LaneColumnGridHelper.getTargetIndexFromValue(16, "overallPosition", 4),
+      ).toBe(15);
+      expect(
+        LaneColumnGridHelper.getTargetIndexFromValue(99, "overallPosition", 4),
+      ).toBe(98);
+      expect(LaneColumnGridHelper.getTargetIndexFromValue(42, "seed", 4)).toBe(
+        41,
+      );
+    });
+
     it("should get and set gridType correctly", () => {
       expect(LaneColumnGridHelper.getGridType(settings)).toBe("heat");
       LaneColumnGridHelper.setGridType(settings, "overall", onChange);

@@ -48,6 +48,7 @@ export class WidgetInspectorFieldsComponent {
   customUi = input<CustomUI>();
   availableColumns = input<{ key: string; label: string }[]>([]);
   isPracticeMode = input<boolean>(false);
+  totalLanes = input<number>(4);
   selectedAnchor = input<string | null>(null);
   anchorChange = output<string | null>();
   change = output<AbsoluteWidgetNode>();

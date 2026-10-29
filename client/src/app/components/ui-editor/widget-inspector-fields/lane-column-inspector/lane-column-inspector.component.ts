@@ -689,6 +689,61 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     );
   }
 
+  get isHeatRelatedTarget(): boolean {
+    return LaneColumnGridHelper.isHeatRelatedTarget(
+      this.currentSettings["bindingMode"],
+    );
+  }
+
+  get maxTargetValue(): number | undefined {
+    return LaneColumnGridHelper.getMaxTargetValue(
+      this.currentSettings["bindingMode"],
+      this.totalLanes(),
+    );
+  }
+
+  get targetValue(): number {
+    return LaneColumnGridHelper.getTargetValue(
+      this.currentSettings["targetIndex"],
+    );
+  }
+
+  onTargetValueChange(value: any): void {
+    if (value === null || value === undefined || value === "") {
+      return;
+    }
+    this.currentSettings["targetIndex"] =
+      LaneColumnGridHelper.getTargetIndexFromValue(
+        value,
+        this.currentSettings["bindingMode"],
+        this.totalLanes(),
+      );
+    this.onFieldChange();
+  }
+
+  onTargetBlur(): void {
+    const idx = this.currentSettings["targetIndex"];
+    if (
+      idx === undefined ||
+      idx === null ||
+      isNaN(Number(idx)) ||
+      Number(idx) < 0
+    ) {
+      this.currentSettings["targetIndex"] = 0;
+      this.onFieldChange();
+    }
+  }
+
+  onBindingModeChange(): void {
+    if (this.isHeatRelatedTarget) {
+      const max = this.maxTargetValue;
+      if (max !== undefined && this.targetValue > max) {
+        this.currentSettings["targetIndex"] = max - 1;
+      }
+    }
+    this.onFieldChange();
+  }
+
   readonly ANCHOR_POSITIONS = INSET_ANCHOR_POSITIONS;
 
   get currentSettings(): any {

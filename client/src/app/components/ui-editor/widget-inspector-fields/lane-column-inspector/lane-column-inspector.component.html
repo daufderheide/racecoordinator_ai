@@ -1063,7 +1063,7 @@
         <div class="select-container select-sm">
           <app-custom-select
             [(ngModel)]="currentSettings['bindingMode']"
-            (change)="onFieldChange()"
+            (change)="onBindingModeChange()"
           >
             <app-custom-option value="lane">
               {{ "UE_GRID_SORT_ORDER_LANE" | translate }}
@@ -1097,36 +1097,14 @@
             ) | translate
           }}
         </label>
-        <div class="select-container select-sm">
-          @if (currentSettings["bindingMode"] === "hostLane") {
+        @if (currentSettings["bindingMode"] === "hostLane") {
+          <div class="select-container select-sm">
             <app-custom-select [disabled]="true" [value]="'dynamic'">
               <app-custom-option value="dynamic">
                 {{ "UE_INSPECTOR_HOST_LANE_DYNAMIC" | translate }}
               </app-custom-option>
             </app-custom-select>
-          } @else {
-            <app-custom-select
-              [(ngModel)]="currentSettings['targetIndex']"
-              (change)="onFieldChange()"
-            >
-              @for (idx of availableIndices; track idx) {
-                <app-custom-option [value]="idx">
-                  {{
-                    (currentSettings["bindingMode"] === "position"
-                      ? "UE_INSPECTOR_POSITION_INDEX"
-                      : currentSettings["bindingMode"] === "overallPosition"
-                        ? "UE_INSPECTOR_OVERALL_POSITION_INDEX"
-                        : currentSettings["bindingMode"] === "seed"
-                          ? "UE_INSPECTOR_SEED_INDEX"
-                          : "UE_INSPECTOR_LANE_INDEX"
-                    ) | translate: { index: idx + 1 }
-                  }}
-                </app-custom-option>
-              }
-            </app-custom-select>
-          }
-        </div>
-        @if (currentSettings["bindingMode"] === "hostLane") {
+          </div>
           <div
             class="inspector-field-hint"
             style="
@@ -1138,6 +1116,24 @@
           >
             {{ "UE_INSPECTOR_HOST_LANE_HINT" | translate }}
           </div>
+        } @else {
+          <input
+            id="target-index-spinner"
+            type="number"
+            class="inspector-input"
+            min="1"
+            [attr.max]="maxTargetValue ?? null"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="targetValue"
+            (ngModelChange)="onTargetValueChange($event)"
+            (blur)="onTargetBlur()"
+          />
         }
       </div>
     </div>

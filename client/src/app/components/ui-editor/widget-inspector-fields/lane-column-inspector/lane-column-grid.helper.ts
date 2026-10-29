@@ -648,4 +648,40 @@ export class LaneColumnGridHelper {
     const laneCount = Math.max(8, totalLanes || 8);
     return Array.from({ length: laneCount }, (_, i) => i);
   }
+
+  public static isHeatRelatedTarget(bindingMode?: string): boolean {
+    const mode = bindingMode || "lane";
+    return mode === "lane" || mode === "position";
+  }
+
+  public static getMaxTargetValue(
+    bindingMode?: string,
+    totalLanes?: number,
+  ): number | undefined {
+    if (this.isHeatRelatedTarget(bindingMode)) {
+      return Math.max(1, totalLanes || 4);
+    }
+    return undefined;
+  }
+
+  public static getTargetValue(targetIndex?: number): number {
+    const idx = Number(targetIndex ?? 0);
+    return Math.max(1, isNaN(idx) ? 1 : idx + 1);
+  }
+
+  public static getTargetIndexFromValue(
+    val: any,
+    bindingMode?: string,
+    totalLanes?: number,
+  ): number {
+    let num = Math.round(Number(val));
+    if (isNaN(num) || num < 1) {
+      num = 1;
+    }
+    const max = this.getMaxTargetValue(bindingMode, totalLanes);
+    if (max !== undefined && num > max) {
+      num = max;
+    }
+    return num - 1;
+  }
 }

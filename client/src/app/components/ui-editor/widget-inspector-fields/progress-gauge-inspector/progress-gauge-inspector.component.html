@@ -72,7 +72,7 @@
     <div class="select-container select-sm">
       <app-custom-select
         [ngModel]="settings().bindingMode || 'hostLane'"
-        (ngModelChange)="settings().bindingMode = $event; onSettingsChange()"
+        (ngModelChange)="settings().bindingMode = $event; onBindingModeChange()"
       >
         <app-custom-option value="hostLane">
           {{ "UE_GRID_SORT_ORDER_HOST_LANE" | translate }}
@@ -92,32 +92,41 @@
     <label class="inspector-label">
       {{ "UE_INSPECTOR_TARGET_LANE" | translate }}
     </label>
-    <div class="select-container select-sm">
-      @if (settings().bindingMode === "hostLane") {
+    @if (settings().bindingMode === "hostLane") {
+      <div class="select-container select-sm">
         <app-custom-select [disabled]="true" [value]="'dynamic'">
           <app-custom-option value="dynamic">
             {{ "UE_INSPECTOR_HOST_LANE_DYNAMIC" | translate }}
           </app-custom-option>
         </app-custom-select>
-      } @else if (settings().bindingMode === "hostDriver") {
+      </div>
+    } @else if (settings().bindingMode === "hostDriver") {
+      <div class="select-container select-sm">
         <app-custom-select [disabled]="true" [value]="'dynamic'">
           <app-custom-option value="dynamic">
             {{ "UE_INSPECTOR_HOST_DRIVER_DYNAMIC" | translate }}
           </app-custom-option>
         </app-custom-select>
-      } @else {
-        <app-custom-select
-          [ngModel]="settings().targetIndex ?? 0"
-          (ngModelChange)="settings().targetIndex = $event; onSettingsChange()"
-        >
-          @for (idx of availableIndices; track idx) {
-            <app-custom-option [value]="idx">
-              {{ "UE_INSPECTOR_LANE_INDEX" | translate: { index: idx + 1 } }}
-            </app-custom-option>
-          }
-        </app-custom-select>
-      }
-    </div>
+      </div>
+    } @else {
+      <input
+        id="progress-gauge-target-spinner"
+        type="number"
+        class="inspector-input"
+        min="1"
+        [attr.max]="maxTargetValue"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="targetValue"
+        (ngModelChange)="onTargetValueChange($event)"
+        (blur)="onTargetBlur()"
+      />
+    }
     @if (settings().bindingMode === "hostLane") {
       <div
         class="inspector-field-hint"

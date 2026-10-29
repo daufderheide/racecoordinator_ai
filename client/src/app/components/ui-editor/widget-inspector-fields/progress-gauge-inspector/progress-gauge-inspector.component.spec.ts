@@ -126,4 +126,32 @@ describe("ProgressGaugeInspectorComponent", () => {
     expect(inputEl.getAttribute("data-bwignore")).toBe("true");
     expect(inputEl.getAttribute("data-form-type")).toBe("other");
   });
+
+  it("should render target lane spinner limited to totalLanes when bindingMode is lane", () => {
+    component.settings().bindingMode = "lane";
+    component.settings().targetIndex = 0;
+    fixture.componentRef.setInput("totalLanes", 6);
+    fixture.detectChanges();
+
+    const spinner = fixture.nativeElement.querySelector(
+      "#progress-gauge-target-spinner",
+    );
+    expect(spinner).toBeTruthy();
+    expect(spinner.getAttribute("min")).toBe("1");
+    expect(spinner.getAttribute("max")).toBe("6");
+    expect(component.targetValue).toBe(1);
+
+    component.onTargetValueChange(4);
+    expect(component.settings().targetIndex).toBe(3);
+    expect(component.targetValue).toBe(4);
+
+    // Clamping to max totalLanes
+    component.onTargetValueChange(12);
+    expect(component.settings().targetIndex).toBe(5); // Clamped to 6 -> index 5
+    expect(component.targetValue).toBe(6);
+
+    // Clamping on binding mode change
+    component.onBindingModeChange();
+    expect(component.settings().targetIndex).toBe(5);
+  });
 });

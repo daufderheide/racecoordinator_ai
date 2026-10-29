@@ -209,50 +209,38 @@ describe("LaneColumnInspectorComponent", () => {
     expect(changeSpy).toHaveBeenCalled();
   });
 
-  it("should format target lane options with 1-based lane numbers", () => {
-    mockTranslationService.translate.and.callFake(
-      (key: string, params?: any) => {
-        if (key === "UE_INSPECTOR_LANE_INDEX") {
-          return `Lane ${params?.index}`;
-        }
-        return key;
-      },
-    );
+  it("should configure target lane spinner with 1-based values and track lane limit", () => {
     mockSettings.bindingMode = "lane";
+    mockSettings.targetIndex = 0;
+    fixture.componentRef.setInput("totalLanes", 8);
     fixture.detectChanges();
 
-    const options = fixture.debugElement.queryAll(By.css("app-custom-option"));
-    const optionTexts = options.map((opt) =>
-      opt.nativeElement.textContent.trim(),
-    );
-    expect(optionTexts).toContain("Lane 1");
-    expect(optionTexts).toContain("Lane 2");
-    expect(optionTexts).toContain("Lane 8");
-    expect(optionTexts).not.toContain("Lane 0");
-    expect(optionTexts).not.toContain("Lane {index}");
+    const spinner = fixture.debugElement.query(By.css("#target-index-spinner"));
+    expect(spinner).toBeTruthy();
+    expect(spinner.nativeElement.getAttribute("min")).toBe("1");
+    expect(spinner.nativeElement.getAttribute("max")).toBe("8");
+    expect(component.targetValue).toBe(1);
+
+    component.onTargetValueChange(4);
+    expect(component.currentSettings.targetIndex).toBe(3);
+    expect(component.targetValue).toBe(4);
   });
 
-  it("should format target position options with 1-based position numbers", () => {
-    mockTranslationService.translate.and.callFake(
-      (key: string, params?: any) => {
-        if (key === "UE_INSPECTOR_POSITION_INDEX") {
-          return `Position ${params?.index}`;
-        }
-        return key;
-      },
-    );
+  it("should configure target position spinner with 1-based values and track lane limit", () => {
     mockSettings.bindingMode = "position";
+    mockSettings.targetIndex = 1;
+    fixture.componentRef.setInput("totalLanes", 6);
     fixture.detectChanges();
 
-    const options = fixture.debugElement.queryAll(By.css("app-custom-option"));
-    const optionTexts = options.map((opt) =>
-      opt.nativeElement.textContent.trim(),
-    );
-    expect(optionTexts).toContain("Position 1");
-    expect(optionTexts).toContain("Position 2");
-    expect(optionTexts).toContain("Position 8");
-    expect(optionTexts).not.toContain("Position 0");
-    expect(optionTexts).not.toContain("Position {index}");
+    const spinner = fixture.debugElement.query(By.css("#target-index-spinner"));
+    expect(spinner).toBeTruthy();
+    expect(spinner.nativeElement.getAttribute("min")).toBe("1");
+    expect(spinner.nativeElement.getAttribute("max")).toBe("6");
+    expect(component.targetValue).toBe(2);
+
+    component.onTargetValueChange(6);
+    expect(component.currentSettings.targetIndex).toBe(5);
+    expect(component.targetValue).toBe(6);
   });
 
   it("should support hostLane bindingMode with dynamic disabled target lane and hint", () => {
@@ -2119,6 +2107,171 @@ describe("LaneColumnInspectorComponent", () => {
       expect(
         titleTexts.some((t) => t.includes("UE_INSPECTOR_TARGET_DRIVER")),
       ).toBeTrue();
+    });
+
+    it("should render a spinner for target lane limited to track lanes", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "lane";
+      mockSettings.targetIndex = 0;
+      fixture.componentRef.setInput("totalLanes", 4);
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const spinner = fixture.debugElement.query(
+        By.css("#target-index-spinner"),
+      );
+      expect(spinner).toBeTruthy();
+      expect(spinner.nativeElement.getAttribute("type")).toBe("number");
+      expect(spinner.nativeElement.getAttribute("min")).toBe("1");
+      expect(spinner.nativeElement.getAttribute("max")).toBe("4");
+      expect(component.isHeatRelatedTarget).toBeTrue();
+      expect(component.maxTargetValue).toBe(4);
+      expect(component.targetValue).toBe(1);
+    });
+
+    it("should render a spinner for target heat position limited to track lanes", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "position";
+      mockSettings.targetIndex = 1;
+      fixture.componentRef.setInput("totalLanes", 6);
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const spinner = fixture.debugElement.query(
+        By.css("#target-index-spinner"),
+      );
+      expect(spinner).toBeTruthy();
+      expect(spinner.nativeElement.getAttribute("max")).toBe("6");
+      expect(component.isHeatRelatedTarget).toBeTrue();
+      expect(component.maxTargetValue).toBe(6);
+      expect(component.targetValue).toBe(2);
+    });
+
+    it("should render an unlimited spinner for overallPosition target", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "overallPosition";
+      mockSettings.targetIndex = 15;
+      fixture.componentRef.setInput("totalLanes", 4);
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const spinner = fixture.debugElement.query(
+        By.css("#target-index-spinner"),
+      );
+      expect(spinner).toBeTruthy();
+      expect(spinner.nativeElement.getAttribute("min")).toBe("1");
+      expect(spinner.nativeElement.getAttribute("max")).toBeNull();
+      expect(component.isHeatRelatedTarget).toBeFalse();
+      expect(component.maxTargetValue).toBeUndefined();
+      expect(component.targetValue).toBe(16);
+    });
+
+    it("should render an unlimited spinner for seed target", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "seed";
+      mockSettings.targetIndex = 31;
+      fixture.componentRef.setInput("totalLanes", 4);
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const spinner = fixture.debugElement.query(
+        By.css("#target-index-spinner"),
+      );
+      expect(spinner).toBeTruthy();
+      expect(spinner.nativeElement.getAttribute("min")).toBe("1");
+      expect(spinner.nativeElement.getAttribute("max")).toBeNull();
+      expect(component.isHeatRelatedTarget).toBeFalse();
+      expect(component.maxTargetValue).toBeUndefined();
+      expect(component.targetValue).toBe(32);
+    });
+
+    it("should render dynamic hostLane dropdown when bindingMode is hostLane", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "hostLane";
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const spinner = fixture.debugElement.query(
+        By.css("#target-index-spinner"),
+      );
+      expect(spinner).toBeNull();
+      const hint = fixture.debugElement.query(By.css(".inspector-field-hint"));
+      expect(hint).toBeTruthy();
+    });
+
+    it("should update targetIndex and emit change on target value change", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "lane";
+      mockSettings.targetIndex = 0;
+      fixture.componentRef.setInput("totalLanes", 4);
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      spyOn(component.change, "emit");
+
+      component.onTargetValueChange(3);
+      expect(component.currentSettings.targetIndex).toBe(2);
+      expect(component.targetValue).toBe(3);
+      expect(component.change.emit).toHaveBeenCalled();
+
+      // Clamping to track lanes on heat target
+      component.onTargetValueChange(10);
+      expect(component.currentSettings.targetIndex).toBe(3); // Clamped to 4 -> index 3
+      expect(component.targetValue).toBe(4);
+
+      // Clamping to minimum 1
+      component.onTargetValueChange(0);
+      expect(component.currentSettings.targetIndex).toBe(0);
+      expect(component.targetValue).toBe(1);
+
+      // Empty string / null ignored during active typing
+      component.onTargetValueChange("");
+      expect(component.currentSettings.targetIndex).toBe(0);
+    });
+
+    it("should clamp targetValue when switching from seed to heat-related target", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "seed";
+      mockSettings.targetIndex = 19; // Target Seed 20
+      fixture.componentRef.setInput("totalLanes", 4);
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      expect(component.targetValue).toBe(20);
+
+      // Switch binding mode to lane
+      component.currentSettings.bindingMode = "lane";
+      component.onBindingModeChange();
+      expect(component.currentSettings.targetIndex).toBe(3); // Clamped to 4 lanes -> index 3
+      expect(component.targetValue).toBe(4);
+    });
+
+    it("should reset invalid targetIndex on blur", () => {
+      delete mockSettings.gridId;
+      component.currentSettings.targetIndex = undefined as any;
+      component.onTargetBlur();
+      expect(component.currentSettings.targetIndex).toBe(0);
+    });
+
+    it("should include autofill protection attributes on target spinner input", () => {
+      delete mockSettings.gridId;
+      mockSettings.bindingMode = "lane";
+      component.setScope("widget");
+      fixture.detectChanges();
+
+      const spinner = fixture.debugElement.query(
+        By.css("#target-index-spinner"),
+      );
+      expect(spinner.nativeElement.getAttribute("autocomplete")).toBe("off");
+      expect(spinner.nativeElement.getAttribute("data-dashlane-ignore")).toBe(
+        "true",
+      );
+      expect(spinner.nativeElement.getAttribute("data-1p-ignore")).toBe("true");
+      expect(spinner.nativeElement.getAttribute("data-lpignore")).toBe("true");
+      expect(spinner.nativeElement.getAttribute("data-bwignore")).toBe("true");
+      expect(spinner.nativeElement.getAttribute("data-form-type")).toBe(
+        "other",
+      );
     });
   });
 

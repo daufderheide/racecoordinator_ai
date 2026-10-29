@@ -26,10 +26,63 @@ export class ProgressGaugeInspectorComponent {
   settings = input.required<any>();
   widget = input<any>();
   disableFontSizes = input<boolean>(false);
+  totalLanes = input<number>(4);
   change = output<void>();
   fontService = inject(FontService);
 
   readonly availableIndices = [0, 1, 2, 3, 4, 5, 6, 7];
+
+  get maxTargetValue(): number {
+    return Math.max(1, this.totalLanes() || 4);
+  }
+
+  get targetValue(): number {
+    const idx = Number(this.settings()?.targetIndex ?? 0);
+    return Math.max(1, isNaN(idx) ? 1 : idx + 1);
+  }
+
+  onTargetValueChange(value: any): void {
+    if (value === null || value === undefined || value === "") {
+      return;
+    }
+    let num = Math.round(Number(value));
+    if (isNaN(num) || num < 1) {
+      num = 1;
+    }
+    const max = this.maxTargetValue;
+    if (num > max) {
+      num = max;
+    }
+    if (this.settings()) {
+      this.settings().targetIndex = num - 1;
+      this.onSettingsChange();
+    }
+  }
+
+  onTargetBlur(): void {
+    const idx = this.settings()?.targetIndex;
+    if (
+      idx === undefined ||
+      idx === null ||
+      isNaN(Number(idx)) ||
+      Number(idx) < 0
+    ) {
+      if (this.settings()) {
+        this.settings().targetIndex = 0;
+        this.onSettingsChange();
+      }
+    }
+  }
+
+  onBindingModeChange(): void {
+    if (this.settings()?.bindingMode === "lane") {
+      const max = this.maxTargetValue;
+      if (this.targetValue > max) {
+        this.settings().targetIndex = max - 1;
+      }
+    }
+    this.onSettingsChange();
+  }
 
   onSettingsChange() {
     this.change.emit();
