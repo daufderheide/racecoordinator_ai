@@ -213,35 +213,53 @@ describe("DataSocketHelper", () => {
 
   describe("observable getters", () => {
     it("should expose all subjects as observables", () => {
-      expect(helper.getRaceTime()).toBe(helper.raceTimeSubject.asObservable());
-      expect(helper.getLaps()).toBe(helper.lapSubject.asObservable());
-      expect(helper.getStandingsUpdate()).toBe(
-        helper.standingsSubject.asObservable(),
-      );
-      expect(helper.getOverallStandingsUpdate()).toBe(
-        helper.overallStandingsSubject.asObservable(),
-      );
-      expect(helper.getGroupStandingsUpdate()).toBe(
-        helper.groupStandingsSubject.asObservable(),
-      );
-      expect(helper.getRaceUpdate()).toBe(
-        helper.raceUpdateSubject.asObservable(),
-      );
-      expect(helper.getInterfaceEvents()).toBe(
-        helper.interfaceEventSubject.asObservable(),
-      );
-      expect(helper.getRaceState()).toBe(
-        helper.raceStateSubject.asObservable(),
-      );
-      expect(helper.getRaceFlag()).toBe(helper.flagSubject.asObservable());
-      expect(helper.getCarData()).toBe(helper.carDataSubject.asObservable());
-      expect(helper.getSegments()).toBe(helper.segmentSubject.asObservable());
-      expect(helper.getRecordData()).toBe(
-        helper.recordDataSubject.asObservable(),
-      );
-      expect(helper.getHeats()).toBe(helper.heatSubject.asObservable());
-      expect(helper.getSystemState()).toBe(
-        helper.systemStateSubject.asObservable(),
+      const cases: [() => any, any, any][] = [
+        [() => helper.getRaceTime(), helper.raceTimeSubject, { time: 100 }],
+        [() => helper.getLaps(), helper.lapSubject, { lap: 1 }],
+        [
+          () => helper.getStandingsUpdate(),
+          helper.standingsSubject,
+          { standings: [] },
+        ],
+        [
+          () => helper.getOverallStandingsUpdate(),
+          helper.overallStandingsSubject,
+          { overall: [] },
+        ],
+        [
+          () => helper.getGroupStandingsUpdate(),
+          helper.groupStandingsSubject,
+          { group: [] },
+        ],
+        [() => helper.getRaceUpdate(), helper.raceUpdateSubject, { id: "r1" }],
+        [
+          () => helper.getInterfaceEvents(),
+          helper.interfaceEventSubject,
+          { event: "ping" },
+        ],
+        [() => helper.getRaceState(), helper.raceStateSubject, 1],
+        [() => helper.getRaceFlag(), helper.flagSubject, 2],
+        [() => helper.getCarData(), helper.carDataSubject, { car: 1 }],
+        [() => helper.getSegments(), helper.segmentSubject, { seg: 1 }],
+        [() => helper.getRecordData(), helper.recordDataSubject, { record: 1 }],
+        [() => helper.getHeats(), helper.heatSubject, { heat: 1 }],
+        [
+          () => helper.getSystemState(),
+          helper.systemStateSubject,
+          { state: 1 },
+        ],
+      ];
+
+      for (const [getter, subject, mockVal] of cases) {
+        let received: any;
+        const sub = getter().subscribe((val: any) => (received = val));
+        subject.next(mockVal);
+        expect(received).toEqual(mockVal);
+        sub.unsubscribe();
+      }
+
+      expect(helper.getSystemStateValue()).toBe(
+        helper.systemStateSubject.value,
       );
     });
   });

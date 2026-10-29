@@ -570,17 +570,69 @@ describe("LayoutEditorComponent", () => {
     });
 
     it("should reset and clear layout in edit mode", () => {
+      component.racedayComp = jasmine.createSpyObj("DefaultRacedayComponent", [
+        "syncLayoutFromEditor",
+      ]);
       component.onToggleEditMode();
+
+      // Reset layout cancel
+      component.onResetLayout();
+      expect(component.showResetConfirm).toBeTrue();
+      component.onCancelResetLayout();
+      expect(component.showResetConfirm).toBeFalse();
+
+      // Reset layout confirm
       component.onResetLayout();
       expect(component.showResetConfirm).toBeTrue();
       component.onConfirmResetLayout();
       expect(component.showResetConfirm).toBeFalse();
+      expect(component.racedayComp?.syncLayoutFromEditor).toHaveBeenCalled();
 
+      // Clear layout cancel
+      component.onClearLayout();
+      expect(component.showClearConfirm).toBeTrue();
+      component.onCancelClearLayout();
+      expect(component.showClearConfirm).toBeFalse();
+
+      // Clear layout confirm
       component.onClearLayout();
       expect(component.showClearConfirm).toBeTrue();
       component.onConfirmClearLayout();
       expect(component.showClearConfirm).toBeFalse();
       expect(component.getLayoutWidgets().length).toBe(0);
+      expect(component.getSelectedWidgetId()).toBe("");
+    });
+
+    it("should not open reset or clear confirm when not in edit mode", () => {
+      component.isEditMode = false;
+      component.onResetLayout();
+      expect(component.showResetConfirm).toBeFalse();
+
+      component.onClearLayout();
+      expect(component.showClearConfirm).toBeFalse();
+    });
+
+    it("should render reset and clear confirmation modals in template", () => {
+      component.showResetConfirm = true;
+      fixture.detectChanges();
+      let modals = fixture.debugElement.queryAll(
+        By.css("app-confirmation-modal"),
+      );
+      const resetModal = modals.find(
+        (m) => m.componentInstance.title() === "LE_CONFIRM_RESET_TITLE",
+      );
+      expect(resetModal).toBeTruthy();
+      expect(resetModal?.componentInstance.visible()).toBeTrue();
+
+      component.showResetConfirm = false;
+      component.showClearConfirm = true;
+      fixture.detectChanges();
+      modals = fixture.debugElement.queryAll(By.css("app-confirmation-modal"));
+      const clearModal = modals.find(
+        (m) => m.componentInstance.title() === "LE_CONFIRM_CLEAR_TITLE",
+      );
+      expect(clearModal).toBeTruthy();
+      expect(clearModal?.componentInstance.visible()).toBeTrue();
     });
 
     it("should select widget from dropdown or canvas", () => {

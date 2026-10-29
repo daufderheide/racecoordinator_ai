@@ -447,7 +447,9 @@ export function resetLayout(
   const data = applyResetLayout(ui, editingSettings);
   if (data?.defaultLayout) {
     saveLayoutConfig(ui, data.defaultLayout);
+    comp.syncRacedayPreview?.(data.defaultLayout);
   }
+  comp.selectedWidgetId = null;
   comp.activeGridSession = null;
   LaneGridAnimationHelper.reset();
   comp.selectedAnchor = null;
@@ -463,9 +465,11 @@ export function clearLayout(
 ): void {
   const layout = applyClearLayout(ui, editingSettings);
   saveLayoutConfig(ui, layout);
+  comp.selectedWidgetId = null;
   comp.activeGridSession = null;
   comp.selectedAnchor = null;
   comp.currentSelectedWidget = null;
+  comp.syncRacedayPreview?.(layout);
   comp.captureState?.();
   comp.cdr?.markForCheck();
 }
@@ -483,7 +487,10 @@ export async function onImportLayout(
     const rawJson = await readJsonFile(file);
     const success = applyImportLayout(rawJson, ui, editingSettings);
     if (success) {
+      comp.selectedWidgetId = null;
       comp.currentSelectedWidget = null;
+      const parsed = parseLayoutConfig(ui);
+      comp.syncRacedayPreview?.(parsed);
       comp.captureState?.();
       comp.cdr?.markForCheck();
     }

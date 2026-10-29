@@ -518,6 +518,30 @@
   >
   </app-confirmation-modal>
 
+  <!-- Reset Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showResetConfirm"
+    title="LE_CONFIRM_RESET_TITLE"
+    message="LE_CONFIRM_RESET_MSG"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmResetLayout()"
+    (cancel)="onCancelResetLayout()"
+  >
+  </app-confirmation-modal>
+
+  <!-- Clear Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showClearConfirm"
+    title="LE_CONFIRM_CLEAR_TITLE"
+    message="LE_CONFIRM_CLEAR_MSG"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmClearLayout()"
+    (cancel)="onCancelClearLayout()"
+  >
+  </app-confirmation-modal>
+
   <!-- Replicate Lane Dialog -->
   <app-replicate-lane-dialog
     [visible]="showReplicateModal"
