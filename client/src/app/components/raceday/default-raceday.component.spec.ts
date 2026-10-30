@@ -14130,6 +14130,100 @@ describe("DefaultRacedayComponent", () => {
       expect(grid.cellWidgets[1]?.customSettings?.["startRowOffset"]).toBe(9);
     });
 
+    it("should prevent scrolling on preceding grids and only scroll excess on the last grid for split offset grids", () => {
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      // Grid 1 (left): 10 rows, startRowOffset: 1
+      const leftGridWidgets = Array.from({ length: 10 }, (_, i) => ({
+        id: `left-row-${i}`,
+        widgetType: "lane-column",
+        x: 100,
+        y: 100 + i * 40,
+        width: 200,
+        height: 40,
+        customSettings: {
+          gridId: "split-grid-left",
+          gridLane: i,
+          targetIndex: i,
+          gridTotalLanes: 10,
+          gridDirection: "vertical",
+          gridType: "overall",
+          bindingMode: "overallPosition",
+          columnKey: "driverName",
+          startRowOffset: 1,
+          emptyRowsMode: "empty",
+        },
+      })) as any[];
+
+      // Grid 2 (right): 10 rows, startRowOffset: 11
+      const rightGridWidgets = Array.from({ length: 10 }, (_, i) => ({
+        id: `right-row-${i}`,
+        widgetType: "lane-column",
+        x: 400,
+        y: 100 + i * 40,
+        width: 200,
+        height: 40,
+        customSettings: {
+          gridId: "split-grid-right",
+          gridLane: i,
+          targetIndex: i,
+          gridTotalLanes: 10,
+          gridDirection: "vertical",
+          gridType: "overall",
+          bindingMode: "overallPosition",
+          columnKey: "driverName",
+          startRowOffset: 11,
+          emptyRowsMode: "empty",
+        },
+      })) as any[];
+
+      (component as any).layout = {
+        widgets: [...leftGridWidgets, ...rightGridWidgets],
+      };
+      (component as any).participants = Array.from({ length: 25 }, (_, i) => ({
+        objectId: `p-${i + 1}`,
+        rank: i + 1,
+      }));
+      (component as any).race = {
+        participants: (component as any).participants,
+      } as any;
+      component.invalidateGridCache();
+
+      const grids25 = component.getGrids();
+      expect(grids25.length).toBe(2);
+
+      const leftGrid25 = grids25.find((g) => g.gridId === "split-grid-left")!;
+      const rightGrid25 = grids25.find((g) => g.gridId === "split-grid-right")!;
+
+      // Left grid should NOT scroll and only contain the 10 base widgets
+      expect(leftGrid25.hasScroll).toBeFalse();
+      expect(leftGrid25.cellWidgets.length).toBe(10);
+      expect(leftGrid25.contentHeight).toBe(400);
+
+      // Right grid should scroll only the 5 drivers beyond index 20
+      expect(rightGrid25.hasScroll).toBeTrue();
+      expect(rightGrid25.cellWidgets.length).toBe(15);
+      expect(rightGrid25.contentHeight).toBe(600); // 15 * 40
+
+      // When 20 participants exist, neither grid should scroll
+      (component as any).participants = Array.from({ length: 20 }, (_, i) => ({
+        objectId: `p-${i + 1}`,
+        rank: i + 1,
+      }));
+      (component as any).race = {
+        participants: (component as any).participants,
+      } as any;
+      component.invalidateGridCache();
+
+      const grids20 = component.getGrids();
+      const leftGrid20 = grids20.find((g) => g.gridId === "split-grid-left")!;
+      const rightGrid20 = grids20.find((g) => g.gridId === "split-grid-right")!;
+
+      expect(leftGrid20.hasScroll).toBeFalse();
+      expect(leftGrid20.cellWidgets.length).toBe(10);
+      expect(rightGrid20.hasScroll).toBeFalse();
+      expect(rightGrid20.cellWidgets.length).toBe(10);
+    });
+
     it("should only use gridSession in isGridOverall and isGridSeed when session.gridId matches", () => {
       fixture.componentRef.setInput("gridSession", {
         gridId: "active-heat-grid",

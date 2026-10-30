@@ -5127,31 +5127,14 @@ export class DefaultRacedayComponent
     sessionLike: LaneGridSession,
     dataBounds: any,
     dataCount: number,
+    allWidgets?: AbsoluteWidgetNode[],
   ) {
-    const isVertical = sessionLike.direction === "vertical";
-    const availHeight =
-      sessionLike.headerPlacement === "top"
-        ? Math.max(0, dataBounds.height - (sessionLike.headerHeight || 36))
-        : dataBounds.height;
-    const pitch = isVertical
-      ? availHeight / sessionLike.totalLanes
-      : dataBounds.width / sessionLike.totalLanes;
-
-    const hasScroll = dataCount > sessionLike.totalLanes;
-    const isRemoveEmptyRows = sessionLike.emptyRowsMode === "remove";
-    const effectiveDisplayCount =
-      isRemoveEmptyRows && dataCount < sessionLike.totalLanes
-        ? dataCount
-        : Math.max(dataCount, sessionLike.totalLanes);
-
-    const contentWidth = isVertical
-      ? dataBounds.width
-      : Math.round(effectiveDisplayCount * pitch);
-    const contentHeight = isVertical
-      ? Math.round(effectiveDisplayCount * pitch)
-      : dataBounds.height;
-
-    return { isVertical, pitch, hasScroll, contentWidth, contentHeight };
+    return LaneGridReplicationHelper.computeGridDimensions(
+      sessionLike,
+      dataBounds,
+      dataCount,
+      allWidgets,
+    );
   }
 
   private buildGridDescriptor(
@@ -5198,7 +5181,12 @@ export class DefaultRacedayComponent
       );
 
     const { isVertical, hasScroll, contentWidth, contentHeight } =
-      this.computeGridDimensions(sessionLike, dataBounds, dataCount);
+      this.computeGridDimensions(
+        sessionLike,
+        dataBounds,
+        dataCount,
+        effectiveWidgets,
+      );
 
     const { headerWidgets, cellWidgets } = this.partitionGridWidgets(
       sessionLike,

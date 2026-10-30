@@ -14,12 +14,14 @@ export class LaneGridScrollHelper {
     finalTotalLanes: number;
     explicitGridType?: string;
     mode: string;
+    startRowOffset: number;
   } {
     let hasGridWidget = false;
     let gridTotalLanes: number | null = null;
     let explicitGridType: string | undefined;
     let mode = "lane";
     let hasOverallSignals = false;
+    let startRowOffset = 1;
 
     for (let i = 0; i < widgets.length; i++) {
       const s = widgets[i]?.customSettings;
@@ -30,6 +32,9 @@ export class LaneGridScrollHelper {
         }
         if (gridTotalLanes == null && s["gridTotalLanes"] != null) {
           gridTotalLanes = Number(s["gridTotalLanes"]);
+        }
+        if (startRowOffset === 1 && s["startRowOffset"] != null) {
+          startRowOffset = Math.max(1, Number(s["startRowOffset"]) || 1);
         }
         if (s["gridType"] === "overall") {
           explicitGridType = "overall";
@@ -50,7 +55,114 @@ export class LaneGridScrollHelper {
       finalTotalLanes: gridTotalLanes || 4,
       explicitGridType,
       mode,
+      startRowOffset,
     };
+  }
+
+  public static getGridDataSourceKey(
+    explicitGridType: string | undefined,
+    mode: string,
+  ): string {
+    const isOverallOrSeed =
+      explicitGridType === "overall" ||
+      mode === "overallPosition" ||
+      mode === "seed";
+    if (isOverallOrSeed) {
+      return mode === "seed" ? "overall:seed" : "overall:standings";
+    }
+    return `heat:${mode || "lane"}`;
+  }
+
+  public static hasHigherOffsetGrid(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+  ): boolean {
+    if (!allWidgets || allWidgets.length === 0 || !gridId) return false;
+
+    const currentMeta = this.extractGridMetadata(allWidgets, gridId);
+    if (!currentMeta.hasGridWidget) return false;
+
+    const currentKey = this.getGridDataSourceKey(
+      currentMeta.explicitGridType,
+      currentMeta.mode,
+    );
+
+    const otherGridIds = new Set<string>();
+    for (let i = 0; i < allWidgets.length; i++) {
+      const gId = allWidgets[i]?.customSettings?.["gridId"];
+      if (gId && gId !== gridId) {
+        otherGridIds.add(gId);
+      }
+    }
+
+    for (const otherId of otherGridIds) {
+      const otherMeta = this.extractGridMetadata(allWidgets, otherId);
+      if (!otherMeta.hasGridWidget) continue;
+      const otherKey = this.getGridDataSourceKey(
+        otherMeta.explicitGridType,
+        otherMeta.mode,
+      );
+      if (
+        otherKey === currentKey &&
+        otherMeta.startRowOffset > currentMeta.startRowOffset
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public static computeGridDimensions(
+    sessionLike: LaneGridSession,
+    dataBounds: any,
+    dataCount: number,
+    allWidgets?: AbsoluteWidgetNode[],
+  ): {
+    isVertical: boolean;
+    pitch: number;
+    hasScroll: boolean;
+    contentWidth: number;
+    contentHeight: number;
+  } {
+    const isVertical = sessionLike.direction === "vertical";
+    const availHeight =
+      sessionLike.headerPlacement === "top"
+        ? Math.max(0, dataBounds.height - (sessionLike.headerHeight || 36))
+        : dataBounds.height;
+    const pitch = isVertical
+      ? availHeight / sessionLike.totalLanes
+      : dataBounds.width / sessionLike.totalLanes;
+
+    const offset = Math.max(0, (sessionLike.startRowOffset || 1) - 1);
+    const hasHigher = allWidgets
+      ? this.hasHigherOffsetGrid(allWidgets, sessionLike.gridId)
+      : false;
+    const canScroll = !hasHigher;
+    const remainingDataCount = Math.max(0, dataCount - offset);
+    const hasScroll = canScroll && remainingDataCount > sessionLike.totalLanes;
+    const isRemoveEmptyRows = sessionLike.emptyRowsMode === "remove";
+
+    let effectiveDisplayCount: number;
+    if (isRemoveEmptyRows && remainingDataCount < sessionLike.totalLanes) {
+      effectiveDisplayCount = remainingDataCount;
+    } else if (canScroll) {
+      effectiveDisplayCount = Math.max(
+        remainingDataCount,
+        sessionLike.totalLanes,
+      );
+    } else {
+      effectiveDisplayCount = sessionLike.totalLanes;
+    }
+
+    const contentWidth = isVertical
+      ? dataBounds.width
+      : Math.round(effectiveDisplayCount * pitch);
+    const contentHeight = isVertical
+      ? Math.round(effectiveDisplayCount * pitch)
+      : dataBounds.height;
+
+    return { isVertical, pitch, hasScroll, contentWidth, contentHeight };
   }
 
   private static resolveDataCount(
@@ -271,8 +383,12 @@ export class LaneGridScrollHelper {
         ? dataBounds.width / gridTotalLanes
         : availHeight / gridTotalLanes;
 
+    const startRowOffset = sessionLike.startRowOffset || 1;
+    const offset = startRowOffset - 1;
+    const maxK = Math.max(gridTotalLanes, dataCount - offset);
+
     const result = [...gridWidgets];
-    for (let k = gridTotalLanes; k < dataCount; k++) {
+    for (let k = gridTotalLanes; k < maxK; k++) {
       for (const master of masterWidgets) {
         result.push(
           this.createScrollableCellWidget(
@@ -326,6 +442,10 @@ export class LaneGridScrollHelper {
 
     if (emptyRowsMode === "remove" && dataCount < offset + gridTotalLanes) {
       return this.filterOverallGridRows(gridWidgets, dataCount);
+    }
+
+    if (this.hasHigherOffsetGrid(allWidgets, gridId)) {
+      return gridWidgets;
     }
 
     if (dataCount <= offset + gridTotalLanes) {

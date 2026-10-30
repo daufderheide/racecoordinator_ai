@@ -1,5 +1,6 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
+import { LaneGridSession } from "./lane-grid-replication.helper";
 import { LaneGridScrollHelper } from "./lane-grid-scroll.helper";
 
 describe("LaneGridScrollHelper", () => {
@@ -608,6 +609,459 @@ describe("LaneGridScrollHelper", () => {
         2,
       );
       expect(result.length).toBe(2);
+    });
+
+    it("should prevent scrolling on earlier grids and only scroll excess drivers on the last grid for split offset grids", () => {
+      // Setup user's scenario:
+      // Grid 1 (left): rows 1-10 (startRowOffset: 1, gridTotalLanes: 10)
+      // Grid 2 (right): rows 11-20 (startRowOffset: 11, gridTotalLanes: 10)
+      const grid1Widgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `g1-row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "grid-left",
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            startRowOffset: 1,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+            emptyRowsMode: "empty",
+          },
+        }),
+      );
+
+      const grid2Widgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `g2-row-${i}`,
+          widgetType: "lane-column",
+          x: 400,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "grid-right",
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            startRowOffset: 11,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+            emptyRowsMode: "empty",
+          },
+        }),
+      );
+
+      const allWidgets = [...grid1Widgets, ...grid2Widgets];
+
+      // When 25 drivers exist:
+      // Left grid should NOT scroll at all and return only its 10 base widgets
+      const leftResult25 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        allWidgets,
+        "grid-left",
+        25,
+      );
+      expect(leftResult25.length).toBe(10);
+      expect(leftResult25.map((w) => w.customSettings?.["gridLane"])).toEqual([
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+      ]);
+
+      // Right grid should only scroll drivers beyond index 20 (exactly 5 virtual rows for 25 drivers)
+      const rightResult25 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        allWidgets,
+        "grid-right",
+        25,
+      );
+      expect(rightResult25.length).toBe(15);
+      const rightLanes = rightResult25.map(
+        (w) => w.customSettings?.["gridLane"],
+      );
+      expect(rightLanes).toEqual([
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      ]);
+      // Verify virtual widget targetIndex and startRowOffset
+      expect(rightResult25[10].customSettings?.["targetIndex"]).toBe(10);
+      expect(rightResult25[10].customSettings?.["startRowOffset"]).toBe(11);
+      expect(rightResult25[14].customSettings?.["targetIndex"]).toBe(14);
+      expect(rightResult25[14].customSettings?.["startRowOffset"]).toBe(11);
+
+      // When 20 drivers exist: right grid should have 0 virtual rows (no scrolling)
+      const rightResult20 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        allWidgets,
+        "grid-right",
+        20,
+      );
+      expect(rightResult20.length).toBe(10);
+    });
+
+    it("should only scroll the last grid when 3 grids share the same data source", () => {
+      // 3 grids of 10 lanes each (1-10, 11-20, 21-30)
+      const g1Widgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `g1-row-${i}`,
+          widgetType: "lane-column",
+          x: 100,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g1",
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            startRowOffset: 1,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        }),
+      );
+      const g2Widgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `g2-row-${i}`,
+          widgetType: "lane-column",
+          x: 350,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g2",
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            startRowOffset: 11,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        }),
+      );
+      const g3Widgets: AbsoluteWidgetNode[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          id: `g3-row-${i}`,
+          widgetType: "lane-column",
+          x: 600,
+          y: 100 + i * 40,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g3",
+            gridLane: i,
+            targetIndex: i,
+            gridTotalLanes: 10,
+            startRowOffset: 21,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        }),
+      );
+
+      const allWidgets = [...g1Widgets, ...g2Widgets, ...g3Widgets];
+
+      // 35 drivers: Grid 1 and 2 do NOT scroll, Grid 3 scrolls 5 drivers (drivers 31-35)
+      const resG1 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        allWidgets,
+        "g1",
+        35,
+      );
+      const resG2 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        allWidgets,
+        "g2",
+        35,
+      );
+      const resG3 = LaneGridScrollHelper.generateScrollableGridWidgets(
+        allWidgets,
+        "g3",
+        35,
+      );
+
+      expect(resG1.length).toBe(10);
+      expect(resG2.length).toBe(10);
+      expect(resG3.length).toBe(15);
+      expect(resG3[14].customSettings?.["targetIndex"]).toBe(14);
+      expect(resG3[14].customSettings?.["startRowOffset"]).toBe(21);
+    });
+  });
+
+  describe("getGridDataSourceKey", () => {
+    it("should return correct keys for overall and heat configurations", () => {
+      expect(
+        LaneGridScrollHelper.getGridDataSourceKey("overall", "overallPosition"),
+      ).toBe("overall:standings");
+      expect(LaneGridScrollHelper.getGridDataSourceKey("overall", "lane")).toBe(
+        "overall:standings",
+      );
+      expect(LaneGridScrollHelper.getGridDataSourceKey("overall", "seed")).toBe(
+        "overall:seed",
+      );
+      expect(
+        LaneGridScrollHelper.getGridDataSourceKey(undefined, "overallPosition"),
+      ).toBe("overall:standings");
+      expect(LaneGridScrollHelper.getGridDataSourceKey(undefined, "seed")).toBe(
+        "overall:seed",
+      );
+      expect(
+        LaneGridScrollHelper.getGridDataSourceKey("heat", "position"),
+      ).toBe("heat:position");
+      expect(LaneGridScrollHelper.getGridDataSourceKey("heat", "lane")).toBe(
+        "heat:lane",
+      );
+      expect(
+        LaneGridScrollHelper.getGridDataSourceKey(undefined, "position"),
+      ).toBe("heat:position");
+      expect(LaneGridScrollHelper.getGridDataSourceKey(undefined, "lane")).toBe(
+        "heat:lane",
+      );
+    });
+  });
+
+  describe("hasHigherOffsetGrid", () => {
+    it("should return false for empty or single grid layouts", () => {
+      expect(LaneGridScrollHelper.hasHigherOffsetGrid([], "g1")).toBeFalse();
+      const singleGrid: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 30,
+          zIndex: 5,
+          customSettings: { gridId: "g1", startRowOffset: 1 },
+        },
+      ];
+      expect(
+        LaneGridScrollHelper.hasHigherOffsetGrid(singleGrid, "g1"),
+      ).toBeFalse();
+    });
+
+    it("should return true when a higher offset grid with the same data source exists", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 30,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g1",
+            startRowOffset: 1,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 200,
+          y: 0,
+          width: 100,
+          height: 30,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g2",
+            startRowOffset: 11,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        },
+      ];
+
+      expect(
+        LaneGridScrollHelper.hasHigherOffsetGrid(widgets, "g1"),
+      ).toBeTrue();
+      expect(
+        LaneGridScrollHelper.hasHigherOffsetGrid(widgets, "g2"),
+      ).toBeFalse();
+    });
+
+    it("should return false when higher offset grid is a different data source", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 30,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g1",
+            startRowOffset: 1,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 200,
+          y: 0,
+          width: 100,
+          height: 30,
+          zIndex: 5,
+          customSettings: {
+            gridId: "g2",
+            startRowOffset: 11,
+            gridType: "heat",
+            bindingMode: "position",
+          },
+        },
+      ];
+
+      // g1 is overall:standings, g2 is heat:position
+      expect(
+        LaneGridScrollHelper.hasHigherOffsetGrid(widgets, "g1"),
+      ).toBeFalse();
+      expect(
+        LaneGridScrollHelper.hasHigherOffsetGrid(widgets, "g2"),
+      ).toBeFalse();
+    });
+  });
+
+  describe("computeGridDimensions", () => {
+    const dataBounds = { x: 0, y: 0, width: 400, height: 400 };
+
+    it("should allow scroll and compute height for single grid when dataCount exceeds lanes", () => {
+      const session: LaneGridSession = {
+        gridId: "single-grid",
+        bounds: dataBounds,
+        totalLanes: 10,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "overallPosition",
+        gridType: "overall",
+        startRowOffset: 1,
+      };
+
+      const result = LaneGridScrollHelper.computeGridDimensions(
+        session,
+        dataBounds,
+        25,
+      );
+
+      expect(result.isVertical).toBeTrue();
+      expect(result.pitch).toBe(40);
+      expect(result.hasScroll).toBeTrue();
+      expect(result.contentHeight).toBe(25 * 40);
+      expect(result.contentWidth).toBe(400);
+    });
+
+    it("should disable scroll on left grid and scroll only excess on right grid when widgets are provided", () => {
+      const allWidgets: AbsoluteWidgetNode[] = [
+        {
+          id: "w1",
+          widgetType: "lane-column",
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "grid-left",
+            startRowOffset: 1,
+            gridTotalLanes: 10,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        },
+        {
+          id: "w2",
+          widgetType: "lane-column",
+          x: 300,
+          y: 0,
+          width: 200,
+          height: 40,
+          zIndex: 5,
+          customSettings: {
+            gridId: "grid-right",
+            startRowOffset: 11,
+            gridTotalLanes: 10,
+            gridType: "overall",
+            bindingMode: "overallPosition",
+          },
+        },
+      ];
+
+      const leftSession: LaneGridSession = {
+        gridId: "grid-left",
+        bounds: dataBounds,
+        totalLanes: 10,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "overallPosition",
+        gridType: "overall",
+        startRowOffset: 1,
+      };
+
+      const rightSession: LaneGridSession = {
+        gridId: "grid-right",
+        bounds: dataBounds,
+        totalLanes: 10,
+        direction: "vertical",
+        sourceLaneIndex: 0,
+        bindingMode: "overallPosition",
+        gridType: "overall",
+        startRowOffset: 11,
+      };
+
+      // 25 drivers
+      const leftResult = LaneGridScrollHelper.computeGridDimensions(
+        leftSession,
+        dataBounds,
+        25,
+        allWidgets,
+      );
+      expect(leftResult.hasScroll).toBeFalse();
+      expect(leftResult.contentHeight).toBe(10 * 40);
+
+      const rightResult = LaneGridScrollHelper.computeGridDimensions(
+        rightSession,
+        dataBounds,
+        25,
+        allWidgets,
+      );
+      expect(rightResult.hasScroll).toBeTrue();
+      expect(rightResult.contentHeight).toBe(15 * 40); // 10 base + 5 scroll
+
+      // 20 drivers: right grid should not scroll
+      const rightResult20 = LaneGridScrollHelper.computeGridDimensions(
+        rightSession,
+        dataBounds,
+        20,
+        allWidgets,
+      );
+      expect(rightResult20.hasScroll).toBeFalse();
+      expect(rightResult20.contentHeight).toBe(10 * 40);
+
+      // 15 drivers with remove empty rows: right grid contentHeight is 5 rows
+      const rightRemoveSession: LaneGridSession = {
+        ...rightSession,
+        emptyRowsMode: "remove",
+      };
+      const rightResult15 = LaneGridScrollHelper.computeGridDimensions(
+        rightRemoveSession,
+        dataBounds,
+        15,
+        allWidgets,
+      );
+      expect(rightResult15.hasScroll).toBeFalse();
+      expect(rightResult15.contentHeight).toBe(5 * 40);
     });
   });
 });

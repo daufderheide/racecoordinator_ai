@@ -865,6 +865,27 @@ export class LaneGridReplicationHelper {
     );
   }
 
+  public static hasHigherOffsetGrid(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+  ): boolean {
+    return LaneGridScrollHelper.hasHigherOffsetGrid(allWidgets, gridId);
+  }
+
+  public static computeGridDimensions(
+    sessionLike: LaneGridSession,
+    dataBounds: any,
+    dataCount: number,
+    allWidgets?: AbsoluteWidgetNode[],
+  ) {
+    return LaneGridScrollHelper.computeGridDimensions(
+      sessionLike,
+      dataBounds,
+      dataCount,
+      allWidgets,
+    );
+  }
+
   public static updateGridHeaderHeight(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,

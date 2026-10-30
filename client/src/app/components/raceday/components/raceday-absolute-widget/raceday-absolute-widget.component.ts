@@ -189,7 +189,9 @@ export class RacedayAbsoluteWidgetComponent
         parent?.raceParticipants?.length ||
         0;
 
-    return lane >= dataCount;
+    const startRowOffset = Math.max(1, Number(s?.["startRowOffset"]) || 1);
+    const effectiveIndex = lane + (startRowOffset - 1);
+    return effectiveIndex >= dataCount;
   }
 
   get isGridMirrored(): boolean {
