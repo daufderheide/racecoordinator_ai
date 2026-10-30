@@ -503,6 +503,10 @@ describe("RacedayUpdateCoordinator", () => {
       coordinator.updateResult!.latestVersion = "1.2.0-beta.1";
       expect(coordinator.isDowngradeUpdate("1.1.0-alpha.20261001")).toBeFalse();
 
+      // 1.1.0-alpha daily to 1.1.0-alpha manual is NOT a downgrade
+      coordinator.updateResult!.latestVersion = "v1.1.0-alpha.60ab8fa";
+      expect(coordinator.isDowngradeUpdate("1.1.0-alpha.20261029")).toBeFalse();
+
       // Null or undefined current version
       expect(coordinator.isDowngradeUpdate(undefined)).toBeFalse();
     });
@@ -528,6 +532,17 @@ describe("RacedayUpdateCoordinator", () => {
     it("should proceed immediately with requestInstallUpdate when not a downgrade", () => {
       coordinator.updateResult!.latestVersion = "1.2.0-beta.1";
       const allowed = coordinator.requestInstallUpdate("1.1.0-alpha.20261001");
+
+      expect(allowed).toBeTrue();
+      expect(coordinator.showDowngradeModal).toBeFalse();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+    });
+
+    it("should proceed immediately with requestInstallUpdate when updating from daily alpha to manual alpha", () => {
+      coordinator.updateResult!.latestVersion = "v1.1.0-alpha.60ab8fa";
+      const allowed = coordinator.requestInstallUpdate("1.1.0-alpha.20261029");
 
       expect(allowed).toBeTrue();
       expect(coordinator.showDowngradeModal).toBeFalse();

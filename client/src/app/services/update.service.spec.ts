@@ -272,13 +272,19 @@ describe("UpdateService", () => {
       expect(isDowngrade("1.1.0-beta.1", "1.1.0-alpha.20261001")).toBeTrue();
       expect(isDowngrade("1.1.0-alpha.20261001", "1.1.0-beta.1")).toBeFalse();
 
-      // Manual commit hash alpha vs scheduled daily dated alpha
+      // Manual commit hash alpha vs scheduled daily dated alpha (neither is a downgrade)
       expect(
         isDowngrade("1.1.0-alpha.2dbe08c", "v1.1.0-alpha.20261023"),
       ).toBeFalse();
       expect(
         isDowngrade("1.1.0-alpha.20261023", "1.1.0-alpha.2dbe08c"),
-      ).toBeTrue();
+      ).toBeFalse();
+      expect(
+        isDowngrade("1.1.0-alpha.20261029", "v1.1.0-alpha.60ab8fa"),
+      ).toBeFalse();
+      expect(
+        isDowngrade("v1.1.0-alpha.60ab8fa", "1.1.0-alpha.20261029"),
+      ).toBeFalse();
       expect(
         isDowngrade("1.1.0-alpha.1234567", "v1.1.0-alpha.20261023"),
       ).toBeFalse();

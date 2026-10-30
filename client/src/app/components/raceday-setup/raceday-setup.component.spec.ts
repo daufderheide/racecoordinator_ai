@@ -902,6 +902,26 @@ describe("RacedaySetupComponent", () => {
       );
     });
 
+    it("should not show downgrade confirmation modal when updating from daily alpha to manual alpha", () => {
+      component.serverVersion = "1.1.0-alpha.20261029";
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.1.0-alpha.60ab8fa",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      mockUpdateService.installUpdate.and.returnValue(of(true));
+      component.installUpdate();
+
+      expect(component.showDowngradeModal).toBeFalse();
+      expect(mockUpdateService.installUpdate).toHaveBeenCalledWith(
+        "http://example.com/dl",
+      );
+    });
+
     it("should intercept onDownloadUpdate when version is a downgrade", () => {
       component.serverVersion = "1.1.0-alpha.20261001";
       component.updateResult = {

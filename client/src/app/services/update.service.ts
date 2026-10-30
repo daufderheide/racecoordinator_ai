@@ -109,15 +109,9 @@ export function comparePrereleases(pre1: string, pre2: string): number {
     const isDate1 = isDateIdentifier(p1);
     const isDate2 = isDateIdentifier(p2);
 
-    if (isHash1 && isDate2) {
-      // Manual commit build is superseded by scheduled daily build
-      return -1;
-    }
-    if (isDate1 && isHash2) {
-      return 1;
-    }
-    if (isHash1 && isHash2) {
-      // Two manual commit builds of same version cannot be ordered chronologically; neither is a downgrade
+    if ((isHash1 && isDate2) || (isDate1 && isHash2) || (isHash1 && isHash2)) {
+      // Manual commit builds and scheduled daily builds of the same version cannot
+      // be ordered chronologically from version strings alone; neither is a downgrade
       return 0;
     }
 
