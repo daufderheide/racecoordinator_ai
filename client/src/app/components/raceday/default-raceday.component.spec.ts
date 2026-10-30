@@ -14427,6 +14427,41 @@ describe("DefaultRacedayComponent", () => {
           gridContainer?.classList.contains("customizing-unselected"),
         ).toBeTrue();
       });
+
+      it("should compute effectiveLabelFontSize and labelShouldWrap when grid widgets have scaleMode 'auto'", () => {
+        const gridWidget = {
+          id: "scale-grid-w1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 600,
+          scaleMode: "auto",
+          customSettings: {
+            gridId: "scale-grid-1",
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "vertical",
+            gridBounds: { x: 100, y: 100, width: 400, height: 600 },
+            gridLabelPosition: "top",
+            gridLabelText: "Really Long Grid Title That Must Scale",
+            gridLabelFontSize: 36,
+          },
+        } as any;
+
+        (component as any).layout = {
+          widgets: [gridWidget],
+        };
+        (component as any).track = { lanes: [{}, {}] };
+        (component as any).race = { track: (component as any).track } as any;
+
+        const grids = component.getGrids();
+        expect(grids.length).toBe(1);
+        const grid = grids[0];
+        expect(grid.isScaleAuto).toBeTrue();
+        expect(grid.effectiveLabelFontSize).toBeDefined();
+        expect(grid.effectiveLabelFontSize).toBeGreaterThan(0);
+      });
     });
   });
 

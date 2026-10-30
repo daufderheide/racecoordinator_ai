@@ -14,7 +14,6 @@ import {
   extractDroppedColumnKey,
   fitColumnLastLaps,
   formatAdjustedLapValue,
-  getSharedCanvasContext,
   isOverallOrSeedDataSource,
   isParentRaceOver,
   resolveEffectiveHeaderFontSize,
@@ -211,72 +210,7 @@ export function formatLaneColumnInsetValue(
   return formatAdjustedLapValue(raw, hd, key);
 }
 
-export function fitLaneColumnHeaderText(
-  cardEl: HTMLElement,
-  settings: LaneColumnWidgetSettings,
-  widget: AbsoluteWidgetNode | null,
-  headerLabel: string,
-  explicitWidth?: number,
-  explicitHeight?: number,
-): void {
-  const headerEl = cardEl.querySelector(
-    ".lane-col-header",
-  ) as HTMLElement | null;
-  if (!headerEl) return;
-
-  const cardW =
-    explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
-  const cardH =
-    explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
-
-  const baseFontSize =
-    widget?.scaleMode === "auto"
-      ? resolveEffectiveHeaderFontSize(settings, widget, cardEl, explicitHeight)
-      : Number(
-          settings.headerFontSize || (widget?.fontSize ? widget.fontSize : 24),
-        );
-  const availWidth = Math.max(10, cardW - 8);
-  const availHeight = Math.max(10, cardH - 4);
-
-  const ctx = getSharedCanvasContext();
-  if (!ctx) return;
-
-  const rawFamily =
-    settings.headerFontFamily ||
-    (!explicitWidth && typeof window !== "undefined" && window.getComputedStyle
-      ? window.getComputedStyle(headerEl).fontFamily
-      : "") ||
-    "sans-serif";
-  const family =
-    rawFamily
-      .replace(/-apple-system|BlinkMacSystemFont/gi, "")
-      .replace(/,\s*,/g, ",")
-      .replace(/^[\s,]+|[\s,]+$/g, "")
-      .trim() || "sans-serif";
-  ctx.font = `700 ${baseFontSize}px ${family}`;
-  const textWidth = ctx.measureText(headerLabel || "").width || 1;
-
-  if (widget?.scaleMode !== undefined && widget?.scaleMode !== "auto") {
-    headerEl.style.fontSize = `${baseFontSize}px`;
-    cardEl.style.setProperty(
-      "--lane-col-header-font-size",
-      `${baseFontSize}px`,
-    );
-    return;
-  }
-
-  let scale = 1.0;
-  if (textWidth > availWidth) {
-    scale = Math.min(scale, availWidth / textWidth);
-  }
-  if (baseFontSize > availHeight) {
-    scale = Math.min(scale, availHeight / baseFontSize);
-  }
-
-  const fittedSize = Math.max(10, Math.floor(baseFontSize * scale));
-  headerEl.style.fontSize = `${fittedSize}px`;
-  cardEl.style.setProperty("--lane-col-header-font-size", `${fittedSize}px`);
-}
+export { fitLaneColumnHeaderText } from "./raceday-lane-column-header-fit.helper";
 
 export { resolveEffectiveHeaderFontSize };
 

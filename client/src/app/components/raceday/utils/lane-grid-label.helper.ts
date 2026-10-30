@@ -1,3 +1,4 @@
+import { getSharedCanvasContext } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.utils";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import {
@@ -326,5 +327,118 @@ export class LaneGridLabelHelper {
     });
 
     return labelGeometryChanged || isAnyUnderLabel;
+  }
+
+  public static computeEffectiveLabelFont(
+    text: string,
+    bounds: LaneGridBounds | null,
+    position?: GridLabelPosition,
+    baseFontSize?: number,
+    fontFamily?: string,
+    fontBold?: boolean,
+    isScaleAuto: boolean = true,
+  ): { fontSize: number; shouldWrap: boolean } {
+    const defaultRes = {
+      fontSize: baseFontSize && baseFontSize > 0 ? baseFontSize : 18,
+      shouldWrap: false,
+    };
+    const cleanText = text?.trim();
+    if (!bounds || bounds.width <= 0 || bounds.height <= 0 || !cleanText) {
+      return defaultRes;
+    }
+    const isVertical = position === "left" || position === "right";
+    const userOrDefSize =
+      baseFontSize && baseFontSize > 0
+        ? baseFontSize
+        : Math.round(isVertical ? bounds.width * 0.55 : bounds.height * 0.55);
+
+    if (isScaleAuto === false) {
+      return { fontSize: userOrDefSize, shouldWrap: false };
+    }
+
+    const availW = Math.max(
+      10,
+      isVertical ? bounds.height - 24 : bounds.width - 24,
+    );
+    const availH = Math.max(
+      10,
+      isVertical ? bounds.width - 8 : bounds.height - 8,
+    );
+
+    const ctx = getSharedCanvasContext();
+    if (!ctx) {
+      return { fontSize: userOrDefSize, shouldWrap: false };
+    }
+
+    const weight = fontBold ? "bold" : "normal";
+    const rawFamily = fontFamily?.trim() || "Inter, sans-serif";
+    const family =
+      rawFamily
+        .replace(/-apple-system|BlinkMacSystemFont/gi, "")
+        .replace(/,\s*,/g, ",")
+        .replace(/^[\s,]+|[\s,]+$/g, "")
+        .trim() || "sans-serif";
+
+    // 1. Test single line at userOrDefSize
+    ctx.font = `${weight} ${userOrDefSize}px ${family}`;
+    const initialWidth = ctx.measureText(cleanText).width || 1;
+
+    if (initialWidth <= availW && userOrDefSize <= availH) {
+      return { fontSize: userOrDefSize, shouldWrap: false };
+    }
+
+    // 2. Single-line scaled down size
+    const scale = Math.min(availW / initialWidth, availH / userOrDefSize);
+    const singleLineSize = Math.max(8, Math.floor(userOrDefSize * scale));
+
+    // 3. If horizontal and text contains spaces, test multi-line wrapping
+    let bestWrapSize = 0;
+    if (!isVertical && cleanText.includes(" ") && availH >= 20) {
+      const words = cleanText.split(/\s+/).filter(Boolean);
+      for (
+        let testSize = userOrDefSize;
+        testSize > singleLineSize;
+        testSize--
+      ) {
+        const lineHeight = Math.ceil(testSize * 1.15);
+        const maxLines = Math.floor(availH / lineHeight);
+        if (maxLines < 2) continue;
+
+        ctx.font = `${weight} ${testSize}px ${family}`;
+        let linesCount = 1;
+        let currentLineWidth = 0;
+        let possible = true;
+
+        for (const word of words) {
+          const wordW = ctx.measureText(word).width;
+          if (wordW > availW) {
+            possible = false;
+            break;
+          }
+          const spaceW = currentLineWidth > 0 ? ctx.measureText(" ").width : 0;
+          if (currentLineWidth + spaceW + wordW <= availW) {
+            currentLineWidth += spaceW + wordW;
+          } else {
+            linesCount++;
+            currentLineWidth = wordW;
+            if (linesCount > maxLines) {
+              possible = false;
+              break;
+            }
+          }
+        }
+
+        if (possible && linesCount <= maxLines) {
+          bestWrapSize = testSize;
+          break;
+        }
+      }
+    }
+
+    if (bestWrapSize > singleLineSize) {
+      return { fontSize: bestWrapSize, shouldWrap: true };
+    }
+
+    return { fontSize: singleLineSize, shouldWrap: false };
   }
 }

@@ -550,4 +550,90 @@ describe("LaneGridLabelHelper", () => {
       );
     });
   });
+
+  describe("computeEffectiveLabelFont", () => {
+    it("should return default font size and shouldWrap=false when text or bounds are missing", () => {
+      const res1 = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "",
+        { x: 0, y: 0, width: 200, height: 40 },
+        "top",
+        20,
+      );
+      expect(res1).toEqual({ fontSize: 20, shouldWrap: false });
+
+      const res2 = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "Title",
+        null,
+        "top",
+        24,
+      );
+      expect(res2).toEqual({ fontSize: 24, shouldWrap: false });
+    });
+
+    it("should return unscaled font size when isScaleAuto is false", () => {
+      const res = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "A Very Long Title That Exceeds Width",
+        { x: 0, y: 0, width: 100, height: 40 },
+        "top",
+        32,
+        "sans-serif",
+        true,
+        false,
+      );
+      expect(res.fontSize).toBe(32);
+      expect(res.shouldWrap).toBeFalse();
+    });
+
+    it("should preserve base font size if short text fits within bounds", () => {
+      const res = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "Short",
+        { x: 0, y: 0, width: 500, height: 50 },
+        "top",
+        24,
+        "sans-serif",
+      );
+      expect(res.fontSize).toBe(24);
+      expect(res.shouldWrap).toBeFalse();
+    });
+
+    it("should scale down font size when text overflows horizontal bounds", () => {
+      const res = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "ReallyLongSuperTitleWithoutSpaces",
+        { x: 0, y: 0, width: 150, height: 40 },
+        "top",
+        30,
+        "sans-serif",
+      );
+      expect(res.fontSize).toBeLessThan(30);
+      expect(res.fontSize).toBeGreaterThanOrEqual(8);
+      expect(res.shouldWrap).toBeFalse();
+    });
+
+    it("should choose wrapping when multi-line wrapping allows a larger font size than single-line scaling", () => {
+      // Container 120px wide by 60px tall with a 4-word title
+      const res = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "Overall Leader Board Standings",
+        { x: 0, y: 0, width: 120, height: 60 },
+        "top",
+        24,
+        "sans-serif",
+      );
+      // Single line in 120px would be very small (< 10px), but multi-line in 60px tall can fit at larger size
+      expect(res.shouldWrap).toBeTrue();
+      expect(res.fontSize).toBeGreaterThan(10);
+    });
+
+    it("should handle vertical label orientation (left/right) scaling correctly", () => {
+      const res = LaneGridLabelHelper.computeEffectiveLabelFont(
+        "Very Long Vertical Title Text",
+        { x: 0, y: 0, width: 40, height: 120 },
+        "left",
+        24,
+        "sans-serif",
+      );
+      expect(res.fontSize).toBeLessThanOrEqual(24);
+      // Vertical text does not wrap horizontally into columns
+      expect(res.shouldWrap).toBeFalse();
+    });
+  });
 });

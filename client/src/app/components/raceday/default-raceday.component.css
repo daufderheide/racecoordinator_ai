@@ -779,6 +779,19 @@ app-default-raceday {
   white-space: nowrap;
 }
 
+.raceday-grid-label.label-wrap,
+.raceday-grid-label.label-wrap .grid-label-text {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.15;
+}
+
+.raceday-grid-label.scale-auto .grid-label-text {
+  text-overflow: clip;
+  max-width: 100%;
+}
+
 .lane-blueprint-cell.grid-label-blueprint-cell {
   position: absolute;
   display: flex;
@@ -804,6 +817,19 @@ app-default-raceday {
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 4px 8px;
+}
+
+.lane-blueprint-cell.grid-label-blueprint-cell.label-wrap,
+.lane-blueprint-cell.grid-label-blueprint-cell.label-wrap .grid-label-blueprint-text {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.15;
+}
+
+.lane-blueprint-cell.grid-label-blueprint-cell.scale-auto .grid-label-blueprint-text {
+  text-overflow: clip;
+  max-width: 100%;
 }
 
 app-default-raceday.driver-station-host {

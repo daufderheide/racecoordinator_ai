@@ -101,4 +101,89 @@ describe("RacedayLabelComponent", () => {
     expect(el.style.borderWidth).toBe("2px");
     expect(el.style.borderRadius).toBe("8px");
   });
+
+  it("should preserve fixed fontSize and nowrap when scaleMode is fixed", () => {
+    const fixedWidget: AbsoluteWidgetNode = {
+      id: "label-fixed",
+      widgetType: "label",
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 40,
+      zIndex: 10,
+      scaleMode: "fixed",
+      customSettings: {
+        text: "Very Long Text That Exceeds Width",
+        fontSize: 24,
+      },
+    };
+
+    fixture.componentRef.setInput("widget", fixedWidget);
+    fixture.detectChanges();
+
+    expect(component.isScaleAuto()).toBeFalse();
+    expect(component.effectiveFont().fontSize).toBe(24);
+    expect(component.effectiveFont().shouldWrap).toBeFalse();
+
+    const el: HTMLElement = fixture.nativeElement.querySelector(
+      ".raceday-label-widget",
+    );
+    expect(el.classList.contains("scale-auto")).toBeFalse();
+    expect(el.classList.contains("label-wrap")).toBeFalse();
+    expect(el.style.fontSize).toBe("24px");
+  });
+
+  it("should auto-scale and wrap text when scaleMode is auto and space allows multi-line", () => {
+    const autoWidget: AbsoluteWidgetNode = {
+      id: "label-auto",
+      widgetType: "label",
+      x: 10,
+      y: 20,
+      width: 120,
+      height: 60,
+      zIndex: 10,
+      scaleMode: "auto",
+      customSettings: {
+        text: "Grid Title Multi Word",
+        fontSize: 24,
+      },
+    };
+
+    fixture.componentRef.setInput("widget", autoWidget);
+    fixture.detectChanges();
+
+    expect(component.isScaleAuto()).toBeTrue();
+    const eff = component.effectiveFont();
+    expect(eff.fontSize).toBeGreaterThan(0);
+
+    const el: HTMLElement = fixture.nativeElement.querySelector(
+      ".raceday-label-widget",
+    );
+    expect(el.classList.contains("scale-auto")).toBeTrue();
+  });
+
+  it("should scale down single line text when text has no spaces in auto scaleMode", () => {
+    const autoWidget: AbsoluteWidgetNode = {
+      id: "label-auto-single",
+      widgetType: "label",
+      x: 10,
+      y: 20,
+      width: 80,
+      height: 30,
+      zIndex: 10,
+      scaleMode: "auto",
+      customSettings: {
+        text: "SuperLongWordWithoutSpaces",
+        fontSize: 24,
+      },
+    };
+
+    fixture.componentRef.setInput("widget", autoWidget);
+    fixture.detectChanges();
+
+    expect(component.isScaleAuto()).toBeTrue();
+    const eff = component.effectiveFont();
+    expect(eff.shouldWrap).toBeFalse();
+    expect(eff.fontSize).toBeLessThan(24);
+  });
 });

@@ -203,6 +203,9 @@ export interface RacedayGridDescriptor {
   labelBorderRadius?: number;
   labelBounds: LaneGridBounds | null;
   dataBounds: LaneGridBounds;
+  isScaleAuto?: boolean;
+  effectiveLabelFontSize?: number;
+  labelShouldWrap?: boolean;
 }
 
 /**
@@ -5207,9 +5210,16 @@ export class DefaultRacedayComponent
       ...gridWidgets.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
     );
 
-    const labelSettings = this.extractGridLabelSettings(
-      labelWidget,
+    const {
+      labelSettings,
+      isScaleAuto,
+      effectiveLabelFontSize,
+      labelShouldWrap,
+    } = this.resolveGridLabelDescriptorData(
       sessionLike,
+      labelWidget,
+      gridWidgets,
+      labelBounds,
     );
 
     return {
@@ -5241,7 +5251,93 @@ export class DefaultRacedayComponent
       ...labelSettings,
       labelBounds,
       dataBounds,
+      isScaleAuto,
+      effectiveLabelFontSize,
+      labelShouldWrap,
     };
+  }
+
+  private resolveGridLabelDescriptorData(
+    sessionLike: any,
+    labelWidget: any,
+    gridWidgets: any[],
+    labelBounds: LaneGridBounds | null,
+  ) {
+    const labelSettings = this.extractGridLabelSettings(
+      labelWidget,
+      sessionLike,
+    );
+
+    const isScaleAuto =
+      gridWidgets.some((w: any) => w.scaleMode === "auto") ||
+      (sessionLike as any)?.scaleMode === "auto" ||
+      labelWidget?.scaleMode === "auto";
+
+    const labelText =
+      sessionLike.gridLabelText || labelSettings.labelText || "";
+
+    const labelFontResult = LaneGridLabelHelper.computeEffectiveLabelFont(
+      labelText,
+      labelBounds,
+      sessionLike.gridLabelPosition,
+      labelSettings.labelFontSize,
+      labelSettings.labelFontFamily,
+      labelSettings.labelFontBold,
+      isScaleAuto,
+    );
+
+    return {
+      labelSettings,
+      isScaleAuto,
+      effectiveLabelFontSize: labelFontResult.fontSize,
+      labelShouldWrap: labelFontResult.shouldWrap,
+    };
+  }
+
+  getBlueprintGridLabelFontSize(labelBounds: LaneGridBounds | null): number {
+    const session = this.gridSession();
+    if (!session) return 18;
+    const isAuto = this.isGridSessionScaleAuto();
+    const text = session.gridLabelText || "";
+    const result = LaneGridLabelHelper.computeEffectiveLabelFont(
+      text,
+      labelBounds,
+      session.gridLabelPosition,
+      session.gridLabelFontSize,
+      session.gridLabelFontFamily,
+      session.gridLabelFontBold,
+      isAuto,
+    );
+    return result.fontSize;
+  }
+
+  getBlueprintGridLabelWrap(labelBounds: LaneGridBounds | null): boolean {
+    const session = this.gridSession();
+    if (!session) return false;
+    const isAuto = this.isGridSessionScaleAuto();
+    const text = session.gridLabelText || "";
+    const result = LaneGridLabelHelper.computeEffectiveLabelFont(
+      text,
+      labelBounds,
+      session.gridLabelPosition,
+      session.gridLabelFontSize,
+      session.gridLabelFontFamily,
+      session.gridLabelFontBold,
+      isAuto,
+    );
+    return result.shouldWrap;
+  }
+
+  isGridSessionScaleAuto(): boolean {
+    const session = this.gridSession();
+    if (!session) return false;
+    return (
+      this.layout?.widgets?.some(
+        (w) =>
+          w.customSettings?.["gridId"] === session.gridId &&
+          w.scaleMode === "auto",
+      ) ?? false
+    );
   }
 
   getTableBodyHeight(): number {

@@ -467,6 +467,60 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(parsedSize).toBeGreaterThan(8);
     });
 
+    it("should wrap multi-line header text when wrapping allows a larger font size without overflowing", () => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "header-widget-card";
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 120,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 40,
+        configurable: true,
+      });
+      const headerEl = document.createElement("div");
+      headerEl.className = "lane-col-header header-widget-only";
+      cardEl.appendChild(headerEl);
+
+      fitLaneColumnHeaderText(
+        cardEl,
+        { isHeaderWidget: true } as any,
+        { scaleMode: "auto" } as any,
+        "Super Long Nickname Name Should Fit",
+      );
+      expect(headerEl.style.whiteSpace).toBe("normal");
+      expect(headerEl.style.wordBreak).toBe("break-word");
+      const parsedSize = parseInt(headerEl.style.fontSize, 10);
+      expect(parsedSize).toBeGreaterThanOrEqual(7);
+    });
+
+    it("should scale down on single line when text cannot wrap or is a single long word", () => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "header-widget-card";
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 80,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 36,
+        configurable: true,
+      });
+      const headerEl = document.createElement("div");
+      headerEl.className = "lane-col-header header-widget-only";
+      cardEl.appendChild(headerEl);
+
+      fitLaneColumnHeaderText(
+        cardEl,
+        { isHeaderWidget: true } as any,
+        { scaleMode: "auto" } as any,
+        "OVERALL_POSITION",
+      );
+      expect(headerEl.style.whiteSpace).toBe("nowrap");
+      const parsedSize = parseInt(headerEl.style.fontSize, 10);
+      expect(parsedSize).toBeLessThanOrEqual(14);
+      expect(parsedSize).toBeGreaterThanOrEqual(7);
+    });
+
     it("should gracefully do nothing if header element missing", () => {
       const cardEl = document.createElement("div");
       expect(() =>
@@ -488,6 +542,21 @@ describe("raceday-lane-column-interaction.helper", () => {
         cardEl,
       );
       expect(size).toBe(18);
+    });
+
+    it("should calculate auto size based on 55% of header height when isHeaderWidget is true", () => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "header-widget-card";
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 36,
+        configurable: true,
+      });
+      const size = resolveEffectiveHeaderFontSize(
+        { isHeaderWidget: true } as any,
+        { scaleMode: "auto" } as any,
+        cardEl,
+      );
+      expect(size).toBe(20); // 36 * 0.55 = 19.8 -> 20
     });
 
     it("should return custom size if defined", () => {

@@ -486,12 +486,20 @@ export function resolveEffectiveHeaderFontSize(
     const isGrid = Boolean(
       settings.gridId || widget?.customSettings?.["gridId"],
     );
+    const isHeaderWidget = Boolean(
+      settings.isHeaderWidget ||
+      (widget?.customSettings as any)?.["isHeaderWidget"] ||
+      cardEl?.classList?.contains("header-widget-card"),
+    );
     const cardH =
       cachedHeight && cachedHeight > 0
         ? cachedHeight
         : cardEl?.clientHeight ||
           (widget?.height && widget.height > 0 ? widget.height : 0);
     if (cardH > 0) {
+      if (isHeaderWidget) {
+        return Math.max(12, Math.min(24, Math.round(cardH * 0.55)));
+      }
       if (isGrid) {
         return Math.max(10, Math.min(24, Math.round(cardH * 0.18)));
       }

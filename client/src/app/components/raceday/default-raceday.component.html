@@ -125,12 +125,16 @@
                   grid.labelPosition === 'left' ||
                   grid.labelPosition === 'right'
                 "
+                [class.scale-auto]="grid.isScaleAuto"
+                [class.label-wrap]="grid.labelShouldWrap"
                 [style.left.px]="grid.labelBounds.x - grid.bounds.x"
                 [style.top.px]="grid.labelBounds.y - grid.bounds.y"
                 [style.width.px]="grid.labelBounds.width"
                 [style.height.px]="grid.labelBounds.height"
                 [style.font-family]="grid.labelFontFamily || null"
-                [style.font-size.px]="grid.labelFontSize || 18"
+                [style.font-size.px]="
+                  grid.effectiveLabelFontSize || grid.labelFontSize || 18
+                "
                 [style.color]="grid.labelTextColor || '#ffffff'"
                 [style.background-color]="
                   grid.labelBackgroundColor || 'rgba(15, 23, 42, 0.85)'
@@ -140,6 +144,7 @@
                 [style.justify-content]="
                   getGridLabelJustify(grid.labelPosition, grid.labelAlignment)
                 "
+                [style.text-align]="grid.labelAlignment || 'center'"
                 [style.border-color]="
                   grid.labelBorderColor || grid.labelTextColor || '#ffffff'
                 "
@@ -295,12 +300,16 @@
                   gridSession()!.gridLabelPosition === 'left' ||
                   gridSession()!.gridLabelPosition === 'right'
                 "
+                [class.scale-auto]="isGridSessionScaleAuto()"
+                [class.label-wrap]="getBlueprintGridLabelWrap(labelBounds)"
                 [style.left.px]="labelBounds.x - gridSession()!.bounds.x"
                 [style.top.px]="labelBounds.y - gridSession()!.bounds.y"
                 [style.width.px]="labelBounds.width"
                 [style.height.px]="labelBounds.height"
                 [style.font-family]="gridSession()!.gridLabelFontFamily || null"
-                [style.font-size.px]="gridSession()!.gridLabelFontSize || 18"
+                [style.font-size.px]="
+                  getBlueprintGridLabelFontSize(labelBounds)
+                "
                 [style.color]="gridSession()!.gridLabelTextColor || '#ffffff'"
                 [style.background-color]="
                   gridSession()!.gridLabelBackgroundColor ||
@@ -317,6 +326,9 @@
                     gridSession()!.gridLabelPosition,
                     gridSession()!.gridLabelAlignment
                   )
+                "
+                [style.text-align]="
+                  gridSession()!.gridLabelAlignment || 'center'
                 "
                 [style.border-radius.px]="
                   gridSession()!.gridLabelBorderRadius != null

@@ -26,6 +26,26 @@
   padding: 8px 4px;
 }
 
+.raceday-label-widget.label-wrap {
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.raceday-label-widget.scale-auto {
+  text-overflow: clip;
+}
+
+.raceday-label-widget.scale-auto .label-widget-text {
+  text-overflow: clip;
+  max-width: 100%;
+}
+
+.raceday-label-widget.label-wrap .label-widget-text {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
 .label-widget-text {
   overflow: hidden;
   text-overflow: ellipsis;
