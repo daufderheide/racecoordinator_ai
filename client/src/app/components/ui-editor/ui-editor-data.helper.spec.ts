@@ -453,6 +453,23 @@ describe("ui-editor-data.helper", () => {
       expect(shiftDownEvent.preventDefault).toHaveBeenCalled();
       expect(onNudge).toHaveBeenCalledWith(0, 10);
     });
+
+    it("should ignore shortcuts when modal backdrop or help overlay is present", () => {
+      const overlayEl = document.createElement("div");
+      overlayEl.className = "help-overlay-container";
+      document.body.appendChild(overlayEl);
+
+      const onUndo = jasmine.createSpy("onUndo");
+      const onRedo = jasmine.createSpy("onRedo");
+      const onDelete = jasmine.createSpy("onDelete");
+      const onNudge = jasmine.createSpy("onNudge");
+
+      const event = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+      handleUiEditorKeyboardShortcut(event, onUndo, onRedo, onDelete, onNudge);
+
+      expect(onNudge).not.toHaveBeenCalled();
+      document.body.removeChild(overlayEl);
+    });
   });
 
   describe("applyLoadedUiEditorData and handleUiEditorDataLoadError", () => {

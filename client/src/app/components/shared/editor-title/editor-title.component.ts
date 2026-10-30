@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   HostListener,
+  inject,
   input,
   output,
   ViewChild,
@@ -17,7 +18,7 @@ import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.compone
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { GuideStep } from "@app/services/help.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 
 @Component({
   standalone: true,
@@ -34,6 +35,7 @@ import { GuideStep } from "@app/services/help.service";
 })
 export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
+  private helpService = inject(HelpService, { optional: true });
   titleKey = input("");
   itemName = input<string | undefined>(undefined);
   trimmedItemName = computed(() => {
@@ -175,8 +177,12 @@ export class EditorTitleComponent implements AfterViewChecked {
 
   @HostListener("window:keydown", ["$event"])
   handleKeyDown(event: KeyboardEvent) {
-    // Suppress if any modal dialog is open
-    if (document.querySelector(".modal-backdrop")) {
+    // Suppress if any modal dialog or guided help is open
+    if (
+      document.querySelector(".modal-backdrop") ||
+      document.querySelector(".help-overlay-container") ||
+      this.helpService?.isVisible
+    ) {
       return;
     }
 

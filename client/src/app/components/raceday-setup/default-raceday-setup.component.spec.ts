@@ -1470,6 +1470,22 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.quit).not.toHaveBeenCalled();
       document.body.removeChild(inputEl);
     });
+
+    it("should ignore keydown shortcuts when help overlay container is present", () => {
+      component.isMac = true;
+      spyOn(component, "quit");
+      const overlayEl = document.createElement("div");
+      overlayEl.className = "help-overlay-container";
+      document.body.appendChild(overlayEl);
+
+      const event = new KeyboardEvent("keydown", {
+        key: "q",
+        metaKey: true,
+      });
+      component.onKeyDown(event);
+      expect(component.quit).not.toHaveBeenCalled();
+      document.body.removeChild(overlayEl);
+    });
   });
 
   it("should load demo configuration from settings on init", () => {

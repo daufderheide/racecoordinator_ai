@@ -718,6 +718,13 @@ export function handleUiEditorKeyboardShortcut(
   onDelete?: () => void,
   onNudge?: (dx: number, dy: number) => void,
 ): void {
+  if (
+    document.querySelector(".modal-backdrop") ||
+    document.querySelector(".help-overlay-container")
+  ) {
+    return;
+  }
+
   if ((event.metaKey || event.ctrlKey) && event.key === "z") {
     event.preventDefault();
     if (event.shiftKey) onRedo();

@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
+import { HelpService } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { CustomSelectComponent } from "../custom-select/custom-select.component";
@@ -335,6 +336,33 @@ describe("EditorTitleComponent", () => {
       expect(component.selectedIdChange.emit).not.toHaveBeenCalled();
 
       document.body.removeChild(inputEl);
+    });
+
+    it("should ignore keyboard navigation when help overlay container is present in DOM", () => {
+      const overlayEl = document.createElement("div");
+      overlayEl.className = "help-overlay-container";
+      document.body.appendChild(overlayEl);
+
+      spyOn(component.selectedIdChange, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", cancelable: true }),
+      );
+      expect(component.selectedIdChange.emit).not.toHaveBeenCalled();
+
+      document.body.removeChild(overlayEl);
+    });
+
+    it("should ignore keyboard navigation when helpService is visible", () => {
+      const helpService = TestBed.inject(HelpService);
+      helpService.startGuide([{ title: "Step", content: "Info" }]);
+
+      spyOn(component.selectedIdChange, "emit");
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", cancelable: true }),
+      );
+      expect(component.selectedIdChange.emit).not.toHaveBeenCalled();
+
+      helpService.endGuide();
     });
 
     it("should ignore keyboard navigation when metaKey or ctrlKey is held", () => {

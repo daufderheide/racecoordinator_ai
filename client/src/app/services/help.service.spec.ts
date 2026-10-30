@@ -88,4 +88,13 @@ describe("HelpService", () => {
       { guide_name: "Step 1" },
     );
   });
+
+  it("should update isVisible property when starting and ending guide", () => {
+    expect(service.isVisible).toBeFalse();
+    const steps: GuideStep[] = [{ title: "Step 1", content: "Content 1" }];
+    service.startGuide(steps);
+    expect(service.isVisible).toBeTrue();
+    service.endGuide();
+    expect(service.isVisible).toBeFalse();
+  });
 });

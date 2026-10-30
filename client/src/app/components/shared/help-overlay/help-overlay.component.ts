@@ -103,14 +103,29 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     switch (event.key) {
       case "Escape":
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation();
+        }
         this.end();
         break;
       case "ArrowRight":
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation();
+        }
         if (this.hasNext) {
           this.next();
         }
         break;
       case "ArrowLeft":
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === "function") {
+          event.stopImmediatePropagation();
+        }
         if (this.hasPrevious) {
           this.previous();
         }

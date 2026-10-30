@@ -19,6 +19,14 @@ export class RacedaySetupUiHelper {
   }
 
   static onKeyDown(host: any, event: KeyboardEvent): void {
+    if (
+      document.querySelector(".modal-backdrop") ||
+      document.querySelector(".help-overlay-container") ||
+      host.helpService?.isVisible
+    ) {
+      return;
+    }
+
     const inInputField =
       document.activeElement &&
       (document.activeElement.tagName === "INPUT" ||

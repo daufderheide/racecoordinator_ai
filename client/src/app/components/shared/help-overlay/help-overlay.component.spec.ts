@@ -299,6 +299,55 @@ describe("HelpOverlayComponent", () => {
     expect(helpServiceMock.previousStep).not.toHaveBeenCalled();
   }));
 
+  it("should prevent default and stop propagation when Arrow keys or Escape are pressed in guide", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    hasNextSubject.next(false);
+    tick();
+    fixture.detectChanges();
+
+    const rightEvent = new KeyboardEvent("keydown", {
+      key: "ArrowRight",
+      cancelable: true,
+    });
+    spyOn(rightEvent, "preventDefault");
+    spyOn(rightEvent, "stopPropagation");
+    spyOn(rightEvent, "stopImmediatePropagation");
+    window.dispatchEvent(rightEvent);
+    tick();
+
+    expect(rightEvent.preventDefault).toHaveBeenCalled();
+    expect(rightEvent.stopPropagation).toHaveBeenCalled();
+    expect(rightEvent.stopImmediatePropagation).toHaveBeenCalled();
+
+    const leftEvent = new KeyboardEvent("keydown", {
+      key: "ArrowLeft",
+      cancelable: true,
+    });
+    spyOn(leftEvent, "preventDefault");
+    spyOn(leftEvent, "stopPropagation");
+    spyOn(leftEvent, "stopImmediatePropagation");
+    window.dispatchEvent(leftEvent);
+    tick();
+
+    expect(leftEvent.preventDefault).toHaveBeenCalled();
+    expect(leftEvent.stopPropagation).toHaveBeenCalled();
+    expect(leftEvent.stopImmediatePropagation).toHaveBeenCalled();
+
+    const escEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      cancelable: true,
+    });
+    spyOn(escEvent, "preventDefault");
+    spyOn(escEvent, "stopPropagation");
+    spyOn(escEvent, "stopImmediatePropagation");
+    window.dispatchEvent(escEvent);
+    tick();
+
+    expect(escEvent.preventDefault).toHaveBeenCalled();
+    expect(escEvent.stopPropagation).toHaveBeenCalled();
+    expect(escEvent.stopImmediatePropagation).toHaveBeenCalled();
+  }));
+
   it("should intercept clicks on help-link elements and call helpLinkService with parsed article and section", fakeAsync(() => {
     isVisibleSubject.next(true);
     tick();

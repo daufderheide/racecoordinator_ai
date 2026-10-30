@@ -22,6 +22,10 @@ export class HelpService {
   private _isVisible = new BehaviorSubject<boolean>(false);
   isVisible$ = this._isVisible.asObservable();
 
+  get isVisible(): boolean {
+    return this._isVisible.value;
+  }
+
   private _currentStep = new BehaviorSubject<GuideStep | null>(null);
   currentStep$ = this._currentStep.asObservable();
 
