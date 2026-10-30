@@ -718,5 +718,16 @@ describe("ToolbarComponent", () => {
       expect(clearIndex).toBe(resetIndex + 1);
       expect(deleteIndex).toBe(clearIndex + 1);
     });
+
+    it("should end guided help on ngOnDestroy if help is visible", () => {
+      helpServiceSpy.endGuide = jasmine.createSpy("endGuide");
+      Object.defineProperty(helpServiceSpy, "isVisible", {
+        value: true,
+        configurable: true,
+      });
+
+      component.ngOnDestroy();
+      expect(helpServiceSpy.endGuide).toHaveBeenCalled();
+    });
   });
 });

@@ -1,9 +1,16 @@
-import { Component, input, output, ViewChild } from "@angular/core";
+import {
+  Component,
+  inject,
+  input,
+  OnDestroy,
+  output,
+  ViewChild,
+} from "@angular/core";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { GuideStep } from "@app/services/help.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 
 @Component({
   standalone: true,
@@ -12,8 +19,9 @@ import { GuideStep } from "@app/services/help.service";
   styleUrls: ["./manager-header.component.css"],
   imports: [ToolbarComponent, TranslatePipe, BrowserNavigationComponent],
 })
-export class ManagerHeaderComponent {
+export class ManagerHeaderComponent implements OnDestroy {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
+  private helpService = inject(HelpService, { optional: true });
   title = input("");
   showActions = input(true);
   showAdd = input(true);
@@ -75,5 +83,11 @@ export class ManagerHeaderComponent {
 
   onReset() {
     this.reset.emit();
+  }
+
+  ngOnDestroy() {
+    if (this.helpService?.isVisible) {
+      this.helpService.endGuide();
+    }
   }
 }

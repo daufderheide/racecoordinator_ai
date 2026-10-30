@@ -582,5 +582,17 @@ describe("EditorTitleComponent", () => {
       component.onClear();
       expect(component.clear.emit).toHaveBeenCalled();
     });
+
+    it("should end guided help on ngOnDestroy if help is visible", () => {
+      const helpService = TestBed.inject(HelpService);
+      spyOn(helpService, "endGuide");
+      Object.defineProperty(helpService, "isVisible", {
+        value: true,
+        configurable: true,
+      });
+
+      component.ngOnDestroy();
+      expect(helpService.endGuide).toHaveBeenCalled();
+    });
   });
 });

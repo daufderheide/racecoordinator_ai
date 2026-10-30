@@ -6,6 +6,7 @@ import {
   HostListener,
   inject,
   input,
+  OnDestroy,
   output,
   ViewChild,
 } from "@angular/core";
@@ -33,7 +34,7 @@ import { GuideStep, HelpService } from "@app/services/help.service";
     CustomOptionComponent,
   ],
 })
-export class EditorTitleComponent implements AfterViewChecked {
+export class EditorTitleComponent implements AfterViewChecked, OnDestroy {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   private helpService = inject(HelpService, { optional: true });
   titleKey = input("");
@@ -141,6 +142,12 @@ export class EditorTitleComponent implements AfterViewChecked {
   });
 
   constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnDestroy() {
+    if (this.helpService?.isVisible) {
+      this.helpService.endGuide();
+    }
+  }
 
   ngAfterViewChecked() {
     // This can help with NG0100 when translations load late

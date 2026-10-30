@@ -3,6 +3,7 @@ import {
   Component,
   inject,
   input,
+  OnDestroy,
   OnInit,
   output,
 } from "@angular/core";
@@ -26,7 +27,7 @@ import { TranslationService } from "@app/services/translation.service";
   styleUrls: ["./toolbar.component.css"],
   imports: [AcknowledgementModalComponent, TranslatePipe, FormsModule],
 })
-export class ToolbarComponent implements OnInit {
+export class ToolbarComponent implements OnInit, OnDestroy {
   showAdd = input(false);
   showEdit = input(false);
   isEditMode = input(false);
@@ -138,6 +139,12 @@ export class ToolbarComponent implements OnInit {
         }, delay);
       }
     });
+  }
+
+  ngOnDestroy() {
+    if (this.helpService?.isVisible) {
+      this.helpService.endGuide();
+    }
   }
 
   add = output<void>();

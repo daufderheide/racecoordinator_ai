@@ -1,5 +1,7 @@
-import { Injectable } from "@angular/core";
-import { BehaviorSubject } from "rxjs";
+import { inject, Injectable, OnDestroy } from "@angular/core";
+import { NavigationEnd, NavigationStart, Router } from "@angular/router";
+import { BehaviorSubject, Subscription } from "rxjs";
+import { filter } from "rxjs/operators";
 import { AnalyticsService } from "@app/analytics.service";
 
 export interface GuideStep {
@@ -15,9 +17,10 @@ export interface GuideStep {
 @Injectable({
   providedIn: "root",
 })
-export class HelpService {
+export class HelpService implements OnDestroy {
   steps: GuideStep[] = [];
   currentStepIndex = 0;
+  private guideStartUrl: string | null = null;
 
   private _isVisible = new BehaviorSubject<boolean>(false);
   isVisible$ = this._isVisible.asObservable();
@@ -35,12 +38,63 @@ export class HelpService {
   private _hasPrevious = new BehaviorSubject<boolean>(false);
   hasPrevious$ = this._hasPrevious.asObservable();
 
-  constructor(private analyticsService: AnalyticsService) {}
+  private router = inject(Router, { optional: true });
+  private routerSubscription?: Subscription;
+  private readonly boundPopStateListener: () => void;
+
+  constructor(private analyticsService: AnalyticsService) {
+    this.boundPopStateListener = () => {
+      if (this.isVisible && this.guideStartUrl) {
+        const currentBaseUrl = this.getCurrentBaseUrl();
+        if (currentBaseUrl !== this.guideStartUrl) {
+          this.endGuide();
+        }
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("popstate", this.boundPopStateListener);
+    }
+
+    if (this.router?.events) {
+      this.routerSubscription = this.router.events
+        .pipe(
+          filter(
+            (event) =>
+              event instanceof NavigationStart ||
+              event instanceof NavigationEnd,
+          ),
+        )
+        .subscribe((event: any) => {
+          if (!this.isVisible || !this.guideStartUrl) {
+            return;
+          }
+          const targetUrl =
+            event instanceof NavigationStart
+              ? event.url
+              : event.urlAfterRedirects || event.url;
+          const targetBaseUrl = this.getBaseUrl(targetUrl);
+          if (targetBaseUrl !== this.guideStartUrl) {
+            this.endGuide();
+          }
+        });
+    }
+  }
+
+  ngOnDestroy() {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("popstate", this.boundPopStateListener);
+    }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
 
   startGuide(steps: GuideStep[]) {
     if (!steps || steps.length === 0) return;
     this.steps = steps;
     this.currentStepIndex = 0;
+    this.guideStartUrl = this.getCurrentBaseUrl();
 
     const guideName = steps[0].title || "Unknown Guide";
     this.analyticsService.trackClick("help_started", { guide_name: guideName });
@@ -90,6 +144,22 @@ export class HelpService {
     this._currentStep.next(null);
     this.steps = [];
     this.currentStepIndex = 0;
+    this.guideStartUrl = null;
+  }
+
+  private getCurrentBaseUrl(): string {
+    const rawUrl =
+      this.router?.url ||
+      (typeof window !== "undefined"
+        ? (window.location?.pathname || "") + (window.location?.search || "")
+        : "");
+    return this.getBaseUrl(rawUrl);
+  }
+
+  private getBaseUrl(url?: string): string {
+    if (!url) return "";
+    const path = url.split("?")[0].split("#")[0];
+    return path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
   }
 
   private updateState() {

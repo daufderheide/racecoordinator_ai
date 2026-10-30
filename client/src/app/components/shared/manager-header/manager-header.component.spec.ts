@@ -102,4 +102,15 @@ describe("ManagerHeaderComponent", () => {
     const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
     expect(navEl).toBeTruthy();
   });
+
+  it("should end guided help on ngOnDestroy if help is visible", () => {
+    helpServiceSpy.endGuide = jasmine.createSpy("endGuide");
+    Object.defineProperty(helpServiceSpy, "isVisible", {
+      value: true,
+      configurable: true,
+    });
+
+    component.ngOnDestroy();
+    expect(helpServiceSpy.endGuide).toHaveBeenCalled();
+  });
 });
