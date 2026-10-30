@@ -136,6 +136,7 @@ describe("LaneGridStyleHelper", () => {
         gridMasterId: "col-lastlaps-lane0",
         lastLapsCount: 8,
         lastLapsShowBorder: true,
+        lastLapsBorderMargin: 4,
       },
       multiColumnWidgets,
       "col-lastlaps-lane0",
@@ -143,10 +144,13 @@ describe("LaneGridStyleHelper", () => {
 
     expect(updated[0].customSettings?.["lastLapsCount"]).toBe(8);
     expect(updated[0].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[0].customSettings?.["lastLapsBorderMargin"]).toBe(4);
     expect(updated[1].customSettings?.["lastLapsCount"]).toBe(8);
     expect(updated[1].customSettings?.["lastLapsShowBorder"]).toBe(true);
+    expect(updated[1].customSettings?.["lastLapsBorderMargin"]).toBe(4);
     expect(updated[2].customSettings?.["lastLapsCount"]).toBeUndefined();
     expect(updated[2].customSettings?.["lastLapsShowBorder"]).toBeUndefined();
+    expect(updated[2].customSettings?.["lastLapsBorderMargin"]).toBeUndefined();
   });
 
   it("should not overwrite lastLaps properties on lastLaps column when non-lastLaps column syncs time properties", () => {

@@ -672,6 +672,7 @@ describe("LaneColumnInspectorComponent", () => {
       mockSettings.lastLapsBorderColor = "#38bdf8";
       mockSettings.lastLapsBorderWidth = 3;
       mockSettings.lastLapsBorderRadius = 8;
+      mockSettings.lastLapsBorderMargin = 3;
       mockSettings.lastLapsBestLapHighlight = true;
       mockSettings.lastLapsBestLapShowBorder = true;
       mockSettings.lastLapsBestLapTextColor = "#10b981";
@@ -698,6 +699,9 @@ describe("LaneColumnInspectorComponent", () => {
         labelTexts.some((t) =>
           t.includes("UE_INSPECTOR_LAST_LAPS_BORDER_MODE"),
         ),
+      ).toBeTrue();
+      expect(
+        labelTexts.some((t) => t.includes("UE_INSPECTOR_BORDER_MARGIN")),
       ).toBeTrue();
       expect(
         labelTexts.some((t) =>

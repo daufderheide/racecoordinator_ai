@@ -169,6 +169,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       lastLapsBorderColor: "",
       lastLapsBorderWidth: 1,
       lastLapsBorderRadius: 8,
+      lastLapsBorderMargin: 0,
       lastLapsBestLapHighlight: true,
       lastLapsBestLapTextColor: "",
       lastLapsBestLapBackgroundColor: "",

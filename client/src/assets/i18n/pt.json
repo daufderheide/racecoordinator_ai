@@ -2773,6 +2773,7 @@
   "UE_INSPECTOR_BINDING_OVERALL_POSITION": "Posição na classificação geral",
   "UE_INSPECTOR_BINDING_SEED": "Classificação prévia do piloto",
   "UE_INSPECTOR_BORDER_COLOR": "Cor da Borda",
+  "UE_INSPECTOR_BORDER_MARGIN": "Margem da Borda",
   "UE_INSPECTOR_BORDER_RADIUS": "Raio dos Cantos",
   "UE_INSPECTOR_BORDER_WIDTH": "Largura da Borda",
   "UE_INSPECTOR_COLUMN": "Coluna / Dado",

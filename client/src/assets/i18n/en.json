@@ -2773,6 +2773,7 @@
   "UE_INSPECTOR_BINDING_OVERALL_POSITION": "Overall Standings Position",
   "UE_INSPECTOR_BINDING_SEED": "Driver Seed",
   "UE_INSPECTOR_BORDER_COLOR": "Border Color",
+  "UE_INSPECTOR_BORDER_MARGIN": "Border Margin",
   "UE_INSPECTOR_BORDER_RADIUS": "Corner Radius",
   "UE_INSPECTOR_BORDER_WIDTH": "Border Width",
   "UE_INSPECTOR_COLUMN": "Column / Data Point",

@@ -777,6 +777,12 @@ export class LaneColumnInsetHelper {
           ? Math.min(32, Math.max(0, Math.round(parsed)))
           : (currentSettings["borderRadius"] ?? 8);
     }
+    if (currentSettings["lastLapsBorderMargin"] !== undefined) {
+      const parsed = Number(currentSettings["lastLapsBorderMargin"]);
+      currentSettings["lastLapsBorderMargin"] = !isNaN(parsed)
+        ? Math.min(100, Math.max(-50, Math.round(parsed)))
+        : 0;
+    }
     if (currentSettings["lastLapsBestLapBorderWidth"] !== undefined) {
       const parsed = Number(currentSettings["lastLapsBestLapBorderWidth"]);
       currentSettings["lastLapsBestLapBorderWidth"] =

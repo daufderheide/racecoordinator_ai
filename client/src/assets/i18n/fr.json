@@ -2773,6 +2773,7 @@
   "UE_INSPECTOR_BINDING_OVERALL_POSITION": "Position au classement général",
   "UE_INSPECTOR_BINDING_SEED": "Tête de série du pilote",
   "UE_INSPECTOR_BORDER_COLOR": "Couleur de la Bordure",
+  "UE_INSPECTOR_BORDER_MARGIN": "Marge de Bordure",
   "UE_INSPECTOR_BORDER_RADIUS": "Rayon des Coins",
   "UE_INSPECTOR_BORDER_WIDTH": "Épaisseur de la Bordure",
   "UE_INSPECTOR_COLUMN": "Colonne / Donnée",

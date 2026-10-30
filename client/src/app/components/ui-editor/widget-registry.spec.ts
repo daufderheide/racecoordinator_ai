@@ -128,6 +128,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["lastLapsShowBorder"]).toBe(false);
     expect(laneColumnSettings["lastLapsBorderMode"]).toBe("separator");
     expect(laneColumnSettings["lastLapsBorderStyle"]).toBe("solid");
+    expect(laneColumnSettings["lastLapsBorderMargin"]).toBe(0);
     expect(laneColumnSettings["lastLapsBestLapHighlight"]).toBe(true);
     expect(laneColumnSettings["lastLapsBestLapFontWeight"]).toBe("bold");
     expect(laneColumnSettings["lastLapsBestLapUnderline"]).toBe(false);

@@ -469,6 +469,30 @@ describe("LaneColumnInsetHelper", () => {
       expect(s.timeSubsecondDecimals).toBe(3);
       expect(s.lastLapsCount).toBe(12);
 
+      const marginSettings = {
+        lastLapsBorderMargin: 12.6,
+      };
+      LaneColumnInsetHelper.sanitizeSettings(marginSettings, true);
+      expect(marginSettings.lastLapsBorderMargin).toBe(13);
+
+      const negativeMarginSettings = {
+        lastLapsBorderMargin: -15,
+      };
+      LaneColumnInsetHelper.sanitizeSettings(negativeMarginSettings, true);
+      expect(negativeMarginSettings.lastLapsBorderMargin).toBe(-15);
+
+      const outOfBoundsMarginSettings = {
+        lastLapsBorderMargin: -999,
+      };
+      LaneColumnInsetHelper.sanitizeSettings(outOfBoundsMarginSettings, true);
+      expect(outOfBoundsMarginSettings.lastLapsBorderMargin).toBe(-50);
+
+      const invalidMarginSettings = {
+        lastLapsBorderMargin: NaN,
+      };
+      LaneColumnInsetHelper.sanitizeSettings(invalidMarginSettings, true);
+      expect(invalidMarginSettings.lastLapsBorderMargin).toBe(0);
+
       const invalidSettings = {
         lastLapsCount: -5,
       };

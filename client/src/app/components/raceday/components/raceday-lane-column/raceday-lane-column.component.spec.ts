@@ -833,6 +833,29 @@ describe("RacedayLaneColumnComponent", () => {
     expect(style["border-bottom"]).toBe("2px dashed #ffffff");
   });
 
+  it("should apply border margin in getLastLapItemStyle", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "lastLaps",
+        gridDirection: "horizontal",
+        showBorder: true,
+        lastLapsShowBorder: true,
+        lastLapsBorderMargin: 4,
+      }),
+    );
+    fixture.detectChanges();
+
+    const style = component.getLastLapItemStyle(
+      { lapNumber: 1, lapTime: "9.123", isBest: false, segments: [] },
+      false,
+    );
+    expect(style["margin-left"]).toBe("4px");
+    expect(style["margin-right"]).toBe("4px");
+    expect(style["width"]).toBe("calc(100% - 8px)");
+  });
+
   it("should apply box-mode class when lastLapsBorderMode is box", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

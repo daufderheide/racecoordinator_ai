@@ -218,6 +218,11 @@ function applyLapBorderStyles(
     !isNaN(Number(settings.lastLapsBorderRadius))
       ? Number(settings.lastLapsBorderRadius)
       : colRadius;
+  const margin =
+    settings.lastLapsBorderMargin != null &&
+    !isNaN(Number(settings.lastLapsBorderMargin))
+      ? Number(settings.lastLapsBorderMargin)
+      : 0;
 
   if (mode === "box") {
     if (!isBest || !settings.lastLapsBestLapShowBorder) {
@@ -225,13 +230,32 @@ function applyLapBorderStyles(
       styles["border-radius"] = `${radius}px`;
       styles["padding"] = "2px 6px";
     }
-  } else if (!isLast) {
-    if (!isBest || !settings.lastLapsBestLapShowBorder) {
+    styles["margin"] = `${margin}px`;
+    if (isVerticalLapsFlow) {
+      styles["width"] = margin !== 0 ? `calc(100% - ${margin * 2}px)` : "100%";
+      styles["align-self"] = "center";
+    } else {
+      styles["height"] = margin !== 0 ? `calc(100% - ${margin * 2}px)` : "100%";
+      styles["align-self"] = "center";
+    }
+  } else {
+    if (!isLast && (!isBest || !settings.lastLapsBestLapShowBorder)) {
       if (isVerticalLapsFlow) {
         styles["border-bottom"] = `${width}px ${style} ${color}`;
       } else {
         styles["border-right"] = `${width}px ${style} ${color}`;
       }
+    }
+    if (isVerticalLapsFlow) {
+      styles["margin-left"] = `${margin}px`;
+      styles["margin-right"] = `${margin}px`;
+      styles["width"] = margin !== 0 ? `calc(100% - ${margin * 2}px)` : "100%";
+      styles["align-self"] = "center";
+    } else {
+      styles["margin-top"] = `${margin}px`;
+      styles["margin-bottom"] = `${margin}px`;
+      styles["height"] = margin !== 0 ? `calc(100% - ${margin * 2}px)` : "100%";
+      styles["align-self"] = "center";
     }
   }
 }

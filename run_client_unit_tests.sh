@@ -7,8 +7,20 @@ echo ""
 echo "--- 🔹 Running Client Unit Tests 🔹 ---"
 cd "$CLIENT_DIR" || exit
 
+# Dynamically resolve Karma port and isolated directory to avoid conflicts/EPERM
+BASE_PORT=$((9876 + $(id -u) % 100))
+KARMA_PORT=${KARMA_PORT:-$BASE_PORT}
+if command -v nc &>/dev/null; then
+  while nc -z 127.0.0.1 "$KARMA_PORT" 2>/dev/null; do
+    KARMA_PORT=$((KARMA_PORT + 1))
+  done
+fi
+
 # Ensure isolated directory exists and is prepared
 ISOLATED_DIR="$PROJECT_ROOT/client/tmp-isolated-test-$(id -u)"
+if [ "$KARMA_PORT" -ne "$BASE_PORT" ]; then
+  ISOLATED_DIR="${ISOLATED_DIR}-${KARMA_PORT}"
+fi
 
 # Auto-prune Angular compilation cache if it exceeds 10 GB limit (10240 MB)
 prune_angular_cache_if_oversized() {
@@ -63,7 +75,6 @@ else
 fi
 
 # Dynamically update the Karma port to avoid conflicts/EPERM
-KARMA_PORT=${KARMA_PORT:-$((9876 + $(id -u) % 100))}
 sed -i '' "s/port: [0-9]*/port: $KARMA_PORT, hostname: '127.0.0.1'/" "$ISOLATED_DIR/karma.conf.js" 2>/dev/null || sed -i "s/port: [0-9]*/port: $KARMA_PORT, hostname: '127.0.0.1'/" "$ISOLATED_DIR/karma.conf.js"
 
 cd "$ISOLATED_DIR" || exit

@@ -4,7 +4,9 @@ module.exports = function (config) {
   var path = require("path");
 
   // Use /tmp for CI compatibility - short paths avoid Unix socket limits
-  var tmpDir = "/tmp/kc";
+  // Use process PID to ensure separate Chrome user-data-dirs and prevent SingletonLock collisions
+  var runId = process.env.KARMA_RUN_ID || process.pid;
+  var tmpDir = path.join("/tmp", "kc-" + runId);
   if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
   // Define dedicated directories
@@ -54,7 +56,7 @@ module.exports = function (config) {
     "--no-first-run",
     "--disable-signin",
     "--disable-sync",
-    "--remote-debugging-port=9222",
+    "--remote-debugging-port=0",
     "--disk-cache-dir=" + path.join(tmpDir, "cache"),
     "--remote-allow-origins=*",
     "--use-mock-keychain",

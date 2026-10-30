@@ -601,6 +601,7 @@
 
 .raceday-lane-column-card.column-last-laps .lane-col-body {
   padding: 0;
+  overflow: visible;
 }
 
 .lane-col-empty {
@@ -619,7 +620,6 @@
   display: flex;
   width: 100%;
   height: 100%;
-  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -659,8 +659,8 @@
 }
 
 .lane-col-last-laps.box-mode {
-  gap: 3px;
-  padding: 2px;
+  gap: 0;
+  padding: 0;
 }
 
 .last-lap-time {

@@ -101,6 +101,7 @@ export class LaneGridStyleHelper {
           "lastLapsBorderColor",
           "lastLapsBorderWidth",
           "lastLapsBorderRadius",
+          "lastLapsBorderMargin",
           "lastLapsBestLapHighlight",
           "lastLapsBestLapTextColor",
           "lastLapsBestLapBackgroundColor",

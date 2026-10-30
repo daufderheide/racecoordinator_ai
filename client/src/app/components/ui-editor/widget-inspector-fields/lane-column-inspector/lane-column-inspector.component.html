@@ -1431,6 +1431,52 @@
           />
         </div>
 
+        <!-- Border Margin -->
+        <div class="inspector-section">
+          <div class="inspector-label-row">
+            <label class="inspector-label">{{
+              "UE_INSPECTOR_BORDER_MARGIN" | translate
+            }}</label>
+            <span class="inspector-val-badge"
+              >{{ currentSettings["lastLapsBorderMargin"] ?? 0 }}px</span
+            >
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              type="range"
+              min="-20"
+              max="40"
+              step="1"
+              [ngModel]="currentSettings['lastLapsBorderMargin'] ?? 0"
+              (ngModelChange)="
+                currentSettings['lastLapsBorderMargin'] = $event;
+                onFieldChange()
+              "
+              class="inspector-slider"
+              style="flex: 1"
+            />
+            <input
+              type="number"
+              min="-50"
+              max="100"
+              step="1"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+              [ngModel]="currentSettings['lastLapsBorderMargin'] ?? 0"
+              (ngModelChange)="
+                currentSettings['lastLapsBorderMargin'] = $event;
+                onFieldChange()
+              "
+              class="inspector-number-input"
+              style="width: 55px"
+            />
+          </div>
+        </div>
+
         <!-- Border Radius (when box mode) -->
         @if (currentSettings["lastLapsBorderMode"] === "box") {
           <div class="inspector-section">

@@ -2773,6 +2773,7 @@
   "UE_INSPECTOR_BINDING_OVERALL_POSITION": "Positie in algemeen klassement",
   "UE_INSPECTOR_BINDING_SEED": "Plaatsingsnummer coureur",
   "UE_INSPECTOR_BORDER_COLOR": "Randkleur",
+  "UE_INSPECTOR_BORDER_MARGIN": "Randmarge",
   "UE_INSPECTOR_BORDER_RADIUS": "Hoekafronding",
   "UE_INSPECTOR_BORDER_WIDTH": "Randbreedte",
   "UE_INSPECTOR_COLUMN": "Kolom / Gegevenspunt",

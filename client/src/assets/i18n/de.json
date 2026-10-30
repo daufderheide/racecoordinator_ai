@@ -2773,6 +2773,7 @@
   "UE_INSPECTOR_BINDING_OVERALL_POSITION": "Gesamtwertungsposition",
   "UE_INSPECTOR_BINDING_SEED": "Fahrer-Setzplatz",
   "UE_INSPECTOR_BORDER_COLOR": "Rahmenfarbe",
+  "UE_INSPECTOR_BORDER_MARGIN": "Rahmenabstand",
   "UE_INSPECTOR_BORDER_RADIUS": "Eckenradius",
   "UE_INSPECTOR_BORDER_WIDTH": "Rahmenbreite",
   "UE_INSPECTOR_COLUMN": "Spalte / Datenpunkt",

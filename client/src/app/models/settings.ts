@@ -192,6 +192,7 @@ export interface LaneColumnWidgetSettings {
   lastLapsBorderColor?: string;
   lastLapsBorderWidth?: number;
   lastLapsBorderRadius?: number;
+  lastLapsBorderMargin?: number;
   lastLapsBestLapHighlight?: boolean;
   lastLapsBestLapTextColor?: string;
   lastLapsBestLapBackgroundColor?: string;

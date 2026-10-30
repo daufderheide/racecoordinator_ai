@@ -134,7 +134,7 @@ Voor gedetailleerde wiskundige formules en tijdmetingsspecificaties, zie de [Gid
 De widget **Laatste Ronden** (`lastLaps`) toont de recent gereden rondetijden van de coureur in de actieve heat:
 
 - **Weer te geven laatste ronden**: Bepaalt hoeveel recente ronden in de widget worden getoond (schuifregelaar 1–20, numeriek invoerveld 1–50). De standaardwaarde is `5`.
-- **Rondescheiding & kaders**: Configureert hoe individuele ronden worden gescheiden. Opties omvatten kaderstijl (doorgetrokken, gestreept, gestippeld, dubbel), kaderkleur, kaderbreedte (1–10px), hoekradius (0–32px) en scheidingsmodus (scheidingslijn tussen de ronden of een kader om elke ronde).
+- **Rondescheiding & kaders**: Configureert hoe individuele ronden worden gescheiden. Opties omvatten kaderstijl (doorgetrokken, gestreept, gestippeld, dubbel), kaderkleur, kaderbreedte (1–10px), randmarge (-20px tot 40px+ om te bepalen hoe ver de rand naar binnen of buiten valt en naadloos aansluit op aangrenzende kolomranden), hoekradius (0–32px) en scheidingsmodus (scheidingslijn tussen de ronden of een kader om elke ronde).
 - **Beste ronde markeren**: Markeert of een ronde in de lijst de snelste rondetijd van de coureur is. Opties omvatten tekstkleur, achtergrond-badgekleur, lettertypedikte (normaal, vet, extra vet/900), onderstrepen, cursief en een speciaal accentkader voor de beste ronde.
 - **Dynamische schaling en pasvorm**: De kaart schaalt lettergroottes en regelafstanden automatisch om het geconfigureerde aantal ronden netjes in de kolomgeometrie te passen.
 - **Grid-synchronisatie**: In banengrids synchroniseert het configureren of toepassen van tijdopmaken het aantal weergegeven ronden en de vormgeving over alle deelnemende banen.

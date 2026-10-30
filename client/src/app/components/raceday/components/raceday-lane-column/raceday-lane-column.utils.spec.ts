@@ -1704,6 +1704,121 @@ describe("raceday-lane-column.utils", () => {
       expect(styles["border"]).toBe("2px solid #10b981");
       expect(styles["border-radius"]).toBe("8px");
       expect(styles["padding"]).toBe("2px 6px");
+      expect(styles["margin"]).toBe("0px");
+      expect(styles["width"]).toBe("100%");
+    });
+
+    it("should configure border margin in separator mode for vertical and horizontal flow", () => {
+      // Positive margin in vertical flow
+      const vertPosStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+          lastLapsBorderMargin: 6,
+        },
+        true,
+        "#ffffff",
+      );
+      expect(vertPosStyles["margin-left"]).toBe("6px");
+      expect(vertPosStyles["margin-right"]).toBe("6px");
+      expect(vertPosStyles["width"]).toBe("calc(100% - 12px)");
+
+      // Negative margin in vertical flow
+      const vertNegStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+          lastLapsBorderMargin: -3,
+        },
+        true,
+        "#ffffff",
+      );
+      expect(vertNegStyles["margin-left"]).toBe("-3px");
+      expect(vertNegStyles["margin-right"]).toBe("-3px");
+      expect(vertNegStyles["width"]).toBe("calc(100% - -6px)");
+
+      // Positive margin in horizontal flow
+      const horizPosStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+          lastLapsBorderMargin: 4,
+        },
+        false,
+        "#ffffff",
+      );
+      expect(horizPosStyles["margin-top"]).toBe("4px");
+      expect(horizPosStyles["margin-bottom"]).toBe("4px");
+      expect(horizPosStyles["height"]).toBe("calc(100% - 8px)");
+
+      // Negative margin in horizontal flow
+      const horizNegStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "separator",
+          lastLapsBorderMargin: -2,
+        },
+        false,
+        "#ffffff",
+      );
+      expect(horizNegStyles["margin-top"]).toBe("-2px");
+      expect(horizNegStyles["margin-bottom"]).toBe("-2px");
+      expect(horizNegStyles["height"]).toBe("calc(100% - -4px)");
+    });
+
+    it("should configure border margin in box mode for vertical and horizontal flow", () => {
+      // Box mode with positive margin in vertical flow
+      const boxVertStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "box",
+          lastLapsBorderMargin: 5,
+        },
+        true,
+        "#ffffff",
+      );
+      expect(boxVertStyles["margin"]).toBe("5px");
+      expect(boxVertStyles["width"]).toBe("calc(100% - 10px)");
+
+      // Box mode with negative margin in horizontal flow
+      const boxHorizStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "box",
+          lastLapsBorderMargin: -4,
+        },
+        false,
+        "#ffffff",
+      );
+      expect(boxHorizStyles["margin"]).toBe("-4px");
+      expect(boxHorizStyles["height"]).toBe("calc(100% - -8px)");
+
+      // Box mode with 0 margin
+      const boxZeroStyles = computeLastLapItemStyle(
+        regularLap,
+        false,
+        {
+          lastLapsShowBorder: true,
+          lastLapsBorderMode: "box",
+          lastLapsBorderMargin: 0,
+        },
+        true,
+        "#ffffff",
+      );
+      expect(boxZeroStyles["margin"]).toBe("0px");
+      expect(boxZeroStyles["width"]).toBe("100%");
     });
 
     it("should apply best lap styling when lap is best and highlight is enabled", () => {
