@@ -2675,6 +2675,11 @@ describe("DefaultRacedaySetupComponent", () => {
         queryParams: { returnUrl: "/raceday-setup" },
       });
 
+      component.openThemeEditor();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/theme-editor"], {
+        queryParams: { returnUrl: "/raceday-setup" },
+      });
+
       (component as any).isRaceRunning = true;
       component.openTrackManager();
       expect(component.showTrackEditorPrompt).toBeTrue();

@@ -2,39 +2,26 @@ import { expect, Page, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 async function openCustomThemeAudioSection(page: Page) {
-  // Navigate to UI Editor (the actual route for theme editing)
+  // Navigate to Theme Editor for custom_theme_1 in edit mode
   await TestSetupHelper.waitForLocalization(
     page,
     "en",
-    page.goto("/ui-editor"),
+    page.goto("/theme-editor?id=custom_theme_1&edit=true"),
   );
-  await page.locator(".ue-container").waitFor({ state: "visible" });
-
-  // Wait for themes to load
-  await page.locator("#help-default-theme").waitFor({ state: "visible" });
-
-  // Expand Custom Theme via explicit entity id and its expander icon
-  const customThemeSection = page.locator(
-    '.theme-sub-section[data-theme-id="custom_theme_1"]',
-  );
-  await customThemeSection.waitFor({ state: "visible" });
-
-  const expander = customThemeSection.locator(".expander-icon").first();
-  await expander.waitFor({ state: "visible" });
-  await expander.scrollIntoViewIfNeeded();
-  await expander.click();
+  const container = page.locator(".theme-editor-content");
+  await container.waitFor({ state: "visible" });
 
   // Expand the Audio section (collapsed by default)
-  const audioHeader = customThemeSection
-    .locator(".section-header")
-    .filter({ hasText: "Audio Configuration" });
-  await audioHeader.waitFor({ state: "visible" });
-  await audioHeader.scrollIntoViewIfNeeded();
-  await audioHeader.click();
+  const audioSection = page.locator("#theme-audio-section");
+  await audioSection.waitFor({ state: "visible" });
 
-  // Wait for the audio panel to appear
-  const audioPanel = customThemeSection.locator(".audio-panel");
-  await audioPanel.waitFor({ state: "visible" });
+  const audioPanel = audioSection.locator(".audio-panel");
+  if (!(await audioPanel.isVisible())) {
+    const audioHeader = audioSection.locator(".section-header");
+    await audioHeader.scrollIntoViewIfNeeded();
+    await audioHeader.click();
+    await audioPanel.waitFor({ state: "visible" });
+  }
 
   return audioPanel;
 }
@@ -46,7 +33,19 @@ test.describe("Audio Selector Modes Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.setupAssetMocks(page);
     await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
     await TestSetupHelper.setupFileSystemMock(page, {});
+
+    await TestSetupHelper.setupSettings(page, {
+      themeEditorHelpShown: true,
+      uiEditorHelpShown: true,
+    });
+
+    await page.addInitScript(() => {
+      localStorage.removeItem("theme_editor_last_edited_id");
+      localStorage.removeItem("theme_editor_expanders");
+    });
+
     await TestSetupHelper.disableAnimations(page);
   });
 

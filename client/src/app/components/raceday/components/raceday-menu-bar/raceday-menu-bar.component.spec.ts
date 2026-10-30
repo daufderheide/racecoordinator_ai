@@ -590,6 +590,26 @@ describe("RacedayMenuBarComponent", () => {
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
 
+    it("should emit optionsMenuSelect with CUSTOMIZE_THEME when Theme Editor is clicked", () => {
+      spyOn(component.optionsMenuSelect, "emit");
+      component.isOptionsMenuOpen = true;
+      fixture.detectChanges();
+
+      const themeItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RDS_MENU_THEME_EDITOR"),
+      ) as HTMLElement;
+
+      expect(themeItem).toBeTruthy();
+      themeItem.click();
+
+      expect(component.optionsMenuSelect.emit).toHaveBeenCalledWith(
+        "CUSTOMIZE_THEME",
+      );
+      expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+
     it("should emit languageSelected when language is selected", () => {
       spyOn(component.languageSelected, "emit");
       component.isOptionsMenuOpen = true;

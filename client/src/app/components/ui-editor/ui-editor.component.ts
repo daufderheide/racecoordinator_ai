@@ -23,19 +23,14 @@ import {
   LaneGridSession,
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
-import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
-import { DriverAudioConfigComponent } from "@app/components/shared/driver-audio-config/driver-audio-config.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
-import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
-import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
-import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
@@ -205,9 +200,6 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     CommonModule,
     EditorTitleComponent,
     FormsModule,
-    ImageSelectorComponent,
-    AudioSelectorComponent,
-    ToolbarComponent,
     ConfirmationModalComponent,
     TranslatePipe,
     AcknowledgementModalComponent,
@@ -218,8 +210,6 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     ReviewStackedColumnsModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
-    AutoSelectDefaultDirective,
-    DriverAudioConfigComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -837,6 +827,15 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ? this.router.url.split("?")[0]
       : "/ui-editor";
     this.router.navigate(["/layout-editor"], {
+      queryParams: { returnUrl },
+    });
+  }
+
+  navigateToThemeEditor(): void {
+    const returnUrl = this.router.url
+      ? this.router.url.split("?")[0]
+      : "/ui-editor";
+    this.router.navigate(["/theme-editor"], {
       queryParams: { returnUrl },
     });
   }

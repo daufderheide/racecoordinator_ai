@@ -112,23 +112,18 @@ describe("ui-editor-help.helper", () => {
 
   it("should return themes steps and expand themes section", () => {
     const steps = getThemesHelpSteps(ctx);
-    expect(steps.length).toBeGreaterThan(3);
+    expect(steps.length).toBe(2);
 
     const themeStep = steps.find((s) => s.selector === "#help-themes");
+    expect(themeStep).toBeDefined();
     themeStep?.onEnter?.();
     expect(sectionsExpanded["themes"]).toBeTrue();
 
-    const driverAudioOverridesStep = steps.find(
-      (s) => s.selector === "#help-theme-driver-audio-overrides",
-    );
-    expect(driverAudioOverridesStep).toBeDefined();
-    expect(driverAudioOverridesStep?.title).toBe(
-      "UE_HEADER_DRIVER_AUDIO_OVERRIDES",
-    );
-    driverAudioOverridesStep?.onEnter?.();
+    const btnStep = steps.find((s) => s.selector === "#btn-open-theme-editor");
+    expect(btnStep).toBeDefined();
+    expect(btnStep?.title).toBe("UE_BTN_OPEN_THEME_EDITOR");
+    btnStep?.onEnter?.();
     expect(sectionsExpanded["themes"]).toBeTrue();
-    expect(sectionsExpanded["theme_default_classic_rc_ai"]).toBeTrue();
-    expect(sectionsExpanded["driverAudioOverrides"]).toBeTrue();
   });
 
   it("should return custom UI config steps", () => {
@@ -193,42 +188,14 @@ describe("ui-editor-help.helper", () => {
     expect(ttsTestStep?.title).toBe("UE_LABEL_TTS_PREVIEW");
   });
 
-  it("should return theme audio help steps", () => {
+  it("should return theme audio help steps (empty now that themes has its own editor)", () => {
     const steps = getAudioHelpSteps(ctx);
-    expect(steps.length).toBeGreaterThan(4);
-
-    const yellowFlagStep = steps.find(
-      (s) => s.selector === "#help-audio-yellowflag",
-    );
-    expect(yellowFlagStep).toBeDefined();
-    expect(yellowFlagStep?.title).toBe("UE_LABEL_YELLOW_FLAG_AUDIO");
-    yellowFlagStep?.onEnter?.();
-    expect(sectionsExpanded["themes"]).toBeTrue();
-    expect(sectionsExpanded["theme_default_classic_rc_ai"]).toBeTrue();
-    expect(sectionsExpanded["audio"]).toBeTrue();
-
-    const lapsLeftStep = steps.find(
-      (s) => s.selector === "#help-audio-laps-left",
-    );
-    expect(lapsLeftStep).toBeDefined();
-    expect(lapsLeftStep?.title).toBe("UE_LABEL_LAPS_LEFT_AUDIO");
-
-    const autoStartStep = steps.find(
-      (s) => s.selector === "#help-audio-auto-start",
-    );
-    expect(autoStartStep).toBeDefined();
-    expect(autoStartStep?.title).toBe("UE_LABEL_AUTO_START_AUDIO");
-
-    const autoAdvanceStep = steps.find(
-      (s) => s.selector === "#help-audio-auto-advance",
-    );
-    expect(autoAdvanceStep).toBeDefined();
-    expect(autoAdvanceStep?.title).toBe("UE_LABEL_AUTO_ADVANCE_AUDIO");
+    expect(steps.length).toBe(0);
   });
 
   it("should return all combined steps in correct order", () => {
     const allSteps = getUiEditorHelpSteps(ctx);
-    expect(allSteps.length).toBeGreaterThan(20);
+    expect(allSteps.length).toBeGreaterThan(10);
     expect(allSteps[0].title).toBe("UE_TITLE");
   });
 
@@ -273,6 +240,15 @@ describe("ui-editor-help.helper", () => {
 
       const step3 = { selector: "#help-themes-list", title: "", content: "" };
       expect(handleUiEditorHelpStep(step3, sectionsExpanded)).toBeTrue();
+      expect(sectionsExpanded["themes"]).toBeTrue();
+
+      delete sectionsExpanded["themes"];
+      const stepBtn = {
+        selector: "#btn-open-theme-editor",
+        title: "",
+        content: "",
+      };
+      expect(handleUiEditorHelpStep(stepBtn, sectionsExpanded)).toBeTrue();
       expect(sectionsExpanded["themes"]).toBeTrue();
     });
   });

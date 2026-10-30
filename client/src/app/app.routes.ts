@@ -19,6 +19,7 @@ import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-set
 import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
 import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
+import { ThemeEditorComponent } from "@app/components/theme-editor/theme-editor.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
@@ -231,6 +232,20 @@ export const routes: Routes = [
   {
     path: "layout-manager",
     redirectTo: "layout-editor",
+    pathMatch: "full",
+  },
+  {
+    path: "theme-editor",
+    component: ThemeEditorComponent,
+    canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
+    title: "Theme Editor",
+    data: { animation: "ThemeEditorPage", requiredRole: Role.VIEWER },
+  },
+  {
+    path: "theme-manager",
+    redirectTo: "theme-editor",
     pathMatch: "full",
   },
   {

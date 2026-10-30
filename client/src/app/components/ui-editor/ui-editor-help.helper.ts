@@ -43,21 +43,6 @@ function expandCustomUiSection(ctx: UiEditorHelpContext): void {
   }
 }
 
-function expandThemeSection(
-  ctx: UiEditorHelpContext,
-  nestedKey?: string,
-): void {
-  ctx.sectionsExpanded["themes"] = true;
-  const targetThemeId =
-    ctx.getActiveThemeId() || ctx.getDefaultTheme()?.entity_id;
-  if (targetThemeId) {
-    ctx.sectionsExpanded[`theme_${targetThemeId}`] = true;
-  }
-  if (nestedKey) {
-    ctx.sectionsExpanded[nestedKey] = true;
-  }
-}
-
 export function getGeneralAndCustomUisHelpSteps(
   ctx: UiEditorHelpContext,
 ): GuideStep[] {
@@ -186,171 +171,26 @@ export function getThemesHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
     {
       selector: "#help-themes",
       title: translationService.translate("UE_HEADER_THEMES_ALL"),
-      content: translationService.translate("UE_HELP_THEMES"),
+      content: translationService.translate("UE_THEMES_LINK_DESC"),
       position: "bottom",
       onEnter: () => {
         sectionsExpanded["themes"] = true;
       },
     },
     {
-      selector: "#help-themes-add",
-      title: translationService.translate("UE_BTN_CREATE_THEME"),
-      content: translationService.translate("UE_HELP_CREATE_THEME_BTN"),
+      selector: "#btn-open-theme-editor",
+      title: translationService.translate("UE_BTN_OPEN_THEME_EDITOR"),
+      content: translationService.translate("UE_THEMES_LINK_DESC"),
       position: "bottom",
       onEnter: () => {
         sectionsExpanded["themes"] = true;
       },
-    },
-    {
-      selector: "#help-default-theme",
-      title: translationService.translate("UE_LABEL_DEFAULT_THEME"),
-      content: translationService.translate("UE_HELP_DEFAULT_THEME"),
-      position: "bottom",
-      onEnter: () => {
-        sectionsExpanded["themes"] = true;
-        const defaultTheme = ctx.getDefaultTheme();
-        if (defaultTheme) {
-          sectionsExpanded[`theme_${defaultTheme.entity_id}`] = true;
-        }
-      },
-    },
-    {
-      selector: "#help-theme-ui-selector",
-      title: translationService.translate("UE_LABEL_CUSTOM_UI"),
-      content: translationService.translate("UE_HELP_THEME_UI_SELECTOR"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx),
-    },
-    {
-      selector: "#help-theme-driver-station-theme",
-      title: translationService.translate(
-        "UE_LABEL_DRIVER_STATION_THEME_SELECT",
-      ),
-      content: translationService.translate("UE_HELP_THEME_DRIVER_STATION"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx),
-    },
-    {
-      selector: "#help-theme-driver-view-theme",
-      title: translationService.translate("UE_LABEL_DRIVER_VIEW_THEME_SELECT"),
-      content: translationService.translate("UE_HELP_THEME_DRIVER_VIEW"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx),
-    },
-    {
-      selector: "#help-theme-flags",
-      title: translationService.translate("UE_HEADER_FLAGS"),
-      content: translationService.translate("UE_HELP_THEME_FLAGS"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "flags"),
-    },
-    {
-      selector: "#help-theme-countdown",
-      title: translationService.translate("UE_HEADER_COUNTDOWN"),
-      content: translationService.translate("UE_HELP_THEME_COUNTDOWN"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "countdown"),
-    },
-    {
-      selector: "#help-theme-fuel",
-      title: translationService.translate("UE_HEADER_FUEL_GAUGE"),
-      content: translationService.translate("UE_HELP_THEME_FUEL"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "fuelGauge"),
-    },
-    {
-      selector: "#help-theme-audio",
-      title: translationService.translate("UE_HEADER_AUDIO"),
-      content: translationService.translate("UE_HELP_THEME_AUDIO"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-theme-driver-audio-overrides",
-      title: translationService.translate("UE_HEADER_DRIVER_AUDIO_OVERRIDES"),
-      content: translationService.translate(
-        "UE_HELP_THEME_DRIVER_AUDIO_OVERRIDES",
-      ),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "driverAudioOverrides"),
     },
   ];
 }
 
-export function getAudioHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
-  const { translationService } = ctx;
-  return [
-    {
-      selector: "#help-audio-yellowflag",
-      title: translationService.translate("UE_LABEL_YELLOW_FLAG_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_YELLOWFLAG"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-countdown",
-      title: translationService.translate("UE_LABEL_COUNTDOWN_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_COUNTDOWN"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-seconds-left",
-      title: translationService.translate("UE_LABEL_SECONDS_LEFT_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_SECONDS_LEFT"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-laps-left",
-      title: translationService.translate("UE_LABEL_LAPS_LEFT_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_LAPS_LEFT"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-auto-start",
-      title: translationService.translate("UE_LABEL_AUTO_START_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_AUTO_START"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-auto-advance",
-      title: translationService.translate("UE_LABEL_AUTO_ADVANCE_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_AUTO_ADVANCE"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-halfway",
-      title: translationService.translate("UE_LABEL_SECONDS_LEFT_HALFWAY"),
-      content: translationService.translate("UE_HELP_AUDIO_HALFWAY"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-heat-over",
-      title: translationService.translate("UE_LABEL_HEAT_OVER_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_HEAT_OVER"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-race-over",
-      title: translationService.translate("UE_LABEL_RACE_OVER_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_RACE_OVER"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-    {
-      selector: "#help-audio-min-lap-time",
-      title: translationService.translate("UE_LABEL_MIN_LAP_TIME_AUDIO"),
-      content: translationService.translate("UE_HELP_AUDIO_MIN_LAP_TIME"),
-      position: "bottom",
-      onEnter: () => expandThemeSection(ctx, "audio"),
-    },
-  ];
+export function getAudioHelpSteps(_ctx: UiEditorHelpContext): GuideStep[] {
+  return [];
 }
 
 export function getCustomUiConfigHelpSteps(
@@ -499,7 +339,6 @@ export function getUiEditorHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
   return [
     ...getGeneralAndCustomUisHelpSteps(ctx),
     ...getThemesHelpSteps(ctx),
-    ...getAudioHelpSteps(ctx),
     ...getCustomUiConfigHelpSteps(ctx),
     ...getAudioSettingsHelpSteps(ctx),
   ];
@@ -515,6 +354,7 @@ export function handleUiEditorHelpStep(
     "#help-raceday-": "racedayLayout",
     "#help-practice-ui": "practiceRacedayLayout",
     "#help-themes": "themes",
+    "#btn-open-theme-editor": "themes",
     "#help-theme-": "themes",
     "#help-custom-ui": "config",
     "#help-export-template": "config",

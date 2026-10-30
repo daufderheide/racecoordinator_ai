@@ -32,6 +32,7 @@ export interface SetupOptions {
   raceEditorHelpShown?: boolean;
   uiEditorHelpShown?: boolean;
   layoutEditorHelpShown?: boolean;
+  themeEditorHelpShown?: boolean;
   recentRaceIds?: string[];
   selectedDriverIds?: string[];
   driverLabels?: any[];
@@ -173,6 +174,7 @@ export class TestSetupHelper {
       raceEditorHelpShown: options.raceEditorHelpShown ?? true,
       uiEditorHelpShown: options.uiEditorHelpShown ?? true,
       layoutEditorHelpShown: options.layoutEditorHelpShown ?? true,
+      themeEditorHelpShown: options.themeEditorHelpShown ?? true,
       recentRaceIds: options.recentRaceIds ?? ["r1", "r2"],
       selectedDriverIds: options.selectedDriverIds ?? ["d1", "d2"],
 

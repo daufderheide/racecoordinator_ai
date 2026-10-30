@@ -4866,9 +4866,24 @@ describe("DefaultRacedayComponent", () => {
         },
       });
     });
+
+    it("should navigate to /theme-editor when CUSTOMIZE_THEME is selected in options menu", () => {
+      (mockRouter as any).url = "/raceday?someParam=true";
+      component.onOptionsSelect("CUSTOMIZE_THEME");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/theme-editor"], {
+        queryParams: {
+          returnUrl: "/raceday",
+        },
+      });
+    });
   });
 
   describe("canDeactivate", () => {
+    it("should allow deactivation when navigating to /theme-editor", () => {
+      const nextState = { url: "/theme-editor" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+    });
     it("should allow deactivation when navigating to /ui-editor", () => {
       const nextState = { url: "/ui-editor" } as any;
       const result = component.canDeactivate(nextState);

@@ -106,4 +106,15 @@ describe("app.routes and racedayTitleResolver", () => {
     expect(layoutManagerRoute).toBeDefined();
     expect(layoutManagerRoute?.redirectTo).toBe("layout-editor");
   });
+
+  it("should configure theme-editor and theme-manager routes correctly", () => {
+    const themeEditorRoute = routes.find((r) => r.path === "theme-editor");
+    expect(themeEditorRoute).toBeDefined();
+    expect(themeEditorRoute?.title).toBe("Theme Editor");
+    expect(themeEditorRoute?.data?.["animation"]).toBe("ThemeEditorPage");
+
+    const themeManagerRoute = routes.find((r) => r.path === "theme-manager");
+    expect(themeManagerRoute).toBeDefined();
+    expect(themeManagerRoute?.redirectTo).toBe("theme-editor");
+  });
 });

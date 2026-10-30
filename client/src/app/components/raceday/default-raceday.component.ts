@@ -4203,6 +4203,8 @@ export class DefaultRacedayComponent
         nextState.url.includes("/ui-editor") ||
         nextState.url.includes("/layout-editor") ||
         nextState.url.includes("/layout-manager") ||
+        nextState.url.includes("/theme-editor") ||
+        nextState.url.includes("/theme-manager") ||
         nextState.url.includes("/driver-station") ||
         nextState.url.includes("/driver-view")
       ) {
@@ -6102,6 +6104,13 @@ export class DefaultRacedayComponent
     });
   }
 
+  navigateToThemeEditor() {
+    const returnUrl = this.router.url.split("?")[0];
+    this.router.navigate(["/theme-editor"], {
+      queryParams: { returnUrl },
+    });
+  }
+
   onOptionsSelect(action: string) {
     this.logger.debug("Options menu action:", action);
     this.isOptionsMenuOpen = false;
@@ -6109,6 +6118,8 @@ export class DefaultRacedayComponent
       this.navigateToUiEditor();
     } else if (action === "CUSTOMIZE_LAYOUT") {
       this.navigateToLayoutEditor();
+    } else if (action === "CUSTOMIZE_THEME") {
+      this.navigateToThemeEditor();
     }
   }
 

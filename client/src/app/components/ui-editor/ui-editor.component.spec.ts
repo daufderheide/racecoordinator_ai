@@ -1041,131 +1041,19 @@ describe("UIEditorComponent", () => {
     });
   });
 
-  describe("theme toolbar states", () => {
-    it("should render a toolbar for each theme", () => {
-      const themes: Theme[] = [
-        {
-          entity_id: "t1",
-          name: "Default",
-          is_default: true,
-          slots: {},
-        } as Theme,
-        {
-          entity_id: "t2",
-          name: "Custom",
-          is_default: false,
-          slots: {},
-        } as Theme,
-      ];
-      component.editingState.themes = themes;
-      component.refreshDisplayProperties();
-      themes.forEach(
-        (t) => (component.sectionsExpanded[`theme_${t.entity_id}`] = true),
-      );
+  describe("theme navigation and operations", () => {
+    it("should show open theme editor button and navigate to theme editor", () => {
+      component.sectionsExpanded["themes"] = true;
       fixture.detectChanges();
 
-      const toolbars = fixture.debugElement.queryAll(
-        By.css(".theme-sub-section .theme-toolbar-container app-toolbar"),
-      );
-      expect(toolbars.length).toBe(themes.length);
-    });
+      const btn = fixture.debugElement.query(By.css("#btn-open-theme-editor"));
+      expect(btn).toBeTruthy();
 
-    it("should show Delete on all theme toolbars", () => {
-      const themes: Theme[] = [
-        {
-          entity_id: "t1",
-          name: "Default",
-          is_default: true,
-          slots: {},
-        } as Theme,
-        {
-          entity_id: "t2",
-          name: "Custom",
-          is_default: false,
-          slots: {},
-        } as Theme,
-      ];
-      component.editingState.themes = themes;
-      component.refreshDisplayProperties();
-      themes.forEach(
-        (t) => (component.sectionsExpanded[`theme_${t.entity_id}`] = true),
-      );
-      fixture.detectChanges();
-
-      const toolbars = fixture.debugElement.queryAll(
-        By.css(".theme-sub-section .theme-toolbar-container app-toolbar"),
-      );
-
-      // Default theme toolbar - Delete should be shown
-      expect(toolbars[0].componentInstance.showDelete()).toBeTrue();
-
-      // Custom theme toolbar - Delete should be shown and enabled
-      expect(toolbars[1].componentInstance.showDelete()).toBeTrue();
-      expect(toolbars[1].componentInstance.disabledDelete()).toBeFalse();
-    });
-
-    it("should show Add button on Themes header toolbar and not on individual themes", () => {
-      const themes: Theme[] = [
-        {
-          entity_id: "t1",
-          name: "Default",
-          is_default: true,
-          slots: {},
-        } as Theme,
-        {
-          entity_id: "t2",
-          name: "Custom",
-          is_default: false,
-          slots: {},
-        } as Theme,
-      ];
-      component.editingState.themes = themes;
-      component.refreshDisplayProperties();
-      themes.forEach(
-        (t) => (component.sectionsExpanded[`theme_${t.entity_id}`] = true),
-      );
-      fixture.detectChanges();
-
-      const headerToolbar = fixture.debugElement.query(
-        By.css("#help-themes .theme-toolbar-container app-toolbar"),
-      );
-      expect(headerToolbar.componentInstance.showAdd()).toBeTrue();
-
-      const itemToolbars = fixture.debugElement.queryAll(
-        By.css(".theme-sub-section .theme-toolbar-container app-toolbar"),
-      );
-      expect(itemToolbars[0].componentInstance.showAdd()).toBeFalse();
-      expect(itemToolbars[1].componentInstance.showAdd()).toBeFalse();
-    });
-
-    it("should enable Edit and Copy on all theme toolbars", () => {
-      const themes: Theme[] = [
-        {
-          entity_id: "t1",
-          name: "Default",
-          is_default: true,
-          slots: {},
-        } as Theme,
-        {
-          entity_id: "t2",
-          name: "Custom",
-          is_default: false,
-          slots: {},
-        } as Theme,
-      ];
-      component.editingState.themes = themes;
-      component.refreshDisplayProperties();
-      themes.forEach(
-        (t) => (component.sectionsExpanded[`theme_${t.entity_id}`] = true),
-      );
-      fixture.detectChanges();
-
-      const toolbars = fixture.debugElement.queryAll(
-        By.css(".theme-sub-section .theme-toolbar-container app-toolbar"),
-      );
-      toolbars.forEach((toolbar) => {
-        expect(toolbar.componentInstance.disabledEdit()).toBeFalse();
-        expect(toolbar.componentInstance.disabledCopy()).toBeFalse();
+      spyOn(component, "navigateToThemeEditor").and.callThrough();
+      btn.nativeElement.click();
+      expect(component.navigateToThemeEditor).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/theme-editor"], {
+        queryParams: { returnUrl: "/ui-editor" },
       });
     });
 
@@ -1194,35 +1082,7 @@ describe("UIEditorComponent", () => {
       expect(sorted[2].name).toBe("Practice");
       expect(sorted[3].name).toBe("ZZZ");
     });
-    it("should not show activate button on theme toolbar and allow theme selection", () => {
-      const themes: Theme[] = [
-        {
-          entity_id: "t1",
-          is_default: true,
-          name: "Default",
-          slots: {},
-        } as Theme,
-        {
-          entity_id: "t2",
-          is_default: false,
-          name: "Custom",
-          slots: {},
-        } as Theme,
-      ];
-      component.editingState.themes = themes;
-      component.refreshDisplayProperties();
-      component.editingSettings.activeThemeId = "t1";
-      fixture.detectChanges();
-
-      const toolbars = fixture.debugElement.queryAll(
-        By.css(".theme-toolbar-container app-toolbar"),
-      );
-
-      // Toolbars should not show Activate button
-      expect(toolbars[0].componentInstance.showActivate()).toBeFalse();
-      expect(toolbars[1].componentInstance.showActivate()).toBeFalse();
-
-      // Theme selection
+    it("should allow theme selection", () => {
       component.onThemeSelected("t2");
       expect(component.editingSettings.activeThemeId).toBe("t2");
       expect(mockThemeService.setActiveTheme).toHaveBeenCalledWith("t2");
@@ -1245,53 +1105,14 @@ describe("UIEditorComponent", () => {
       ];
       component.editingState.themes = themes;
       component.refreshDisplayProperties();
-      fixture.detectChanges();
-
-      const customSection = fixture.debugElement.query(
-        By.css('[data-theme-id="t2"]'),
-      );
-      expect(customSection).toBeTruthy();
-      const input = customSection.query(By.css(".theme-name-input"));
-      expect(input).toBeTruthy();
-
-      input.nativeElement.value = "Updated Name";
-      input.nativeElement.dispatchEvent(new Event("input"));
-      input.nativeElement.dispatchEvent(new Event("change"));
-      tick();
 
       const customTheme = themes.find((t) => t.entity_id === "t2")!;
+      customTheme.name = "Updated Name";
+      component.onThemeNameChanged(customTheme);
+      tick();
+
       expect(customTheme.name).toBe("Updated Name");
-      expect(mockDataService.updateTheme).toHaveBeenCalledWith(
-        "t2",
-        customTheme,
-      );
     }));
-
-    it("should enable image selectors for all themes including default", () => {
-      const themes: Theme[] = [
-        {
-          entity_id: "t1",
-          name: "Default",
-          is_default: true,
-          slots: {},
-        } as Theme,
-      ];
-      component.editingState.themes = themes;
-      component.refreshDisplayProperties();
-      component.sectionsExpanded["theme_t1"] = true;
-      component.sectionsExpanded["flags"] = true;
-      component.sectionsExpanded["countdown"] = true;
-      component.sectionsExpanded["fuelGauge"] = true;
-      fixture.detectChanges();
-
-      const selectors = fixture.debugElement.queryAll(
-        By.css("app-image-selector"),
-      );
-      expect(selectors.length).toBeGreaterThan(0);
-      selectors.forEach((s) => {
-        expect(s.componentInstance.disabled()).toBeFalse();
-      });
-    });
 
     it("should allow updating theme slots on any theme including default", async () => {
       const theme = { entity_id: "t1", is_default: true, slots: {} } as Theme;
@@ -1813,7 +1634,7 @@ describe("UIEditorComponent", () => {
       expect(mockSettingsService.saveSettings).not.toHaveBeenCalled();
     }));
 
-    it("should apply invalid class to theme name input in template", () => {
+    it("should identify invalid theme names with duplicate names", () => {
       const themes: Theme[] = [
         {
           entity_id: "t1",
@@ -1830,12 +1651,9 @@ describe("UIEditorComponent", () => {
       ];
       component.editingState.themes = themes;
       component.refreshDisplayProperties();
-      fixture.detectChanges();
 
-      const containers = fixture.debugElement.queryAll(
-        By.css(".theme-title-container.invalid"),
-      );
-      expect(containers.length).toBe(2);
+      expect(component.isThemeNameInvalid(themes[0])).toBeTrue();
+      expect(component.isThemeNameInvalid(themes[1])).toBeTrue();
     });
   });
 
@@ -3041,16 +2859,9 @@ describe("UIEditorComponent", () => {
       }
 
       expect(component.sectionsExpanded["customUIs"]).toBeTrue();
-      expect(
-        component.sectionsExpanded[`ui_${defaultUi.entity_id}`],
-      ).toBeTrue();
       expect(component.sectionsExpanded["themes"]).toBeTrue();
-      expect(component.sectionsExpanded["theme_1"]).toBeTrue();
-      expect(component.sectionsExpanded["flags"]).toBeTrue();
-      expect(component.sectionsExpanded["countdown"]).toBeTrue();
-      expect(component.sectionsExpanded["fuelGauge"]).toBeTrue();
-      expect(component.sectionsExpanded["audio"]).toBeTrue();
       expect(component.sectionsExpanded["config"]).toBeTrue();
+      expect(component.sectionsExpanded["audioSettings"]).toBeTrue();
     });
 
     it("should include all new custom UI and theme steps with valid selectors", () => {
@@ -3060,19 +2871,17 @@ describe("UIEditorComponent", () => {
       expect(selectors).toContain("#help-custom-uis");
       expect(selectors).toContain("#btn-open-layout-editor");
       expect(selectors).toContain("#help-themes");
-      expect(selectors).toContain("#help-themes-add");
-      expect(selectors).toContain("#help-default-theme");
-      expect(selectors).toContain("#help-theme-ui-selector");
-      expect(selectors).toContain("#help-theme-driver-station-theme");
-      expect(selectors).toContain("#help-theme-driver-view-theme");
-      expect(selectors).toContain("#help-theme-flags");
-      expect(selectors).toContain("#help-theme-countdown");
-      expect(selectors).toContain("#help-theme-fuel");
-      expect(selectors).toContain("#help-theme-audio");
+      expect(selectors).toContain("#btn-open-theme-editor");
       expect(selectors).toContain("#help-custom-ui");
       expect(selectors).toContain("#help-custom-ui-dir");
       expect(selectors).toContain("#help-export-template");
       expect(selectors).toContain("#help-page-transition");
+
+      // Verify old theme detail selectors are no longer in UI Editor (moved to Theme Editor)
+      expect(selectors).not.toContain("#help-theme-flags");
+      expect(selectors).not.toContain("#help-theme-countdown");
+      expect(selectors).not.toContain("#help-theme-fuel");
+      expect(selectors).not.toContain("#help-theme-audio");
 
       // Verify no obsolete badge or button selectors remain
       expect(selectors).not.toContain("#help-default-badge");

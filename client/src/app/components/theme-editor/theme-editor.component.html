@@ -1,0 +1,511 @@
+<div
+  class="page-container"
+  [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'"
+>
+  <app-editor-title
+    titleKey="THM_TITLE"
+    [items]="themeSelectItems"
+    [selectedId]="selectedThemeId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showExpandCollapse]="true"
+    [allExpanded]="areAllSectionsExpanded()"
+    [showAdd]="true"
+    [showCopy]="true"
+    [showDelete]="true"
+    [disabledCopy]="isSaving || !isConfigValid()"
+    [disabledDelete]="isSaving || !editingTheme || isThemeDefault(editingTheme)"
+    [copyDisabledTooltipKey]="'THM_TOOLTIP_COPY_DISABLED'"
+    [isSaving]="isSaving"
+    [undoManager]="undoManager"
+    [helpSteps]="getHelpSteps()"
+    [helpRecordName]="'themeEditorHelpShown'"
+    (selectedIdChange)="onSelectThemeById($event)"
+    (edit)="onToggleEditMode()"
+    (expandCollapse)="toggleAllSections()"
+    (add)="onAddNewTheme()"
+    (copy)="onCopyTheme()"
+    (delete)="onDeleteTheme()"
+  >
+  </app-editor-title>
+
+  @if (!isLoading && editingTheme) {
+    <div class="theme-editor-content">
+      <!-- Controls Bar -->
+      <div class="theme-controls-bar">
+        <div class="theme-controls-grid">
+          <!-- Theme Name Input -->
+          <div
+            id="theme-name-section"
+            class="theme-control-group"
+            [class.invalid]="!isConfigValid()"
+          >
+            <label class="theme-control-label">{{
+              "THM_THEME_NAME" | translate
+            }}</label>
+            <input
+              id="theme-name-input"
+              type="text"
+              class="theme-name-input"
+              [class.invalid]="!isConfigValid()"
+              [(ngModel)]="editingTheme.name"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+              [appAutoSelectDefault]="defaultThemeNames[editingTheme.entity_id]"
+              autocomplete="one-time-code"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+              data-field-type="other"
+              spellcheck="false"
+              autocorrect="off"
+              autocapitalize="off"
+              name="theme-name-ignore"
+            />
+          </div>
+
+          <!-- Custom UI Layout Selection -->
+          <div id="theme-ui-selector" class="theme-control-group">
+            <label class="theme-control-label">{{
+              "UE_LABEL_CUSTOM_UI" | translate
+            }}</label>
+            <app-custom-select
+              [(ngModel)]="editingTheme.uiId"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+            >
+              @for (ui of displayCustomUIs; track ui.entity_id) {
+                <app-custom-option [value]="ui.entity_id">
+                  {{ getCustomUiDisplayNameKey(ui) | translate }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+
+          <!-- Driver Station Theme Selection -->
+          <div id="theme-driver-station-theme" class="theme-control-group">
+            <label class="theme-control-label">{{
+              "UE_LABEL_DRIVER_STATION_THEME_SELECT" | translate
+            }}</label>
+            <app-custom-select
+              [(ngModel)]="editingTheme.driver_station_theme_id"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+            >
+              @for (t of displayThemes; track t.entity_id) {
+                <app-custom-option [value]="t.entity_id">
+                  {{ getThemeDisplayNameKey(t) | translate }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+
+          <!-- Driver View Theme Selection -->
+          <div id="theme-driver-view-theme" class="theme-control-group">
+            <label class="theme-control-label">{{
+              "UE_LABEL_DRIVER_VIEW_THEME_SELECT" | translate
+            }}</label>
+            <app-custom-select
+              [(ngModel)]="editingTheme.driver_view_theme_id"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+            >
+              @for (t of displayThemes; track t.entity_id) {
+                <app-custom-option [value]="t.entity_id">
+                  {{ getThemeDisplayNameKey(t) | translate }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections Container -->
+      <div class="theme-sections-wrapper">
+        <!-- Flag Image Settings -->
+        <div
+          id="theme-flags-section"
+          class="config-section sub-section"
+          data-section="flags"
+        >
+          <div class="section-header" (click)="toggleSection('flags')">
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.flags"
+              >▼</span
+            >
+            <h1>{{ "UE_HEADER_FLAGS" | translate }}</h1>
+          </div>
+          @if (sectionsExpanded.flags) {
+            <div class="section-content">
+              <div class="panel flags-panel">
+                <div class="panel-content flags-grid">
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_RACING' | translate"
+                    [imageUrl]="getFlagUrl('flag.racing')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.racing']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.racing')?.images"
+                    (assetSelected)="onThemeSlotChanged('flag.racing', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_HEAT_PAUSED' | translate"
+                    [imageUrl]="getFlagUrl('flag.heat_paused')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.heat_paused']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.heat_paused')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.heat_paused', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_HEAT_OVER' | translate"
+                    [imageUrl]="getFlagUrl('flag.heat_over')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.heat_over']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.heat_over')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.heat_over', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_RACE_OVER' | translate"
+                    [imageUrl]="getFlagUrl('flag.race_over')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.race_over']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.race_over')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.race_over', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_NOT_STARTED' | translate"
+                    [imageUrl]="getFlagUrl('flag.not_started')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.not_started']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.not_started')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.not_started', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_STARTING' | translate"
+                    [imageUrl]="getFlagUrl('flag.starting')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.starting']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.starting')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.starting', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_RESTARTING' | translate"
+                    [imageUrl]="getFlagUrl('flag.restarting')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.restarting']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.restarting')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.restarting', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_ONE_LAP_TO_GO' | translate"
+                    [imageUrl]="getFlagUrl('flag.one_lap_to_go')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.one_lap_to_go']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.one_lap_to_go')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.one_lap_to_go', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_HEAT_FINISHING' | translate"
+                    [imageUrl]="getFlagUrl('flag.heat_finishing')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.heat_finishing']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.heat_finishing')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.heat_finishing', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_WARMUP' | translate"
+                    [imageUrl]="getFlagUrl('flag.warmup')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.warmup']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.warmup')?.images"
+                    (assetSelected)="onThemeSlotChanged('flag.warmup', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_DRIVER_FINISHED' | translate"
+                    [imageUrl]="getFlagUrl('flag.driver_finished')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.driver_finished']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.driver_finished')?.images"
+                    (assetSelected)="
+                      onThemeSlotChanged('flag.driver_finished', $event)
+                    "
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_FLAG_PENALTY' | translate"
+                    [imageUrl]="getFlagUrl('flag.penalty')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['flag.penalty']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('flag.penalty')?.images"
+                    (assetSelected)="onThemeSlotChanged('flag.penalty', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Countdown Image Settings -->
+        <div
+          id="theme-countdown-section"
+          class="config-section sub-section"
+          data-section="countdown"
+        >
+          <div class="section-header" (click)="toggleSection('countdown')">
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.countdown"
+              >▼</span
+            >
+            <h1>{{ "UE_HEADER_COUNTDOWN" | translate }}</h1>
+          </div>
+          @if (sectionsExpanded.countdown) {
+            <div class="section-content">
+              <div class="panel countdown-panel">
+                <div class="panel-content countdown-grid">
+                  <app-image-selector
+                    [label]="'UE_LABEL_LAMP_RED_OFF' | translate"
+                    [imageUrl]="getLampUrl('lamp.red.dim')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['lamp.red.dim']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('lamp.red.dim')?.images"
+                    (assetSelected)="onThemeSlotChanged('lamp.red.dim', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_LAMP_RED_ON' | translate"
+                    [imageUrl]="getLampUrl('lamp.red.on')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['lamp.red.on']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('lamp.red.on')?.images"
+                    (assetSelected)="onThemeSlotChanged('lamp.red.on', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                  <app-image-selector
+                    [label]="'UE_LABEL_LAMP_GREEN' | translate"
+                    [imageUrl]="getLampUrl('lamp.green')"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['lamp.green']"
+                    [assetType]="'image'"
+                    [images]="getAssetForSlot('lamp.green')?.images"
+                    (assetSelected)="onThemeSlotChanged('lamp.green', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Fuel Gauge Image Settings -->
+        <div
+          id="theme-fuel-section"
+          class="config-section sub-section"
+          data-section="fuelGauge"
+        >
+          <div class="section-header" (click)="toggleSection('fuelGauge')">
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.fuelGauge"
+              >▼</span
+            >
+            <h1>{{ "UE_HEADER_FUEL_GAUGE" | translate }}</h1>
+          </div>
+          @if (sectionsExpanded.fuelGauge) {
+            <div class="section-content">
+              <div class="panel fuel-gauge-panel">
+                <div class="panel-content single-selector">
+                  <app-image-selector
+                    [label]="'UE_HEADER_FUEL_GAUGE' | translate"
+                    [imageUrl]="getFuelGaugeUrl()"
+                    (imageUrlChange)="captureState()"
+                    [assetId]="editingTheme.slots['gauge.fuel']"
+                    [assetType]="'image_set'"
+                    [images]="getAssetForSlot('gauge.fuel')?.images"
+                    (assetSelected)="onThemeSlotChanged('gauge.fuel', $event)"
+                    [assets]="assets"
+                    [disabled]="!isEditMode"
+                  >
+                  </app-image-selector>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Audio Settings -->
+        <div
+          id="theme-audio-section"
+          class="config-section sub-section"
+          data-section="audio"
+        >
+          <div class="section-header" (click)="toggleSection('audio')">
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.audio"
+              >▼</span
+            >
+            <h1>{{ "UE_HEADER_AUDIO" | translate }}</h1>
+          </div>
+          @if (sectionsExpanded.audio) {
+            <div class="section-content">
+              <div class="panel audio-panel">
+                <div class="panel-content audio-grid">
+                  @for (slot of mainAudioSlots; track slot.key) {
+                    <app-audio-selector
+                      [attr.id]="slot.helpId"
+                      [label]="slot.label | translate"
+                      [mode]="slot.mode"
+                      [assets]="soundAssets"
+                      [type]="getAudioConfigForSlot(slot.key).type"
+                      (typeChange)="
+                        onThemeAudioChanged(slot.key, 'type', $event)
+                      "
+                      [url]="getAudioUrl(slot.key)"
+                      [assetId]="getAudioConfigForSlot(slot.key).url"
+                      (urlChange)="onThemeAudioChanged(slot.key, 'url', $event)"
+                      (assetSelected)="onAudioAssetSelected(slot.key, $event)"
+                      [text]="getAudioConfigForSlot(slot.key).text"
+                      (textChange)="
+                        onThemeAudioChanged(slot.key, 'text', $event)
+                      "
+                      [context]="previewTTSContext"
+                      [ttsVoice]="editingSettings.ttsVoice"
+                      [ttsRate]="editingSettings.ttsRate"
+                      [ttsPitch]="editingSettings.ttsPitch"
+                      [ttsVolume]="editingSettings.ttsVolume"
+                      [masterVolume]="editingSettings.masterVolume"
+                      [readonly]="!isEditMode"
+                    >
+                    </app-audio-selector>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Driver Audio Overrides Section -->
+        <div
+          id="theme-driver-audio-section"
+          class="config-section sub-section"
+          data-section="driverAudioOverrides"
+        >
+          <div
+            class="section-header"
+            (click)="toggleSection('driverAudioOverrides')"
+          >
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded.driverAudioOverrides"
+              >▼</span
+            >
+            <h1>
+              {{ "UE_HEADER_DRIVER_AUDIO_OVERRIDES" | translate }}
+            </h1>
+          </div>
+          @if (sectionsExpanded.driverAudioOverrides) {
+            <div class="section-content">
+              <app-driver-audio-config
+                [overrides]="editingTheme.driver_audio_overrides || {}"
+                [isOverrideMode]="true"
+                [readonly]="!isEditMode"
+                [assets]="soundAssets"
+                [ttsContext]="previewTTSContext"
+                idPrefix="theme"
+                (overrideChange)="onDriverAudioOverrideChange($event)"
+                (resetAllOverrides)="onResetDriverAudioOverrides()"
+              >
+              </app-driver-audio-config>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  <app-confirmation-modal
+    [visible]="showDeleteConfirm"
+    title="THM_CONFIRM_DELETE_TITLE"
+    message="THM_CONFIRM_DELETE_MSG"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmDeleteTheme()"
+    (cancel)="onCancelDeleteTheme()"
+  >
+  </app-confirmation-modal>
+</div>
