@@ -4,8 +4,11 @@ import { Settings } from "@app/models/settings";
 
 import {
   applyClearLayout,
+  applyImportLayout,
+  applyImportLayoutDetailed,
   applyResetLayout,
   executeClearLayout,
+  executeImportLayout,
   handleClearCurrentLayout,
   handleClearLayout,
   handleExportMigrationDiagnostics,
@@ -339,6 +342,161 @@ describe("ui-editor-layout-actions.helper", () => {
 
       handleImportPracticeRacedayLayout(mockComp, event);
       expect(mockComp.onImportLayout).toHaveBeenCalledWith(event, ui);
+    });
+  });
+
+  describe("applyImportLayout and executeImportLayout", () => {
+    it("should apply imported layout from CustomUI layoutJson string", () => {
+      const customUiJson = JSON.stringify({
+        name: "Four Rows Layout",
+        entity_id: "rcai-four-rows",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          scaleMode: "letterbox",
+          widgets: [
+            {
+              id: "w-imported-1",
+              widgetType: "lane-column",
+              x: 10,
+              y: 20,
+              width: 200,
+              height: 100,
+            },
+          ],
+        }),
+        columnsJson: "[]",
+        columnLayoutsJson: "{}",
+        columnVisibilityJson: "{}",
+        columnWidthsJson: "{}",
+        columnAnchorsJson: "{}",
+      });
+
+      const result = applyImportLayoutDetailed(customUiJson, ui, settings);
+      expect(result.success).toBeTrue();
+      expect(ui.layoutJson).toContain("w-imported-1");
+      expect(settings.racedayLayout?.widgets?.[0]?.id).toBe("w-imported-1");
+
+      const boolResult = applyImportLayout(customUiJson, ui, settings);
+      expect(boolResult).toBeTrue();
+    });
+
+    it("should return failure with UE_ERROR_IMPORT_INVALID_JSON for invalid JSON", () => {
+      const result = applyImportLayoutDetailed("{invalid-json", ui, settings);
+      expect(result.success).toBeFalse();
+      expect(result.errorKey).toBe("UE_ERROR_IMPORT_INVALID_JSON");
+      expect(applyImportLayout("{invalid-json", ui, settings)).toBeFalse();
+    });
+
+    it("should return failure with UE_ERROR_IMPORT_NO_LAYOUT when JSON has no layout", () => {
+      const result = applyImportLayoutDetailed(
+        JSON.stringify({ notALayout: true }),
+        ui,
+        settings,
+      );
+      expect(result.success).toBeFalse();
+      expect(result.errorKey).toBe("UE_ERROR_IMPORT_NO_LAYOUT");
+      expect(
+        applyImportLayout(JSON.stringify({ notALayout: true }), ui, settings),
+      ).toBeFalse();
+    });
+
+    it("should alert when executeImportLayout encounters an invalid layout", () => {
+      spyOn(window, "alert");
+      const mockTranslation = {
+        translate: jasmine
+          .createSpy("translate")
+          .and.callFake((key: string) => `Translated:${key}`),
+      };
+      const mockLogger = {
+        error: jasmine.createSpy("error"),
+      };
+      const onSuccess = jasmine.createSpy("onSuccess");
+
+      const file = new File([JSON.stringify({ empty: true })], "test.json", {
+        type: "application/json",
+      });
+      const input = {
+        files: [file],
+        value: "test.json",
+      } as unknown as HTMLInputElement;
+      const event = { target: input } as unknown as Event;
+
+      const dummyFileReader = {
+        readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+          this: any,
+        ) {
+          this.onload({ target: { result: JSON.stringify({ empty: true }) } });
+        }),
+      };
+      spyOn(window as any, "FileReader").and.returnValue(
+        dummyFileReader as any,
+      );
+
+      executeImportLayout(
+        event,
+        ui,
+        settings,
+        mockLogger,
+        onSuccess,
+        null,
+        mockTranslation,
+      );
+
+      expect(window.alert).toHaveBeenCalledWith(
+        "Translated:UE_ERROR_IMPORT_NO_LAYOUT",
+      );
+      expect(onSuccess).not.toHaveBeenCalled();
+      expect(input.value).toBe("");
+    });
+
+    it("should alert when executeImportLayout encounters file read error", () => {
+      spyOn(window, "alert");
+      const mockTranslation = {
+        translate: jasmine
+          .createSpy("translate")
+          .and.callFake((key: string) => `Translated:${key}`),
+      };
+      const mockLogger = {
+        error: jasmine.createSpy("error"),
+      };
+      const onSuccess = jasmine.createSpy("onSuccess");
+
+      const file = new File(["data"], "test.json", {
+        type: "application/json",
+      });
+      const input = {
+        files: [file],
+        value: "test.json",
+      } as unknown as HTMLInputElement;
+      const event = { target: input } as unknown as Event;
+
+      const dummyFileReader = {
+        readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+          this: any,
+        ) {
+          this.onerror(new Error("disk error"));
+        }),
+      };
+      spyOn(window as any, "FileReader").and.returnValue(
+        dummyFileReader as any,
+      );
+
+      executeImportLayout(
+        event,
+        ui,
+        settings,
+        mockLogger,
+        onSuccess,
+        null,
+        mockTranslation,
+      );
+
+      expect(window.alert).toHaveBeenCalledWith(
+        "Translated:UE_ERROR_IMPORT_READ_FAILED",
+      );
+      expect(mockLogger.error).toHaveBeenCalled();
+      expect(onSuccess).not.toHaveBeenCalled();
     });
   });
 

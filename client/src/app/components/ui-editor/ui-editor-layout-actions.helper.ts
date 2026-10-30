@@ -9,7 +9,7 @@ import {
   downloadJsonFile,
   exportMigrationDiagnostics,
   getDefaultLayoutResetData,
-  parseLayoutImport,
+  parseLayoutImportDetailed,
   preMigrationLayoutCache,
   restorePreMigrationLayout,
   upgradePreservedHeatViewLayout,
@@ -55,15 +55,26 @@ export function applyResetLayout(
   return data;
 }
 
-export function applyImportLayout(
+export interface ApplyImportLayoutResult {
+  success: boolean;
+  errorKey?: string;
+}
+
+export function applyImportLayoutDetailed(
   rawJson: string,
   ui: CustomUI,
   editingSettings: Settings,
-): boolean {
+): ApplyImportLayoutResult {
   const isPractice = ui.entity_id === "practice_ui_layout_rc_ai";
-  const parsed = parseLayoutImport(rawJson, isPractice);
-  if (!parsed) return false;
+  const result = parseLayoutImportDetailed(rawJson, isPractice);
+  if (!result.success || !result.data) {
+    return {
+      success: false,
+      errorKey: result.errorKey || "UE_ERROR_IMPORT_FAILED",
+    };
+  }
 
+  const parsed = result.data;
   ui.layoutJson = JSON.stringify(parsed.layout);
   ui.columnsJson = JSON.stringify(parsed.columns);
   ui.columnLayoutsJson = JSON.stringify(parsed.columnLayouts);
@@ -86,7 +97,15 @@ export function applyImportLayout(
     editingSettings.practiceColumnAnchors = parsed.columnAnchors;
     editingSettings.practiceColumnWidths = parsed.columnWidths;
   }
-  return true;
+  return { success: true };
+}
+
+export function applyImportLayout(
+  rawJson: string,
+  ui: CustomUI,
+  editingSettings: Settings,
+): boolean {
+  return applyImportLayoutDetailed(rawJson, ui, editingSettings).success;
 }
 
 export function applyClearLayout(
@@ -159,6 +178,7 @@ export function executeImportLayout(
   logger: any,
   onSuccess: () => void,
   stackedColumnsController?: any,
+  translationService?: any,
 ): void {
   const input = event?.target as HTMLInputElement;
   if (!input?.files || input.files.length === 0) return;
@@ -175,12 +195,29 @@ export function executeImportLayout(
       ) {
         return;
       }
-      if (applyImportLayout(rawJson, ui, editingSettings)) {
+      const result = applyImportLayoutDetailed(rawJson, ui, editingSettings);
+      if (result.success) {
         onSuccess();
+      } else {
+        const errorKey = result.errorKey || "UE_ERROR_IMPORT_FAILED";
+        const msg =
+          translationService?.translate(errorKey) || "Failed to import layout.";
+        alert(msg);
       }
     } catch (err) {
-      logger.error("Failed to parse layout file", err);
+      logger?.error("Failed to parse layout file", err);
+      const msg =
+        translationService?.translate("UE_ERROR_IMPORT_FAILED") ||
+        "Failed to import layout.";
+      alert(msg);
     }
+  };
+  reader.onerror = (err) => {
+    logger?.error("Failed to read layout file", err);
+    const msg =
+      translationService?.translate("UE_ERROR_IMPORT_READ_FAILED") ||
+      "Failed to import layout: Could not read the selected file.";
+    alert(msg);
   };
   reader.readAsText(input.files[0]);
   input.value = "";
@@ -320,6 +357,7 @@ export function handleImportLayout(
       comp.cdr?.detectChanges?.() || comp.cdr?.markForCheck?.();
     },
     comp.stackedColumnsController,
+    comp.translationService,
   );
 }
 

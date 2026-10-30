@@ -92,6 +92,184 @@ export function buildLayoutExport(
   return { layoutExport, fileName };
 }
 
+export interface LayoutImportResult {
+  success: boolean;
+  errorKey?: string;
+  data?: {
+    layout: LayoutConfig;
+    columns: string[];
+    columnLayouts: any;
+    columnVisibility: any;
+    columnAnchors: any;
+    columnWidths: any;
+  };
+}
+
+function extractImportedLayout(layoutData: any): LayoutConfig | null {
+  let rawLayout =
+    layoutData.layout ??
+    layoutData.racedayLayout ??
+    layoutData.practiceRacedayLayout ??
+    layoutData.layoutJson ??
+    (layoutData.widgets ? layoutData : null);
+
+  if (typeof rawLayout === "string") {
+    try {
+      rawLayout = JSON.parse(rawLayout);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!rawLayout || typeof rawLayout !== "object" || Array.isArray(rawLayout)) {
+    return null;
+  }
+
+  if (!Array.isArray(rawLayout.widgets)) {
+    if (
+      typeof rawLayout.baseWidth === "number" ||
+      typeof rawLayout.baseHeight === "number"
+    ) {
+      rawLayout.widgets = [];
+    } else {
+      return null;
+    }
+  }
+  return rawLayout;
+}
+
+function extractImportedColumns(
+  layoutData: any,
+  isPractice: boolean,
+): string[] {
+  let rawColumns =
+    layoutData.columns ??
+    layoutData.racedayColumns ??
+    layoutData.practiceRacedayColumns ??
+    layoutData.columnsJson;
+  if (typeof rawColumns === "string") {
+    try {
+      rawColumns = JSON.parse(rawColumns);
+    } catch {
+      rawColumns = null;
+    }
+  }
+  return Array.isArray(rawColumns)
+    ? rawColumns
+    : isPractice
+      ? Settings.DEFAULT_PRACTICE_COLUMNS
+      : Settings.DEFAULT_COLUMNS;
+}
+
+function extractImportedRecordMap(
+  data: any,
+  ...keys: string[]
+): Record<string, any> {
+  for (const key of keys) {
+    let val = data[key];
+    if (val !== undefined && val !== null) {
+      if (typeof val === "string") {
+        try {
+          val = JSON.parse(val);
+        } catch {
+          val = {};
+        }
+      }
+      if (typeof val === "object" && !Array.isArray(val)) {
+        return val;
+      }
+    }
+  }
+  return {};
+}
+
+export function parseLayoutImportDetailed(
+  jsonContent: string,
+  isPractice: boolean,
+): LayoutImportResult {
+  if (!jsonContent || typeof jsonContent !== "string") {
+    return { success: false, errorKey: "UE_ERROR_IMPORT_INVALID_JSON" };
+  }
+
+  const trimmed = jsonContent.trim().replace(/^\uFEFF/, "");
+  if (!trimmed) {
+    return { success: false, errorKey: "UE_ERROR_IMPORT_INVALID_JSON" };
+  }
+
+  let layoutData: any;
+  try {
+    layoutData = JSON.parse(trimmed);
+  } catch {
+    return { success: false, errorKey: "UE_ERROR_IMPORT_INVALID_JSON" };
+  }
+
+  if (
+    !layoutData ||
+    typeof layoutData !== "object" ||
+    Array.isArray(layoutData)
+  ) {
+    return { success: false, errorKey: "UE_ERROR_IMPORT_NO_LAYOUT" };
+  }
+
+  const rawLayout = extractImportedLayout(layoutData);
+  if (!rawLayout) {
+    return { success: false, errorKey: "UE_ERROR_IMPORT_NO_LAYOUT" };
+  }
+
+  const columns = extractImportedColumns(layoutData, isPractice);
+  const columnLayouts = extractImportedRecordMap(
+    layoutData,
+    "columnLayouts",
+    "practiceColumnLayouts",
+    "columnLayoutsJson",
+  );
+  const columnVisibility = extractImportedRecordMap(
+    layoutData,
+    "columnVisibility",
+    "practiceColumnVisibility",
+    "columnVisibilityJson",
+  );
+  const columnAnchors = extractImportedRecordMap(
+    layoutData,
+    "columnAnchors",
+    "practiceColumnAnchors",
+    "columnAnchorsJson",
+  );
+  const columnWidths = extractImportedRecordMap(
+    layoutData,
+    "columnWidths",
+    "practiceColumnWidths",
+    "columnWidthsJson",
+  );
+
+  const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+    layout: rawLayout,
+    columns,
+    columnLayouts,
+    columnVisibility,
+    columnAnchors,
+    columnWidths,
+    isPractice,
+  });
+  const finalLayout = migration.migrated ? migration.layout : rawLayout;
+  LaneViewMigrationHelper.migrateGapWidgets(finalLayout);
+  LaneViewMigrationHelper.migrateColumnList(columns);
+  LaneViewMigrationHelper.migrateColumnLayouts(columnLayouts);
+  LaneViewMigrationHelper.migrateColumnWidths(columnWidths);
+
+  return {
+    success: true,
+    data: {
+      layout: finalLayout,
+      columns,
+      columnLayouts,
+      columnVisibility,
+      columnAnchors,
+      columnWidths,
+    },
+  };
+}
+
 export function parseLayoutImport(
   jsonContent: string,
   isPractice: boolean,
@@ -103,59 +281,8 @@ export function parseLayoutImport(
   columnAnchors: any;
   columnWidths: any;
 } | null {
-  try {
-    const layoutData = JSON.parse(jsonContent);
-    const layout =
-      layoutData.layout ||
-      layoutData.racedayLayout ||
-      layoutData.practiceRacedayLayout ||
-      (layoutData.widgets ? layoutData : null);
-
-    if (!layout) return null;
-
-    const columns =
-      layoutData.columns ||
-      layoutData.racedayColumns ||
-      layoutData.practiceRacedayColumns ||
-      (isPractice
-        ? Settings.DEFAULT_PRACTICE_COLUMNS
-        : Settings.DEFAULT_COLUMNS);
-
-    const columnLayouts =
-      layoutData.columnLayouts || layoutData.practiceColumnLayouts || {};
-    const columnVisibility =
-      layoutData.columnVisibility || layoutData.practiceColumnVisibility || {};
-    const columnAnchors =
-      layoutData.columnAnchors || layoutData.practiceColumnAnchors || {};
-    const columnWidths =
-      layoutData.columnWidths || layoutData.practiceColumnWidths || {};
-
-    const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-      layout,
-      columns,
-      columnLayouts,
-      columnVisibility,
-      columnAnchors,
-      columnWidths,
-      isPractice,
-    });
-    const finalLayout = migration.migrated ? migration.layout : layout;
-    LaneViewMigrationHelper.migrateGapWidgets(finalLayout);
-    LaneViewMigrationHelper.migrateColumnList(columns);
-    LaneViewMigrationHelper.migrateColumnLayouts(columnLayouts);
-    LaneViewMigrationHelper.migrateColumnWidths(columnWidths);
-
-    return {
-      layout: finalLayout,
-      columns,
-      columnLayouts,
-      columnVisibility,
-      columnAnchors,
-      columnWidths,
-    };
-  } catch {
-    return null;
-  }
+  const result = parseLayoutImportDetailed(jsonContent, isPractice);
+  return result.success && result.data ? result.data : null;
 }
 
 export function getDefaultLayoutResetData(

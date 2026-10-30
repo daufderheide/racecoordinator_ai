@@ -438,9 +438,14 @@ export abstract class LayoutEditorBase {
   }
 
   // --- Import & Export ---
-  onImportLayout(event: Event): void {
+  onImportLayout(event: Event): Promise<void> | void {
     if (this.editingLayout && this.isEditMode) {
-      onImportLayout(event, this.editingLayout, this.editingSettings, this);
+      return onImportLayout(
+        event,
+        this.editingLayout,
+        this.editingSettings,
+        this,
+      );
     }
   }
 

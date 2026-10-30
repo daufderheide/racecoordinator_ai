@@ -793,6 +793,194 @@ describe("LayoutEditorComponent", () => {
       expect(mockLogger.error).not.toHaveBeenCalled();
     });
 
+    describe("onImportLayout", () => {
+      it("should successfully import a CustomUI format layout (e.g. four-rows-layout.json)", async () => {
+        component.isEditMode = true;
+        component.selectedWidgetId = "widget-timer";
+        spyOn(component, "syncRacedayPreview");
+
+        const customUiLayout = JSON.stringify({
+          name: "Modern RC AI — Four Rows",
+          entity_id: "rcai-modern-four-rows-layout",
+          is_default: false,
+          layoutJson: JSON.stringify({
+            baseWidth: 1920,
+            baseHeight: 1080,
+            scaleMode: "letterbox",
+            widgets: [
+              {
+                id: "rcai-modern-four-rows-6",
+                widgetType: "lane-column",
+                x: 24,
+                y: 180,
+                width: 446,
+                height: 160,
+                zIndex: 10,
+                customSettings: {
+                  columnKey: "driver.nickname",
+                  targetIndex: 0,
+                },
+              },
+            ],
+          }),
+          columnsJson: "[]",
+          columnLayoutsJson: "{}",
+          columnVisibilityJson: "{}",
+          columnWidthsJson: "{}",
+          columnAnchorsJson: "{}",
+        });
+
+        const dummyFileReader = {
+          result: customUiLayout,
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onload?.();
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        const file = new File([customUiLayout], "four-rows-layout.json", {
+          type: "application/json",
+        });
+        const input = {
+          files: [file],
+          value: "four-rows-layout.json",
+        } as unknown as HTMLInputElement;
+        const event = { target: input } as unknown as Event;
+
+        await component.onImportLayout(event);
+
+        expect(component.selectedWidgetId).toBeNull();
+        expect(component.syncRacedayPreview).toHaveBeenCalled();
+        expect(component.editingLayout?.layoutJson).toContain(
+          "rcai-modern-four-rows-6",
+        );
+        expect(input.value).toBe("");
+      });
+
+      it("should not import when isEditMode is false", async () => {
+        component.isEditMode = false;
+        spyOn(component, "syncRacedayPreview");
+
+        const file = new File(["{}"], "layout.json", {
+          type: "application/json",
+        });
+        const input = {
+          files: [file],
+          value: "layout.json",
+        } as unknown as HTMLInputElement;
+        const event = { target: input } as unknown as Event;
+
+        await component.onImportLayout(event);
+
+        expect(component.syncRacedayPreview).not.toHaveBeenCalled();
+      });
+
+      it("should alert user with translated error when file contains invalid JSON", async () => {
+        component.isEditMode = true;
+        spyOn(window, "alert");
+
+        const dummyFileReader = {
+          result: "not valid json {",
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onload?.();
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        const file = new File(["not valid json {"], "bad.json", {
+          type: "application/json",
+        });
+        const input = {
+          files: [file],
+          value: "bad.json",
+        } as unknown as HTMLInputElement;
+        const event = { target: input } as unknown as Event;
+
+        await component.onImportLayout(event);
+
+        expect(window.alert).toHaveBeenCalledWith(
+          mockTranslationService.translate("UE_ERROR_IMPORT_INVALID_JSON"),
+        );
+        expect(input.value).toBe("");
+      });
+
+      it("should alert user with translated error when file has no layout configuration", async () => {
+        component.isEditMode = true;
+        spyOn(window, "alert");
+
+        const emptyJson = JSON.stringify({ hello: "world" });
+        const dummyFileReader = {
+          result: emptyJson,
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onload?.();
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        const file = new File([emptyJson], "no-layout.json", {
+          type: "application/json",
+        });
+        const input = {
+          files: [file],
+          value: "no-layout.json",
+        } as unknown as HTMLInputElement;
+        const event = { target: input } as unknown as Event;
+
+        await component.onImportLayout(event);
+
+        expect(window.alert).toHaveBeenCalledWith(
+          mockTranslationService.translate("UE_ERROR_IMPORT_NO_LAYOUT"),
+        );
+        expect(input.value).toBe("");
+      });
+
+      it("should alert user with translated error when file read fails", async () => {
+        component.isEditMode = true;
+        spyOn(window, "alert");
+
+        const dummyFileReader = {
+          error: new Error("File unreadable"),
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onerror?.();
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        const file = new File(["dummy"], "unreadable.json", {
+          type: "application/json",
+        });
+        const input = {
+          files: [file],
+          value: "unreadable.json",
+        } as unknown as HTMLInputElement;
+        const event = { target: input } as unknown as Event;
+
+        await component.onImportLayout(event);
+
+        expect(window.alert).toHaveBeenCalledWith(
+          mockTranslationService.translate("UE_ERROR_IMPORT_READ_FAILED"),
+        );
+        expect(mockLogger.error).toHaveBeenCalled();
+        expect(input.value).toBe("");
+      });
+    });
+
     it("should return guide help steps and activate widget on inspector step onEnter", () => {
       const steps = component.getHelpSteps();
       expect(steps.length).toBeGreaterThan(2);

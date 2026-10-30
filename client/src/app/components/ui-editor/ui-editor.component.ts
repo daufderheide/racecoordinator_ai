@@ -430,7 +430,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private router: Router,
     public themeService: ThemeService,
     public customUiService: CustomUiService,
-    private translationService: TranslationService,
+    public translationService: TranslationService,
     private logger: LoggerService,
     private route: ActivatedRoute,
     private raceConnectionService: RaceConnectionService,

@@ -21,7 +21,7 @@ import {
 } from "@app/components/ui-editor/ui-editor-io.helper";
 import {
   applyClearLayout,
-  applyImportLayout,
+  applyImportLayoutDetailed,
   applyResetLayout,
 } from "@app/components/ui-editor/ui-editor-layout-actions.helper";
 import {
@@ -494,18 +494,39 @@ export async function onImportLayout(
   if (!input.files || input.files.length === 0) return;
   const file = input.files[0];
   try {
-    const rawJson = await readJsonFile(file);
-    const success = applyImportLayout(rawJson, ui, editingSettings);
-    if (success) {
+    let rawJson: string;
+    try {
+      rawJson = await readJsonFile(file);
+    } catch (readErr) {
+      comp.logger?.error("Failed to read layout file", readErr);
+      const msg =
+        comp.translationService?.translate("UE_ERROR_IMPORT_READ_FAILED") ||
+        "Failed to import layout: Could not read the selected file.";
+      alert(msg);
+      return;
+    }
+
+    const result = applyImportLayoutDetailed(rawJson, ui, editingSettings);
+    if (result.success) {
       comp.selectedWidgetId = null;
       comp.currentSelectedWidget = null;
       const parsed = parseLayoutConfig(ui);
       comp.syncRacedayPreview?.(parsed);
       comp.captureState?.();
       comp.cdr?.markForCheck();
+    } else {
+      const errorKey = result.errorKey || "UE_ERROR_IMPORT_FAILED";
+      const msg =
+        comp.translationService?.translate(errorKey) ||
+        "Failed to import layout.";
+      alert(msg);
     }
   } catch (err) {
     comp.logger?.error("Failed to import layout", err);
+    const msg =
+      comp.translationService?.translate("UE_ERROR_IMPORT_FAILED") ||
+      "Failed to import layout.";
+    alert(msg);
   } finally {
     input.value = "";
   }

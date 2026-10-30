@@ -11,6 +11,7 @@ import {
   exportMigrationDiagnostics,
   getDefaultLayoutResetData,
   parseLayoutImport,
+  parseLayoutImportDetailed,
   preMigrationLayoutCache,
   restorePreMigrationLayout,
   upgradePreservedHeatViewLayout,
@@ -90,6 +91,67 @@ describe("ui-editor-io.helper", () => {
   it("should return null for invalid JSON", () => {
     const parsed = parseLayoutImport("invalid-json{", false);
     expect(parsed).toBeNull();
+  });
+
+  it("should parse CustomUI entity layout JSON with stringified layoutJson and columnsJson", () => {
+    const customUiJson = JSON.stringify({
+      name: "Modern RC AI — Four Rows",
+      entity_id: "rcai-modern-four-rows-layout",
+      is_default: false,
+      layoutJson: JSON.stringify({
+        baseWidth: 1920,
+        baseHeight: 1080,
+        scaleMode: "letterbox",
+        widgets: [
+          {
+            id: "w-lane-0",
+            widgetType: "lane-column",
+            x: 24,
+            y: 180,
+            width: 446,
+            height: 160,
+            zIndex: 10,
+            customSettings: { columnKey: "driver.nickname", targetIndex: 0 },
+          },
+        ],
+      }),
+      columnsJson: "[]",
+      columnLayoutsJson: "{}",
+      columnVisibilityJson: "{}",
+      columnWidthsJson: "{}",
+      columnAnchorsJson: "{}",
+    });
+
+    const detailed = parseLayoutImportDetailed(customUiJson, false);
+    expect(detailed.success).toBeTrue();
+    expect(detailed.data).toBeDefined();
+    expect(detailed.data?.layout.baseWidth).toBe(1920);
+    expect(detailed.data?.layout.widgets.length).toBe(1);
+    expect(detailed.data?.columns).toEqual([]);
+
+    const compat = parseLayoutImport(customUiJson, false);
+    expect(compat).not.toBeNull();
+    expect(compat?.layout.widgets[0].id).toBe("w-lane-0");
+  });
+
+  it("should report UE_ERROR_IMPORT_INVALID_JSON for malformed JSON or empty string", () => {
+    const res1 = parseLayoutImportDetailed("not-json", false);
+    expect(res1.success).toBeFalse();
+    expect(res1.errorKey).toBe("UE_ERROR_IMPORT_INVALID_JSON");
+
+    const res2 = parseLayoutImportDetailed("", false);
+    expect(res2.success).toBeFalse();
+    expect(res2.errorKey).toBe("UE_ERROR_IMPORT_INVALID_JSON");
+  });
+
+  it("should report UE_ERROR_IMPORT_NO_LAYOUT when JSON has no layout configuration", () => {
+    const noLayoutJson = JSON.stringify({
+      foo: "bar",
+      someNumber: 42,
+    });
+    const res = parseLayoutImportDetailed(noLayoutJson, false);
+    expect(res.success).toBeFalse();
+    expect(res.errorKey).toBe("UE_ERROR_IMPORT_NO_LAYOUT");
   });
 
   describe("executeSelectFolder & executeClearFolder", () => {
