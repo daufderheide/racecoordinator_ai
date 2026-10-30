@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +19,21 @@ public class SerialConnection implements ISerialConnection {
   private volatile String portName;
 
   public static List<String> getAvailableSerialPorts() {
-    SerialPort[] ports = SerialPort.getCommPorts();
-    List<String> portNames = new ArrayList<>();
-    for (SerialPort port : ports) {
-      portNames.add(port.getSystemPortName());
+    try {
+      SerialPort[] ports = SerialPort.getCommPorts();
+      List<String> portNames = new ArrayList<>();
+      if (ports != null) {
+        for (SerialPort port : ports) {
+          portNames.add(port.getSystemPortName());
+        }
+      }
+      return portNames;
+    } catch (LinkageError | Exception e) {
+      logger.warn(
+          "Failed to retrieve available serial ports due to native linkage or driver error: {}",
+          e.getMessage());
+      return Collections.emptyList();
     }
-    return portNames;
   }
 
   public void connect(String portName) throws IOException {
@@ -40,13 +50,21 @@ public class SerialConnection implements ISerialConnection {
       return;
     }
 
-    SerialPort[] ports = SerialPort.getCommPorts();
-    for (SerialPort port : ports) {
-      if (port.getSystemPortName().equalsIgnoreCase(portName)
-          || port.getSystemPortPath().equalsIgnoreCase(portName)) {
-        serialPort = port;
-        this.portName = portName;
-        break;
+    SerialPort[] ports;
+    try {
+      ports = SerialPort.getCommPorts();
+    } catch (LinkageError e) {
+      throw new IOException(
+          "Failed to enumerate serial ports due to native library error: " + e.getMessage(), e);
+    }
+    if (ports != null) {
+      for (SerialPort port : ports) {
+        if (port.getSystemPortName().equalsIgnoreCase(portName)
+            || port.getSystemPortPath().equalsIgnoreCase(portName)) {
+          serialPort = port;
+          this.portName = portName;
+          break;
+        }
       }
     }
 
@@ -175,12 +193,22 @@ public class SerialConnection implements ISerialConnection {
 
   // Static helper to list ports
   public static String[] getPortNames() {
-    SerialPort[] ports = SerialPort.getCommPorts();
-    String[] names = new String[ports.length];
-    for (int i = 0; i < ports.length; i++) {
-      names[i] = ports[i].getSystemPortName();
+    try {
+      SerialPort[] ports = SerialPort.getCommPorts();
+      if (ports == null) {
+        return new String[0];
+      }
+      String[] names = new String[ports.length];
+      for (int i = 0; i < ports.length; i++) {
+        names[i] = ports[i].getSystemPortName();
+      }
+      return names;
+    } catch (LinkageError | Exception e) {
+      logger.warn(
+          "Failed to retrieve port names due to native linkage or driver error: {}",
+          e.getMessage());
+      return new String[0];
     }
-    return names;
   }
 
   private static String bytesToHex(byte[] bytes) {

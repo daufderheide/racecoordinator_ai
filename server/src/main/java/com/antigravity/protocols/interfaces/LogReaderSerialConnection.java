@@ -114,10 +114,13 @@ public class LogReaderSerialConnection implements ISerialConnection {
           SerialPort.class.getDeclaredConstructor();
       constructor.setAccessible(true);
       dummyPort = constructor.newInstance();
-    } catch (Exception e) {
-      SerialPort[] ports = SerialPort.getCommPorts();
-      if (ports.length > 0) {
-        dummyPort = ports[0];
+    } catch (Throwable e) {
+      try {
+        SerialPort[] ports = SerialPort.getCommPorts();
+        if (ports != null && ports.length > 0) {
+          dummyPort = ports[0];
+        }
+      } catch (Throwable ignored) {
       }
     }
 

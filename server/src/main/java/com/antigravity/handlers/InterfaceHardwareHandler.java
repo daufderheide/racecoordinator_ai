@@ -264,7 +264,7 @@ public class InterfaceHardwareHandler {
     try {
       List<String> ports = SerialConnection.getAvailableSerialPorts();
       ctx.json(ports);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       logger.error("Error getting serial ports", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
@@ -288,7 +288,7 @@ public class InterfaceHardwareHandler {
           bartDevices.size(),
           bartDevices);
       ctx.json(bartDevices);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       logger.error("Error getting BLE devices", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }

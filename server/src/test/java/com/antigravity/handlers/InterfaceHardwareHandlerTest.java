@@ -29,8 +29,32 @@ public class InterfaceHardwareHandlerTest {
   }
 
   @Test
+  public void testGetBleDevices_WhenContextThrows_HandlesErrorGracefully() {
+    Context mockCtx = mock(Context.class);
+    org.mockito.Mockito.doThrow(new UnsatisfiedLinkError("Mock BLE link failure"))
+        .when(mockCtx)
+        .json(org.mockito.ArgumentMatchers.any());
+    when(mockCtx.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(mockCtx);
+
+    handler.getBleDevices(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).status(500);
+  }
+
+  @Test
   public void testGetSerialPorts_ShouldNotCrash() {
     handler.getSerialPorts(ctx);
+  }
+
+  @Test
+  public void testGetSerialPorts_WhenContextThrows_HandlesErrorGracefully() {
+    Context mockCtx = mock(Context.class);
+    org.mockito.Mockito.doThrow(new UnsatisfiedLinkError("Mock native link failure"))
+        .when(mockCtx)
+        .json(org.mockito.ArgumentMatchers.any());
+    when(mockCtx.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(mockCtx);
+
+    handler.getSerialPorts(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).status(500);
   }
 
   @Test
