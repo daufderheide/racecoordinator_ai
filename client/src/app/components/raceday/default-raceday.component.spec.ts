@@ -6472,7 +6472,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should resolve Halfway vs 30s collision by playing Halfway (NORMAL) and dropping 30s (NORMAL)", () => {
+    it("should resolve Halfway vs 30s collision by playing Halfway (HIGH) and dropping 30s (HIGH)", () => {
       (window.Audio as any).calls.reset();
 
       mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
@@ -6506,7 +6506,7 @@ describe("DefaultRacedayComponent", () => {
       // Crossing 30s threshold: both Halfway (30s) and standard 30s threshold are triggered
       raceTimeSubject.next({ time: 30.0 });
 
-      // Halfway is NORMAL priority (played first), 30s is NORMAL priority (dropped because channel is busy)
+      // Halfway is HIGH priority (played first), 30s is HIGH priority (dropped because channel is busy)
       // Only halfway_sound should have been played; 30s was dropped!
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching(/halfway_sound/),
@@ -6516,7 +6516,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should resolve Halfway vs 30s collision when Halfway is TTS by playing Halfway TTS (NORMAL) and dropping 30s (NORMAL)", () => {
+    it("should resolve Halfway vs 30s collision when Halfway is TTS by playing Halfway TTS (HIGH) and dropping 30s (HIGH)", () => {
       (window.Audio as any).calls.reset();
       const playCalloutSpy = spyOn(
         component["audioService"],
@@ -6552,21 +6552,21 @@ describe("DefaultRacedayComponent", () => {
       (window.Audio as any).calls.reset();
       playCalloutSpy.calls.reset();
 
-      // Crossing 30s threshold: Halfway (TTS) triggers first with NORMAL priority, occupies voice channel
+      // Crossing 30s threshold: Halfway (TTS) triggers first with HIGH priority, occupies voice channel
       raceTimeSubject.next({ time: 30.0 });
 
-      // Halfway TTS played with normal priority
+      // Halfway TTS played with high priority
       expect(playCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
           text: "Halfway through the heat",
         }),
-        "normal",
+        "high",
         undefined,
         undefined,
         { widgetType: "timer" },
       );
-      // 30s threshold audio was dropped because voice channel was busy with NORMAL priority Halfway!
+      // 30s threshold audio was dropped because voice channel was busy with HIGH priority Halfway!
       expect(window.Audio).not.toHaveBeenCalledWith(
         jasmine.stringMatching(/api\/assets\/download\/30$/),
       );
@@ -6645,14 +6645,14 @@ describe("DefaultRacedayComponent", () => {
       );
       playCalloutSpy.calls.reset();
 
-      // Halfway (normal)
+      // Halfway (high)
       component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY);
       expect(playCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
           text: "TTS for audio.seconds_left.halfway",
         }),
-        "normal",
+        "high",
         undefined,
         undefined,
         { widgetType: "timer" },
@@ -8029,7 +8029,7 @@ describe("DefaultRacedayComponent", () => {
         jasmine.objectContaining({
           url: jasmine.stringMatching("/assets/30_elapsed.mp3"),
         }),
-        "normal",
+        "high",
         undefined,
         jasmine.stringMatching("/assets/30_elapsed.mp3"),
         jasmine.anything(),
@@ -8053,10 +8053,65 @@ describe("DefaultRacedayComponent", () => {
         jasmine.objectContaining({
           url: jasmine.stringMatching("/assets/30_remaining.mp3"),
         }),
-        "normal",
+        "high",
         undefined,
         jasmine.stringMatching("/assets/30_remaining.mp3"),
         jasmine.anything(),
+      );
+    });
+
+    it("should trigger seconds left time callout with high priority and log diagnostic info", () => {
+      component["assets"] = [
+        {
+          entity_id: "time-left-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 3,
+              triggerMode: "remaining",
+              text: "White Flag - Finish your lap",
+              type: "tts",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "time-left-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 20,
+        },
+      } as any;
+
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.returnValue(true);
+      const loggerInfoSpy = spyOn((component as any).logger, "info");
+
+      // Crossing 3s remaining: previous time 3.5, current time 2.8
+      (component as any).checkAudioCallouts(2.8, 3.5);
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "White Flag - Finish your lap",
+        }),
+        "high",
+        undefined,
+        undefined,
+        jasmine.anything(),
+      );
+      expect(loggerInfoSpy).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[AUDIO-TIMED\] Seconds left \(remaining\) threshold 3s triggered/,
+        ),
       );
     });
 
@@ -12791,7 +12846,7 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(audioService.playCallout).toHaveBeenCalledWith(
         jasmine.objectContaining({ type: "preset" }),
-        "normal",
+        "high",
         undefined,
         jasmine.any(String),
         { widgetType: "timer" },

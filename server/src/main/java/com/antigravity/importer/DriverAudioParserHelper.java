@@ -72,6 +72,12 @@ public final class DriverAudioParserHelper {
     }
 
     if (lower.startsWith("default_")) {
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(lower)) {
+        String resolved = assetUrlLookup.get(lower);
+        if (resolved != null && resolved.startsWith("/assets/")) {
+          return new AudioConfig("preset", resolved, "");
+        }
+      }
       return new AudioConfig("preset", val, "");
     }
 

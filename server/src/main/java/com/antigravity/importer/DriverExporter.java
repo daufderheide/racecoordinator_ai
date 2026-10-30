@@ -302,11 +302,6 @@ public class DriverExporter {
       return;
     }
 
-    // Skip built-in default presets and helmets
-    if (isBuiltInDefault(urlOrId)) {
-      return;
-    }
-
     ResolvedAsset asset = resolveAssetData(urlOrId);
     if (asset == null || asset.data == null || asset.data.length == 0) {
       return;
@@ -316,7 +311,7 @@ public class DriverExporter {
     if (hashToFileMap.containsKey(hash)) {
       // Audio or image is shared with another driver or slot: reuse existing entry
       ExportedMediaFile existing = hashToFileMap.get(hash);
-      urlToZipEntryMap.put(urlOrId, existing.getZipEntryName());
+      registerUrlMappings(urlOrId, existing.getZipEntryName(), urlToZipEntryMap);
       return;
     }
 
@@ -325,17 +320,79 @@ public class DriverExporter {
 
     ExportedMediaFile exported = new ExportedMediaFile(uniqueName, asset.data, hash);
     hashToFileMap.put(hash, exported);
-    urlToZipEntryMap.put(urlOrId, uniqueName);
+    registerUrlMappings(urlOrId, uniqueName, urlToZipEntryMap);
   }
 
-  private boolean isBuiltInDefault(String urlOrId) {
-    if (urlOrId == null) return true;
-    String lower = urlOrId.toLowerCase(Locale.ROOT);
-    if (lower.startsWith("default_")) return true;
-    if (lower.startsWith("preset:default_")) return true;
-    if (lower.startsWith("assets/defaults/")) return true;
-    if (lower.startsWith("/assets/default_")) return true;
-    return AssetDefaultsInitializer.getDefaultResourcePath(urlOrId) != null;
+  private void registerUrlMappings(
+      String urlOrId, String zipEntryName, Map<String, String> urlToZipEntryMap) {
+    if (urlOrId == null || urlOrId.trim().isEmpty() || zipEntryName == null) {
+      return;
+    }
+    urlToZipEntryMap.put(urlOrId, zipEntryName);
+
+    String clean = urlOrId.trim();
+    if (clean.toLowerCase(Locale.ROOT).startsWith("preset:")) {
+      String without = clean.substring(7).trim();
+      urlToZipEntryMap.put(without, zipEntryName);
+    } else {
+      urlToZipEntryMap.put("preset:" + clean, zipEntryName);
+    }
+
+    if (clean.startsWith("/assets/")) {
+      String stripped = clean.substring("/assets/".length());
+      urlToZipEntryMap.put(stripped, zipEntryName);
+    } else {
+      urlToZipEntryMap.put("/assets/" + clean, zipEntryName);
+    }
+
+    // Default helmet url variant like /assets/default_black-yellow_Helmet_Black-Yellow
+    if (clean.startsWith("/assets/default_") && clean.contains("_Helmet_")) {
+      String helmetSuffix = clean.substring(clean.indexOf("_Helmet_") + 8).toLowerCase(Locale.ROOT);
+      urlToZipEntryMap.put(
+          "assets/defaults/helmets/helmet_" + helmetSuffix.replace(" ", "_") + ".png",
+          zipEntryName);
+    }
+
+    // Map aliases for default assets
+    String defaultResPath = AssetDefaultsInitializer.getDefaultResourcePath(clean);
+    if (defaultResPath == null && clean.startsWith("/assets/")) {
+      defaultResPath =
+          AssetDefaultsInitializer.getDefaultResourcePath(clean.substring("/assets/".length()));
+    }
+    if (defaultResPath != null) {
+      registerDefaultAssetAliases(defaultResPath, zipEntryName, urlToZipEntryMap);
+    }
+  }
+
+  private void registerDefaultAssetAliases(
+      String defaultResPath, String zipEntryName, Map<String, String> urlToZipEntryMap) {
+    for (AssetDefaultsInitializer.DefaultAsset def :
+        AssetDefaultsInitializer.getDefaultImageAssets()) {
+      String res = AssetDefaultsInitializer.getDefaultResourcePath(def.id);
+      if (defaultResPath.equalsIgnoreCase(res)) {
+        urlToZipEntryMap.put(def.id, zipEntryName);
+        urlToZipEntryMap.put("/assets/" + def.id, zipEntryName);
+        String fn = AssetDefaultsInitializer.getDefaultFilename(def.id);
+        if (fn != null) {
+          urlToZipEntryMap.put(fn, zipEntryName);
+          urlToZipEntryMap.put("/assets/" + fn, zipEntryName);
+        }
+      }
+    }
+    for (AssetDefaultsInitializer.DefaultAsset def :
+        AssetDefaultsInitializer.getDefaultAudioAssets()) {
+      String res = AssetDefaultsInitializer.getDefaultResourcePath(def.id);
+      if (defaultResPath.equalsIgnoreCase(res)) {
+        urlToZipEntryMap.put(def.id, zipEntryName);
+        urlToZipEntryMap.put("preset:" + def.id, zipEntryName);
+        urlToZipEntryMap.put("/assets/" + def.id, zipEntryName);
+        String fn = AssetDefaultsInitializer.getDefaultFilename(def.id);
+        if (fn != null) {
+          urlToZipEntryMap.put(fn, zipEntryName);
+          urlToZipEntryMap.put("/assets/" + fn, zipEntryName);
+        }
+      }
+    }
   }
 
   private static class ResolvedAsset {
@@ -349,6 +406,15 @@ public class DriverExporter {
   }
 
   private ResolvedAsset resolveAssetData(String urlOrId) {
+    if (urlOrId == null || urlOrId.trim().isEmpty()) {
+      return null;
+    }
+
+    String cleanUrl = urlOrId.trim();
+    if (cleanUrl.toLowerCase(Locale.ROOT).startsWith("preset:")) {
+      cleanUrl = cleanUrl.substring(7).trim();
+    }
+
     String currentDbName =
         databaseContext != null && databaseContext.getCurrentDatabaseName() != null
             ? databaseContext.getCurrentDatabaseName()
@@ -358,41 +424,50 @@ public class DriverExporter {
             ? new File(new File(databaseContext.getDataRoot(), currentDbName), "assets")
             : new File("assets");
 
-    String cleanUrl = urlOrId.trim();
     String filename =
         cleanUrl.startsWith("/assets/") ? cleanUrl.substring("/assets/".length()) : cleanUrl;
 
-    // Check physical file directly in assets directory
+    String defaultResPath = AssetDefaultsInitializer.getDefaultResourcePath(cleanUrl);
+    if (defaultResPath == null) {
+      defaultResPath = AssetDefaultsInitializer.getDefaultResourcePath(filename);
+    }
+    String defaultSuggestedName = defaultResPath != null ? extractSimpleName(defaultResPath) : null;
+
+    // 1. Check physical file directly in assets directory
     File directFile = new File(assetsDir, filename);
-    if (directFile.exists() && directFile.isFile()) {
+    if (directFile.exists() && directFile.isFile() && directFile.length() > 0) {
       try {
         byte[] bytes = Files.readAllBytes(directFile.toPath());
-        return new ResolvedAsset(bytes, extractSimpleName(filename));
+        String suggested =
+            defaultSuggestedName != null ? defaultSuggestedName : extractSimpleName(filename);
+        return new ResolvedAsset(bytes, suggested);
       } catch (Exception e) {
         logger.warn("Could not read asset file: {}", directFile.getAbsolutePath(), e);
       }
     }
 
-    // Try finding via AssetService metadata
+    // 2. Try finding via AssetService metadata
     if (assetService != null) {
-      String id = filename;
-      if (id.contains("_")) {
-        id = id.substring(0, id.indexOf('_'));
+      AssetMessage assetMsg = assetService.getAssetById(filename);
+      if (assetMsg == null && filename.contains("_") && !filename.startsWith("default_")) {
+        String idPrefix = filename.substring(0, filename.indexOf('_'));
+        assetMsg = assetService.getAssetById(idPrefix);
       }
-      AssetMessage assetMsg = assetService.getAssetById(id);
       if (assetMsg != null) {
         String realFilename =
             assetMsg.getUrl() != null && assetMsg.getUrl().startsWith("/assets/")
                 ? assetMsg.getUrl().substring("/assets/".length())
                 : filename;
         File assetFile = new File(assetsDir, realFilename);
-        if (assetFile.exists() && assetFile.isFile()) {
+        if (assetFile.exists() && assetFile.isFile() && assetFile.length() > 0) {
           try {
             byte[] bytes = Files.readAllBytes(assetFile.toPath());
             String name =
-                assetMsg.getName() != null && !assetMsg.getName().isEmpty()
-                    ? assetMsg.getName()
-                    : extractSimpleName(realFilename);
+                defaultSuggestedName != null
+                    ? defaultSuggestedName
+                    : (assetMsg.getName() != null && !assetMsg.getName().isEmpty()
+                        ? assetMsg.getName()
+                        : extractSimpleName(realFilename));
             return new ResolvedAsset(bytes, name);
           } catch (Exception e) {
             logger.warn(
@@ -404,7 +479,7 @@ public class DriverExporter {
       }
     }
 
-    // Check case-insensitive match in assets directory
+    // 3. Check case-insensitive match in assets directory
     if (assetsDir.exists() && assetsDir.isDirectory()) {
       File[] matching =
           assetsDir.listFiles(
@@ -412,7 +487,11 @@ public class DriverExporter {
       if (matching != null && matching.length > 0) {
         try {
           byte[] bytes = Files.readAllBytes(matching[0].toPath());
-          return new ResolvedAsset(bytes, extractSimpleName(matching[0].getName()));
+          String suggested =
+              defaultSuggestedName != null
+                  ? defaultSuggestedName
+                  : extractSimpleName(matching[0].getName());
+          return new ResolvedAsset(bytes, suggested);
         } catch (Exception e) {
           logger.warn(
               "Could not read case-matched asset file: {}", matching[0].getAbsolutePath(), e);
@@ -420,7 +499,37 @@ public class DriverExporter {
       }
     }
 
+    // 4. Default resource fallback from classpath if not present on disk
+    if (defaultResPath != null) {
+      byte[] bytes = readResourceBytes(defaultResPath);
+      if (bytes != null && bytes.length > 0) {
+        return new ResolvedAsset(bytes, defaultSuggestedName);
+      }
+    }
+
     return null;
+  }
+
+  private byte[] readResourceBytes(String resourcePath) {
+    if (resourcePath == null) {
+      return null;
+    }
+    try (java.io.InputStream is =
+        AssetDefaultsInitializer.class.getResourceAsStream(resourcePath)) {
+      if (is == null) {
+        return null;
+      }
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      byte[] buf = new byte[8192];
+      int nRead;
+      while ((nRead = is.read(buf, 0, buf.length)) != -1) {
+        buffer.write(buf, 0, nRead);
+      }
+      return buffer.toByteArray();
+    } catch (Exception e) {
+      logger.warn("Could not read default resource bytes: {}", resourcePath, e);
+      return null;
+    }
   }
 
   private String extractSimpleName(String filename) {
@@ -455,6 +564,11 @@ public class DriverExporter {
     if (dotIdx > 0) {
       nameWithoutExt = name.substring(0, dotIdx);
       ext = name.substring(dotIdx);
+    }
+
+    if (ext.isEmpty()) {
+      ext = "image".equals(mediaType) ? ".png" : ".wav";
+      name = nameWithoutExt + ext;
     }
 
     int counter = 1;
@@ -610,7 +724,14 @@ public class DriverExporter {
           a.put("url", config.getUrl() != null ? config.getUrl() : "");
         } else {
           String url = config.getUrl();
-          String finalUrl = urlToZipEntryMap.getOrDefault(url, url);
+          String lookupKey = url != null ? url.trim() : "";
+          String finalUrl = urlToZipEntryMap.get(lookupKey);
+          if (finalUrl == null && lookupKey.toLowerCase(Locale.ROOT).startsWith("preset:")) {
+            finalUrl = urlToZipEntryMap.get(lookupKey.substring(7).trim());
+          }
+          if (finalUrl == null) {
+            finalUrl = lookupKey;
+          }
           ObjectNode a = node.putObject(key);
           a.put("type", "preset");
           a.put("url", finalUrl != null ? finalUrl : "");
@@ -659,6 +780,12 @@ public class DriverExporter {
     String cleanUrl = url.trim();
     if (urlToZipEntryMap.containsKey(cleanUrl)) {
       return urlToZipEntryMap.get(cleanUrl);
+    }
+    if (cleanUrl.toLowerCase(Locale.ROOT).startsWith("preset:")) {
+      String without = cleanUrl.substring(7).trim();
+      if (urlToZipEntryMap.containsKey(without)) {
+        return urlToZipEntryMap.get(without);
+      }
     }
     if (cleanUrl.startsWith("default_")) {
       return "preset:" + cleanUrl;

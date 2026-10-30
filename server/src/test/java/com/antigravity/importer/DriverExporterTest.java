@@ -140,15 +140,17 @@ public class DriverExporterTest {
     // 1. Primary CSV data file must exist
     assertTrue("drivers.csv must be present in zip", zipEntries.containsKey("drivers.csv"));
 
-    // 2. Audio files must be included
+    // 2. Audio files must be included (both custom and referenced defaults)
     assertTrue("turbo_sound.wav must be present in zip", zipEntries.containsKey("turbo_sound.wav"));
     assertTrue("engine_rev.wav must be present in zip", zipEntries.containsKey("engine_rev.wav"));
     assertTrue(
         "speedy_avatar.png must be present in zip", zipEntries.containsKey("speedy_avatar.png"));
+    assertTrue("driveby.wav must be present in zip", zipEntries.containsKey("driveby.wav"));
+    assertTrue("beep.wav must be present in zip", zipEntries.containsKey("beep.wav"));
 
-    // 3. Deduplication check: total entries = 4 (drivers.csv, turbo_sound.wav, engine_rev.wav,
-    // speedy_avatar.png)
-    assertEquals("Shared audio must only be packaged once in zip", 4, zipEntries.size());
+    // 3. Deduplication check: all custom and referenced default audio must be packaged with
+    // deduplication
+    assertEquals("Shared audio must only be packaged once in zip", 15, zipEntries.size());
 
     // 4. Verify CSV content structure
     String csvText = new String(zipEntries.get("drivers.csv"), StandardCharsets.UTF_8);
@@ -161,6 +163,8 @@ public class DriverExporterTest {
     assertTrue("Should reference relative engine_rev.wav", csvText.contains("engine_rev.wav"));
     assertTrue(
         "Should reference relative speedy_avatar.png", csvText.contains("speedy_avatar.png"));
+    assertTrue("Should reference relative driveby.wav", csvText.contains("driveby.wav"));
+    assertTrue("Should reference relative beep.wav", csvText.contains("beep.wav"));
     assertTrue("Should include TTS", csvText.contains("tts:Fastest lap by ${nickname}!"));
 
     // 5. Test Round-Trip: pass the exported zip directly into DriverImporter.parseAndValidate
@@ -275,12 +279,23 @@ public class DriverExporterTest {
             .withName("Ghost Driver")
             .withNickname("Ghost")
             .withLapAudio(new AudioConfig("preset", "/assets/non_existent_sound.wav", ""))
+            .withBestLapAudio(new AudioConfig("none", "", ""))
+            .withPenaltyAudio(new AudioConfig("none", "", ""))
+            .withOverallBestLapAudio(new AudioConfig("none", "", ""))
+            .withOverallLaneBestLapAudio(new AudioConfig("none", "", ""))
+            .withRaceBestLapAudio(new AudioConfig("none", "", ""))
+            .withRaceLaneBestLapAudio(new AudioConfig("none", "", ""))
+            .withHeatBestLapAudio(new AudioConfig("none", "", ""))
+            .withNewRaceLeaderAudio(new AudioConfig("none", "", ""))
+            .withNewHeatLeaderAudio(new AudioConfig("none", "", ""))
+            .withPitInAudio(new AudioConfig("none", "", ""))
             .build();
 
     byte[] zipBytes = exporter.exportDriversZip(Arrays.asList(d), "csv");
     assertNotNull(zipBytes);
     Map<String, byte[]> entries = extractZipEntries(zipBytes);
     assertTrue(entries.containsKey("drivers.csv"));
+    org.junit.Assert.assertFalse(entries.containsKey("non_existent_sound.wav"));
     // Non-existent physical file should not crash the export or create corrupted entries
     assertEquals(1, entries.size());
   }
@@ -529,5 +544,157 @@ public class DriverExporterTest {
     assertEquals(2, j2Labels.size());
     assertEquals("Club 2", j2Labels.get(0).asText());
     assertEquals("Pro", j2Labels.get(1).asText());
+  }
+
+  @Test
+  public void testExportDrivers_IncludesReferencedDefaultImagesAndSoundsAcrossFormats()
+      throws Exception {
+    Driver d =
+        new Driver.Builder()
+            .withEntityId("d_fmt")
+            .withName("Format Test Driver")
+            .withNickname("FmtGuy")
+            .withAvatarUrl("assets/defaults/helmets/helmet_yellow.png")
+            .withLapAudio(new AudioConfig("preset", "default_beep", ""))
+            .withBestLapAudio(new AudioConfig("preset", "default_driveby", ""))
+            .build();
+
+    // 1. CSV
+    byte[] csvZip = exporter.exportDriversZip(Arrays.asList(d), "csv");
+    Map<String, byte[]> csvEntries = extractZipEntries(csvZip);
+    assertTrue(csvEntries.containsKey("drivers.csv"));
+    assertTrue(csvEntries.containsKey("black-yellow.png"));
+    assertTrue(csvEntries.containsKey("beep.wav"));
+    assertTrue(csvEntries.containsKey("driveby.wav"));
+    String csvText = new String(csvEntries.get("drivers.csv"), StandardCharsets.UTF_8);
+    assertTrue(csvText.contains("black-yellow.png"));
+    assertTrue(csvText.contains("beep.wav"));
+    assertTrue(csvText.contains("driveby.wav"));
+
+    // 2. XLSX
+    byte[] xlsxZip = exporter.exportDriversZip(Arrays.asList(d), "xlsx");
+    Map<String, byte[]> xlsxEntries = extractZipEntries(xlsxZip);
+    assertTrue(xlsxEntries.containsKey("drivers.xlsx"));
+    assertTrue(xlsxEntries.containsKey("black-yellow.png"));
+    assertTrue(xlsxEntries.containsKey("beep.wav"));
+    assertTrue(xlsxEntries.containsKey("driveby.wav"));
+
+    // 3. JSON
+    byte[] jsonZip = exporter.exportDriversZip(Arrays.asList(d), "json");
+    Map<String, byte[]> jsonEntries = extractZipEntries(jsonZip);
+    assertTrue(jsonEntries.containsKey("drivers.json"));
+    assertTrue(jsonEntries.containsKey("black-yellow.png"));
+    assertTrue(jsonEntries.containsKey("beep.wav"));
+    assertTrue(jsonEntries.containsKey("driveby.wav"));
+    String jsonText = new String(jsonEntries.get("drivers.json"), StandardCharsets.UTF_8);
+    assertTrue(jsonText.contains("black-yellow.png"));
+    assertTrue(jsonText.contains("beep.wav"));
+    assertTrue(jsonText.contains("driveby.wav"));
+  }
+
+  @Test
+  public void
+      testExportDrivers_WhenImportedIntoDatabaseWhereDefaultAssetsWereDeleted_SuccessfullyRestoresAssets()
+          throws Exception {
+    Driver d =
+        new Driver.Builder()
+            .withEntityId("d_orig")
+            .withName("Default Asset Driver")
+            .withNickname("DefaultGuy")
+            .withAvatarUrl("/assets/default_black-yellow_Helmet_Black-Yellow")
+            .withLapAudio(new AudioConfig("preset", "default_beep", ""))
+            .withBestLapAudio(new AudioConfig("preset", "default_driveby", ""))
+            .build();
+    driverRepository.insert(d);
+
+    byte[] zipBytes = exporter.exportDriversZip(Arrays.asList(d), "csv");
+    assertNotNull(zipBytes);
+
+    Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
+    assertTrue("Must export default helmet", zipEntries.containsKey("black-yellow.png"));
+    assertTrue("Must export default beep", zipEntries.containsKey("beep.wav"));
+    assertTrue("Must export default driveby", zipEntries.containsKey("driveby.wav"));
+
+    // Target database where default assets were deleted / do not exist
+    String rootDir2 = tempFolder.newFolder("db_target").getAbsolutePath() + File.separator;
+    DatabaseContext dbContextTarget = new DatabaseContext("target_db", null, rootDir2);
+    SqliteRepository<Driver> driverRepoTarget =
+        new SqliteRepository<>(dbContextTarget, "drivers", Driver.class);
+    File targetAssetsDir = new File(new File(dbContextTarget.getDataRoot(), "target_db"), "assets");
+    AssetService assetServiceTarget =
+        new AssetService(dbContextTarget, targetAssetsDir.getAbsolutePath());
+    DriverImporter importerTarget =
+        new DriverImporter(dbContextTarget, driverRepoTarget, assetServiceTarget);
+
+    // Verify target DB initially has zero assets
+    assertEquals(0, assetServiceTarget.getAllAssets().size());
+
+    // Import into target DB
+    DriverImportPreview preview =
+        importerTarget.parseAndValidate(new ByteArrayInputStream(zipBytes), "drivers.zip", null);
+    assertEquals(1, preview.getTotalRows());
+    assertEquals(0, preview.getErrorCount());
+    assertTrue(
+        "Imported assets should list companion media", preview.getImportedAssetNames().size() >= 3);
+
+    DriverImportResult result =
+        importerTarget.commitImport(new DriverImportCommitRequest(preview.getRows()));
+    assertTrue(result.isSuccess());
+    assertEquals(1, result.getImportedCount());
+
+    Driver importedDriver = driverRepoTarget.findAll().get(0);
+    assertNotNull(importedDriver);
+    assertNotNull(importedDriver.getAvatarUrl());
+    assertTrue(
+        "Avatar url should point to imported asset",
+        importedDriver.getAvatarUrl().contains("black-yellow.png"));
+    assertNotNull(importedDriver.getLapAudio());
+    assertTrue(
+        "Lap audio should point to imported asset",
+        importedDriver.getLapAudio().getUrl().contains("beep.wav"));
+    assertNotNull(importedDriver.getBestLapAudio());
+    assertTrue(
+        "Best lap audio should point to imported asset",
+        importedDriver.getBestLapAudio().getUrl().contains("driveby.wav"));
+
+    // Ensure assets exist on disk in target assets directory
+    assertTrue("Target assets directory should exist", targetAssetsDir.exists());
+    File[] targetFiles = targetAssetsDir.listFiles();
+    assertNotNull(targetFiles);
+    assertTrue("Target files should be written to disk", targetFiles.length >= 3);
+
+    dbContextTarget.getConnection().close();
+  }
+
+  @Test
+  public void testExportDrivers_DeduplicatesMultipleDriversSharingDefaultAssets() throws Exception {
+    Driver d1 =
+        new Driver.Builder()
+            .withEntityId("d1")
+            .withName("Driver One")
+            .withNickname("D1")
+            .withAvatarUrl("/assets/default_black-yellow_Helmet_Black-Yellow")
+            .withLapAudio(new AudioConfig("preset", "default_beep", ""))
+            .build();
+
+    Driver d2 =
+        new Driver.Builder()
+            .withEntityId("d2")
+            .withName("Driver Two")
+            .withNickname("D2")
+            .withAvatarUrl("assets/defaults/helmets/helmet_yellow.png")
+            .withLapAudio(new AudioConfig("preset", "/assets/default_beep_Lap_Beep", ""))
+            .build();
+
+    byte[] zipBytes = exporter.exportDriversZip(Arrays.asList(d1, d2), "csv");
+    Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
+
+    // Both drivers reference black-yellow helmet and default beep
+    assertTrue(zipEntries.containsKey("black-yellow.png"));
+    assertTrue(zipEntries.containsKey("beep.wav"));
+
+    // Verify deduplication: there should NOT be black-yellow_1.png or beep_1.wav
+    org.junit.Assert.assertFalse(zipEntries.containsKey("black-yellow_1.png"));
+    org.junit.Assert.assertFalse(zipEntries.containsKey("beep_1.wav"));
   }
 }

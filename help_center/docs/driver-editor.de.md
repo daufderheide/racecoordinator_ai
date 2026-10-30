@@ -127,7 +127,7 @@ Wenn Sie in der Symbolleiste auf **Fahrer exportieren** klicken, können Sie aus
 
 ### Bündelung von Audio- und Mediendateien
 
-- Alle Audiodateien und benutzerdefinierten Avatare, die von den exportierten Fahrern referenziert werden, werden automatisch gesammelt und zusammen mit der Datendatei (`drivers.csv`, `drivers.xlsx` oder `drivers.json`) in das ZIP-Archiv gepackt.
+- Alle Audiodateien und Avatarbilder (sowohl benutzerdefinierte Medien als auch voreingestellte Standard-Sounds oder Helme), die von den exportierten Fahrern referenziert werden, werden automatisch gesammelt und zusammen mit der Datendatei (`drivers.csv`, `drivers.xlsx` oder `drivers.json`) in das ZIP-Archiv gepackt. Standard-Assets werden mitgebündelt, um das Archiv vollständig unabhängig und portabel zu machen, sodass der Import auch dann reibungslos funktioniert, wenn Standard-Assets auf dem Zielsystem gelöscht oder angepasst wurden.
 - **Deduplizierung**: Wenn zwei oder mehr Fahrer denselben Soundeffekt oder dasselbe Avatarbild verwenden, wird die Datei **nur einmal** im ZIP-Archiv gespeichert. Relative Referenzen in der Datendatei verweisen auf den gemeinsamen Dateinamen.
-- **Voreinstellungen & TTS erhalten**: System-Preset-Sounds (z. B. `default_beep`), stummgeschaltete Slots und benutzerdefinierte Text-to-Speech-Ansagen (TTS) bleiben in der Exportdatei erhalten.
+- **Voreinstellungen & TTS erhalten**: Stummgeschaltete Slots und benutzerdefinierte Text-to-Speech-Ansagen (TTS) bleiben in der Exportdatei erhalten.
 - **Sofort wieder importierbar**: Das resultierende ZIP-Paket kann direkt per Drag & Drop in das Dialogfeld **Fahrer importieren** auf jedem beliebigen Computer geladen werden.

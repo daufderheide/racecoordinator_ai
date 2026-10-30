@@ -194,8 +194,26 @@ public class DriverImporter {
         AssetMessage asset = assetService.saveAsset(name, type, data);
         if (asset != null) {
           lookup.put(lower, asset.getUrl());
+          if (lower.contains(".")) {
+            lookup.put(lower.substring(0, lower.lastIndexOf('.')), asset.getUrl());
+          }
           lookup.put(asset.getName().toLowerCase(Locale.ROOT), asset.getUrl());
           imported.add(asset.getName());
+
+          // Also map matching default asset identifiers so imported drivers can resolve them
+          for (DefaultAsset def : AssetDefaultsInitializer.getDefaultAudioAssets()) {
+            if (def.filename.equalsIgnoreCase(name)
+                || def.filename.toLowerCase(Locale.ROOT).endsWith("/" + lower)) {
+              lookup.put(def.id.toLowerCase(Locale.ROOT), asset.getUrl());
+              lookup.put("preset:" + def.id.toLowerCase(Locale.ROOT), asset.getUrl());
+            }
+          }
+          for (DefaultAsset def : AssetDefaultsInitializer.getDefaultImageAssets()) {
+            if (def.filename.equalsIgnoreCase(name)
+                || def.filename.toLowerCase(Locale.ROOT).endsWith("/" + lower)) {
+              lookup.put(def.id.toLowerCase(Locale.ROOT), asset.getUrl());
+            }
+          }
         }
       } catch (Exception e) {
         logger.error("Failed to auto-import asset: {}", name, e);

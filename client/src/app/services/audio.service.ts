@@ -305,6 +305,9 @@ export class AudioService implements OnDestroy {
         "Dropping callout: not relevant to current UI page",
         association,
       );
+      this.logger.info(
+        `[AUDIO] Dropping callout: not relevant to current UI page (widget: ${association?.widgetType})`,
+      );
       return false;
     }
 
@@ -317,8 +320,16 @@ export class AudioService implements OnDestroy {
       return false;
     }
 
+    const desc =
+      config.type === "tts"
+        ? `TTS "${config.text}"`
+        : `preset "${resolvedUrl || config.url}"`;
+
     // Channel IDLE
     if (!this.activeVoice && !this.isSpacingCoolingDown) {
+      this.logger.info(
+        `[AUDIO] Dispatching callout immediately: ${desc} (priority: ${priority})`,
+      );
       this.executeVoiceCallout(config, priority, context, resolvedUrl);
       return true;
     }
@@ -326,6 +337,9 @@ export class AudioService implements OnDestroy {
     // Channel BUSY
     if (priority === "urgent") {
       if (this.isSpacingCoolingDown) {
+        this.logger.info(
+          `[AUDIO] Urgent callout breaking through cadence cooldown: ${desc}`,
+        );
         this.clearSpacingTimer();
         this.executeVoiceCallout(config, priority, context, resolvedUrl);
         return true;
@@ -334,11 +348,17 @@ export class AudioService implements OnDestroy {
       if (this.activeVoice) {
         if (this.activeVoice.priority !== "urgent") {
           // Preempt lower-priority sound immediately
+          this.logger.info(
+            `[AUDIO] Urgent callout preempting active '${this.activeVoice.priority}' voice: ${desc}`,
+          );
           this.activeVoice.stop();
           this.activeVoice = null;
           this.executeVoiceCallout(config, priority, context, resolvedUrl);
         } else {
           // Another urgent sound is actively playing, queue this urgent sound
+          this.logger.info(
+            `[AUDIO] Queueing urgent callout behind active urgent voice: ${desc}`,
+          );
           this.urgentQueue.push({
             config,
             priority,
@@ -356,6 +376,9 @@ export class AudioService implements OnDestroy {
     // Incoming sound is NOT urgent
     if (this.isSpacingCoolingDown) {
       this.logger.debug("Dropping non-urgent callout during cadence pause");
+      this.logger.info(
+        `[AUDIO] Dropping callout during cadence pause (500ms spacing cooldown): ${desc} (priority: ${priority})`,
+      );
       return false;
     }
 
@@ -365,6 +388,9 @@ export class AudioService implements OnDestroy {
         AUDIO_PRIORITY_WEIGHT[this.activeVoice.priority]
       ) {
         // Preempt active sound
+        this.logger.info(
+          `[AUDIO] Preempting active '${this.activeVoice.priority}' voice with higher priority '${priority}': ${desc}`,
+        );
         this.activeVoice.stop();
         this.activeVoice = null;
         this.executeVoiceCallout(config, priority, context, resolvedUrl);
@@ -373,6 +399,9 @@ export class AudioService implements OnDestroy {
         // Drop incoming sound (Play, Preempt, or Drop)
         this.logger.debug(
           "Dropping callout due to equal or higher active priority",
+        );
+        this.logger.info(
+          `[AUDIO] Dropping callout due to equal or higher active priority (active: '${this.activeVoice.priority}', incoming: '${priority}'): ${desc}`,
         );
         return false;
       }
@@ -426,13 +455,24 @@ export class AudioService implements OnDestroy {
       return false;
     }
 
+    const desc =
+      config.type === "tts"
+        ? `TTS "${config.text}"`
+        : `preset "${resolvedUrl || config.url}"`;
+
     // Channel IDLE
     if (!this.activeVoice && !this.isSpacingCoolingDown) {
+      this.logger.info(
+        `[AUDIO] Dispatching queued callout immediately (channel idle): ${desc} (priority: ${priority})`,
+      );
       this.executeVoiceCallout(config, priority, context, resolvedUrl);
       return true;
     }
 
     // Channel BUSY or cooling down: enqueue into calloutQueue
+    this.logger.info(
+      `[AUDIO] Enqueueing callout into calloutQueue: ${desc} (priority: ${priority}, queueSize: ${this.calloutQueue.length + 1})`,
+    );
     this.calloutQueue.push({
       config,
       priority,
@@ -558,6 +598,9 @@ export class AudioService implements OnDestroy {
 
   private playPresetVoice(url: string, priority: AudioPriority): void {
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
+    this.logger.info(
+      `[AUDIO] Playing preset voice: ${playableUrl} (priority: ${priority})`,
+    );
     const audio = this.getOrCreatePresetAudio(playableUrl);
     this.activeAudioElement = audio;
     const settings = this.settingsService.getSettings();
@@ -726,6 +769,9 @@ export class AudioService implements OnDestroy {
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
     }
+    this.logger.info(
+      `[AUDIO] Speaking TTS: "${interpolatedText}" (priority: ${priority})`,
+    );
     window.speechSynthesis.speak(utterance);
   }
 
@@ -777,6 +823,7 @@ export class AudioService implements OnDestroy {
     if (window.speechSynthesis.paused) {
       window.speechSynthesis.resume();
     }
+    this.logger.info(`[AUDIO] Previewing TTS: "${text}"`);
     window.speechSynthesis.speak(utterance);
   }
 
@@ -899,6 +946,7 @@ export class AudioService implements OnDestroy {
   }
 
   private onVoiceCalloutEnded(): void {
+    this.logger.info("[AUDIO] Voice callout ended. Active voice cleared.");
     this.activeVoice = null;
     this.processQueueOrCooldown();
   }

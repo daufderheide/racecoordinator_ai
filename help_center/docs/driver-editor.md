@@ -127,7 +127,7 @@ When you click **Export Drivers** on the toolbar, you can select from three data
 
 ### Companion Audio & Media Bundling
 
-- All audio files and custom avatars referenced by the exported drivers are automatically collected and packaged into the ZIP archive alongside the data file (`drivers.csv`, `drivers.xlsx`, or `drivers.json`).
+- All audio files and avatar images (both custom media and default preset sounds or helmets) referenced by the exported drivers are automatically collected and packaged into the ZIP archive alongside the data file (`drivers.csv`, `drivers.xlsx`, or `drivers.json`). Default assets are bundled to make the archive fully self-contained, guaranteeing a seamless import even if default assets were removed or altered on the target system.
 - **Deduplication**: If two or more drivers share the same sound effect or avatar image, the file is packaged **only once** inside the ZIP archive. Relative references in the export data file point to the shared asset name.
-- **Preserved Presets & TTS**: System preset sounds (e.g. `default_beep`), muted slots, and custom Text-to-Speech (TTS) callouts are preserved in the export file.
+- **Preserved Presets & TTS**: Muted slots and custom Text-to-Speech (TTS) callouts are preserved in the export file.
 - **Re-import Ready**: The resulting ZIP package is immediately ready to be dragged and dropped into the **Import Drivers** modal on any computer.

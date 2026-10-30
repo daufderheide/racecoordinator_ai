@@ -127,7 +127,7 @@ Lorsque vous cliquez sur **Exporter des pilotes** dans la barre d'outils, vous p
 
 ### Regroupement des fichiers audio et multimédias
 
-- Tous les fichiers audio et avatars personnalisés référencés par les pilotes exportés sont automatiquement collectés et intégrés dans l'archive ZIP aux côtés du fichier de données (`drivers.csv`, `drivers.xlsx` ou `drivers.json`).
+- Tous les fichiers audio et images d'avatars (aussi bien les médias personnalisés que les sons et casques par défaut du système) référencés par les pilotes exportés sont automatiquement collectés et intégrés dans l'archive ZIP aux côtés du fichier de données (`drivers.csv`, `drivers.xlsx` ou `drivers.json`). Les ressources par défaut sont incluses afin de rendre l'archive totalement autonome, garantissant une importation sans accroc même si les ressources par défaut ont été supprimées ou modifiées sur le système cible.
 - **Déduplication** : Si deux pilotes ou plus partagent le même effet sonore ou la même image d'avatar, le fichier n'est intégré **qu'une seule fois** dans l'archive ZIP. Les références relatives dans le fichier de données pointent vers le nom de ressource partagé.
-- **Préservation des préréglages et du TTS** : Les sons de préréglage du système (ex. `default_beep`), les emplacements désactivés et les annonces de synthèse vocale (TTS) personnalisées sont conservés dans le fichier exporté.
+- **Préservation des préréglages et du TTS** : Les emplacements désactivés et les annonces de synthèse vocale (TTS) personnalisées sont conservés dans le fichier exporté.
 - **Prêt pour la réimportation** : Le package ZIP obtenu est immédiatement prêt à être glissé-déposé dans la fenêtre **Importer des pilotes** sur n'importe quel ordinateur.

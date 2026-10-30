@@ -127,7 +127,7 @@ Wanneer u op **Coureurs exporteren** in de werkbalk klikt, kunt u kiezen uit dri
 
 ### Bündeling van audio- en mediabestanden
 
-- Alle audiobestanden en aangepaste avatars waarnaar de geëxporteerde coureurs verwijzen, worden automatisch verzameld en verpakt in het ZIP-archief naast het gegevensbestand (`drivers.csv`, `drivers.xlsx` of `drivers.json`).
+- Alle audiobestanden en avatar-afbeeldingen (zowel aangepaste media als standaardsysteemsounds of -helmen) waarnaar de geëxporteerde coureurs verwijzen, worden automatisch verzameld en verpakt in het ZIP-archief naast het gegevensbestand (`drivers.csv`, `drivers.xlsx` of `drivers.json`). Standaardbestanden worden meegebundeld om het archief volledig zelfstandig te maken, wat een naadloze import garandeert, zelfs als de standaardactiva op het doelsysteem zijn verwijderd of gewijzigd.
 - **Ontdubbeling**: Als twee of meer coureurs hetzelfde geluidseffect of dezelfde avatar gebruiken, wordt het bestand **slechts één keer** opgenomen in het ZIP-archief. Relatieve verwijzingen in het gegevensbestand verwijzen naar de gedeelde bestandsnaam.
-- **Presets & TTS behouden**: Systeempreset-geluiden (bijv. `default_beep`), gedempte slots en aangepaste tekst-naar-spraak (TTS) oproepen blijven behouden in het geëxporteerde bestand.
+- **Presets & TTS behouden**: Gedempte slots en aangepaste tekst-naar-spraak (TTS) oproepen blijven behouden in het geëxporteerde bestand.
 - **Klaar voor herimport**: Het resulterende ZIP-pakket kan direct worden gesleept en neergezet in het dialoogvenster **Coureurs importeren** op elke computer.

@@ -318,6 +318,11 @@ describe("AudioService", () => {
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Dropping callout due to equal or higher active priority",
       );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[AUDIO\] Dropping callout due to equal or higher active priority/,
+        ),
+      );
 
       // Attempt equal priority
       const anotherHigh: AudioConfig = { type: "preset", url: "penalty.wav" };
@@ -337,6 +342,11 @@ describe("AudioService", () => {
       expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(mockAudioInstance.play).toHaveBeenCalled();
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[AUDIO\] Preempting active 'low' voice with higher priority 'high'/,
+        ),
+      );
     });
 
     it("should preempt non-urgent sound immediately when URGENT callout arrives", () => {
@@ -486,6 +496,11 @@ describe("AudioService", () => {
       expect(service.getActiveVoice()).toBeNull();
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Dropping non-urgent callout during cadence pause",
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        jasmine.stringMatching(
+          /\[AUDIO\] Dropping callout during cadence pause \(500ms spacing cooldown\)/,
+        ),
       );
 
       tick(500);

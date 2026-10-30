@@ -127,7 +127,7 @@ Ao clicar em **Exportar Pilotos** na barra de ferramentas, você pode escolher e
 
 ### Empacotamento de Arquivos de Áudio e Mídia
 
-- Todos os arquivos de áudio e avatares personalizados referenciados pelos pilotos exportados são automaticamente coletados e empacotados no arquivo ZIP junto com o arquivo de dados (`drivers.csv`, `drivers.xlsx` ou `drivers.json`).
+- Todos os arquivos de áudio e imagens de avatar (tanto mídias personalizadas quanto sons e capacetes padrão do sistema) referenciados pelos pilotos exportados são automaticamente coletados e empacotados no arquivo ZIP junto com o arquivo de dados (`drivers.csv`, `drivers.xlsx` ou `drivers.json`). Os recursos padrão são incluídos para tornar o arquivo totalmente independente, garantindo uma importação perfeita mesmo se os recursos padrão tiverem sido excluídos ou alterados no sistema de destino.
 - **Desduplicação**: Se dois ou mais pilotos compartilharem o mesmo efeito sonoro ou imagem de avatar, o arquivo será empacotado **apenas uma vez** no arquivo ZIP. Referências relativas no arquivo de dados apontam para o nome do recurso compartilhado.
-- **Presets e TTS preservados**: Sons pré-definidos do sistema (ex: `default_beep`), slots silenciados e anúncios de texto para fala (TTS) personalizados são preservados no arquivo exportado.
+- **Presets e TTS preservados**: Slots silenciados e anúncios de texto para fala (TTS) personalizados são preservados no arquivo exportado.
 - **Pronto para reimportação**: O pacote ZIP resultante está imediatamente pronto para ser arrastado e solto no diálogo **Importar Pilotos** em qualquer computador.

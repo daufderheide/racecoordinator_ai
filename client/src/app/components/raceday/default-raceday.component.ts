@@ -8534,9 +8534,14 @@ export class DefaultRacedayComponent
           );
         }
       } else {
+        const isTimeCallout = slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT;
+        const priority: AudioPriority = isTimeCallout ? "high" : "normal";
+        this.logger.info(
+          `[AUDIO-SET] Triggering audio set '${slotKey}' at ${timeSeconds}s (${triggerMode}) with priority '${priority}'`,
+        );
         return this.audioService.playCallout(
           entryItem.config,
-          "normal",
+          priority,
           undefined,
           entryItem.playableUrl,
           defaultAssoc,
@@ -8824,6 +8829,9 @@ export class DefaultRacedayComponent
       currentTime <= halfwayThreshold &&
       !this.playedHalfway
     ) {
+      this.logger.info(
+        `[AUDIO-TIMED] Halfway threshold reached (currentTime: ${currentTime.toFixed(2)}s, prevTime: ${previousTime.toFixed(2)}s, halfway: ${halfwayThreshold.toFixed(2)}s)`,
+      );
       this.playThemedSound(
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
         undefined,
@@ -8843,12 +8851,20 @@ export class DefaultRacedayComponent
         // Rule: Don't play if it's the start time of the heat
         if (Math.abs(threshold - totalDuration) < 0.1) continue;
 
-        this.playAudioFromSet(
+        this.logger.info(
+          `[AUDIO-TIMED] Seconds left (remaining) threshold ${threshold}s triggered (currentTime: ${currentTime.toFixed(2)}s, prevTime: ${previousTime.toFixed(2)}s)`,
+        );
+        const played = this.playAudioFromSet(
           THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
           threshold,
           { widgetType: "timer" },
           "remaining",
         );
+        if (!played) {
+          this.logger.warn(
+            `[AUDIO-TIMED] Seconds left (remaining) threshold ${threshold}s was NOT played (dropped or missing entry)`,
+          );
+        }
         this.playedSecondsLeft.add(threshold);
       }
     }
@@ -8865,12 +8881,20 @@ export class DefaultRacedayComponent
           continue;
         }
 
-        this.playAudioFromSet(
+        this.logger.info(
+          `[AUDIO-TIMED] Seconds left (elapsed) threshold ${threshold}s triggered (currentElapsed: ${currentElapsed.toFixed(2)}s, prevElapsed: ${previousElapsed.toFixed(2)}s)`,
+        );
+        const played = this.playAudioFromSet(
           THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
           threshold,
           { widgetType: "timer" },
           "elapsed",
         );
+        if (!played) {
+          this.logger.warn(
+            `[AUDIO-TIMED] Seconds left (elapsed) threshold ${threshold}s was NOT played (dropped or missing entry)`,
+          );
+        }
         this.playedSecondsElapsed.add(threshold);
       }
     }
@@ -8903,6 +8927,11 @@ export class DefaultRacedayComponent
       slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME
     ) {
       priority = "urgent";
+    } else if (
+      slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT
+    ) {
+      priority = "high";
     }
 
     let defaultAssoc = association;
@@ -8929,6 +8958,10 @@ export class DefaultRacedayComponent
         };
       }
     }
+
+    this.logger.info(
+      `[AUDIO-THEME] Dispatching themed sound '${slotKey}' with priority '${priority}'`,
+    );
 
     if (defaultAssoc) {
       this.audioService.playCallout(
