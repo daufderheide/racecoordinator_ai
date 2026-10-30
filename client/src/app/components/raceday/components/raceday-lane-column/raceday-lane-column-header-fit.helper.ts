@@ -7,6 +7,7 @@ import {
   getSharedCanvasContext,
   resolveEffectiveHeaderFontSize,
 } from "./raceday-lane-column.utils";
+import { computeBestWrapTextFontSize } from "./raceday-lane-column-text-wrap.helper";
 
 interface HeaderBoundsAndFont {
   baseFontSize: number;
@@ -73,51 +74,6 @@ function resolveHeaderBoundsAndFont(
   };
 }
 
-function computeBestWrapHeaderFontSize(
-  ctx: CanvasRenderingContext2D,
-  words: string[],
-  baseFontSize: number,
-  singleLineSize: number,
-  availWidth: number,
-  availHeight: number,
-  family: string,
-): number {
-  for (let testSize = baseFontSize; testSize > singleLineSize; testSize--) {
-    const lineHeight = Math.ceil(testSize * 1.15);
-    const maxLines = Math.floor(availHeight / lineHeight);
-    if (maxLines < 2) continue;
-
-    ctx.font = `700 ${testSize}px ${family}`;
-    let linesCount = 1;
-    let currentLineWidth = 0;
-    let possible = true;
-
-    for (const word of words) {
-      const wordW = ctx.measureText(word).width;
-      if (wordW > availWidth) {
-        possible = false;
-        break;
-      }
-      const spaceW = currentLineWidth > 0 ? ctx.measureText(" ").width : 0;
-      if (currentLineWidth + spaceW + wordW <= availWidth) {
-        currentLineWidth += spaceW + wordW;
-      } else {
-        linesCount++;
-        currentLineWidth = wordW;
-        if (linesCount > maxLines) {
-          possible = false;
-          break;
-        }
-      }
-    }
-
-    if (possible && linesCount <= maxLines) {
-      return testSize;
-    }
-  }
-  return 0;
-}
-
 export function fitLaneColumnHeaderText(
   cardEl: HTMLElement,
   settings: LaneColumnWidgetSettings,
@@ -170,7 +126,7 @@ export function fitLaneColumnHeaderText(
   const cleanLabel = (headerLabel || "").trim();
   const words = cleanLabel.split(/\s+/).filter(Boolean);
   if (ctx && words.length > 1 && availHeight >= 20) {
-    bestWrapSize = computeBestWrapHeaderFontSize(
+    bestWrapSize = computeBestWrapTextFontSize(
       ctx,
       words,
       baseFontSize,

@@ -7,6 +7,14 @@ import {
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
 
+import {
+  applyValueWrapStyles,
+  computeBestWrapTextFontSize,
+  computeSingleLineTextScale,
+  isNameOrTeamProperty,
+  isNumericalOrTimeText,
+} from "./raceday-lane-column-text-wrap.helper";
+
 export const DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE = 36;
 export const DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE = 54;
 export const DEFAULT_LANE_COLUMN_HEADER_FONT_SIZE = 14;
@@ -667,6 +675,7 @@ export function fitColumnTextValue(
   explicitHeight?: number,
   textScaleFactor: number = 1,
   hasTeamName: boolean = false,
+  columnKey?: string,
 ): void {
   if (!text) return;
 
@@ -724,22 +733,53 @@ export function fitColumnTextValue(
   if (!ctx) return;
 
   const computedFamily = resolveCardFontFamily(cardEl, settings);
-  ctx.font = `700 ${baseFontSize}px ${computedFamily}`;
-  const textWidth = ctx.measureText(text).width || 1;
-
-  let scale = 1;
-  if (dims.availWidth > 0 && textWidth > dims.availWidth) {
-    scale = Math.min(scale, dims.availWidth / textWidth);
-  }
-  if (dims.availHeight > 0 && baseFontSize > dims.availHeight) {
-    scale = Math.min(scale, dims.availHeight / baseFontSize);
-  }
-
   const minSize = 10;
-  const targetSize = Math.max(minSize, Math.floor(baseFontSize * scale));
+  const singleLineSize = computeSingleLineTextScale(
+    ctx,
+    text,
+    baseFontSize,
+    dims.availWidth,
+    dims.availHeight,
+    computedFamily,
+    minSize,
+  );
+
+  const colKey = columnKey || settings.columnKey;
+  const isNameOrTeam = colKey
+    ? isNameOrTeamProperty(colKey)
+    : !isNumericalOrTimeText(text);
+  const allowWrap = scaleMode === "auto" && isNameOrTeam;
+
+  let bestWrapSize = 0;
+  const cleanText = text.trim();
+  const words = cleanText.split(/\s+/).filter(Boolean);
+  if (allowWrap && words.length > 1 && dims.availHeight >= 20) {
+    bestWrapSize = computeBestWrapTextFontSize(
+      ctx,
+      words,
+      baseFontSize,
+      singleLineSize,
+      dims.availWidth,
+      dims.availHeight,
+      computedFamily,
+    );
+  }
+
+  const isWrapped = allowWrap && bestWrapSize > singleLineSize;
+  const targetSize = isWrapped ? bestWrapSize : singleLineSize;
+  applyValueWrapStyles(cardEl, isWrapped, allowWrap);
+
   cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
   safeguardTextOverflow(cardEl, targetSize, minSize);
 }
+
+export {
+  applyValueWrapStyles,
+  computeBestWrapTextFontSize,
+  computeSingleLineTextScale,
+  isNameOrTeamProperty,
+  isNumericalOrTimeText,
+};
 
 export * from "./raceday-lane-column-driver.helper";
 

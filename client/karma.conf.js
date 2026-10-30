@@ -77,6 +77,8 @@ module.exports = function (config) {
         var currentSuiteStart = Date.now();
         var failedSpecs = [];
 
+        var runExitCode = 0;
+
         this.onSpecComplete = function (browser, result) {
           if (!result.success) {
             failedSpecs.push({
@@ -98,6 +100,9 @@ module.exports = function (config) {
         };
 
         this.onRunComplete = function (browsers, results) {
+          if (results && results.exitCode !== undefined) {
+            runExitCode = results.exitCode;
+          }
           if (currentSuite) {
             suiteTimes[currentSuite] =
               (suiteTimes[currentSuite] || 0) +
@@ -141,6 +146,22 @@ module.exports = function (config) {
             console.log(
               "====================================================================\n",
             );
+          }
+        };
+
+        this.onExit = function (done) {
+          if (config.singleRun) {
+            // Safety fallback: Angular CLI v14+ does not call process.exit() on test completion,
+            // which causes the runner to hang indefinitely if Webpack build cache, unclosed sockets,
+            // or uncollected observers keep Node's event loop active.
+            setTimeout(function () {
+              var exitCode =
+                process.exitCode !== undefined ? process.exitCode : runExitCode;
+              process.exit(exitCode || 0);
+            }, 1000);
+          }
+          if (typeof done === "function") {
+            done();
           }
         };
       },
@@ -194,7 +215,7 @@ module.exports = function (config) {
       terminal: true,
     },
     logLevel: config.LOG_ERROR,
-    autoWatch: true,
+    autoWatch: false,
     browsers: ["ChromeHeadlessWithCustomConfig"],
     customLaunchers: {
       ChromeHeadlessWithCustomConfig: {
@@ -207,6 +228,6 @@ module.exports = function (config) {
     browserDisconnectTimeout: 240000,
     browserNoActivityTimeout: 240000,
     singleRun: true,
-    restartOnFileChange: true,
+    restartOnFileChange: false,
   });
 };

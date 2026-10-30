@@ -45,6 +45,7 @@ import {
   HeatDataLapItem,
   isCustomWidgetKey,
   isLaneColumnImageProperty,
+  isNameOrTeamProperty,
   resolveColumnHeaderLabel,
   resolveLaneColumnImageUrl,
   resolvePacingBenchmarkType,
@@ -749,7 +750,16 @@ export class RacedayLaneColumnComponent
       explicitH,
       this.widget()?.textScaleFactor ?? 1,
       this.hasTeamName,
+      this.columnKey,
     );
+  }
+
+  isScaleAuto(): boolean {
+    return this.widget()?.scaleMode === "auto";
+  }
+
+  shouldAllowValueWrap(): boolean {
+    return this.isScaleAuto() && isNameOrTeamProperty(this.columnKey);
   }
 
   isImageProperty(key: string = this.columnKey): boolean {

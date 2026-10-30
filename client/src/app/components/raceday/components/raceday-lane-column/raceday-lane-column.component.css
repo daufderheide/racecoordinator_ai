@@ -577,6 +577,11 @@
   white-space: nowrap;
 }
 
+.lane-col-value.allow-wrap {
+  white-space: normal;
+  line-height: 1.15;
+}
+
 .lane-col-text {
   display: inline-block;
   max-width: 100%;
@@ -585,6 +590,13 @@
   white-space: nowrap;
   vertical-align: middle;
   line-height: 1.1;
+}
+
+.lane-col-text.allow-wrap {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-overflow: clip;
 }
 
 .lane-col-value:has(.team-name) {
@@ -600,6 +612,13 @@
   text-overflow: ellipsis;
   margin-top: -2px;
   line-height: 1.1;
+}
+
+.lane-col-value .team-name.allow-wrap {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-overflow: clip;
 }
 
 .raceday-lane-column-card.column-last-laps .lane-col-body {

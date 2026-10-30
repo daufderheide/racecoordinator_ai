@@ -641,7 +641,9 @@
                     } @else if (!shouldShowTeammateSelect(col, entry, hd)) {
                       <span
                         [style.white-space]="
-                          isNameProperty(entry.property) ? 'normal' : 'nowrap'
+                          isTeamOrNameProperty(entry.property)
+                            ? 'normal'
+                            : 'nowrap'
                         "
                         [style.padding-right]="
                           parent().race?.practice &&

@@ -694,6 +694,7 @@
             <!-- Case 4: Formatted Text / Numerical Value -->
             <div
               class="lane-col-value"
+              [class.allow-wrap]="shouldAllowValueWrap()"
               [style.font-family]="settings.valueFontFamily || null"
               [style.color]="effectiveValueTextColor"
               [style.justify-content]="
@@ -703,10 +704,21 @@
                     ? 'flex-end'
                     : 'center'
               "
+              [style.text-align]="
+                settings.valueAlignment === 'start'
+                  ? 'left'
+                  : settings.valueAlignment === 'end'
+                    ? 'right'
+                    : 'center'
+              "
             >
-              <span class="lane-col-text">{{ formattedValue }}</span>
+              <span
+                class="lane-col-text"
+                [class.allow-wrap]="shouldAllowValueWrap()"
+                >{{ formattedValue }}</span
+              >
               @if (hasTeamName) {
-                <span class="team-name">{{
+                <span class="team-name" [class.allow-wrap]="isScaleAuto()">{{
                   targetDriver?.participant?.team?.name
                 }}</span>
               }

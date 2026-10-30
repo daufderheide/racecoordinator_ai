@@ -1353,6 +1353,108 @@ describe("raceday-lane-column.utils", () => {
 
       expect(sizeWithTeam).toBeLessThan(sizeWithoutTeam);
     });
+
+    it("should allow driver and team names to wrap and fit at larger font size in auto scaleMode", () => {
+      const card = document.createElement("div");
+      const val = document.createElement("div");
+      val.className = "lane-col-value";
+      const txt = document.createElement("span");
+      txt.className = "lane-col-text";
+      val.appendChild(txt);
+      card.appendChild(val);
+
+      fitColumnTextValue(
+        card,
+        "Super Long Driver Name",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        100,
+        70,
+        1,
+        false,
+        "driver.name",
+      );
+
+      expect(txt.style.whiteSpace).toBe("normal");
+      expect(txt.style.wordBreak).toBe("break-word");
+      const size = parseInt(
+        card.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+      expect(size).toBeGreaterThanOrEqual(14);
+    });
+
+    it("should never wrap numbers for lap counts, lap times, and gaps in auto scaleMode", () => {
+      const card = document.createElement("div");
+      const val = document.createElement("div");
+      val.className = "lane-col-value";
+      const txt = document.createElement("span");
+      txt.className = "lane-col-text";
+      val.appendChild(txt);
+      card.appendChild(val);
+
+      // Lap times should NOT wrap
+      fitColumnTextValue(
+        card,
+        "1:23.456",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        60,
+        50,
+        1,
+        false,
+        "lastLapTime",
+      );
+      expect(txt.style.whiteSpace).toBe("nowrap");
+
+      // Lap counts should NOT wrap
+      fitColumnTextValue(
+        card,
+        "150",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        60,
+        50,
+        1,
+        false,
+        "lapCount",
+      );
+      expect(txt.style.whiteSpace).toBe("nowrap");
+
+      // Gaps should NOT wrap
+      fitColumnTextValue(
+        card,
+        "+0.456",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        60,
+        50,
+        1,
+        false,
+        "gapToLeader",
+      );
+      expect(txt.style.whiteSpace).toBe("nowrap");
+    });
   });
 
   describe("resolveCardFontFamily", () => {
