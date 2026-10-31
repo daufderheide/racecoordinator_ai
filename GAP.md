@@ -89,3 +89,20 @@ If the trailing driver is on the same lap as the leader (`lapsDown <= 0`), the s
   ```
 
 > **Note:** If the calculated `timeGap` is somehow negative (e.g., due to unusual timing anomalies), it is forced to `0.0`.
+
+---
+
+## Fastest Lap Scoring Gaps
+
+When heat or overall scoring is configured with **Fastest Lap** ranking (`RankingMethod.FASTEST_LAP`), gap calculations evaluate the delta between competitors' fastest laps rather than lap counts or projected times:
+
+* **Gap to Leader (`gapLeader` and `gapLeaderF1`)**: Delta between the current driver's fastest lap and the race leader's fastest lap:
+  ```java
+  current.getBestLapTime() - leader.getBestLapTime()
+  ```
+* **Gap to Position Ahead (`gapPosition` and `gapPositionF1`)**: Delta between the current driver's fastest lap and the driver immediately ahead in the standings:
+  ```java
+  current.getBestLapTime() - ahead.getBestLapTime()
+  ```
+* If either the current driver or the reference driver has not yet completed a timed lap (`bestLapTime <= 0`), the gap evaluates to `0.0` (displayed as `--`).
+* In fastest lap scoring, laps down (`lapsDownLeader`, `lapsDownPosition`) and lap gaps (`gapLeaderLaps`, `gapPositionLaps`) evaluate to `0` / `0.0`.

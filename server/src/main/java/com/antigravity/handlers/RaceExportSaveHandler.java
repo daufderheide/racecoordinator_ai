@@ -650,7 +650,9 @@ public class RaceExportSaveHandler {
       if (saveData.getHeats() != null) {
         for (Heat heat : saveData.getHeats()) {
           heat.initializeStandings(
-              saveData.getModel().getHeatScoring(), saveData.getModel().isPractice());
+              saveData.getModel().getHeatScoring(),
+              saveData.getModel().getOverallScoring(),
+              saveData.getModel().isPractice());
         }
       }
 

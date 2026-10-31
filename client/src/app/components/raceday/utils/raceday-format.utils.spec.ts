@@ -651,6 +651,46 @@ describe("RacedayFormatUtils", () => {
         RacedayFormatUtils.formatValue("overallGap", 0, hd, undefined, ctx),
       ).toBe("+0.000");
     });
+
+    it("should format overall gap as fastest lap delta when hd has overallGapLeader or participant has gapLeader", () => {
+      (hd as any).participant = {
+        rank: 2,
+        totalLaps: 10,
+        physicalLapCount: 10,
+        gapLeader: 0.2,
+        gapPosition: 0.2,
+      };
+      (hd as any).overallGapLeader = 0.2;
+      (hd as any).overallGapPosition = 0.2;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGap",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.200");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapLeader",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.200");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallGapPosition",
+          undefined,
+          hd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("+0.200");
+    });
   });
 
   describe("formatValue - Predictions", () => {

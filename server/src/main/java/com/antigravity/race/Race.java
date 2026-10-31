@@ -261,6 +261,13 @@ public class Race implements ProtocolListener {
       this.heats = new ArrayList<>(builder.heats);
       linkDriverReferences();
 
+      for (Heat heat : this.heats) {
+        if (heat.getHeatStandings() == null) {
+          heat.initializeStandings(
+              this.model.getHeatScoring(), this.model.getOverallScoring(), this.model.isPractice());
+        }
+      }
+
       if (builder.currentHeatIndex >= 0 && builder.currentHeatIndex < this.heats.size()) {
         this.currentHeat = this.heats.get(builder.currentHeatIndex);
       } else if (!this.heats.isEmpty()) {

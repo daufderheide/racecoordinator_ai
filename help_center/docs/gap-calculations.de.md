@@ -154,6 +154,21 @@ Der Fahrer behält diesen berechneten Wert bei, bis er selbst die nächste Runde
 
 ---
 
+### 4. Wertungsmethode Schnellste Runde
+
+Wenn als Wertungsmethode für den Lauf oder die Gesamtwertung **Schnellste Runde** (`FASTEST_LAP`) eingestellt ist, berechnen die Abstandsmetriken die Differenz zwischen den persönlichen Bestzeiten der Fahrer statt Rundenzahlen oder projizierter Zeiten:
+
+#### 1. Abstand zum Führenden
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Abstand zum Vorausfahrenden
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **Keine gezeitete Runde**: Wenn ein Fahrer oder der verglichene Zielfahrer noch keine gültige Runde absolviert hat ($\text{BestLap} \le 0$), beträgt der Abstand `0.0` (als `--` angezeigt).
+- **Formel 1 & Rundenrückstände**: Da die Platzierung ausschließlich auf der Qualifikations-Rundenzeit basiert, gibt es keine Überrundungen ($\text{LapsDown} = 0$). Formel-1-Abstandsmetriken (`gapLeaderF1`, `gapPositionF1`) entsprechen dem Delta der schnellsten Runden, und Rundenabstandsmetriken (`gapLeaderLaps`, `gapPositionLaps`) ergeben `0.0`.
+
+---
+
 ## Vergleich der Berechnungsmodi
 
 | Merkmal | Immer Zeit (`always_time`) | Zeit und Runden zurück (`laps_and_time`) | Immer Runden (`always_laps`) |

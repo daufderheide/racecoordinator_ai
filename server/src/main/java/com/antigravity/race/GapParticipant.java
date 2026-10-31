@@ -10,6 +10,11 @@ public interface GapParticipant {
   /** Gets the average lap time in seconds. */
   double getAverageLapTime();
 
+  /** Gets the best lap time in seconds. */
+  default double getBestLapTime() {
+    return 0.0;
+  }
+
   /** Returns true if the participant has not completed any full laps. */
   boolean hasNoFullLaps();
 

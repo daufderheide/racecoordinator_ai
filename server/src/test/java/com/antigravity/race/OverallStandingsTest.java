@@ -860,4 +860,192 @@ public class OverallStandingsTest {
     assertEquals(2, p3.getHeatsRaced());
     assertEquals(0, p3.getHeatsRemaining());
   }
+
+  @Test
+  public void testFastestLapOverallRankingGaps() {
+    OverallScoring scoring =
+        new OverallScoring(
+            0, OverallRanking.FASTEST_LAP, OverallRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(new HeatScoring(), scoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    RaceParticipant p3 = createDriver("D3", "id3");
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2, p3);
+
+    DriverHeatData d1_1 = new DriverHeatData(p1);
+    d1_1.addLap(4.200, false, true);
+    d1_1.addLap(5.000, false, true);
+    d1_1.addLap(5.000, false, true);
+    d1_1.addLap(5.000, false, true);
+    d1_1.addLap(5.000, false, true);
+
+    DriverHeatData d2_1 = new DriverHeatData(p2);
+    d2_1.addLap(4.000, false, true);
+    d2_1.addLap(4.500, false, true);
+
+    Heat h1 = new Heat(1, java.util.Arrays.asList(d1_1, d2_1), false);
+
+    DriverHeatData d2_2 = new DriverHeatData(p2);
+    d2_2.addLap(4.100, false, true);
+
+    DriverHeatData d3_2 = new DriverHeatData(p3);
+    d3_2.addLap(4.500, false, true);
+    d3_2.addLap(4.600, false, true);
+    d3_2.addLap(4.700, false, true);
+    d3_2.addLap(4.800, false, true);
+
+    Heat h2 = new Heat(2, java.util.Arrays.asList(d2_2, d3_2), false);
+
+    List<Heat> heats = java.util.Arrays.asList(h1, h2);
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p2.getRank());
+    assertEquals(2, p1.getRank());
+    assertEquals(3, p3.getRank());
+
+    assertEquals(0.0, p2.getGapLeader(), 0.001);
+    assertEquals(0.0, p2.getGapPosition(), 0.001);
+    assertEquals(0.0, p2.getGapLeaderF1(), 0.001);
+    assertEquals(0.0, p2.getGapPositionF1(), 0.001);
+    assertEquals(0, p2.getLapsDownLeader());
+    assertEquals(0, p2.getLapsDownPosition());
+    assertEquals(0.0, p2.getGapLeaderLaps(), 0.001);
+    assertEquals(0.0, p2.getGapPositionLaps(), 0.001);
+
+    assertEquals(0.200, p1.getGapLeader(), 0.001);
+    assertEquals(0.200, p1.getGapPosition(), 0.001);
+    assertEquals(0.200, p1.getGapLeaderF1(), 0.001);
+    assertEquals(0.200, p1.getGapPositionF1(), 0.001);
+    assertEquals(0, p1.getLapsDownLeader());
+    assertEquals(0, p1.getLapsDownPosition());
+    assertEquals(0.0, p1.getGapLeaderLaps(), 0.001);
+    assertEquals(0.0, p1.getGapPositionLaps(), 0.001);
+
+    assertEquals(0.500, p3.getGapLeader(), 0.001);
+    assertEquals(0.300, p3.getGapPosition(), 0.001);
+    assertEquals(0.500, p3.getGapLeaderF1(), 0.001);
+    assertEquals(0.300, p3.getGapPositionF1(), 0.001);
+    assertEquals(0, p3.getLapsDownLeader());
+    assertEquals(0, p3.getLapsDownPosition());
+    assertEquals(0.0, p3.getGapLeaderLaps(), 0.001);
+    assertEquals(0.0, p3.getGapPositionLaps(), 0.001);
+  }
+
+  @Test
+  public void testOverallStandingsInheritsFastestLapFromHeatScoring() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap, 0, HeatRanking.FASTEST_LAP, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring scoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallStandings os = new OverallStandings(heatScoring, scoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    RaceParticipant p3 = createDriver("D3", "id3");
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2, p3);
+
+    DriverHeatData d1_1 = new DriverHeatData(p1);
+    d1_1.addLap(4.200, false, true); // best lap 4.200, 5 laps
+    d1_1.addLap(5.000, false, true);
+    d1_1.addLap(5.000, false, true);
+    d1_1.addLap(5.000, false, true);
+    d1_1.addLap(5.000, false, true);
+
+    DriverHeatData d2_1 = new DriverHeatData(p2);
+    d2_1.addLap(4.000, false, true); // best lap 4.000, 2 laps
+    d2_1.addLap(4.500, false, true);
+
+    Heat h1 = new Heat(1, java.util.Arrays.asList(d1_1, d2_1), false);
+
+    DriverHeatData d2_2 = new DriverHeatData(p2);
+    d2_2.addLap(4.100, false, true);
+
+    DriverHeatData d3_2 = new DriverHeatData(p3);
+    d3_2.addLap(4.500, false, true); // best lap 4.500, 4 laps
+    d3_2.addLap(4.600, false, true);
+    d3_2.addLap(4.700, false, true);
+    d3_2.addLap(4.800, false, true);
+
+    Heat h2 = new Heat(2, java.util.Arrays.asList(d2_2, d3_2), false);
+
+    List<Heat> heats = java.util.Arrays.asList(h1, h2);
+    os.recalculate(drivers, heats);
+
+    // Because heatScoring is FASTEST_LAP, overall standings ranks by best lap:
+    // p2 best lap 4.000 (P1)
+    // p1 best lap 4.200 (P2)
+    // p3 best lap 4.500 (P3)
+    assertEquals(1, p2.getRank());
+    assertEquals(2, p1.getRank());
+    assertEquals(3, p3.getRank());
+
+    assertEquals(0.0, p2.getGapLeader(), 0.001);
+    assertEquals(0.0, p2.getGapPosition(), 0.001);
+    assertEquals(0.0, p2.getGapLeaderF1(), 0.001);
+    assertEquals(0.0, p2.getGapPositionF1(), 0.001);
+
+    assertEquals(0.200, p1.getGapLeader(), 0.001);
+    assertEquals(0.200, p1.getGapPosition(), 0.001); // gapLeader == gapPosition for P2!
+    assertEquals(0.200, p1.getGapLeaderF1(), 0.001);
+    assertEquals(0.200, p1.getGapPositionF1(), 0.001);
+
+    assertEquals(0.500, p3.getGapLeader(), 0.001);
+    assertEquals(0.300, p3.getGapPosition(), 0.001);
+    assertEquals(0.500, p3.getGapLeaderF1(), 0.001);
+    assertEquals(0.300, p3.getGapPositionF1(), 0.001);
+  }
+
+  @Test
+  public void testOtherScoringMethods_NotAffectedByHeatScoring() {
+    // heatScoring is AVERAGE_LAP, overallScoring is LAP_COUNT
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap, 10, HeatRanking.TOTAL_TIME, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1"); // 10 laps in 60s (avg 6.0s)
+    RaceParticipant p2 = createDriver("D2", "id2"); // 8 laps in 40s (avg 5.0s)
+    List<RaceParticipant> drivers = java.util.Arrays.asList(p1, p2);
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    for (int i = 0; i < 10; i++) {
+      d1.addLap(6.0, false, true);
+    }
+    DriverHeatData d2 = new DriverHeatData(p2);
+    for (int i = 0; i < 8; i++) {
+      d2.addLap(5.0, false, true);
+    }
+
+    Heat h1 = new Heat(1, java.util.Arrays.asList(d1, d2), false);
+    os.recalculate(drivers, java.util.Collections.singletonList(h1));
+
+    // Overall scoring is LAP_COUNT: p1 must be P1 because p1 has 10 laps > 8 laps,
+    // even though p2 has a faster average lap time (5.0s < 6.0s).
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+    assertEquals(10.0, p1.getRankValue(), 0.001); // rankValue is total laps
+    assertEquals(8.0, p2.getRankValue(), 0.001);
+
+    // Verify reverse: overallScoring is AVERAGE_LAP, heatScoring is LAP_COUNT
+    HeatScoring heatScoring2 =
+        new HeatScoring(
+            FinishMethod.Lap, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring overallScoring2 =
+        new OverallScoring(0, OverallRanking.AVERAGE_LAP, OverallRankingTiebreaker.TOTAL_TIME);
+    OverallStandings os2 =
+        new OverallStandings(heatScoring2, overallScoring2, new GroupOptions(), false);
+
+    os2.recalculate(drivers, java.util.Collections.singletonList(h1));
+    // Overall scoring is AVERAGE_LAP: p2 (avg 5.0s) must be P1 over p1 (avg 6.0s)
+    assertEquals(1, p2.getRank());
+    assertEquals(2, p1.getRank());
+    assertEquals(5.0, p2.getRankValue(), 0.001); // rankValue is average lap
+    assertEquals(6.0, p1.getRankValue(), 0.001);
+  }
 }

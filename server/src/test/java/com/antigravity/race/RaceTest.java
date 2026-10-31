@@ -4942,5 +4942,88 @@ public class RaceTest {
       assertEquals(
           "D1", updatedBuilder.getGroupStandingsUpdate().getParticipants(0).getDriver().getName());
     }
+
+    @Test
+    public void testPopulateOverallStandings_FastestLapGaps() {
+      Track track =
+          new Track.Builder()
+              .name("T")
+              .lanes(Arrays.asList(new Lane("r", "w", 100), new Lane("b", "w", 101)))
+              .build();
+
+      com.antigravity.models.Race raceModel =
+          new com.antigravity.models.Race.Builder()
+              .withName("FastestLapRace")
+              .withHeatScoring(
+                  new HeatScoring(
+                      HeatScoring.FinishMethod.Lap,
+                      0,
+                      HeatScoring.HeatRanking.FASTEST_LAP,
+                      HeatScoring.HeatRankingTiebreaker.AVERAGE_LAP_TIME))
+              .withOverallScoring(
+                  new OverallScoring(
+                      0,
+                      OverallScoring.OverallRanking.FASTEST_LAP,
+                      OverallScoring.OverallRankingTiebreaker.AVERAGE_LAP_TIME))
+              .build();
+
+      RaceParticipant p1 =
+          new RaceParticipant(new Driver.Builder().withName("D1").withEntityId("d1").build());
+      RaceParticipant p2 =
+          new RaceParticipant(new Driver.Builder().withName("D2").withEntityId("d2").build());
+      DriverHeatData dhd1 = new DriverHeatData(p1);
+      dhd1.setLane(1);
+      DriverHeatData dhd2 = new DriverHeatData(p2);
+      dhd2.setLane(2);
+
+      Heat heat1 =
+          new Heat(
+              1,
+              Arrays.asList(dhd1, dhd2),
+              raceModel.getHeatScoring(),
+              raceModel.getOverallScoring(),
+              false);
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(raceModel)
+              .track(track)
+              .drivers(Arrays.asList(p1, p2))
+              .heats(Collections.singletonList(heat1))
+              .isDemoMode(true)
+              .build();
+
+      // Drivers run laps in Heat 1
+      dhd1.addLap(4.200, false, true); // P2: 4.200s
+      dhd2.addLap(4.000, false, true); // P1: 4.000s
+
+      RaceData.Builder raceDataBuilder = race.populateOverallStandings(RaceData.newBuilder());
+      com.antigravity.proto.OverallStandingsUpdate osu =
+          raceDataBuilder.getOverallStandingsUpdate();
+      assertNotNull(osu);
+      assertEquals(2, osu.getParticipantsCount());
+
+      com.antigravity.proto.RaceParticipant protoLeader =
+          osu.getParticipantsList().stream()
+              .filter(p -> p.getDriver().getName().equals("D2"))
+              .findFirst()
+              .orElse(null);
+      assertNotNull(protoLeader);
+      assertEquals(1, protoLeader.getRank());
+      assertEquals(4.0, protoLeader.getBestLapTime(), 0.001);
+      assertEquals(0.0, protoLeader.getGapLeader(), 0.001);
+      assertEquals(0.0, protoLeader.getGapPosition(), 0.001);
+
+      com.antigravity.proto.RaceParticipant protoP2 =
+          osu.getParticipantsList().stream()
+              .filter(p -> p.getDriver().getName().equals("D1"))
+              .findFirst()
+              .orElse(null);
+      assertNotNull(protoP2);
+      assertEquals(2, protoP2.getRank());
+      assertEquals(4.2, protoP2.getBestLapTime(), 0.001);
+      assertEquals(0.2, protoP2.getGapLeader(), 0.001);
+      assertEquals(0.2, protoP2.getGapPosition(), 0.001);
+    }
   }
 }

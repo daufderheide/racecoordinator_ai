@@ -140,6 +140,21 @@ Le concurrent conserve cette valeur jusqu'au franchissement de son propre tour s
 
 ---
 
+### 4. Mode de Classement Meilleur Tour
+
+Lorsque la méthode de classement de la manche ou générale est configurée sur **Meilleur Tour** (`FASTEST_LAP`), les calculs d'écart évaluent la différence entre les meilleurs tours personnels des pilotes plutôt que le nombre de tours ou les projections de temps :
+
+#### 1. Écart avec le Leader
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Écart avec la Position Précédente
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **Aucun tour chronométré** : Si un concurrent ou le pilote de référence n'a pas encore bouclé de tour chronométré ($\text{BestLap} \le 0$), l'écart vaut `0.0` (affiché sous la forme `--`).
+- **Formule 1 & tours de retard** : Comme le classement repose uniquement sur le rythme de qualification sur un tour, les concurrents ne peuvent pas avoir de tour de retard ($\text{LapsDown} = 0$). Les métriques de type Formule 1 (`gapLeaderF1`, `gapPositionF1`) correspondent au delta du meilleur tour, et les écarts en tours (`gapLeaderLaps`, `gapPositionLaps`) valent `0.0`.
+
+---
+
 ## Comparaison des Modes de Calcul
 
 | Caractéristique | Toujours temps (`always_time`) | Temps et tours de retard (`laps_and_time`) | Toujours tours (`always_laps`) |

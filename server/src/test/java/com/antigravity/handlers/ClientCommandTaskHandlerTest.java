@@ -1012,7 +1012,7 @@ public class ClientCommandTaskHandlerTest {
     handler.updateUserLaps(ctx, pathParams, body);
 
     verify(mockDhd).setUserLaps(1.25);
-    verify(mockHeat).initializeStandings(any(), anyBoolean());
+    verify(mockHeat).initializeStandings(any(), any(), anyBoolean());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(res).setStatus(200);
   }
@@ -1054,7 +1054,7 @@ public class ClientCommandTaskHandlerTest {
     m.invoke(handler, ctx);
 
     verify(mockDhd).setUserLaps(1.25);
-    verify(mockHeat).initializeStandings(any(), anyBoolean());
+    verify(mockHeat).initializeStandings(any(), any(), anyBoolean());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(mockRace).updateScoreRecords();
     verify(mockRace).broadcast(any());
@@ -1163,7 +1163,7 @@ public class ClientCommandTaskHandlerTest {
     handler.updateUserLaps(ctx, pathParams, body);
 
     verify(mockDhd).setUserLaps(1.25);
-    verify(mockHeat).initializeStandings(any(), anyBoolean());
+    verify(mockHeat).initializeStandings(any(), any(), anyBoolean());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(res).setStatus(200);
   }
@@ -1205,7 +1205,7 @@ public class ClientCommandTaskHandlerTest {
     m.invoke(handler, ctx);
 
     verify(mockDhd).setUserLaps(1.25);
-    verify(mockHeat).initializeStandings(any(), anyBoolean());
+    verify(mockHeat).initializeStandings(any(), any(), anyBoolean());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(res).setStatus(200);
   }
@@ -1258,8 +1258,8 @@ public class ClientCommandTaskHandlerTest {
 
     verify(mockDhd1).setUserLaps(1.5);
     verify(mockDhd2).setUserLaps(2.25);
-    verify(mockHeat1).initializeStandings(any(), anyBoolean());
-    verify(mockHeat2).initializeStandings(any(), anyBoolean());
+    verify(mockHeat1).initializeStandings(any(), any(), anyBoolean());
+    verify(mockHeat2).initializeStandings(any(), any(), anyBoolean());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(mockRace).updateScoreRecords();
     verify(mockRace).broadcast(any());
@@ -1300,7 +1300,7 @@ public class ClientCommandTaskHandlerTest {
     m.invoke(handler, ctx);
 
     verify(mockDhd1).setUserLaps(1.5);
-    verify(mockHeat1).initializeStandings(any(), anyBoolean());
+    verify(mockHeat1).initializeStandings(any(), any(), anyBoolean());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(res).setStatus(200);
   }

@@ -292,7 +292,10 @@ public class HistoryPredictionTaskHandler {
     }
 
     for (Heat h : heatsToRecalc) {
-      h.initializeStandings(race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+      h.initializeStandings(
+          race.getRaceModel().getHeatScoring(),
+          race.getRaceModel().getOverallScoring(),
+          race.getRaceModel().isPractice());
     }
     race.updateAndBroadcastOverallStandings();
     race.updateScoreRecords();

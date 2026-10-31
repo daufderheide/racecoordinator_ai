@@ -29,6 +29,7 @@ export interface FormatContext {
   getFullUrl: (url: string | undefined) => string;
   getImageSetUrl: (hd: DriverHeatData, propertyName: string) => string;
   laneViewWidgetSettings?: any;
+  getParticipant?: (hd: DriverHeatData) => any;
   getDriverOverallRanking?: (hd: DriverHeatData) => number | undefined;
   getDriverGroupRanking?: (hd: DriverHeatData) => number | undefined;
   getLaneQrCodeUrl?: (laneIndex: number) => string;
@@ -156,11 +157,14 @@ export class RacedayFormatUtils {
     propertyPath: string,
     settings?: any,
     anchor?: string,
+    ctx?: FormatContext,
   ): any {
     if (!heatDriver || !propertyPath) return undefined;
     const baseKey = propertyPath.split(".")[0].split("_")[0];
-    const participant =
-      heatDriver.participant ?? (heatDriver as any).actualDriver?.participant;
+    const participant = ctx?.getParticipant
+      ? ctx.getParticipant(heatDriver)
+      : (heatDriver.participant ??
+        (heatDriver as any).actualDriver?.participant);
     const overallVal = RacedayOverallFormatUtils.extractOverallPropertyValue(
       participant,
       heatDriver,
@@ -929,6 +933,7 @@ export class RacedayFormatUtils {
           prop,
           ctx.laneViewWidgetSettings,
           anchor,
+          ctx,
         ),
         heatDriver,
         column,
@@ -940,6 +945,7 @@ export class RacedayFormatUtils {
       prop,
       ctx.laneViewWidgetSettings,
       anchor,
+      ctx,
     );
     return RacedayFormatUtils.formatValue(
       prop,

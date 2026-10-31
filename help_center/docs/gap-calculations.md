@@ -162,6 +162,21 @@ Competitors hold their calculated lap gap until they complete their own next lap
 
 ---
 
+### 4. Fastest Lap Scoring Mode
+
+When the heat or overall scoring ranking method is set to **Fastest Lap** (`FASTEST_LAP`), gap calculations evaluate the delta between drivers' personal best laps rather than lap counts or projected times:
+
+#### 1. Gap to Leader
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Gap to Position Ahead
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **No Recorded Lap**: If a competitor or the compared target driver has not yet completed a timed lap ($\text{BestLap} \le 0$), the gap evaluates to `0.0` (rendered as `--`).
+- **Formula 1 & Lap Deficits**: Because ranking is based strictly on single-lap qualifying pace, competitors cannot be lapped ($\text{LapsDown} = 0$). Formula 1 gap metrics (`gapLeaderF1`, `gapPositionF1`) equal the fastest lap delta, and lap gap metrics (`gapLeaderLaps`, `gapPositionLaps`) evaluate to `0.0`.
+
+---
+
 ## Comparison of Calculation Modes
 
 | Feature | Always Time (`always_time`) | Time and Laps Down (`laps_and_time`) | Always Laps (`always_laps`) |

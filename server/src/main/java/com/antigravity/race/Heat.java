@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import com.antigravity.models.HeatScoring;
+import com.antigravity.models.OverallScoring;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +47,12 @@ public class Heat extends ServerToClientObject {
     this.trackCalls = 0;
   }
 
-  public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring, boolean practice) {
+  public Heat(
+      int heatNumber,
+      List<DriverHeatData> drivers,
+      HeatScoring scoring,
+      OverallScoring overallScoring,
+      boolean practice) {
     super();
     this.heatNumber = heatNumber;
     this.drivers = drivers != null ? drivers : new ArrayList<>();
@@ -58,12 +64,27 @@ public class Heat extends ServerToClientObject {
         }
       }
       HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
-      this.heatStandings = new HeatStandings(this.drivers, safeScoring, practice);
+      this.heatStandings = new HeatStandings(this.drivers, safeScoring, overallScoring, practice);
     }
   }
 
+  public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring, boolean practice) {
+    this(heatNumber, drivers, scoring, null, practice);
+  }
+
   public Heat(int heatNumber, List<DriverHeatData> drivers, boolean practice) {
-    this(heatNumber, drivers, null, practice);
+    this(heatNumber, drivers, null, null, practice);
+  }
+
+  public Heat(
+      int heatNumber,
+      List<DriverHeatData> drivers,
+      int group,
+      HeatScoring scoring,
+      OverallScoring overallScoring,
+      boolean practice) {
+    this(heatNumber, drivers, scoring, overallScoring, practice);
+    this.group = group;
   }
 
   public Heat(
@@ -72,8 +93,7 @@ public class Heat extends ServerToClientObject {
       int group,
       HeatScoring scoring,
       boolean practice) {
-    this(heatNumber, drivers, scoring, practice);
-    this.group = group;
+    this(heatNumber, drivers, group, scoring, null, practice);
   }
 
   public Heat() {
@@ -85,9 +105,14 @@ public class Heat extends ServerToClientObject {
     this.drivers = drivers != null ? drivers : new ArrayList<>();
   }
 
-  public void initializeStandings(HeatScoring scoring, boolean practice) {
+  public void initializeStandings(
+      HeatScoring scoring, OverallScoring overallScoring, boolean practice) {
     HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
-    this.heatStandings = new HeatStandings(this.drivers, safeScoring, practice);
+    this.heatStandings = new HeatStandings(this.drivers, safeScoring, overallScoring, practice);
+  }
+
+  public void initializeStandings(HeatScoring scoring, boolean practice) {
+    initializeStandings(scoring, null, practice);
   }
 
   public int getHeatNumber() {

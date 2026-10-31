@@ -94,9 +94,11 @@ describe("RaceConnectionService", () => {
       "getHeats",
       "setHeats",
       "setParticipants",
+      "getParticipants",
       "setGroupParticipants",
       "clear",
     ]);
+    mockRaceService.getParticipants.and.returnValue([]);
     mockRaceService.getHeats.and.returnValue([]);
     mockRaceService.getCurrentHeat.and.returnValue({
       heatDrivers: [
@@ -1110,6 +1112,47 @@ describe("RaceConnectionService", () => {
       // The overall participant must retain its original rank 15!
       expect(overallParticipant.rank).toBe(15);
       expect(overallParticipant.groupRank).toBe(5);
+    });
+
+    it("should sync overall gaps and ranks to current heatDrivers on handleOverallStandingsIncoming", () => {
+      service.connect();
+
+      const mockHeatDriver: any = {
+        objectId: "hd-1",
+        driver: { entity_id: "d1", name: "Driver 1" },
+        participant: {
+          objectId: "p-d1",
+          gapLeader: 0,
+          gapPosition: 0,
+          rank: 0,
+        },
+      };
+      mockRaceService.getCurrentHeat.and.returnValue({
+        heatDrivers: [mockHeatDriver],
+      });
+
+      const update = {
+        participants: [
+          {
+            objectId: "p-d1",
+            driver: { model: { entityId: "d1" }, name: "Driver 1" },
+            rank: 2,
+            gapLeader: 0.25,
+            gapPosition: 0.25,
+            fuelLevel: 80,
+          },
+        ],
+      };
+
+      (service as any).handleOverallStandingsIncoming(update);
+
+      expect(mockRaceService.setParticipants).toHaveBeenCalled();
+      expect(mockHeatDriver.overallRank).toBe(2);
+      expect(mockHeatDriver.overallGapLeader).toBe(0.25);
+      expect(mockHeatDriver.overallGapPosition).toBe(0.25);
+      expect(mockHeatDriver.participant.gapLeader).toBe(0.25);
+      expect(mockHeatDriver.participant.gapPosition).toBe(0.25);
+      expect(mockHeatDriver.participant.fuelLevel).toBe(80);
     });
   });
 });

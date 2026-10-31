@@ -551,14 +551,45 @@ export class DefaultRacedayComponent
       this.heat.heatDrivers.forEach((hd) => {
         const d = hd.actualDriver || hd.driver;
         const driverId = d?.entity_id || d?.name;
-        const match = this.participants?.find(
-          (p) =>
-            p.driver?.entity_id === driverId || p.driver?.name === driverId,
-        );
+        const teamId = hd.participant?.team?.entity_id;
+        const match =
+          this.participants?.find((p) => {
+            if (
+              hd.participant?.objectId &&
+              p.objectId === hd.participant.objectId
+            ) {
+              return true;
+            }
+            if (hd.objectId && p.objectId === hd.objectId) {
+              return true;
+            }
+            if (
+              driverId &&
+              (p.driver?.entity_id === driverId || p.driver?.name === driverId)
+            ) {
+              return true;
+            }
+            return false;
+          }) ||
+          (teamId
+            ? this.participants?.find((p) => p.team?.entity_id === teamId)
+            : undefined);
         if (match) {
           if (match.rank) {
             (hd as any).overallRank = match.rank;
           }
+          if (hd.participant) {
+            Object.assign(hd.participant, match);
+          }
+          (hd as any).participant = match;
+          (hd as any).overallGapLeader = match.gapLeader;
+          (hd as any).overallGapPosition = match.gapPosition;
+          (hd as any).overallGapLeaderF1 = match.gapLeaderF1;
+          (hd as any).overallGapPositionF1 = match.gapPositionF1;
+          (hd as any).overallGapLeaderLaps = match.gapLeaderLaps;
+          (hd as any).overallGapPositionLaps = match.gapPositionLaps;
+          (hd as any).overallLapsDownLeader = match.lapsDownLeader;
+          (hd as any).overallLapsDownPosition = match.lapsDownPosition;
           if (match.fuelLevel != null) {
             if (hd.participant) {
               hd.participant.fuelLevel = match.fuelLevel;
@@ -5376,6 +5407,38 @@ export class DefaultRacedayComponent
   getAnchorFontSize(anchor: string): number {
     return RacedayLayoutUtils.getAnchorFontSize(anchor);
   }
+
+  getDriverParticipant(hd: DriverHeatData): RaceParticipant | undefined {
+    if (!hd) return undefined;
+    const d = hd.actualDriver || hd.driver;
+    const driverId = d?.entity_id || d?.name;
+    const teamId = hd.participant?.team?.entity_id;
+    return (
+      this.participants?.find((p) => {
+        if (
+          hd.participant?.objectId &&
+          p.objectId === hd.participant.objectId
+        ) {
+          return true;
+        }
+        if (hd.objectId && p.objectId === hd.objectId) {
+          return true;
+        }
+        if (
+          driverId &&
+          (p.driver?.entity_id === driverId || p.driver?.name === driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }) ||
+      (teamId
+        ? this.participants?.find((p) => p.team?.entity_id === teamId)
+        : undefined) ||
+      hd.participant
+    );
+  }
+
   getDriverOverallRanking(hd: DriverHeatData): number | undefined {
     if (!hd) return undefined;
     const d = hd.actualDriver || hd.driver;
@@ -5721,6 +5784,7 @@ export class DefaultRacedayComponent
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
+      getParticipant: (hd) => this.getDriverParticipant(hd),
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
@@ -5768,6 +5832,7 @@ export class DefaultRacedayComponent
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewWidget?.customSettings,
+      getParticipant: (hd) => this.getDriverParticipant(hd),
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
@@ -7987,6 +8052,7 @@ export class DefaultRacedayComponent
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
       laneViewWidgetSettings: laneViewSettings,
+      getParticipant: (hd) => this.getDriverParticipant(hd),
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),

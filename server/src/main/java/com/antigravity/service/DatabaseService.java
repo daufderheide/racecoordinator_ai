@@ -437,7 +437,9 @@ public class DatabaseService {
       for (Heat heat : record.getHeats()) {
         if (record.getModel() != null) {
           heat.initializeStandings(
-              record.getModel().getHeatScoring(), record.getModel().isPractice());
+              record.getModel().getHeatScoring(),
+              record.getModel().getOverallScoring(),
+              record.getModel().isPractice());
         }
       }
     }
@@ -692,7 +694,9 @@ public class DatabaseService {
               if (race.getHeats() != null && race.getModel() != null) {
                 for (Heat heat : race.getHeats()) {
                   heat.initializeStandings(
-                      race.getModel().getHeatScoring(), race.getModel().isPractice());
+                      race.getModel().getHeatScoring(),
+                      race.getModel().getOverallScoring(),
+                      race.getModel().isPractice());
                 }
               }
               saves.add(race);

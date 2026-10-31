@@ -1,21 +1,29 @@
 package com.antigravity.race;
 
 import com.antigravity.models.HeatScoring;
+import com.antigravity.models.RankingMethod;
 import java.util.List;
 
 public class GapCalculator {
 
   /**
-   * Calculates and sets gaps (gapLeader and gapPosition) for a list of participants.
+   * Calculates and sets gaps (gapLeader, gapPosition, F1 gaps, and lap gaps) for a list of
+   * participants.
    *
    * @param sortedParticipants The list of participants, sorted from first (index 0) to last.
    * @param finishMethod The finish method (Lap or Timed) used for the scoring.
+   * @param rankingMethod The ranking method used to rank participants. When set to FASTEST_LAP, all
+   *     gap calculations evaluate the delta between drivers' fastest laps.
    */
   public static void calculateGaps(
-      List<? extends GapParticipant> sortedParticipants, HeatScoring.FinishMethod finishMethod) {
+      List<? extends GapParticipant> sortedParticipants,
+      HeatScoring.FinishMethod finishMethod,
+      RankingMethod rankingMethod) {
     if (sortedParticipants == null || sortedParticipants.isEmpty()) {
       return;
     }
+
+    RankingMethod rankMethod = rankingMethod != null ? rankingMethod : RankingMethod.LAP_COUNT;
 
     GapParticipant leader = sortedParticipants.get(0);
     leader.setGapLeader(0.0);
@@ -32,14 +40,12 @@ public class GapCalculator {
       GapParticipant ahead = sortedParticipants.get(i - 1);
 
       if (current.isEmptyParticipant()) {
-        current.setGapLeader(0.0);
-        current.setGapPosition(0.0);
-        current.setGapLeaderF1(0.0);
-        current.setGapPositionF1(0.0);
-        current.setGapLeaderLaps(0.0);
-        current.setGapPositionLaps(0.0);
-        current.setLapsDownLeader(0);
-        current.setLapsDownPosition(0);
+        resetParticipantGaps(current);
+        continue;
+      }
+
+      if (rankMethod == RankingMethod.FASTEST_LAP) {
+        calculateFastestLapGaps(leader, ahead, current);
         continue;
       }
 
@@ -56,12 +62,64 @@ public class GapCalculator {
     }
   }
 
+  private static void resetParticipantGaps(GapParticipant current) {
+    current.setGapLeader(0.0);
+    current.setGapPosition(0.0);
+    current.setGapLeaderF1(0.0);
+    current.setGapPositionF1(0.0);
+    current.setGapLeaderLaps(0.0);
+    current.setGapPositionLaps(0.0);
+    current.setLapsDownLeader(0);
+    current.setLapsDownPosition(0);
+  }
+
+  private static void calculateFastestLapGaps(
+      GapParticipant leader, GapParticipant ahead, GapParticipant current) {
+    double gapLead = calculateFastestLapDelta(leader, current);
+    double gapPos = calculateFastestLapDelta(ahead, current);
+
+    current.setGapLeader(gapLead);
+    current.setGapPosition(gapPos);
+    current.setGapLeaderF1(gapLead);
+    current.setGapPositionF1(gapPos);
+    current.setLapsDownLeader(0);
+    current.setLapsDownPosition(0);
+    current.setGapLeaderLaps(0.0);
+    current.setGapPositionLaps(0.0);
+  }
+
+  private static double calculateFastestLapDelta(
+      GapParticipant targetParticipant, GapParticipant curParticipant) {
+    if (targetParticipant == null
+        || curParticipant == null
+        || targetParticipant.isEmptyParticipant()
+        || curParticipant.isEmptyParticipant()) {
+      return 0.0;
+    }
+    double targetBest = targetParticipant.getBestLapTime();
+    double curBest = curParticipant.getBestLapTime();
+    if (targetBest <= 0.0 || curBest <= 0.0) {
+      return 0.0;
+    }
+    return Math.max(0.0, curBest - targetBest);
+  }
+
   /**
    * Calculates and sets lap gaps (gapLeaderLaps and gapPositionLaps) for all participants,
    * comparing each driver's effective lap count against the effective lap counts of the leader and
    * ahead.
    */
   public static void calculateLapGaps(List<? extends GapParticipant> sortedParticipants) {
+    calculateLapGaps(sortedParticipants, RankingMethod.LAP_COUNT);
+  }
+
+  /**
+   * Calculates and sets lap gaps (gapLeaderLaps and gapPositionLaps) for all participants,
+   * comparing each driver's effective lap count against the effective lap counts of the leader and
+   * ahead.
+   */
+  public static void calculateLapGaps(
+      List<? extends GapParticipant> sortedParticipants, RankingMethod rankingMethod) {
     if (sortedParticipants == null || sortedParticipants.isEmpty()) {
       return;
     }
@@ -71,7 +129,7 @@ public class GapCalculator {
     for (int i = 1; i < sortedParticipants.size(); i++) {
       GapParticipant current = sortedParticipants.get(i);
       GapParticipant ahead = sortedParticipants.get(i - 1);
-      if (current.isEmptyParticipant()) {
+      if (current.isEmptyParticipant() || rankingMethod == RankingMethod.FASTEST_LAP) {
         current.setGapLeaderLaps(0.0);
         current.setGapPositionLaps(0.0);
         continue;
@@ -90,7 +148,24 @@ public class GapCalculator {
    */
   public static void calculateLapGapsForDriver(
       GapParticipant completedDriver, List<? extends GapParticipant> sortedParticipants) {
+    calculateLapGapsForDriver(completedDriver, sortedParticipants, RankingMethod.LAP_COUNT);
+  }
+
+  /**
+   * Calculates and sets lap gaps (gapLeaderLaps and gapPositionLaps) for a driver who just
+   * completed a lap, comparing their effective lap count against the effective lap counts
+   * (including running partial laps) of the leader and position immediately ahead.
+   */
+  public static void calculateLapGapsForDriver(
+      GapParticipant completedDriver,
+      List<? extends GapParticipant> sortedParticipants,
+      RankingMethod rankingMethod) {
     if (completedDriver == null || sortedParticipants == null || sortedParticipants.isEmpty()) {
+      return;
+    }
+    if (rankingMethod == RankingMethod.FASTEST_LAP) {
+      completedDriver.setGapLeaderLaps(0.0);
+      completedDriver.setGapPositionLaps(0.0);
       return;
     }
     if (completedDriver.isEmptyParticipant()) {

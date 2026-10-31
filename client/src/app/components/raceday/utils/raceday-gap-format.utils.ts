@@ -230,7 +230,9 @@ export class RacedayGapFormatUtils {
       return mode === "always_laps" ? lapPlaceholder : timePlaceholder;
     }
 
-    const p = hd?.participant;
+    const p = (ctx as any)?.getParticipant
+      ? (ctx as any).getParticipant(hd)
+      : hd?.participant;
 
     if (mode === "always_laps") {
       return this.formatOverallLapsGap(
@@ -247,7 +249,9 @@ export class RacedayGapFormatUtils {
 
     if (mode === "laps_and_time") {
       const lapsDown =
-        (target === "leader" ? p?.lapsDownLeader : p?.lapsDownPosition) ??
+        (target === "leader"
+          ? (p?.lapsDownLeader ?? (hd as any)?.overallLapsDownLeader)
+          : (p?.lapsDownPosition ?? (hd as any)?.overallLapsDownPosition)) ??
         (target === "leader" ? hd?.lapsDownLeader : hd?.lapsDownPosition) ??
         0;
 
@@ -301,8 +305,12 @@ export class RacedayGapFormatUtils {
     const lapValue =
       baseKey === "overallGap" || value === null || value === undefined
         ? target === "position"
-          ? (p?.gapPositionLaps ?? hd?.gapPositionLaps)
-          : (p?.gapLeaderLaps ?? hd?.gapLeaderLaps)
+          ? (p?.gapPositionLaps ??
+            (hd as any)?.overallGapPositionLaps ??
+            hd?.gapPositionLaps)
+          : (p?.gapLeaderLaps ??
+            (hd as any)?.overallGapLeaderLaps ??
+            hd?.gapLeaderLaps)
         : value;
     if (
       lapValue === null ||
@@ -336,11 +344,17 @@ export class RacedayGapFormatUtils {
       baseKey === "overallGap" || value === null || value === undefined
         ? target === "position"
           ? mode === "laps_and_time"
-            ? (p?.gapPositionF1 ?? hd?.gapPositionF1)
-            : (p?.gapPosition ?? hd?.gapPosition)
+            ? (p?.gapPositionF1 ??
+              (hd as any)?.overallGapPositionF1 ??
+              hd?.gapPositionF1)
+            : (p?.gapPosition ??
+              (hd as any)?.overallGapPosition ??
+              hd?.gapPosition)
           : mode === "laps_and_time"
-            ? (p?.gapLeaderF1 ?? hd?.gapLeaderF1)
-            : (p?.gapLeader ?? hd?.gapLeader)
+            ? (p?.gapLeaderF1 ??
+              (hd as any)?.overallGapLeaderF1 ??
+              hd?.gapLeaderF1)
+            : (p?.gapLeader ?? (hd as any)?.overallGapLeader ?? hd?.gapLeader)
         : value;
 
     if (

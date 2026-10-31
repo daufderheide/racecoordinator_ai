@@ -29,6 +29,7 @@ import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { LoggerService } from "./logger.service";
 import { RaceService } from "./race.service";
+import { RaceConnectionUtils } from "./race-connection.utils";
 import { WakeLockService } from "./wake-lock.service";
 
 export interface IReactionTime {
@@ -397,7 +398,7 @@ export class RaceConnectionService implements OnDestroy {
       driverData.flag = lap.flag;
     }
 
-    this.syncTargetHeat(
+    RaceConnectionUtils.syncTargetHeat(
       heat,
       allHeats,
       lap,
@@ -406,66 +407,10 @@ export class RaceConnectionService implements OnDestroy {
       segmentsCopy,
       lapTotalTime,
     );
+    this.raceService.setHeats([...allHeats]);
 
     this.raceService.setCurrentHeat(heat);
     this.lapSubject.next(lap);
-  }
-
-  private syncTargetHeat(
-    heat: any,
-    allHeats: any[],
-    lap: any,
-    driverData: any,
-    isFalseStart: boolean,
-    segmentsCopy: any[],
-    lapTotalTime: any,
-  ): void {
-    if (!allHeats || allHeats.length === 0) return;
-
-    const targetHeat = allHeats.find(
-      (h) =>
-        (heat.objectId && h.objectId === heat.objectId) ||
-        h.heatNumber === heat.heatNumber,
-    );
-    if (targetHeat && targetHeat.heatDrivers) {
-      const targetHd = DriverMatchingUtils.findDriverForLap(
-        targetHeat.heatDrivers,
-        lap,
-      );
-      if (targetHd && targetHd !== driverData) {
-        if (isFalseStart) {
-          if (
-            lap.adjustedLapCount !== undefined &&
-            lap.adjustedLapCount !== null &&
-            !isNaN(lap.adjustedLapCount)
-          ) {
-            targetHd.adjustedLapCount = lap.adjustedLapCount;
-          }
-        } else if (typeof targetHd.addLapTime === "function") {
-          targetHd.addLapTime(
-            lap.lapNumber!,
-            lap.lapTime!,
-            lap.averageLapTime!,
-            lap.medianLapTime!,
-            lap.bestLapTime!,
-            lap.adjustedLapCount!,
-            lap.driverId ?? undefined,
-            lap.isDrift ?? undefined,
-            lap.type ?? undefined,
-            segmentsCopy,
-            lap.countTowardsRecords !== false,
-            lapTotalTime,
-          );
-          if (lap.fuelLevel != null && targetHd.participant) {
-            targetHd.participant.fuelLevel = Number(lap.fuelLevel);
-          }
-        }
-        if (lap.flag !== undefined && lap.flag !== null) {
-          targetHd.flag = lap.flag;
-        }
-      }
-    }
-    this.raceService.setHeats([...allHeats]);
   }
 
   private handleCarDataIncoming(carData: any): void {
@@ -581,17 +526,10 @@ export class RaceConnectionService implements OnDestroy {
       this.raceService.setParticipants(participants);
       const heat = this.raceService.getCurrentHeat();
       if (heat && heat.heatDrivers) {
-        heat.heatDrivers.forEach((hd) => {
-          const d = hd.actualDriver || hd.driver;
-          const driverId = d?.entity_id || d?.name;
-          const match = participants.find(
-            (p: any) =>
-              p.driver?.entity_id === driverId || p.driver?.name === driverId,
-          );
-          if (match && match.fuelLevel != null && hd.participant) {
-            hd.participant.fuelLevel = match.fuelLevel;
-          }
-        });
+        RaceConnectionUtils.syncParticipantsToHeatDrivers(
+          heat.heatDrivers,
+          participants,
+        );
       }
       this.overallStandingsSubject.next(update);
     }
@@ -691,32 +629,7 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private mergeRaceUpdates(existing: IRace | null, incoming: IRace): IRace {
-    if (!existing) {
-      return incoming;
-    }
-    return {
-      ...existing,
-      ...incoming,
-      race: incoming.race || existing.race,
-      drivers:
-        incoming.drivers && incoming.drivers.length > 0
-          ? incoming.drivers
-          : existing.drivers,
-      heats:
-        incoming.heats && incoming.heats.length > 0
-          ? incoming.heats
-          : existing.heats,
-      currentHeat: incoming.currentHeat || existing.currentHeat,
-      recordData: incoming.recordData || existing.recordData,
-      state:
-        incoming.state !== undefined && incoming.state !== null
-          ? incoming.state
-          : existing.state,
-      flag:
-        incoming.flag !== undefined && incoming.flag !== null
-          ? incoming.flag
-          : existing.flag,
-    };
+    return RaceConnectionUtils.mergeRaceUpdates(existing, incoming);
   }
 
   private processHeatUpdate(heatProto: any) {
@@ -726,6 +639,18 @@ export class RaceConnectionService implements OnDestroy {
         this.driverRankings.set(sid, index + 1);
       });
     }
+
+    const participants =
+      typeof this.raceService?.getParticipants === "function"
+        ? this.raceService.getParticipants()
+        : [];
+    if (heat && heat.heatDrivers && participants && participants.length > 0) {
+      RaceConnectionUtils.syncParticipantsToHeatDrivers(
+        heat.heatDrivers,
+        participants,
+      );
+    }
+
     this.raceService.setCurrentHeat(heat);
 
     if (!this.raceService.getRace()?.track) {
@@ -835,24 +760,7 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private decorateRaceWithMetadata(race: any, update: IRace): void {
-    if (update.isEvent) {
-      race.is_event = update.isEvent;
-      race.event_id = update.eventId;
-      race.event_name = update.eventName;
-      race.current_event_race_index = update.currentEventRaceIndex;
-      race.total_event_races = update.totalEventRaces;
-      race.auto_advance_remaining_seconds = update.autoAdvanceRemainingSeconds;
-    }
-    if (update.isSeason || update.seasonId || update.seasonName) {
-      race.is_season = update.isSeason;
-      race.season_id = update.seasonId;
-      race.season_name = update.seasonName;
-      race.season_standings = update.seasonStandings || [];
-    }
-    if (update.startTimeMillis || (update as any).start_time_millis) {
-      const sm = update.startTimeMillis || (update as any).start_time_millis;
-      race.start_time_millis = typeof sm === "number" ? sm : Number(sm);
-    }
+    RaceConnectionUtils.decorateRaceWithMetadata(race, update);
   }
 
   private applyHeatsAndRecordsFromUpdate(update: IRace): void {
@@ -898,37 +806,7 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private applyStandingsUpdate(update: IStandingsUpdate, heat: any) {
-    if (heat && update && update.updates) {
-      heat.standings = []; // Rebuild standings list to match server exactly
-      update.updates.forEach((u: any) => {
-        if (u.objectId) {
-          heat.standings.push(u.objectId); // Server drives the standings!
-          this.driverRankings.set(u.objectId, u.rank || 0);
-          const driverData = heat.heatDrivers.find(
-            (d: any) => d.objectId === u.objectId,
-          );
-          if (driverData) {
-            driverData.rank = u.rank || 0;
-            driverData.gapLeader = u.gapLeader || 0;
-            driverData.gapPosition = u.gapPosition || 0;
-            driverData.gapLeaderF1 = u.gapLeaderF1 || 0;
-            driverData.gapPositionF1 = u.gapPositionF1 || 0;
-            driverData.gapLeaderLaps = u.gapLeaderLaps || 0;
-            driverData.gapPositionLaps = u.gapPositionLaps || 0;
-            driverData.lapsDownLeader = u.lapsDownLeader || 0;
-            driverData.lapsDownPosition = u.lapsDownPosition || 0;
-            driverData.lapsLed = u.lapsLed ?? u.laps_led ?? 0;
-            if (
-              u.trackCalls !== undefined ||
-              (u as any).track_calls !== undefined
-            ) {
-              driverData.trackCalls =
-                u.trackCalls ?? (u as any).track_calls ?? 0;
-            }
-          }
-        }
-      });
-    }
+    RaceConnectionUtils.applyStandingsUpdate(update, heat, this.driverRankings);
   }
 
   private interfaceAlertSubject = new Subject<{

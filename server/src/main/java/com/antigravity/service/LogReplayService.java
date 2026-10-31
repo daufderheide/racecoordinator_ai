@@ -368,7 +368,9 @@ public class LogReplayService {
           DriverHeatData dhd = drivers.get(lane);
           if (applyAdjustment(dhd, body)) {
             currentHeat.initializeStandings(
-                race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().getOverallScoring(),
+                race.getRaceModel().isPractice());
             race.updateAndBroadcastOverallStandings();
             race.updateScoreRecords();
             race.broadcast(race.createSnapshot());
@@ -393,7 +395,9 @@ public class LogReplayService {
           DriverHeatData dhd = drivers.get(lane);
           if (applyAdjustment(dhd, body)) {
             heat.initializeStandings(
-                race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().getOverallScoring(),
+                race.getRaceModel().isPractice());
             race.updateAndBroadcastOverallStandings();
             race.updateScoreRecords();
             race.broadcast(race.createSnapshot());
@@ -440,7 +444,9 @@ public class LogReplayService {
         }
         for (Heat heat : heatsToRecalculate) {
           heat.initializeStandings(
-              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+              race.getRaceModel().getHeatScoring(),
+              race.getRaceModel().getOverallScoring(),
+              race.getRaceModel().isPractice());
         }
         race.updateAndBroadcastOverallStandings();
         race.updateScoreRecords();

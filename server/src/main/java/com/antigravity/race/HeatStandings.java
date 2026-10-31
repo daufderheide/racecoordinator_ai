@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
+import com.antigravity.models.OverallScoring;
 import com.antigravity.models.RankingMethod;
 import com.antigravity.models.TiebreakerMethod;
 import com.antigravity.proto.HeatPositionUpdate;
@@ -20,15 +21,25 @@ public class HeatStandings {
   private static final Logger logger = LoggerFactory.getLogger(HeatStandings.class);
 
   private final HeatScoring scoring;
+  private final OverallScoring overallScoring;
+  private final RankingMethod effectiveRankingMethod;
+  private final TiebreakerMethod effectiveTiebreakerMethod;
   private final HeatRanking sortType;
   private final HeatRankingTiebreaker tieBreaker;
   private final List<DriverHeatData> driverHeatData;
   private List<String> currentStandings;
   private final boolean practice;
 
-  public HeatStandings(List<DriverHeatData> driverHeatData, HeatScoring scoring, boolean practice) {
+  public HeatStandings(
+      List<DriverHeatData> driverHeatData,
+      HeatScoring scoring,
+      OverallScoring overallScoring,
+      boolean practice) {
     this.driverHeatData = new ArrayList<>(driverHeatData);
     this.scoring = scoring != null ? scoring : new HeatScoring();
+    this.overallScoring = overallScoring;
+    this.effectiveRankingMethod = resolveHeatRankingMethod(this.scoring, this.overallScoring);
+    this.effectiveTiebreakerMethod = resolveHeatTiebreakerMethod(this.scoring);
     this.sortType = this.scoring.getHeatRanking();
     this.tieBreaker = this.scoring.getHeatRankingTiebreaker();
     this.practice = practice;
@@ -39,6 +50,58 @@ public class HeatStandings {
       }
     }
     this.currentStandings = this.calculateStandings();
+  }
+
+  public HeatStandings(List<DriverHeatData> driverHeatData, HeatScoring scoring, boolean practice) {
+    this(driverHeatData, scoring, null, practice);
+  }
+
+  public static boolean isFastestLapScoring(
+      HeatScoring heatScoring, OverallScoring overallScoring) {
+    if (heatScoring != null && heatScoring.getHeatRanking() == HeatRanking.FASTEST_LAP) {
+      return true;
+    }
+    if (overallScoring != null
+        && overallScoring.getRankingMethod() == OverallScoring.OverallRanking.FASTEST_LAP) {
+      return true;
+    }
+    return false;
+  }
+
+  public static RankingMethod resolveHeatRankingMethod(
+      HeatScoring heatScoring, OverallScoring overallScoring) {
+    if (isFastestLapScoring(heatScoring, overallScoring)) {
+      return RankingMethod.FASTEST_LAP;
+    }
+    if (heatScoring != null && heatScoring.getHeatRanking() != null) {
+      return heatScoring.toRankingMethod();
+    }
+    return RankingMethod.LAP_COUNT;
+  }
+
+  public static TiebreakerMethod resolveHeatTiebreakerMethod(HeatScoring heatScoring) {
+    if (heatScoring != null && heatScoring.getHeatRankingTiebreaker() != null) {
+      return heatScoring.toTiebreakerMethod();
+    }
+    return TiebreakerMethod.AVERAGE_LAP_TIME;
+  }
+
+  public static RankingMethod resolveOverallRankingMethod(
+      HeatScoring heatScoring, OverallScoring overallScoring) {
+    if (isFastestLapScoring(heatScoring, overallScoring)) {
+      return RankingMethod.FASTEST_LAP;
+    }
+    if (overallScoring != null && overallScoring.getRankingMethod() != null) {
+      return overallScoring.toRankingMethod();
+    }
+    return RankingMethod.LAP_COUNT;
+  }
+
+  public static TiebreakerMethod resolveOverallTiebreakerMethod(OverallScoring overallScoring) {
+    if (overallScoring != null && overallScoring.getTiebreaker() != null) {
+      return overallScoring.toTiebreakerMethod();
+    }
+    return TiebreakerMethod.AVERAGE_LAP_TIME;
   }
 
   public void reset() {
@@ -141,7 +204,7 @@ public class HeatStandings {
               .sorted(Comparator.comparingInt(DriverHeatData::getLane))
               .collect(Collectors.toList());
       calculateGaps(sortedDrivers, completedDriver);
-    } else if (practice) {
+    } else if (practice && effectiveRankingMethod != RankingMethod.FASTEST_LAP) {
       sortedDrivers = new ArrayList<>(driverHeatData);
     } else {
       sortedDrivers = driverHeatData.stream().sorted(getComparator()).collect(Collectors.toList());
@@ -176,16 +239,17 @@ public class HeatStandings {
   }
 
   private void calculateGaps(List<DriverHeatData> sortedDrivers, DriverHeatData completedDriver) {
-    GapCalculator.calculateGaps(sortedDrivers, scoring.getFinishMethod());
+    HeatScoring.FinishMethod finishMethod =
+        scoring != null ? scoring.getFinishMethod() : HeatScoring.FinishMethod.Lap;
+    GapCalculator.calculateGaps(sortedDrivers, finishMethod, effectiveRankingMethod);
     if (completedDriver != null) {
-      GapCalculator.calculateLapGapsForDriver(completedDriver, sortedDrivers);
+      GapCalculator.calculateLapGapsForDriver(
+          completedDriver, sortedDrivers, effectiveRankingMethod);
     }
   }
 
   private Comparator<DriverHeatData> getComparator() {
-    return new StandingsComparator(
-        scoring != null ? scoring.toRankingMethod() : RankingMethod.LAP_COUNT,
-        scoring != null ? scoring.toTiebreakerMethod() : TiebreakerMethod.AVERAGE_LAP_TIME);
+    return new StandingsComparator(effectiveRankingMethod, effectiveTiebreakerMethod);
   }
 
   private void calculateLapsLed() {
@@ -195,9 +259,8 @@ public class HeatStandings {
       }
       return;
     }
-    RankingMethod hRank = scoring != null ? scoring.toRankingMethod() : RankingMethod.LAP_COUNT;
-    TiebreakerMethod hTie =
-        scoring != null ? scoring.toTiebreakerMethod() : TiebreakerMethod.AVERAGE_LAP_TIME;
+    RankingMethod hRank = effectiveRankingMethod;
+    TiebreakerMethod hTie = effectiveTiebreakerMethod;
     Map<String, Integer> ledMap = GhostRaceSimulator.calculateLapsLed(driverHeatData, hRank, hTie);
     for (DriverHeatData d : driverHeatData) {
       String dId = d.getParticipantId();

@@ -140,6 +140,21 @@ O competidor retém esse valor até a conclusão da sua própria volta seguinte.
 
 ---
 
+### 4. Modo de Classificação Volta Mais Rápida
+
+Quando o método de classificação da bateria ou geral está configurado como **Volta Mais Rápida** (`FASTEST_LAP`), os cálculos de intervalo avaliam a diferença entre as melhores voltas pessoais dos pilotos em vez de contagens de voltas ou projeções de tempo:
+
+#### 1. Diferença para o Líder
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Diferença para a Posição Anterior
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **Sem volta cronometrada**: Se um competidor ou o piloto de referência ainda não concluiu uma volta cronometrada ($\text{BestLap} \le 0$), a diferença é avaliada como `0.0` (exibida como `--`).
+- **Fórmula 1 e voltas atrás**: Como a classificação se baseia estritamente no ritmo de qualificação em volta única, os competidores não podem tomar volta de atraso ($\text{LapsDown} = 0$). As métricas de diferença estilo Fórmula 1 (`gapLeaderF1`, `gapPositionF1`) equivalem ao delta da volta mais rápida, e as métricas de diferença em voltas (`gapLeaderLaps`, `gapPositionLaps`) são avaliadas como `0.0`.
+
+---
+
 ## Comparação dos Modos de Cálculo
 
 | Característica | Sempre tempo (`always_time`) | Tempo e voltas atrás (`laps_and_time`) | Sempre voltas (`always_laps`) |

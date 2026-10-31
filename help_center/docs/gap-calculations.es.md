@@ -140,6 +140,21 @@ El competidor mantiene este valor calculado hasta que complete su propia vuelta 
 
 ---
 
+### 4. Modo de Puntuación Vuelta Rápida
+
+Cuando el método de clasificación de la manga o general se configura en **Vuelta Rápida** (`FASTEST_LAP`), los cálculos de diferencia evalúan la diferencia entre las mejores vueltas personales de los pilotos en lugar del número de vueltas o tiempos proyectados:
+
+#### 1. Diferencia con el Líder
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Diferencia con la Posición Anterior
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **Sin vuelta cronometrada**: Si un competidor o el piloto de referencia aún no ha completado una vuelta cronometrada ($\text{BestLap} \le 0$), la diferencia evalúa a `0.0` (mostrado como `--`).
+- **Fórmula 1 y vueltas perdidas**: Dado que la clasificación se basa estrictamente en el ritmo de vuelta única de clasificación, los competidores no pueden ser doblados ($\text{LapsDown} = 0$). Las métricas de diferencia estilo Fórmula 1 (`gapLeaderF1`, `gapPositionF1`) equivalen al delta de vuelta rápida, y las métricas de diferencia en vueltas (`gapLeaderLaps`, `gapPositionLaps`) evalúan a `0.0`.
+
+---
+
 ## Comparación de Modos de Cálculo
 
 | Característica | Siempre tiempo (`always_time`) | Tiempo y vueltas perdidas (`laps_and_time`) | Siempre vueltas (`always_laps`) |

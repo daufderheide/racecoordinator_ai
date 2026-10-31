@@ -2091,6 +2091,33 @@ describe("DefaultRacedayComponent", () => {
         );
       expect(formattedRanks).toEqual(["1", "2", "3", "4"]);
     });
+
+    it("should sync overall gaps and participant data to heatDrivers", () => {
+      const hd = {
+        objectId: "hd1",
+        driver: { entity_id: "d1", name: "Mario" },
+        participant: { objectId: "p1", gapLeader: 0, gapPosition: 0 },
+      } as any;
+      (component as any).heat = { heatDrivers: [hd] };
+      (component as any).participants = [
+        {
+          objectId: "p1",
+          driver: { entity_id: "d1", name: "Mario" },
+          rank: 2,
+          gapLeader: 0.35,
+          gapPosition: 0.35,
+          fuelLevel: 90,
+        },
+      ];
+
+      (component as any).syncHeatDriversWithParticipants();
+
+      expect((hd as any).overallRank).toBe(2);
+      expect((hd as any).overallGapLeader).toBe(0.35);
+      expect((hd as any).overallGapPosition).toBe(0.35);
+      expect(hd.participant.gapLeader).toBe(0.35);
+      expect(hd.participant.gapPosition).toBe(0.35);
+    });
   });
 
   describe("getDriverGroupRanking", () => {

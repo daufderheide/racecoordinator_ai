@@ -5,7 +5,6 @@ import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.RankingMethod;
-import com.antigravity.models.TiebreakerMethod;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -97,7 +96,9 @@ public class OverallStandings {
       driver.setRank(isEmpty || practice ? 99 : currentRank++);
 
       double rankValue = 0;
-      if (overallScoring != null && overallScoring.getRankingMethod() != null) {
+      if (HeatStandings.isFastestLapScoring(heatScoring, overallScoring)) {
+        rankValue = driver.getBestLapTime();
+      } else if (overallScoring != null && overallScoring.getRankingMethod() != null) {
         switch (overallScoring.getRankingMethod()) {
           case LAP_COUNT:
             rankValue = driver.getTotalLaps();
@@ -124,7 +125,9 @@ public class OverallStandings {
     if (!practice) {
       HeatScoring.FinishMethod finishMethod =
           heatScoring != null ? heatScoring.getFinishMethod() : HeatScoring.FinishMethod.Lap;
-      GapCalculator.calculateGaps(drivers, finishMethod);
+      RankingMethod rankingMethod =
+          HeatStandings.resolveOverallRankingMethod(heatScoring, overallScoring);
+      GapCalculator.calculateGaps(drivers, finishMethod, rankingMethod);
       if (completedDriverParticipantId != null) {
         RaceParticipant completed =
             drivers.stream()
@@ -135,7 +138,7 @@ public class OverallStandings {
                 .findFirst()
                 .orElse(null);
         if (completed != null) {
-          GapCalculator.calculateLapGapsForDriver(completed, drivers);
+          GapCalculator.calculateLapGapsForDriver(completed, drivers, rankingMethod);
         }
       }
     }
@@ -260,10 +263,8 @@ public class OverallStandings {
 
   private Comparator<RaceParticipant> getComparator() {
     return new StandingsComparator(
-        overallScoring != null ? overallScoring.toRankingMethod() : RankingMethod.LAP_COUNT,
-        overallScoring != null
-            ? overallScoring.toTiebreakerMethod()
-            : TiebreakerMethod.AVERAGE_LAP_TIME);
+        HeatStandings.resolveOverallRankingMethod(heatScoring, overallScoring),
+        HeatStandings.resolveOverallTiebreakerMethod(overallScoring));
   }
 
   private void calculateDriverStats(

@@ -144,37 +144,53 @@ export class RacedayOverallFormatUtils {
           if (mode === "always_laps") {
             return (
               p?.gapPositionLaps ??
-              hd?.gapPositionLaps ??
-              hd?.overallGapPositionLaps
+              (hd as any)?.overallGapPositionLaps ??
+              hd?.gapPositionLaps
             );
           }
           if (mode === "laps_and_time") {
             return (
-              p?.gapPositionF1 ?? hd?.gapPositionF1 ?? hd?.overallGapPositionF1
+              p?.gapPositionF1 ??
+              (hd as any)?.overallGapPositionF1 ??
+              hd?.gapPositionF1
             );
           }
-          return p?.gapPosition ?? hd?.gapPosition ?? hd?.overallGapPosition;
+          return (
+            p?.gapPosition ?? (hd as any)?.overallGapPosition ?? hd?.gapPosition
+          );
         } else {
           if (mode === "always_laps") {
             return (
-              p?.gapLeaderLaps ?? hd?.gapLeaderLaps ?? hd?.overallGapLeaderLaps
+              p?.gapLeaderLaps ??
+              (hd as any)?.overallGapLeaderLaps ??
+              hd?.gapLeaderLaps
             );
           }
           if (mode === "laps_and_time") {
-            return p?.gapLeaderF1 ?? hd?.gapLeaderF1 ?? hd?.overallGapLeaderF1;
+            return (
+              p?.gapLeaderF1 ??
+              (hd as any)?.overallGapLeaderF1 ??
+              hd?.gapLeaderF1
+            );
           }
-          return p?.gapLeader ?? hd?.gapLeader ?? hd?.overallGapLeader;
+          return p?.gapLeader ?? (hd as any)?.overallGapLeader ?? hd?.gapLeader;
         }
       }
       case "overallGapLeader":
-        return p?.gapLeader ?? hd?.gapLeader ?? hd?.overallGapLeader;
+        return p?.gapLeader ?? (hd as any)?.overallGapLeader ?? hd?.gapLeader;
       case "overallGapPosition":
-        return p?.gapPosition ?? hd?.gapPosition ?? hd?.overallGapPosition;
+        return (
+          p?.gapPosition ?? (hd as any)?.overallGapPosition ?? hd?.gapPosition
+        );
       case "overallGapLeaderF1":
-        return p?.gapLeaderF1 ?? hd?.gapLeaderF1 ?? hd?.overallGapLeaderF1;
+        return (
+          p?.gapLeaderF1 ?? (hd as any)?.overallGapLeaderF1 ?? hd?.gapLeaderF1
+        );
       case "overallGapPositionF1":
         return (
-          p?.gapPositionF1 ?? hd?.gapPositionF1 ?? hd?.overallGapPositionF1
+          p?.gapPositionF1 ??
+          (hd as any)?.overallGapPositionF1 ??
+          hd?.gapPositionF1
         );
       default:
         return undefined;

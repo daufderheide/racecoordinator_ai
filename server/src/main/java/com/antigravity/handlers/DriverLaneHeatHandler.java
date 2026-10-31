@@ -452,7 +452,9 @@ public class DriverLaneHeatHandler {
 
       for (Heat heat : heatsToRecalculate) {
         heat.initializeStandings(
-            race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+            race.getRaceModel().getHeatScoring(),
+            race.getRaceModel().getOverallScoring(),
+            race.getRaceModel().isPractice());
       }
       race.updateAndBroadcastOverallStandings();
       race.updateScoreRecords();
@@ -485,7 +487,9 @@ public class DriverLaneHeatHandler {
 
   private void recalculateAndBroadcast(Race race, Heat heat) {
     heat.initializeStandings(
-        race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+        race.getRaceModel().getHeatScoring(),
+        race.getRaceModel().getOverallScoring(),
+        race.getRaceModel().isPractice());
     race.updateAndBroadcastOverallStandings();
     race.updateScoreRecords();
     race.broadcast(race.createSnapshot());
@@ -717,7 +721,9 @@ public class DriverLaneHeatHandler {
       dhd.recalculateBestLapTime();
 
       targetHeat.initializeStandings(
-          race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+          race.getRaceModel().getHeatScoring(),
+          race.getRaceModel().getOverallScoring(),
+          race.getRaceModel().isPractice());
       race.updateAndBroadcastOverallStandings();
       race.updateScoreRecords();
       race.broadcast(race.createSnapshot());

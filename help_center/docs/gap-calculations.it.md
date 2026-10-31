@@ -140,6 +140,21 @@ Il pilota mantiene questo valore calcolato fino al completamento del proprio gir
 
 ---
 
+### 4. Modalità di Classifica Giro Più Veloce
+
+Quando il metodo di classifica della manche o generale è impostato su **Giro Più Veloce** (`FASTEST_LAP`), i calcoli del distacco valutano la differenza tra i migliori giri personali dei piloti anziché il numero di giri o i tempi previsti:
+
+#### 1. Distacco dal Leader
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Distacco dalla Posizione Precedente
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **Nessun giro cronometrato**: Se un concorrente o il pilota di riferimento non ha ancora completato un giro cronometrato ($\text{BestLap} \le 0$), il distacco vale `0.0` (visualizzato come `--`).
+- **Formula 1 e giri di ritardo**: Poiché la classifica si basa esclusivamente sul ritmo del giro singolo di qualifica, i concorrenti non possono essere doppiati ($\text{LapsDown} = 0$). Le metriche in stile Formula 1 (`gapLeaderF1`, `gapPositionF1`) equivalgono al delta del giro più veloce, e i distacchi in giri (`gapLeaderLaps`, `gapPositionLaps`) valgono `0.0`.
+
+---
+
 ## Confronto delle Modalità di Calcolo
 
 | Caratteristica | Sempre tempo (`always_time`) | Tempo e giri di ritardo (`laps_and_time`) | Sempre giri (`always_laps`) |

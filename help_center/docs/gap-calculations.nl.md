@@ -140,6 +140,21 @@ De coureur behoudt deze berekende waarde tot diens eigen volgende rondeovergang.
 
 ---
 
+### 4. Waarderingsmethode Snelste Ronde
+
+Wanneer de rangschikkingsmethode voor de heat of algemeen is ingesteld op **Snelste Ronde** (`FASTEST_LAP`), berekenen de tijdsverschillen het verschil tussen de persoonlijke snelste ronden van coureurs in plaats van rondenaantallen of geprojecteerde tijden:
+
+#### 1. Achterstand op de Leider
+$$\text{Gap}_{\text{lead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{lead}}$$
+
+#### 2. Achterstand op de Voorgaande Positie
+$$\text{Gap}_{\text{ahead}} = \text{BestLap}_{\text{cur}} - \text{BestLap}_{\text{ahead}}$$
+
+- **Geen geklokte ronde**: Als een deelnemer of de vergeleken referentiecoureur nog geen getimede ronde heeft voltooid ($\text{BestLap} \le 0$), is het verschil `0.0` (weergegeven als `--`).
+- **Formule 1 & ronden achterstand**: Omdat de rangschikking uitsluitend gebaseerd is op kwalificatiesnelheid over één ronde, kunnen coureurs niet worden gedubbeld ($\text{LapsDown} = 0$). Formule 1-verschilmetrieken (`gapLeaderF1`, `gapPositionF1`) zijn gelijk aan het delta van de snelste ronde, en rondenverschilmetrieken (`gapLeaderLaps`, `gapPositionLaps`) leveren `0.0` op.
+
+---
+
 ## Vergelijking van Berekeningsmodi
 
 | Eigenschap | Altijd tijd (`always_time`) | Tijd en ronden achterstand (`laps_and_time`) | Altijd ronden (`always_laps`) |
