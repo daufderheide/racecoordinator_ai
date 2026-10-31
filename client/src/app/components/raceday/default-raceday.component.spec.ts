@@ -601,6 +601,25 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("isFuelRace", () => {
+    it("should return true when race has fuel options enabled", () => {
+      component["race"] = {
+        fuel_options: { enabled: true },
+      } as any;
+      expect(component.isFuelRace).toBeTrue();
+    });
+
+    it("should return false when race has fuel options disabled or absent", () => {
+      component["race"] = {
+        fuel_options: { enabled: false },
+      } as any;
+      expect(component.isFuelRace).toBeFalse();
+
+      component["race"] = undefined as any;
+      expect(component.isFuelRace).toBeFalse();
+    });
+  });
+
   describe("practice mode teammates", () => {
     it("should return empty driver and other drivers for getTeammates in practice mode", () => {
       component["race"] = { ...component["race"], practice: true } as any;

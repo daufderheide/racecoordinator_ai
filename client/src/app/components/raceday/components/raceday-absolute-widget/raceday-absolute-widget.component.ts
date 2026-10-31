@@ -144,7 +144,31 @@ export class RacedayAbsoluteWidgetComponent
       w?.widgetType === "progress-gauge" &&
       w?.customSettings?.["gaugeType"] === "fuel"
     ) {
-      return !parent?.isFuelRace;
+      if (typeof parent?.isFuelRace === "function") {
+        return !parent.isFuelRace();
+      }
+      if (typeof parent?.isFuelRace === "boolean") {
+        return !parent.isFuelRace;
+      }
+      const race = parent?.race || parent?.raceService?.getRace?.();
+      const track = parent?.track || race?.track;
+      if (race) {
+        const isDigital =
+          typeof track?.hasDigitalFuel === "function"
+            ? track.hasDigitalFuel()
+            : !!(track?.has_digital_fuel || track?.hasDigitalFuel);
+        const fuelOptions = isDigital
+          ? race.digital_fuel_options || race.digitalFuelOptions
+          : race.fuel_options || race.fuelOptions;
+        return !(
+          fuelOptions?.enabled ||
+          race.fuel_options?.enabled ||
+          race.fuelOptions?.enabled ||
+          race.digital_fuel_options?.enabled ||
+          race.digitalFuelOptions?.enabled
+        );
+      }
+      return false;
     }
     return false;
   }

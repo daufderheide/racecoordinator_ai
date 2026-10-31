@@ -579,6 +579,12 @@ export class DefaultRacedayComponent
     return this.activeLaneIndex !== undefined || this.isDriverStationLayout;
   }
 
+  get isFuelRace(): boolean {
+    const race = this.race || this.raceService?.getRace();
+    const track = this.track || race?.track;
+    return this.fuelAudioTracker?.isFuelRace(race, track) ?? false;
+  }
+
   get isPracticeLayout(): boolean {
     const isDemo = this.race?.entity_id?.startsWith("demo_") || false;
     return (

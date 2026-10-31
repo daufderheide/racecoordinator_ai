@@ -53,12 +53,14 @@ export class FuelAudioTracker {
             (track as any)?.has_digital_fuel || (track as any)?.hasDigitalFuel
           );
     const fuelOptions = isDigital
-      ? race.digital_fuel_options
-      : race.fuel_options;
+      ? race.digital_fuel_options || (race as any)?.digitalFuelOptions
+      : race.fuel_options || (race as any)?.fuelOptions;
     return !!(
       fuelOptions?.enabled ||
-      (!track &&
-        (race.fuel_options?.enabled || race.digital_fuel_options?.enabled))
+      (race as any)?.fuel_options?.enabled ||
+      (race as any)?.fuelOptions?.enabled ||
+      (race as any)?.digital_fuel_options?.enabled ||
+      (race as any)?.digitalFuelOptions?.enabled
     );
   }
 

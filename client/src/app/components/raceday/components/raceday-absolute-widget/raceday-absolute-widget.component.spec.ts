@@ -1393,5 +1393,52 @@ describe("RacedayAbsoluteWidgetComponent", () => {
         headerWidget,
       );
     });
+
+    it("should correctly determine isFuelWidgetHidden based on fuel options and parent status", () => {
+      const fuelWidget: AbsoluteWidgetNode = {
+        id: "fuel-gauge",
+        widgetType: "progress-gauge",
+        x: 10,
+        y: 10,
+        width: 100,
+        height: 50,
+        zIndex: 1,
+        customSettings: {
+          gaugeType: "fuel",
+        },
+      };
+
+      fixture.componentRef.setInput("widget", fuelWidget);
+      fixture.componentRef.setInput("isCustomizing", false);
+
+      // When parent.isFuelRace is true
+      mockParent.isFuelRace = true;
+      expect(component.isFuelWidgetHidden).toBeFalse();
+
+      // When parent.isFuelRace is false
+      mockParent.isFuelRace = false;
+      expect(component.isFuelWidgetHidden).toBeTrue();
+
+      // When customizing or in editor mode, never hidden
+      fixture.componentRef.setInput("isCustomizing", true);
+      expect(component.isFuelWidgetHidden).toBeFalse();
+
+      fixture.componentRef.setInput("isCustomizing", false);
+      mockParent.isLayoutCustomizing = true;
+      expect(component.isFuelWidgetHidden).toBeFalse();
+      mockParent.isLayoutCustomizing = false;
+
+      // Fallback to parent.race when isFuelRace property is undefined
+      delete mockParent.isFuelRace;
+      mockParent.race = {
+        fuel_options: { enabled: true },
+      };
+      expect(component.isFuelWidgetHidden).toBeFalse();
+
+      mockParent.race = {
+        fuel_options: { enabled: false },
+      };
+      expect(component.isFuelWidgetHidden).toBeTrue();
+    });
   });
 });
