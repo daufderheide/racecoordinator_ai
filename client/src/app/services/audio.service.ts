@@ -7,7 +7,9 @@ import {
   interpolate,
   releaseUtterance,
   resolveAudioUrl,
+  resolveBestTtsVoice,
   retainUtterance,
+  setupTtsWatchdogs,
 } from "@app/utils/audio";
 
 export type AudioPriority = "low" | "normal" | "high" | "urgent";
@@ -53,14 +55,45 @@ export interface UrgentQueueItem {
   association?: AudioAssociation;
 }
 
-export interface CalloutQueueItem {
-  config: AudioConfig;
-  priority: AudioPriority;
-  context?: any;
-  resolvedUrl?: string;
-  enqueuedAt: number;
-  association?: AudioAssociation;
-}
+export type CalloutQueueItem = UrgentQueueItem;
+
+const ANNOUNCEMENT_SLOTS = [
+  "audio.yellowflag",
+  "audio.seconds_left",
+  "audio.seconds_left.halfway",
+  "audio.heat_over",
+  "audio.race_over",
+  "audio.min_lap_time",
+  "audio.drift_lap",
+  "driftLap",
+  "drift_lap",
+  "penalty",
+  "falseStart",
+  "false_start",
+  "overallBestLap",
+  "overall_best_lap",
+  "overallRecordLap",
+  "overall_record_lap",
+  "overallLaneBestLap",
+  "overall_lane_best_lap",
+  "overallLaneRecordLap",
+  "overall_lane_record_lap",
+  "raceBestLap",
+  "race_best_lap",
+  "raceLaneBestLap",
+  "race_lane_best_lap",
+  "heatBestLap",
+  "heat_best_lap",
+  "newRaceLeader",
+  "new_race_leader",
+  "newHeatLeader",
+  "new_heat_leader",
+  "pitIn",
+  "pit_in",
+  "fuel",
+  "fuel_level",
+  "fuelLevel",
+];
 
 export interface ActiveVoiceCallout {
   priority: AudioPriority;
@@ -83,6 +116,7 @@ export class AudioService implements OnDestroy {
   private relevanceFilter: AudioRelevanceFilter | null = null;
   private preloadedAudioMap = new Map<string, HTMLAudioElement>();
   private lastCancelTime: number = 0;
+  private activeUtteranceStartedAt: number = 0;
 
   constructor(
     private dataService: DataService,
@@ -99,46 +133,7 @@ export class AudioService implements OnDestroy {
   isVoiceCallout(slotOrCategory: string, config?: AudioConfig): boolean {
     if (!config || config.type === "none") return false;
     if (config.type === "tts") return true;
-
-    const announcementSlots = [
-      "audio.yellowflag",
-      "audio.seconds_left",
-      "audio.seconds_left.halfway",
-      "audio.heat_over",
-      "audio.race_over",
-      "audio.min_lap_time",
-      "audio.drift_lap",
-      "driftLap",
-      "drift_lap",
-      "penalty",
-      "falseStart",
-      "false_start",
-      "overallBestLap",
-      "overall_best_lap",
-      "overallRecordLap",
-      "overall_record_lap",
-      "overallLaneBestLap",
-      "overall_lane_best_lap",
-      "overallLaneRecordLap",
-      "overall_lane_record_lap",
-      "raceBestLap",
-      "race_best_lap",
-      "raceLaneBestLap",
-      "race_lane_best_lap",
-      "heatBestLap",
-      "heat_best_lap",
-      "newRaceLeader",
-      "new_race_leader",
-      "newHeatLeader",
-      "new_heat_leader",
-      "pitIn",
-      "pit_in",
-      "fuel",
-      "fuel_level",
-      "fuelLevel",
-    ];
-
-    return announcementSlots.some((s) => slotOrCategory.includes(s));
+    return ANNOUNCEMENT_SLOTS.some((s) => slotOrCategory.includes(s));
   }
 
   setRelevanceFilter(filter: AudioRelevanceFilter | null): void {
@@ -326,6 +321,8 @@ export class AudioService implements OnDestroy {
         ? `TTS "${config.text}"`
         : `preset "${resolvedUrl || config.url}"`;
 
+    this.releaseStaleTtsVoiceIfIdle();
+
     // Channel IDLE
     if (!this.activeVoice && !this.isSpacingCoolingDown) {
       this.logger.info(
@@ -337,41 +334,14 @@ export class AudioService implements OnDestroy {
 
     // Channel BUSY
     if (priority === "urgent") {
-      if (this.isSpacingCoolingDown) {
-        this.logger.info(
-          `[AUDIO] Urgent callout breaking through cadence cooldown: ${desc}`,
-        );
-        this.clearSpacingTimer();
-        this.executeVoiceCallout(config, priority, context, resolvedUrl);
-        return true;
-      }
-
-      if (this.activeVoice) {
-        if (this.activeVoice.priority !== "urgent") {
-          // Preempt lower-priority sound immediately
-          this.logger.info(
-            `[AUDIO] Urgent callout preempting active '${this.activeVoice.priority}' voice: ${desc}`,
-          );
-          this.activeVoice.stop();
-          this.activeVoice = null;
-          this.executeVoiceCallout(config, priority, context, resolvedUrl);
-        } else {
-          // Another urgent sound is actively playing, queue this urgent sound
-          this.logger.info(
-            `[AUDIO] Queueing urgent callout behind active urgent voice: ${desc}`,
-          );
-          this.urgentQueue.push({
-            config,
-            priority,
-            context,
-            resolvedUrl,
-            enqueuedAt: Date.now(),
-            association,
-          });
-        }
-        return true;
-      }
-      return false;
+      return this.handleUrgentCalloutWhenBusy(
+        config,
+        priority,
+        desc,
+        context,
+        resolvedUrl,
+        association,
+      );
     }
 
     // Incoming sound is NOT urgent
@@ -408,6 +378,51 @@ export class AudioService implements OnDestroy {
       }
     }
 
+    return false;
+  }
+
+  private handleUrgentCalloutWhenBusy(
+    config: AudioConfig,
+    priority: AudioPriority,
+    desc: string,
+    context?: any,
+    resolvedUrl?: string,
+    association?: AudioAssociation,
+  ): boolean {
+    if (this.isSpacingCoolingDown) {
+      this.logger.info(
+        `[AUDIO] Urgent callout breaking through cadence cooldown: ${desc}`,
+      );
+      this.clearSpacingTimer();
+      this.executeVoiceCallout(config, priority, context, resolvedUrl);
+      return true;
+    }
+
+    if (this.activeVoice) {
+      if (this.activeVoice.priority !== "urgent") {
+        // Preempt lower-priority sound immediately
+        this.logger.info(
+          `[AUDIO] Urgent callout preempting active '${this.activeVoice.priority}' voice: ${desc}`,
+        );
+        this.activeVoice.stop();
+        this.activeVoice = null;
+        this.executeVoiceCallout(config, priority, context, resolvedUrl);
+      } else {
+        // Another urgent sound is actively playing, queue this urgent sound
+        this.logger.info(
+          `[AUDIO] Queueing urgent callout behind active urgent voice: ${desc}`,
+        );
+        this.urgentQueue.push({
+          config,
+          priority,
+          context,
+          resolvedUrl,
+          enqueuedAt: Date.now(),
+          association,
+        });
+      }
+      return true;
+    }
     return false;
   }
 
@@ -460,6 +475,8 @@ export class AudioService implements OnDestroy {
       config.type === "tts"
         ? `TTS "${config.text}"`
         : `preset "${resolvedUrl || config.url}"`;
+
+    this.releaseStaleTtsVoiceIfIdle();
 
     // Channel IDLE
     if (!this.activeVoice && !this.isSpacingCoolingDown) {
@@ -707,12 +724,22 @@ export class AudioService implements OnDestroy {
 
   private prepareTtsUtterance(
     interpolatedText: string,
+    isRetry = false,
   ): SpeechSynthesisUtterance {
     if (this.activeUtterance) {
       releaseUtterance(this.activeUtterance);
       this.activeUtterance.onend = null;
       this.activeUtterance.onerror = null;
       this.activeUtterance = null;
+    }
+
+    if (
+      !isRetry &&
+      typeof window !== "undefined" &&
+      window.speechSynthesis &&
+      (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+    ) {
+      this.cancelSpeechSynthesis();
     }
 
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
@@ -725,58 +752,36 @@ export class AudioService implements OnDestroy {
   private setupTtsWatchdogs(
     utterance: SpeechSynthesisUtterance,
     isEnded: () => boolean,
+    onComplete?: () => void,
   ): { clear: () => void } {
-    let started = false;
-    let startWatchdog: any = null;
+    return setupTtsWatchdogs(utterance, isEnded, onComplete);
+  }
 
-    utterance.onstart = () => {
-      started = true;
-      if (startWatchdog) {
-        clearTimeout(startWatchdog);
-        startWatchdog = null;
-      }
-    };
-
-    startWatchdog = setTimeout(() => {
-      if (!started && !isEnded()) {
-        try {
-          if (typeof window !== "undefined" && window.speechSynthesis) {
-            window.speechSynthesis.resume();
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }, 1000);
-
-    const keepAliveTimer: any = setInterval(() => {
-      if (isEnded()) {
-        clearInterval(keepAliveTimer);
-        return;
-      }
-      try {
-        if (typeof window !== "undefined" && window.speechSynthesis) {
-          if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-          }
-        }
-      } catch {
-        // ignore
-      }
-    }, 5000);
-
-    return {
-      clear: () => {
-        if (keepAliveTimer) clearInterval(keepAliveTimer);
-        if (startWatchdog) clearTimeout(startWatchdog);
-      },
-    };
+  private releaseStaleTtsVoiceIfIdle(): void {
+    if (
+      this.activeVoice &&
+      this.activeUtterance &&
+      this.activeUtteranceStartedAt > 0 &&
+      Date.now() - this.activeUtteranceStartedAt >= 250 &&
+      typeof window !== "undefined" &&
+      window.speechSynthesis &&
+      window.speechSynthesis.speaking === false &&
+      window.speechSynthesis.pending === false &&
+      !window.speechSynthesis.paused
+    ) {
+      this.logger.info(
+        "[AUDIO] Releasing stale TTS activeVoice (speechSynthesis is idle).",
+      );
+      this.activeVoice.stop();
+      this.activeVoice = null;
+    }
   }
 
   private playTtsVoice(
     text: string,
     priority: AudioPriority,
     context?: any,
+    isRetry = false,
   ): void {
     let interpolatedText = text;
     if (context) {
@@ -794,9 +799,19 @@ export class AudioService implements OnDestroy {
       return;
     }
 
-    const utterance = this.prepareTtsUtterance(interpolatedText);
+    const utterance = this.prepareTtsUtterance(interpolatedText, isRetry);
+    this.activeUtteranceStartedAt = Date.now();
     let ended = false;
-    const watchdogs = this.setupTtsWatchdogs(utterance, () => ended);
+    const watchdogs = this.setupTtsWatchdogs(
+      utterance,
+      () => ended,
+      () => {
+        cleanup();
+        if (this.activeVoice?.stop === stop) {
+          this.onVoiceCalloutEnded();
+        }
+      },
+    );
 
     const cleanup = () => {
       if (ended) return;
@@ -812,6 +827,7 @@ export class AudioService implements OnDestroy {
       }
       if (this.activeUtterance === utterance) {
         this.activeUtterance = null;
+        this.activeUtteranceStartedAt = 0;
       }
     };
 
@@ -843,9 +859,22 @@ export class AudioService implements OnDestroy {
       }
     };
 
-    utterance.onerror = (err) => {
+    utterance.onerror = (err: any) => {
+      const errType = err?.error;
+      const isInterrupted = errType === "interrupted" || errType === "canceled";
+      if (isInterrupted && this.activeVoice?.stop === stop && !isRetry) {
+        cleanup();
+        setTimeout(() => {
+          if (this.activeVoice?.stop === stop) {
+            this.playTtsVoice(text, priority, context, true);
+          }
+        }, 60);
+        return;
+      }
       cleanup();
-      this.logger.error("TTS playback error", err);
+      if (!isInterrupted) {
+        this.logger.error("TTS playback error", err);
+      }
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
@@ -884,18 +913,27 @@ export class AudioService implements OnDestroy {
     const utterance = new SpeechSynthesisUtterance(text);
     retainUtterance(utterance);
     this.activeUtterance = utterance;
-    utterance.onend = () => {
+    let ended = false;
+    const watchdogs = this.setupTtsWatchdogs(utterance, () => ended);
+    const cleanup = () => {
+      if (ended) return;
+      ended = true;
+      watchdogs.clear();
       releaseUtterance(utterance);
+      utterance.onstart = null;
+      utterance.onend = null;
+      utterance.onerror = null;
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
+        this.safetyTimeout = null;
+      }
       if (this.activeUtterance === utterance) {
         this.activeUtterance = null;
       }
     };
-    utterance.onerror = () => {
-      releaseUtterance(utterance);
-      if (this.activeUtterance === utterance) {
-        this.activeUtterance = null;
-      }
-    };
+    utterance.onend = () => cleanup();
+    utterance.onerror = () => cleanup();
+
     this.applyTtsSettingsToUtterance(
       utterance,
       voiceName,
@@ -904,6 +942,17 @@ export class AudioService implements OnDestroy {
       volume,
       masterVolume,
     );
+
+    const wordCount = text.trim().split(/\s+/).length;
+    const dynamicTimeout = Math.max(
+      3000,
+      Math.min(10000, wordCount * 500 + 2000),
+    );
+    this.safetyTimeout = setTimeout(() => {
+      cleanup();
+      this.cancelSpeechSynthesis();
+    }, dynamicTimeout);
+
     this.logger.info(`[AUDIO] Previewing TTS: "${text}"`);
     this.speakUtterance(utterance);
   }
@@ -990,14 +1039,7 @@ export class AudioService implements OnDestroy {
       typeof window.speechSynthesis.getVoices === "function"
     ) {
       const voices = this.getVoices();
-      const trimmed = voiceName.trim().toLowerCase();
-      const matched = voices.find(
-        (v) =>
-          v.name === voiceName ||
-          v.voiceURI === voiceName ||
-          (v.name && v.name.trim().toLowerCase() === trimmed) ||
-          (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
-      );
+      const matched = resolveBestTtsVoice(voices, voiceName);
       if (matched) {
         try {
           utterance.voice = matched;

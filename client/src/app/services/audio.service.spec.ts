@@ -349,6 +349,36 @@ describe("AudioService", () => {
       );
     });
 
+    it("should automatically retry TTS callout once after 60ms if interrupted by asynchronous cancel", fakeAsync(() => {
+      const lowConfig: AudioConfig = { type: "tts", text: "Lap" };
+      const normalConfig: AudioConfig = { type: "tts", text: "P Best Lap" };
+
+      service.playCallout(lowConfig, "low");
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(1);
+
+      // Preempt with normal priority TTS callout
+      service.playCallout(normalConfig, "normal");
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(2);
+      const secondUtterance =
+        mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(secondUtterance.text).toBe("P Best Lap");
+
+      // Simulate Chromium firing onerror "interrupted" on the newly queued utterance due to in-flight cancel()
+      secondUtterance.onerror({ error: "interrupted" });
+
+      // Active voice should remain held while retry timer is pending
+      expect(service.getActiveVoice()?.priority).toBe("normal");
+
+      tick(60);
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalledTimes(3);
+      const retriedUtterance =
+        mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(retriedUtterance.text).toBe("P Best Lap");
+
+      retriedUtterance.onend();
+      expect(service.getActiveVoice()).toBeNull();
+    }));
+
     it("should preempt non-urgent sound immediately when URGENT callout arrives", () => {
       const highConfig: AudioConfig = { type: "preset", url: "halfway.wav" };
       service.playCallout(highConfig, "high");
@@ -637,6 +667,64 @@ describe("AudioService", () => {
       expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
     });
 
+    it("should leave utterance.voice unset when voiceName is empty so browser uses native default voice", () => {
+      const remoteVoice = {
+        name: "Google US English",
+        voiceURI: "google-us",
+        lang: "en-US",
+        localService: false,
+        default: true,
+      } as any;
+      const localVoice = {
+        name: "Samantha",
+        voiceURI: "samantha",
+        lang: "en-US",
+        localService: true,
+        default: false,
+      } as any;
+      mockSpeechSynthesis.getVoices.and.returnValue([remoteVoice, localVoice]);
+      (service as any).cachedVoices = [remoteVoice, localVoice];
+
+      const utterance = new SpeechSynthesisUtterance("Hello");
+      service.applyTtsSettingsToUtterance(utterance, "");
+      expect(utterance.voice).toBeNull();
+      expect(utterance.lang).toBe("en-US");
+    });
+
+    it("should unjam speech synthesis by canceling if speaking is true but no active voice", () => {
+      mockSpeechSynthesis.speaking = true;
+      mockSpeechSynthesis.cancel.calls.reset();
+
+      service.previewTTS("Test unjam message");
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+    });
+
+    it("should cancel stuck speechSynthesis before speaking new TTS callout when speaking or pending is true", () => {
+      mockSpeechSynthesis.speaking = true;
+      mockSpeechSynthesis.cancel.calls.reset();
+
+      service.playCallout({ type: "tts", text: "Lap" }, "low");
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+    });
+
+    it("should release stale TTS activeVoice when speechSynthesis is no longer speaking or pending", fakeAsync(() => {
+      service.playCallout({ type: "tts", text: "New Leader" }, "high");
+      expect(service.getActiveVoice()?.priority).toBe("high");
+
+      tick(300);
+      mockSpeechSynthesis.speaking = false;
+      mockSpeechSynthesis.pending = false;
+      mockSpeechSynthesis.paused = false;
+
+      // Incoming low-priority lap callout should succeed because previous TTS finished without firing onend
+      const played = service.playCallout({ type: "tts", text: "Lap" }, "low");
+      expect(played).toBeTrue();
+      expect(service.getActiveVoice()?.priority).toBe("low");
+
+      service.reset();
+    }));
+
     it("should align utterance.lang with voice.lang when voice specifies locale", () => {
       const germanVoice = {
         name: "Anna",
@@ -664,7 +752,8 @@ describe("AudioService", () => {
       expect(service.getActiveVoice()).toBeNull();
     }));
 
-    it("should trigger resume via startWatchdog when onstart has not fired after 1000ms", fakeAsync(() => {
+    it("should trigger resume via startWatchdog when paused and onstart has not fired after 1000ms", fakeAsync(() => {
+      mockSpeechSynthesis.paused = true;
       mockSpeechSynthesis.resume = jasmine.createSpy("resume");
       service.playCallout(
         { type: "tts", text: "Test start watchdog" },

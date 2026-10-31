@@ -897,6 +897,10 @@ export class AssetManagerComponent
       }
       const playContext = mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
+      if (!interpolatedText || !interpolatedText.trim()) {
+        resolve();
+        return;
+      }
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
       this.activeUtterance = utterance;
       retainUtterance(utterance);

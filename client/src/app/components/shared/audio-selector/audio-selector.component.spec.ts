@@ -1093,6 +1093,40 @@ describe("AudioSelectorComponent", () => {
       expect(spokenText).toBe("Dave out of fuel");
     });
 
+    it("should cancel any stuck synthesis queue when play is clicked in TTS mode", () => {
+      if (window.speechSynthesis) {
+        if (!(window.speechSynthesis.speak as any).and) {
+          spyOn(window.speechSynthesis, "speak");
+        }
+        if (!(window.speechSynthesis.cancel as any).and) {
+          spyOn(window.speechSynthesis, "cancel");
+        }
+        (window.speechSynthesis as any).speaking = true;
+      }
+      fixture.componentRef.setInput("type", "tts");
+      fixture.componentRef.setInput("text", "Pit in");
+      fixture.detectChanges();
+
+      component.play();
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled();
+      expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    });
+
+    it("should not call speak when TTS text is empty or whitespace only", () => {
+      if (window.speechSynthesis && (window.speechSynthesis.speak as any).and) {
+        (window.speechSynthesis.speak as jasmine.Spy).calls.reset();
+      }
+      fixture.componentRef.setInput("type", "tts");
+      fixture.componentRef.setInput("text", "   ");
+      fixture.detectChanges();
+
+      component.play();
+      expect(component.isPlaying).toBeFalse();
+      if (window.speechSynthesis && (window.speechSynthesis.speak as any).and) {
+        expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+      }
+    });
+
     it("should reset localText when parent text input changes", () => {
       component.onTextChange("Typed text");
       expect(component.effectiveText()).toBe("Typed text");
@@ -1505,5 +1539,40 @@ describe("AudioSelectorComponent", () => {
         "/assets/default_countdown_1_Countdown_1",
       );
     });
+
+    it("should retry speaking once after 60ms if playTTS receives an interrupted error", fakeAsync(() => {
+      if (window.speechSynthesis) {
+        if (!(window.speechSynthesis.speak as any).and) {
+          spyOn(window.speechSynthesis, "speak");
+        } else {
+          (window.speechSynthesis.speak as jasmine.Spy).calls.reset();
+        }
+        if (!(window.speechSynthesis.cancel as any).and) {
+          spyOn(window.speechSynthesis, "cancel");
+        }
+      }
+
+      fixture.componentRef.setInput("type", "tts");
+      fixture.componentRef.setInput("text", "Selector TTS test");
+      fixture.detectChanges();
+
+      component.play();
+      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+      expect(component.isPlaying).toBeTrue();
+
+      const firstUtterance = (
+        window.speechSynthesis.speak as jasmine.Spy
+      ).calls.mostRecent().args[0];
+      firstUtterance.onerror({ error: "interrupted" });
+      expect(component.isPlaying).toBeTrue();
+
+      tick(60);
+      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(2);
+      const secondUtterance = (
+        window.speechSynthesis.speak as jasmine.Spy
+      ).calls.mostRecent().args[0];
+      secondUtterance.onend();
+      expect(component.isPlaying).toBeFalse();
+    }));
   });
 });

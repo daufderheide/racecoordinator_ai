@@ -665,6 +665,93 @@ export function releaseUtterance(
   }
 }
 
+/** Resolves a matching TTS voice when a specific voiceName is configured; returns null to use the browser default when voiceName is empty. */
+export function resolveBestTtsVoice(
+  voices: SpeechSynthesisVoice[],
+  voiceName?: string,
+): SpeechSynthesisVoice | null {
+  if (!voices || voices.length === 0 || !voiceName || !voiceName.trim()) {
+    return null;
+  }
+
+  const trimmed = voiceName.trim().toLowerCase();
+  return (
+    voices.find(
+      (v) =>
+        v.name === voiceName ||
+        v.voiceURI === voiceName ||
+        (v.name && v.name.trim().toLowerCase() === trimmed) ||
+        (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
+    ) || null
+  );
+}
+
+/**
+ * Sets up start watchdog and completion/keep-alive timers to prevent Chromium speech synthesis stalls.
+ */
+export function setupTtsWatchdogs(
+  utterance: SpeechSynthesisUtterance,
+  isEnded: () => boolean,
+  onComplete?: () => void,
+): { clear: () => void } {
+  let started = false;
+  let startWatchdog: any = null;
+
+  utterance.onstart = () => {
+    started = true;
+    if (startWatchdog) {
+      clearTimeout(startWatchdog);
+      startWatchdog = null;
+    }
+  };
+
+  startWatchdog = setTimeout(() => {
+    if (!started && !isEnded()) {
+      try {
+        if (
+          typeof window !== "undefined" &&
+          window.speechSynthesis &&
+          window.speechSynthesis.paused
+        ) {
+          window.speechSynthesis.resume();
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, 1000);
+
+  const keepAliveTimer: any = setInterval(() => {
+    if (isEnded()) {
+      clearInterval(keepAliveTimer);
+      return;
+    }
+    try {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        } else if (
+          started &&
+          window.speechSynthesis.speaking === false &&
+          window.speechSynthesis.pending === false
+        ) {
+          clearInterval(keepAliveTimer);
+          onComplete?.();
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, 250);
+
+  return {
+    clear: () => {
+      if (keepAliveTimer) clearInterval(keepAliveTimer);
+      if (startWatchdog) clearTimeout(startWatchdog);
+    },
+  };
+}
+
 let globalAudioUnlocked = false;
 
 /**
@@ -764,6 +851,9 @@ function playTtsAudio(
 
   try {
     window.speechSynthesis.cancel();
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
   } catch {
     // ignore
   }
@@ -777,14 +867,7 @@ function playTtsAudio(
   ) {
     try {
       const voices = window.speechSynthesis.getVoices() || [];
-      const trimmed = options.ttsVoice.trim().toLowerCase();
-      const match = voices.find(
-        (v) =>
-          v.name === options.ttsVoice ||
-          v.voiceURI === options.ttsVoice ||
-          (v.name && v.name.trim().toLowerCase() === trimmed) ||
-          (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
-      );
+      const match = resolveBestTtsVoice(voices, options.ttsVoice);
       if (match) {
         utterance.voice = match;
       }

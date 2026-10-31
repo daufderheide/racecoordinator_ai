@@ -8,7 +8,9 @@ import {
   mockTTSContext,
   playSound,
   resolveAudioUrl,
+  resolveBestTtsVoice,
   resolveLapAudio,
+  setupTtsWatchdogs,
 } from "./audio";
 
 describe("playSound Utility", () => {
@@ -297,6 +299,69 @@ describe("playSound Utility", () => {
       );
       const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
       expect(callArgs[0].lang).toBe("de-DE");
+    });
+
+    describe("resolveBestTtsVoice", () => {
+      const mockVoices = [
+        {
+          name: "Google US English",
+          voiceURI: "Google US English",
+          lang: "en-US",
+          localService: false,
+          default: true,
+        },
+        {
+          name: "Samantha",
+          voiceURI: "Samantha",
+          lang: "en-US",
+          localService: true,
+          default: false,
+        },
+        {
+          name: "Anna",
+          voiceURI: "Anna",
+          lang: "de-DE",
+          localService: true,
+          default: false,
+        },
+        {
+          name: "Daniel",
+          voiceURI: "Daniel",
+          lang: "en-GB",
+          localService: true,
+          default: false,
+        },
+      ] as any[];
+
+      it("should match requested voice by name or voiceURI", () => {
+        const result = resolveBestTtsVoice(mockVoices, "Samantha");
+        expect(result?.name).toBe("Samantha");
+
+        const resultUri = resolveBestTtsVoice(mockVoices, "anna");
+        expect(resultUri?.name).toBe("Anna");
+      });
+
+      it("should return null when voiceName is empty or not specified so browser uses native default voice", () => {
+        expect(resolveBestTtsVoice(mockVoices, undefined)).toBeNull();
+        expect(resolveBestTtsVoice(mockVoices, "")).toBeNull();
+        expect(resolveBestTtsVoice(mockVoices, "   ")).toBeNull();
+      });
+
+      it("should return null when requested voice is not found or voices list is empty", () => {
+        expect(resolveBestTtsVoice(mockVoices, "NonExistentVoice")).toBeNull();
+        expect(resolveBestTtsVoice([], "Samantha")).toBeNull();
+      });
+    });
+
+    describe("setupTtsWatchdogs", () => {
+      it("should clear watchdog when utterance starts", () => {
+        const mockUtterance = {} as any;
+        const watchdogs = setupTtsWatchdogs(mockUtterance, () => false);
+        expect(mockUtterance.onstart).toBeDefined();
+
+        mockUtterance.onstart();
+        watchdogs.clear();
+      });
     });
   });
 
@@ -1340,6 +1405,23 @@ describe("playSound Utility", () => {
       expect(getDefaultAudioName("custom_sound")).toBeUndefined();
       expect(getDefaultAudioName("")).toBeUndefined();
       expect(getDefaultAudioName(undefined as any)).toBeUndefined();
+    });
+
+    it("should leave utterance.voice unset when ttsVoice is empty so browser uses its native default voice", () => {
+      mockSpeechSynthesis.getVoices.and.returnValue([
+        {
+          name: "Samantha",
+          voiceURI: "com.apple.voice.compact.en-US.Samantha",
+          lang: "en-US",
+          localService: true,
+          default: true,
+        },
+      ]);
+
+      playSound("tts", undefined, "Standard voice test", SERVER_URL);
+
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].voice).toBeNull();
     });
   });
 });
