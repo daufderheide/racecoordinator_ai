@@ -584,4 +584,14 @@
     (cancel)="showReviewStackedColumnsModal = false"
   >
   </app-review-stacked-columns-modal>
+
+  <!-- New Layout Template Modal -->
+  <app-new-layout-modal
+    [visible]="showNewLayoutModal"
+    [options]="layoutTemplateOptions"
+    [selectedTemplateId]="selectedNewLayoutTemplateId"
+    (confirm)="onConfirmCreateLayout($event)"
+    (cancel)="onCancelCreateLayout()"
+  >
+  </app-new-layout-modal>
 </div>

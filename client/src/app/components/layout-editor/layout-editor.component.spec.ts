@@ -412,12 +412,71 @@ describe("LayoutEditorComponent", () => {
   });
 
   describe("Add, Copy, Delete", () => {
-    it("should create new layout on onAddNewLayout", fakeAsync(() => {
+    it("should open new layout template modal on onAddNewLayout", () => {
       component.onAddNewLayout();
+      expect(component.showNewLayoutModal).toBeTrue();
+      expect(component.selectedNewLayoutTemplateId).toBe(
+        "default_ui_layout_rc_ai",
+      );
+    });
+
+    it("should create new layout when template modal confirms", fakeAsync(() => {
+      component.openNewLayoutModal();
+      expect(component.showNewLayoutModal).toBeTrue();
+
+      component.onConfirmCreateLayout("default_ui_layout_rc_ai");
+      tick();
+
+      expect(component.showNewLayoutModal).toBeFalse();
+      expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should create empty layout when empty template is selected", fakeAsync(() => {
+      component.onConfirmCreateLayout("empty");
       tick();
 
       expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      const createdArg = mockDataService.createCustomUI.calls.mostRecent()
+        .args[0] as CustomUI;
+      const layout = JSON.parse(createdArg.layoutJson || "{}");
+      expect(layout.widgets).toEqual([]);
       expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should create practice layout when practice template is selected", fakeAsync(() => {
+      component.onConfirmCreateLayout("practice_ui_layout_rc_ai");
+      tick();
+
+      expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      const createdArg = mockDataService.createCustomUI.calls.mostRecent()
+        .args[0] as CustomUI;
+      expect(createdArg.layoutJson).toContain("widget");
+      expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should close template modal without creating on cancel", () => {
+      mockDataService.createCustomUI.calls.reset();
+      component.openNewLayoutModal();
+      expect(component.showNewLayoutModal).toBeTrue();
+
+      component.onCancelCreateLayout();
+      expect(component.showNewLayoutModal).toBeFalse();
+      expect(mockDataService.createCustomUI).not.toHaveBeenCalled();
+    });
+
+    it("should prompt discard when dirty before opening new layout modal", fakeAsync(() => {
+      component.isEditMode = true;
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      spyOn(component["lifecycle"], "confirmDiscard").and.returnValue(
+        Promise.resolve(true),
+      );
+
+      component.onAddNewLayout();
+      tick();
+
+      expect(component["lifecycle"].confirmDiscard).toHaveBeenCalled();
+      expect(component.showNewLayoutModal).toBeTrue();
     }));
 
     it("should duplicate current layout on onCopyLayout", fakeAsync(() => {

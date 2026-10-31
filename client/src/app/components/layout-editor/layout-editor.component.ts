@@ -46,6 +46,7 @@ import { LayoutEditorBase } from "./layout-editor.base";
 import {
   areLayoutsEqual,
   buildLayoutSelectItems,
+  buildLayoutTemplateOptions,
   cloneLayout,
   createFallbackDefaultLayouts,
   getLastEditedLayoutId,
@@ -53,6 +54,7 @@ import {
   isCustomUiDefault,
   isLayoutNameUnique,
   LAYOUT_AVAILABLE_COLUMNS,
+  LayoutTemplateOption,
   resolveInitialLayout,
   setLastEditedLayoutId,
   syncLayoutSettingsWithDefaults,
@@ -65,6 +67,7 @@ import {
   parseLayoutConfig,
 } from "./layout-editor-actions.helper";
 import { buildLayoutEditorHelpSteps } from "./layout-editor-help.helper";
+import { NewLayoutModalComponent } from "./new-layout-modal/new-layout-modal.component";
 
 @Component({
   standalone: true,
@@ -84,6 +87,7 @@ import { buildLayoutEditorHelpSteps } from "./layout-editor-help.helper";
     WidgetInspectorFieldsComponent,
     ReplicateLaneDialogComponent,
     ReviewStackedColumnsModalComponent,
+    NewLayoutModalComponent,
   ],
 })
 export class LayoutEditorComponent
@@ -103,6 +107,8 @@ export class LayoutEditorComponent
   isLoading = true;
   isSaving = false;
   isAutoSaving = false;
+  showNewLayoutModal = false;
+  selectedNewLayoutTemplateId = "default_ui_layout_rc_ai";
 
   undoManager!: UndoManager<CustomUI>;
   lifecycle!: EditorLifecycleHelper;
@@ -188,6 +194,10 @@ export class LayoutEditorComponent
 
   get layoutSelectItems(): SelectItem[] {
     return buildLayoutSelectItems(this.allLayouts, this.translationService);
+  }
+
+  get layoutTemplateOptions(): LayoutTemplateOption[] {
+    return buildLayoutTemplateOptions(this.allLayouts, this.translationService);
   }
 
   get isDefaultLayout(): boolean {
@@ -641,16 +651,32 @@ export class LayoutEditorComponent
     if (this.isEditMode && this.isDirtyState()) {
       this.lifecycle.confirmDiscard().then((confirmed) => {
         if (confirmed) {
-          this.startNewLayout();
+          this.openNewLayoutModal();
         }
       });
     } else {
-      this.startNewLayout();
+      this.openNewLayoutModal();
     }
   }
 
-  startNewLayout(): Promise<void> {
-    return handleStartNewLayout(this);
+  openNewLayoutModal(): void {
+    this.selectedNewLayoutTemplateId = "default_ui_layout_rc_ai";
+    this.showNewLayoutModal = true;
+    this.cdr.markForCheck();
+  }
+
+  onConfirmCreateLayout(templateId: string): void {
+    this.showNewLayoutModal = false;
+    this.startNewLayout(templateId);
+  }
+
+  onCancelCreateLayout(): void {
+    this.showNewLayoutModal = false;
+    this.cdr.markForCheck();
+  }
+
+  startNewLayout(templateId?: string): Promise<void> {
+    return handleStartNewLayout(this, templateId);
   }
 
   onCopyLayout(): void {

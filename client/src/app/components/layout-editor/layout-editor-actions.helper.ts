@@ -59,6 +59,7 @@ import {
   buildDuplicateLayoutTemplate,
   buildNewLayoutTemplate,
   clearLastEditedLayoutId,
+  resolveTemplateSource,
 } from "./layout-editor.helper";
 
 export function parseLayoutConfig(
@@ -607,13 +608,18 @@ export function canUpgradeLegacyHeatView(ui: CustomUI): boolean {
   return LaneViewMigrationHelper.canUpgradeLegacyHeatView(layout, ui?.name);
 }
 
-export async function handleStartNewLayout(comp: any): Promise<void> {
+export async function handleStartNewLayout(
+  comp: any,
+  templateId?: string,
+): Promise<void> {
   comp.isSaving = true;
   try {
+    const templateSource = resolveTemplateSource(templateId, comp.allLayouts);
     const template = buildNewLayoutTemplate(
       comp.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME") ||
         "New UI Layout",
       comp.allLayouts,
+      templateSource,
     );
     const created: CustomUI = await firstValueFrom(
       comp.dataService.createCustomUI(template),
@@ -628,7 +634,7 @@ export async function handleStartNewLayout(comp: any): Promise<void> {
     comp.logger.error("Failed to create layout", err);
   } finally {
     comp.isSaving = false;
-    comp.cdr.markForCheck();
+    comp.cdr?.markForCheck();
   }
 }
 

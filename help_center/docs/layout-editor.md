@@ -27,7 +27,7 @@ The top toolbar provides standardized management actions:
 
 - **Layout Selector**: Dropdown to select any system or user-defined layout, sorted naturally with localized default names (*Default Raceday UI*, *Default Practice UI*, *Default Driver Station UI*).
 - **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode.
-- **Add Layout (<span class="material-icons">add</span>)**: Creates a new layout template based on the default system layout.
+- **Add Layout (<span class="material-icons">add</span>)**: Opens a template selection dialog allowing you to create a new layout from any default Race Coordinator AI layout (*RaceCoordinator AI*, *Practice*, *Fuel*, *Driver Station*) or start from a completely empty layout.
 - **Copy Layout (<span class="material-icons">content_copy</span>)**: Duplicates the currently selected layout under a unique name (e.g. *Layout Name (Copy)*).
 - **Delete Layout (<span class="material-icons">delete</span>)**: Deletes the current custom layout after confirmation. System default layouts are protected and cannot be deleted.
 - **Help Tour (<span class="material-icons">help_outline</span>)**: Launches an interactive guided tour highlighting the layout selector, header actions, raceday canvas, widget library, and widget inspector.

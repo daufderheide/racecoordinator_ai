@@ -27,7 +27,7 @@ La barra de herramientas superior proporciona acciones de gestión estandarizada
 
 - **Selector de Diseño**: Menú desplegable para seleccionar cualquier diseño del sistema o personalizado, ordenado naturalmente con nombres predeterminados localizados (*IU Predeterminada Día de Carrera*, *IU Predeterminada Práctica*, *IU Predeterminada Puesto de Piloto*).
 - **Editar / Terminar Edición**: Alterna entre el Modo de Solo Lectura y el Modo de Edición.
-- **Añadir Diseño (<span class="material-icons">add</span>)**: Crea una nueva plantilla de diseño basada en el diseño predeterminado del sistema.
+- **Añadir Diseño (<span class="material-icons">add</span>)**: Abre un cuadro de diálogo de selección de plantilla que le permite crear un nuevo diseño a partir de cualquier diseño predeterminado de Race Coordinator AI (*RaceCoordinator AI*, *Práctica*, *Combustible*, *Puesto de Piloto*) o comenzar desde un diseño completamente vacío.
 - **Copiar Diseño (<span class="material-icons">content_copy</span>)**: Duplica el diseño seleccionado actualmente con un nombre único (por ejemplo, *Nombre del Diseño (Copia)*).
 - **Eliminar Diseño (<span class="material-icons">delete</span>)**: Elimina el diseño personalizado actual tras confirmación. Los diseños predeterminados del sistema están protegidos y no se pueden eliminar.
 - **Visita Guiada (<span class="material-icons">help_outline</span>)**: Inicia una visita interactiva guiada que resalta el selector de diseños, las acciones del encabezado, el lienzo de día de carrera, la biblioteca de widgets y el inspector de widgets.

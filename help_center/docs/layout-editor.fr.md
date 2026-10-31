@@ -27,7 +27,7 @@ La barre d'outils supérieure fournit des actions de gestion standardisées :
 
 - **Sélecteur de Disposition** : Menu déroulant pour sélectionner n'importe quelle disposition système ou personnalisée, triée naturellement avec les noms par défaut traduits (*IU Jour de Course par Défaut*, *IU Entraînement par Défaut*, *IU Poste de Pilotage par Défaut*).
 - **Modifier / Terminer** : Bascule entre le mode lecture seule et le mode édition.
-- **Ajouter une Disposition (<span class="material-icons">add</span>)** : Crée un nouveau modèle de disposition basé sur la disposition système par défaut.
+- **Ajouter une Disposition (<span class="material-icons">add</span>)** : Ouvre une boîte de dialogue de sélection de modèle vous permettant de créer une nouvelle disposition à partir de n'importe quelle disposition par défaut de Race Coordinator AI (*RaceCoordinator AI*, *Entraînement*, *Carburant*, *Poste de Pilotage*) ou de démarrer avec une disposition entièrement vide.
 - **Copier la Disposition (<span class="material-icons">content_copy</span>)** : Duplique la disposition actuellement sélectionnée sous un nom unique (par exemple, *Nom de Disposition (Copie)*).
 - **Supprimer la Disposition (<span class="material-icons">delete</span>)** : Supprime la disposition personnalisée actuelle après confirmation. Les dispositions système par défaut sont protégées et ne peuvent pas être supprimées.
 - **Visite Guidée (<span class="material-icons">help_outline</span>)** : Lance une visite guidée interactive mettant en valeur le sélecteur de disposition, les actions de la barre d'outils, le canevas, la bibliothèque de widgets et l'inspecteur de widgets.

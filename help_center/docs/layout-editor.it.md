@@ -27,7 +27,7 @@ La barra degli strumenti superiore fornisce azioni di gestione standardizzate:
 
 - **Selettore Layout**: Menu a discesa per selezionare qualsiasi layout di sistema o personalizzato, ordinato naturalmente con i nomi predefiniti localizzati (*UI Predefinita Giorno di Gara*, *UI Predefinita Prove*, *UI Predefinita Postazione Pilota*).
 - **Modifica / Fine Modifica**: Alterna tra la modalità sola lettura e la modalità di modifica.
-- **Aggiungi Layout (<span class="material-icons">add</span>)**: Crea un nuovo modello di layout basato sul layout predefinito di sistema.
+- **Aggiungi Layout (<span class="material-icons">add</span>)**: Apre una finestra di dialogo per la selezione del modello che consente di creare un nuovo layout partendo da qualsiasi layout predefinito di Race Coordinator AI (*RaceCoordinator AI*, *Prove*, *Carburante*, *Postazione Pilota*) o da un layout completamente vuoto.
 - **Copia Layout (<span class="material-icons">content_copy</span>)**: Duplica il layout attualmente selezionato con un nome univoco (ad es. *Nome Layout (Copia)*).
 - **Elimina Layout (<span class="material-icons">delete</span>)**: Elimina il layout personalizzato corrente previa conferma. I layout di sistema predefiniti sono protetti e non possono essere eliminati.
 - **Guida Interattiva (<span class="material-icons">help_outline</span>)**: Avvia un tour guidato interattivo che evidenzia il selettore layout, le azioni di testata, il canvas, la libreria dei widget e l'ispettore dei widget.

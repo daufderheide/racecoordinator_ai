@@ -6,9 +6,11 @@ import {
   areLayoutsEqual,
   buildDuplicateLayoutTemplate,
   buildLayoutSelectItems,
+  buildLayoutTemplateOptions,
   buildNewLayoutTemplate,
   clearLastEditedLayoutId,
   cloneLayout,
+  createFallbackDefaultLayouts,
   getLastEditedLayoutId,
   getLayoutDisplayName,
   getLayoutUnsavedReasons,
@@ -17,6 +19,7 @@ import {
   LAYOUT_AVAILABLE_COLUMNS,
   LAYOUT_LAST_EDITED_STORAGE_KEY,
   resolveInitialLayout,
+  resolveTemplateSource,
   setLastEditedLayoutId,
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
@@ -174,6 +177,39 @@ describe("layout-editor.helper", () => {
       expect(template.layoutJson).toBeDefined();
     });
 
+    it("should build empty new layout template with empty widgets", () => {
+      const existing: CustomUI[] = [];
+      const template = buildNewLayoutTemplate(
+        "New UI Layout",
+        existing,
+        "empty",
+      );
+      expect(template.entity_id).toBe("new");
+      expect(template.is_default).toBeFalse();
+      const layout = JSON.parse(template.layoutJson || "{}");
+      expect(layout.widgets).toEqual([]);
+    });
+
+    it("should build new layout template from custom template source", () => {
+      const existing: CustomUI[] = [];
+      const source: CustomUI = {
+        entity_id: "src1",
+        name: "Custom Source",
+        is_default: false,
+        layoutJson: JSON.stringify({ widgets: [{ id: "custom_w" }] }),
+        columnsJson: '["col1"]',
+        columnLayoutsJson: '{"col1":{}}',
+      };
+      const template = buildNewLayoutTemplate(
+        "New UI Layout",
+        existing,
+        source,
+      );
+      expect(template.entity_id).toBe("new");
+      expect(template.layoutJson).toBe(source.layoutJson);
+      expect(template.columnsJson).toBe('["col1"]');
+    });
+
     it("should duplicate existing layout with unique name", () => {
       const source: CustomUI = {
         entity_id: "src",
@@ -186,6 +222,113 @@ describe("layout-editor.helper", () => {
       expect(copy.is_default).toBeFalse();
       expect(copy.name).toContain("Main Display Copy");
       expect(copy.layoutJson).toBe('{"widgets":[]}');
+    });
+  });
+
+  describe("buildLayoutTemplateOptions and resolveTemplateSource", () => {
+    it("should build template options with 4 defaults and empty option", () => {
+      const allLayouts: CustomUI[] = [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        },
+        {
+          entity_id: "practice_ui_layout_rc_ai",
+          name: "RaceCoordinator AI (Practice)",
+          is_default: true,
+        },
+        {
+          entity_id: "default_fuel_ui_layout_rc_ai",
+          name: "RaceCoordinator AI (Fuel)",
+          is_default: true,
+        },
+        {
+          entity_id: "driver_station_ui_layout_rc_ai",
+          name: "Driver Station",
+          is_default: true,
+        },
+      ];
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "LE_TEMPLATE_EMPTY") return "Empty Layout";
+        return key;
+      });
+      const options = buildLayoutTemplateOptions(
+        allLayouts,
+        mockTranslationService,
+      );
+      expect(options.length).toBe(5);
+      expect(options[0].id).toBe("default_ui_layout_rc_ai");
+      expect(options[1].id).toBe("practice_ui_layout_rc_ai");
+      expect(options[2].id).toBe("default_fuel_ui_layout_rc_ai");
+      expect(options[3].id).toBe("driver_station_ui_layout_rc_ai");
+      expect(options[4].id).toBe("empty");
+      expect(options[4].name).toBe("Empty Layout");
+    });
+
+    it("should resolve template source for empty and specific IDs", () => {
+      const allLayouts: CustomUI[] = [
+        {
+          entity_id: "default_ui_layout_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        },
+        {
+          entity_id: "practice_ui_layout_rc_ai",
+          name: "Practice",
+          is_default: true,
+        },
+      ];
+      expect(resolveTemplateSource("empty", allLayouts)).toBe("empty");
+      expect(
+        resolveTemplateSource("practice_ui_layout_rc_ai", allLayouts),
+      ).toBe(allLayouts[1]);
+      expect(resolveTemplateSource(undefined, allLayouts)).toBe(allLayouts[0]);
+
+      // Fallbacks when not in allLayouts
+      const fallbackPractice = resolveTemplateSource(
+        "practice_ui_layout_rc_ai",
+        [],
+      );
+      expect(fallbackPractice).not.toBeNull();
+      expect((fallbackPractice as CustomUI).entity_id).toBe(
+        "practice_ui_layout_rc_ai",
+      );
+
+      const fallbackDs = resolveTemplateSource(
+        "driver_station_ui_layout_rc_ai",
+        [],
+      );
+      expect(fallbackDs).not.toBeNull();
+      expect((fallbackDs as CustomUI).entity_id).toBe(
+        "driver_station_ui_layout_rc_ai",
+      );
+
+      const fallbackFuel = resolveTemplateSource(
+        "default_fuel_ui_layout_rc_ai",
+        [],
+      );
+      expect(fallbackFuel).not.toBeNull();
+      expect((fallbackFuel as CustomUI).entity_id).toBe(
+        "default_fuel_ui_layout_rc_ai",
+      );
+    });
+
+    it("should include 4 default layouts in createFallbackDefaultLayouts", () => {
+      const fallbacks = createFallbackDefaultLayouts();
+      expect(fallbacks.length).toBe(4);
+      expect(
+        fallbacks.some((u) => u.entity_id === "default_ui_layout_rc_ai"),
+      ).toBeTrue();
+      expect(
+        fallbacks.some((u) => u.entity_id === "practice_ui_layout_rc_ai"),
+      ).toBeTrue();
+      expect(
+        fallbacks.some((u) => u.entity_id === "default_fuel_ui_layout_rc_ai"),
+      ).toBeTrue();
+      expect(
+        fallbacks.some((u) => u.entity_id === "driver_station_ui_layout_rc_ai"),
+      ).toBeTrue();
     });
   });
 

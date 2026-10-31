@@ -17,6 +17,11 @@ export const LAYOUT_AVAILABLE_COLUMNS: { key: string; label: string }[] = [
   ...BASE_AVAILABLE_COLUMNS,
 ];
 
+export interface LayoutTemplateOption {
+  id: string;
+  name: string;
+}
+
 export function createFallbackDefaultLayouts(
   racedayLayout?: any,
   practiceRacedayLayout?: any,
@@ -48,6 +53,17 @@ export function createFallbackDefaultLayouts(
       ),
       columnWidthsJson: JSON.stringify(defaultSettings.practiceColumnWidths),
       columnAnchorsJson: JSON.stringify(defaultSettings.practiceColumnAnchors),
+    },
+    {
+      entity_id: "default_fuel_ui_layout_rc_ai",
+      name: "RaceCoordinator AI (Fuel)",
+      is_default: true,
+      layoutJson: JSON.stringify(racedayLayout || Settings.DEFAULT_LAYOUT),
+      columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
+      columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
+      columnVisibilityJson: JSON.stringify(defaultSettings.columnVisibility),
+      columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
+      columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
     },
     {
       entity_id: "driver_station_ui_layout_rc_ai",
@@ -192,11 +208,144 @@ export function buildLayoutSelectItems(
     .sort((a, b) => naturalSortCompare(a.name, b.name));
 }
 
+export function buildLayoutTemplateOptions(
+  allLayouts: CustomUI[],
+  translationService?: TranslationService,
+): LayoutTemplateOption[] {
+  const defaultIds = [
+    "default_ui_layout_rc_ai",
+    "practice_ui_layout_rc_ai",
+    "default_fuel_ui_layout_rc_ai",
+    "driver_station_ui_layout_rc_ai",
+  ];
+  const options: LayoutTemplateOption[] = [];
+  for (const id of defaultIds) {
+    const existing = allLayouts.find((u) => u.entity_id === id);
+    let displayName = "";
+    if (existing) {
+      displayName = getLayoutDisplayName(existing, translationService);
+    } else {
+      const keyMap: Record<string, string> = {
+        default_ui_layout_rc_ai: "UE_LABEL_DEFAULT_RACEDAY_UI",
+        practice_ui_layout_rc_ai: "UE_LABEL_DEFAULT_PRACTICE_UI",
+        default_fuel_ui_layout_rc_ai: "UE_LABEL_DEFAULT_FUEL_UI",
+        driver_station_ui_layout_rc_ai: "UE_LABEL_DEFAULT_DRIVER_STATION_UI",
+      };
+      displayName = translationService?.translate(keyMap[id]) || id;
+    }
+    options.push({ id, name: displayName });
+  }
+  const emptyName =
+    translationService?.translate("LE_TEMPLATE_EMPTY") || "Empty Layout";
+  options.push({ id: "empty", name: emptyName });
+  return options;
+}
+
+export function resolveTemplateSource(
+  templateId: string | undefined,
+  allLayouts: CustomUI[],
+): CustomUI | "empty" | null {
+  if (templateId === "empty") {
+    return "empty";
+  }
+  const targetId = templateId || "default_ui_layout_rc_ai";
+  const found = allLayouts.find((u) => u.entity_id === targetId);
+  if (found) {
+    return found;
+  }
+  if (targetId === "practice_ui_layout_rc_ai") {
+    const resetData = getDefaultLayoutResetData(true);
+    return {
+      entity_id: "practice_ui_layout_rc_ai",
+      name: "RaceCoordinator AI (Practice)",
+      is_default: true,
+      layoutJson: JSON.stringify(resetData.defaultLayout),
+      columnsJson: JSON.stringify(resetData.columns),
+      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+      columnWidthsJson: JSON.stringify(resetData.columnWidths),
+      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+    };
+  }
+  if (targetId === "driver_station_ui_layout_rc_ai") {
+    const resetData = getDefaultLayoutResetData(
+      false,
+      undefined,
+      undefined,
+      true,
+    );
+    return {
+      entity_id: "driver_station_ui_layout_rc_ai",
+      name: "Driver Station",
+      is_default: true,
+      layoutJson: JSON.stringify(resetData.defaultLayout),
+      columnsJson: JSON.stringify(resetData.columns),
+      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+      columnWidthsJson: JSON.stringify(resetData.columnWidths),
+      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+    };
+  }
+  if (targetId === "default_fuel_ui_layout_rc_ai") {
+    const resetData = getDefaultLayoutResetData(false);
+    return {
+      entity_id: "default_fuel_ui_layout_rc_ai",
+      name: "RaceCoordinator AI (Fuel)",
+      is_default: true,
+      layoutJson: JSON.stringify(resetData.defaultLayout),
+      columnsJson: JSON.stringify(resetData.columns),
+      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+      columnWidthsJson: JSON.stringify(resetData.columnWidths),
+      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+    };
+  }
+  return null;
+}
+
 export function buildNewLayoutTemplate(
   baseName: string,
   existingLayouts: CustomUI[],
+  templateSource?: CustomUI | "empty" | null,
 ): CustomUI {
   const newName = generateUniqueCustomUiName(baseName, existingLayouts);
+  if (templateSource === "empty") {
+    const resetData = getDefaultLayoutResetData(false);
+    const emptyLayout = {
+      ...resetData.defaultLayout,
+      widgets: [],
+    };
+    return {
+      "@id": 1,
+      entity_id: "new",
+      name: newName,
+      is_default: false,
+      layoutJson: JSON.stringify(emptyLayout),
+      columnsJson: JSON.stringify(resetData.columns),
+      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+      columnWidthsJson: JSON.stringify(resetData.columnWidths),
+      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+    };
+  }
+
+  if (templateSource) {
+    return {
+      "@id": 1,
+      entity_id: "new",
+      name: newName,
+      is_default: false,
+      layoutJson:
+        templateSource.layoutJson ||
+        JSON.stringify(getDefaultLayoutResetData(false).defaultLayout),
+      columnsJson: templateSource.columnsJson || "[]",
+      columnLayoutsJson: templateSource.columnLayoutsJson || "{}",
+      columnVisibilityJson: templateSource.columnVisibilityJson || "{}",
+      columnWidthsJson: templateSource.columnWidthsJson || "{}",
+      columnAnchorsJson: templateSource.columnAnchorsJson || "{}",
+    };
+  }
+
   const resetData = getDefaultLayoutResetData(false);
   return {
     "@id": 1,

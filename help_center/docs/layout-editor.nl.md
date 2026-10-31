@@ -27,7 +27,7 @@ De bovenste werkbalk biedt gestandaardiseerde beheeracties:
 
 - **Lay-out Kiezer**: Vervolgkeuzemenu om elke systeem- of aangepaste lay-out te selecteren, natuurlijk gesorteerd met vertaalde standaardnamen (*Standaard Racedag UI*, *Standaard Training UI*, *Standaard Rijderspost UI*).
 - **Bewerken / Gereed**: Schakelt tussen alleen-lezen en bewerkingsmodus.
-- **Lay-out Toevoegen (<span class="material-icons">add</span>)**: Maakt een nieuwe lay-outsjabloon op basis van de standaardsysteemlay-out.
+- **Lay-out Toevoegen (<span class="material-icons">add</span>)**: Opent een sjabloonselectievenster waarmee u een nieuwe lay-out kunt maken op basis van een standaard Race Coordinator AI-lay-out (*RaceCoordinator AI*, *Training*, *Brandstof*, *Rijderspost*) of met een volledig lege lay-out kunt beginnen.
 - **Lay-out Kopiëren (<span class="material-icons">content_copy</span>)**: Dupliceert de momenteel geselecteerde lay-out onder een unieke naam (bijv. *Lay-out Naam (Kopie)*).
 - **Lay-out Verwijderen (<span class="material-icons">delete</span>)**: Verwijdert de huidige aangepaste lay-out na bevestiging. Standaardsysteemlay-outs zijn beveiligd en kunnen niet worden verwijderd.
 - **Rondleiding (<span class="material-icons">help_outline</span>)**: Start een interactieve rondleiding die de lay-outkiezer, acties in de header, het canvas, de widgetbibliotheek en de widget-inspector toelicht.

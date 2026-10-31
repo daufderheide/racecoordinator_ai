@@ -27,7 +27,7 @@ A barra de ferramentas superior oferece ações de gerenciamento padronizadas:
 
 - **Seletor de Layout**: Menu suspenso para selecionar qualquer layout do sistema ou personalizado, ordenado naturalmente com nomes padrão traduzidos (*IU Padrão Dia de Corrida*, *IU Padrão Treino*, *IU Padrão Posto do Piloto*).
 - **Editar / Concluir Edição**: Alterna entre o Modo Somente Leitura e o Modo de Edição.
-- **Adicionar Layout (<span class="material-icons">add</span>)**: Cria um novo modelo de layout baseado no layout padrão do sistema.
+- **Adicionar Layout (<span class="material-icons">add</span>)**: Abre uma caixa de diálogo de seleção de modelo que permite criar um novo layout a partir de qualquer layout padrão do Race Coordinator AI (*RaceCoordinator AI*, *Treino*, *Combustível*, *Posto do Piloto*) ou começar com um layout totalmente vazio.
 - **Copiar Layout (<span class="material-icons">content_copy</span>)**: Duplica o layout atualmente selecionado com um nome exclusivo (por exemplo, *Nome do Layout (Cópia)*).
 - **Excluir Layout (<span class="material-icons">delete</span>)**: Exclui o layout personalizado atual após confirmação. Layouts padrão do sistema são protegidos e não podem ser excluídos.
 - **Tour Guiado (<span class="material-icons">help_outline</span>)**: Inicia um tour guiado interativo destacando o seletor de layout, ações do cabeçalho, a tela, a biblioteca de widgets e o inspetor de widgets.

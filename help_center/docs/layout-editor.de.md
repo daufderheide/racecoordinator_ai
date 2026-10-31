@@ -27,7 +27,7 @@ Die obere Symbolleiste bietet standardisierte Verwaltungsaktionen:
 
 - **Layout-Auswahl**: Dropdown-Menü zur Auswahl eines beliebigen System- oder benutzerdefinierten Layouts, natürlich sortiert mit lokalisierten Standardnamen (*Standard Renntag-UI*, *Standard Trainings-UI*, *Standard Fahrerstand-UI*).
 - **Bearbeiten / Fertig**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um.
-- **Layout hinzufügen (<span class="material-icons">add</span>)**: Erstellt eine neue Layout-Vorlage basierend auf dem System-Standardlayout.
+- **Layout hinzufügen (<span class="material-icons">add</span>)**: Öffnet einen Vorlagenauswahldialog, mit dem Sie ein neues Layout aus einem beliebigen Standard-Race-Coordinator-AI-Layout (*RaceCoordinator AI*, *Training*, *Kraftstoff*, *Fahrerstand*) oder mit einem vollständig leeren Layout erstellen können.
 - **Layout kopieren (<span class="material-icons">content_copy</span>)**: Dupliziert das aktuell ausgewählte Layout unter einem eindeutigen Namen (z. B. *Layout-Name (Kopie)*).
 - **Layout löschen (<span class="material-icons">delete</span>)**: Löscht das aktuelle benutzerdefinierte Layout nach Bestätigung. Standard-Systemlayouts sind geschützt und können nicht gelöscht werden.
 - **Geführte Tour (<span class="material-icons">help_outline</span>)**: Startet eine interaktive geführte Tour zur Erklärung der Layoutauswahl, Symbolleiste, Arbeitsfläche, Widget-Bibliothek und des Widget-Inspectors.
