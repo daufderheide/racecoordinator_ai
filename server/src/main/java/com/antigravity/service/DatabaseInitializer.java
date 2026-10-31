@@ -773,6 +773,7 @@ public class DatabaseInitializer {
               updatedLayoutJson.replace("\"useLaneColors\":false", "\"useLaneColors\":true");
         }
         updatedLayoutJson = CustomUI.ensureDriverStationLapHighlight(updatedLayoutJson);
+        updatedLayoutJson = CustomUI.ensureDriverStationProgressGaugeDefaults(updatedLayoutJson);
       }
       if (!updatedLayoutJson.equals(layoutJson)) {
         layoutJson = updatedLayoutJson;

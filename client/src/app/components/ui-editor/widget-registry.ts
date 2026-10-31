@@ -80,6 +80,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       fillColor: "",
       backgroundColor: "",
       borderColor: "",
+      textColor: "",
       timeDisplayFormat: "dynamic",
       timeSubsecondMode: "threshold",
       timeSubsecondThreshold: 10,

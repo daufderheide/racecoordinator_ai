@@ -318,7 +318,7 @@ public class CustomUI extends Model {
   public static CustomUI createDriverStation() {
     String layoutJson =
         "{\"widgets\":["
-            + "{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"scaleMode\":\"auto\",\"x\":20,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"heat-progress\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\",\"timeDisplayFormat\":\"dynamic\",\"timeSubsecondMode\":\"threshold\",\"timeSubsecondThreshold\":10,\"timeSubsecondDecimals\":2,\"lapDecimalPlaces\":0,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"scaleMode\":\"auto\",\"x\":20,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"heat-progress\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\",\"borderColor\":\"#ffffff\",\"textColor\":\"#ffffff\",\"timeDisplayFormat\":\"dynamic\",\"timeSubsecondMode\":\"threshold\",\"timeSubsecondThreshold\":10,\"timeSubsecondDecimals\":2,\"lapDecimalPlaces\":0,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-nickname\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":20,\"width\":640,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"driver.nickname\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-lane-number\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":780,\"y\":20,\"width\":180,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"laneNumber\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-rank-heat\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankHeat\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
@@ -328,7 +328,7 @@ public class CustomUI extends Model {
             + "{\"id\":\"widget-ds-gap-leader\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":950,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"gapLeader\",\"customLabel\":\"GAP LEADER\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-best-lap-time\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":1260,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"bestLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-flag\",\"widgetType\":\"flag\",\"scaleMode\":\"auto\",\"x\":120,\"y\":1570,\"width\":840,\"height\":330,\"zIndex\":100,\"customSettings\":{\"displayMode\":\"color-bar\",\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
-            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"scaleMode\":\"auto\",\"x\":980,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"fuel\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\",\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}}"
+            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"scaleMode\":\"auto\",\"x\":980,\"y\":20,\"width\":80,\"height\":1880,\"zIndex\":100,\"customSettings\":{\"gaugeType\":\"fuel\",\"gaugeStyle\":\"thermometer\",\"orientation\":\"vertical\",\"bindingMode\":\"hostLane\",\"borderColor\":\"#ffffff\",\"textColor\":\"#ffffff\",\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}}"
             + "],\"baseWidth\":1080,\"baseHeight\":1920,\"aspectRatio\":\"9:16\",\"scaleMode\":\"stretch\"}";
     return new CustomUI(
         DRIVER_STATION_UI_NAME,
@@ -606,6 +606,57 @@ public class CustomUI extends Model {
             if (currentStyle.isEmpty() || "classic".equalsIgnoreCase(currentStyle)) {
               cs.put("highlightLapStyle", "full-glow");
               modified = true;
+            }
+          }
+        }
+        return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
+      }
+    } catch (Exception e) {
+      // Return original on error
+    }
+    return layoutJson;
+  }
+
+  public static String ensureDriverStationProgressGaugeDefaults(String layoutJson) {
+    if (layoutJson == null || layoutJson.trim().isEmpty()) {
+      return layoutJson;
+    }
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(layoutJson);
+      if (!root.isObject()) {
+        return layoutJson;
+      }
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj =
+          (com.fasterxml.jackson.databind.node.ObjectNode) root;
+      com.fasterxml.jackson.databind.JsonNode widgetsNode = rootObj.get("widgets");
+      if (widgetsNode != null && widgetsNode.isArray()) {
+        boolean modified = false;
+        com.fasterxml.jackson.databind.node.ArrayNode widgetsArray =
+            (com.fasterxml.jackson.databind.node.ArrayNode) widgetsNode;
+        for (com.fasterxml.jackson.databind.JsonNode widgetNode : widgetsArray) {
+          if (widgetNode.isObject()) {
+            com.fasterxml.jackson.databind.node.ObjectNode wObj =
+                (com.fasterxml.jackson.databind.node.ObjectNode) widgetNode;
+            String widgetType = wObj.has("widgetType") ? wObj.get("widgetType").asText() : "";
+            if ("progress-gauge".equals(widgetType)) {
+              com.fasterxml.jackson.databind.node.ObjectNode cs;
+              if (wObj.has("customSettings") && wObj.get("customSettings").isObject()) {
+                cs = (com.fasterxml.jackson.databind.node.ObjectNode) wObj.get("customSettings");
+              } else {
+                cs = mapper.createObjectNode();
+                wObj.set("customSettings", cs);
+                modified = true;
+              }
+              if (!cs.has("borderColor") || cs.get("borderColor").asText().trim().isEmpty()) {
+                cs.put("borderColor", "#ffffff");
+                modified = true;
+              }
+              if (!cs.has("textColor") || cs.get("textColor").asText().trim().isEmpty()) {
+                cs.put("textColor", "#ffffff");
+                modified = true;
+              }
             }
           }
         }

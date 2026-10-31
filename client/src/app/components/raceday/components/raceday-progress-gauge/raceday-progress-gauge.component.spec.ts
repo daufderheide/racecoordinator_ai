@@ -309,10 +309,10 @@ describe("RacedayProgressGaugeComponent", () => {
       expect(labelEl).toBeNull();
     });
 
-    it("should fall back to parent activeLaneForegroundColor when fillColor and textColor are absent", () => {
+    it("should fall back to parent activeLaneForegroundColor when fillColor and textColor are absent and not driver station", () => {
       mockParent.activeLaneForegroundColor = "#000000";
       const widget = {
-        id: "gauge-ds",
+        id: "gauge-raceday",
         widgetType: "progress-gauge",
         customSettings: {
           gaugeType: "heat-progress",
@@ -327,6 +327,78 @@ describe("RacedayProgressGaugeComponent", () => {
 
       expect(component.effectiveFillColor).toBe("#000000");
       expect(component.effectiveForegroundColor).toBe("#000000");
+      expect(component.effectiveBorderColor).toBe("#000000");
+    });
+
+    it("should default to white for both framing and text label in driver station mode when colors are absent", () => {
+      mockParent.isDriverStation = true;
+      mockParent.activeLaneForegroundColor = "#000000";
+      const widget = {
+        id: "gauge-station",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+          gaugeStyle: "thermometer",
+          bindingMode: "hostLane",
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.isDriverStation).toBeTrue();
+      expect(component.effectiveForegroundColor).toBe("#ffffff");
+      expect(component.effectiveBorderColor).toBe("#ffffff");
+
+      const containerEl = fixture.nativeElement.querySelector(
+        ".thermometer-container",
+      ) as HTMLElement;
+      expect(containerEl.style.borderColor).toBe("rgb(255, 255, 255)");
+
+      const labelEl = fixture.nativeElement.querySelector(
+        ".thermometer-label",
+      ) as HTMLElement;
+      expect(labelEl.style.color).toBe("rgb(255, 255, 255)");
+    });
+
+    it("should default to white for widget-ds-progress and widget-ds-fuel by widget id", () => {
+      mockParent.activeLaneForegroundColor = "#000000";
+      const widget = {
+        id: "widget-ds-progress",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.isDriverStation).toBeTrue();
+      expect(component.effectiveForegroundColor).toBe("#ffffff");
+      expect(component.effectiveBorderColor).toBe("#ffffff");
+    });
+
+    it("should allow custom textColor and borderColor to override white defaults on driver station", () => {
+      mockParent.isDriverStation = true;
+      const widget = {
+        id: "widget-ds-fuel",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "fuel",
+          textColor: "#38bdf8",
+          borderColor: "#f59e0b",
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.effectiveForegroundColor).toBe("#38bdf8");
+      expect(component.effectiveBorderColor).toBe("#f59e0b");
     });
 
     it("should resolve effectiveFontSize and effectiveFontFamily from customSettings", () => {

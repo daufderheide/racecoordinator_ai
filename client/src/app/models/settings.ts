@@ -118,6 +118,7 @@ export interface ProgressGaugeWidgetSettings {
   fillColor?: string;
   backgroundColor?: string;
   borderColor?: string;
+  textColor?: string;
   borderWidth?: number;
   borderRadius?: number;
 }
@@ -741,6 +742,8 @@ export class Settings {
           gaugeStyle: "thermometer",
           orientation: "vertical",
           bindingMode: "hostLane",
+          borderColor: "#ffffff",
+          textColor: "#ffffff",
           timeDisplayFormat: "dynamic",
           timeSubsecondMode: "threshold",
           timeSubsecondThreshold: 10,
@@ -966,6 +969,8 @@ export class Settings {
           gaugeStyle: "thermometer",
           orientation: "vertical",
           bindingMode: "hostLane",
+          borderColor: "#ffffff",
+          textColor: "#ffffff",
           highlightRowOnLap: true,
           highlightLapStyle: "full-glow",
         },

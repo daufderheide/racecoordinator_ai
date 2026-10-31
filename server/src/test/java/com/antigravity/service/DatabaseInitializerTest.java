@@ -477,6 +477,33 @@ public class DatabaseInitializerTest {
   }
 
   @Test
+  public void testBackfillCustomUIs_MigratesDriverStationProgressGaugeDefaults() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            CustomUI.DRIVER_STATION_UI_NAME,
+            true,
+            "{\"widgets\":[{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"customSettings\":{\"gaugeType\":\"heat-progress\"}}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DRIVER_STATION_UI_ID,
+            null));
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI driverStationUi = uiRepo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID);
+    assertNotNull(driverStationUi);
+    assertTrue(driverStationUi.getLayoutJson().contains("\"borderColor\":\"#ffffff\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"textColor\":\"#ffffff\""));
+  }
+
+  @Test
   public void testResetDrivers_InitializesPitInAndFuelAudio() {
     initializer.resetDrivers(context);
     SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);

@@ -202,6 +202,14 @@ export class RacedayProgressGaugeComponent {
     return this.effectiveSettings["fontFamily"] || null;
   }
 
+  get isDriverStation(): boolean {
+    return Boolean(
+      this.parent()?.isDriverStation ||
+      this.parent()?.isDriverStationLayout ||
+      this.widget()?.id?.startsWith("widget-ds-"),
+    );
+  }
+
   get effectiveFillColor(): string {
     return (
       this.effectiveSettings["fillColor"] ||
@@ -212,8 +220,13 @@ export class RacedayProgressGaugeComponent {
   }
 
   get effectiveForegroundColor(): string {
+    if (this.effectiveSettings["textColor"]) {
+      return this.effectiveSettings["textColor"];
+    }
+    if (this.isDriverStation) {
+      return "#ffffff";
+    }
     return (
-      this.effectiveSettings["textColor"] ||
       this.parent()?.activeLaneForegroundColor ||
       this.parent()?.foregroundColor ||
       "currentColor"
@@ -221,9 +234,10 @@ export class RacedayProgressGaugeComponent {
   }
 
   get effectiveBorderColor(): string {
-    return (
-      this.effectiveSettings["borderColor"] || this.effectiveForegroundColor
-    );
+    if (this.effectiveSettings["borderColor"]) {
+      return this.effectiveSettings["borderColor"];
+    }
+    return this.effectiveForegroundColor;
   }
 
   get showLabel(): boolean {

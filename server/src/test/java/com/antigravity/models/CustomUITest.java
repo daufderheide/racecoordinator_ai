@@ -98,6 +98,8 @@ public class CustomUITest {
     assertTrue(driverStationUi.getLayoutJson().contains("\"useLaneColors\":true"));
     assertTrue(driverStationUi.getLayoutJson().contains("\"highlightLapStyle\":\"full-glow\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"highlightRowOnLap\":true"));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"borderColor\":\"#ffffff\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"textColor\":\"#ffffff\""));
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(defaultUi.getLayoutJson().contains("\"glowEffect\":true"));
@@ -306,5 +308,27 @@ public class CustomUITest {
     assertTrue(result.contains("\"highlightLapStyle\":\"full-glow\""));
     assertTrue(result.contains("\"highlightRowOnLap\":true"));
     assertFalse(result.contains("\"highlightLapStyle\":\"classic\""));
+  }
+
+  @Test
+  public void testEnsureDriverStationProgressGaugeDefaults() {
+    assertNull(CustomUI.ensureDriverStationProgressGaugeDefaults(null));
+    assertEquals("", CustomUI.ensureDriverStationProgressGaugeDefaults(""));
+    assertEquals("not json", CustomUI.ensureDriverStationProgressGaugeDefaults("not json"));
+
+    String input =
+        "{\"widgets\":["
+            + "{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"customSettings\":{\"gaugeType\":\"heat-progress\"}},"
+            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"customSettings\":{\"gaugeType\":\"fuel\",\"borderColor\":\"#38bdf8\",\"textColor\":\"#f59e0b\"}},"
+            + "{\"id\":\"widget-ds-nickname\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"driver.nickname\"}}"
+            + "]}";
+
+    String result = CustomUI.ensureDriverStationProgressGaugeDefaults(input);
+    // widget-ds-progress should receive defaults
+    assertTrue(result.contains("\"borderColor\":\"#ffffff\""));
+    assertTrue(result.contains("\"textColor\":\"#ffffff\""));
+    // widget-ds-fuel custom colors should be preserved
+    assertTrue(result.contains("\"borderColor\":\"#38bdf8\""));
+    assertTrue(result.contains("\"textColor\":\"#f59e0b\""));
   }
 }
