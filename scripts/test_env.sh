@@ -20,6 +20,10 @@ export XDG_CACHE_HOME="$BASE_TMP/cache"
 export PLAYWRIGHT_TRANSFORM_CACHE_PATH="$BASE_TMP/playwright-cache"
 # export CHROME_BIN is handled by run_client_unit_tests.sh
 
+# Ensure local loopback bypasses any proxies configured in the environment
+export NO_PROXY="127.0.0.1,localhost,::1,${NO_PROXY:-}"
+export no_proxy="127.0.0.1,localhost,::1,${no_proxy:-}"
+
 mkdir -p "$TMPDIR" "$HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$PLAYWRIGHT_TRANSFORM_CACHE_PATH"
 
 # macOS Chrome requirements

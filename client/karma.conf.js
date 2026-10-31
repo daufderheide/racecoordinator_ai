@@ -56,6 +56,8 @@ module.exports = function (config) {
     "--no-first-run",
     "--disable-signin",
     "--disable-sync",
+    "--no-proxy-server",
+    "--proxy-bypass-list=<-loopback>",
     "--remote-debugging-port=0",
     "--disk-cache-dir=" + path.join(tmpDir, "cache"),
     "--remote-allow-origins=*",
@@ -64,7 +66,6 @@ module.exports = function (config) {
     "--disable-extensions",
     "--disable-features=Translate,PasswordImport,AutofillServerCommunication,Dial",
     "--js-flags=--max-old-space-size=4096",
-    "--window-size=1920,1080",
   ];
 
   var timingReporterPlugin = {
@@ -223,10 +224,10 @@ module.exports = function (config) {
         flags: chromeFlags,
       },
     },
-    captureTimeout: 240000,
+    captureTimeout: 60000,
     browserDisconnectTolerance: 3,
-    browserDisconnectTimeout: 240000,
-    browserNoActivityTimeout: 240000,
+    browserDisconnectTimeout: 60000,
+    browserNoActivityTimeout: 120000,
     singleRun: true,
     restartOnFileChange: false,
   });
