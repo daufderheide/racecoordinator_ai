@@ -272,6 +272,32 @@ describe("playSound Utility", () => {
         jasmine.objectContaining({ name: "Alex" }),
       );
     });
+
+    it("should not call speak when tts text is empty or whitespace", () => {
+      mockSpeechSynthesis.speak.calls.reset();
+      playSound("tts", undefined, "   ", SERVER_URL);
+      expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
+
+      playSound("tts", undefined, "", SERVER_URL);
+      expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
+    });
+
+    it("should align utterance.lang with voice.lang when voice is matched", () => {
+      mockSpeechSynthesis.getVoices.and.returnValue([
+        { name: "Marlene", voiceURI: "Marlene", lang: "de-DE" },
+      ]);
+      playSound(
+        "tts",
+        undefined,
+        "Guten Tag",
+        SERVER_URL,
+        undefined,
+        undefined,
+        { ttsVoice: "Marlene" },
+      );
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].lang).toBe("de-DE");
+    });
   });
 
   describe("TTS Helpers", () => {

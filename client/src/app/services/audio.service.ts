@@ -82,6 +82,7 @@ export class AudioService implements OnDestroy {
   private safetyTimeout: any = null;
   private relevanceFilter: AudioRelevanceFilter | null = null;
   private preloadedAudioMap = new Map<string, HTMLAudioElement>();
+  private lastCancelTime: number = 0;
 
   constructor(
     private dataService: DataService,
@@ -506,13 +507,21 @@ export class AudioService implements OnDestroy {
       this.activeAudioElement = null;
     }
     if (this.activeUtterance) {
+      releaseUtterance(this.activeUtterance);
       this.activeUtterance.onend = null;
       this.activeUtterance.onerror = null;
       this.activeUtterance = null;
     }
+    this.cancelSpeechSynthesis();
+    this.clearSpacingTimer();
+    this.calloutQueue = [];
+  }
+
+  private cancelSpeechSynthesis(): void {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       try {
         window.speechSynthesis.cancel();
+        this.lastCancelTime = Date.now();
         if (window.speechSynthesis.paused) {
           window.speechSynthesis.resume();
         }
@@ -520,8 +529,19 @@ export class AudioService implements OnDestroy {
         // ignore
       }
     }
-    this.clearSpacingTimer();
-    this.calloutQueue = [];
+  }
+
+  private speakUtterance(utterance: SpeechSynthesisUtterance): void {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      this.logger.error("Error executing window.speechSynthesis.speak", err);
+    }
   }
 
   /** Resets the entire voice callout system and purges pending urgent calls. */
@@ -685,6 +705,74 @@ export class AudioService implements OnDestroy {
     });
   }
 
+  private prepareTtsUtterance(
+    interpolatedText: string,
+  ): SpeechSynthesisUtterance {
+    if (this.activeUtterance) {
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      this.activeUtterance = null;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    retainUtterance(utterance);
+    this.activeUtterance = utterance;
+    this.applyTtsSettingsToUtterance(utterance);
+    return utterance;
+  }
+
+  private setupTtsWatchdogs(
+    utterance: SpeechSynthesisUtterance,
+    isEnded: () => boolean,
+  ): { clear: () => void } {
+    let started = false;
+    let startWatchdog: any = null;
+
+    utterance.onstart = () => {
+      started = true;
+      if (startWatchdog) {
+        clearTimeout(startWatchdog);
+        startWatchdog = null;
+      }
+    };
+
+    startWatchdog = setTimeout(() => {
+      if (!started && !isEnded()) {
+        try {
+          if (typeof window !== "undefined" && window.speechSynthesis) {
+            window.speechSynthesis.resume();
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }, 1000);
+
+    const keepAliveTimer: any = setInterval(() => {
+      if (isEnded()) {
+        clearInterval(keepAliveTimer);
+        return;
+      }
+      try {
+        if (typeof window !== "undefined" && window.speechSynthesis) {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }, 5000);
+
+    return {
+      clear: () => {
+        if (keepAliveTimer) clearInterval(keepAliveTimer);
+        if (startWatchdog) clearTimeout(startWatchdog);
+      },
+    };
+  }
+
   private playTtsVoice(
     text: string,
     priority: AudioPriority,
@@ -695,7 +783,7 @@ export class AudioService implements OnDestroy {
       interpolatedText = interpolate(text, context);
     }
 
-    if (!interpolatedText) {
+    if (!interpolatedText || !interpolatedText.trim()) {
       this.onVoiceCalloutEnded();
       return;
     }
@@ -706,16 +794,16 @@ export class AudioService implements OnDestroy {
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(interpolatedText);
-    retainUtterance(utterance);
-    this.activeUtterance = utterance;
-    this.applyTtsSettingsToUtterance(utterance);
+    const utterance = this.prepareTtsUtterance(interpolatedText);
     let ended = false;
+    const watchdogs = this.setupTtsWatchdogs(utterance, () => ended);
 
     const cleanup = () => {
       if (ended) return;
       ended = true;
+      watchdogs.clear();
       releaseUtterance(utterance);
+      utterance.onstart = null;
       utterance.onend = null;
       utterance.onerror = null;
       if (this.safetyTimeout) {
@@ -729,11 +817,7 @@ export class AudioService implements OnDestroy {
 
     const stop = () => {
       cleanup();
-      try {
-        window.speechSynthesis.cancel();
-      } catch {
-        // ignore
-      }
+      this.cancelSpeechSynthesis();
     };
 
     this.activeVoice = { priority, stop };
@@ -746,6 +830,7 @@ export class AudioService implements OnDestroy {
 
     this.safetyTimeout = setTimeout(() => {
       cleanup();
+      this.cancelSpeechSynthesis();
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
@@ -766,13 +851,10 @@ export class AudioService implements OnDestroy {
       }
     };
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
     this.logger.info(
       `[AUDIO] Speaking TTS: "${interpolatedText}" (priority: ${priority})`,
     );
-    window.speechSynthesis.speak(utterance);
+    this.speakUtterance(utterance);
   }
 
   previewTTS(
@@ -783,7 +865,12 @@ export class AudioService implements OnDestroy {
     volume?: number,
     masterVolume?: number,
   ): void {
-    if (!text || typeof window === "undefined" || !window.speechSynthesis) {
+    if (
+      !text ||
+      !text.trim() ||
+      typeof window === "undefined" ||
+      !window.speechSynthesis
+    ) {
       return;
     }
     if (this.activeUtterance) {
@@ -792,11 +879,8 @@ export class AudioService implements OnDestroy {
       this.activeUtterance.onerror = null;
       this.activeUtterance = null;
     }
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      // ignore
-    }
+    this.cancelSpeechSynthesis();
+
     const utterance = new SpeechSynthesisUtterance(text);
     retainUtterance(utterance);
     this.activeUtterance = utterance;
@@ -820,11 +904,8 @@ export class AudioService implements OnDestroy {
       volume,
       masterVolume,
     );
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
     this.logger.info(`[AUDIO] Previewing TTS: "${text}"`);
-    window.speechSynthesis.speak(utterance);
+    this.speakUtterance(utterance);
   }
 
   getMasterVolume(masterVolumeOverride?: number): number {
@@ -925,7 +1006,9 @@ export class AudioService implements OnDestroy {
         }
       }
     }
-    if (!utterance.lang) {
+    if (utterance.voice?.lang) {
+      utterance.lang = utterance.voice.lang;
+    } else if (!utterance.lang) {
       utterance.lang = "en-US";
     }
     if (rate != null) {

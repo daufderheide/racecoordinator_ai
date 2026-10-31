@@ -750,6 +750,10 @@ function playTtsAudio(
     interpolatedText = interpolate(text, data);
   }
 
+  if (!interpolatedText || !interpolatedText.trim()) {
+    return;
+  }
+
   if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
     logger.debug("Playing TTS:", interpolatedText);
   }
@@ -767,9 +771,6 @@ function playTtsAudio(
   retainUtterance(utterance);
   utterance.onend = () => releaseUtterance(utterance);
   utterance.onerror = () => releaseUtterance(utterance);
-  if (!utterance.lang) {
-    utterance.lang = "en-US";
-  }
   if (
     options.ttsVoice &&
     typeof window.speechSynthesis.getVoices === "function"
@@ -790,6 +791,11 @@ function playTtsAudio(
     } catch {
       // Ignored
     }
+  }
+  if (utterance.voice?.lang) {
+    utterance.lang = utterance.voice.lang;
+  } else if (!utterance.lang) {
+    utterance.lang = "en-US";
   }
   if (options.ttsRate != null) {
     utterance.rate = Math.max(0.1, Math.min(10, options.ttsRate));

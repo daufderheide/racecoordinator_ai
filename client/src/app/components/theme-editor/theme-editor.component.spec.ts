@@ -11,8 +11,10 @@ import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
+import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -30,6 +32,8 @@ describe("ThemeEditorComponent", () => {
   let mockRouter: any;
   let mockActivatedRoute: any;
   let mockNavigationService: any;
+  let mockRaceConnectionService: any;
+  let mockChildWindowManagerService: any;
 
   let testThemes: Theme[];
   let testCustomUIs: CustomUI[];
@@ -183,6 +187,26 @@ describe("ThemeEditorComponent", () => {
         .and.returnValue(null),
     };
 
+    mockRaceConnectionService = {
+      connect: jasmine.createSpy("connect"),
+      disconnect: jasmine.createSpy("disconnect"),
+    };
+
+    mockChildWindowManagerService = {
+      isRacePreservingRoute: jasmine
+        .createSpy("isRacePreservingRoute")
+        .and.callFake((url: string) => {
+          if (!url) return false;
+          if (url.includes("raceday-setup")) return false;
+          return (
+            url.startsWith("/default-raceday") ||
+            url === "/raceday" ||
+            url.startsWith("/theme-editor")
+          );
+        }),
+      closeAllWindows: jasmine.createSpy("closeAllWindows"),
+    };
+
     await TestBed.configureTestingModule({
       imports: [FormsModule, ThemeEditorComponent],
       providers: [
@@ -194,6 +218,11 @@ describe("ThemeEditorComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: NavigationService, useValue: mockNavigationService },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
+        {
+          provide: ChildWindowManagerService,
+          useValue: mockChildWindowManagerService,
+        },
       ],
     }).compileComponents();
 
@@ -509,6 +538,47 @@ describe("ThemeEditorComponent", () => {
       );
       component.canDeactivate();
       expect(component.lifecycle.confirmDiscard).toHaveBeenCalled();
+    });
+  });
+
+  describe("Race Persistence and Lifecycle", () => {
+    it("should connect RaceConnectionService on initialization", () => {
+      expect(mockRaceConnectionService.connect).toHaveBeenCalled();
+    });
+
+    it("should disconnect RaceConnectionService on destroy", () => {
+      fixture.destroy();
+      expect(mockRaceConnectionService.disconnect).toHaveBeenCalled();
+    });
+
+    it("should close all child windows on destroy when navigating away from race preserving routes", () => {
+      mockRouter.url = "/raceday-setup";
+      mockRouter.getCurrentNavigation = jasmine
+        .createSpy("getCurrentNavigation")
+        .and.returnValue({
+          extractedUrl: { toString: () => "/raceday-setup" },
+        });
+      fixture.destroy();
+      expect(mockChildWindowManagerService.closeAllWindows).toHaveBeenCalled();
+    });
+
+    it("should preserve child windows on destroy when navigating to a race preserving route", () => {
+      mockRouter.url = "/default-raceday";
+      mockRouter.getCurrentNavigation = jasmine
+        .createSpy("getCurrentNavigation")
+        .and.returnValue({
+          extractedUrl: { toString: () => "/default-raceday" },
+        });
+      fixture.destroy();
+      expect(
+        mockChildWindowManagerService.closeAllWindows,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("should disconnect and close windows on pagehide", () => {
+      component.onPageHide();
+      expect(mockRaceConnectionService.disconnect).toHaveBeenCalled();
+      expect(mockChildWindowManagerService.closeAllWindows).toHaveBeenCalled();
     });
   });
 });

@@ -627,6 +627,56 @@ describe("AudioService", () => {
       const result = service.getVoices();
       expect(result).toEqual(voices);
     });
+
+    it("should not speak whitespace or empty interpolated text", () => {
+      mockSpeechSynthesis.speak.calls.reset();
+      service.playCallout({ type: "tts", text: "   " }, "normal");
+      expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
+
+      service.previewTTS("   ");
+      expect(mockSpeechSynthesis.speak).not.toHaveBeenCalled();
+    });
+
+    it("should align utterance.lang with voice.lang when voice specifies locale", () => {
+      const germanVoice = {
+        name: "Anna",
+        voiceURI: "anna-de",
+        lang: "de-DE",
+      } as any;
+      mockSpeechSynthesis.getVoices.and.returnValue([germanVoice]);
+      (service as any).cachedVoices = [germanVoice];
+
+      const utterance = new SpeechSynthesisUtterance("Hallo");
+      service.applyTtsSettingsToUtterance(utterance, "anna-de");
+      expect(utterance.lang).toBe("de-DE");
+    });
+
+    it("should cancel speech synthesis when safety timeout triggers", fakeAsync(() => {
+      mockSpeechSynthesis.cancel.calls.reset();
+      service.playCallout(
+        { type: "tts", text: "Test message timeout" },
+        "normal",
+      );
+      expect(service.getActiveVoice()).not.toBeNull();
+
+      tick(12000);
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect(service.getActiveVoice()).toBeNull();
+    }));
+
+    it("should trigger resume via startWatchdog when onstart has not fired after 1000ms", fakeAsync(() => {
+      mockSpeechSynthesis.resume = jasmine.createSpy("resume");
+      service.playCallout(
+        { type: "tts", text: "Test start watchdog" },
+        "normal",
+      );
+
+      tick(1100);
+      expect(mockSpeechSynthesis.resume).toHaveBeenCalled();
+
+      // Clean up safety timeout
+      tick(10000);
+    }));
   });
 
   describe("stopVoice and reset", () => {

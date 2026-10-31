@@ -1,5 +1,12 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { catchError, firstValueFrom, of, Subscription } from "rxjs";
@@ -35,9 +42,11 @@ import { AudioConfig } from "@app/models/driver";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -128,6 +137,13 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     driverAudioOverrides: false,
   };
 
+  public raceConnectionService = inject(RaceConnectionService, {
+    optional: true,
+  });
+  public childWindowManagerService = inject(ChildWindowManagerService, {
+    optional: true,
+  });
+
   private subscriptions: Subscription[] = [];
   private queryParamSub?: Subscription;
 
@@ -144,6 +160,7 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ) {}
 
   ngOnInit(): void {
+    this.raceConnectionService?.connect();
     this.expanderManager = new ExpanderStateManager(
       "theme_editor_expanders",
       this.sectionsExpanded,
@@ -159,6 +176,24 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ngOnDestroy(): void {
     this.subscriptions.forEach((s) => s.unsubscribe());
     this.queryParamSub?.unsubscribe();
+    this.raceConnectionService?.disconnect();
+
+    const destUrl =
+      this.router?.getCurrentNavigation?.()?.extractedUrl?.toString() ||
+      this.router?.url ||
+      "";
+    if (
+      this.childWindowManagerService &&
+      !this.childWindowManagerService.isRacePreservingRoute(destUrl)
+    ) {
+      this.childWindowManagerService.closeAllWindows();
+    }
+  }
+
+  @HostListener("window:pagehide")
+  onPageHide(): void {
+    this.raceConnectionService?.disconnect();
+    this.childWindowManagerService?.closeAllWindows();
   }
 
   get themeSelectItems(): SelectItem[] {
