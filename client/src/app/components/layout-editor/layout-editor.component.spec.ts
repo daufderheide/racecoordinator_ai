@@ -736,6 +736,61 @@ describe("LayoutEditorComponent", () => {
       expect(component.currentSelectedWidget.height).toBe(180);
     });
 
+    it("should update widget scaleMode and populate default settings when switching to custom in inspector", () => {
+      component.onSelectLayoutById("default_ui_layout_rc_ai");
+      component.onToggleEditMode();
+      component.onWidgetDropdownSelect("w1");
+
+      expect(component.currentSelectedWidget.scaleMode).toBeUndefined();
+
+      component.onWidgetScaleModeChange("auto");
+      expect(component.currentSelectedWidget.scaleMode).toBe("auto");
+
+      component.onWidgetScaleModeChange("");
+      expect(component.currentSelectedWidget.scaleMode).toBe("");
+    });
+
+    it("should populate default font sizes when switching header widgets (race-name, heat-info, track-name, event-name, season-name) to custom scaleMode", () => {
+      component.onSelectLayoutById("default_ui_layout_rc_ai");
+      component.onToggleEditMode();
+
+      const headerTypes = [
+        "race-name",
+        "heat-info",
+        "track-name",
+        "event-name",
+        "season-name",
+      ];
+      for (const type of headerTypes) {
+        const id = `test-header-${type}`;
+        const layout = component.getLayout(component.editingLayout);
+        layout!.widgets.push({
+          id,
+          widgetType: type as any,
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 18,
+          zIndex: 100,
+          scaleMode: "auto",
+        });
+        component.editingLayout!.layoutJson = JSON.stringify(layout);
+
+        component.onWidgetDropdownSelect(id);
+        expect(component.currentSelectedWidget.id).toBe(id);
+        expect(component.currentSelectedWidget.scaleMode).toBe("auto");
+
+        component.onWidgetScaleModeChange("");
+        expect(component.currentSelectedWidget.scaleMode).toBe("");
+        expect(
+          component.currentSelectedWidget.customSettings?.labelFontSize,
+        ).toBe(13);
+        expect(
+          component.currentSelectedWidget.customSettings?.valueFontSize,
+        ).toBe(18);
+      }
+    });
+
     it("should handle grid and columns events", () => {
       component.onAnchorSelected("Center");
       expect(component.selectedAnchor).toBe("Center");

@@ -71,4 +71,58 @@ describe("RacedaySeasonNameComponent", () => {
 
     expect(await harness.getSeasonName()).toBe("2026 Winter Cup");
   });
+
+  it("should apply custom font size and fallback when scaleMode is custom", () => {
+    fixture.componentRef.setInput("seasonName", "2026 Winter Cup");
+    fixture.componentRef.setInput("widget", {
+      id: "w-season",
+      widgetType: "season-name",
+      scaleMode: "",
+      customSettings: {
+        labelFontSize: 21,
+        valueFontSize: 27,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("21px");
+    expect(valueEl.style.fontSize).toBe("27px");
+
+    // Test fallback when customSettings lacks font sizes
+    fixture.componentRef.setInput("widget", {
+      id: "w-season",
+      widgetType: "season-name",
+      scaleMode: "",
+      customSettings: {},
+    } as any);
+    fixture.detectChanges();
+
+    expect(labelEl.style.fontSize).toBe("13px");
+    expect(valueEl.style.fontSize).toBe("18px");
+  });
+
+  it("should not apply inline font size when scaleMode is auto", () => {
+    fixture.componentRef.setInput("seasonName", "2026 Winter Cup");
+    fixture.componentRef.setInput("widget", {
+      id: "w-season",
+      widgetType: "season-name",
+      scaleMode: "auto",
+      customSettings: {
+        labelFontSize: 21,
+        valueFontSize: 27,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("");
+    expect(valueEl.style.fontSize).toBe("");
+  });
 });

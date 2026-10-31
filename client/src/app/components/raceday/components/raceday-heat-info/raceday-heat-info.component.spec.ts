@@ -88,4 +88,60 @@ describe("RacedayHeatInfoComponent", () => {
 
     expect((await harness.getHeatStatus()).trim()).toBe("3 of 6 - Pro Group");
   });
+
+  it("should apply custom font size and fallback when scaleMode is custom", () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 3, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "",
+      customSettings: {
+        labelFontSize: 19,
+        valueFontSize: 25,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("19px");
+    expect(valueEl.style.fontSize).toBe("25px");
+
+    // Test fallback when customSettings lacks font sizes
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "",
+      customSettings: {},
+    } as any);
+    fixture.detectChanges();
+
+    expect(labelEl.style.fontSize).toBe("13px");
+    expect(valueEl.style.fontSize).toBe("18px");
+  });
+
+  it("should not apply inline font size when scaleMode is auto", () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 3, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "auto",
+      customSettings: {
+        labelFontSize: 19,
+        valueFontSize: 25,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("");
+    expect(valueEl.style.fontSize).toBe("");
+  });
 });

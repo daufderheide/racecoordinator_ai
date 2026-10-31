@@ -66,4 +66,58 @@ describe("RacedayRaceNameComponent", () => {
     expect(await harness.getLabel()).toBe("RD_LABEL_RACE");
     expect(await harness.getRaceName()).toBe("Heat 1 1 / 4");
   });
+
+  it("should apply custom font size and fallback when scaleMode is custom", () => {
+    fixture.componentRef.setInput("race", { name: "Test Race" } as Race);
+    fixture.componentRef.setInput("widget", {
+      id: "w-race",
+      widgetType: "race-name",
+      scaleMode: "",
+      customSettings: {
+        labelFontSize: 22,
+        valueFontSize: 28,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("22px");
+    expect(valueEl.style.fontSize).toBe("28px");
+
+    // Test fallback when customSettings lacks font sizes
+    fixture.componentRef.setInput("widget", {
+      id: "w-race",
+      widgetType: "race-name",
+      scaleMode: "",
+      customSettings: {},
+    } as any);
+    fixture.detectChanges();
+
+    expect(labelEl.style.fontSize).toBe("13px");
+    expect(valueEl.style.fontSize).toBe("18px");
+  });
+
+  it("should not apply inline font size when scaleMode is auto", () => {
+    fixture.componentRef.setInput("race", { name: "Test Race" } as Race);
+    fixture.componentRef.setInput("widget", {
+      id: "w-race",
+      widgetType: "race-name",
+      scaleMode: "auto",
+      customSettings: {
+        labelFontSize: 22,
+        valueFontSize: 28,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("");
+    expect(valueEl.style.fontSize).toBe("");
+  });
 });

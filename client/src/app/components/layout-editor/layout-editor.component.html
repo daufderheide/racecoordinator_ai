@@ -383,8 +383,8 @@
                   }}</label>
                   <div class="select-container select-sm">
                     <app-custom-select
-                      [(ngModel)]="currentSelectedWidget.scaleMode"
-                      (change)="onWidgetInspectorChange(currentSelectedWidget)"
+                      [value]="currentSelectedWidget.scaleMode || ''"
+                      (change)="onWidgetScaleModeChange($event)"
                     >
                       <app-custom-option value="">
                         {{ "UE_INSPECTOR_SCALING_DEFAULT" | translate }}

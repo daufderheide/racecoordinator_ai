@@ -20,6 +20,7 @@ import {
   setLastEditedLayoutId,
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
+import { onWidgetScaleModeChange } from "./layout-editor-actions.helper";
 
 describe("layout-editor.helper", () => {
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
@@ -534,6 +535,60 @@ describe("layout-editor.helper", () => {
 
       expect(layouts[0].layoutJson).toBeUndefined();
       expect(layouts[1].layoutJson).toBeUndefined();
+    });
+  });
+
+  describe("onWidgetScaleModeChange", () => {
+    it("should do nothing if widget is falsy", () => {
+      const mockComp = {
+        getLayout: jasmine.createSpy("getLayout"),
+        captureState: jasmine.createSpy("captureState"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+      const ui: CustomUI = {
+        entity_id: "u1",
+        name: "UI 1",
+        is_default: false,
+        layoutJson: "{}",
+      };
+      expect(() =>
+        onWidgetScaleModeChange("", null as any, ui, mockComp),
+      ).not.toThrow();
+      expect(mockComp.getLayout).not.toHaveBeenCalled();
+    });
+
+    it("should update scaleMode to custom and apply default settings", () => {
+      const widget = {
+        id: "w-race",
+        widgetType: "race-name",
+        scaleMode: "auto",
+      };
+      const layout = {
+        widgets: [{ ...widget }],
+      };
+      const ui: CustomUI = {
+        entity_id: "u1",
+        name: "UI 1",
+        is_default: false,
+        layoutJson: JSON.stringify(layout),
+      };
+      const mockComp = {
+        getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+        syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+        captureState: jasmine.createSpy("captureState"),
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+        editingSettings: {},
+      };
+
+      onWidgetScaleModeChange("", widget, ui, mockComp);
+
+      const savedLayout = JSON.parse(ui.layoutJson!);
+      expect(savedLayout.widgets[0].scaleMode).toBe("");
+      expect(savedLayout.widgets[0].customSettings?.labelFontSize).toBe(13);
+      expect(savedLayout.widgets[0].customSettings?.valueFontSize).toBe(18);
+      expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
+      expect(mockComp.captureState).toHaveBeenCalled();
+      expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
     });
   });
 });

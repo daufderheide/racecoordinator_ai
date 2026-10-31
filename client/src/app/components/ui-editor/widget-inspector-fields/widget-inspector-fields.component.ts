@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, effect, input, output } from "@angular/core";
+import { applyWidgetDefaultSettings } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { AbsoluteWidgetNode, Settings } from "@app/models/settings";
 
@@ -63,8 +64,8 @@ export class WidgetInspectorFieldsComponent {
   constructor() {
     effect(() => {
       const w = this.widget();
-      if (w && !w.customSettings) {
-        w.customSettings = {};
+      if (w) {
+        applyWidgetDefaultSettings(w);
       }
     });
   }

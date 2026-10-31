@@ -49,6 +49,7 @@ import {
   onWidgetDropdownSelect,
   onWidgetHeightChange,
   onWidgetInspectorChange,
+  onWidgetScaleModeChange,
   onWidgetSelected,
   onWidgetWidthChange,
   onWidgetXChange,
@@ -282,6 +283,17 @@ export abstract class LayoutEditorBase {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetHeightChange(
         h,
+        this.currentSelectedWidget,
+        this.editingLayout,
+        this,
+      );
+    }
+  }
+
+  onWidgetScaleModeChange(mode: any): void {
+    if (this.editingLayout && this.currentSelectedWidget) {
+      onWidgetScaleModeChange(
+        mode,
         this.currentSelectedWidget,
         this.editingLayout,
         this,

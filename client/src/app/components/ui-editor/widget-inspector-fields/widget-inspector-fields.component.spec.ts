@@ -63,6 +63,24 @@ describe("WidgetInspectorFieldsComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should initialize default customSettings for header widgets if not present", () => {
+    const raceNameWidget: AbsoluteWidgetNode = {
+      id: "w-race",
+      widgetType: "race-name",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 18,
+      zIndex: 1,
+    };
+    fixture.componentRef.setInput("widget", raceNameWidget);
+    fixture.detectChanges();
+
+    expect(raceNameWidget.customSettings).toBeDefined();
+    expect(raceNameWidget.customSettings?.["labelFontSize"]).toBe(13);
+    expect(raceNameWidget.customSettings?.["valueFontSize"]).toBe(18);
+  });
+
   it("should detect custom widget types", () => {
     expect(component.isCustomWidget("custom:my-widget")).toBeTrue();
     expect(component.isCustomWidget("timer")).toBeFalse();

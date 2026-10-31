@@ -38,6 +38,7 @@ import {
   setLayoutZoomHelper,
 } from "@app/components/ui-editor/ui-editor-resolution.helper";
 import {
+  applyWidgetDefaultSettings,
   computeWidgetDisplayName,
   handleRemoveSelectedWidget,
   handleReplicateLanes,
@@ -379,6 +380,20 @@ export function onWidgetHeightChange(
     comp.captureState?.();
     comp.cdr?.markForCheck();
   }
+}
+
+export function onWidgetScaleModeChange(
+  newMode: "auto" | "fixed" | "",
+  widget: any,
+  ui: CustomUI,
+  comp: any,
+): void {
+  if (!widget) return;
+  const targetWidget = { ...widget, scaleMode: newMode };
+  if (newMode !== "auto") {
+    applyWidgetDefaultSettings(targetWidget);
+  }
+  helperHandleWidgetInspectorChange(comp, targetWidget, ui);
 }
 
 export function onWidgetInspectorChange(

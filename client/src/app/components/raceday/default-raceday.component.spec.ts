@@ -8093,7 +8093,8 @@ describe("DefaultRacedayComponent", () => {
         component["audioService"],
         "playCallout",
       ).and.returnValue(true);
-      const loggerInfoSpy = spyOn((component as any).logger, "info");
+      const loggerInfoSpy = (component as any).logger.info;
+      loggerInfoSpy.calls.reset();
 
       // Crossing 3s remaining: previous time 3.5, current time 2.8
       (component as any).checkAudioCallouts(2.8, 3.5);

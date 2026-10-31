@@ -5,7 +5,7 @@
     [style.font-family]="widget()?.customSettings?.['labelFontFamily'] || null"
     [style.font-size.px]="
       widget()?.scaleMode !== 'auto'
-        ? widget()?.customSettings?.['labelFontSize'] || null
+        ? widget()?.customSettings?.['labelFontSize'] || 13
         : null
     "
     [style.color]="widget()?.customSettings?.['labelTextColor'] || null"
@@ -17,7 +17,7 @@
     [style.font-family]="widget()?.customSettings?.['valueFontFamily'] || null"
     [style.font-size.px]="
       widget()?.scaleMode !== 'auto'
-        ? widget()?.customSettings?.['valueFontSize'] || null
+        ? widget()?.customSettings?.['valueFontSize'] || 18
         : null
     "
     [style.color]="widget()?.customSettings?.['valueTextColor'] || null"

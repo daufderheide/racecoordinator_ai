@@ -52,4 +52,66 @@ describe("RacedayEventNameComponent", () => {
     expect(await harness.getLabel()).toBe("RD_LABEL_EVENT");
     expect(await harness.getEventName()).toBe("Grand Championship");
   });
+
+  it("should apply custom font size and fallback when scaleMode is custom", () => {
+    fixture.componentRef.setInput("race", {
+      name: "Heat 1",
+      is_event: true,
+      event_name: "Grand Championship",
+    } as any);
+    fixture.componentRef.setInput("widget", {
+      id: "w-event",
+      widgetType: "event-name",
+      scaleMode: "",
+      customSettings: {
+        labelFontSize: 20,
+        valueFontSize: 26,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("20px");
+    expect(valueEl.style.fontSize).toBe("26px");
+
+    // Test fallback when customSettings lacks font sizes
+    fixture.componentRef.setInput("widget", {
+      id: "w-event",
+      widgetType: "event-name",
+      scaleMode: "",
+      customSettings: {},
+    } as any);
+    fixture.detectChanges();
+
+    expect(labelEl.style.fontSize).toBe("13px");
+    expect(valueEl.style.fontSize).toBe("18px");
+  });
+
+  it("should not apply inline font size when scaleMode is auto", () => {
+    fixture.componentRef.setInput("race", {
+      name: "Heat 1",
+      is_event: true,
+      event_name: "Grand Championship",
+    } as any);
+    fixture.componentRef.setInput("widget", {
+      id: "w-event",
+      widgetType: "event-name",
+      scaleMode: "auto",
+      customSettings: {
+        labelFontSize: 20,
+        valueFontSize: 26,
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("");
+    expect(valueEl.style.fontSize).toBe("");
+  });
 });
