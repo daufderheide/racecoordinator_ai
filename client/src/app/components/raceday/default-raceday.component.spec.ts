@@ -13126,6 +13126,220 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("Theme Driver Audio Overrides in Live Race", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+      const race = {
+        ...MOCK_RACES[0],
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+      mockRaceService.getCurrentHeat.and.returnValue(component["heat"]);
+      component["raceState"] = RaceState.RACING;
+      fixture.detectChanges();
+    });
+
+    it("should play theme driver audio override TTS instead of driver default sound on normal lap", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(audioService, "playSfx").and.callThrough();
+
+      const dopamineTheme: any = {
+        entity_id: "dopamine_theme",
+        name: "Dopamine",
+        driver_audio_overrides: {
+          lapAudio: {
+            type: "tts",
+            text: "{driver.name} lap override",
+          },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(dopamineTheme);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.lapAudio = { type: "preset", url: "driver_default_beep.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 2,
+        lapTime: 4.5,
+        bestLapTime: 4.0,
+      });
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "{driver.name} lap override",
+        }),
+        "low",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+      expect(playSfxSpy).not.toHaveBeenCalledWith("driver_default_beep.wav");
+    });
+
+    it("should play theme driver audio override TTS on personal best lap", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(audioService, "playSfx").and.callThrough();
+
+      const dopamineTheme: any = {
+        entity_id: "dopamine_theme",
+        name: "Dopamine",
+        driver_audio_overrides: {
+          bestLapAudio: {
+            type: "tts",
+            text: "Fastest lap by {driver.name}",
+          },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(dopamineTheme);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.bestLapAudio = { type: "preset", url: "driver_best_lap.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 3,
+        lapTime: 3.8,
+        bestLapTime: 3.8,
+      });
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Fastest lap by {driver.name}",
+        }),
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+      expect(playSfxSpy).not.toHaveBeenCalledWith("driver_best_lap.wav");
+    });
+
+    it("should play theme driver audio override TTS on false start lap", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+
+      const dopamineTheme: any = {
+        entity_id: "dopamine_theme",
+        name: "Dopamine",
+        driver_audio_overrides: {
+          falseStartAudio: {
+            type: "tts",
+            text: "False start for {driver.name}",
+          },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(dopamineTheme);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.falseStartAudio = { type: "preset", url: "driver_penalty.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 1,
+        type: LapType.FALSE_START,
+      });
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "False start for {driver.name}",
+        }),
+        "urgent",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+    });
+
+    it("should play theme driver audio override TTS on drift lap", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+
+      const dopamineTheme: any = {
+        entity_id: "dopamine_theme",
+        name: "Dopamine",
+        driver_audio_overrides: {
+          driftLapAudio: {
+            type: "tts",
+            text: "Incredible drift {driver.name}!",
+          },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(dopamineTheme);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.driftLapAudio = { type: "preset", url: "driver_drift.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 2,
+        lapTime: 4.2,
+        isDrift: true,
+      });
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Incredible drift {driver.name}!",
+        }),
+        "urgent",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({
+          widgetType: "lane-view",
+          eventType: "drift_lap",
+        }),
+      );
+    });
+
+    it("should fall back to driver sound when theme has no override for that slot", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playSfxSpy = spyOn(audioService, "playSfx").and.callThrough();
+
+      const dopamineTheme: any = {
+        entity_id: "dopamine_theme",
+        name: "Dopamine",
+        driver_audio_overrides: {},
+      };
+      mockThemeService.getActiveTheme.and.returnValue(dopamineTheme);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.lapAudio = { type: "preset", url: "driver_default_beep.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 2,
+        lapTime: 4.5,
+        bestLapTime: 4.0,
+      });
+
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "driver_default_beep.wav",
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+    });
+  });
+
   describe("Grid Session Blueprint Resizing", () => {
     it("should handle onGridResizeStart and emit gridBoundsChange on pointermove", () => {
       const session = {

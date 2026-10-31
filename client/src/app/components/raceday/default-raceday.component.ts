@@ -2531,7 +2531,13 @@ export class DefaultRacedayComponent
       this.livePredictionSubject.next();
     }
 
-    const driver = driverData.driver;
+    const rawDriver =
+      driverData?.actualDriver ||
+      driverData?.participant?.driver ||
+      (driverData?.driver as any)?.driver ||
+      driverData?.driver;
+    const activeTheme = this.themeService?.getActiveTheme?.();
+    const driver = getEffectiveDriver(rawDriver, activeTheme);
     const isBestLap = lap.lapTime === lap.bestLapTime;
     const ttsContext = createTTSContext(driver as any, driverData as any);
 
@@ -2873,12 +2879,15 @@ export class DefaultRacedayComponent
     association: AudioAssociation,
   ): LapAudioCandidate | null {
     if (!driver) return null;
+    const activeTheme = this.themeService?.getActiveTheme?.();
     const specialAudio = resolveLapAudio(
       driver,
       lap.recordTier,
       isBestLap,
       lap.isNewRaceLeader,
       lap.isNewHeatLeader,
+      lap.isDrift,
+      activeTheme,
     );
 
     if (specialAudio && isAudioConfigured(specialAudio.config)) {
