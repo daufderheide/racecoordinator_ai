@@ -348,7 +348,10 @@ export class RacedayGridLayoutHelper {
   ): { x: number; y: number; w: number; h: number } {
     const extraX: number[] = [];
     const extraY: number[] = [];
-    const s = host.gridSession();
+    const s =
+      typeof host.gridSession === "function"
+        ? host.gridSession()
+        : host.gridSession;
     if (s) {
       extraX.push(s.bounds.x, s.bounds.x + s.bounds.width);
       extraY.push(s.bounds.y, s.bounds.y + s.bounds.height);
@@ -357,6 +360,24 @@ export class RacedayGridLayoutHelper {
         extraX.push(...dividers);
       } else {
         extraY.push(...dividers);
+      }
+    }
+    if (typeof host.getGrids === "function") {
+      const grids = host.getGrids();
+      if (Array.isArray(grids)) {
+        for (const g of grids) {
+          if (g?.bounds) {
+            extraX.push(g.bounds.x, g.bounds.x + g.bounds.width);
+            extraY.push(g.bounds.y, g.bounds.y + g.bounds.height);
+          }
+          if (g?.labelBounds) {
+            extraX.push(g.labelBounds.x, g.labelBounds.x + g.labelBounds.width);
+            extraY.push(
+              g.labelBounds.y,
+              g.labelBounds.y + g.labelBounds.height,
+            );
+          }
+        }
       }
     }
 

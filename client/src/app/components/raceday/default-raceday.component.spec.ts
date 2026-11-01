@@ -13599,6 +13599,65 @@ describe("DefaultRacedayComponent", () => {
       expect(lane1Widget.height).toBe(80);
     });
 
+    it("should snap widgets to layout bounds and adjacent widgets via snapToEdges", () => {
+      const w1 = {
+        id: "w1",
+        widgetType: "timer" as const,
+        x: 100,
+        y: 100,
+        width: 200,
+        height: 150,
+        zIndex: 100,
+      };
+      const w2 = {
+        id: "w2",
+        widgetType: "branding" as const,
+        x: 400,
+        y: 300,
+        width: 150,
+        height: 80,
+        zIndex: 101,
+      };
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [w1, w2],
+      };
+
+      // Near left boundary (x = 5 -> snaps to 0)
+      const snappedLeft = component.snapToEdges(
+        5,
+        50,
+        100,
+        100,
+        "dragged",
+        "all",
+      );
+      expect(snappedLeft.x).toBe(0);
+
+      // Near w1 right edge (x + w = 300; dragged widget at x = 305 -> snaps to 300)
+      const snappedAdjacent = component.snapToEdges(
+        305,
+        100,
+        100,
+        100,
+        "dragged",
+        "all",
+      );
+      expect(snappedAdjacent.x).toBe(300);
+
+      // Near bottom boundary (y = 975 -> 975 + 100 = 1075 near 1080 -> snaps to 980)
+      const snappedBottom = component.snapToEdges(
+        500,
+        975,
+        100,
+        100,
+        "dragged",
+        "all",
+      );
+      expect(snappedBottom.y).toBe(980);
+    });
+
     it("should ignore onMasterWidgetModified when widget is null or from another grid", () => {
       const session = {
         gridId: "test-grid-safety",

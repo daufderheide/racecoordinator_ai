@@ -420,6 +420,29 @@ export abstract class DefaultRacedayLayoutBase {
     return RacedayGridLayoutHelper.hasWidgetId(this, id);
   }
 
+  snapToEdges(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    ignoreId: string,
+    handle: string,
+    layoutWidth: number = 1920,
+    layoutHeight: number = 1080,
+  ): { x: number; y: number; w: number; h: number } {
+    return RacedayGridLayoutHelper.snapToEdges(
+      this,
+      x,
+      y,
+      w,
+      h,
+      ignoreId,
+      handle,
+      layoutWidth,
+      layoutHeight,
+    );
+  }
+
   onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {
     RacedayGridColumnHelper.onGridResizeStart(this, event, handle);
   }
