@@ -17,7 +17,7 @@
     "prepare": "husky",
     "lint": "npm run lint:client && npm run lint:server && npm run lint:audit && npm run test:scripts",
     "lint:client": "cd client && npx eslint --fix \"src/**/*.{ts,html}\"",
-    "lint:server": "cd server && mvn spotless:check checkstyle:check pmd:check",
+    "lint:server": "cd server && node -e \"const fs = require('fs'); const isCi = process.env.CI === 'true' || !!process.env.GITHUB_ACTIONS; const localM2 = !isCi && fs.existsSync('./.m2/repository') ? '-Dmaven.repo.local=./.m2/repository' : ''; require('child_process').execSync('mvn spotless:check checkstyle:check pmd:check ' + localM2, { stdio: 'inherit' });\"",
     "lint:audit": "node scripts/audit_test_coverage.js --ci",
     "check:screendiff": "node scripts/check_screendiff_changes.js --staged",
     "test:scripts": "node --test scripts/*.spec.js",

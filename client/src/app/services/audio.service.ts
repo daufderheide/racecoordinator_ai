@@ -1,5 +1,16 @@
 import { Injectable, OnDestroy } from "@angular/core";
 import { DataService } from "@app/data.service";
+import {
+  ActiveVoiceCallout,
+  ANNOUNCEMENT_SLOTS,
+  AUDIO_PRIORITY_WEIGHT,
+  AudioAssociation,
+  AudioPriority,
+  AudioRelevanceFilter,
+  CalloutQueueItem,
+  DriverAudioMode,
+  UrgentQueueItem,
+} from "@app/models/audio";
 import { AudioConfig } from "@app/models/driver";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -7,98 +18,25 @@ import {
   interpolate,
   releaseUtterance,
   resolveAudioUrl,
-  resolveBestTtsVoice,
   retainUtterance,
   setupTtsWatchdogs,
 } from "@app/utils/audio";
+import {
+  isAudioRelevant,
+  isVoiceCalloutSlot,
+} from "@app/utils/audio-relevance";
+import { AudioVoiceManager } from "@app/utils/audio-voice-manager";
 
-export type AudioPriority = "low" | "normal" | "high" | "urgent";
-
-export const AUDIO_PRIORITY_WEIGHT: Record<AudioPriority, number> = {
-  low: 1,
-  normal: 2,
-  high: 3,
-  urgent: 4,
+export type {
+  ActiveVoiceCallout,
+  AudioAssociation,
+  AudioPriority,
+  AudioRelevanceFilter,
+  CalloutQueueItem,
+  DriverAudioMode,
+  UrgentQueueItem,
 };
-
-export interface AudioAssociation {
-  widgetType?: "lane-view" | "timer" | "flag" | "countdown" | string;
-  laneIndex?: number;
-  driverId?: string;
-  eventType?: string;
-}
-
-export type DriverAudioMode = "all" | "none" | "scoped";
-
-export interface AudioRelevanceFilter {
-  /** Driver audio mode: 'all' (all lanes), 'none' (no driver audio), 'scoped' (specific lanes/drivers) */
-  driverAudioMode: DriverAudioMode;
-  /** When driverAudioMode is 'scoped', set of allowed 0-indexed lane numbers */
-  allowedLanes?: Set<number>;
-  /** When driverAudioMode is 'scoped', set of allowed driver entity IDs / object IDs */
-  allowedDriverIds?: Set<string>;
-
-  /** Whether countdown audio is allowed */
-  allowCountdown?: boolean;
-  /** Whether timer audio (seconds left, halfway) is allowed */
-  allowTimer?: boolean;
-  /** Whether race state audio (yellow flag, heat over, race over) is allowed */
-  allowRaceState?: boolean;
-}
-
-export interface UrgentQueueItem {
-  config: AudioConfig;
-  priority: AudioPriority;
-  context?: any;
-  resolvedUrl?: string;
-  enqueuedAt: number;
-  association?: AudioAssociation;
-}
-
-export type CalloutQueueItem = UrgentQueueItem;
-
-const ANNOUNCEMENT_SLOTS = [
-  "audio.yellowflag",
-  "audio.seconds_left",
-  "audio.seconds_left.halfway",
-  "audio.heat_over",
-  "audio.race_over",
-  "audio.min_lap_time",
-  "audio.drift_lap",
-  "driftLap",
-  "drift_lap",
-  "penalty",
-  "falseStart",
-  "false_start",
-  "overallBestLap",
-  "overall_best_lap",
-  "overallRecordLap",
-  "overall_record_lap",
-  "overallLaneBestLap",
-  "overall_lane_best_lap",
-  "overallLaneRecordLap",
-  "overall_lane_record_lap",
-  "raceBestLap",
-  "race_best_lap",
-  "raceLaneBestLap",
-  "race_lane_best_lap",
-  "heatBestLap",
-  "heat_best_lap",
-  "newRaceLeader",
-  "new_race_leader",
-  "newHeatLeader",
-  "new_heat_leader",
-  "pitIn",
-  "pit_in",
-  "fuel",
-  "fuel_level",
-  "fuelLevel",
-];
-
-export interface ActiveVoiceCallout {
-  priority: AudioPriority;
-  stop: () => void;
-}
+export { ANNOUNCEMENT_SLOTS, AUDIO_PRIORITY_WEIGHT };
 
 @Injectable({
   providedIn: "root",
@@ -109,7 +47,7 @@ export class AudioService implements OnDestroy {
   private calloutQueue: CalloutQueueItem[] = [];
   private isSpacingCoolingDown: boolean = false;
   private spacingTimer: any = null;
-  private cachedVoices: SpeechSynthesisVoice[] = [];
+  private voiceManager = new AudioVoiceManager();
   private activeAudioElement: HTMLAudioElement | null = null;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private safetyTimeout: any = null;
@@ -118,22 +56,26 @@ export class AudioService implements OnDestroy {
   private lastCancelTime: number = 0;
   private activeUtteranceStartedAt: number = 0;
 
+  get cachedVoices(): SpeechSynthesisVoice[] {
+    return this.voiceManager.cachedVoices;
+  }
+
+  set cachedVoices(voices: SpeechSynthesisVoice[]) {
+    this.voiceManager.cachedVoices = voices;
+  }
+
   constructor(
     private dataService: DataService,
     private settingsService: SettingsService,
     private logger: LoggerService,
-  ) {
-    this.initVoices();
-  }
+  ) {}
 
   /**
    * Determines whether an audio slot or configuration represents a verbal callout
    * versus a sound effect (SFX) based on Option 1 (Convention by Slot & Type).
    */
   isVoiceCallout(slotOrCategory: string, config?: AudioConfig): boolean {
-    if (!config || config.type === "none") return false;
-    if (config.type === "tts") return true;
-    return ANNOUNCEMENT_SLOTS.some((s) => slotOrCategory.includes(s));
+    return isVoiceCalloutSlot(slotOrCategory, config);
   }
 
   setRelevanceFilter(filter: AudioRelevanceFilter | null): void {
@@ -149,58 +91,7 @@ export class AudioService implements OnDestroy {
   }
 
   isSoundRelevant(association?: AudioAssociation): boolean {
-    if (!this.relevanceFilter) {
-      return true;
-    }
-
-    // 1. Countdown audio
-    if (association?.widgetType === "countdown") {
-      return !!this.relevanceFilter.allowCountdown;
-    }
-
-    // 2. Timer audio (seconds left, halfway)
-    if (association?.widgetType === "timer") {
-      return !!this.relevanceFilter.allowTimer;
-    }
-
-    // 3. Race state audio (flag, yellow flag, heat over, race over)
-    if (
-      association?.widgetType === "flag" ||
-      association?.widgetType === "race-state"
-    ) {
-      return !!this.relevanceFilter.allowRaceState;
-    }
-
-    // 4. Driver / Lane audio (lane-view / driver station)
-    if (
-      association?.widgetType === "lane-view" ||
-      association?.widgetType === "driver" ||
-      association?.laneIndex != null ||
-      association?.driverId != null
-    ) {
-      if (this.relevanceFilter.driverAudioMode === "all") {
-        return true;
-      }
-      if (this.relevanceFilter.driverAudioMode === "scoped") {
-        if (
-          association.laneIndex != null &&
-          this.relevanceFilter.allowedLanes?.has(association.laneIndex)
-        ) {
-          return true;
-        }
-        if (
-          association.driverId &&
-          this.relevanceFilter.allowedDriverIds?.has(association.driverId)
-        ) {
-          return true;
-        }
-        return false;
-      }
-      return false;
-    }
-
-    // Unassociated fallback
-    return true;
+    return isAudioRelevant(this.relevanceFilter, association);
   }
 
   ngOnDestroy(): void {
@@ -965,47 +856,7 @@ export class AudioService implements OnDestroy {
   }
 
   getVoices(): SpeechSynthesisVoice[] {
-    if (
-      typeof window !== "undefined" &&
-      window.speechSynthesis &&
-      typeof window.speechSynthesis.getVoices === "function"
-    ) {
-      try {
-        const list = window.speechSynthesis.getVoices() || [];
-        if (list.length > 0) {
-          this.cachedVoices = list;
-          return list;
-        }
-      } catch {
-        // Fallback to cached voices
-      }
-    }
-    return this.cachedVoices || [];
-  }
-
-  private initVoices(): void {
-    if (
-      typeof window !== "undefined" &&
-      window.speechSynthesis &&
-      typeof window.speechSynthesis.getVoices === "function"
-    ) {
-      const updateVoices = () => {
-        try {
-          const list = window.speechSynthesis.getVoices() || [];
-          if (list.length > 0) {
-            this.cachedVoices = list;
-          }
-        } catch {
-          // Ignored
-        }
-      };
-      updateVoices();
-      if (typeof window.speechSynthesis.addEventListener === "function") {
-        window.speechSynthesis.addEventListener("voiceschanged", updateVoices);
-      } else if ("onvoiceschanged" in window.speechSynthesis) {
-        window.speechSynthesis.onvoiceschanged = updateVoices;
-      }
-    }
+    return this.voiceManager.getVoices();
   }
 
   applyTtsSettingsToUtterance(
@@ -1016,58 +867,15 @@ export class AudioService implements OnDestroy {
     volumeOverride?: number,
     masterVolumeOverride?: number,
   ): void {
-    const settings = this.settingsService.getSettings();
-    const voiceName =
-      voiceNameOverride !== undefined ? voiceNameOverride : settings.ttsVoice;
-    const rate =
-      rateOverride !== undefined ? rateOverride : (settings.ttsRate ?? 1.0);
-    const pitch =
-      pitchOverride !== undefined ? pitchOverride : (settings.ttsPitch ?? 1.0);
-    const volume =
-      volumeOverride !== undefined
-        ? volumeOverride
-        : (settings.ttsVolume ?? 100);
-    const masterVolume =
-      masterVolumeOverride !== undefined
-        ? masterVolumeOverride
-        : (settings.masterVolume ?? 100);
-
-    if (
-      voiceName &&
-      typeof window !== "undefined" &&
-      window.speechSynthesis &&
-      typeof window.speechSynthesis.getVoices === "function"
-    ) {
-      const voices = this.getVoices();
-      const matched = resolveBestTtsVoice(voices, voiceName);
-      if (matched) {
-        try {
-          utterance.voice = matched;
-        } catch {
-          // Native browser enforces SpeechSynthesisVoice instance; safely ignored if mock
-        }
-      }
-    }
-    if (utterance.voice?.lang) {
-      utterance.lang = utterance.voice.lang;
-    } else if (!utterance.lang) {
-      utterance.lang = "en-US";
-    }
-    if (rate != null) {
-      utterance.rate = Math.max(0.1, Math.min(10, rate));
-    }
-    if (pitch != null) {
-      utterance.pitch = Math.max(0, Math.min(2, pitch));
-    }
-    const effMaster =
-      typeof masterVolume === "number" && !isNaN(masterVolume)
-        ? masterVolume
-        : 100;
-    const effTts = typeof volume === "number" && !isNaN(volume) ? volume : 100;
-    const masterVol = Math.max(0, Math.min(1, effMaster / 100));
-    const ttsVol = Math.max(0, Math.min(1, effTts / 100));
-    const finalVol = masterVol * ttsVol;
-    utterance.volume = isNaN(finalVol) ? 1.0 : finalVol;
+    this.voiceManager.applyTtsSettingsToUtterance(
+      utterance,
+      this.settingsService.getSettings(),
+      voiceNameOverride,
+      rateOverride,
+      pitchOverride,
+      volumeOverride,
+      masterVolumeOverride,
+    );
   }
 
   private onVoiceCalloutEnded(): void {

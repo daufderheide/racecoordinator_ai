@@ -47,10 +47,20 @@ fi
 # JVM optimization for faster startup in tests
 JVM_OPTS="-XX:TieredStopAtLevel=1 -Djdk.attach.allowAttachSelf=true --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
 
+if [ -n "$MAVEN_REPO_LOCAL" ]; then
+  REPO_LOCAL="$MAVEN_REPO_LOCAL"
+elif [ "$CI" = "true" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  REPO_LOCAL="$HOME/.m2/repository"
+else
+  REPO_LOCAL="$SERVER_DIR/.m2/repository"
+fi
+
 mvn test $MVN_THREADS "$@" \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
   -DforkCount="$FORK_COUNT" \
   -DreuseForks="$REUSE_FORKS" \
   -Djava.io.tmpdir="$SERVER_TMP" \
-  -Dmaven.repo.local="$SERVER_DIR/.m2/repository"
+  -Dmaven.repo.local="$REPO_LOCAL" \
+  -Dmaven.wagon.http.retryHandler.count=3 \
+  -Daether.remoteRepositoryFilter.prefixes=false

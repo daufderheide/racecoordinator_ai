@@ -61,11 +61,21 @@ if [ "$MUTATION_THRESHOLD" != "0" ]; then
   PITEST_ARGS="$PITEST_ARGS -DmutationThreshold=$MUTATION_THRESHOLD"
 fi
 
+if [ -n "$MAVEN_REPO_LOCAL" ]; then
+  REPO_LOCAL="$MAVEN_REPO_LOCAL"
+elif [ "$CI" = "true" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  REPO_LOCAL="$HOME/.m2/repository"
+else
+  REPO_LOCAL="$SERVER_DIR/.m2/repository"
+fi
+
 mvn test-compile org.pitest:pitest-maven:mutationCoverage \
   -Dbuild.dist.dir="$SERVER_BUILD_DIR" \
   -DskipProtobuf=true \
   -Djava.io.tmpdir="$SERVER_TMP" \
-  -Dmaven.repo.local="$SERVER_DIR/.m2/repository" \
+  -Dmaven.repo.local="$REPO_LOCAL" \
+  -Dmaven.wagon.http.retryHandler.count=3 \
+  -Daether.remoteRepositoryFilter.prefixes=false \
   $PITEST_ARGS "${EXTRA_MVN_ARGS[@]}"
 
 REPORT_DIR=$(find "$SERVER_BUILD_DIR/pit-reports" -maxdepth 1 -mindepth 1 -type d | sort -r | head -n 1)
