@@ -3143,6 +3143,7 @@
   "LE_HELP_WIDGET_CONFIG_CONTENT": "Schakel het paneel Widget-configuratie in of uit om widgeteigenschappen aan te passen of het canvasgebied te maximaliseren.",
   "THM_TITLE": "THEMA-EDITOR",
   "THM_THEME_NAME": "Themanaam",
+  "THM_UI_LAYOUT": "UI-lay-out",
   "RDS_MENU_THEME_EDITOR": "Thema's",
   "THM_ERROR_NAME_INVALID": "Voer een unieke, niet-lege themanaam in.",
   "THM_CONFIRM_DELETE_TITLE": "Thema verwijderen",

@@ -3143,6 +3143,7 @@
   "LE_HELP_WIDGET_CONFIG_CONTENT": "Mostra o nascondi il pannello Configurazione Widget per personalizzare le proprietà dei widget o ingrandire l'area di lavoro.",
   "THM_TITLE": "EDITOR TEMI",
   "THM_THEME_NAME": "Nome del tema",
+  "THM_UI_LAYOUT": "Layout interfaccia",
   "RDS_MENU_THEME_EDITOR": "Temi",
   "THM_ERROR_NAME_INVALID": "Inserisci un nome tema univoco e non vuoto.",
   "THM_CONFIRM_DELETE_TITLE": "Elimina tema",

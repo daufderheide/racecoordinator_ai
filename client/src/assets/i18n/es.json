@@ -3143,6 +3143,7 @@
   "LE_HELP_WIDGET_CONFIG_CONTENT": "Muestra u oculta el panel de Configuración de Widgets para personalizar las propiedades de los widgets o maximizar el área del lienzo.",
   "THM_TITLE": "EDITOR DE TEMAS",
   "THM_THEME_NAME": "Nombre del tema",
+  "THM_UI_LAYOUT": "Diseño de interfaz",
   "RDS_MENU_THEME_EDITOR": "Temas",
   "THM_ERROR_NAME_INVALID": "Por favor, introduzca un nombre de tema único y no vacío.",
   "THM_CONFIRM_DELETE_TITLE": "Eliminar tema",

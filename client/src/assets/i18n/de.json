@@ -3143,6 +3143,7 @@
   "LE_HELP_WIDGET_CONFIG_CONTENT": "Blenden Sie das Widget-Konfigurationspanel ein oder aus, um Widget-Eigenschaften anzupassen oder den Zeichenbereich zu maximieren.",
   "THM_TITLE": "THEMEN-EDITOR",
   "THM_THEME_NAME": "Designname",
+  "THM_UI_LAYOUT": "UI-Layout",
   "RDS_MENU_THEME_EDITOR": "Designs",
   "THM_ERROR_NAME_INVALID": "Bitte geben Sie einen eindeutigen, nicht leeren Designnamen ein.",
   "THM_CONFIRM_DELETE_TITLE": "Design löschen",

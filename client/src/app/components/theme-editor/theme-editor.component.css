@@ -1,12 +1,47 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  color: #e2e8f0;
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
 .page-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100%;
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 40%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
   overflow: hidden;
-  background: #0f172a;
-  color: #f8fafc;
   box-sizing: border-box;
+}
+
+app-editor-title {
+  position: relative;
+  z-index: 100;
+}
+
+app-editor-title:has(.custom-select-container.open) {
+  z-index: 2000000 !important;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
 }
 
 .theme-editor-content {
@@ -53,6 +88,7 @@
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 6px;
   color: #f8fafc;
+  font-family: inherit;
   font-size: 1rem;
   padding: 8px 12px;
   outline: none;

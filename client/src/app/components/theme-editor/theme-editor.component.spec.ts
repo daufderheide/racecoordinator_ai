@@ -149,6 +149,8 @@ describe("ThemeEditorComponent", () => {
     mockTranslationService = {
       translate: jasmine.createSpy("translate").and.callFake((key: string) => {
         if (key === "THM_TITLE") return "Themes";
+        if (key === "THM_THEME_NAME") return "Theme Name";
+        if (key === "THM_UI_LAYOUT") return "UI Layout";
         if (key === "THM_ERROR_NAME_INVALID") return "Theme name is invalid";
         if (key === "UE_DEFAULT_THEME_NAME") return "New Theme";
         if (key === "UE_LABEL_DEFAULT_THEME") return "Classic";
@@ -244,6 +246,13 @@ describe("ThemeEditorComponent", () => {
       expect(component.selectedThemeId).toBe("default_classic_rc_ai");
       expect(component.editingTheme?.name).toBe("Classic");
       expect(component.isLoading).toBeFalse();
+
+      fixture.detectChanges();
+      const uiLabel = fixture.nativeElement.querySelector(
+        "#theme-ui-selector .theme-control-label",
+      );
+      expect(uiLabel).toBeTruthy();
+      expect(uiLabel.textContent.trim()).toBe("UI Layout");
     });
 
     it("should respect edit query parameter", () => {
