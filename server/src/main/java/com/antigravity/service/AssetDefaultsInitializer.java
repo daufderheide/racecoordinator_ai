@@ -343,6 +343,30 @@ public class AssetDefaultsInitializer {
     return Collections.unmodifiableList(DEFAULT_AUDIO_ASSETS);
   }
 
+  public static List<DefaultAsset> getAllDefaultAssets() {
+    List<DefaultAsset> all =
+        new ArrayList<>(
+            DEFAULT_IMAGE_ASSETS.size()
+                + DEFAULT_AUDIO_ASSETS.size()
+                + DEFAULT_FUEL_IMAGE_ASSETS.size());
+    all.addAll(DEFAULT_IMAGE_ASSETS);
+    all.addAll(DEFAULT_AUDIO_ASSETS);
+    all.addAll(DEFAULT_FUEL_IMAGE_ASSETS);
+    return Collections.unmodifiableList(all);
+  }
+
+  public static String getAssetTypeForDefault(DefaultAsset asset) {
+    if (asset == null) {
+      return "image";
+    }
+    for (DefaultAsset audio : DEFAULT_AUDIO_ASSETS) {
+      if (audio.id.equals(asset.id)) {
+        return "audio";
+      }
+    }
+    return "image";
+  }
+
   public static String getDefaultResourcePath(String nameOrId) {
     if (nameOrId == null || nameOrId.trim().isEmpty()) {
       return null;
@@ -515,6 +539,11 @@ public class AssetDefaultsInitializer {
     backfillAudioSetDefaults(audioUrls);
     backfillFuelGaugeDefaults();
     backfillDefaultTheme();
+    cleanupLegacyDuplicates();
+  }
+
+  public int cleanupLegacyDuplicates() {
+    return new LegacyAssetCleanupService(assetService).cleanupLegacyDuplicates();
   }
 
   private void backfillAudioSetDefaults(Map<String, String> audioUrls) {

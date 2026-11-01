@@ -771,6 +771,10 @@ public class AssetService {
     new AssetDefaultsInitializer(this, databaseContext).backfillDefaults();
   }
 
+  public int cleanupLegacyDuplicates() {
+    return new LegacyAssetCleanupService(this).cleanupLegacyDuplicates();
+  }
+
   public void backfillDefaultTheme() {
     new AssetDefaultsInitializer(this, databaseContext).backfillDefaultTheme();
   }
