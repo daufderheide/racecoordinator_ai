@@ -795,6 +795,7 @@
   "RDS_LABEL_NICKNAME": "Surnom :",
   "RDS_LABEL_PASSWORD": "Mot de passe du directeur :",
   "RDS_LABEL_PORT": "Port :",
+  "RDS_LABEL_TRACK": "Circuit",
   "RDS_LANG_DE": "Allemand (DE)",
   "RDS_LANG_DEFAULT": "Par défaut",
   "RDS_LANG_EN": "Anglais (EN)",
