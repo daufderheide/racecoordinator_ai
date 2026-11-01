@@ -100,6 +100,7 @@ public class CustomUITest {
     assertTrue(driverStationUi.getLayoutJson().contains("\"highlightRowOnLap\":true"));
     assertTrue(driverStationUi.getLayoutJson().contains("\"borderColor\":\"#ffffff\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"textColor\":\"#ffffff\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"fillColor\":\"#d3d3d3\""));
 
     assertTrue(defaultUi.getLayoutJson().contains("widget-countdown"));
     assertTrue(defaultUi.getLayoutJson().contains("\"glowEffect\":true"));
@@ -319,7 +320,7 @@ public class CustomUITest {
     String input =
         "{\"widgets\":["
             + "{\"id\":\"widget-ds-progress\",\"widgetType\":\"progress-gauge\",\"customSettings\":{\"gaugeType\":\"heat-progress\"}},"
-            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"customSettings\":{\"gaugeType\":\"fuel\",\"borderColor\":\"#38bdf8\",\"textColor\":\"#f59e0b\"}},"
+            + "{\"id\":\"widget-ds-fuel\",\"widgetType\":\"progress-gauge\",\"customSettings\":{\"gaugeType\":\"fuel\",\"borderColor\":\"#38bdf8\",\"textColor\":\"#f59e0b\",\"fillColor\":\"#ef4444\"}},"
             + "{\"id\":\"widget-ds-nickname\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"driver.nickname\"}}"
             + "]}";
 
@@ -327,8 +328,10 @@ public class CustomUITest {
     // widget-ds-progress should receive defaults
     assertTrue(result.contains("\"borderColor\":\"#ffffff\""));
     assertTrue(result.contains("\"textColor\":\"#ffffff\""));
+    assertTrue(result.contains("\"fillColor\":\"#d3d3d3\""));
     // widget-ds-fuel custom colors should be preserved
     assertTrue(result.contains("\"borderColor\":\"#38bdf8\""));
     assertTrue(result.contains("\"textColor\":\"#f59e0b\""));
+    assertTrue(result.contains("\"fillColor\":\"#ef4444\""));
   }
 }

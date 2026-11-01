@@ -309,7 +309,7 @@ describe("RacedayProgressGaugeComponent", () => {
       expect(labelEl).toBeNull();
     });
 
-    it("should fall back to parent activeLaneForegroundColor when fillColor and textColor are absent and not driver station", () => {
+    it("should default to light grey for fillColor without using lane color, and fall back to activeLaneForegroundColor for text when not driver station", () => {
       mockParent.activeLaneForegroundColor = "#000000";
       const widget = {
         id: "gauge-raceday",
@@ -325,7 +325,7 @@ describe("RacedayProgressGaugeComponent", () => {
       fixture.componentRef.setInput("widget", widget);
       fixture.detectChanges();
 
-      expect(component.effectiveFillColor).toBe("#000000");
+      expect(component.effectiveFillColor).toBe("#d3d3d3");
       expect(component.effectiveForegroundColor).toBe("#000000");
       expect(component.effectiveBorderColor).toBe("#000000");
     });
@@ -348,6 +348,7 @@ describe("RacedayProgressGaugeComponent", () => {
       fixture.detectChanges();
 
       expect(component.isDriverStation).toBeTrue();
+      expect(component.effectiveFillColor).toBe("#d3d3d3");
       expect(component.effectiveForegroundColor).toBe("#ffffff");
       expect(component.effectiveBorderColor).toBe("#ffffff");
 
@@ -377,6 +378,7 @@ describe("RacedayProgressGaugeComponent", () => {
       fixture.detectChanges();
 
       expect(component.isDriverStation).toBeTrue();
+      expect(component.effectiveFillColor).toBe("#d3d3d3");
       expect(component.effectiveForegroundColor).toBe("#ffffff");
       expect(component.effectiveBorderColor).toBe("#ffffff");
     });
@@ -399,6 +401,25 @@ describe("RacedayProgressGaugeComponent", () => {
 
       expect(component.effectiveForegroundColor).toBe("#38bdf8");
       expect(component.effectiveBorderColor).toBe("#f59e0b");
+    });
+
+    it("should allow custom fillColor to override light grey default and not use lane color", () => {
+      mockParent.isDriverStation = true;
+      mockParent.activeLaneForegroundColor = "#ff0000";
+      const widget = {
+        id: "widget-ds-progress",
+        widgetType: "progress-gauge",
+        customSettings: {
+          gaugeType: "heat-progress",
+          fillColor: "#38bdf8",
+        },
+      } as any;
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      expect(component.effectiveFillColor).toBe("#38bdf8");
     });
 
     it("should resolve effectiveFontSize and effectiveFontFamily from customSettings", () => {

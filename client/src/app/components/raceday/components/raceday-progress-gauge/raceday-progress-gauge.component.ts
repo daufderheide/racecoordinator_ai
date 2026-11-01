@@ -211,12 +211,7 @@ export class RacedayProgressGaugeComponent {
   }
 
   get effectiveFillColor(): string {
-    return (
-      this.effectiveSettings["fillColor"] ||
-      this.parent()?.activeLaneForegroundColor ||
-      this.parent()?.foregroundColor ||
-      "currentColor"
-    );
+    return this.effectiveSettings["fillColor"] || "#d3d3d3";
   }
 
   get effectiveForegroundColor(): string {

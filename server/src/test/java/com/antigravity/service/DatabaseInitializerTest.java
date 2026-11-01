@@ -501,6 +501,7 @@ public class DatabaseInitializerTest {
     assertNotNull(driverStationUi);
     assertTrue(driverStationUi.getLayoutJson().contains("\"borderColor\":\"#ffffff\""));
     assertTrue(driverStationUi.getLayoutJson().contains("\"textColor\":\"#ffffff\""));
+    assertTrue(driverStationUi.getLayoutJson().contains("\"fillColor\":\"#d3d3d3\""));
   }
 
   @Test

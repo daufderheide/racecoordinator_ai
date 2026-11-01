@@ -68,6 +68,14 @@ describe("ProgressGaugeInspectorComponent", () => {
     expect(changeSpy).toHaveBeenCalled();
   });
 
+  it("should display default color placeholder and fallback value #d3d3d3 when fillColor is empty", () => {
+    const colorInput = fixture.nativeElement.querySelector(
+      '.color-picker-input[type="color"]',
+    );
+    expect(colorInput).toBeTruthy();
+    expect(colorInput.value).toBe("#d3d3d3");
+  });
+
   it("should reset color to empty string and emit change on resetColor", () => {
     component.settings().fillColor = "#ffffff";
     component.resetColor("fillColor");
