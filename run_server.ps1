@@ -182,7 +182,7 @@ function Get-PortConflictReport($Port, $ServiceName) {
 }
 
 function Show-PortErrorDialog($Title, $Message) {
-    Write-Host "`nPORT CONFLICT ERROR - $Title:" -ForegroundColor Red
+    Write-Host "`nPORT CONFLICT ERROR - ${Title}:" -ForegroundColor Red
     Write-Host "$Message`n" -ForegroundColor Yellow
     try {
         Add-Type -AssemblyName System.Windows.Forms
