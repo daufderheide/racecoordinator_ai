@@ -40,6 +40,7 @@ import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import { Team } from "@app/models/team";
+import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IDemoConfig } from "@app/proto/antigravity";
 import { FileSystemService } from "@app/services/file-system.service";
@@ -255,6 +256,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   selectedSeason?: Season;
   seasonStandings: SeasonStandingItem[] = [];
 
+  // Track State
+  tracks: Track[] = [];
+
   // Race State Additions
   isRaceRunning: boolean = false;
   showEndRacePrompt: boolean = false;
@@ -300,6 +304,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       events: this.dataService.getEvents(),
       seasons: this.dataService.getSeasons(),
       driverLabels: this.dataService.getDriverLabels(),
+      tracks: this.dataService.getTracks(),
     }).subscribe({
       next: (result) => this.initInitialData(result),
       error: (err) => this.logger.error("Error loading initial data", err),
@@ -1024,6 +1029,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.themeService.getThemes(),
       this.translationService,
     );
+  }
+
+  getTrackName(race: any): string {
+    if (!race?.track_entity_id) {
+      return this.translationService.translate("GEN_NONE") || "None";
+    }
+    const track = this.tracks.find(
+      (t: any) => t.entity_id === race.track_entity_id,
+    );
+    return track?.name || race.track_entity_id;
   }
 
   isHandsFree(race?: any): boolean {

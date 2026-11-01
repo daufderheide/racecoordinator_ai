@@ -35,6 +35,7 @@ export class RacedaySetupInitHelper {
       (a.name || "").localeCompare(b.name || ""),
     );
     host.driverLabels = (result.driverLabels as DriverLabel[]) || [];
+    host.tracks = result.tracks || [];
 
     const localSettings = host.settingsService.getSettings();
     host.updateQuickStartRaces(localSettings.recentRaceIds);

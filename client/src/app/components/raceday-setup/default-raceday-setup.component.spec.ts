@@ -2148,7 +2148,7 @@ describe("DefaultRacedaySetupComponent", () => {
       const summaryGrid = raceSummaryCard.querySelector(".summary-grid");
       expect(summaryGrid).toBeTruthy();
       const items = summaryGrid.querySelectorAll(".summary-item");
-      expect(items.length).toBe(9);
+      expect(items.length).toBe(10);
 
       const labels = Array.from(items).map((item: any) =>
         item.querySelector(".summary-label")?.textContent?.trim(),
@@ -2162,6 +2162,7 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(labels[6]).toBe("RM_LABEL_HANDS_FREE:");
       expect(labels[7]).toBe("RM_LABEL_WARMUP_TIME:");
       expect(labels[8]).toBe("RM_LABEL_THEME:");
+      expect(labels[9]).toBe("RM_LABEL_TRACK:");
     });
 
     it("should render edit race button on race summary and invoke editSelectedRace when clicked", () => {
@@ -2249,7 +2250,7 @@ describe("DefaultRacedaySetupComponent", () => {
       let items = fixture.nativeElement.querySelectorAll(
         ".race-summary-card .summary-item",
       );
-      expect(items.length).toBe(9);
+      expect(items.length).toBe(10);
       let handsFreeVal = items[6]
         .querySelector(".summary-value")
         ?.textContent?.trim();
@@ -2324,6 +2325,21 @@ describe("DefaultRacedaySetupComponent", () => {
         component.getThemeDisplay({ theme_id: "default_fuel_theme_rc_ai" }),
       ).toBe("My Fuel");
       expect(component.getThemeDisplay({})).toBe("Fixed Distance");
+    });
+
+    it("should correctly return track name in getTrackName", () => {
+      component.tracks = [
+        { entity_id: "track_1", name: "Grand Prix Circuit" } as any,
+      ];
+
+      expect(component.getTrackName({ track_entity_id: "track_1" })).toBe(
+        "Grand Prix Circuit",
+      );
+      expect(component.getTrackName({ track_entity_id: "unknown_track" })).toBe(
+        "unknown_track",
+      );
+      expect(component.getTrackName({})).toBe("GEN_NONE");
+      expect(component.getTrackName(undefined)).toBe("GEN_NONE");
     });
 
     it("should update recentRaceIds and quickStartRaces when an event is started", fakeAsync(() => {
