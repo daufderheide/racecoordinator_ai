@@ -9,7 +9,7 @@ Der **Theme-Editor** bietet eine dedizierte Benutzeroberfläche zur Verwaltung v
 Der Theme-Editor ist von mehreren Stellen aus zugänglich:
 
 - **Renntag-Setup-Symbolleiste**: Wählen Sie **Konfig > Theme-Editor** (`/theme-editor` oder `/theme-manager`).
-- **Renntag-Optionen-Menü**: Klicken Sie auf das Zahnradmenü in der Renntag-Symbolleiste und wählen Sie **Theme-Editor** (`/theme-editor`). Das Navigieren während eines laufenden Rennens behält den Rennstatus bei.
+- **Renntag-Verwalten-Menü**: Wählen Sie **Verwalten > Theme-Editor** (`/theme-editor`). Das Navigieren während eines laufenden Rennens behält den Rennstatus bei.
 - **UI-Editor**: Klicken Sie im UI-Editor (`/ui-editor`) im Bereich Themes auf **Theme-Editor öffnen**.
 
 ### Schreibschutz und Bearbeitungsmodus-Lebenszyklus

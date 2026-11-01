@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Uitloggen",
   "RD_MENU_MAIN_POWER_OFF": "Hoofdstroom Uit",
   "RD_MENU_MAIN_POWER_ON": "Hoofdstroom Aan",
+  "RD_MENU_MANAGE": "Beheren",
   "RD_MENU_MODIFY": "Heats Wijzigen",
   "RD_MENU_NEXT_HEAT": "Volgende Heat",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "Uw baaninterface ondersteunt geen hoofdstroomrelais.",

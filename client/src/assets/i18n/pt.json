@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Sair",
   "RD_MENU_MAIN_POWER_OFF": "Energia Principal Desligada",
   "RD_MENU_MAIN_POWER_ON": "Energia Principal Ligada",
+  "RD_MENU_MANAGE": "Gerenciar",
   "RD_MENU_MODIFY": "Modificar Baterias",
   "RD_MENU_NEXT_HEAT": "Próxima Bateria",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "Sua interface de pista não suporta um relé de energia principal.",

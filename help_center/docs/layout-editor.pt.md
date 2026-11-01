@@ -9,6 +9,7 @@ O **Editor de Layouts** fornece uma interface de tela cheia dedicada para person
 O Editor de Layouts pode ser acessado de vários locais no aplicativo:
 
 - **Barra de Ferramentas de Configuração do Dia de Corrida**: Selecione **Config > Editor de Layouts** (`/layout-editor` ou `/layout-manager`).
+- **Menu de Gerenciamento do Dia de Corrida**: Selecione **Gerenciar > Editor de Layouts** (`/layout-editor`). A navegação durante uma corrida ativa preserva a conexão e o estado da corrida.
 - **Editor de UI**: Clique em **Abrir Editor de Layouts** na seção de Layouts de UI no Editor de UI (`/ui-editor`).
 
 ### Ciclo de Vida do Modo Somente Leitura e Edição

@@ -83,6 +83,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   windowsMenuSelect = output<string>();
   driverViewMenuSelect = output<string>();
   themeMenuSelect = output<string>();
+  manageMenuSelect = output<string>();
   optionsMenuSelect = output<string>();
   languageSelected = output<void>();
 
@@ -91,6 +92,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
 
   isFileMenuOpen = false;
   isMenuOpen = false;
+  isManageMenuOpen = false;
   isDriversStationOpen = false;
   isWindowsMenuOpen = false;
   isDriversViewOpen = false;
@@ -103,6 +105,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     return (
       this.isFileMenuOpen ||
       this.isMenuOpen ||
+      this.isManageMenuOpen ||
       this.isDriversStationOpen ||
       this.isDriversViewOpen ||
       this.isThemesOpen ||
@@ -297,6 +300,11 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleManageMenu() {
+    this.isManageMenuOpen = !this.isManageMenuOpen;
+    this.closeOthers("manage");
+  }
+
   toggleWindowsMenu() {
     this.isWindowsMenuOpen = !this.isWindowsMenuOpen;
     this.closeOthers("windows");
@@ -316,12 +324,14 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     if (
       this.isFileMenuOpen ||
       this.isMenuOpen ||
+      this.isManageMenuOpen ||
       this.isWindowsMenuOpen ||
       this.isOptionsMenuOpen ||
       this.isHelpMenuOpen
     ) {
       this.isFileMenuOpen = menu === "file";
       this.isMenuOpen = menu === "race";
+      this.isManageMenuOpen = menu === "manage";
       this.isWindowsMenuOpen = menu === "windows";
       this.isOptionsMenuOpen = menu === "options";
       this.isHelpMenuOpen = menu === "help";
@@ -380,6 +390,11 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.closeAll();
   }
 
+  onManageSelect(action: string) {
+    this.manageMenuSelect.emit(action);
+    this.closeAll();
+  }
+
   onOptionsSelect(action: string) {
     this.optionsMenuSelect.emit(action);
     this.closeAll();
@@ -408,6 +423,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
       this.isMenuOpen = false;
       this.isTrackPowerMenuOpen = false;
     }
+    if (active !== "manage") this.isManageMenuOpen = false;
     if (active !== "windows") {
       this.isWindowsMenuOpen = false;
       this.isDriversStationOpen = false;
@@ -435,6 +451,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   private closeAll() {
     this.isFileMenuOpen = false;
     this.isMenuOpen = false;
+    this.isManageMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isDriversViewOpen = false;
     this.isThemesOpen = false;

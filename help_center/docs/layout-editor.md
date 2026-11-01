@@ -9,6 +9,7 @@ The **Layout Editor** provides a dedicated, full-screen canvas interface for cus
 The Layout Editor is accessible from several locations across the application:
 
 - **Race Day Setup Toolbar**: Select **Config > Layout Editor** (`/layout-editor` or `/layout-manager`).
+- **Race Day Manage Menu**: Select **Manage > Layout Editor** (`/layout-editor`). Navigating during an active race preserves race connection and state.
 - **UI Editor**: Click **Open Layout Editor** from the UI Layouts section in the UI Editor (`/ui-editor`).
 
 ### Read-Only and Edit Mode Lifecycle

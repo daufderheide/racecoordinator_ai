@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Cerrar sesión",
   "RD_MENU_MAIN_POWER_OFF": "Energía Principal Apagada",
   "RD_MENU_MAIN_POWER_ON": "Energía Principal Encendida",
+  "RD_MENU_MANAGE": "Administrar",
   "RD_MENU_MODIFY": "Modificar Mangas",
   "RD_MENU_NEXT_HEAT": "Siguiente Manga",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "Su interfaz de pista no admite un relé de alimentación principal.",

@@ -517,8 +517,73 @@ describe("RacedayMenuBarComponent", () => {
     });
   });
 
+  describe("Manage Menu", () => {
+    it("should toggle manage menu and render Layout Editor and Theme Editor options", () => {
+      expect(component.isManageMenuOpen).toBeFalse();
+
+      component.toggleManageMenu();
+      fixture.detectChanges();
+
+      expect(component.isManageMenuOpen).toBeTrue();
+
+      const dropdown = fixture.nativeElement.querySelector(".menu-dropdown");
+      expect(dropdown).toBeTruthy();
+
+      const items = Array.from(dropdown.querySelectorAll(".menu-item")).map(
+        (el: any) => el.textContent.trim(),
+      );
+
+      expect(
+        items.some((text: string) => text.includes("RDS_MENU_LAYOUT_EDITOR")),
+      ).toBeTrue();
+      expect(
+        items.some((text: string) => text.includes("RDS_MENU_THEME_EDITOR")),
+      ).toBeTrue();
+    });
+
+    it("should emit manageMenuSelect with LAYOUT_EDITOR when Layout Editor is clicked", () => {
+      spyOn(component.manageMenuSelect, "emit");
+      component.isManageMenuOpen = true;
+      fixture.detectChanges();
+
+      const layoutItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RDS_MENU_LAYOUT_EDITOR"),
+      ) as HTMLElement;
+
+      expect(layoutItem).toBeTruthy();
+      layoutItem.click();
+
+      expect(component.manageMenuSelect.emit).toHaveBeenCalledWith(
+        "LAYOUT_EDITOR",
+      );
+      expect(component.isManageMenuOpen).toBeFalse();
+    });
+
+    it("should emit manageMenuSelect with THEME_EDITOR when Theme Editor is clicked", () => {
+      spyOn(component.manageMenuSelect, "emit");
+      component.isManageMenuOpen = true;
+      fixture.detectChanges();
+
+      const themeItem = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      ).find((el: any) =>
+        el.textContent.includes("RDS_MENU_THEME_EDITOR"),
+      ) as HTMLElement;
+
+      expect(themeItem).toBeTruthy();
+      themeItem.click();
+
+      expect(component.manageMenuSelect.emit).toHaveBeenCalledWith(
+        "THEME_EDITOR",
+      );
+      expect(component.isManageMenuOpen).toBeFalse();
+    });
+  });
+
   describe("Options Menu", () => {
-    it("should toggle options menu and render customize UI and language selector without automatic updates", () => {
+    it("should toggle options menu and render customize UI and language selector without automatic updates, layout, or theme editors", () => {
       expect(component.isOptionsMenuOpen).toBeFalse();
 
       component.toggleOptionsMenu();
@@ -536,6 +601,12 @@ describe("RacedayMenuBarComponent", () => {
       expect(
         items.some((text: string) => text.includes("RD_MENU_CUSTOMIZE_UI")),
       ).toBeTrue();
+      expect(
+        items.some((text: string) => text.includes("RDS_MENU_LAYOUT_EDITOR")),
+      ).toBeFalse();
+      expect(
+        items.some((text: string) => text.includes("RDS_MENU_THEME_EDITOR")),
+      ).toBeFalse();
 
       const languageSelector = dropdown.querySelector("app-language-selector");
       expect(languageSelector).toBeTruthy();
@@ -570,46 +641,6 @@ describe("RacedayMenuBarComponent", () => {
       expect(component.isOptionsMenuOpen).toBeFalse();
     });
 
-    it("should emit optionsMenuSelect with CUSTOMIZE_LAYOUT when Layout Editor is clicked", () => {
-      spyOn(component.optionsMenuSelect, "emit");
-      component.isOptionsMenuOpen = true;
-      fixture.detectChanges();
-
-      const layoutItem = Array.from(
-        fixture.nativeElement.querySelectorAll(".menu-item"),
-      ).find((el: any) =>
-        el.textContent.includes("RDS_MENU_LAYOUT_EDITOR"),
-      ) as HTMLElement;
-
-      expect(layoutItem).toBeTruthy();
-      layoutItem.click();
-
-      expect(component.optionsMenuSelect.emit).toHaveBeenCalledWith(
-        "CUSTOMIZE_LAYOUT",
-      );
-      expect(component.isOptionsMenuOpen).toBeFalse();
-    });
-
-    it("should emit optionsMenuSelect with CUSTOMIZE_THEME when Theme Editor is clicked", () => {
-      spyOn(component.optionsMenuSelect, "emit");
-      component.isOptionsMenuOpen = true;
-      fixture.detectChanges();
-
-      const themeItem = Array.from(
-        fixture.nativeElement.querySelectorAll(".menu-item"),
-      ).find((el: any) =>
-        el.textContent.includes("RDS_MENU_THEME_EDITOR"),
-      ) as HTMLElement;
-
-      expect(themeItem).toBeTruthy();
-      themeItem.click();
-
-      expect(component.optionsMenuSelect.emit).toHaveBeenCalledWith(
-        "CUSTOMIZE_THEME",
-      );
-      expect(component.isOptionsMenuOpen).toBeFalse();
-    });
-
     it("should emit languageSelected when language is selected", () => {
       spyOn(component.languageSelected, "emit");
       component.isOptionsMenuOpen = true;
@@ -618,6 +649,24 @@ describe("RacedayMenuBarComponent", () => {
 
       expect(component.languageSelected.emit).toHaveBeenCalled();
       expect(component.isOptionsMenuOpen).toBeFalse();
+    });
+  });
+
+  describe("Menu Order", () => {
+    it("should render top-level menu buttons in order: FILE, RACE DIRECTOR, MANAGE, OPTIONS, WINDOWS, HELP", () => {
+      fixture.detectChanges();
+      const menuButtons = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-button-top"),
+      ).map((btn: any) => btn.textContent.trim());
+
+      expect(menuButtons).toEqual([
+        "RD_MENU_FILE",
+        "RD_MENU_RACE_DIRECTOR",
+        "RD_MENU_MANAGE",
+        "RD_MENU_OPTIONS",
+        "RD_MENU_WINDOWS",
+        "RD_MENU_HELP",
+      ]);
     });
   });
 
@@ -715,12 +764,36 @@ describe("RacedayMenuBarComponent", () => {
       ).toBeTrue();
 
       component.isMenuOpen = false;
+      component.isManageMenuOpen = true;
+      expect(component.hasOpenMenu).toBeTrue();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.classList.contains("has-open-menu"),
+      ).toBeTrue();
+
+      component.isManageMenuOpen = false;
       component.isOptionsMenuOpen = true;
       expect(component.hasOpenMenu).toBeTrue();
       fixture.detectChanges();
       expect(
         fixture.nativeElement.classList.contains("has-open-menu"),
       ).toBeTrue();
+    });
+
+    it("should switch active menu onMenuItemHover when a menu is already open", () => {
+      component.isFileMenuOpen = true;
+
+      component.onMenuItemHover("manage");
+      expect(component.isFileMenuOpen).toBeFalse();
+      expect(component.isManageMenuOpen).toBeTrue();
+
+      component.onMenuItemHover("options");
+      expect(component.isManageMenuOpen).toBeFalse();
+      expect(component.isOptionsMenuOpen).toBeTrue();
+
+      component.onMenuItemHover("windows");
+      expect(component.isOptionsMenuOpen).toBeFalse();
+      expect(component.isWindowsMenuOpen).toBeTrue();
     });
   });
 });

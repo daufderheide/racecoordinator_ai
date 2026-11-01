@@ -9,6 +9,7 @@ L'**Éditeur de Dispositions** offre une interface canevas plein écran dédiée
 L'Éditeur de Dispositions est accessible depuis plusieurs emplacements dans l'application :
 
 - **Barre d'outils Configuration Jour de Course** : Sélectionnez **Config > Éditeur de Dispositions** (`/layout-editor` ou `/layout-manager`).
+- **Menu de gestion du jour de course** : Sélectionnez **Gérer > Éditeur de Dispositions** (`/layout-editor`). La navigation pendant une course active préserve la connexion et l'état.
 - **Éditeur d'Interface** : Cliquez sur **Ouvrir l'Éditeur de Dispositions** depuis la section Dispositions d'IU dans l'Éditeur d'Interface (`/ui-editor`).
 
 ### Cycle de Vie Lecture Seule et Mode Édition

@@ -240,6 +240,50 @@
 
   <div class="menu-wrapper">
     <button
+      id="manage-menu-button"
+      class="menu-button-top"
+      (click)="toggleManageMenu()"
+      (mouseenter)="onMenuItemHover('manage')"
+    >
+      {{ "RD_MENU_MANAGE" | translate }}
+    </button>
+    @if (isManageMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div class="menu-item" (click)="onManageSelect('LAYOUT_EDITOR')">
+          {{ "RDS_MENU_LAYOUT_EDITOR" | translate }}
+        </div>
+        <div class="menu-item" (click)="onManageSelect('THEME_EDITOR')">
+          {{ "RDS_MENU_THEME_EDITOR" | translate }}
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="menu-wrapper">
+    <button
+      id="options-menu-button"
+      class="menu-button-top"
+      (click)="toggleOptionsMenu()"
+      (mouseenter)="onMenuItemHover('options')"
+    >
+      {{ "RD_MENU_OPTIONS" | translate }}
+    </button>
+    @if (isOptionsMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_UI')">
+          {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
+        </div>
+        <app-language-selector
+          wrapperClass="menu-item"
+          itemClass="menu-item"
+          (languageSelected)="onLanguageSelected()"
+        ></app-language-selector>
+      </div>
+    }
+  </div>
+
+  <div class="menu-wrapper">
+    <button
       id="windows-menu-button"
       class="menu-button-top"
       (click)="toggleWindowsMenu()"
@@ -334,34 +378,6 @@
             </div>
           }
         </div>
-      </div>
-    }
-  </div>
-  <div class="menu-wrapper">
-    <button
-      id="options-menu-button"
-      class="menu-button-top"
-      (click)="toggleOptionsMenu()"
-      (mouseenter)="onMenuItemHover('options')"
-    >
-      {{ "RD_MENU_OPTIONS" | translate }}
-    </button>
-    @if (isOptionsMenuOpen) {
-      <div class="menu-dropdown top-dropdown">
-        <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_UI')">
-          {{ "RD_MENU_CUSTOMIZE_UI" | translate }}
-        </div>
-        <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_LAYOUT')">
-          {{ "RDS_MENU_LAYOUT_EDITOR" | translate }}
-        </div>
-        <div class="menu-item" (click)="onOptionsSelect('CUSTOMIZE_THEME')">
-          {{ "RDS_MENU_THEME_EDITOR" | translate }}
-        </div>
-        <app-language-selector
-          wrapperClass="menu-item"
-          itemClass="menu-item"
-          (languageSelected)="onLanguageSelected()"
-        ></app-language-selector>
       </div>
     }
   </div>

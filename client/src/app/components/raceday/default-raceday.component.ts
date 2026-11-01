@@ -832,6 +832,7 @@ export class DefaultRacedayComponent
   protected totalHeats: number = 0;
   isMenuOpen = false;
   isFileMenuOpen = false;
+  isManageMenuOpen = false;
   isWindowsMenuOpen = false;
   isOptionsMenuOpen = false;
   scale: number = 1;

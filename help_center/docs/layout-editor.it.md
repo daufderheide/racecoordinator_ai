@@ -9,6 +9,7 @@ L'**Editor di Layout** offre un'interfaccia canvas dedicata a schermo intero per
 L'Editor di Layout è accessibile da diverse posizioni all'interno dell'applicazione:
 
 - **Barra degli strumenti Configurazione Giorno di Gara**: Selezionare **Config > Editor di Layout** (`/layout-editor` o `/layout-manager`).
+- **Menu Gestisci Giorno di Gara**: Selezionare **Gestisci > Editor di Layout** (`/layout-editor`). La navigazione durante una gara attiva mantiene la connessione e lo stato della gara.
 - **Editor UI**: Fare clic su **Apri Editor di Layout** dalla sezione Layout UI nell'Editor UI (`/ui-editor`).
 
 ### Ciclo di Vita Modalità Sola Lettura e Modifica

@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Abmelden",
   "RD_MENU_MAIN_POWER_OFF": "Hauptstrom Aus",
   "RD_MENU_MAIN_POWER_ON": "Hauptstrom Ein",
+  "RD_MENU_MANAGE": "Verwalten",
   "RD_MENU_MODIFY": "Heats ändern",
   "RD_MENU_NEXT_HEAT": "Nächster Heat",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "Ihre Streckenschnittstelle unterstützt kein Hauptstromrelais.",

@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Se déconnecter",
   "RD_MENU_MAIN_POWER_OFF": "Alimentation Principale Off",
   "RD_MENU_MAIN_POWER_ON": "Alimentation Principale On",
+  "RD_MENU_MANAGE": "Gérer",
   "RD_MENU_MODIFY": "Modifier Manches",
   "RD_MENU_NEXT_HEAT": "Manche Suivante",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "Votre interface de piste ne prend pas en charge de relais d'alimentation principal.",

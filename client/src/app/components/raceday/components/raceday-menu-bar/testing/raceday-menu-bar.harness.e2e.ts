@@ -32,7 +32,7 @@ export class RacedayMenuBarHarnessE2e implements RacedayMenuBarHarnessBase {
   }
 
   async isMenuOpen(
-    _menuType: "file" | "race" | "lanes" | "windows" | "options",
+    _menuType: "file" | "race" | "manage" | "lanes" | "windows" | "options",
   ): Promise<boolean> {
     // Check dropdown visibility in E2E
     return await this.dropdowns.first().isVisible();

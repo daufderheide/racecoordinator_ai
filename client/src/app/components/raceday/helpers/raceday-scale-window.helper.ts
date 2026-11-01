@@ -77,6 +77,7 @@ export class RacedayScaleWindowHelper {
     if (!isInsideMenu) {
       host.isMenuOpen = false;
       host.isFileMenuOpen = false;
+      host.isManageMenuOpen = false;
       host.isDriversStationOpen = false;
       host.isWindowsMenuOpen = false;
       host.isOptionsMenuOpen = false;

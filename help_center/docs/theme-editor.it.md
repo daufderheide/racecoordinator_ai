@@ -9,7 +9,7 @@ L'**Editor di Temi** offre un'interfaccia dedicata e intuitiva per gestire bandi
 L'Editor di Temi è accessibile da diverse posizioni all'interno dell'applicazione:
 
 - **Barra degli strumenti Configurazione Giorno di Gara**: Selezionare **Config > Editor di Temi** (`/theme-editor` o `/theme-manager`).
-- **Menu Opzioni Giorno di Gara**: Fare clic sul menu a ingranaggio sulla barra degli strumenti del giorno di gara e selezionare **Editor di Temi** (`/theme-editor`). La navigazione durante una gara attiva mantiene la connessione e lo stato della gara.
+- **Menu Gestisci Giorno di Gara**: Selezionare **Gestisci > Editor di Temi** (`/theme-editor`). La navigazione durante una gara attiva mantiene la connessione e lo stato della gara.
 - **Editor UI**: Fare clic su **Apri Editor di Temi** dalla scheda Temi nell'Editor UI (`/ui-editor`).
 
 ### Ciclo di Vita Modalità Sola Lettura e Modifica

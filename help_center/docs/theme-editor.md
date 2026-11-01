@@ -9,7 +9,7 @@ The **Theme Editor** provides a dedicated, streamlined interface for managing vi
 The Theme Editor is accessible from several key locations:
 
 - **Race Day Setup Toolbar**: Select **Config > Theme Editor** (`/theme-editor` or `/theme-manager`).
-- **Race Day Options Menu**: Click the gear menu on the Raceday toolbar and select **Theme Editor** (`/theme-editor`). Navigating during an active race preserves race connection and state.
+- **Race Day Manage Menu**: Select **Manage > Theme Editor** (`/theme-editor`). Navigating during an active race preserves race connection and state.
 - **UI Editor**: Click **Open Theme Editor** from the Themes card in the UI Editor (`/ui-editor`).
 
 ### Read-Only and Edit Mode Lifecycle

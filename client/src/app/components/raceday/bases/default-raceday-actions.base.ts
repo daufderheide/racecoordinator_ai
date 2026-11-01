@@ -414,6 +414,10 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
     RacedayActionsMenuHelper.toggleDriversStationMenu(this);
   }
 
+  toggleManageMenu(): void {
+    RacedayActionsMenuHelper.toggleManageMenu(this);
+  }
+
   toggleWindowsMenu(): void {
     RacedayActionsMenuHelper.toggleWindowsMenu(this);
   }
@@ -436,6 +440,10 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
 
   navigateToThemeEditor(): void {
     RacedayActionsMenuHelper.navigateToThemeEditor(this);
+  }
+
+  onManageSelect(action: string): void {
+    RacedayActionsMenuHelper.onManageSelect(this, action);
   }
 
   onOptionsSelect(action: string): void {

@@ -9,6 +9,7 @@ De **Lay-out Editor** biedt een speciale canvas-interface op volledig scherm voo
 De Lay-out Editor is toegankelijk vanaf verschillende locaties binnen de applicatie:
 
 - **Racedag Instellingen Werkbalk**: Selecteer **Config > Lay-out Editor** (`/layout-editor` of `/layout-manager`).
+- **Menu Racedagbeheer**: Selecteer **Beheren > Lay-out Editor** (`/layout-editor`). Navigeren tijdens een actieve race behoudt de raceverbinding en status.
 - **UI Editor**: Klik op **Lay-out Editor openen** in het onderdeel UI Lay-outs in de UI Editor (`/ui-editor`).
 
 ### Alleen-lezen en Bewerkingsmodus

@@ -9,7 +9,7 @@ De **Thema-editor** biedt een speciale, gestroomlijnde interface voor het behere
 De Thema-editor is toegankelijk vanaf verschillende belangrijke locaties:
 
 - **Werkbalk Racedaginstelling**: Selecteer **Config > Thema-editor** (`/theme-editor` of `/theme-manager`).
-- **Menu Racedagopties**: Klik op het tandwielmenu op de racedagwerkbalk en selecteer **Thema-editor** (`/theme-editor`). Navigeren tijdens een actieve race behoudt de raceverbinding en status.
+- **Menu Racedagbeheer**: Selecteer **Beheren > Thema-editor** (`/theme-editor`). Navigeren tijdens een actieve race behoudt de raceverbinding en status.
 - **UI-editor**: Klik op **Thema-editor openen** vanuit de kaart Thema's in de UI-editor (`/ui-editor`).
 
 ### Alleen-lezen en bewerkingsmoduscyclus

@@ -10,6 +10,7 @@ export class RacedayActionsMenuHelper {
     );
     host.isMenuOpen = !host.isMenuOpen;
     host.isFileMenuOpen = false;
+    host.isManageMenuOpen = false;
     host.isDriversStationOpen = false;
     host.isWindowsMenuOpen = false;
     host.isOptionsMenuOpen = false;
@@ -22,6 +23,7 @@ export class RacedayActionsMenuHelper {
     );
     host.isFileMenuOpen = !host.isFileMenuOpen;
     host.isMenuOpen = false;
+    host.isManageMenuOpen = false;
     host.isDriversStationOpen = false;
     host.isWindowsMenuOpen = false;
     host.isOptionsMenuOpen = false;
@@ -35,6 +37,19 @@ export class RacedayActionsMenuHelper {
     host.isDriversStationOpen = !host.isDriversStationOpen;
   }
 
+  static toggleManageMenu(host: any): void {
+    host.logger?.debug(
+      "Toggling Manage menu. Current state:",
+      host.isManageMenuOpen,
+    );
+    host.isManageMenuOpen = !host.isManageMenuOpen;
+    host.isFileMenuOpen = false;
+    host.isMenuOpen = false;
+    host.isDriversStationOpen = false;
+    host.isWindowsMenuOpen = false;
+    host.isOptionsMenuOpen = false;
+  }
+
   static toggleWindowsMenu(host: any): void {
     host.logger?.debug(
       "Toggling Windows menu. Current state:",
@@ -43,6 +58,7 @@ export class RacedayActionsMenuHelper {
     host.isWindowsMenuOpen = !host.isWindowsMenuOpen;
     host.isFileMenuOpen = false;
     host.isMenuOpen = false;
+    host.isManageMenuOpen = false;
     host.isDriversStationOpen = false;
     host.isOptionsMenuOpen = false;
   }
@@ -55,12 +71,14 @@ export class RacedayActionsMenuHelper {
     host.isOptionsMenuOpen = !host.isOptionsMenuOpen;
     host.isFileMenuOpen = false;
     host.isMenuOpen = false;
+    host.isManageMenuOpen = false;
     host.isDriversStationOpen = false;
     host.isWindowsMenuOpen = false;
   }
 
   static onLanguageSelected(host: any): void {
     host.isFileMenuOpen = false;
+    host.isManageMenuOpen = false;
     host.isOptionsMenuOpen = false;
     host.cdr?.markForCheck();
   }
@@ -86,6 +104,16 @@ export class RacedayActionsMenuHelper {
     });
   }
 
+  static onManageSelect(host: any, action: string): void {
+    host.logger?.debug("Manage menu action:", action);
+    host.isManageMenuOpen = false;
+    if (action === "CUSTOMIZE_LAYOUT" || action === "LAYOUT_EDITOR") {
+      RacedayActionsMenuHelper.navigateToLayoutEditor(host);
+    } else if (action === "CUSTOMIZE_THEME" || action === "THEME_EDITOR") {
+      RacedayActionsMenuHelper.navigateToThemeEditor(host);
+    }
+  }
+
   static onOptionsSelect(host: any, action: string): void {
     host.logger?.debug("Options menu action:", action);
     host.isOptionsMenuOpen = false;
@@ -102,6 +130,7 @@ export class RacedayActionsMenuHelper {
     return (
       host.isFileMenuOpen ||
       host.isMenuOpen ||
+      host.isManageMenuOpen ||
       host.isWindowsMenuOpen ||
       host.isOptionsMenuOpen
     );
@@ -111,11 +140,13 @@ export class RacedayActionsMenuHelper {
     if (RacedayActionsMenuHelper.isAnyMenuDropdownOpen(host)) {
       if (menuName === "file" && host.isFileMenuOpen) return;
       if (menuName === "race" && host.isMenuOpen) return;
+      if (menuName === "manage" && host.isManageMenuOpen) return;
       if (menuName === "windows" && host.isWindowsMenuOpen) return;
       if (menuName === "options" && host.isOptionsMenuOpen) return;
 
       host.isFileMenuOpen = false;
       host.isMenuOpen = false;
+      host.isManageMenuOpen = false;
       host.isDriversStationOpen = false;
       host.isWindowsMenuOpen = false;
       host.isOptionsMenuOpen = false;
@@ -124,6 +155,8 @@ export class RacedayActionsMenuHelper {
         host.isFileMenuOpen = true;
       } else if (menuName === "race") {
         host.isMenuOpen = true;
+      } else if (menuName === "manage") {
+        host.isManageMenuOpen = true;
       } else if (menuName === "windows") {
         host.isWindowsMenuOpen = true;
       } else if (menuName === "options") {

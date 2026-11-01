@@ -9,6 +9,7 @@ El **Editor de Diseños** proporciona una interfaz de lienzo dedicada a pantalla
 Se puede acceder al Editor de Diseños desde varias ubicaciones de la aplicación:
 
 - **Barra de herramientas de Configuración de Día de Carrera**: Seleccione **Config > Editor de Diseños** (`/layout-editor` o `/layout-manager`).
+- **Menú de administración de jornada**: Seleccione **Administrar > Editor de Diseños** (`/layout-editor`). Navegar durante una carrera activa preserva la conexión y el estado.
 - **Editor de Interfaz**: Haga clic en **Abrir Editor de Diseños** desde la sección de Diseños de UI en el Editor de Interfaz (`/ui-editor`).
 
 ### Ciclo de Vida del Modo de Solo Lectura y Edición

@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Disconnetti",
   "RD_MENU_MAIN_POWER_OFF": "Alimentazione Principale Off",
   "RD_MENU_MAIN_POWER_ON": "Alimentazione Principale On",
+  "RD_MENU_MANAGE": "Gestisci",
   "RD_MENU_MODIFY": "Modifica Manches",
   "RD_MENU_NEXT_HEAT": "Prossima Manche",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "L'interfaccia della tua pista non supporta un relè di alimentazione principale.",

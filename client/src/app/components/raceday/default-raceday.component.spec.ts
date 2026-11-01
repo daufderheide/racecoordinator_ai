@@ -4922,6 +4922,26 @@ describe("DefaultRacedayComponent", () => {
         },
       });
     });
+
+    it("should navigate to /layout-editor when LAYOUT_EDITOR is selected in manage menu", () => {
+      (mockRouter as any).url = "/raceday?someParam=true";
+      component.onManageSelect("LAYOUT_EDITOR");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/layout-editor"], {
+        queryParams: {
+          returnUrl: "/raceday",
+        },
+      });
+    });
+
+    it("should navigate to /theme-editor when THEME_EDITOR is selected in manage menu", () => {
+      (mockRouter as any).url = "/raceday?someParam=true";
+      component.onManageSelect("THEME_EDITOR");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/theme-editor"], {
+        queryParams: {
+          returnUrl: "/raceday",
+        },
+      });
+    });
   });
 
   describe("canDeactivate", () => {
@@ -5212,6 +5232,30 @@ describe("DefaultRacedayComponent", () => {
           },
         },
       );
+    });
+  });
+
+  describe("Manage Menu", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+
+    it("should toggle manage menu", () => {
+      expect(component.isManageMenuOpen).toBeFalse();
+      component.toggleManageMenu();
+      expect(component.isManageMenuOpen).toBeTrue();
+    });
+
+    it("should close manage menu on document click outside", () => {
+      component.isManageMenuOpen = true;
+
+      // Simulate click outside
+      const mockEvent = {
+        target: document.createElement("div"),
+      } as any;
+      component.onDocumentClick(mockEvent);
+
+      expect(component.isManageMenuOpen).toBeFalse();
     });
   });
 

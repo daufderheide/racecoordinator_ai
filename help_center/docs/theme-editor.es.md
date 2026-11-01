@@ -9,7 +9,7 @@ El **Editor de Temas** proporciona una interfaz dedicada y simplificada para ges
 El Editor de Temas es accesible desde varias ubicaciones clave:
 
 - **Barra de herramientas de configuración de jornada**: Seleccione **Config > Editor de Temas** (`/theme-editor` o `/theme-manager`).
-- **Menú de opciones de carrera**: Haga clic en el menú de engranaje en la barra de herramientas de la jornada de carrera y seleccione **Editor de Temas** (`/theme-editor`). Navegar durante una carrera activa preserva la conexión y el estado.
+- **Menú de administración de jornada**: Seleccione **Administrar > Editor de Temas** (`/theme-editor`). Navegar durante una carrera activa preserva la conexión y el estado.
 - **Editor de interfaz de usuario (UI Editor)**: Haga clic en **Abrir Editor de Temas** desde la tarjeta de Temas en el Editor de UI (`/ui-editor`).
 
 ### Ciclo de vida de solo lectura y modo de edición

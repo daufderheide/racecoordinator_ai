@@ -1178,6 +1178,7 @@
   "RD_MENU_LOGOUT": "Logout",
   "RD_MENU_MAIN_POWER_OFF": "Main Power Off",
   "RD_MENU_MAIN_POWER_ON": "Main Power On",
+  "RD_MENU_MANAGE": "Manage",
   "RD_MENU_MODIFY": "Modify Heats",
   "RD_MENU_NEXT_HEAT": "Next Heat",
   "RD_MENU_NO_MAIN_RELAYS_TOOLTIP": "Your track interface does not support a main power relay.",

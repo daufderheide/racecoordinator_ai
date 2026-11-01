@@ -9,7 +9,7 @@ L'**Éditeur de Thèmes** offre une interface dédiée et rationalisée pour gé
 L'Éditeur de Thèmes est accessible depuis plusieurs emplacements :
 
 - **Barre d'outils de configuration du jour de course** : Sélectionnez **Config > Éditeur de Thèmes** (`/theme-editor` ou `/theme-manager`).
-- **Menu d'options du jour de course** : Cliquez sur le menu d'engrenage sur la barre d'outils et sélectionnez **Éditeur de Thèmes** (`/theme-editor`). La navigation pendant une course active préserve la connexion et l'état.
+- **Menu de gestion du jour de course** : Sélectionnez **Gérer > Éditeur de Thèmes** (`/theme-editor`). La navigation pendant une course active préserve la connexion et l'état.
 - **Éditeur d'interface utilisateur (UI Editor)** : Cliquez sur **Ouvrir l'éditeur de thèmes** depuis la section Thèmes dans l'Éditeur d'UI (`/ui-editor`).
 
 ### Cycle de vie Lecture Seule et Mode Édition

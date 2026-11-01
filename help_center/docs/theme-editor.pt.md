@@ -9,7 +9,7 @@ O **Editor de Temas** oferece uma interface dedicada e simplificada para gerenci
 O Editor de Temas pode ser acessado de vários locais principais:
 
 - **Barra de Ferramentas de Configuração do Dia de Corrida**: Selecione **Config > Editor de Temas** (`/theme-editor` ou `/theme-manager`).
-- **Menu de Opções do Dia de Corrida**: Clique no menu de engrenagem na barra de ferramentas e selecione **Editor de Temas** (`/theme-editor`). A navegação durante uma corrida ativa preserva a conexão e o estado da corrida.
+- **Menu de Gerenciamento do Dia de Corrida**: Selecione **Gerenciar > Editor de Temas** (`/theme-editor`). A navegação durante uma corrida ativa preserva a conexão e o estado da corrida.
 - **Editor de Interface (UI Editor)**: Clique em **Abrir Editor de Temas** no cartão de Temas no Editor de UI (`/ui-editor`).
 
 ### Ciclo de Vida de Somente Leitura e Modo de Edição

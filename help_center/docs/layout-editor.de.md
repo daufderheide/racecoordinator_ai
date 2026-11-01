@@ -9,6 +9,7 @@ Der **Layout-Editor** bietet eine dedizierte Vollbild-Oberfläche zum Anpassen, 
 Der Layout-Editor kann an mehreren Stellen in der Anwendung aufgerufen werden:
 
 - **Renntag-Setup-Symbolleiste**: Wählen Sie **Konfig > Layout-Editor** (`/layout-editor` oder `/layout-manager`).
+- **Renntag-Verwalten-Menü**: Wählen Sie **Verwalten > Layout-Editor** (`/layout-editor`). Das Navigieren während eines laufenden Rennens behält den Rennstatus bei.
 - **UI-Editor**: Klicken Sie auf **Layout-Editor öffnen** im Bereich "UI-Layouts" des UI-Editors (`/ui-editor`).
 
 ### Schreibgeschützter Modus und Bearbeitungsmodus
