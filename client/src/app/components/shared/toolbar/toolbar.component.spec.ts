@@ -123,7 +123,7 @@ describe("ToolbarComponent", () => {
     expect(component.edit.emit).toHaveBeenCalled();
   });
 
-  it("should update edit button tooltip, aria-label, and icon based on isEditMode", async () => {
+  it("should update edit button tooltip, aria-label, icon, and classes based on isEditMode", async () => {
     fixture.componentRef.setInput("showEdit", true);
     fixture.componentRef.setInput("isEditMode", false);
     fixture.detectChanges();
@@ -135,6 +135,8 @@ describe("ToolbarComponent", () => {
     expect(editBtn.getAttribute("title")).toBe("EDITOR_TOOLTIP_EDIT");
     expect(editBtn.getAttribute("aria-label")).toBe("EDITOR_TOOLTIP_EDIT");
     expect(iconSpan.textContent.trim()).toBe("edit");
+    expect(editBtn.classList.contains("edit")).toBeTrue();
+    expect(editBtn.classList.contains("in-edit-mode")).toBeFalse();
 
     fixture.componentRef.setInput("isEditMode", true);
     fixture.detectChanges();
@@ -142,6 +144,8 @@ describe("ToolbarComponent", () => {
     expect(editBtn.getAttribute("title")).toBe("EDITOR_TOOLTIP_READ_ONLY");
     expect(editBtn.getAttribute("aria-label")).toBe("EDITOR_TOOLTIP_READ_ONLY");
     expect(iconSpan.textContent.trim()).toBe("check");
+    expect(editBtn.classList.contains("edit")).toBeTrue();
+    expect(editBtn.classList.contains("in-edit-mode")).toBeTrue();
   });
 
   it("should show help button when showHelp is true", async () => {

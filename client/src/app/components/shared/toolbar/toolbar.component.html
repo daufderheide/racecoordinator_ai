@@ -73,7 +73,8 @@
   @if (showEdit()) {
     <button
       id="edit-track-btn"
-      class="toolbar-btn ghost"
+      class="toolbar-btn edit"
+      [class.in-edit-mode]="isEditMode()"
       (click)="onEdit()"
       [disabled]="isSaving() || disabledEdit()"
       [title]="

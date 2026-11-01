@@ -106,6 +106,30 @@
   color: #f59e0b;
 }
 
+.toolbar-btn.edit {
+  background: transparent;
+  color: #facc15;
+  border: 1px solid transparent;
+}
+
+.toolbar-btn.edit:hover:not(:disabled) {
+  background: rgba(250, 204, 21, 0.15);
+  border-color: rgba(250, 204, 21, 0.3);
+  color: #facc15;
+}
+
+.toolbar-btn.edit.in-edit-mode {
+  background: transparent;
+  color: #10b981;
+  border: 1px solid transparent;
+}
+
+.toolbar-btn.edit.in-edit-mode:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
 .spacer {
   flex: 1;
 }
