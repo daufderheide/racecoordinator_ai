@@ -964,11 +964,11 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
-  describe("handleKeyUpEvent (Spacebar)", () => {
+  describe("handleKeyboardEvent (Spacebar)", () => {
     let mockEvent: KeyboardEvent;
 
     beforeEach(() => {
-      mockEvent = new KeyboardEvent("keyup", { code: "Space" });
+      mockEvent = new KeyboardEvent("keydown", { code: "Space" });
       spyOn(component, "onMenuSelect");
       // Set connected by default to avoid disabled states
       component["isInterfaceConnected"] = true;
@@ -979,16 +979,46 @@ describe("DefaultRacedayComponent", () => {
       document.body.appendChild(inputEl);
       inputEl.focus();
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).not.toHaveBeenCalled();
       document.body.removeChild(inputEl);
     });
 
+    it("should ignore repeated keydown events when spacebar is held down", () => {
+      const repeatEvent = new KeyboardEvent("keydown", {
+        code: "Space",
+        repeat: true,
+      });
+      component["raceState"] = RaceState.RACING;
+
+      component.handleKeyboardEvent(repeatEvent);
+
+      expect(component.onMenuSelect).not.toHaveBeenCalled();
+    });
+
+    it("should not trigger onMenuSelect on keyup event", () => {
+      const keyUpEvent = new KeyboardEvent("keyup", { code: "Space" });
+      component["raceState"] = RaceState.RACING;
+
+      component.handleKeyUpEvent(keyUpEvent);
+
+      expect(component.onMenuSelect).not.toHaveBeenCalled();
+    });
+
+    it("should trigger PAUSE when state is RACING and timers not active", () => {
+      component["raceState"] = RaceState.RACING;
+      component["autoStartRemaining"] = 0;
+
+      component.handleKeyboardEvent(mockEvent);
+
+      expect(component.onMenuSelect).toHaveBeenCalledWith("PAUSE");
+    });
+
     it("should trigger NEXT_HEAT when state is HEAT_OVER", () => {
       component["raceState"] = RaceState.HEAT_OVER;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("NEXT_HEAT");
     });
@@ -996,7 +1026,7 @@ describe("DefaultRacedayComponent", () => {
     it("should trigger START_RESUME when state is NOT_STARTED", () => {
       component["raceState"] = RaceState.NOT_STARTED;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("START_RESUME");
     });
@@ -1004,7 +1034,7 @@ describe("DefaultRacedayComponent", () => {
     it("should trigger START_RESUME when state is PAUSED", () => {
       component["raceState"] = RaceState.PAUSED;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("START_RESUME");
     });
@@ -1012,7 +1042,7 @@ describe("DefaultRacedayComponent", () => {
     it("should trigger START_RESUME when state is UNKNOWN_STATE", () => {
       component["raceState"] = RaceState.UNKNOWN_STATE;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("START_RESUME");
     });
@@ -1021,7 +1051,7 @@ describe("DefaultRacedayComponent", () => {
       component["raceState"] = RaceState.STARTING;
       component["autoStartRemaining"] = 3.0;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
@@ -1030,7 +1060,7 @@ describe("DefaultRacedayComponent", () => {
       component["raceState"] = RaceState.RACING;
       component["autoStartRemaining"] = 3.0;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
@@ -1039,7 +1069,7 @@ describe("DefaultRacedayComponent", () => {
       component["raceState"] = RaceState.NOT_STARTED;
       component["autoStartRemaining"] = 5.0;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
@@ -1048,7 +1078,7 @@ describe("DefaultRacedayComponent", () => {
       component["raceState"] = RaceState.HEAT_OVER;
       component["autoAdvanceRemaining"] = 5.0;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
@@ -1058,7 +1088,7 @@ describe("DefaultRacedayComponent", () => {
       component["raceHasEnded"] = true;
       component["autoStartRemaining"] = 5.0;
 
-      component.handleKeyUpEvent(mockEvent);
+      component.handleKeyboardEvent(mockEvent);
 
       expect(component.onMenuSelect).not.toHaveBeenCalledWith("ABORT_TIMERS");
     });

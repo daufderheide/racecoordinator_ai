@@ -489,6 +489,18 @@ export class RacedayDriverStandingsHelper {
     if (host.isUIEditorMode?.() || host.isLayoutCustomizing) {
       return false;
     }
+    if (host.authService?.currentRole === Role.VIEWER) {
+      return false;
+    }
+    const isTeam = host.isTeam
+      ? host.isTeam(hd)
+      : RacedayDriverStandingsHelper.isTeam(host, hd);
+    const isSwapDisabled = host.isDriverSwapDisabled
+      ? host.isDriverSwapDisabled(hd)
+      : RacedayDriverStandingsHelper.isDriverSwapDisabled(host, hd);
+    if (!isTeam || isSwapDisabled) {
+      return false;
+    }
     const prop = col.propertyName || "";
     const baseKey = prop.split("_")[0];
     let isTeamOrName =
@@ -518,22 +530,7 @@ export class RacedayDriverStandingsHelper {
         );
       });
     }
-    if (!isTeamOrName) {
-      return false;
-    }
-    const isTeam = host.isTeam
-      ? host.isTeam(hd)
-      : RacedayDriverStandingsHelper.isTeam(host, hd);
-    const isSwapDisabled = host.isDriverSwapDisabled
-      ? host.isDriverSwapDisabled(hd)
-      : RacedayDriverStandingsHelper.isDriverSwapDisabled(host, hd);
-    if (!isTeam || isSwapDisabled) {
-      return false;
-    }
-    if (host.authService?.currentRole === Role.VIEWER) {
-      return false;
-    }
-    return true;
+    return isTeamOrName;
   }
 
   static isLapCountColumnClickable(host: any, col: ColumnDefinition): boolean {

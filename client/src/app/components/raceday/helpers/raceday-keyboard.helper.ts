@@ -2,7 +2,41 @@ import { Role } from "@app/models/role";
 import { RaceState } from "@app/proto/antigravity";
 
 export class RacedayKeyboardHelper {
-  public static handleKeyUpEvent(host: any, event: KeyboardEvent): void {
+  public static handleSpacebarAction(host: any): void {
+    const s = host.raceState;
+    const RS = RaceState;
+
+    if (
+      !host.raceHasEnded &&
+      host.raceState !== RaceState.RACE_OVER &&
+      (host.autoStartRemaining > 0 || host.autoAdvanceRemaining > 0)
+    ) {
+      if (!host.isPauseDisabled) {
+        host.onMenuSelect("ABORT_TIMERS");
+        return;
+      }
+    }
+
+    if (s === RS.HEAT_OVER || s === RS.RACE_OVER) {
+      if (!host.isNextHeatDisabled) {
+        host.onMenuSelect("NEXT_HEAT");
+      }
+    } else if (
+      s === RS.NOT_STARTED ||
+      s === RS.PAUSED ||
+      s === RS.UNKNOWN_STATE
+    ) {
+      if (!host.isStartResumeDisabled) {
+        host.onMenuSelect("START_RESUME");
+      }
+    } else {
+      if (!host.isPauseDisabled) {
+        host.onMenuSelect("PAUSE");
+      }
+    }
+  }
+
+  public static handleKeyUpEvent(_host: any, event: KeyboardEvent): void {
     if (event.code === "Space") {
       if (
         document.activeElement &&
@@ -11,38 +45,7 @@ export class RacedayKeyboardHelper {
       ) {
         return;
       }
-
-      const s = host.raceState;
-      const RS = RaceState;
-
-      if (
-        !host.raceHasEnded &&
-        host.raceState !== RaceState.RACE_OVER &&
-        (host.autoStartRemaining > 0 || host.autoAdvanceRemaining > 0)
-      ) {
-        if (!host.isPauseDisabled) {
-          host.onMenuSelect("ABORT_TIMERS");
-          return;
-        }
-      }
-
-      if (s === RS.HEAT_OVER || s === RS.RACE_OVER) {
-        if (!host.isNextHeatDisabled) {
-          host.onMenuSelect("NEXT_HEAT");
-        }
-      } else if (
-        s === RS.NOT_STARTED ||
-        s === RS.PAUSED ||
-        s === RS.UNKNOWN_STATE
-      ) {
-        if (!host.isStartResumeDisabled) {
-          host.onMenuSelect("START_RESUME");
-        }
-      } else {
-        if (!host.isPauseDisabled) {
-          host.onMenuSelect("PAUSE");
-        }
-      }
+      event.preventDefault();
     }
   }
   public static handleLayoutCustomizationKey(
@@ -231,6 +234,8 @@ export class RacedayKeyboardHelper {
     if (event.code === "Space") {
       if (inInputField) return;
       event.preventDefault();
+      if (event.repeat) return;
+      RacedayKeyboardHelper.handleSpacebarAction(host);
       return;
     }
 
