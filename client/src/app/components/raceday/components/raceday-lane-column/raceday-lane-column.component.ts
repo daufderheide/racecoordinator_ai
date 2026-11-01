@@ -68,6 +68,7 @@ import {
   isLaneColumnPracticeLaneResetActive,
   isLaneColumnTeamDriverSwapActive,
   isNameOrNicknameProperty,
+  isTeamProperty,
   LaneColumnAvatarHelper,
   notifyLaneColumnParentChange,
   resolveCachedSyntheticInsetInputs,
@@ -116,6 +117,9 @@ export class RacedayLaneColumnComponent
   private customWidgetSub?: Subscription;
   isCustomWidget(key?: string): boolean {
     return isCustomWidgetKey(key);
+  }
+  isTeamProperty(key?: string): boolean {
+    return isTeamProperty(key);
   }
   private insetCustomInputs = new Map<string, any>();
   private mainCustomInputsRef: { current?: any } = {};
@@ -506,7 +510,25 @@ export class RacedayLaneColumnComponent
       this.targetDriver,
       this.columnKey,
       this.isUIEditorMode,
+      this.settings.insets,
     );
+  }
+
+  get isTeamColumn(): boolean {
+    return isTeamProperty(this.columnKey);
+  }
+
+  get hasTeamNameInset(): boolean {
+    const insets = this.settings.insets;
+    if (!insets) return false;
+    return Object.values(insets).some((key) => isTeamProperty(key));
+  }
+
+  get hasTeamPulldownIndicator(): boolean {
+    if (!this.isTeamDriverSwapActive) return false;
+    const hasTeam = Boolean(this.targetDriver?.participant?.team?.name);
+    if (!hasTeam) return false;
+    return this.hasTeamName || this.isTeamColumn || this.hasTeamNameInset;
   }
 
   get isPracticeLaneResetActive(): boolean {
@@ -557,6 +579,8 @@ export class RacedayLaneColumnComponent
       this.parent(),
       this.targetDriver,
       this.isUIEditorMode,
+      this.isTeamDriverSwapActive,
+      this.teammateSelect(),
     );
   }
 
@@ -706,7 +730,8 @@ export class RacedayLaneColumnComponent
     return Boolean(
       isNameOrNicknameProperty(this.columnKey) &&
       this.targetDriver?.participant?.team?.name &&
-      !this.isEmptyDriver,
+      !this.isEmptyDriver &&
+      !this.hasTeamNameInset,
     );
   }
 

@@ -377,6 +377,23 @@
                     (error)="onImageError($event, 'top-left')"
                   />
                 }
+              } @else if (isTeamProperty(getInsetKey("top-left"))) {
+                <span class="inset-team-name">
+                  <span class="inset-team-name-text">{{
+                    getInsetValue("top-left")
+                  }}</span>
+                  @if (
+                    isTeamDriverSwapActive &&
+                    targetDriver?.participant?.team?.name
+                  ) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               } @else {
                 <span>{{ getInsetValue("top-left") }}</span>
               }
@@ -442,6 +459,23 @@
                     (error)="onImageError($event, 'top-center')"
                   />
                 }
+              } @else if (isTeamProperty(getInsetKey("top-center"))) {
+                <span class="inset-team-name">
+                  <span class="inset-team-name-text">{{
+                    getInsetValue("top-center")
+                  }}</span>
+                  @if (
+                    isTeamDriverSwapActive &&
+                    targetDriver?.participant?.team?.name
+                  ) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               } @else {
                 <span>{{ getInsetValue("top-center") }}</span>
               }
@@ -507,6 +541,23 @@
                     (error)="onImageError($event, 'top-right')"
                   />
                 }
+              } @else if (isTeamProperty(getInsetKey("top-right"))) {
+                <span class="inset-team-name">
+                  <span class="inset-team-name-text">{{
+                    getInsetValue("top-right")
+                  }}</span>
+                  @if (
+                    isTeamDriverSwapActive &&
+                    targetDriver?.participant?.team?.name
+                  ) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               } @else {
                 <span>{{ getInsetValue("top-right") }}</span>
               }
@@ -577,6 +628,23 @@
                   (error)="onImageError($event, 'center-left')"
                 />
               }
+            } @else if (isTeamProperty(getInsetKey("center-left"))) {
+              <span class="inset-team-name">
+                <span class="inset-team-name-text">{{
+                  getInsetValue("center-left")
+                }}</span>
+                @if (
+                  isTeamDriverSwapActive &&
+                  targetDriver?.participant?.team?.name
+                ) {
+                  <span
+                    class="team-pulldown-indicator"
+                    [style.background-image]="
+                      parent()?.getDropdownArrowBg?.(targetDriver)
+                    "
+                  ></span>
+                }
+              </span>
             } @else {
               <span>{{ getInsetValue("center-left") }}</span>
             }
@@ -726,6 +794,18 @@
                 [class.allow-wrap]="shouldAllowValueWrap()"
                 >{{ formattedValue }}</span
               >
+              @if (
+                isTeamColumn &&
+                isTeamDriverSwapActive &&
+                targetDriver?.participant?.team?.name
+              ) {
+                <span
+                  class="team-pulldown-indicator"
+                  [style.background-image]="
+                    parent()?.getDropdownArrowBg?.(targetDriver)
+                  "
+                ></span>
+              }
               @if (hasTeamName) {
                 <span class="team-name" [class.allow-wrap]="isScaleAuto()">
                   <span class="team-name-text">{{
@@ -748,7 +828,7 @@
               <app-custom-select
                 class="teammate-select"
                 [style.background-image]="
-                  hasTeamName
+                  hasTeamPulldownIndicator
                     ? 'none'
                     : parent()?.getDropdownArrowBg?.(targetDriver)
                 "
@@ -863,6 +943,23 @@
                   (error)="onImageError($event, 'center-right')"
                 />
               }
+            } @else if (isTeamProperty(getInsetKey("center-right"))) {
+              <span class="inset-team-name">
+                <span class="inset-team-name-text">{{
+                  getInsetValue("center-right")
+                }}</span>
+                @if (
+                  isTeamDriverSwapActive &&
+                  targetDriver?.participant?.team?.name
+                ) {
+                  <span
+                    class="team-pulldown-indicator"
+                    [style.background-image]="
+                      parent()?.getDropdownArrowBg?.(targetDriver)
+                    "
+                  ></span>
+                }
+              </span>
             } @else {
               <span>{{ getInsetValue("center-right") }}</span>
             }
@@ -938,6 +1035,23 @@
                     (error)="onImageError($event, 'bottom-left')"
                   />
                 }
+              } @else if (isTeamProperty(getInsetKey("bottom-left"))) {
+                <span class="inset-team-name">
+                  <span class="inset-team-name-text">{{
+                    getInsetValue("bottom-left")
+                  }}</span>
+                  @if (
+                    isTeamDriverSwapActive &&
+                    targetDriver?.participant?.team?.name
+                  ) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               } @else {
                 <span>{{ getInsetValue("bottom-left") }}</span>
               }
@@ -1003,6 +1117,23 @@
                     (error)="onImageError($event, 'bottom-center')"
                   />
                 }
+              } @else if (isTeamProperty(getInsetKey("bottom-center"))) {
+                <span class="inset-team-name">
+                  <span class="inset-team-name-text">{{
+                    getInsetValue("bottom-center")
+                  }}</span>
+                  @if (
+                    isTeamDriverSwapActive &&
+                    targetDriver?.participant?.team?.name
+                  ) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               } @else {
                 <span>{{ getInsetValue("bottom-center") }}</span>
               }
@@ -1068,6 +1199,23 @@
                     (error)="onImageError($event, 'bottom-right')"
                   />
                 }
+              } @else if (isTeamProperty(getInsetKey("bottom-right"))) {
+                <span class="inset-team-name">
+                  <span class="inset-team-name-text">{{
+                    getInsetValue("bottom-right")
+                  }}</span>
+                  @if (
+                    isTeamDriverSwapActive &&
+                    targetDriver?.participant?.team?.name
+                  ) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               } @else {
                 <span>{{ getInsetValue("bottom-right") }}</span>
               }

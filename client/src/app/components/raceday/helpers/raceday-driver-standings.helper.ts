@@ -491,8 +491,33 @@ export class RacedayDriverStandingsHelper {
     }
     const prop = col.propertyName || "";
     const baseKey = prop.split("_")[0];
-    const isTeamOrName =
-      host.isNameProperty?.(prop) || baseKey === "participant.team.name";
+    let isTeamOrName =
+      host.isNameProperty?.(prop) ||
+      baseKey === "participant.team.name" ||
+      baseKey === "team.name" ||
+      baseKey === "team";
+    if (!isTeamOrName && (col as any).insets) {
+      isTeamOrName = Object.values((col as any).insets).some((k: any) => {
+        const b = (k || "").split("_")[0];
+        return (
+          host.isNameProperty?.(k) ||
+          b === "participant.team.name" ||
+          b === "team.name" ||
+          b === "team"
+        );
+      });
+    }
+    if (!isTeamOrName && (col as any).layout) {
+      isTeamOrName = Object.values((col as any).layout).some((k: any) => {
+        const b = (k || "").split("_")[0];
+        return (
+          host.isNameProperty?.(k) ||
+          b === "participant.team.name" ||
+          b === "team.name" ||
+          b === "team"
+        );
+      });
+    }
     if (!isTeamOrName) {
       return false;
     }

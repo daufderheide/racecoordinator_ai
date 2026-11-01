@@ -14,6 +14,7 @@ import {
   isLaneColumnPracticeLaneResetActive,
   isLaneColumnTeamDriverSwapActive,
   isNameOrNicknameProperty,
+  isTeamProperty,
   notifyLaneColumnParentChange,
   resolveEffectiveHeaderFontSize,
   resolveEffectiveInsetFontSize,
@@ -151,6 +152,23 @@ describe("raceday-lane-column-interaction.helper", () => {
       ).toBeTrue();
       expect(
         isLaneColumnTeamDriverSwapActive(parent, mockHd, "lapTime", false),
+      ).toBeFalse();
+
+      // Should return true when column is lapTime but insets contain team or name widget
+      expect(
+        isLaneColumnTeamDriverSwapActive(parent, mockHd, "lapTime", false, {
+          "bottom-right": "participant.team.name",
+        }),
+      ).toBeTrue();
+      expect(
+        isLaneColumnTeamDriverSwapActive(parent, mockHd, "lapTime", false, {
+          "top-left": "driver.name",
+        }),
+      ).toBeTrue();
+      expect(
+        isLaneColumnTeamDriverSwapActive(parent, mockHd, "lapTime", false, {
+          "bottom-right": "bestLapTime",
+        }),
       ).toBeFalse();
     });
 
@@ -1793,6 +1811,48 @@ describe("raceday-lane-column-interaction.helper", () => {
         event,
       );
     });
+
+    it("should toggle teammate select for team name inset when team swap active", () => {
+      const select = { toggleOpen: jasmine.createSpy("toggleOpen") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        target: document.createElement("div"),
+      };
+      handleLaneColumnInsetClick(
+        event,
+        "top-right",
+        { "top-right": "participant.team.name" },
+        {},
+        mockHd,
+        false,
+        true,
+        select,
+      );
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(select.toggleOpen).toHaveBeenCalled();
+    });
+
+    it("should not toggle teammate select if click on team inset was inside app-custom-select", () => {
+      const select = { toggleOpen: jasmine.createSpy("toggleOpen") };
+      const selectEl = document.createElement("app-custom-select");
+      const innerChild = document.createElement("span");
+      selectEl.appendChild(innerChild);
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        target: innerChild,
+      };
+      handleLaneColumnInsetClick(
+        event,
+        "bottom-right",
+        { "bottom-right": "team.name" },
+        {},
+        mockHd,
+        false,
+        true,
+        select,
+      );
+      expect(select.toggleOpen).not.toHaveBeenCalled();
+    });
   });
 
   describe("resolveLaneColumnFormattedValue", () => {
@@ -1859,6 +1919,17 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(isNameOrNicknameProperty("name")).toBeTrue();
       expect(isNameOrNicknameProperty("nickname")).toBeTrue();
       expect(isNameOrNicknameProperty("lapCount")).toBeFalse();
+
+      // isTeamProperty helper
+      expect(isTeamProperty("participant.team.name")).toBeTrue();
+      expect(isTeamProperty("participant.team.name_0")).toBeTrue();
+      expect(isTeamProperty("team.name")).toBeTrue();
+      expect(isTeamProperty("team")).toBeTrue();
+      expect(isTeamProperty("driver.name")).toBeFalse();
+      expect(isTeamProperty("driver.nickname")).toBeFalse();
+      expect(isTeamProperty("lapCount")).toBeFalse();
+      expect(isTeamProperty("")).toBeFalse();
+      expect(isTeamProperty(undefined)).toBeFalse();
     });
 
     it("should delegate to parent.formatValue if provided", () => {

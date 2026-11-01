@@ -431,6 +431,50 @@
   max-width: 100%;
 }
 
+.inset-cell .inset-team-name {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.inset-cell.tl > .inset-team-name,
+.inset-cell.bl > .inset-team-name,
+.inset-cell.cl > .inset-team-name {
+  justify-content: flex-start;
+}
+
+.inset-cell.tc > .inset-team-name,
+.inset-cell.bc > .inset-team-name {
+  justify-content: center;
+}
+
+.inset-cell.tr > .inset-team-name,
+.inset-cell.br > .inset-team-name,
+.inset-cell.cr > .inset-team-name {
+  justify-content: flex-end;
+}
+
+.inset-cell .inset-team-name .inset-team-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.inset-cell .team-pulldown-indicator {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  min-width: 0.9em;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  flex-shrink: 0;
+  margin-left: 3px;
+  pointer-events: none;
+}
+
 /* Image insets scale uniformly to fit the entire inset bounding box */
 .lane-col-inset-image {
   width: 100%;
@@ -636,6 +680,10 @@
   word-break: break-word;
   overflow-wrap: break-word;
   text-overflow: clip;
+}
+
+.lane-col-value:has(.team-pulldown-indicator) .lane-col-text {
+  min-width: 0;
 }
 
 .lane-col-value .team-pulldown-indicator {

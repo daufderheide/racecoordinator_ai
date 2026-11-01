@@ -44,23 +44,35 @@ export function isLaneColumnTeamDriverSwapActive(
   hd: DriverHeatData | undefined,
   columnKey: string,
   isUIEditorMode: boolean,
+  insets?: Record<string, string>,
 ): boolean {
   if (!parent || !hd || isUIEditorMode) return false;
+
   if (parent.isTeamDriverSwapActive) {
     return parent.isTeamDriverSwapActive(hd, {
       propertyName: columnKey,
-    } as ColumnDefinition);
+      insets,
+    } as unknown as ColumnDefinition);
   }
-  const baseKey = (columnKey || "").split("_")[0];
-  const isTeamOrName =
-    (parent.isNameProperty ? parent.isNameProperty(columnKey) : false) ||
-    columnKey === "driver.name" ||
-    columnKey === "driver.nickname" ||
-    baseKey === "participant.team.name";
-  if (!isTeamOrName) return false;
+
   if (!parent.isTeam?.(hd) || parent.isDriverSwapDisabled?.(hd)) return false;
   if (parent.authService?.currentRole === Role.VIEWER) return false;
-  return true;
+
+  let isTeamOrName =
+    (parent.isNameProperty ? parent.isNameProperty(columnKey) : false) ||
+    isNameOrNicknameProperty(columnKey) ||
+    isTeamProperty(columnKey);
+
+  if (!isTeamOrName && insets) {
+    isTeamOrName = Object.values(insets).some(
+      (k) =>
+        (parent.isNameProperty ? parent.isNameProperty(k) : false) ||
+        isNameOrNicknameProperty(k) ||
+        isTeamProperty(k),
+    );
+  }
+
+  return isTeamOrName;
 }
 
 export function isLaneColumnPracticeLaneResetActive(
@@ -119,6 +131,16 @@ export function isNameOrNicknameProperty(property?: string): boolean {
     baseKey === "driver.nickname" ||
     baseKey === "name" ||
     baseKey === "nickname"
+  );
+}
+
+export function isTeamProperty(property?: string): boolean {
+  if (!property) return false;
+  const baseKey = property.split("_")[0];
+  return (
+    baseKey === "participant.team.name" ||
+    baseKey === "team.name" ||
+    baseKey === "team"
   );
 }
 
@@ -805,6 +827,8 @@ export function handleLaneColumnInsetClick(
   parent: any,
   hd: DriverHeatData | undefined,
   isUIEditorMode: boolean,
+  isTeamDriverSwapActive?: boolean,
+  teammateSelect?: { toggleOpen: () => void } | null,
 ): void {
   if (isUIEditorMode) return;
   const key = insets?.[anchor];
@@ -813,6 +837,17 @@ export function handleLaneColumnInsetClick(
     if (parent?.onCellClick && hd) {
       parent.onCellClick(hd, { propertyName: key } as ColumnDefinition, event);
     }
+  } else if (isTeamProperty(key) && isTeamDriverSwapActive) {
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      typeof target.closest === "function" &&
+      target.closest("app-custom-select")
+    ) {
+      return;
+    }
+    event.stopPropagation();
+    teammateSelect?.toggleOpen();
   }
 }
 
