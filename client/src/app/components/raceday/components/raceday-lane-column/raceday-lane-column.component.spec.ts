@@ -2997,6 +2997,22 @@ describe("RacedayLaneColumnComponent", () => {
 
       expect(component.hasTeamName).toBeTrue();
 
+      // Should render team name and indicator next to team name, and clear background image on select overlay
+      const teamNameEl = fixture.nativeElement.querySelector(".team-name");
+      expect(teamNameEl).toBeTruthy();
+      expect(
+        teamNameEl.querySelector(".team-name-text")?.textContent?.trim(),
+      ).toBe("Red Bull Racing");
+
+      const indicatorEl = teamNameEl.querySelector(".team-pulldown-indicator");
+      expect(indicatorEl).toBeTruthy();
+
+      const selectOverlay = fixture.nativeElement.querySelector(
+        "app-custom-select.teammate-select",
+      );
+      expect(selectOverlay).toBeTruthy();
+      expect(selectOverlay.style.backgroundImage).toBe("none");
+
       // Should be false for non-name properties
       fixture.componentRef.setInput(
         "widget",
@@ -3007,6 +3023,108 @@ describe("RacedayLaneColumnComponent", () => {
       );
       fixture.detectChanges();
       expect(component.hasTeamName).toBeFalse();
+    });
+
+    it("should render pulldown indicator next to team name with arrow background and retain card click behavior", () => {
+      const arrowUrl = 'url("data:image/svg+xml;utf8,<svg></svg>")';
+      const participantWithTeam = {
+        objectId: "p1",
+        team: { name: "Scuderia Ferrari" },
+        driver: { name: "Charles", nickname: "Lord Perceval" },
+      };
+      const driverWithTeam = {
+        objectId: "p1",
+        participant: participantWithTeam,
+        driver: { name: "Charles", nickname: "Lord Perceval" },
+      } as any;
+
+      const parentWithTeam = {
+        ...mockParent,
+        sortedHeatDrivers: [driverWithTeam],
+        heatDrivers: [driverWithTeam],
+        getDropdownArrowBg: jasmine
+          .createSpy("getDropdownArrowBg")
+          .and.returnValue(arrowUrl),
+      };
+      fixture.componentRef.setInput("parent", parentWithTeam);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.nickname",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.hasTeamName).toBeTrue();
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+
+      const teamNameEl = fixture.nativeElement.querySelector(".team-name");
+      const indicatorEl = teamNameEl?.querySelector(
+        ".team-pulldown-indicator",
+      ) as HTMLElement;
+      expect(indicatorEl).toBeTruthy();
+      expect(indicatorEl.style.backgroundImage).toContain(arrowUrl);
+
+      const selectOverlay = fixture.nativeElement.querySelector(
+        "app-custom-select.teammate-select",
+      ) as HTMLElement;
+      expect(selectOverlay.style.backgroundImage).toBe("none");
+
+      // Verify clicking the name or card toggles teammate selector
+      const select = component.teammateSelect();
+      expect(select).toBeTruthy();
+      const toggleSpy = spyOn(select!, "toggleOpen");
+
+      const cardEl = fixture.nativeElement.querySelector(
+        ".raceday-lane-column-card",
+      );
+      cardEl.click();
+      expect(toggleSpy).toHaveBeenCalled();
+    });
+
+    it("should keep pulldown indicator on custom select overlay when hasTeamName is false", () => {
+      const arrowUrl = 'url("data:image/svg+xml;utf8,<svg></svg>")';
+      const participantWithoutTeam = {
+        objectId: "p1",
+        driver: { name: "Solo Driver", nickname: "Solo" },
+      };
+      const driverWithoutTeam = {
+        objectId: "p1",
+        participant: participantWithoutTeam,
+        driver: { name: "Solo Driver", nickname: "Solo" },
+      } as any;
+
+      const parentWithArrow = {
+        ...mockParent,
+        sortedHeatDrivers: [driverWithoutTeam],
+        heatDrivers: [driverWithoutTeam],
+        isTeam: () => true, // team mode active on heat driver level
+        getDropdownArrowBg: jasmine
+          .createSpy("getDropdownArrowBg")
+          .and.returnValue(arrowUrl),
+      };
+      fixture.componentRef.setInput("parent", parentWithArrow);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.name",
+          targetIndex: 0,
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.hasTeamName).toBeFalse();
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+
+      const teamNameEl = fixture.nativeElement.querySelector(".team-name");
+      expect(teamNameEl).toBeNull();
+
+      const selectOverlay = fixture.nativeElement.querySelector(
+        "app-custom-select.teammate-select",
+      ) as HTMLElement;
+      expect(selectOverlay).toBeTruthy();
+      expect(selectOverlay.style.backgroundImage).toContain(arrowUrl);
     });
 
     it("should recognize physicalLapCount column and insets as clickable for add lap sections", () => {

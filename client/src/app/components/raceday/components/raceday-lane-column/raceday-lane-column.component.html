@@ -704,6 +704,15 @@
                     ? 'flex-end'
                     : 'center'
               "
+              [style.align-items]="
+                hasTeamName
+                  ? settings.valueAlignment === 'start'
+                    ? 'flex-start'
+                    : settings.valueAlignment === 'end'
+                      ? 'flex-end'
+                      : 'center'
+                  : 'center'
+              "
               [style.text-align]="
                 settings.valueAlignment === 'start'
                   ? 'left'
@@ -718,9 +727,19 @@
                 >{{ formattedValue }}</span
               >
               @if (hasTeamName) {
-                <span class="team-name" [class.allow-wrap]="isScaleAuto()">{{
-                  targetDriver?.participant?.team?.name
-                }}</span>
+                <span class="team-name" [class.allow-wrap]="isScaleAuto()">
+                  <span class="team-name-text">{{
+                    targetDriver?.participant?.team?.name
+                  }}</span>
+                  @if (isTeamDriverSwapActive) {
+                    <span
+                      class="team-pulldown-indicator"
+                      [style.background-image]="
+                        parent()?.getDropdownArrowBg?.(targetDriver)
+                      "
+                    ></span>
+                  }
+                </span>
               }
             </div>
 
@@ -729,7 +748,9 @@
               <app-custom-select
                 class="teammate-select"
                 [style.background-image]="
-                  parent()?.getDropdownArrowBg?.(targetDriver)
+                  hasTeamName
+                    ? 'none'
+                    : parent()?.getDropdownArrowBg?.(targetDriver)
                 "
                 [style.background-position]="
                   parent()?.race?.practice ? 'right top' : 'right center'

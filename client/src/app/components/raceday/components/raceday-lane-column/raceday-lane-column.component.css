@@ -612,6 +612,16 @@
   text-overflow: ellipsis;
   margin-top: -2px;
   line-height: 1.1;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+.lane-col-value .team-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .lane-col-value .team-name.allow-wrap {
@@ -619,6 +629,26 @@
   word-break: break-word;
   overflow-wrap: break-word;
   text-overflow: clip;
+}
+
+.lane-col-value .team-name.allow-wrap .team-name-text {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-overflow: clip;
+}
+
+.lane-col-value .team-pulldown-indicator {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  min-width: 0.9em;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  flex-shrink: 0;
+  margin-left: 3px;
+  pointer-events: none;
 }
 
 .raceday-lane-column-card.column-last-laps .lane-col-body {
