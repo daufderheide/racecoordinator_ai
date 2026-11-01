@@ -500,10 +500,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   removeAllFilteredRacingParticipants(inputElem?: HTMLInputElement) {
-    RacedaySetupSelectionHelper.removeAllFilteredRacingParticipants(
-      this,
-      inputElem,
-    );
+    this.removeAllParticipants(inputElem);
   }
 
   onAvailableSearchQueryChange() {
@@ -546,8 +543,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     RacedaySetupUiHelper.scrollRacingParticipantIntoView(this, participant);
   }
 
-  removeAllParticipants() {
-    RacedaySetupSelectionHelper.removeAllParticipants(this);
+  removeAllParticipants(inputElem?: HTMLInputElement) {
+    RacedaySetupSelectionHelper.removeAllParticipants(this, inputElem);
   }
 
   randomizeParticipants() {

@@ -279,12 +279,17 @@ export class RacedaySetupSelectionHelper {
     host.updateAvailableActiveItem();
   }
 
-  static removeAllFilteredRacingParticipants(
-    host: any,
-    inputElem?: HTMLInputElement,
-  ): void {
-    if (!host.racingSearchQuery && host.selectedRacingLabelIds.length === 0) {
-      host.removeAllParticipants();
+  static removeAllParticipants(host: any, inputElem?: HTMLInputElement): void {
+    if (
+      !host.racingSearchQuery &&
+      (!host.selectedRacingLabelIds || host.selectedRacingLabelIds.length === 0)
+    ) {
+      host.updateListWithRefresh(() => {
+        host.selectedParticipants = [];
+        host.updateUnselectedParticipants();
+        host.selectedParticipantItem = null;
+        host.clickedParticipantItem = null;
+      }, inputElem);
       return;
     }
 
@@ -316,6 +321,13 @@ export class RacedaySetupSelectionHelper {
         : null;
     host.clickedParticipantItem = host.selectedParticipantItem;
     host.cdr.detectChanges();
+  }
+
+  static removeAllFilteredRacingParticipants(
+    host: any,
+    inputElem?: HTMLInputElement,
+  ): void {
+    this.removeAllParticipants(host, inputElem);
   }
 
   static onAvailableSearchKeydown(
@@ -702,15 +714,6 @@ export class RacedaySetupSelectionHelper {
       host.clickedParticipantItem = null;
       host.selectedParticipantItem = null;
     }
-  }
-
-  static removeAllParticipants(host: any): void {
-    host.updateListWithRefresh(() => {
-      host.selectedParticipants = [];
-      host.updateUnselectedParticipants();
-      host.selectedParticipantItem = null;
-      host.clickedParticipantItem = null;
-    });
   }
 
   static randomizeParticipants(host: any): void {

@@ -4254,6 +4254,71 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedParticipants).toContain(d2);
     });
 
+    it("should remove only label-filtered racing participants when removeAllParticipants is called", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      component.allDrivers = [d1, d2];
+      component.selectedParticipants = [d1, d2];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+      ];
+
+      component.selectedRacingLabelId = "lbl-pro";
+      component.racingSearchQuery = "";
+      component.removeAllParticipants();
+
+      expect(component.selectedParticipants).not.toContain(d1);
+      expect(component.selectedParticipants).toContain(d2);
+    });
+
+    it("should remove only label-filtered racing participants when removeAllBtn is clicked in UI", async () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      const d2 = Driver.createDefault("d2", "Beta", "B", undefined, [
+        "lbl-rookie",
+      ]);
+      component.allDrivers = [d1, d2];
+      component.selectedParticipants = [d1, d2];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+      ];
+
+      component.selectedRacingLabelId = "lbl-pro";
+      component.racingSearchQuery = "";
+      fixture.detectChanges();
+
+      await harness.clickRemoveAll();
+
+      expect(component.selectedParticipants).not.toContain(d1);
+      expect(component.selectedParticipants).toContain(d2);
+    });
+
+    it("should do nothing when removeAllParticipants is called and no drivers match the label filter", () => {
+      const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
+        "lbl-pro",
+      ]);
+      component.allDrivers = [d1];
+      component.selectedParticipants = [d1];
+      component.driverLabels = [
+        { entity_id: "lbl-pro", name: "Pro", color: "#ef4444" },
+        { entity_id: "lbl-rookie", name: "Rookie", color: "#3b82f6" },
+      ];
+
+      component.selectedRacingLabelId = "lbl-rookie";
+      component.racingSearchQuery = "";
+      component.removeAllParticipants();
+
+      expect(component.selectedParticipants).toContain(d1);
+      expect(component.selectedParticipants.length).toBe(1);
+    });
+
     it("should filter participants by multiple labels using Match Any (OR) and Match All (AND)", () => {
       const d1 = Driver.createDefault("d1", "Alpha", "A", undefined, [
         "lbl-pro",
@@ -4344,6 +4409,12 @@ describe("DefaultRacedaySetupComponent", () => {
 
       expect(component.selectedParticipants).not.toContain(d1);
       expect(component.selectedParticipants).toContain(d2);
+
+      // Now filter remaining by lbl-rookie and remove via removeAllParticipants
+      component.onRacingLabelFilterChange(["lbl-rookie"]);
+      component.removeAllParticipants();
+      expect(component.selectedParticipants).not.toContain(d2);
+      expect(component.selectedParticipants.length).toBe(0);
     });
 
     it("should render chips for <= 2 labels and colored dots for > 2 labels", () => {
