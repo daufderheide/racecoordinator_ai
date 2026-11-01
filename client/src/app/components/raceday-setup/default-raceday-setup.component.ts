@@ -218,6 +218,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   selectedSeason?: Season;
   seasonStandings: SeasonStandingItem[] = [];
 
+  // Track State
+  tracks: any[] = [];
+
   // Race State Additions
   isRaceRunning: boolean = false;
   showEndRacePrompt: boolean = false;
@@ -280,6 +283,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       races: this.dataService.getRaces(),
       events: this.dataService.getEvents(),
       seasons: this.dataService.getSeasons(),
+      tracks: this.dataService.getTracks(),
     }).subscribe({
       next: (result) => {
         const drivers = (result.drivers as any[]).map((d: any) => {
@@ -313,6 +317,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
         this.seasons = (result.seasons || []).sort((a: any, b: any) =>
           (a.name || "").localeCompare(b.name || ""),
         );
+
+        this.tracks = result.tracks || [];
 
         const localSettings = this.settingsService.getSettings();
         this.updateQuickStartRaces(localSettings.recentRaceIds);
@@ -2531,6 +2537,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
       return this.translationService.translate("UE_LABEL_FUEL_THEME") || "Fuel";
     }
     return themeId;
+  }
+
+  getTrackName(race: any): string {
+    if (!race?.track_entity_id) {
+      return this.translationService.translate('GEN_NONE') || 'None';
+    }
+    const track = this.tracks.find((t: any) => t.entity_id === race.track_entity_id);
+    return track?.name || race.track_entity_id;
   }
 
   isHandsFree(race?: any): boolean {

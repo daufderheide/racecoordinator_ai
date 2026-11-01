@@ -795,6 +795,7 @@
   "RDS_LABEL_NICKNAME": "Spitzname:",
   "RDS_LABEL_PASSWORD": "Rennleiter-Passwort:",
   "RDS_LABEL_PORT": "Port:",
+  "RDS_LABEL_TRACK": "Strecke",
   "RDS_LANG_DE": "Deutsch (DE)",
   "RDS_LANG_DEFAULT": "Standard",
   "RDS_LANG_EN": "Englisch (EN)",

@@ -795,6 +795,7 @@
   "RDS_LABEL_NICKNAME": "Apodo:",
   "RDS_LABEL_PASSWORD": "Contraseña del director:",
   "RDS_LABEL_PORT": "Puerto:",
+  "RDS_LABEL_TRACK": "Pista",
   "RDS_LANG_DE": "Alemán (DE)",
   "RDS_LANG_DEFAULT": "Predeterminado",
   "RDS_LANG_EN": "Inglés (EN)",
