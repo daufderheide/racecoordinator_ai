@@ -214,7 +214,11 @@ export function getLayoutBaseHeight(ui: CustomUI): number {
 
 export function getAvailableWidth(comp?: any): number {
   const winW = typeof window !== "undefined" ? window.innerWidth : 1920;
-  const hasInspector = !!(comp?.currentSelectedWidget && comp?.isEditMode);
+  const hasInspector = !!(
+    comp?.currentSelectedWidget &&
+    comp?.isEditMode &&
+    comp?.isWidgetConfigVisible !== false
+  );
   const inspectorWidth = hasInspector ? 370 : 0;
   return Math.max(winW - 48 - inspectorWidth - 28, 400);
 }

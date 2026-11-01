@@ -104,6 +104,7 @@ export class LayoutEditorComponent
 
   isEditMode = false;
   isWidgetLibraryVisible = true;
+  override isWidgetConfigVisible = true;
   isLoading = true;
   isSaving = false;
   isAutoSaving = false;
@@ -539,6 +540,7 @@ export class LayoutEditorComponent
     if (!this.isEditMode) {
       this.isEditMode = true;
       this.isWidgetLibraryVisible = true;
+      this.isWidgetConfigVisible = true;
       if (!this.selectedWidgetId && this.editingLayout) {
         const parsed = parseLayoutConfig(this.editingLayout);
         this.selectedWidgetId =
@@ -559,6 +561,7 @@ export class LayoutEditorComponent
       this.saveCurrentLayout();
     } else {
       this.isEditMode = false;
+      this.isWidgetConfigVisible = true;
       this.cdr.markForCheck();
     }
   }
@@ -578,6 +581,21 @@ export class LayoutEditorComponent
       this.racedayComp?.resetLayoutEditorPosition?.();
     } else {
       this.isWidgetLibraryVisible = !this.isWidgetLibraryVisible;
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleWidgetConfig(): void {
+    if (!this.isEditMode) return;
+    this.isWidgetConfigVisible = !this.isWidgetConfigVisible;
+    if (
+      this.isWidgetConfigVisible &&
+      !this.selectedWidgetId &&
+      this.editingLayout
+    ) {
+      const parsed = parseLayoutConfig(this.editingLayout);
+      this.selectedWidgetId =
+        findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
     }
     this.cdr.markForCheck();
   }
@@ -628,6 +646,7 @@ export class LayoutEditorComponent
         } else {
           this.undoManager.initialize(this.editingLayout);
           this.isEditMode = false;
+          this.isWidgetConfigVisible = true;
         }
       }
       return saved;
@@ -711,6 +730,7 @@ export class LayoutEditorComponent
 
   getHelpSteps(): GuideStep[] {
     return buildLayoutEditorHelpSteps(this.translationService, () => {
+      this.isWidgetConfigVisible = true;
       if (!this.currentSelectedWidget) {
         const widgets = this.getLayoutWidgets();
         if (widgets.length > 0) {

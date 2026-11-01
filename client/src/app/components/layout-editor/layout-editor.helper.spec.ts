@@ -23,7 +23,10 @@ import {
   setLastEditedLayoutId,
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
-import { onWidgetScaleModeChange } from "./layout-editor-actions.helper";
+import {
+  getAvailableWidth,
+  onWidgetScaleModeChange,
+} from "./layout-editor-actions.helper";
 
 describe("layout-editor.helper", () => {
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
@@ -732,6 +735,40 @@ describe("layout-editor.helper", () => {
       expect(mockComp.syncRacedayPreview).toHaveBeenCalled();
       expect(mockComp.captureState).toHaveBeenCalled();
       expect(mockComp.cdr.markForCheck).toHaveBeenCalled();
+    });
+  });
+
+  describe("getAvailableWidth", () => {
+    it("should include inspector width when editMode is true, widget selected, and isWidgetConfigVisible is true", () => {
+      const comp = {
+        isEditMode: true,
+        currentSelectedWidget: { id: "w1" },
+        isWidgetConfigVisible: true,
+      };
+      const widthWithInspector = getAvailableWidth(comp);
+
+      const compHidden = {
+        isEditMode: true,
+        currentSelectedWidget: { id: "w1" },
+        isWidgetConfigVisible: false,
+      };
+      const widthHidden = getAvailableWidth(compHidden);
+
+      expect(widthHidden - widthWithInspector).toBe(370);
+    });
+
+    it("should not subtract inspector width when not in edit mode", () => {
+      const comp = {
+        isEditMode: false,
+        currentSelectedWidget: { id: "w1" },
+        isWidgetConfigVisible: true,
+      };
+      const compNoWidget = {
+        isEditMode: false,
+        currentSelectedWidget: null,
+        isWidgetConfigVisible: true,
+      };
+      expect(getAvailableWidth(comp)).toBe(getAvailableWidth(compNoWidget));
     });
   });
 });

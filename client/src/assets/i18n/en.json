@@ -3138,6 +3138,8 @@
   "UE_BTN_RESET_POSITION": "Reset Position",
   "LE_HELP_WIDGET_LIBRARY_TITLE": "Widget Library",
   "LE_HELP_WIDGET_LIBRARY_CONTENT": "Toggle and locate the Widget Library toolbox to drag, drop, and add widgets to your layout.",
+  "LE_HELP_WIDGET_CONFIG_TITLE": "Widget Configuration",
+  "LE_HELP_WIDGET_CONFIG_CONTENT": "Toggle the visibility of the Widget Configuration panel to customize widget properties or maximize the canvas area.",
   "THM_TITLE": "THEME EDITOR",
   "THM_THEME_NAME": "Theme Name",
   "RDS_MENU_THEME_EDITOR": "Themes",

@@ -3138,6 +3138,8 @@
   "UE_BTN_RESET_POSITION": "Réinitialiser la position",
   "LE_HELP_WIDGET_LIBRARY_TITLE": "Bibliothèque de widgets",
   "LE_HELP_WIDGET_LIBRARY_CONTENT": "Affichez et localisez la boîte à outils pour glisser, déposer et ajouter des widgets à votre mise en page.",
+  "LE_HELP_WIDGET_CONFIG_TITLE": "Configuration de widgets",
+  "LE_HELP_WIDGET_CONFIG_CONTENT": "Affichez ou masquez le panneau de configuration des widgets pour personnaliser leurs propriétés ou agrandir l'espace de travail.",
   "THM_TITLE": "ÉDITEUR DE THÈMES",
   "THM_THEME_NAME": "Nom du thème",
   "RDS_MENU_THEME_EDITOR": "Thèmes",

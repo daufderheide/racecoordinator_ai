@@ -3138,6 +3138,8 @@
   "UE_BTN_RESET_POSITION": "Positie resetten",
   "LE_HELP_WIDGET_LIBRARY_TITLE": "Widgetbibliotheek",
   "LE_HELP_WIDGET_LIBRARY_CONTENT": "Schakel de widgetbibliotheek in om widgets naar uw lay-out te slepen en toe te voegen.",
+  "LE_HELP_WIDGET_CONFIG_TITLE": "Widget-configuratie",
+  "LE_HELP_WIDGET_CONFIG_CONTENT": "Schakel het paneel Widget-configuratie in of uit om widgeteigenschappen aan te passen of het canvasgebied te maximaliseren.",
   "THM_TITLE": "THEMA-EDITOR",
   "THM_THEME_NAME": "Themanaam",
   "RDS_MENU_THEME_EDITOR": "Thema's",

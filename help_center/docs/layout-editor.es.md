@@ -54,8 +54,9 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 ### Vista Previa de la Cuenta Regresiva de Salida
 - Haga clic en **Vista Previa de Luces** (<span class="material-icons">timer</span>) para alternar una vista previa de la secuencia de luces de salida en el lienzo sin iniciar una carrera real.
 
-### Biblioteca de widgets y cuadro de herramientas
+### Biblioteca de widgets y controles de configuración
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
+- **Configuración de Widgets (<span class="material-icons">tune</span>)**: Alterna la visibilidad del panel lateral de Configuración de Widgets. Cuando está oculto, el lienzo puede extenderse a lo largo de toda la página si la relación de aspecto del diseño lo permite (igual que en modo de solo lectura).
 - **Restablecer posición (<span class="material-icons">restart_alt</span>)**: Ubicado en el encabezado del cuadro flotante para devolverlo instantáneamente a su origen predeterminado `(0, 0)` arriba a la izquierda.
 - **Minimizar (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Contrae el cuadro de herramientas a una barra de título compacta para liberar espacio en el lienzo.
 

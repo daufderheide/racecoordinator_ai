@@ -72,6 +72,7 @@ export abstract class LayoutEditorBase {
   abstract editingLayout: CustomUI | null;
   abstract editingSettings: any;
   abstract isEditMode: boolean;
+  isWidgetConfigVisible: boolean = true;
   abstract selectedWidgetId: string | null;
   abstract currentSelectedWidget: any | null;
   abstract selectedAnchor: string | null;

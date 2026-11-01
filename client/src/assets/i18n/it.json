@@ -3138,6 +3138,8 @@
   "UE_BTN_RESET_POSITION": "Ripristina posizione",
   "LE_HELP_WIDGET_LIBRARY_TITLE": "Libreria dei widget",
   "LE_HELP_WIDGET_LIBRARY_CONTENT": "Mostra e individua la casella degli strumenti per trascinare, rilasciare e aggiungere widget al layout.",
+  "LE_HELP_WIDGET_CONFIG_TITLE": "Configurazione Widget",
+  "LE_HELP_WIDGET_CONFIG_CONTENT": "Mostra o nascondi il pannello Configurazione Widget per personalizzare le proprietà dei widget o ingrandire l'area di lavoro.",
   "THM_TITLE": "EDITOR TEMI",
   "THM_THEME_NAME": "Nome del tema",
   "RDS_MENU_THEME_EDITOR": "Temi",

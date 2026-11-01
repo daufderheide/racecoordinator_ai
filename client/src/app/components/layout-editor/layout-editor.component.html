@@ -217,6 +217,22 @@
               <span>{{ "UE_LABEL_LAYOUT_EDITOR" | translate }}</span>
             </button>
           </div>
+
+          <!-- Widget Configuration Toggle Button -->
+          <div id="help-raceday-widget-config" class="layout-control-group">
+            <button
+              id="toggle-widget-config-btn"
+              type="button"
+              class="layout-widget-config-btn"
+              [class.active]="isEditMode && isWidgetConfigVisible"
+              [disabled]="!isEditMode"
+              (click)="toggleWidgetConfig()"
+              [title]="'UE_INSPECTOR_TITLE' | translate"
+            >
+              <span class="material-icons">tune</span>
+              <span>{{ "UE_INSPECTOR_TITLE" | translate }}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -335,7 +351,7 @@
         </div>
 
         <!-- Widget Configuration Inspector -->
-        @if (currentSelectedWidget && isEditMode) {
+        @if (currentSelectedWidget && isEditMode && isWidgetConfigVisible) {
           <div id="help-widget-inspector" class="widget-inspector-panel">
             <div class="inspector-header">
               <div class="inspector-title-group">

@@ -3138,6 +3138,8 @@
   "UE_BTN_RESET_POSITION": "Position zurücksetzen",
   "LE_HELP_WIDGET_LIBRARY_TITLE": "Widget-Bibliothek",
   "LE_HELP_WIDGET_LIBRARY_CONTENT": "Öffnen Sie die Widget-Bibliothek, um Widgets per Drag-and-Drop zu Ihrem Layout hinzuzufügen.",
+  "LE_HELP_WIDGET_CONFIG_TITLE": "Widget-Konfiguration",
+  "LE_HELP_WIDGET_CONFIG_CONTENT": "Blenden Sie das Widget-Konfigurationspanel ein oder aus, um Widget-Eigenschaften anzupassen oder den Zeichenbereich zu maximieren.",
   "THM_TITLE": "THEMEN-EDITOR",
   "THM_THEME_NAME": "Designname",
   "RDS_MENU_THEME_EDITOR": "Designs",

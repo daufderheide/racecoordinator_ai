@@ -54,8 +54,9 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 ### Anteprima Semaforo di Partenza
 - Fare clic su **Anteprima Luci** (<span class="material-icons">timer</span>) per visualizzare in anteprima la sequenza delle luci del conto alla rovescia sul canvas senza avviare una gara reale.
 
-### Libreria dei widget e casella degli strumenti
+### Libreria dei widget e controlli di configurazione
 - **Libreria dei widget (<span class="material-icons">widgets</span>)**: Attiva/disattiva la visibilità della casella degli strumenti mobile. Un clic ripristina la casella se è ridotta a icona o posizionata fuori dallo schermo visibile.
+- **Configurazione Widget (<span class="material-icons">tune</span>)**: Attiva/disattiva la visibilità del pannello laterale Configurazione Widget. Quando è nascosto, il canvas può estendersi sull'intera larghezza della pagina se le proporzioni del layout lo consentono (proprio come in modalità di sola lettura).
 - **Ripristina posizione (<span class="material-icons">restart_alt</span>)**: Situato nell'intestazione della casella mobile per riportarla istantaneamente all'origine `(0, 0)` in alto a sinistra.
 - **Riduci (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Comprime la casella degli strumenti in una barra del titolo compatta per liberare spazio sul canvas.
 

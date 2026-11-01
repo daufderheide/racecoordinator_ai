@@ -1114,6 +1114,106 @@ describe("LayoutEditorComponent", () => {
         (s) => s.selector === "#help-raceday-widget-library",
       );
       expect(widgetLibStep).toBeDefined();
+
+      const widgetConfigStep = steps.find(
+        (s) => s.selector === "#help-raceday-widget-config",
+      );
+      expect(widgetConfigStep).toBeDefined();
+    });
+
+    it("should handle toggleWidgetConfig in edit mode and preserve selected item when hidden", () => {
+      // When not in edit mode, toggleWidgetConfig does nothing
+      component.isEditMode = false;
+      component.isWidgetConfigVisible = true;
+      component.toggleWidgetConfig();
+      expect(component.isWidgetConfigVisible).toBeTrue();
+
+      // In edit mode: toggles between visible and hidden; does NOT deselect widgets when hiding
+      component.isEditMode = true;
+      component.selectedWidgetId = "w1";
+      component.selectedAnchor = "anchor-1";
+      component.toggleWidgetConfig();
+      expect(component.isWidgetConfigVisible).toBeFalse();
+      expect(component.selectedWidgetId).toBe("w1");
+      expect(component.selectedAnchor).toBe("anchor-1");
+
+      // Selecting another widget does NOT unhide widget configuration when hidden
+      component.onWidgetSelected({ id: "w2" });
+      expect(component.isWidgetConfigVisible).toBeFalse();
+      expect(component.selectedWidgetId).toBe("w2");
+
+      // Selecting via dropdown also does NOT unhide widget configuration when hidden
+      component.onWidgetDropdownSelect("w1");
+      expect(component.isWidgetConfigVisible).toBeFalse();
+      expect(component.selectedWidgetId).toBe("w1");
+
+      // Toggling back to visible unhides and retains the selected widget
+      component.toggleWidgetConfig();
+      expect(component.isWidgetConfigVisible).toBeTrue();
+      expect(component.selectedWidgetId).toBe("w1");
+    });
+
+    it("should render widget configuration toggle button, reflect edit mode, and expand canvas width when hidden without deselecting", () => {
+      fixture.detectChanges();
+      const configBtn = fixture.nativeElement.querySelector(
+        "#toggle-widget-config-btn",
+      );
+      expect(configBtn).toBeTruthy();
+      expect(configBtn.disabled).toBeTrue();
+
+      component.onToggleEditMode();
+      component.onSelectLayoutById("default_ui_layout_rc_ai");
+      component.onWidgetDropdownSelect("w1");
+      fixture.detectChanges();
+
+      expect(configBtn.disabled).toBeFalse();
+      expect(configBtn.classList.contains("active")).toBeTrue();
+
+      // With inspector visible, inspector panel is rendered
+      let inspector = fixture.nativeElement.querySelector(
+        "#help-widget-inspector",
+      );
+      expect(inspector).toBeTruthy();
+
+      const widthWithInspector = component.getPreviewContainerWidth();
+
+      // Click to hide widget configuration panel
+      spyOn(component, "toggleWidgetConfig").and.callThrough();
+      configBtn.click();
+      fixture.detectChanges();
+
+      expect(component.toggleWidgetConfig).toHaveBeenCalled();
+      expect(component.isWidgetConfigVisible).toBeFalse();
+      // The selected item is NOT deselected
+      expect(component.selectedWidgetId).toBe("w1");
+      expect(configBtn.classList.contains("active")).toBeFalse();
+
+      // Inspector panel is hidden
+      inspector = fixture.nativeElement.querySelector("#help-widget-inspector");
+      expect(inspector).toBeNull();
+
+      // Canvas width extends to available page width (matching read-only available width)
+      const widthWithoutInspector = component.getPreviewContainerWidth();
+      expect(widthWithoutInspector).toBeGreaterThan(widthWithInspector);
+
+      // Selecting a different widget on canvas does NOT unhide the panel
+      component.onWidgetSelected({ id: "w1" });
+      fixture.detectChanges();
+
+      expect(component.isWidgetConfigVisible).toBeFalse();
+      expect(
+        fixture.nativeElement.querySelector("#help-widget-inspector"),
+      ).toBeNull();
+
+      // Toggling back via button restores the inspector panel and original width
+      configBtn.click();
+      fixture.detectChanges();
+
+      expect(component.isWidgetConfigVisible).toBeTrue();
+      expect(configBtn.classList.contains("active")).toBeTrue();
+      inspector = fixture.nativeElement.querySelector("#help-widget-inspector");
+      expect(inspector).toBeTruthy();
+      expect(component.getPreviewContainerWidth()).toBe(widthWithInspector);
     });
 
     it("should handle toggleWidgetLibrary across visibility and minimized states", () => {

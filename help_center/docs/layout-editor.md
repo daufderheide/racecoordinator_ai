@@ -54,8 +54,9 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 ### Start Countdown Preview
 - Click **Preview Lights** (<span class="material-icons">timer</span>) to toggle a live countdown light sequence preview on the canvas without starting an actual race.
 
-### Widget Library & Toolbox Controls
+### Widget Library & Configuration Controls
 - **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox. Clicking also unminimizes the toolbox and ensures it is clamped within the visible screen area if previously moved off-screen.
+- **Widget Configuration (<span class="material-icons">tune</span>)**: Toggles visibility of the Widget Configuration sidebar panel. When hidden, the canvas can extend across the full width of the page if it makes sense for the layout's aspect ratio (just like in read-only mode).
 - **Reset Position (<span class="material-icons">restart_alt</span>)**: Located in the floating toolbox header to instantly return the toolbox to its default top-left origin `(0, 0)`.
 - **Minimize (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Collapses the toolbox to a compact header bar to free up canvas workspace while keeping the library immediately accessible.
 

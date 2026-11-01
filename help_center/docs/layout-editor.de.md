@@ -54,8 +54,9 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 ### Start-Countdown-Vorschau
 - Klicken Sie auf **Startampel-Vorschau** (<span class="material-icons">timer</span>), um eine Live-Vorschau der Startampel-Sequenz auf dem Canvas zu testen, ohne ein echtes Rennen zu starten.
 
-### Widget-Bibliothek & Werkzeugkasten
+### Widget-Bibliothek & Konfigurationssteuerung
 - **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.
+- **Widget-Konfiguration (<span class="material-icons">tune</span>)**: Schaltet die Sichtbarkeit des Widget-Konfigurationspanels um. Wenn es ausgeblendet ist, kann sich die Arbeitsfläche über die gesamte Seitenbreite erstrecken, sofern es das Seitenverhältnis des Layouts erlaubt (wie im schreibgeschützten Modus).
 - **Position zurücksetzen (<span class="material-icons">restart_alt</span>)**: Setzt den Werkzeugkasten über die Schaltfläche in der Kopfzeile sofort an die Standardursprungsposition `(0, 0)` oben links zurück.
 - **Minimieren (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Klappt den Werkzeugkasten auf eine kompakte Titelleiste zusammen, um Platz auf der Arbeitsfläche freizugeben.
 

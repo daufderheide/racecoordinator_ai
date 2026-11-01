@@ -54,8 +54,9 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 ### Aperçu du Compte à Rebours de Départ
 - Cliquez sur **Aperçu des Feux** (<span class="material-icons">timer</span>) pour prévisualiser la séquence de feux de départ sur le canevas sans démarrer une vraie course.
 
-### Bibliothèque de widgets & boîte à outils
+### Bibliothèque de widgets & contrôles de configuration
 - **Bibliothèque de widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante. Un clic la restaure également si elle est réduite ou hors de l'écran visible.
+- **Configuration de widgets (<span class="material-icons">tune</span>)** : Bascule la visibilité du panneau latéral de configuration des widgets. Lorsqu'il est masqué, le canevas peut s'étendre sur toute la largeur de la page si les proportions de la disposition le permettent (comme en mode lecture seule).
 - **Réinitialiser la position (<span class="material-icons">restart_alt</span>)** : Situé dans l'en-tête de la boîte à outils flottante pour la replacer instantanément à l'origine `(0, 0)` en haut à gauche.
 - **Réduire (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)** : Replie la boîte à outils sous forme de barre de titre compacte pour libérer de l'espace sur le canevas.
 

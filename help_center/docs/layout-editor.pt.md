@@ -54,8 +54,9 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 ### Pré-visualização da Contagem Regressiva de Largada
 - Clique em **Pré-visualizar Luzes** (<span class="material-icons">timer</span>) para alternar uma prévia ao vivo da sequência de luzes de largada na tela sem iniciar uma corrida real.
 
-### Biblioteca de widgets e caixa de ferramentas
+### Biblioteca de widgets e controles de configuração
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante. Um clique também a restaura se estiver minimizada ou fora da tela visível.
+- **Configuração de Widgets (<span class="material-icons">tune</span>)**: Alterna a visibilidade do painel lateral Configuração de Widgets. Quando oculto, a tela pode se estender por toda a largura da página se a proporção da tela permitir (assim como no modo somente leitura).
 - **Redefinir posição (<span class="material-icons">restart_alt</span>)**: Localizado no cabeçalho da caixa de ferramentas para retorná-la instantaneamente à origem padrão `(0, 0)` no canto superior esquerdo.
 - **Minimizar (<span class="material-icons">keyboard_arrow_up</span> / <span class="material-icons">keyboard_arrow_down</span>)**: Recolhe a caixa de ferramentas para uma barra de título compacta para liberar espaço na tela.
 
