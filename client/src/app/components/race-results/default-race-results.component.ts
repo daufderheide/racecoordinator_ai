@@ -24,7 +24,10 @@ import {
   FinishMethod,
   HeatRanking,
 } from "@app/models/heat_scoring";
-import { getOverallScoreFormat } from "@app/models/overall_scoring";
+import {
+  getOverallScoreFormat,
+  OverallRanking,
+} from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { isAtLeast, Role } from "@app/models/role";
@@ -552,6 +555,40 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     this.scale = Math.min(scaleX, scaleY);
   }
 
+  private calculateParticipantGaps(
+    curr: RaceParticipant,
+    index: number,
+    sorted: RaceParticipant[],
+    isFastestLap: boolean,
+  ): { gap1st: number | null; gapAhead: number | null } {
+    let gap1st: number | null = curr.gapLeader;
+    let gapAhead: number | null = curr.gapPosition;
+
+    if (index === 0) {
+      return { gap1st: null, gapAhead: null };
+    }
+
+    if (gap1st === undefined || gap1st === null || isNaN(gap1st)) {
+      gap1st = null;
+    } else if (
+      isFastestLap &&
+      (curr.bestLapTime <= 0 || sorted[0].bestLapTime <= 0)
+    ) {
+      gap1st = null;
+    }
+
+    if (gapAhead === undefined || gapAhead === null || isNaN(gapAhead)) {
+      gapAhead = null;
+    } else if (
+      isFastestLap &&
+      (curr.bestLapTime <= 0 || sorted[index - 1].bestLapTime <= 0)
+    ) {
+      gapAhead = null;
+    }
+
+    return { gap1st, gapAhead };
+  }
+
   protected recalculateStandings() {
     if (!this.participants || this.participants.length === 0) {
       this.standingsRows = [];
@@ -591,9 +628,20 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     }
     const allHeats = Array.from(heatMap.values());
 
+    const isFastestLap =
+      this.race?.overall_scoring?.rankingMethod ===
+        OverallRanking.OR_FASTEST_LAP ||
+      (this.race?.overall_scoring?.rankingMethod as any) === "FASTEST_LAP" ||
+      this.race?.heat_scoring?.heatRanking === HeatRanking.HR_FASTEST_LAP ||
+      (this.race?.heat_scoring?.heatRanking as any) === "FASTEST_LAP";
+
     this.standingsRows = sorted.map((curr, i) => {
-      let gap1st: number | null = curr.gapLeader ?? 0;
-      let gapAhead: number | null = curr.gapPosition ?? 0;
+      const { gap1st, gapAhead } = this.calculateParticipantGaps(
+        curr,
+        i,
+        sorted,
+        isFastestLap,
+      );
 
       const laneScores: (number | null)[] = Array(laneCount).fill(null);
 
@@ -660,9 +708,11 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  protected formatGap(value: number | null): string {
-    if (value === null || value === undefined) return "";
-    if (value === 0) return "--.---";
+  protected formatGap(value: number | null, isLeader?: boolean): string {
+    if (value === null || value === undefined) return isLeader ? "--.---" : "";
+    if (isNaN(value)) return "--.---";
+    if (isLeader || (isLeader === undefined && value === 0)) return "--.---";
+    if (value === 0) return "0.000";
     const sign = value > 0 ? "+" : "";
     return sign + value.toFixed(3);
   }

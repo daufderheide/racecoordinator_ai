@@ -1,3 +1,5 @@
+import { HeatRanking } from "@app/models/heat_scoring";
+import { OverallRanking } from "@app/models/overall_scoring";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 
 import { FormatContext, RacedayFormatUtils } from "./raceday-format.utils";
@@ -110,6 +112,7 @@ export class RacedayGapFormatUtils {
       mode,
       timeDecimals,
       timePlaceholder,
+      ctx,
     );
   }
 
@@ -173,6 +176,7 @@ export class RacedayGapFormatUtils {
     mode: "always_time" | "laps_and_time",
     timeDecimals: number,
     timePlaceholder: string,
+    ctx?: FormatContext,
   ): string {
     const timeValue =
       baseKey === "gap" || value === null || value === undefined
@@ -192,11 +196,30 @@ export class RacedayGapFormatUtils {
     ) {
       return timePlaceholder;
     }
+
+    const race = ctx?.getRace ? ctx.getRace() : undefined;
+    const heatRank = race?.heat_scoring?.heatRanking;
+    const overallRank = race?.overall_scoring?.rankingMethod;
+    const isFastestLap =
+      heatRank === HeatRanking.HR_FASTEST_LAP ||
+      (heatRank as any) === 2 ||
+      (heatRank as any) === "FASTEST_LAP" ||
+      overallRank === OverallRanking.OR_FASTEST_LAP ||
+      (overallRank as any) === 2 ||
+      (overallRank as any) === "FASTEST_LAP";
+
+    if (isFastestLap && (hd?.bestLapTime ?? 0) <= 0) {
+      return timePlaceholder;
+    }
+
     const num = Number(timeValue);
     const fixed = Math.abs(num).toFixed(timeDecimals);
     const isZero = Number(fixed) === 0;
     if (isZero && !RacedayFormatUtils.hasHeatData(hd)) {
       return timePlaceholder;
+    }
+    if (isFastestLap && isZero) {
+      return fixed;
     }
     const sign = !isZero && num < 0 ? "-" : "+";
     return sign + fixed;
@@ -276,6 +299,7 @@ export class RacedayGapFormatUtils {
       timeDecimals,
       timePlaceholder,
       hasOverallData,
+      ctx,
     );
   }
 
@@ -339,6 +363,7 @@ export class RacedayGapFormatUtils {
     timeDecimals: number,
     timePlaceholder: string,
     hasOverallData: boolean,
+    ctx?: FormatContext,
   ): string {
     const timeValue =
       baseKey === "overallGap" || value === null || value === undefined
@@ -364,12 +389,28 @@ export class RacedayGapFormatUtils {
     ) {
       return timePlaceholder;
     }
+
+    const race = ctx?.getRace ? ctx.getRace() : undefined;
+    const overallRank = race?.overall_scoring?.rankingMethod;
+    const isFastestLap =
+      overallRank === OverallRanking.OR_FASTEST_LAP ||
+      (overallRank as any) === 2 ||
+      (overallRank as any) === "FASTEST_LAP";
+
+    const driverBest = p?.bestLapTime ?? hd?.bestLapTime ?? 0;
+    if (isFastestLap && driverBest <= 0) {
+      return timePlaceholder;
+    }
+
     const num = Number(timeValue);
     const fixed = Math.abs(num).toFixed(timeDecimals);
     const isZero = Number(fixed) === 0;
 
     if (isZero && !hasOverallData) {
       return timePlaceholder;
+    }
+    if (isFastestLap && isZero) {
+      return fixed;
     }
     const sign = !isZero && num < 0 ? "-" : "+";
     return sign + fixed;

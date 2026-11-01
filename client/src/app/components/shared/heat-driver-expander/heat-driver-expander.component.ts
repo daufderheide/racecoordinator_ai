@@ -46,6 +46,13 @@ export class HeatDriverExpanderComponent {
   @Input() isGroupRace = false;
   @Input() groupNames: string[] = [];
 
+  protected formatGap(gap: number | null | undefined): string {
+    if (gap === null || gap === undefined || isNaN(gap)) return "--.---";
+    if (gap === 0) return "0.000";
+    const sign = gap > 0 ? "+" : "";
+    return `${sign}${gap.toFixed(3)}`;
+  }
+
   get customGroupName(): string {
     const groupIdx = this.heatData?.heat?.group;
     if (

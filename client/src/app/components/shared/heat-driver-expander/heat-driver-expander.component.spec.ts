@@ -176,4 +176,24 @@ describe("HeatDriverExpanderComponent Analysis Section", () => {
 
     expect(trajectorySpy).toHaveBeenCalledWith(mockData);
   });
+
+  describe("formatGap", () => {
+    it("should return dashes for null, undefined, or NaN", () => {
+      expect((component as any).formatGap(null)).toBe("--.---");
+      expect((component as any).formatGap(undefined)).toBe("--.---");
+      expect((component as any).formatGap(NaN)).toBe("--.---");
+    });
+
+    it("should return 0.000 for 0", () => {
+      expect((component as any).formatGap(0)).toBe("0.000");
+    });
+
+    it("should return +X.XXX for positive number", () => {
+      expect((component as any).formatGap(1.234)).toBe("+1.234");
+    });
+
+    it("should return -X.XXX for negative number", () => {
+      expect((component as any).formatGap(-0.5)).toBe("-0.500");
+    });
+  });
 });

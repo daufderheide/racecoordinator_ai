@@ -219,6 +219,75 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("-0.250");
     });
 
+    it("should format gapLeader as placeholder when heatRanking is FASTEST_LAP and driver has no bestLapTime", () => {
+      (ctx as any).getRace = () =>
+        ({
+          heat_scoring: { heatRanking: 2 }, // HeatRanking.HR_FASTEST_LAP
+        }) as any;
+      (hd as any).bestLapTime = 0;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--.---");
+    });
+
+    it("should format gapLeader as 0.000 when heatRanking is FASTEST_LAP and driver has bestLapTime with 0 gap", () => {
+      (ctx as any).getRace = () =>
+        ({
+          heat_scoring: { heatRanking: 2 }, // HeatRanking.HR_FASTEST_LAP
+        }) as any;
+      (hd as any).bestLapTime = 4.123;
+      (hd as any).physicalLapCount = 1;
+      (hd as any).rank = 2;
+      const result = RacedayFormatUtils.formatValue(
+        "gapLeader",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("0.000");
+    });
+
+    it("should format overall gap as placeholder when overallRanking is FASTEST_LAP and driver has no bestLapTime", () => {
+      (ctx as any).getRace = () =>
+        ({
+          overall_scoring: { rankingMethod: 2 }, // OverallRanking.OR_FASTEST_LAP
+        }) as any;
+      (hd as any).bestLapTime = 0;
+      (hd as any).rank = 2;
+      const result = RacedayFormatUtils.formatValue(
+        "overallGapLeader",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--.---");
+    });
+
+    it("should format overall gap as 0.000 when overallRanking is FASTEST_LAP and driver has bestLapTime with 0 gap", () => {
+      (ctx as any).getRace = () =>
+        ({
+          overall_scoring: { rankingMethod: 2 }, // OverallRanking.OR_FASTEST_LAP
+        }) as any;
+      (hd as any).bestLapTime = 5.678;
+      (hd as any).physicalLapCount = 1;
+      (hd as any).rank = 2;
+      const result = RacedayFormatUtils.formatValue(
+        "overallGapLeader",
+        0,
+        hd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("0.000");
+    });
+
     it("should format gapLeader with configured time decimals", () => {
       (hd as any).physicalLapCount = 1;
       const customCtx = {

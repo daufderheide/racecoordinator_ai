@@ -233,11 +233,11 @@
               </div>
               <!-- Gap to Overall 1st -->
               <div class="body-cell col-gap-leader text-gap">
-                {{ formatGap(row.gap1st) }}
+                {{ formatGap(row.gap1st, row.rank === 1) }}
               </div>
               <!-- Gap to Driver Ahead -->
               <div class="body-cell col-gap-ahead text-gap">
-                {{ formatGap(row.gapAhead) }}
+                {{ formatGap(row.gapAhead, row.rank === 1) }}
               </div>
               <!-- Lane Scores -->
               @for (score of row.laneScores; track $index; let idx = $index) {

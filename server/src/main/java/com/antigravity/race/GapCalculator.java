@@ -26,10 +26,14 @@ public class GapCalculator {
     RankingMethod rankMethod = rankingMethod != null ? rankingMethod : RankingMethod.LAP_COUNT;
 
     GapParticipant leader = sortedParticipants.get(0);
-    leader.setGapLeader(0.0);
-    leader.setGapPosition(0.0);
-    leader.setGapLeaderF1(0.0);
-    leader.setGapPositionF1(0.0);
+    double initialGap =
+        (rankMethod == RankingMethod.FASTEST_LAP && leader.getBestLapTime() <= 0.0)
+            ? Double.NaN
+            : 0.0;
+    leader.setGapLeader(initialGap);
+    leader.setGapPosition(initialGap);
+    leader.setGapLeaderF1(initialGap);
+    leader.setGapPositionF1(initialGap);
     leader.setGapLeaderLaps(0.0);
     leader.setGapPositionLaps(0.0);
     leader.setLapsDownLeader(0);
@@ -94,12 +98,12 @@ public class GapCalculator {
         || curParticipant == null
         || targetParticipant.isEmptyParticipant()
         || curParticipant.isEmptyParticipant()) {
-      return 0.0;
+      return Double.NaN;
     }
     double targetBest = targetParticipant.getBestLapTime();
     double curBest = curParticipant.getBestLapTime();
     if (targetBest <= 0.0 || curBest <= 0.0) {
-      return 0.0;
+      return Double.NaN;
     }
     return Math.max(0.0, curBest - targetBest);
   }

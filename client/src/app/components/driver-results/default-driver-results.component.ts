@@ -16,7 +16,11 @@ import {
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
-import { getOverallScoreFormat } from "@app/models/overall_scoring";
+import { HeatRanking } from "@app/models/heat_scoring";
+import {
+  getOverallScoreFormat,
+  OverallRanking,
+} from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
@@ -286,7 +290,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
   }
 
   protected formatGap(gap: number | null): string {
-    if (gap === null) return "--.---";
+    if (gap === null || isNaN(gap)) return "--.---";
     if (gap === 0) return "0.000";
     const sign = gap > 0 ? "+" : "";
     return `${sign}${gap.toFixed(3)}`;
@@ -366,9 +370,39 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const isFastestLap =
+      this.race?.overall_scoring?.rankingMethod ===
+        OverallRanking.OR_FASTEST_LAP ||
+      (this.race?.overall_scoring?.rankingMethod as any) === "FASTEST_LAP" ||
+      this.race?.heat_scoring?.heatRanking === HeatRanking.HR_FASTEST_LAP ||
+      (this.race?.heat_scoring?.heatRanking as any) === "FASTEST_LAP";
+
     const standings = sorted.map((curr, i) => {
-      let gap1st: number | null = curr.gapLeader ?? 0;
-      let gapAhead: number | null = curr.gapPosition ?? 0;
+      let gap1st: number | null = curr.gapLeader;
+      let gapAhead: number | null = curr.gapPosition;
+
+      if (i === 0) {
+        gap1st = null;
+        gapAhead = null;
+      } else {
+        if (gap1st === undefined || gap1st === null || isNaN(gap1st)) {
+          gap1st = null;
+        } else if (
+          isFastestLap &&
+          (curr.bestLapTime <= 0 || sorted[0].bestLapTime <= 0)
+        ) {
+          gap1st = null;
+        }
+
+        if (gapAhead === undefined || gapAhead === null || isNaN(gapAhead)) {
+          gapAhead = null;
+        } else if (
+          isFastestLap &&
+          (curr.bestLapTime <= 0 || sorted[i - 1].bestLapTime <= 0)
+        ) {
+          gapAhead = null;
+        }
+      }
 
       return {
         rank: curr.rank || i + 1,
@@ -390,7 +424,58 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
     );
   }
 
+  private calculateHeatGaps(
+    heat: Heat,
+    heatDriver: DriverHeatData,
+    rank: number,
+    isFastestLap: boolean,
+  ): { gap1st: number | null; gapAhead: number | null } {
+    let gap1st: number | null = heatDriver.gapLeader;
+    let gapAhead: number | null = heatDriver.gapPosition;
+    if (rank === 1) {
+      return { gap1st: null, gapAhead: null };
+    }
+
+    if (gap1st === undefined || gap1st === null || isNaN(gap1st)) {
+      gap1st = null;
+    }
+    if (gapAhead === undefined || gapAhead === null || isNaN(gapAhead)) {
+      gapAhead = null;
+    }
+    if (isFastestLap) {
+      const leaderHd = heat.heatDrivers?.find(
+        (d) =>
+          d.rank === 1 || (heat.standings && heat.standings[0] === d.objectId),
+      );
+      if (
+        heatDriver.bestLapTime <= 0 ||
+        (leaderHd && leaderHd.bestLapTime <= 0)
+      ) {
+        gap1st = null;
+      }
+      const aheadHd = heat.heatDrivers?.find(
+        (d) =>
+          d.rank === rank - 1 ||
+          (heat.standings && heat.standings[rank - 2] === d.objectId),
+      );
+      if (
+        heatDriver.bestLapTime <= 0 ||
+        (aheadHd && aheadHd.bestLapTime <= 0)
+      ) {
+        gapAhead = null;
+      }
+    }
+    return { gap1st, gapAhead };
+  }
+
   private recalculateHeats() {
+    const isFastestLap =
+      this.race?.overall_scoring?.rankingMethod ===
+        OverallRanking.OR_FASTEST_LAP ||
+      (this.race?.overall_scoring?.rankingMethod as any) === "FASTEST_LAP" ||
+      this.race?.heat_scoring?.heatRanking === HeatRanking.HR_FASTEST_LAP ||
+      (this.race?.heat_scoring?.heatRanking as any) === "FASTEST_LAP";
+
     const currentHeat = this.raceService.getCurrentHeat();
 
     // Merge completed heats with the current (live) heat, deduplicating by objectId
@@ -448,6 +533,13 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
         }
       }
 
+      const { gap1st, gapAhead } = this.calculateHeatGaps(
+        heat,
+        heatDriver,
+        rank,
+        isFastestLap,
+      );
+
       const row: HeatStandingsRow = {
         rank,
         objectId: heatDriver.objectId,
@@ -456,8 +548,8 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
         medianLapTime: heatDriver.medianLapTime,
         bestLapTime: heatDriver.bestLapTime,
         totalTime: heatDriver.totalTime,
-        gap1st: heatDriver.gapLeader ?? 0,
-        gapAhead: heatDriver.gapPosition ?? 0,
+        gap1st,
+        gapAhead,
         reactionTime: heatDriver.reactionTime,
       };
 

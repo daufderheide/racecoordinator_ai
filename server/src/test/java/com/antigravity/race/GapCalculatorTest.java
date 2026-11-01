@@ -331,10 +331,15 @@ public class GapCalculatorTest {
     GapCalculator.calculateGaps(
         participants, HeatScoring.FinishMethod.Lap, RankingMethod.FASTEST_LAP);
 
-    org.mockito.Mockito.verify(p2).setGapLeader(0.0);
-    org.mockito.Mockito.verify(p2).setGapPosition(0.0);
-    org.mockito.Mockito.verify(p2).setGapLeaderF1(0.0);
-    org.mockito.Mockito.verify(p2).setGapPositionF1(0.0);
+    org.mockito.Mockito.verify(leader).setGapLeader(0.0);
+    org.mockito.Mockito.verify(p2)
+        .setGapLeader(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapPosition(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapLeaderF1(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapPositionF1(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
   }
 
   @Test
@@ -349,8 +354,36 @@ public class GapCalculatorTest {
     GapCalculator.calculateGaps(
         participants, HeatScoring.FinishMethod.Lap, RankingMethod.FASTEST_LAP);
 
-    org.mockito.Mockito.verify(p2).setGapLeader(0.0);
-    org.mockito.Mockito.verify(p2).setGapPosition(0.0);
+    org.mockito.Mockito.verify(leader)
+        .setGapLeader(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(leader)
+        .setGapPosition(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapLeader(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapPosition(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+  }
+
+  @Test
+  public void testGapCalculator_FastestLap_LeaderNoLap_TrailingDriverHasLap() {
+    GapParticipant leader = mock(GapParticipant.class);
+    when(leader.getBestLapTime()).thenReturn(0.0);
+
+    GapParticipant p2 = mock(GapParticipant.class);
+    when(p2.getBestLapTime()).thenReturn(4.123);
+
+    List<GapParticipant> participants = Arrays.asList(leader, p2);
+    GapCalculator.calculateGaps(
+        participants, HeatScoring.FinishMethod.Lap, RankingMethod.FASTEST_LAP);
+
+    org.mockito.Mockito.verify(leader)
+        .setGapLeader(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(leader)
+        .setGapPosition(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapLeader(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
+    org.mockito.Mockito.verify(p2)
+        .setGapPosition(org.mockito.ArgumentMatchers.doubleThat(d -> Double.isNaN(d)));
   }
 
   @Test
@@ -365,6 +398,7 @@ public class GapCalculatorTest {
     GapCalculator.calculateGaps(
         participants, HeatScoring.FinishMethod.Lap, RankingMethod.FASTEST_LAP);
 
+    org.mockito.Mockito.verify(leader).setGapLeader(0.0);
     org.mockito.Mockito.verify(p2).setGapLeader(0.0);
     org.mockito.Mockito.verify(p2).setGapPosition(0.0);
   }

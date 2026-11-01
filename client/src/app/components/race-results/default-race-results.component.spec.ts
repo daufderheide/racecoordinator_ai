@@ -1043,7 +1043,15 @@ describe("DefaultRaceResultsComponent", () => {
     });
 
     it("should return dashes for zero gap (leader)", () => {
-      expect(component["formatGap"](0)).toBe("--.---");
+      expect(component["formatGap"](0, true)).toBe("--.---");
+    });
+
+    it("should return 0.000 for zero gap when not leader", () => {
+      expect(component["formatGap"](0, false)).toBe("0.000");
+    });
+
+    it("should return dashes for NaN", () => {
+      expect(component["formatGap"](NaN, false)).toBe("--.---");
     });
 
     it("should format positive gap with plus sign", () => {

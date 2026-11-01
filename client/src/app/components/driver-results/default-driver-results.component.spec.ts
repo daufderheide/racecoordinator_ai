@@ -947,6 +947,25 @@ describe("DefaultDriverResultsComponent", () => {
     });
   });
 
+  describe("formatGap", () => {
+    it("should return dashes for null, undefined, or NaN", () => {
+      expect((component as any).formatGap(null)).toBe("--.---");
+      expect((component as any).formatGap(NaN)).toBe("--.---");
+    });
+
+    it("should return 0.000 for zero gap", () => {
+      expect((component as any).formatGap(0)).toBe("0.000");
+    });
+
+    it("should return +X.XXX for positive gap", () => {
+      expect((component as any).formatGap(1.234)).toBe("+1.234");
+    });
+
+    it("should return -X.XXX for negative gap", () => {
+      expect((component as any).formatGap(-0.5)).toBe("-0.500");
+    });
+  });
+
   it("should render app-browser-navigation with mode='close'", () => {
     fixture.detectChanges();
     const navEl = fixture.nativeElement.querySelector("app-browser-navigation");

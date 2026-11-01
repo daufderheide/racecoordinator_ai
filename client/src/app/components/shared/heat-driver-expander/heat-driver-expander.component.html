@@ -117,20 +117,10 @@
                 }}
               </div>
               <div class="body-cell text-gap">
-                {{
-                  heatData.row.gap1st !== null &&
-                  (heatData.row.gap1st !== 0 || heatData.row.laps > 0)
-                    ? (heatData.row.gap1st | number: "1.3-3")
-                    : "--.---"
-                }}
+                {{ formatGap(heatData.row.gap1st) }}
               </div>
               <div class="body-cell text-gap">
-                {{
-                  heatData.row.gapAhead !== null &&
-                  (heatData.row.gapAhead !== 0 || heatData.row.laps > 0)
-                    ? (heatData.row.gapAhead | number: "1.3-3")
-                    : "--.---"
-                }}
+                {{ formatGap(heatData.row.gapAhead) }}
               </div>
             </div>
           </div>
