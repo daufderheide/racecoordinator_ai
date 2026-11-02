@@ -327,6 +327,30 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
     );
 
     const raceData = {
+      recordData: {
+        overall: {
+          laneFastestLap: [
+            { value: 4.8, holderNickname: "Alice", holderName: "Alice" },
+            { value: 4.9, holderNickname: "Bob", holderName: "Bob" },
+          ],
+        },
+        current: {
+          fastestLap: {
+            value: 4.88,
+            holderNickname: "Alice",
+            holderName: "Alice",
+          },
+          heatFastestLap: {
+            value: 4.88,
+            holderNickname: "Alice",
+            holderName: "Alice",
+          },
+          laneFastestLap: [
+            { value: 4.88, holderNickname: "Alice", holderName: "Alice" },
+            { value: 5.15, holderNickname: "Bob", holderName: "Bob" },
+          ],
+        },
+      },
       race: {
         race: {
           model: { entityId: "r1" },
@@ -359,6 +383,10 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
             {
               objectId: "hd1",
               laneIndex: 0,
+              currentLocation: 65,
+              laps: Array.from({ length: 20 }, (_, i) => ({
+                lapTime: i === 0 ? 4.88 : 5.05,
+              })),
               lapCount: 20,
               lastLapTime: 4.95,
               bestLapTime: 4.88,
@@ -373,6 +401,10 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
             {
               objectId: "hd2",
               laneIndex: 1,
+              currentLocation: 40,
+              laps: Array.from({ length: 19 }, (_, i) => ({
+                lapTime: i === 0 ? 5.15 : 5.32,
+              })),
               lapCount: 19,
               lastLapTime: 5.21,
               bestLapTime: 5.15,

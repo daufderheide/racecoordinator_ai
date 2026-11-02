@@ -954,6 +954,54 @@ describe("RacedayLaneColumnComponent", () => {
     expect(component.getPacingBenchmarkType()).toBe("HEAT_LEADER_AVG");
   });
 
+  it("should configure stacked and compact correctly for solo pacing and insets", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "ghostPacingLeaderAvg" }),
+    );
+    fixture.detectChanges();
+
+    expect(component.isSoloPacing()).toBeTrue();
+
+    const pacingWidget = fixture.nativeElement.querySelector(
+      "app-raceday-ghost-pacing",
+    );
+    expect(pacingWidget).toBeTruthy();
+
+    // Now add an inset
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        columnKey: "ghostPacingLeaderAvg",
+        insets: { "top-left": "lapCount" },
+      }),
+    );
+    fixture.detectChanges();
+
+    expect(component.isSoloPacing()).toBeFalse();
+  });
+
+  it("should compute and set font size on card for pacing column", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "ghostPacing" }),
+    );
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".raceday-lane-column-card",
+    ) as HTMLElement;
+    expect(cardEl).toBeTruthy();
+    component.fitContent(true);
+    const fontSizeVar = cardEl.style.getPropertyValue(
+      "--lane-col-value-font-size",
+    );
+    expect(fontSizeVar).toBeTruthy();
+    expect(fontSizeVar.endsWith("px")).toBeTrue();
+  });
+
   it("should generate lastLaps from driver lapTimes in reverse order with segments and best lap", () => {
     const driverWithLaps = {
       ...mockDrivers[0],

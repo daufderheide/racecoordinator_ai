@@ -40,6 +40,7 @@ import {
   computeHeatDataLastLaps,
   computeLastLapItemStyle,
   computeLastLapTimeStyle,
+  fitColumnPacingValue,
   fitColumnTextValue,
   getSvgPreserveAspectRatio,
   HeatDataLapItem,
@@ -758,7 +759,26 @@ export class RacedayLaneColumnComponent
       hasTeamName: this.hasTeamName,
       setMaxVisibleLaps: (count) => this.maxVisibleLaps.set(count),
       onFitTextValue: (el) => this.fitTextValue(el),
+      onFitPacingValue: (el) => this.fitPacingValue(el),
     });
+  }
+
+  private fitPacingValue(cardEl: HTMLElement): void {
+    const explicitW = this.cachedWidth || cardEl.clientWidth;
+    const explicitH = this.cachedHeight || cardEl.clientHeight;
+    fitColumnPacingValue(
+      cardEl,
+      this.settings,
+      this.widget()?.scaleMode,
+      this.layoutOrientation,
+      this.hasLeftInsets(),
+      this.hasRightInsets(),
+      (anchor) => this.hasInset(anchor),
+      this.effectiveInsetFontSize,
+      explicitW,
+      explicitH,
+      this.widget()?.textScaleFactor ?? 1,
+    );
   }
 
   private fitTextValue(cardEl: HTMLElement): void {
@@ -842,6 +862,15 @@ export class RacedayLaneColumnComponent
     return this.anchorHelper.hasSideInsets(
       "right",
       this.isExtraGridRow && this.emptyRowsMode === "blank",
+    );
+  }
+
+  isSoloPacing(): boolean {
+    return (
+      !this.hasTopInsets() &&
+      !this.hasBottomInsets() &&
+      !this.hasLeftInsets() &&
+      !this.hasRightInsets()
     );
   }
 

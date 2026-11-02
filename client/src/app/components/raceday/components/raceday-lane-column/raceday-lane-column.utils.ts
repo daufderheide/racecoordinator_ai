@@ -773,6 +773,83 @@ export function fitColumnTextValue(
   safeguardTextOverflow(cardEl, targetSize, minSize);
 }
 
+export function fitColumnPacingValue(
+  cardEl: HTMLElement,
+  settings: LaneColumnWidgetSettings,
+  scaleMode: string | undefined,
+  layoutOrientation: "vertical" | "horizontal",
+  hasLeftInsets: boolean,
+  hasRightInsets: boolean,
+  hasInset: (anchor: string) => boolean,
+  effectiveInsetFontSize: number,
+  explicitWidth?: number,
+  explicitHeight?: number,
+  textScaleFactor: number = 1,
+): void {
+  const cardW =
+    explicitWidth && explicitWidth > 0 ? explicitWidth : cardEl.clientWidth;
+  const cardH =
+    explicitHeight && explicitHeight > 0 ? explicitHeight : cardEl.clientHeight;
+
+  if (cardW <= 0 || cardH <= 0) {
+    const fallbackSize = settings.valueFontSize || 54;
+    cardEl.style.setProperty("--lane-col-value-font-size", `${fallbackSize}px`);
+    cardEl.style.setProperty("--lane-col-pad-left", "0px");
+    cardEl.style.setProperty("--lane-col-pad-right", "0px");
+    cardEl.style.setProperty("--lane-col-pad-top", "0px");
+    cardEl.style.setProperty("--lane-col-pad-bottom", "0px");
+    return;
+  }
+
+  const isHorizontal = layoutOrientation === "horizontal";
+  const baseDims = calculateBaseDimensions(
+    cardEl,
+    settings,
+    isHorizontal,
+    explicitWidth,
+    explicitHeight,
+    scaleMode,
+    false,
+  );
+  const dims = applyColumnInsetsAndPaddings(
+    cardEl,
+    baseDims.availWidth,
+    baseDims.availHeight,
+    hasLeftInsets,
+    hasRightInsets,
+    hasInset,
+    effectiveInsetFontSize,
+  );
+
+  const baseFontSize = resolveColumnBaseFontSize(
+    settings,
+    dims.availHeight,
+    scaleMode,
+    isHorizontal,
+    textScaleFactor,
+  );
+
+  const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
+  if (isCustomScaling) {
+    cardEl.style.setProperty("--lane-col-value-font-size", `${baseFontSize}px`);
+    return;
+  }
+
+  const ctx = getSharedCanvasContext();
+  let fittedSize = baseFontSize;
+  if (ctx && dims.availWidth > 0) {
+    const computedFamily = resolveCardFontFamily(cardEl, settings);
+    ctx.font = `bold ${Math.round(baseFontSize * 0.9)}px ${computedFamily}`;
+    const textW = ctx.measureText("99.999s").width;
+    if (textW > dims.availWidth && textW > 0) {
+      const scale = dims.availWidth / textW;
+      fittedSize = Math.max(14, Math.floor(baseFontSize * scale));
+    }
+  }
+
+  cardEl.style.setProperty("--lane-col-value-font-size", `${fittedSize}px`);
+}
+
 export {
   applyValueWrapStyles,
   computeBestWrapTextFontSize,

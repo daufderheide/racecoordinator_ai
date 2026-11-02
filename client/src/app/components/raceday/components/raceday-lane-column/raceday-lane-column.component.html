@@ -757,6 +757,8 @@
               [heatLeaderBest]="parent()?.heatBestTime || 0"
               [heatLeaderAvg]="parent()?.heatLeaderAvgTime || 0"
               [heatLeaderMedian]="parent()?.heatLeaderMedianTime || 0"
+              [stacked]="isSoloPacing()"
+              [compact]="!isSoloPacing()"
             ></app-raceday-ghost-pacing>
           } @else {
             <!-- Case 4: Formatted Text / Numerical Value -->

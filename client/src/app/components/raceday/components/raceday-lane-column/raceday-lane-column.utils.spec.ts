@@ -9,6 +9,7 @@ import {
   computeLastLapTimeStyle,
   extractDroppedColumnKey,
   fitColumnLastLaps,
+  fitColumnPacingValue,
   fitColumnTextValue,
   formatAdjustedLapValue,
   getInsetDefaultAlignment,
@@ -1454,6 +1455,98 @@ describe("raceday-lane-column.utils", () => {
         "gapToLeader",
       );
       expect(txt.style.whiteSpace).toBe("nowrap");
+    });
+  });
+
+  describe("fitColumnPacingValue", () => {
+    let cardEl: HTMLElement;
+
+    beforeEach(() => {
+      cardEl = document.createElement("div");
+    });
+
+    it("should set fallback font size when card dimensions are zero", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 0,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 0,
+        configurable: true,
+      });
+
+      fitColumnPacingValue(
+        cardEl,
+        { valueFontSize: 42 } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(sizeVar).toBe("42px");
+    });
+
+    it("should apply base font size directly in fixed scaleMode", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 150,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 80,
+        configurable: true,
+      });
+
+      fitColumnPacingValue(
+        cardEl,
+        { valueFontSize: 48 } as any,
+        "fixed",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(sizeVar).toBe("48px");
+    });
+
+    it("should auto-scale font size to container dimensions in auto scaleMode", () => {
+      Object.defineProperty(cardEl, "clientWidth", {
+        value: 200,
+        configurable: true,
+      });
+      Object.defineProperty(cardEl, "clientHeight", {
+        value: 100,
+        configurable: true,
+      });
+
+      fitColumnPacingValue(
+        cardEl,
+        { showHeader: true } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+      );
+
+      const sizeVar = cardEl.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(sizeVar).toBeTruthy();
+      const numSize = parseInt(sizeVar, 10);
+      expect(numSize).toBeGreaterThanOrEqual(14);
+      expect(numSize).toBeLessThanOrEqual(84);
     });
   });
 

@@ -24,6 +24,7 @@ export interface LaneColumnFitContext {
   hasTeamName?: boolean;
   setMaxVisibleLaps: (count: number | undefined) => void;
   onFitTextValue: (cardEl: HTMLElement) => void;
+  onFitPacingValue?: (cardEl: HTMLElement) => void;
 }
 
 export class LaneColumnFitHelper {
@@ -80,7 +81,9 @@ export class LaneColumnFitHelper {
         ctx.isVerticalLapsFlow,
         ctx.setMaxVisibleLaps,
       );
-    } else if (!ctx.isImageProperty && !ctx.isPacingProperty) {
+    } else if (ctx.isPacingProperty) {
+      ctx.onFitPacingValue?.(cardEl);
+    } else if (!ctx.isImageProperty) {
       const text = ctx.formattedValue?.trim() || "";
       const w = ctx.cachedWidth || cardEl.clientWidth;
       const h = ctx.cachedHeight || cardEl.clientHeight;
