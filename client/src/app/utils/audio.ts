@@ -66,7 +66,9 @@ export interface LapAudioCalloutInfo {
  * Checks whether an audio configuration is defined, not set to 'none',
  * and contains playable content (non-empty URL or non-empty TTS text).
  */
-export function isAudioConfigured(config?: AudioConfig | null): boolean {
+export function isAudioConfigured(
+  config?: AudioConfig | null,
+): config is AudioConfig {
   if (!config) return false;
   if (config.type === "none") return false;
   if (config.type === "tts") {
@@ -376,17 +378,15 @@ export function dispatchLapAudio(
   }
 
   // If the sound for that lap wasn't played (either because of priority, set to none, or missing),
-  // fallback to personal best lap sound (if isBestLap) or normal lap sound.
-  let fallbackAudio = isBestLap
-    ? resolvedDriver.bestLapAudio
-    : resolvedDriver.lapAudio;
-
-  // If the special audio that failed WAS the bestLapAudio, we should fallback to the normal lapAudio instead
+  // fallback to personal best lap sound (if isBestLap and configured) or normal lap sound.
+  let fallbackAudio: AudioConfig | undefined;
   if (
-    specialAudio &&
-    specialAudio.config === fallbackAudio &&
-    fallbackAudio === resolvedDriver.bestLapAudio
+    isBestLap &&
+    isAudioConfigured(resolvedDriver.bestLapAudio) &&
+    (!specialAudio || specialAudio.config !== resolvedDriver.bestLapAudio)
   ) {
+    fallbackAudio = resolvedDriver.bestLapAudio;
+  } else {
     fallbackAudio = resolvedDriver.lapAudio;
   }
 

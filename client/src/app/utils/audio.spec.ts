@@ -1057,6 +1057,7 @@ describe("playSound Utility", () => {
         ...driver,
         overallBestLapAudio: { type: "none" },
         bestLapAudio: { type: "none" },
+        lapAudio: { type: "none" },
       };
       dispatchLapAudio(
         mockPlayer,
@@ -1069,6 +1070,26 @@ describe("playSound Utility", () => {
 
       expect(mockPlayer.playCallout).not.toHaveBeenCalled();
       expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should fall back to lapAudio if bestLapAudio is configured as none on best lap", () => {
+      const driverWithNoneBestLap = {
+        ...driver,
+        overallBestLapAudio: { type: "none" },
+        bestLapAudio: { type: "none" },
+        lapAudio: { type: "preset", url: "beep.wav" },
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driverWithNoneBestLap,
+        1,
+        true,
+        false,
+        false,
+      );
+
+      expect(mockPlayer.playCallout).not.toHaveBeenCalled();
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("beep.wav");
     });
 
     it("should play personal best lap preset directly as SFX for Tier 1 lap", () => {
@@ -1253,7 +1274,7 @@ describe("playSound Utility", () => {
       );
       expect(mockPlayer.playSfx).toHaveBeenCalledWith("theme_beep.wav");
 
-      // When theme overrides bestLapAudio to none, no sound plays
+      // When theme overrides bestLapAudio to none, it falls back to theme's lapAudio
       mockPlayer.playSfx.calls.reset();
       dispatchLapAudio(
         mockPlayer,
@@ -1267,7 +1288,53 @@ describe("playSound Utility", () => {
         false,
         theme as any,
       );
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("theme_beep.wav");
+
+      // When theme overrides both bestLapAudio and lapAudio to none, no sound plays
+      const themeBothNone = {
+        name: "Test Theme",
+        driver_audio_overrides: {
+          lapAudio: { type: "none" as const },
+          bestLapAudio: { type: "none" as const },
+        },
+      };
+      mockPlayer.playSfx.calls.reset();
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        1,
+        true,
+        false,
+        false,
+        undefined,
+        undefined,
+        false,
+        themeBothNone as any,
+      );
       expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+
+      // When theme overrides bestLapAudio to none and leaves lapAudio to use driver config,
+      // it falls back to whatever is configured on the driver
+      const themeOnlyBestNone = {
+        name: "Test Theme",
+        driver_audio_overrides: {
+          bestLapAudio: { type: "none" as const },
+        },
+      };
+      mockPlayer.playSfx.calls.reset();
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        1,
+        true,
+        false,
+        false,
+        undefined,
+        undefined,
+        false,
+        themeOnlyBestNone as any,
+      );
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("beep.wav");
 
       // When theme overrides bestLapAudio to a custom preset sound
       const themeWithBest = {

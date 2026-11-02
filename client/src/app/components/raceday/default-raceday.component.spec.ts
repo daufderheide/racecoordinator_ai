@@ -13443,6 +13443,112 @@ describe("DefaultRacedayComponent", () => {
         jasmine.objectContaining({ widgetType: "lane-view" }),
       );
     });
+
+    it("should fall back to theme lapAudio override on best lap when theme overrides bestLapAudio to none", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+
+      const themeWithNoneBestLap: any = {
+        entity_id: "test_theme",
+        name: "Test Theme",
+        driver_audio_overrides: {
+          bestLapAudio: { type: "none" },
+          lapAudio: {
+            type: "tts",
+            text: "{driver.name} lap override",
+          },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(themeWithNoneBestLap);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.bestLapAudio = { type: "preset", url: "driver_best_lap.wav" };
+      hd.driver.lapAudio = { type: "preset", url: "driver_default_beep.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 1,
+        lapTime: 4.5,
+        bestLapTime: 4.5,
+      });
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "{driver.name} lap override",
+        }),
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+    });
+
+    it("should fall back to driver lapAudio on best lap when theme overrides bestLapAudio to none and lapAudio is unset", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playSfxSpy = spyOn(audioService, "playSfx").and.callThrough();
+
+      const themeBestNone: any = {
+        entity_id: "test_theme",
+        name: "Test Theme",
+        driver_audio_overrides: {
+          bestLapAudio: { type: "none" },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(themeBestNone);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.bestLapAudio = { type: "preset", url: "driver_best_lap.wav" };
+      hd.driver.lapAudio = { type: "preset", url: "driver_default_beep.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 1,
+        lapTime: 4.5,
+        bestLapTime: 4.5,
+      });
+
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "driver_default_beep.wav",
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+    });
+
+    it("should not play any sound on best lap when both bestLapAudio and lapAudio are overridden to none in theme", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(audioService, "playSfx").and.callThrough();
+
+      const themeBothNone: any = {
+        entity_id: "test_theme",
+        name: "Test Theme",
+        driver_audio_overrides: {
+          bestLapAudio: { type: "none" },
+          lapAudio: { type: "none" },
+        },
+      };
+      mockThemeService.getActiveTheme.and.returnValue(themeBothNone);
+
+      const hd = component["heat"]!.heatDrivers[0];
+      hd.driver.bestLapAudio = { type: "preset", url: "driver_best_lap.wav" };
+      hd.driver.lapAudio = { type: "preset", url: "driver_default_beep.wav" };
+
+      lapsSubject.next({
+        objectId: hd.objectId,
+        lapNumber: 1,
+        lapTime: 4.5,
+        bestLapTime: 4.5,
+      });
+
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe("Grid Session Blueprint Resizing", () => {

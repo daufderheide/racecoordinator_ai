@@ -304,13 +304,19 @@ export class RacedayLapAudioHelper {
     specialAudioConfig?: any,
   ): void {
     if (!driver) return;
-    let fallbackAudio = isBestLap ? driver.bestLapAudio : driver.lapAudio;
+    const activeTheme = host.themeService?.getActiveTheme?.();
+    const effectiveDriver = getEffectiveDriver(driver, activeTheme);
+
+    let fallbackAudio: any;
     if (
-      specialAudioConfig &&
-      specialAudioConfig === fallbackAudio &&
-      fallbackAudio === driver.bestLapAudio
+      isBestLap &&
+      isAudioConfigured(effectiveDriver.bestLapAudio) &&
+      (!specialAudioConfig ||
+        specialAudioConfig !== effectiveDriver.bestLapAudio)
     ) {
-      fallbackAudio = driver.lapAudio;
+      fallbackAudio = effectiveDriver.bestLapAudio;
+    } else {
+      fallbackAudio = effectiveDriver.lapAudio;
     }
 
     if (
