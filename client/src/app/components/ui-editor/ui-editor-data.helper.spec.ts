@@ -47,7 +47,7 @@ describe("ui-editor-data.helper", () => {
     ];
     normalizeLoadedCustomUis(uis);
     expect(uis.length).toBe(1);
-    expect(uis[0].name).toBe("RaceCoordinator AI");
+    expect(uis[0].name).toBe("RC AI");
     expect(
       uis.some((u) => u.entity_id === "practice_ui_layout_rc_ai"),
     ).toBeFalse();
@@ -84,13 +84,13 @@ describe("ui-editor-data.helper", () => {
     ensureDefaultCustomUis(uis, settings);
     expect(
       uis.find((u) => u.entity_id === "default_ui_layout_rc_ai")?.name,
-    ).toBe("RaceCoordinator AI");
+    ).toBe("RC AI");
     expect(
       uis.find((u) => u.entity_id === "practice_ui_layout_rc_ai")?.name,
-    ).toBe("RaceCoordinator AI (Practice)");
+    ).toBe("RC AI (Practice)");
     expect(
       uis.find((u) => u.entity_id === "default_fuel_ui_layout_rc_ai")?.name,
-    ).toBe("RaceCoordinator AI (Fuel)");
+    ).toBe("RC AI (Fuel)");
     expect(uis.find((u) => u.entity_id === "custom_ui_1")?.name).toBe(
       "My Custom Layout",
     );
@@ -100,7 +100,7 @@ describe("ui-editor-data.helper", () => {
     const uis: CustomUI[] = [
       {
         entity_id: "driver_station_ui_layout_rc_ai",
-        name: "RaceCoordinator AI (Driver Station)",
+        name: "RC AI (Driver Station)",
         is_default: true,
         layoutJson: JSON.stringify({
           widgets: [
@@ -151,7 +151,7 @@ describe("ui-editor-data.helper", () => {
       (u) => u.entity_id === "default_fuel_ui_layout_rc_ai",
     );
     expect(fuelUi).toBeDefined();
-    expect(fuelUi?.name).toBe("RaceCoordinator AI (Fuel)");
+    expect(fuelUi?.name).toBe("RC AI (Fuel)");
     expect(uis.some((u) => u.entity_id === "2")).toBeFalse();
   });
 
@@ -177,7 +177,7 @@ describe("ui-editor-data.helper", () => {
       (u) => u.entity_id === "default_fuel_ui_layout_rc_ai",
     );
     expect(fuelUi).toBeDefined();
-    expect(fuelUi?.name).toBe("RaceCoordinator AI (Fuel)");
+    expect(fuelUi?.name).toBe("RC AI (Fuel)");
   });
 
   it("should preserve custom theme uiId when pointing to custom UI '2'", () => {
@@ -257,14 +257,14 @@ describe("ui-editor-data.helper", () => {
     const loadedThemes = result.initialState.themes;
     expect(
       loadedThemes.find((t) => t.entity_id === "default_classic_rc_ai")?.name,
-    ).toBe("RaceCoordinator AI");
+    ).toBe("RC AI");
     expect(
       loadedThemes.find((t) => t.entity_id === "practice_theme_rc_ai")?.name,
-    ).toBe("RaceCoordinator AI (Practice)");
+    ).toBe("RC AI (Practice)");
     expect(
       loadedThemes.find((t) => t.entity_id === "default_fuel_theme_rc_ai")
         ?.name,
-    ).toBe("RaceCoordinator AI (Fuel)");
+    ).toBe("RC AI (Fuel)");
     expect(
       loadedThemes.find((t) => t.entity_id === "custom_theme_1")?.name,
     ).toBe("My Custom Theme");
@@ -287,7 +287,7 @@ describe("ui-editor-data.helper", () => {
       customUIs: [
         {
           entity_id: "default_ui_layout_rc_ai",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
         },
       ],

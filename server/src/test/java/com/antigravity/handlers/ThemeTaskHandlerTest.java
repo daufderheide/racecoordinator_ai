@@ -442,6 +442,15 @@ public class ThemeTaskHandlerTest {
             "Fuel Theme", true, new HashMap<>(), new HashMap<>(), null, Theme.FUEL_THEME_ID, null));
     repo.save(
         new Theme(
+            "Driver Station Theme",
+            true,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.DRIVER_STATION_THEME_ID,
+            null));
+    repo.save(
+        new Theme(
             "My Custom Theme",
             false,
             new HashMap<>(),
@@ -463,6 +472,10 @@ public class ThemeTaskHandlerTest {
     Theme fuelTheme = repo.findByEntityId(Theme.FUEL_THEME_ID);
     assertNotNull(fuelTheme);
     assertEquals(Theme.FUEL_THEME_NAME, fuelTheme.getName());
+
+    Theme driverStationTheme = repo.findByEntityId(Theme.DRIVER_STATION_THEME_ID);
+    assertNotNull(driverStationTheme);
+    assertEquals(Theme.DRIVER_STATION_THEME_NAME, driverStationTheme.getName());
 
     Theme customTheme = repo.findByEntityId("custom_1");
     assertNotNull(customTheme);

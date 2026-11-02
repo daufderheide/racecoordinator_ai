@@ -404,7 +404,7 @@ describe("RacedayMenuBarComponent", () => {
 
     it("should alphabetize themes in natural order and localize default themes when rendered in the menu", () => {
       mockTranslationService.translate.and.callFake((key: string) => {
-        if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+        if (key === "UE_LABEL_DEFAULT_THEME") return "RC AI";
         return key;
       });
 
@@ -412,7 +412,7 @@ describe("RacedayMenuBarComponent", () => {
         { entity_id: "t_zeta", name: "Zeta Theme" } as any,
         {
           entity_id: "default_classic_rc_ai",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
         } as any,
         { entity_id: "t_alpha", name: "Alpha Theme" } as any,
@@ -431,7 +431,7 @@ describe("RacedayMenuBarComponent", () => {
         "Alpha Theme",
         "Beta 2 Theme",
         "Beta 10 Theme",
-        "RaceCoordinator AI",
+        "RC AI",
         "Zeta Theme",
       ]);
     });

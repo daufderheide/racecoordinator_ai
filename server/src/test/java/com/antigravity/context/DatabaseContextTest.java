@@ -161,7 +161,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(defaultTheme);
-    assertEquals("RaceCoordinator AI", defaultTheme.getName());
+    assertEquals(com.antigravity.models.Theme.DEFAULT_THEME_NAME, defaultTheme.getName());
 
     com.antigravity.models.Theme practiceTheme =
         themes.stream()
@@ -169,7 +169,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(practiceTheme);
-    assertEquals("RaceCoordinator AI (Practice)", practiceTheme.getName());
+    assertEquals(com.antigravity.models.Theme.PRACTICE_THEME_NAME, practiceTheme.getName());
 
     com.antigravity.models.Theme fuelTheme =
         themes.stream()
@@ -177,7 +177,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(fuelTheme);
-    assertEquals("RaceCoordinator AI (Fuel)", fuelTheme.getName());
+    assertEquals(com.antigravity.models.Theme.FUEL_THEME_NAME, fuelTheme.getName());
 
     SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
         new SqliteRepository<>(
@@ -192,7 +192,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(defaultUi);
-    assertEquals("RaceCoordinator AI", defaultUi.getName());
+    assertEquals(com.antigravity.models.CustomUI.DEFAULT_UI_NAME, defaultUi.getName());
 
     com.antigravity.models.CustomUI practiceUi =
         uis.stream()
@@ -200,7 +200,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(practiceUi);
-    assertEquals("RaceCoordinator AI (Practice)", practiceUi.getName());
+    assertEquals(com.antigravity.models.CustomUI.PRACTICE_UI_NAME, practiceUi.getName());
 
     com.antigravity.models.CustomUI fuelUi =
         uis.stream()
@@ -208,7 +208,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(fuelUi);
-    assertEquals("RaceCoordinator AI (Fuel)", fuelUi.getName());
+    assertEquals(com.antigravity.models.CustomUI.FUEL_UI_NAME, fuelUi.getName());
 
     com.antigravity.models.CustomUI driverStationUi =
         uis.stream()
@@ -217,7 +217,7 @@ public class DatabaseContextTest {
             .findFirst()
             .orElse(null);
     assertNotNull(driverStationUi);
-    assertEquals("RaceCoordinator AI (Driver Station)", driverStationUi.getName());
+    assertEquals(com.antigravity.models.CustomUI.DRIVER_STATION_UI_NAME, driverStationUi.getName());
   }
 
   @Test

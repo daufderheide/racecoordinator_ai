@@ -288,7 +288,7 @@ test.describe("Theme Editor Visuals", () => {
 
     const themeInput = page.locator("#theme-name-input");
     await themeInput.waitFor({ state: "visible" });
-    await themeInput.fill("RaceCoordinator AI");
+    await themeInput.fill("RC AI");
     await themeInput.blur();
 
     const nameSection = page.locator("#theme-name-section.invalid");

@@ -12,10 +12,10 @@ public class CustomUI extends Model {
   public static final String FUEL_UI_ID = "default_fuel_ui_layout_rc_ai";
   public static final String DRIVER_STATION_UI_ID = "driver_station_ui_layout_rc_ai";
 
-  public static final String DEFAULT_UI_NAME = "RaceCoordinator AI";
-  public static final String PRACTICE_UI_NAME = "RaceCoordinator AI (Practice)";
-  public static final String FUEL_UI_NAME = "RaceCoordinator AI (Fuel)";
-  public static final String DRIVER_STATION_UI_NAME = "RaceCoordinator AI (Driver Station)";
+  public static final String DEFAULT_UI_NAME = "RC AI";
+  public static final String PRACTICE_UI_NAME = "RC AI (Practice)";
+  public static final String FUEL_UI_NAME = "RC AI (Fuel)";
+  public static final String DRIVER_STATION_UI_NAME = "RC AI (Driver Station)";
 
   public static boolean isLegacyDefaultName(String name) {
     if (name == null || name.trim().isEmpty()) {
@@ -27,7 +27,9 @@ public class CustomUI extends Model {
         || "default ui layout".equals(n)
         || "raceday ui layout".equals(n)
         || "racecoordinator ai".equals(n)
-        || "racecoordinator ai (default)".equals(n);
+        || "racecoordinator ai (default)".equals(n)
+        || "rc ai".equals(n)
+        || "rc ai (default)".equals(n);
   }
 
   public static boolean isLegacyPracticeName(String name) {
@@ -38,7 +40,9 @@ public class CustomUI extends Model {
     return "practice".equals(n)
         || "practice ui".equals(n)
         || "practice ui layout".equals(n)
-        || "default practice ui layout".equals(n);
+        || "default practice ui layout".equals(n)
+        || "racecoordinator ai (practice)".equals(n)
+        || "rc ai (practice)".equals(n);
   }
 
   public static boolean isLegacyFuelName(String name) {
@@ -49,7 +53,9 @@ public class CustomUI extends Model {
     return "fuel".equals(n)
         || "fuel ui".equals(n)
         || "fuel ui layout".equals(n)
-        || "default fuel ui layout".equals(n);
+        || "default fuel ui layout".equals(n)
+        || "racecoordinator ai (fuel)".equals(n)
+        || "rc ai (fuel)".equals(n);
   }
 
   public static boolean isLegacyDriverStationName(String name) {
@@ -62,7 +68,8 @@ public class CustomUI extends Model {
         || "driver station layout".equals(n)
         || "driver station ui layout".equals(n)
         || "default driver station ui layout".equals(n)
-        || "racecoordinator ai (driver station)".equals(n);
+        || "racecoordinator ai (driver station)".equals(n)
+        || "rc ai (driver station)".equals(n);
   }
 
   public static final String PRE_MIGRATION_BACKUP_SUFFIX = " (Pre-Migration Backup)";
@@ -205,7 +212,7 @@ public class CustomUI extends Model {
     String columnVisibilityJson = "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\"}";
     String columnWidthsJson = "{\"ghostPacingLeaderAvg\":200,\"averageLapTime\":310}";
     return new CustomUI(
-        "RaceCoordinator AI",
+        DEFAULT_UI_NAME,
         true,
         layoutJson,
         columnsJson,
@@ -233,7 +240,7 @@ public class CustomUI extends Model {
     String columnVisibilityJson =
         "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\",\"laneNumber\":\"Always\",\"lastLaps\":\"Always\"}";
     return new CustomUI(
-        "RaceCoordinator AI (Practice)",
+        PRACTICE_UI_NAME,
         true,
         layoutJson,
         columnsJson,
@@ -303,7 +310,7 @@ public class CustomUI extends Model {
         "{\"lapCount\":210,\"imageset_fuel-gauge-builtin\":210,\"lastLapTime\":310,"
             + "\"gap\":310}";
     return new CustomUI(
-        "RaceCoordinator AI (Fuel)",
+        FUEL_UI_NAME,
         true,
         layoutJson,
         columnsJson,

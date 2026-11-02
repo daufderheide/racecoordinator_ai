@@ -22,10 +22,10 @@ public class Theme extends Model {
   public static final String FUEL_THEME_ID = "default_fuel_theme_rc_ai";
   public static final String DRIVER_STATION_THEME_ID = "driver_station_theme_rc_ai";
 
-  public static final String DEFAULT_THEME_NAME = "RaceCoordinator AI";
-  public static final String PRACTICE_THEME_NAME = "RaceCoordinator AI (Practice)";
-  public static final String FUEL_THEME_NAME = "RaceCoordinator AI (Fuel)";
-  public static final String DRIVER_STATION_THEME_NAME = "RaceCoordinator AI (Driver Station)";
+  public static final String DEFAULT_THEME_NAME = "RC AI";
+  public static final String PRACTICE_THEME_NAME = "RC AI (Practice)";
+  public static final String FUEL_THEME_NAME = "RC AI (Fuel)";
+  public static final String DRIVER_STATION_THEME_NAME = "RC AI (Driver Station)";
 
   // TODO(aufderheide): Remove the legacy name checks after a few versions.
   public static boolean isLegacyDefaultName(String name) {
@@ -38,7 +38,9 @@ public class Theme extends Model {
         || "classic theme".equals(n)
         || "default theme".equals(n)
         || "racecoordinator ai".equals(n)
-        || "racecoordinator ai (default)".equals(n);
+        || "racecoordinator ai (default)".equals(n)
+        || "rc ai".equals(n)
+        || "rc ai (default)".equals(n);
   }
 
   // TODO(aufderheide): Remove the legacy name checks after a few versions.
@@ -47,7 +49,10 @@ public class Theme extends Model {
       return true;
     }
     String n = name.trim().toLowerCase();
-    return "practice".equals(n) || "practice theme".equals(n);
+    return "practice".equals(n)
+        || "practice theme".equals(n)
+        || "racecoordinator ai (practice)".equals(n)
+        || "rc ai (practice)".equals(n);
   }
 
   // TODO(aufderheide): Remove the legacy name checks after a few versions.
@@ -56,7 +61,10 @@ public class Theme extends Model {
       return true;
     }
     String n = name.trim().toLowerCase();
-    return "fuel".equals(n) || "fuel theme".equals(n);
+    return "fuel".equals(n)
+        || "fuel theme".equals(n)
+        || "racecoordinator ai (fuel)".equals(n)
+        || "rc ai (fuel)".equals(n);
   }
 
   public static boolean isLegacyDriverStationName(String name) {
@@ -66,7 +74,8 @@ public class Theme extends Model {
     String n = name.trim().toLowerCase();
     return "driver station".equals(n)
         || "driver station theme".equals(n)
-        || "racecoordinator ai (driver station)".equals(n);
+        || "racecoordinator ai (driver station)".equals(n)
+        || "rc ai (driver station)".equals(n);
   }
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

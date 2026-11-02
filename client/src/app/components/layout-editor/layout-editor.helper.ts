@@ -30,7 +30,7 @@ export function createFallbackDefaultLayouts(
   return [
     {
       entity_id: "default_ui_layout_rc_ai",
-      name: "RaceCoordinator AI",
+      name: "RC AI",
       is_default: true,
       layoutJson: JSON.stringify(racedayLayout || Settings.DEFAULT_LAYOUT),
       columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
@@ -41,7 +41,7 @@ export function createFallbackDefaultLayouts(
     },
     {
       entity_id: "practice_ui_layout_rc_ai",
-      name: "RaceCoordinator AI (Practice)",
+      name: "RC AI (Practice)",
       is_default: true,
       layoutJson: JSON.stringify(
         practiceRacedayLayout || Settings.DEFAULT_PRACTICE_LAYOUT,
@@ -56,7 +56,7 @@ export function createFallbackDefaultLayouts(
     },
     {
       entity_id: "default_fuel_ui_layout_rc_ai",
-      name: "RaceCoordinator AI (Fuel)",
+      name: "RC AI (Fuel)",
       is_default: true,
       layoutJson: JSON.stringify(racedayLayout || Settings.DEFAULT_LAYOUT),
       columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
@@ -257,7 +257,7 @@ export function resolveTemplateSource(
     const resetData = getDefaultLayoutResetData(true);
     return {
       entity_id: "practice_ui_layout_rc_ai",
-      name: "RaceCoordinator AI (Practice)",
+      name: "RC AI (Practice)",
       is_default: true,
       layoutJson: JSON.stringify(resetData.defaultLayout),
       columnsJson: JSON.stringify(resetData.columns),
@@ -290,7 +290,7 @@ export function resolveTemplateSource(
     const resetData = getDefaultLayoutResetData(false);
     return {
       entity_id: "default_fuel_ui_layout_rc_ai",
-      name: "RaceCoordinator AI (Fuel)",
+      name: "RC AI (Fuel)",
       is_default: true,
       layoutJson: JSON.stringify(resetData.defaultLayout),
       columnsJson: JSON.stringify(resetData.columns),

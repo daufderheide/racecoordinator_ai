@@ -20,12 +20,12 @@ describe("NewLayoutModalComponent", () => {
   let fixture: ComponentFixture<NewLayoutModalComponent>;
 
   const mockOptions = [
-    { id: "default_ui_layout_rc_ai", name: "RaceCoordinator AI" },
-    { id: "practice_ui_layout_rc_ai", name: "RaceCoordinator AI (Practice)" },
-    { id: "default_fuel_ui_layout_rc_ai", name: "RaceCoordinator AI (Fuel)" },
+    { id: "default_ui_layout_rc_ai", name: "RC AI" },
+    { id: "practice_ui_layout_rc_ai", name: "RC AI (Practice)" },
+    { id: "default_fuel_ui_layout_rc_ai", name: "RC AI (Fuel)" },
     {
       id: "driver_station_ui_layout_rc_ai",
-      name: "RaceCoordinator AI (Driver Station)",
+      name: "RC AI (Driver Station)",
     },
     { id: "empty", name: "Empty Layout" },
   ];

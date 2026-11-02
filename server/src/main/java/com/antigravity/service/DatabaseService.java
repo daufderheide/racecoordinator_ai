@@ -85,6 +85,10 @@ public class DatabaseService {
     databaseInitializer.backfillDrivers(context);
   }
 
+  public void backfillThemes(DatabaseContext context) {
+    databaseInitializer.backfillThemes(context);
+  }
+
   public void markDefaultArtifactDeleted(DatabaseContext context, String type, String id) {
     context.markDefaultArtifactDeleted(type, id);
   }

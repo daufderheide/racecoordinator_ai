@@ -51,6 +51,7 @@ public class DatabaseInitializer {
         new AssetService(context, Paths.get(context.getDataRoot(), dbName, "assets").toString())
             .backfillDefaults();
         backfillCustomUIs(context);
+        backfillThemes(context);
         backfillDrivers(context);
         logger.info("Database reset to factory complete.");
         return;
@@ -496,7 +497,7 @@ public class DatabaseInitializer {
 
     Theme defaultTheme =
         new Theme(
-            "RaceCoordinator AI",
+            Theme.DEFAULT_THEME_NAME,
             true,
             slots,
             audioSlots,
@@ -505,7 +506,7 @@ public class DatabaseInitializer {
             null);
     Theme practiceTheme =
         new Theme(
-            "RaceCoordinator AI (Practice)",
+            Theme.PRACTICE_THEME_NAME,
             true,
             slots,
             audioSlots,
@@ -514,7 +515,7 @@ public class DatabaseInitializer {
             null);
     Theme fuelTheme =
         new Theme(
-            "RaceCoordinator AI (Fuel)",
+            Theme.FUEL_THEME_NAME,
             true,
             slots,
             audioSlots,
@@ -663,6 +664,76 @@ public class DatabaseInitializer {
     ensurePreMigrationBackups(context, uiRepo);
   }
 
+  public void backfillThemes(DatabaseContext context) {
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    List<Theme> themes = themeRepo.findAll();
+    boolean[] foundFlags = new boolean[4]; // [default, practice, fuel, driver_station]
+    for (Theme theme : themes) {
+      backfillSingleTheme(theme, themeRepo, foundFlags);
+    }
+    if (!foundFlags[0] && !context.isDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID)) {
+      Theme defaultTheme =
+          new Theme(
+              Theme.DEFAULT_THEME_NAME,
+              true,
+              createDefaultThemeSlots(),
+              createDefaultThemeAudioSlots(),
+              CustomUI.DEFAULT_UI_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.DEFAULT_THEME_ID,
+              null);
+      themeRepo.save(defaultTheme);
+      logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
+    }
+    if (!foundFlags[1] && !context.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID)) {
+      Theme practiceTheme =
+          new Theme(
+              Theme.PRACTICE_THEME_NAME,
+              false,
+              createDefaultThemeSlots(),
+              createDefaultThemeAudioSlots(),
+              CustomUI.PRACTICE_UI_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.PRACTICE_THEME_ID,
+              null);
+      themeRepo.save(practiceTheme);
+      logger.info("Backfilled practice theme with ID {}", Theme.PRACTICE_THEME_ID);
+    }
+    if (!foundFlags[2] && !context.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID)) {
+      Theme fuelTheme =
+          new Theme(
+              Theme.FUEL_THEME_NAME,
+              false,
+              createDefaultThemeSlots(),
+              createDefaultThemeAudioSlots(),
+              CustomUI.FUEL_UI_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.FUEL_THEME_ID,
+              null);
+      themeRepo.save(fuelTheme);
+      logger.info("Backfilled fuel theme with ID {}", Theme.FUEL_THEME_ID);
+    }
+    if (!foundFlags[3]
+        && !context.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID)) {
+      Theme driverStationTheme =
+          new Theme(
+              Theme.DRIVER_STATION_THEME_NAME,
+              false,
+              createDefaultThemeSlots(),
+              createDefaultThemeAudioSlots(),
+              CustomUI.DRIVER_STATION_UI_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              Theme.DRIVER_STATION_THEME_ID,
+              null);
+      themeRepo.save(driverStationTheme);
+      logger.info("Backfilled driver station theme with ID {}", Theme.DRIVER_STATION_THEME_ID);
+    }
+  }
+
   public void ensurePreMigrationBackups(
       DatabaseContext context, SqliteRepository<CustomUI> uiRepo) {
     List<CustomUI> allUis = uiRepo.findAll();
@@ -796,6 +867,83 @@ public class DatabaseInitializer {
               ui.getId());
       uiRepo.save(updatedUi);
       logger.info("Backfilled custom UI '{}' ({})", updatedUi.getName(), updatedUi.getEntityId());
+    }
+  }
+
+  private void backfillSingleTheme(
+      Theme theme, SqliteRepository<Theme> themeRepo, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = theme.getEntityId();
+    String name = theme.getName();
+    String uiId = theme.getUiId();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (theme.isDefault() || "Fuel Theme".equalsIgnoreCase(name))) {
+      themeRepo.delete("2");
+      entityId = Theme.FUEL_THEME_ID;
+      name = Theme.FUEL_THEME_NAME;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (Theme.isLegacyDefaultName(name) && !Theme.DEFAULT_THEME_NAME.equals(name)) {
+        name = Theme.DEFAULT_THEME_NAME;
+        updated = true;
+      }
+      if (uiId == null || uiId.trim().isEmpty()) {
+        uiId = CustomUI.DEFAULT_UI_ID;
+        updated = true;
+      }
+    } else if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (Theme.isLegacyPracticeName(name) && !Theme.PRACTICE_THEME_NAME.equals(name)) {
+        name = Theme.PRACTICE_THEME_NAME;
+        updated = true;
+      }
+      if (uiId == null || uiId.trim().isEmpty()) {
+        uiId = CustomUI.PRACTICE_UI_ID;
+        updated = true;
+      }
+    } else if (Theme.FUEL_THEME_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (Theme.isLegacyFuelName(name) && !Theme.FUEL_THEME_NAME.equals(name)) {
+        name = Theme.FUEL_THEME_NAME;
+        updated = true;
+      }
+      if (uiId == null || uiId.trim().isEmpty() || "2".equals(uiId)) {
+        uiId = CustomUI.FUEL_UI_ID;
+        updated = true;
+      }
+    } else if (Theme.DRIVER_STATION_THEME_ID.equals(entityId)) {
+      foundFlags[3] = true;
+      if (Theme.isLegacyDriverStationName(name) && !Theme.DRIVER_STATION_THEME_NAME.equals(name)) {
+        name = Theme.DRIVER_STATION_THEME_NAME;
+        updated = true;
+      }
+      if (uiId == null || uiId.trim().isEmpty()) {
+        uiId = CustomUI.DRIVER_STATION_UI_ID;
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      Theme updatedTheme =
+          new Theme(
+              name,
+              theme.isDefault(),
+              theme.getSlots(),
+              theme.getAudioSlots(),
+              theme.getDriverAudioOverrides(),
+              uiId,
+              theme.getDriverStationThemeId(),
+              theme.getDriverViewThemeId(),
+              entityId,
+              theme.getId());
+      themeRepo.save(updatedTheme);
+      logger.info("Backfilled theme '{}' ({})", updatedTheme.getName(), updatedTheme.getEntityId());
     }
   }
 

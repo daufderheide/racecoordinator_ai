@@ -411,6 +411,7 @@ public class DatabaseContext {
         new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
         DatabaseService.getInstance().backfillDrivers(this);
         DatabaseService.getInstance().backfillCustomUIs(this);
+        DatabaseService.getInstance().backfillThemes(this);
         return;
       }
     } catch (Exception e) {

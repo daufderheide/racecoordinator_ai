@@ -17,10 +17,9 @@ describe("app.routes and racedayTitleResolver", () => {
 
     mockTranslationService = {
       translate: jasmine.createSpy("translate").and.callFake((key: string) => {
-        if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
-        if (key === "UE_LABEL_PRACTICE_THEME")
-          return "RaceCoordinator AI (Practice)";
-        if (key === "UE_LABEL_FUEL_THEME") return "RaceCoordinator AI (Fuel)";
+        if (key === "UE_LABEL_DEFAULT_THEME") return "RC AI";
+        if (key === "UE_LABEL_PRACTICE_THEME") return "RC AI (Practice)";
+        if (key === "UE_LABEL_FUEL_THEME") return "RC AI (Fuel)";
         return key;
       }),
     };
@@ -73,7 +72,7 @@ describe("app.routes and racedayTitleResolver", () => {
     const title = TestBed.runInInjectionContext(() =>
       racedayTitleResolver(route, {} as any),
     );
-    expect(title).toBe("RaceCoordinator AI (Practice)");
+    expect(title).toBe("RC AI (Practice)");
   });
 
   it("should return localized title for fuel theme", () => {
@@ -83,7 +82,7 @@ describe("app.routes and racedayTitleResolver", () => {
     const title = TestBed.runInInjectionContext(() =>
       racedayTitleResolver(route, {} as any),
     );
-    expect(title).toBe("RaceCoordinator AI (Fuel)");
+    expect(title).toBe("RC AI (Fuel)");
   });
 
   it("should return localized title for default classic theme", () => {
@@ -93,7 +92,7 @@ describe("app.routes and racedayTitleResolver", () => {
     const title = TestBed.runInInjectionContext(() =>
       racedayTitleResolver(route, {} as any),
     );
-    expect(title).toBe("RaceCoordinator AI");
+    expect(title).toBe("RC AI");
   });
 
   it("should configure layout-editor and layout-manager routes correctly", () => {

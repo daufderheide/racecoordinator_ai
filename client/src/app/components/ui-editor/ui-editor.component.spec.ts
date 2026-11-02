@@ -166,7 +166,7 @@ class MockAudioSelectorComponent {
 @Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
   transform(value: string): string {
-    if (value === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+    if (value === "UE_LABEL_DEFAULT_THEME") return "RC AI";
     if (value === "UE_LABEL_COPY_SUFFIX") return " (Copy)";
     return value;
   }
@@ -293,7 +293,7 @@ describe("UIEditorComponent", () => {
       },
     };
     mockTranslationService.translate.and.callFake((key: string) => {
-      if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+      if (key === "UE_LABEL_DEFAULT_THEME") return "RC AI";
       if (key === "UE_LABEL_COPY_SUFFIX") return " (Copy)";
       return key;
     });
@@ -1261,7 +1261,7 @@ describe("UIEditorComponent", () => {
       );
     }));
 
-    it("should use 'RaceCoordinator AI (Copy)' when duplicating the default theme via the Copy button", fakeAsync(() => {
+    it("should use 'RC AI (Copy)' when duplicating the default theme via the Copy button", fakeAsync(() => {
       const themes: Theme[] = [
         {
           entity_id: "t1",
@@ -1282,7 +1282,7 @@ describe("UIEditorComponent", () => {
 
       expect(mockThemeService.duplicateTheme).toHaveBeenCalledWith(
         "t1",
-        "RaceCoordinator AI (Copy)",
+        "RC AI (Copy)",
       );
     }));
 
@@ -3081,7 +3081,7 @@ describe("UIEditorComponent", () => {
       const defaultTheme: any = {
         entity_id: "default_classic_rc_ai",
         is_default: true,
-        name: "RaceCoordinator AI",
+        name: "RC AI",
       };
       const practiceTheme: any = {
         entity_id: "practice_theme_rc_ai",

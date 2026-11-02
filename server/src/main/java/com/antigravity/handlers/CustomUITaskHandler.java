@@ -242,19 +242,19 @@ public class CustomUITaskHandler {
 
       customUIRepository.save(ui);
       if (CustomUI.DEFAULT_UI_ID.equals(ui.getEntityId())
-          || CustomUI.DEFAULT_UI_NAME.equalsIgnoreCase(ui.getName())) {
+          || CustomUI.isLegacyDefaultName(ui.getName())) {
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_ID);
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DEFAULT_UI_NAME);
       } else if (CustomUI.PRACTICE_UI_ID.equals(ui.getEntityId())
-          || CustomUI.PRACTICE_UI_NAME.equalsIgnoreCase(ui.getName())) {
+          || CustomUI.isLegacyPracticeName(ui.getName())) {
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_NAME);
       } else if (CustomUI.FUEL_UI_ID.equals(ui.getEntityId())
-          || CustomUI.FUEL_UI_NAME.equalsIgnoreCase(ui.getName())) {
+          || CustomUI.isLegacyFuelName(ui.getName())) {
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_NAME);
       } else if (CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())
-          || CustomUI.DRIVER_STATION_UI_NAME.equalsIgnoreCase(ui.getName())) {
+          || CustomUI.isLegacyDriverStationName(ui.getName())) {
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID);
         databaseContext.clearDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_NAME);
       }

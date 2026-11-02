@@ -11780,14 +11780,14 @@ describe("DefaultRacedayComponent", () => {
       (translationService.translate as jasmine.Spy).and.callFake(
         (key: string) => {
           if (key === "UE_LABEL_PRACTICE_THEME") {
-            return "RaceCoordinator AI (Training)";
+            return "RC AI (Training)";
           }
           return key;
         },
       );
 
       component.updateTabTitle("practice_theme_rc_ai");
-      expect(setTitleSpy).toHaveBeenCalledWith("RaceCoordinator AI (Training)");
+      expect(setTitleSpy).toHaveBeenCalledWith("RC AI (Training)");
     });
 
     it("should update tab title for fuel theme using localized display name", () => {
@@ -11797,16 +11797,14 @@ describe("DefaultRacedayComponent", () => {
       (translationService.translate as jasmine.Spy).and.callFake(
         (key: string) => {
           if (key === "UE_LABEL_FUEL_THEME") {
-            return "RaceCoordinator AI (Kraftstoff)";
+            return "RC AI (Kraftstoff)";
           }
           return key;
         },
       );
 
       component.updateTabTitle("default_fuel_theme_rc_ai");
-      expect(setTitleSpy).toHaveBeenCalledWith(
-        "RaceCoordinator AI (Kraftstoff)",
-      );
+      expect(setTitleSpy).toHaveBeenCalledWith("RC AI (Kraftstoff)");
     });
 
     it("should update tab title for default classic theme using localized display name", () => {
@@ -11816,14 +11814,14 @@ describe("DefaultRacedayComponent", () => {
       (translationService.translate as jasmine.Spy).and.callFake(
         (key: string) => {
           if (key === "UE_LABEL_DEFAULT_THEME") {
-            return "RaceCoordinator AI";
+            return "RC AI";
           }
           return key;
         },
       );
 
       component.updateTabTitle("default_classic_rc_ai");
-      expect(setTitleSpy).toHaveBeenCalledWith("RaceCoordinator AI");
+      expect(setTitleSpy).toHaveBeenCalledWith("RC AI");
     });
 
     it("should not update tab title when themeId is absent", () => {

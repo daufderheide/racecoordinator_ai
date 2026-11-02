@@ -45,7 +45,7 @@ describe("ui-editor-operations.helper", () => {
     const existingUis = [
       {
         entity_id: "default_ui_layout_rc_ai",
-        name: "RaceCoordinator AI",
+        name: "RC AI",
         is_default: true,
       },
     ];

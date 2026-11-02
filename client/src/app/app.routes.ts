@@ -51,25 +51,23 @@ export const racedayTitleResolver: ResolveFn<string> = (
     if (themeId === "practice_theme_rc_ai") {
       return (
         translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
-        "RaceCoordinator AI (Practice)"
+        "RC AI (Practice)"
       );
     }
     if (themeId === "default_fuel_theme_rc_ai") {
       return (
-        translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
-        "RaceCoordinator AI (Fuel)"
+        translationService?.translate?.("UE_LABEL_FUEL_THEME") || "RC AI (Fuel)"
       );
     }
     if (themeId === "driver_station_theme_rc_ai") {
       return (
         translationService?.translate?.("UE_LABEL_DRIVER_STATION_THEME") ||
-        "RaceCoordinator AI (Driver Station)"
+        "RC AI (Driver Station)"
       );
     }
     if (themeId === "default_classic_rc_ai") {
       return (
-        translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
-        "RaceCoordinator AI"
+        translationService?.translate?.("UE_LABEL_DEFAULT_THEME") || "RC AI"
       );
     }
   }

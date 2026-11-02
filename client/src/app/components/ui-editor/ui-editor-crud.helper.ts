@@ -8,6 +8,8 @@ export const DEFAULT_RACEDAY_UI_NAMES = new Set([
   "default ui",
   "racecoordinator ai",
   "racecoordinator ai (default)",
+  "rc ai",
+  "rc ai (default)",
   "default ui layout",
   "raceday ui layout",
 ]);
@@ -16,6 +18,7 @@ export const DEFAULT_PRACTICE_UI_NAMES = new Set([
   "practice",
   "practice ui",
   "racecoordinator ai (practice)",
+  "rc ai (practice)",
   "default practice ui layout",
   "practice ui layout",
 ]);
@@ -24,6 +27,7 @@ export const DEFAULT_FUEL_UI_NAMES = new Set([
   "fuel",
   "fuel ui",
   "racecoordinator ai (fuel)",
+  "rc ai (fuel)",
   "default fuel ui layout",
   "fuel ui layout",
 ]);
@@ -32,6 +36,7 @@ export const DEFAULT_DRIVER_STATION_UI_NAMES = new Set([
   "driver station",
   "driver station ui",
   "racecoordinator ai (driver station)",
+  "rc ai (driver station)",
   "default driver station ui layout",
   "driver station ui layout",
 ]);
@@ -40,6 +45,8 @@ export const DEFAULT_THEME_NAMES = new Set([
   "default",
   "racecoordinator ai",
   "racecoordinator ai (default)",
+  "rc ai",
+  "rc ai (default)",
   "classic",
   "classic theme",
   "default theme",
@@ -47,18 +54,21 @@ export const DEFAULT_THEME_NAMES = new Set([
 
 export const DEFAULT_PRACTICE_THEME_NAMES = new Set([
   "racecoordinator ai (practice)",
+  "rc ai (practice)",
   "practice",
   "practice theme",
 ]);
 
 export const DEFAULT_FUEL_THEME_NAMES = new Set([
   "racecoordinator ai (fuel)",
+  "rc ai (fuel)",
   "fuel",
   "fuel theme",
 ]);
 
 export const DEFAULT_DRIVER_STATION_THEME_NAMES = new Set([
   "racecoordinator ai (driver station)",
+  "rc ai (driver station)",
   "driver station",
   "driver station theme",
 ]);

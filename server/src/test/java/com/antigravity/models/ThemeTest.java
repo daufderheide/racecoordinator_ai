@@ -211,20 +211,24 @@ public class ThemeTest {
     assertTrue(Theme.isLegacyDefaultName("default theme"));
     assertTrue(Theme.isLegacyDefaultName("RaceCoordinator AI"));
     assertTrue(Theme.isLegacyDefaultName("RaceCoordinator AI (Default)"));
+    assertTrue(Theme.isLegacyDefaultName("RC AI"));
+    assertTrue(Theme.isLegacyDefaultName("RC AI (Default)"));
     assertFalse(Theme.isLegacyDefaultName("Custom Leaderboard Theme"));
 
     assertTrue(Theme.isLegacyPracticeName(null));
     assertTrue(Theme.isLegacyPracticeName(""));
     assertTrue(Theme.isLegacyPracticeName("practice"));
     assertTrue(Theme.isLegacyPracticeName("practice theme"));
-    assertFalse(Theme.isLegacyPracticeName("RaceCoordinator AI (Practice)"));
+    assertTrue(Theme.isLegacyPracticeName("RaceCoordinator AI (Practice)"));
+    assertTrue(Theme.isLegacyPracticeName("RC AI (Practice)"));
     assertFalse(Theme.isLegacyPracticeName("Custom Leaderboard Theme"));
 
     assertTrue(Theme.isLegacyFuelName(null));
     assertTrue(Theme.isLegacyFuelName(""));
     assertTrue(Theme.isLegacyFuelName("fuel"));
     assertTrue(Theme.isLegacyFuelName("fuel theme"));
-    assertFalse(Theme.isLegacyFuelName("RaceCoordinator AI (Fuel)"));
+    assertTrue(Theme.isLegacyFuelName("RaceCoordinator AI (Fuel)"));
+    assertTrue(Theme.isLegacyFuelName("RC AI (Fuel)"));
     assertFalse(Theme.isLegacyFuelName("Custom Leaderboard Theme"));
 
     assertTrue(Theme.isLegacyDriverStationName(null));
@@ -232,6 +236,7 @@ public class ThemeTest {
     assertTrue(Theme.isLegacyDriverStationName("driver station"));
     assertTrue(Theme.isLegacyDriverStationName("driver station theme"));
     assertTrue(Theme.isLegacyDriverStationName("RaceCoordinator AI (Driver Station)"));
+    assertTrue(Theme.isLegacyDriverStationName("RC AI (Driver Station)"));
     assertFalse(Theme.isLegacyDriverStationName("Custom Leaderboard Theme"));
   }
 

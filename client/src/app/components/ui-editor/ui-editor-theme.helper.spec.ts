@@ -129,9 +129,9 @@ describe("ui-editor-theme.helper", () => {
     const mockTranslationService = {
       translate: jasmine.createSpy("translate").and.callFake((key: string) => {
         const dict: Record<string, string> = {
-          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
-          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Fuel)",
-          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Practice)",
+          UE_LABEL_DEFAULT_THEME: "RC AI",
+          UE_LABEL_FUEL_THEME: "RC AI (Fuel)",
+          UE_LABEL_PRACTICE_THEME: "RC AI (Practice)",
         };
         return dict[key] || key;
       }),
@@ -192,9 +192,9 @@ describe("ui-editor-theme.helper", () => {
     const mockTranslationService = {
       translate: jasmine.createSpy("translate").and.callFake((key: string) => {
         const dict: Record<string, string> = {
-          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
-          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Kraftstoff)",
-          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Training)",
+          UE_LABEL_DEFAULT_THEME: "RC AI",
+          UE_LABEL_FUEL_THEME: "RC AI (Kraftstoff)",
+          UE_LABEL_PRACTICE_THEME: "RC AI (Training)",
         };
         return dict[key] || key;
       }),

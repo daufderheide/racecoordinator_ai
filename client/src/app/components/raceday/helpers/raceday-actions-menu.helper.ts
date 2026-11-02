@@ -406,15 +406,15 @@ export class RacedayActionsMenuHelper {
     } else if (themeId === "practice_theme_rc_ai") {
       themeTitle =
         host.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
-        "RaceCoordinator AI (Practice)";
+        "RC AI (Practice)";
     } else if (themeId === "default_fuel_theme_rc_ai") {
       themeTitle =
         host.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
-        "RaceCoordinator AI (Fuel)";
+        "RC AI (Fuel)";
     } else if (themeId === "default_classic_rc_ai") {
       themeTitle =
         host.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
-        "RaceCoordinator AI";
+        "RC AI";
     }
     if (themeTitle) {
       host.childWindowManagerService?.openThemeWindow(url, themeTitle);
@@ -450,15 +450,15 @@ export class RacedayActionsMenuHelper {
     } else if (themeId === "practice_theme_rc_ai") {
       titleToSet =
         host.translationService?.translate?.("UE_LABEL_PRACTICE_THEME") ||
-        "RaceCoordinator AI (Practice)";
+        "RC AI (Practice)";
     } else if (themeId === "default_fuel_theme_rc_ai") {
       titleToSet =
         host.translationService?.translate?.("UE_LABEL_FUEL_THEME") ||
-        "RaceCoordinator AI (Fuel)";
+        "RC AI (Fuel)";
     } else if (themeId === "default_classic_rc_ai") {
       titleToSet =
         host.translationService?.translate?.("UE_LABEL_DEFAULT_THEME") ||
-        "RaceCoordinator AI";
+        "RC AI";
     }
     if (titleToSet) {
       host.titleService?.setTitle(titleToSet);

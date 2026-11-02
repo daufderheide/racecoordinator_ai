@@ -360,7 +360,7 @@ describe("ui-editor-io.helper", () => {
     it("should restore from Settings.DEFAULT_LAYOUT for default UI when backup entity is absent", () => {
       const ui: CustomUI = {
         entity_id: "default_ui_layout_rc_ai",
-        name: "RaceCoordinator AI",
+        name: "RC AI",
         is_default: true,
         layoutJson: '{"widgets":[{"widgetType":"lane-column"}]}',
       };

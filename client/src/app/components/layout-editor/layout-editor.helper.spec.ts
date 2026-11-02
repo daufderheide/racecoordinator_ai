@@ -233,17 +233,17 @@ describe("layout-editor.helper", () => {
       const allLayouts: CustomUI[] = [
         {
           entity_id: "default_ui_layout_rc_ai",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
         },
         {
           entity_id: "practice_ui_layout_rc_ai",
-          name: "RaceCoordinator AI (Practice)",
+          name: "RC AI (Practice)",
           is_default: true,
         },
         {
           entity_id: "default_fuel_ui_layout_rc_ai",
-          name: "RaceCoordinator AI (Fuel)",
+          name: "RC AI (Fuel)",
           is_default: true,
         },
         {
@@ -273,7 +273,7 @@ describe("layout-editor.helper", () => {
       const allLayouts: CustomUI[] = [
         {
           entity_id: "default_ui_layout_rc_ai",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
         },
         {

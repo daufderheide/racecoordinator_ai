@@ -441,6 +441,7 @@ public class App {
       DatabaseService.getInstance().backfillRaces(databaseContext);
       DatabaseService.getInstance().backfillCustomUIs(databaseContext);
       DatabaseService.getInstance().backfillDrivers(databaseContext);
+      DatabaseService.getInstance().backfillThemes(databaseContext);
     }
     databaseContext.switchDatabase(activeDb);
   }

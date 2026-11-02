@@ -17,6 +17,7 @@ import com.antigravity.models.Track;
 import com.antigravity.repository.SqliteRepository;
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
@@ -728,7 +729,7 @@ public class DatabaseInitializerTest {
     // Verify default UI does NOT get backed up (defaults are restored via built-in definitions)
     CustomUI defaultUi =
         new CustomUI(
-            "RaceCoordinator AI",
+            CustomUI.DEFAULT_UI_NAME,
             true,
             "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
             "[]",
@@ -747,11 +748,123 @@ public class DatabaseInitializerTest {
     assertEquals(3, uisAfter.size());
     boolean hasDefaultBackup =
         uisAfter.stream()
-            .anyMatch(u -> "RaceCoordinator AI (Pre-Migration Backup)".equals(u.getName()));
+            .anyMatch(
+                u ->
+                    (CustomUI.DEFAULT_UI_NAME + CustomUI.PRE_MIGRATION_BACKUP_SUFFIX)
+                        .equals(u.getName()));
     assertFalse(hasDefaultBackup);
 
     // Running again does not duplicate user backups
     initializer.ensurePreMigrationBackups(context, uiRepo);
     assertEquals(3, uiRepo.findAll().size());
+  }
+
+  @Test
+  public void testBackfillThemes_RenamesLegacyThemeNames() {
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    themeRepo.drop();
+
+    themeRepo.save(
+        new Theme(
+            "Classic Theme",
+            true,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.DEFAULT_THEME_ID,
+            null));
+    themeRepo.save(
+        new Theme(
+            "Practice Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.PRACTICE_THEME_ID,
+            null));
+    themeRepo.save(
+        new Theme(
+            "Fuel Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.FUEL_THEME_ID,
+            null));
+    themeRepo.save(
+        new Theme(
+            "Driver Station Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.DRIVER_STATION_THEME_ID,
+            null));
+    themeRepo.save(
+        new Theme(
+            "My Custom Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            "custom_ui",
+            "custom_1",
+            null));
+
+    initializer.backfillThemes(context);
+
+    Theme defaultTheme = themeRepo.findByEntityId(Theme.DEFAULT_THEME_ID);
+    assertNotNull(defaultTheme);
+    assertEquals(Theme.DEFAULT_THEME_NAME, defaultTheme.getName());
+
+    Theme practiceTheme = themeRepo.findByEntityId(Theme.PRACTICE_THEME_ID);
+    assertNotNull(practiceTheme);
+    assertEquals(Theme.PRACTICE_THEME_NAME, practiceTheme.getName());
+
+    Theme fuelTheme = themeRepo.findByEntityId(Theme.FUEL_THEME_ID);
+    assertNotNull(fuelTheme);
+    assertEquals(Theme.FUEL_THEME_NAME, fuelTheme.getName());
+
+    Theme driverStationTheme = themeRepo.findByEntityId(Theme.DRIVER_STATION_THEME_ID);
+    assertNotNull(driverStationTheme);
+    assertEquals(Theme.DRIVER_STATION_THEME_NAME, driverStationTheme.getName());
+
+    Theme customTheme = themeRepo.findByEntityId("custom_1");
+    assertNotNull(customTheme);
+    assertEquals("My Custom Theme", customTheme.getName());
+  }
+
+  @Test
+  public void testBackfillThemes_CreatesMissingDefaultThemes() {
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    themeRepo.drop();
+
+    initializer.backfillThemes(context);
+
+    List<Theme> themes = themeRepo.findAll();
+    assertEquals(4, themes.size());
+    assertNotNull(themeRepo.findByEntityId(Theme.DEFAULT_THEME_ID));
+    assertNotNull(themeRepo.findByEntityId(Theme.PRACTICE_THEME_ID));
+    assertNotNull(themeRepo.findByEntityId(Theme.FUEL_THEME_ID));
+    assertNotNull(themeRepo.findByEntityId(Theme.DRIVER_STATION_THEME_ID));
+  }
+
+  @Test
+  public void testBackfillThemes_RespectsDeletedFlags() {
+    initializer.resetThemes(context);
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    assertEquals(4, themeRepo.findAll().size());
+
+    themeRepo.delete(Theme.PRACTICE_THEME_ID);
+    themeRepo.delete(Theme.FUEL_THEME_ID);
+    themeRepo.delete(Theme.DRIVER_STATION_THEME_ID);
+    context.markDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
+    context.markDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID);
+    context.markDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID);
+
+    initializer.backfillThemes(context);
+
+    List<Theme> remaining = themeRepo.findAll();
+    assertEquals(1, remaining.size());
+    assertEquals(Theme.DEFAULT_THEME_ID, remaining.get(0).getEntityId());
   }
 }

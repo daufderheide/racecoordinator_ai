@@ -247,7 +247,7 @@ describe("ui-editor-crud.helper", () => {
 
     it("should return base name when not taken", () => {
       const existing: CustomUI[] = [
-        { entity_id: "1", name: "RaceCoordinator AI", is_default: true },
+        { entity_id: "1", name: "RC AI", is_default: true },
         { entity_id: "2", name: "Practice", is_default: true },
       ];
       expect(generateUniqueCustomUiName("New UI Layout", existing)).toBe(
@@ -288,7 +288,7 @@ describe("ui-editor-crud.helper", () => {
       const existing: Theme[] = [
         {
           entity_id: "1",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
           slots: {},
           audio_slots: {},

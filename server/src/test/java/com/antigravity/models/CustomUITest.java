@@ -45,7 +45,7 @@ public class CustomUITest {
 
     CustomUI defaultUi = CustomUI.createDefault();
     assertTrue(defaultUi.isDefault());
-    assertEquals("RaceCoordinator AI", defaultUi.getName());
+    assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUi.getName());
     assertEquals(CustomUI.DEFAULT_UI_ID, defaultUi.getEntityId());
     assertTrue(defaultUi.getColumnsJson().contains("averageLapTime"));
     assertTrue(defaultUi.getColumnsJson().contains("ghostPacingLeaderAvg"));
@@ -56,13 +56,13 @@ public class CustomUITest {
 
     CustomUI practiceUi = CustomUI.createPractice();
     assertTrue(practiceUi.isDefault());
-    assertEquals("RaceCoordinator AI (Practice)", practiceUi.getName());
+    assertEquals(CustomUI.PRACTICE_UI_NAME, practiceUi.getName());
     assertEquals(CustomUI.PRACTICE_UI_ID, practiceUi.getEntityId());
     assertTrue(practiceUi.getLayoutJson().contains("\"highlightLapStyle\":\"shimmer\""));
 
     CustomUI fuelUi = CustomUI.createFuel();
     assertTrue(fuelUi.isDefault());
-    assertEquals("RaceCoordinator AI (Fuel)", fuelUi.getName());
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
     assertEquals(CustomUI.FUEL_UI_ID, fuelUi.getEntityId());
     assertTrue(fuelUi.getColumnsJson().contains("imageset_fuel-gauge-builtin"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"imageset_fuel-gauge-builtin\":210"));
@@ -74,7 +74,7 @@ public class CustomUITest {
 
     CustomUI driverStationUi = CustomUI.createDriverStation();
     assertTrue(driverStationUi.isDefault());
-    assertEquals("RaceCoordinator AI (Driver Station)", driverStationUi.getName());
+    assertEquals(CustomUI.DRIVER_STATION_UI_NAME, driverStationUi.getName());
     assertEquals(CustomUI.DRIVER_STATION_UI_ID, driverStationUi.getEntityId());
     assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-progress"));
     assertTrue(driverStationUi.getLayoutJson().contains("widget-ds-nickname"));
@@ -231,6 +231,8 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyDefaultName("raceday ui layout"));
     assertTrue(CustomUI.isLegacyDefaultName("RaceCoordinator AI"));
     assertTrue(CustomUI.isLegacyDefaultName("RaceCoordinator AI (Default)"));
+    assertTrue(CustomUI.isLegacyDefaultName("RC AI"));
+    assertTrue(CustomUI.isLegacyDefaultName("RC AI (Default)"));
     assertFalse(CustomUI.isLegacyDefaultName("Custom Leaderboard"));
 
     assertTrue(CustomUI.isLegacyPracticeName(null));
@@ -239,6 +241,8 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyPracticeName("Practice UI"));
     assertTrue(CustomUI.isLegacyPracticeName("Practice UI Layout"));
     assertTrue(CustomUI.isLegacyPracticeName("default practice ui layout"));
+    assertTrue(CustomUI.isLegacyPracticeName("RaceCoordinator AI (Practice)"));
+    assertTrue(CustomUI.isLegacyPracticeName("RC AI (Practice)"));
     assertFalse(CustomUI.isLegacyPracticeName("Custom Leaderboard"));
 
     assertTrue(CustomUI.isLegacyFuelName(null));
@@ -247,6 +251,8 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyFuelName("Fuel UI"));
     assertTrue(CustomUI.isLegacyFuelName("Fuel UI Layout"));
     assertTrue(CustomUI.isLegacyFuelName("default fuel ui layout"));
+    assertTrue(CustomUI.isLegacyFuelName("RaceCoordinator AI (Fuel)"));
+    assertTrue(CustomUI.isLegacyFuelName("RC AI (Fuel)"));
     assertFalse(CustomUI.isLegacyFuelName("Custom Leaderboard"));
 
     assertTrue(CustomUI.isLegacyDriverStationName(null));
@@ -255,6 +261,8 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyDriverStationName("driver station ui"));
     assertTrue(CustomUI.isLegacyDriverStationName("driver station layout"));
     assertTrue(CustomUI.isLegacyDriverStationName("default driver station ui layout"));
+    assertTrue(CustomUI.isLegacyDriverStationName("RaceCoordinator AI (Driver Station)"));
+    assertTrue(CustomUI.isLegacyDriverStationName("RC AI (Driver Station)"));
     assertFalse(CustomUI.isLegacyDriverStationName("Custom Leaderboard"));
   }
 

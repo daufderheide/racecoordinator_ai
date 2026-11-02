@@ -3225,9 +3225,9 @@ describe("RaceEditorComponent", () => {
     it("should alphabetize themes on loadThemes and preserve default theme selection", fakeAsync(() => {
       mockTranslationService.translate.and.callFake((key: string) => {
         const dict: Record<string, string> = {
-          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
-          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Fuel)",
-          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Practice)",
+          UE_LABEL_DEFAULT_THEME: "RC AI",
+          UE_LABEL_FUEL_THEME: "RC AI (Fuel)",
+          UE_LABEL_PRACTICE_THEME: "RC AI (Practice)",
         };
         return dict[key] || key;
       });
@@ -3235,19 +3235,19 @@ describe("RaceEditorComponent", () => {
       const mockThemes: any[] = [
         {
           entity_id: "practice_theme_rc_ai",
-          name: "RaceCoordinator AI (Practice)",
+          name: "RC AI (Practice)",
           is_default: true,
         },
         { entity_id: "theme_z", name: "Zebra Custom", is_default: false },
         {
           entity_id: "default_classic_rc_ai",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
         },
         { entity_id: "theme_a", name: "Alpha Custom", is_default: false },
         {
           entity_id: "default_fuel_theme_rc_ai",
-          name: "RaceCoordinator AI (Fuel)",
+          name: "RC AI (Fuel)",
           is_default: true,
         },
       ];
@@ -3274,7 +3274,7 @@ describe("RaceEditorComponent", () => {
         } as any,
         {
           entity_id: "default_classic_rc_ai",
-          name: "RaceCoordinator AI",
+          name: "RC AI",
           is_default: true,
         } as any,
         {

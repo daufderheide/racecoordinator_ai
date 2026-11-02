@@ -48,17 +48,16 @@ public class ThemeTaskHandler {
       if (!foundFlags[0]
           && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID)) {
         createAndSaveFactoryTheme(
-            Theme.DEFAULT_THEME_ID, "RaceCoordinator AI", CustomUI.DEFAULT_UI_ID);
+            Theme.DEFAULT_THEME_ID, Theme.DEFAULT_THEME_NAME, CustomUI.DEFAULT_UI_ID);
       }
       if (!foundFlags[1]
           && !databaseContext.isDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID)) {
         createAndSaveFactoryTheme(
-            Theme.PRACTICE_THEME_ID, "RaceCoordinator AI (Practice)", CustomUI.PRACTICE_UI_ID);
+            Theme.PRACTICE_THEME_ID, Theme.PRACTICE_THEME_NAME, CustomUI.PRACTICE_UI_ID);
       }
       if (!foundFlags[2]
           && !databaseContext.isDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID)) {
-        createAndSaveFactoryTheme(
-            Theme.FUEL_THEME_ID, "RaceCoordinator AI (Fuel)", CustomUI.FUEL_UI_ID);
+        createAndSaveFactoryTheme(Theme.FUEL_THEME_ID, Theme.FUEL_THEME_NAME, CustomUI.FUEL_UI_ID);
       }
       if (!foundFlags[3]
           && !databaseContext.isDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID)) {
@@ -496,17 +495,21 @@ public class ThemeTaskHandler {
 
       themeRepository.save(theme);
       if (Theme.DEFAULT_THEME_ID.equals(theme.getEntityId())
-          || Theme.DEFAULT_THEME_NAME.equalsIgnoreCase(theme.getName())) {
+          || Theme.isLegacyDefaultName(theme.getName())) {
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID);
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_NAME);
       } else if (Theme.PRACTICE_THEME_ID.equals(theme.getEntityId())
-          || Theme.PRACTICE_THEME_NAME.equalsIgnoreCase(theme.getName())) {
+          || Theme.isLegacyPracticeName(theme.getName())) {
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_ID);
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.PRACTICE_THEME_NAME);
       } else if (Theme.FUEL_THEME_ID.equals(theme.getEntityId())
-          || Theme.FUEL_THEME_NAME.equalsIgnoreCase(theme.getName())) {
+          || Theme.isLegacyFuelName(theme.getName())) {
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.FUEL_THEME_ID);
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.FUEL_THEME_NAME);
+      } else if (Theme.DRIVER_STATION_THEME_ID.equals(theme.getEntityId())
+          || Theme.isLegacyDriverStationName(theme.getName())) {
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_ID);
+        databaseContext.clearDefaultArtifactDeleted("theme", Theme.DRIVER_STATION_THEME_NAME);
       }
       if (theme.getEntityId() != null) {
         databaseContext.clearDefaultArtifactDeleted("theme", theme.getEntityId());
