@@ -66,6 +66,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "standardDeviation",
       "consistencyScore",
       "averageLapTime",
+      "averageScore",
       "medianLapTime",
       "averageTop5",
       "averageTop10",

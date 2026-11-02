@@ -2054,5 +2054,20 @@ describe("raceday-lane-column-interaction.helper", () => {
       const calledLaps = onFit.calls.mostRecent().args[0];
       expect(calledLaps).toBeLessThanOrEqual(4);
     });
+
+    it("should return -- for averageScore when in an overall data source", () => {
+      const hd = {
+        driver: { entity_id: "d1" },
+        actualDriver: { entity_id: "d1" },
+      } as any;
+      const res = resolveLaneColumnFormattedValue(
+        hd,
+        "averageScore",
+        {},
+        { gridType: "overall" } as any,
+        "overallPosition",
+      );
+      expect(res).toBe("--");
+    });
   });
 });

@@ -139,6 +139,23 @@ Il widget **Ultimi Giri** (`lastLaps`) visualizza i tempi dei giri recenti compl
 - **Ridimensionamento e adattamento dinamico**: La scheda scala automaticamente le dimensioni dei caratteri e le spaziature per adattare ordinatamente il numero configurato di giri nella geometria della colonna.
 - **Sincronizzazione della griglia**: Nelle griglie di corsia, la configurazione o l'applicazione dei formati orari sincronizza il conteggio degli ultimi giri e il relativo stile su tutte le corsie in gara.
 
+#### Widget Punteggio Medio (`averageScore`)
+
+Il widget **Punteggio Medio** (`averageScore`) mostra il punteggio medio di manche su tutte le manche completate dal pilota:
+
+- **Solo Dati di Manche**: Appartiene rigorosamente al gruppo di strumenti **Dati Manche** (`analysis`). In un contesto di dati generali o per un pilota a riposo senza manche attiva, vengono visualizzati trattini (`--`).
+- **Adattamento al metodo di punteggio**: Calcola automaticamente la media in base al metodo di punteggio configurato per la gara:
+  - **Punteggio per numero di giri**: Calcola la media dei giri del pilota sulle manche completate (con decimali giri configurati, default 2).
+  - **Punteggio per miglior giro**: Calcola la media dei migliori tempi sul giro sulle manche completate con giro valido (con decimali tempo, default 3).
+  - **Punteggio per tempo totale**: Calcola la media dei tempi totali di manche sulle manche completate (con opzioni timer o decimali tempo).
+- **Mostra manche parziali**:
+  - Deselezionato (predefinito), contano solo le manche completamente terminate.
+  - Selezionato, include la manche in corso ponderando il contributo in base all'avanzamento:
+    - **Gara a giri**: In una manche da 10 giri con il leader al 4° giro, la manche conta come 0,4 al denominatore e il punteggio attivo si somma al numeratore.
+    - **Gara a tempo**: L'avanzamento dipende dal tempo trascorso rispetto alla durata prevista.
+    - **Valore finale non configurato**: Se non è possibile calcolare l'avanzamento (`finishValue <= 0`), la manche parziale non viene conteggiata.
+- **Precisione decimale**: Configurabile nell'Ispettore Colonne (0–3 decimali) per schede principali e riquadri interni (insets).
+
 ### Ordinamento Griglia e Matrice di Interazione
 
 Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordine delle righe. Il suo comportamento dipende direttamente dall'impostazione dell'**Origine dati** (**Dati Manche** o **Dati Generali**):

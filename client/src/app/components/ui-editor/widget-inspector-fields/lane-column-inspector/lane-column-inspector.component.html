@@ -1252,6 +1252,30 @@
       </div>
     }
 
+    @if (isAverageScoreColumn) {
+      <hr class="inspector-divider" />
+      <div
+        class="inspector-geometry-title"
+        id="average-score-inspector-section"
+      >
+        <span class="material-icons">analytics</span>
+        {{ "UE_INSPECTOR_AVERAGE_SCORE_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [(ngModel)]="showPartialHeats"
+          />
+          <span>{{ "UE_INSPECTOR_SHOW_PARTIAL_HEATS" | translate }}</span>
+        </label>
+        <span class="inspector-hint-text">
+          {{ "UE_INSPECTOR_SHOW_PARTIAL_HEATS_DESC" | translate }}
+        </span>
+      </div>
+    }
+
     @if (isLastLapsColumn) {
       <hr class="inspector-divider" />
       <div class="inspector-geometry-title" id="last-laps-inspector-section">
@@ -2018,6 +2042,23 @@
             <app-custom-select
               [(ngModel)]="currentSettings['lapDecimalPlaces']"
               (change)="onFieldChange()"
+            >
+              <app-custom-option [value]="0">0</app-custom-option>
+              <app-custom-option [value]="1">1</app-custom-option>
+              <app-custom-option [value]="2">2</app-custom-option>
+              <app-custom-option [value]="3">3</app-custom-option>
+            </app-custom-select>
+          </div>
+        </div>
+      } @else if (isAverageScoreColumn) {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_DECIMAL_PLACES" | translate
+          }}</label>
+          <div class="select-container select-sm">
+            <app-custom-select
+              [ngModel]="averageScoreDecimalPlaces"
+              (ngModelChange)="onAverageScoreDecimalsChange($event)"
             >
               <app-custom-option [value]="0">0</app-custom-option>
               <app-custom-option [value]="1">1</app-custom-option>
@@ -3335,6 +3376,50 @@
             <app-custom-option value="always_laps">
               {{ "UE_GAP_MODE_ALWAYS_LAPS" | translate }}
             </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    }
+
+    <!-- Inset Average Score Configuration -->
+    @if (isInsetAverageScoreColumn(effectiveSelectedAnchor)) {
+      <div class="inspector-geometry-title">
+        <span class="material-icons">analytics</span>
+        {{ "UE_INSPECTOR_AVERAGE_SCORE_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            class="form-checkbox"
+            [ngModel]="getInsetShowPartialHeats(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetShowPartialHeats(effectiveSelectedAnchor, $event)
+            "
+          />
+          <span>{{ "UE_INSPECTOR_SHOW_PARTIAL_HEATS" | translate }}</span>
+        </label>
+        <span class="inspector-hint-text">
+          {{ "UE_INSPECTOR_SHOW_PARTIAL_HEATS_DESC" | translate }}
+        </span>
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DECIMAL_PLACES" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="
+              getInsetAverageScoreDecimalPlaces(effectiveSelectedAnchor)
+            "
+            (ngModelChange)="
+              setInsetAverageScoreDecimalPlaces(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option [value]="0">0</app-custom-option>
+            <app-custom-option [value]="1">1</app-custom-option>
+            <app-custom-option [value]="2">2</app-custom-option>
+            <app-custom-option [value]="3">3</app-custom-option>
           </app-custom-select>
         </div>
       </div>

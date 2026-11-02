@@ -13,6 +13,7 @@ import {
   TimerFormatOptions,
 } from "@app/utils/timer-format.utils";
 
+import { RacedayAverageScoreUtils } from "./raceday-average-score.utils";
 import { RacedayFlagFormatUtils } from "./raceday-flag-format.utils";
 import { RacedayGapFormatUtils } from "./raceday-gap-format.utils";
 import { RacedayOverallFormatUtils } from "./raceday-overall-format.utils";
@@ -44,6 +45,10 @@ export interface FormatContext {
   getLaneRecordEntry?: (laneIndex: number) => any;
   getBestRaceLapEntry?: (laneIndex: number) => any;
   formatDate?: (date: any) => string;
+  getHeats?: () => any[];
+  getCurrentHeat?: () => any;
+  getSortedHeatDrivers?: () => DriverHeatData[];
+  getHeatTime?: () => number;
 }
 
 export class RacedayFormatUtils {
@@ -158,6 +163,7 @@ export class RacedayFormatUtils {
     settings?: any,
     anchor?: string,
     ctx?: FormatContext,
+    parent?: any,
   ): any {
     if (!heatDriver || !propertyPath) return undefined;
     const baseKey = propertyPath.split(".")[0].split("_")[0];
@@ -174,6 +180,15 @@ export class RacedayFormatUtils {
     );
     if (overallVal !== undefined) {
       return overallVal;
+    }
+    if (baseKey === "averageScore") {
+      return RacedayAverageScoreUtils.calculateAverageScore(
+        heatDriver,
+        settings,
+        anchor,
+        ctx,
+        parent,
+      );
     }
     if (baseKey === "gap") {
       const config =
@@ -395,6 +410,7 @@ export class RacedayFormatUtils {
       baseKey === "bestRaceLapTime" ||
       baseKey === "heatsRaced" ||
       baseKey === "heatsRemaining" ||
+      baseKey === "averageScore" ||
       baseKey.startsWith("ghostPacing")
     ) {
       return "--";
@@ -453,6 +469,30 @@ export class RacedayFormatUtils {
   ): string {
     if (baseKey === "recordLapTime") {
       return this.formatRecordLapTime(hd, ctx, timeDecimals, timePlaceholder);
+    }
+    if (baseKey === "averageScore") {
+      let calcValue = value;
+      if (calcValue === null || calcValue === undefined) {
+        calcValue = RacedayAverageScoreUtils.calculateAverageScore(
+          hd,
+          ctx?.laneViewWidgetSettings,
+          anchor,
+          ctx,
+        );
+      }
+      return RacedayAverageScoreUtils.formatAverageScore(
+        calcValue,
+        hd,
+        column,
+        ctx,
+        timeDecimals,
+        lapDecimals,
+        timePlaceholder,
+        lapPlaceholder,
+        colKey,
+        isInset,
+        anchor,
+      );
     }
     if (baseKey === "bestRaceLapTime") {
       return this.formatBestRaceLapTime(hd, ctx, timeDecimals, timePlaceholder);

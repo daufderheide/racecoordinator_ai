@@ -272,6 +272,12 @@ export class RacedayLayoutUtils {
     return parts.some((p) => isTotalTimeBase(p));
   }
 
+  static isAverageScoreColumnKey(key: string): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    return baseKey === "averageScore";
+  }
+
   static isLapOrTimeColumnKey(key: string): boolean {
     return (
       RacedayLayoutUtils.isTimeColumnKey(key) ||
@@ -350,6 +356,7 @@ export class RacedayLayoutUtils {
     lastLaps: "RD_COL_LAST_LAPS",
     medianLapTime: "RD_COL_MEDIAN_LAP",
     averageLapTime: "RD_COL_AVG_LAP",
+    averageScore: "RD_COL_AVERAGE_SCORE",
     bestLapTime: "RD_COL_BEST_LAP",
     bestRaceLapTime: "RD_COL_BEST_RACE_LAP_TIME",
     recordLapTime: "RD_COL_RECORD_LAP_TIME",

@@ -139,6 +139,23 @@ Le widget **Derniers Tours** (`lastLaps`) affiche les temps des tours récents r
 - **Ajustement et mise à l'échelle dynamiques** : La carte ajuste automatiquement la taille de police et les interlignes pour intégrer parfaitement le nombre de tours configuré dans la géométrie de la colonne.
 - **Synchronisation de grille** : Dans les grilles de voies, la configuration ou l'application des formats de temps synchronise le nombre de derniers tours affichés ainsi que leur style sur toutes les voies concurrentes.
 
+#### Widget Score Moyen (`averageScore`)
+
+Le widget **Score Moyen** (`averageScore`) affiche le score moyen de manche sur toutes les manches terminées par le pilote :
+
+- **Données de Manche Uniquement** : Appartient strictement au groupe d'outils **Données de Manche** (`analysis`). Dans un contexte de données générales ou pour un pilote au repos sans manche active, des tirets (`--`) sont affichés.
+- **Adaptation au mode de score** : Calcule automatiquement la moyenne selon le mode de classement configuré :
+  - **Score au nombre de tours** : Moyenne des tours sur les manches terminées (avec les décimales de tour configurées, par défaut 2).
+  - **Score au meilleur tour** : Moyenne des meilleurs tours sur les manches terminées avec un tour valide (avec les décimales de temps, par défaut 3).
+  - **Score au temps total** : Moyenne des temps totaux sur les manches terminées (avec options de chronomètre ou décimales de temps).
+- **Afficher les manches partielles** :
+  - Décoché (par défaut), seules les manches complètement terminées sont comptabilisées.
+  - Coché, intègre la manche en cours en pondérant sa contribution selon sa progression :
+    - **Course au nombre de tours** : Dans une manche de 10 tours avec le leader au 4e tour, la manche compte pour 0,4 au dénominateur et le score actif du pilote s'ajoute au numérateur.
+    - **Course au temps** : La progression dépend du temps écoulé par rapport à la durée cible.
+    - **Valeur cible non configurée** : Si la progression ne peut être déterminée (`finishValue <= 0`), la manche partielle n'est pas comptée.
+- **Précision décimale** : Réglable dans l'inspecteur de colonnes (0–3 décimales) pour les cartes principales et les incrustations.
+
 ### Tri de Grille & Matrice d'Interaction
 
 Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre des lignes. Son comportement dépend directement du réglage de la **Source de données** (**Données de Série** ou **Données Générales**) :

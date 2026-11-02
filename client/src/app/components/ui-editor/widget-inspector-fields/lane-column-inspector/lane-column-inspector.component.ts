@@ -561,6 +561,44 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     return LaneColumnInsetHelper.isInsetGapColumn(this.getAnchorValue(anchor));
   }
 
+  isInsetAverageScoreColumn(anchor: string): boolean {
+    return LaneColumnInsetHelper.isInsetAverageScoreColumn(
+      this.getAnchorValue(anchor),
+    );
+  }
+
+  getInsetShowPartialHeats(anchor: string): boolean {
+    return LaneColumnInsetHelper.getInsetShowPartialHeats(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetShowPartialHeats(anchor: string, val: boolean): void {
+    LaneColumnInsetHelper.setInsetShowPartialHeats(
+      this.currentSettings,
+      anchor,
+      val,
+    );
+    this.onFieldChange();
+  }
+
+  getInsetAverageScoreDecimalPlaces(anchor: string): number {
+    return LaneColumnInsetHelper.getInsetAverageScoreDecimalPlaces(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetAverageScoreDecimalPlaces(anchor: string, val: number): void {
+    LaneColumnInsetHelper.setInsetAverageScoreDecimalPlaces(
+      this.currentSettings,
+      anchor,
+      val,
+    );
+    this.onFieldChange();
+  }
+
   getInsetGapTarget(anchor: string): "leader" | "position" {
     return LaneColumnInsetHelper.getInsetGapTarget(
       this.currentSettings,
@@ -839,6 +877,45 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   get isHeatsCountColumn(): boolean {
     const key = this.currentSettings["columnKey"] || "";
     return key === "heatsRaced" || key === "heatsRemaining";
+  }
+
+  get isAverageScoreColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return (
+      key === "averageScore" ||
+      key.startsWith("averageScore") ||
+      this.widget()?.widgetType === "average-score" ||
+      this.widget()?.widgetType === "averageScore"
+    );
+  }
+
+  get showPartialHeats(): boolean {
+    return Boolean(this.currentSettings["showPartialHeats"]);
+  }
+
+  set showPartialHeats(value: boolean) {
+    this.currentSettings["showPartialHeats"] = value;
+    this.onFieldChange();
+  }
+
+  get averageScoreDecimalPlaces(): number {
+    if (this.currentSettings["decimalPlaces"] !== undefined) {
+      return Number(this.currentSettings["decimalPlaces"]);
+    }
+    if (this.currentSettings["lapDecimalPlaces"] !== undefined) {
+      return Number(this.currentSettings["lapDecimalPlaces"]);
+    }
+    if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
+      return Number(this.currentSettings["timeDecimalPlaces"]);
+    }
+    return 2;
+  }
+
+  onAverageScoreDecimalsChange(val: number): void {
+    this.currentSettings["decimalPlaces"] = val;
+    this.currentSettings["lapDecimalPlaces"] = val;
+    this.currentSettings["timeDecimalPlaces"] = val;
+    this.onFieldChange();
   }
 
   get isImageColumn(): boolean {

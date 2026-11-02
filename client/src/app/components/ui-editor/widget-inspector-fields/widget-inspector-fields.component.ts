@@ -80,7 +80,11 @@ export class WidgetInspectorFieldsComponent {
 
   isLaneColumnWidget(widget: AbsoluteWidgetNode | undefined): boolean {
     if (!widget) return false;
-    if (widget.widgetType === "lane-column") return true;
+    if (
+      widget.widgetType === "lane-column" ||
+      widget.widgetType === "average-score"
+    )
+      return true;
     if (widget.customSettings?.["gridId"]) return true;
     if (this.isCustomWidget(widget.widgetType)) {
       const s = widget.customSettings;

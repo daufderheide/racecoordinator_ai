@@ -17,6 +17,18 @@ export interface LapDisplayInfo {
   segments: string[];
 }
 
+function resolveHostHeats(host: any): any[] {
+  const rsHeats = host.raceService?.getHeats?.();
+  if (rsHeats && rsHeats.length > 0) return rsHeats;
+  if (host.heats && host.heats.length > 0) return host.heats;
+  if (host.race?.heats && host.race.heats.length > 0) return host.race.heats;
+  return rsHeats || host.heats || [];
+}
+
+function resolveHostCurrentHeat(host: any): any {
+  return host.currentHeat || host.raceService?.getCurrentHeat?.() || host.heat;
+}
+
 export class RacedayColumnLayoutHelper {
   static loadColumns(host: any): void {
     const settings =
@@ -368,6 +380,10 @@ export class RacedayColumnLayoutHelper {
       getLaneRecordEntry: (laneIndex) => host.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => host.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => host.dateTimeFormatService.formatDate(d, "short"),
+      getHeats: () => resolveHostHeats(host),
+      getCurrentHeat: () => resolveHostCurrentHeat(host),
+      getSortedHeatDrivers: () => host.sortedHeatDrivers || [],
+      getHeatTime: () => host.raceTimeService?.time ?? host.time ?? 0,
     };
     return RacedayFormatUtils.formatValue(
       propertyName,
@@ -500,6 +516,10 @@ export class RacedayColumnLayoutHelper {
       getLaneRecordEntry: (laneIndex) => host.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => host.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => host.dateTimeFormatService.formatDate(d, "short"),
+      getHeats: () => resolveHostHeats(host),
+      getCurrentHeat: () => resolveHostCurrentHeat(host),
+      getSortedHeatDrivers: () => host.sortedHeatDrivers || [],
+      getHeatTime: () => host.raceTimeService?.time ?? host.time ?? 0,
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -546,6 +566,10 @@ export class RacedayColumnLayoutHelper {
       isWarmup: () => host.isWarmup,
       isCooldown: () => host.isCooldown,
       formatDate: (d: any) => host.dateTimeFormatService.formatDate(d, "short"),
+      getHeats: () => resolveHostHeats(host),
+      getCurrentHeat: () => resolveHostCurrentHeat(host),
+      getSortedHeatDrivers: () => host.sortedHeatDrivers || [],
+      getHeatTime: () => host.raceTimeService?.time ?? host.time ?? 0,
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;

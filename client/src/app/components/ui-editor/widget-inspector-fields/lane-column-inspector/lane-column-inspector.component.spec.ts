@@ -2652,5 +2652,36 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.currentSettings["_gridEmptyRowsModeChanged"]).toBeTrue();
       expect(component.change.emit).toHaveBeenCalledTimes(2);
     });
+
+    it("should handle averageScore column and inset properties correctly", () => {
+      component.currentSettings["columnKey"] = "averageScore";
+      expect(component.isAverageScoreColumn).toBeTrue();
+
+      expect(component.showPartialHeats).toBeFalse();
+      spyOn(component.change, "emit");
+      component.showPartialHeats = true;
+      expect(component.showPartialHeats).toBeTrue();
+      expect(component.currentSettings["showPartialHeats"]).toBeTrue();
+      expect(component.change.emit).toHaveBeenCalled();
+
+      expect(component.averageScoreDecimalPlaces).toBe(2);
+      component.onAverageScoreDecimalsChange(3);
+      expect(component.averageScoreDecimalPlaces).toBe(3);
+      expect(component.currentSettings["decimalPlaces"]).toBe(3);
+      expect(component.currentSettings["lapDecimalPlaces"]).toBe(3);
+      expect(component.currentSettings["timeDecimalPlaces"]).toBe(3);
+
+      component.currentSettings["insets"] = { "top-right": "averageScore" };
+      expect(component.isInsetAverageScoreColumn("top-right")).toBeTrue();
+      expect(component.isInsetAverageScoreColumn("top-left")).toBeFalse();
+
+      expect(component.getInsetShowPartialHeats("top-right")).toBeFalse();
+      component.setInsetShowPartialHeats("top-right", true);
+      expect(component.getInsetShowPartialHeats("top-right")).toBeTrue();
+
+      expect(component.getInsetAverageScoreDecimalPlaces("top-right")).toBe(2);
+      component.setInsetAverageScoreDecimalPlaces("top-right", 1);
+      expect(component.getInsetAverageScoreDecimalPlaces("top-right")).toBe(1);
+    });
   });
 });

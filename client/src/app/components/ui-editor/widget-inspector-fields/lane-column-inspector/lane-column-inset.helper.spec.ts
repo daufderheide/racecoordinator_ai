@@ -825,5 +825,41 @@ describe("LaneColumnInsetHelper", () => {
         "always_time",
       );
     });
+
+    it("should handle averageScore inset helpers correctly", () => {
+      expect(
+        LaneColumnInsetHelper.isInsetAverageScoreColumn("averageScore"),
+      ).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.isInsetAverageScoreColumn("averageScore_0"),
+      ).toBeTrue();
+      expect(
+        LaneColumnInsetHelper.isInsetAverageScoreColumn("lapCount"),
+      ).toBeFalse();
+
+      const s: any = {
+        insets: { "top-left": "averageScore" },
+        insetsConfig: {},
+      };
+
+      expect(
+        LaneColumnInsetHelper.getInsetShowPartialHeats(s, "top-left"),
+      ).toBeFalse();
+      LaneColumnInsetHelper.setInsetShowPartialHeats(s, "top-left", true);
+      expect(
+        LaneColumnInsetHelper.getInsetShowPartialHeats(s, "top-left"),
+      ).toBeTrue();
+
+      expect(
+        LaneColumnInsetHelper.getInsetAverageScoreDecimalPlaces(s, "top-left"),
+      ).toBe(2);
+      LaneColumnInsetHelper.setInsetAverageScoreDecimalPlaces(s, "top-left", 3);
+      expect(
+        LaneColumnInsetHelper.getInsetAverageScoreDecimalPlaces(s, "top-left"),
+      ).toBe(3);
+      expect(s.insetsConfig["top-left"].decimalPlaces).toBe(3);
+      expect(s.insetsConfig["top-left"].lapDecimalPlaces).toBe(3);
+      expect(s.insetsConfig["top-left"].timeDecimalPlaces).toBe(3);
+    });
   });
 });

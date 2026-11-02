@@ -713,7 +713,11 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   shouldRenderAsLaneColumn(widget: AbsoluteWidgetNode): boolean {
-    if (widget.widgetType === "lane-column") return true;
+    if (
+      widget.widgetType === "lane-column" ||
+      widget.widgetType === "average-score"
+    )
+      return true;
     if (this.isCustomWidget(widget.widgetType)) {
       const s = widget.customSettings;
       return Boolean(

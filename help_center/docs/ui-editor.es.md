@@ -139,6 +139,23 @@ El widget **Últimas Vueltas** (`lastLaps`) muestra los tiempos de las vueltas r
 - **Ajuste y escala dinámicos**: La tarjeta escala automáticamente los tamaños de fuente y el espaciado para ajustar limpiamente la cantidad configurada de vueltas dentro de la geometría asignada.
 - **Sincronización en cuadrícula**: En cuadrículas de carriles, configurar o aplicar formatos de tiempo sincroniza la cantidad de vueltas mostradas y su diseño en todos los carriles participantes.
 
+#### Widget de Puntuación Media (`averageScore`)
+
+El widget **Puntuación Media** (`averageScore`) muestra el resultado medio de manga para todas las mangas que el piloto ha finalizado:
+
+- **Solo datos de manga**: Pertenece estrictamente al grupo de herramientas **Datos de Manga** (`analysis`). Cuando se sitúa en un contexto de datos generales o con un piloto en descanso, muestra guiones (`--`).
+- **Adaptación al método de puntuación**: Calcula automáticamente la media según el método de puntuación de manga configurado:
+  - **Puntuación por vueltas**: Promedia las vueltas del piloto en mangas completadas (con decimales de vuelta configurados, por defecto 2).
+  - **Puntuación por mejor vuelta**: Promedia las mejores vueltas en mangas completadas con vuelta válida (con decimales de tiempo configurados, por defecto 3).
+  - **Puntuación por tiempo total**: Promedia los tiempos totales en mangas completadas (con formato de temporizador o decimales de tiempo).
+- **Mostrar mangas parciales**:
+  - Desmarcado (por defecto), solo cuentan las mangas completamente finalizadas.
+  - Marcado, incorpora la manga activa ponderando su contribución según el progreso:
+    - **Carrera por vueltas**: En una manga de 10 vueltas con el líder en la vuelta 4, la manga cuenta como 0,4 en el denominador y se añade la puntuación activa al numerador.
+    - **Carrera por tiempo**: El progreso se determina por el tiempo transcurrido respecto a la duración objetivo.
+    - **Valor objetivo no configurado**: Si no se puede determinar el progreso (`finishValue <= 0`), la manga parcial no se cuenta.
+- **Precisión decimal**: Configurable en el Inspector de Columnas (0–3 decimales) para tarjetas principales e insets.
+
 ### Ordenación de Cuadrícula y Matriz de Interacción
 
 El menú desplegable **Ordenación de Cuadrícula** en la pestaña Cuadrícula controla el orden de las filas. Su comportamiento depende directamente de si la **Fuente de datos** está establecida en **Datos de Ronda** o **Datos Generales**:

@@ -48,7 +48,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(121);
+    expect(rcAiGroup.totalCount).toBe(122);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -87,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(121);
+    expect(rcAiGroup.totalCount).toBe(122);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
@@ -477,6 +477,15 @@ describe("ToolboxGroupHelper", () => {
       (w) => w.type === "lane-col:lastLapTime",
     );
     expect(lastLapWidget).toBeDefined();
+
+    // Verify averageScore is present in analysis subgroup of Heat Data
+    const analysisSg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-analysis",
+    );
+    expect(analysisSg).toBeDefined();
+    expect(
+      analysisSg!.widgets.find((w) => w.type === "lane-col:averageScore"),
+    ).toBeDefined();
   });
 
   it("should nest Overall Race Data inside Race Coordinator AI with 7 alphabetized subgroups", () => {
@@ -516,6 +525,7 @@ describe("ToolboxGroupHelper", () => {
     expect(widgetTypes).toContain("lane-col:overallAverageTop15");
     expect(widgetTypes).toContain("lane-col:overallTop2Consecutive");
     expect(widgetTypes).toContain("lane-col:overallTop3Consecutive");
+    expect(widgetTypes).not.toContain("lane-col:averageScore");
   });
 
   it("should include custom image sets in media-custom subgroup of Heat Data", () => {

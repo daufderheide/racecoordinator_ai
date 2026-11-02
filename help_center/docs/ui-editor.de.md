@@ -139,6 +139,23 @@ Das Widget **Letzte Runden** (`lastLaps`) zeigt die zuletzt absolvierten Rundenz
 - **Dynamische Skalierung & Einpassung**: Die Karte passt Schriftgrößen und Zeilenabstände automatisch an, um die konfigurierte Anzahl an Runden sauber in die Spaltengeometrie einzupassen.
 - **Raster-Synchronisation**: In Bahnrastern synchronisiert das Zuweisen von Zeitformaten die Anzahl der angezeigten letzten Runden sowie deren Gestaltung über alle Bahnen hinweg.
 
+#### Widget für durchschnittliche Punktzahl (`averageScore`)
+
+Das Widget **Durchschnittliche Punktzahl** (`averageScore`) zeigt das durchschnittliche Laufergebnis über alle vom Fahrer beendeten Läufe an:
+
+- **Nur Lauf-Daten**: Gehört ausschließlich zur Toolbox-Gruppe **Lauf-Daten** (`analysis`). In einem Gesamtwertungs-Kontext oder bei pausierenden Fahrern ohne aktiven Lauf werden Striche (`--`) angezeigt.
+- **Anpassung an Wertungsmethode**: Berechnet den Durchschnitt automatisch basierend auf der für das Rennen konfigurierten Wertungsmethode:
+  - **Rundenzahl-Wertung**: Bildet den Durchschnitt der Runden des Fahrers über beendete Läufe (formatiert mit Runden-Dezimalstellen, Standard 2).
+  - **Schnellste-Runde-Wertung**: Bildet den Durchschnitt der besten Rundenzeiten über beendete Läufe mit gültiger Zeit (formatiert mit Zeit-Dezimalstellen, Standard 3).
+  - **Gesamtzeit-Wertung**: Bildet den Durchschnitt der Gesamtlaufzeiten über beendete Läufe (formatiert mit Timer-Optionen oder Zeit-Dezimalstellen).
+- **Teilläufe anzeigen**:
+  - Wenn deaktiviert (Standard), zählen nur vollständig beendete Läufe.
+  - Wenn aktiviert, wird der aktuell laufende Lauf gewichtet nach seinem Fortschritt berücksichtigt:
+    - **Rundenrennen**: Bei einem 10-Runden-Lauf und führendem Auto in Runde 4 zählt der Lauf als 0,4 im Nenner, und der Zwischenstand des Fahrers fließt in den Zähler ein.
+    - **Zeiterennen**: Der Fortschritt bestimmt sich aus der abgelaufenen Laufzeit im Verhältnis zur Ziellaufzeit.
+    - **Nicht konfigurierter Zielwert**: Lässt die Rennkonfiguration keine Fortschrittsermittlung zu (z. B. `finishValue <= 0`), wird der Teillauf nicht gezählt.
+- **Dezimalpräzision**: Im Spalteninspektor (0–3 Dezimalstellen) für Hauptkarten und Insets einstellbar.
+
 ### Raster-Sortierung & Interaktionsmatrix
 
 Das Dropdown-Menü **Raster-Sortierung** im Reiter „Raster“ steuert die Zeilenreihenfolge. Das Verhalten hängt direkt davon ab, ob die **Datenquelle** des Rasters auf **Lauf-Daten** oder **Gesamtwertung** eingestellt ist:

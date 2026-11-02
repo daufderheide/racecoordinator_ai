@@ -139,6 +139,23 @@ O widget **Últimas Voltas** (`lastLaps`) exibe os tempos das voltas recentes co
 - **Ajuste e dimensionamento dinâmicos**: O cartão ajusta automaticamente os tamanhos de fonte e espaçamento para encaixar perfeitamente a quantidade configurada de voltas na geometria da coluna.
 - **Sincronização na grade**: Em grades de pistas, configurar ou aplicar formatos de tempo sincroniza o total de últimas voltas e sua estilização em todas as pistas concorrentes.
 
+#### Widget de Pontuação Média (`averageScore`)
+
+O widget **Pontuação Média** (`averageScore`) exibe a pontuação média da bateria em todas as baterias concluídas pelo piloto:
+
+- **Apenas Dados da Bateria**: Pertence estritamente ao grupo da caixa de ferramentas **Dados da Bateria** (`analysis`). Em um contexto de dados gerais ou com piloto em repouso sem bateria ativa, são exibidos traços (`--`).
+- **Adaptação ao método de pontuação**: Calcula a média automaticamente de acordo com o método de pontuação configurado na corrida:
+  - **Pontuação por contagem de voltas**: Média das voltas do piloto nas baterias concluídas (com casas decimais configuradas, padrão 2).
+  - **Pontuação por melhor volta**: Média dos melhores tempos de volta nas baterias concluídas com tempo válido (com casas decimais de tempo, padrão 3).
+  - **Pontuação por tempo total**: Média dos tempos totais nas baterias concluídas (com opções de cronômetro ou casas decimais).
+- **Mostrar baterias parciais**:
+  - Desmarcado (padrão): apenas baterias totalmente concluídas são contabilizadas.
+  - Marcado: a bateria ativa em treino ou andamento é incorporada, ponderando sua contribuição pelo progresso:
+    - **Corrida por voltas**: Numa bateria de 10 voltas com o líder na volta 4, a bateria conta como 0,4 no denominador e a pontuação ativa do piloto é somada ao numerador.
+    - **Corrida por tempo**: O progresso é determinado pelo tempo decorrido em relação à duração prevista.
+    - **Valor final não configurado**: Se a configuração não permitir determinar o progresso (`finishValue <= 0`), a bateria parcial não é contabilizada.
+- **Precisão decimal**: Configurável no Inspetor de Colunas (0–3 casas decimais) para cartões principais e insets.
+
 ### Ordenação da Grade e Matriz de Interação
 
 O menu suspenso **Classificação da Grade** na aba Grade controla a ordem das linhas. Seu comportamento depende diretamente da **Origem de dados** selecionada (**Dados da Bateria** ou **Dados Gerais**):

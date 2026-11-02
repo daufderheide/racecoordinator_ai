@@ -24,6 +24,7 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
   { key: "lastLaps", label: "RD_COL_LAST_LAPS" },
   { key: "medianLapTime", label: "UI_EDITOR_COL_HEAT_MEDIAN_LAP" },
   { key: "averageLapTime", label: "UI_EDITOR_COL_HEAT_AVG_LAP" },
+  { key: "averageScore", label: "UI_EDITOR_COL_HEAT_AVG_SCORE" },
   { key: "bestLapTime", label: "UI_EDITOR_COL_HEAT_BEST_LAP" },
   { key: "bestRaceLapTime", label: "RD_COL_BEST_RACE_LAP_TIME" },
   { key: "recordLapTime", label: "RD_COL_RECORD_LAP_TIME" },

@@ -30,6 +30,7 @@ export type WidgetType =
   | "season-race-leaderboard"
   | "lane-view"
   | "lane-column"
+  | "average-score"
   | "on-deck"
   | "next-heat"
   | "heat-list"
@@ -92,6 +93,7 @@ export interface InsetConfig {
   columnKey?: string;
   gapTarget?: "leader" | "position";
   gapMode?: "always_time" | "laps_and_time" | "always_laps";
+  showPartialHeats?: boolean;
   timeDecimalPlaces?: number;
   lapDecimalPlaces?: number;
   decimalPlaces?: number;
@@ -127,6 +129,7 @@ export interface LaneColumnWidgetSettings {
   columnKey: string;
   gapTarget?: "leader" | "position";
   gapMode?: "always_time" | "laps_and_time" | "always_laps";
+  showPartialHeats?: boolean;
   bindingMode:
     | "lane"
     | "position"

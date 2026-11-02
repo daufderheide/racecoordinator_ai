@@ -3516,5 +3516,53 @@ describe("RacedayFormatUtils", () => {
         ),
       ).toBe("Red Bull Racing");
     });
+
+    it("should retrieve and format averageScore correctly", () => {
+      const driver = {
+        driver: { entity_id: "driver-1" },
+        actualDriver: { entity_id: "driver-1", name: "Alice" },
+      } as any;
+
+      const heats = [
+        {
+          heatNumber: 1,
+          isCompleted: true,
+          heatDrivers: [{ driver: { entity_id: "driver-1" }, lapCount: 10 }],
+        },
+        {
+          heatNumber: 2,
+          isCompleted: true,
+          heatDrivers: [{ driver: { entity_id: "driver-1" }, lapCount: 12 }],
+        },
+      ];
+      ctx.getHeats = () => heats;
+
+      const val = RacedayFormatUtils.getPropertyValue(
+        driver,
+        "averageScore",
+        {},
+        "center-center",
+        ctx,
+      );
+      expect(val).toBeCloseTo(11.0, 4);
+
+      const formatted = RacedayFormatUtils.formatValue(
+        "averageScore",
+        val,
+        driver,
+        undefined,
+        ctx,
+      );
+      expect(formatted).toBe("11.00");
+
+      const emptyFormatted = RacedayFormatUtils.formatValue(
+        "averageScore",
+        undefined,
+        { isEmpty: true } as any,
+        undefined,
+        ctx,
+      );
+      expect(emptyFormatted).toBe("--");
+    });
   });
 });

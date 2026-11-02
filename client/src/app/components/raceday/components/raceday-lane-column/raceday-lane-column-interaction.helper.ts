@@ -181,6 +181,7 @@ export function formatLaneColumnInsetValue(
   const insetSettings: any = {
     gapTarget: anchorCfg?.gapTarget,
     gapMode: anchorCfg?.gapMode,
+    showPartialHeats: anchorCfg?.showPartialHeats ?? settings.showPartialHeats,
     insetsConfig: settings.insetsConfig,
     insetTimeDecimalPlaces: insetTimeDec,
     insetLapDecimalPlaces: insetLapDec,
@@ -202,7 +203,14 @@ export function formatLaneColumnInsetValue(
     const colDef = parent.columns?.find((c: any) => c.propertyName === key);
     return parent.formatValue(
       key,
-      RacedayFormatUtils.getPropertyValue(hd, key, insetSettings, anchor),
+      RacedayFormatUtils.getPropertyValue(
+        hd,
+        key,
+        insetSettings,
+        anchor,
+        undefined,
+        parent,
+      ),
       hd,
       colDef,
       anchor,
@@ -228,7 +236,13 @@ export function formatLaneColumnInsetValue(
     key,
     insetSettings,
     anchor,
+    undefined,
+    parent,
   );
+  if (key === "averageScore" || key.startsWith("averageScore")) {
+    if (raw === null || raw === undefined) return "--";
+    return Number(raw).toFixed(insetLapDec);
+  }
   return formatAdjustedLapValue(raw, hd, key);
 }
 
@@ -883,6 +897,13 @@ export function resolveLaneColumnFormattedValue(
     return "--";
   }
 
+  if (
+    (columnKey === "averageScore" || columnKey.startsWith("averageScore")) &&
+    isOverallOrSeedDataSource(settings, parent, bindingMode)
+  ) {
+    return "--";
+  }
+
   if (parent?.formatValue) {
     return parent.formatValue(
       columnKey,
@@ -891,6 +912,8 @@ export function resolveLaneColumnFormattedValue(
         columnKey,
         settings,
         "center-center",
+        undefined,
+        parent,
       ),
       hd,
       colDef,
@@ -917,7 +940,13 @@ export function resolveLaneColumnFormattedValue(
     columnKey,
     settings,
     "center-center",
+    undefined,
+    parent,
   );
+  if (columnKey === "averageScore" || columnKey.startsWith("averageScore")) {
+    if (raw === null || raw === undefined) return "--";
+    return Number(raw).toFixed(settings.lapDecimalPlaces ?? 2);
+  }
   return formatAdjustedLapValue(raw, hd, columnKey);
 }
 

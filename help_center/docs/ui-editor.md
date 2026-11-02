@@ -139,6 +139,23 @@ The **Last Laps** (`lastLaps`) widget displays recent lap times completed by the
 - **Dynamic Sizing & Fit**: The card automatically scales font sizes and line heights to fit the configured number of laps cleanly within the allocated column geometry.
 - **Cross-Grid Synchronization**: In lane grids, configuring or applying time formats synchronizes the last laps display count and styling across all competing lanes.
 
+#### Average Score Widget (`averageScore`)
+
+The **Average Score** (`averageScore`) widget displays the average heat score across all heats the driver has finished:
+
+- **Heat Data Only**: Belongs strictly to the **Heat Data** toolbox group (`analysis`). When placed in an overall race data context or bound to a non-heat resting driver, it displays dashes (`--`).
+- **Scoring Method Adaptation**: Automatically calculates the average based on the race's configured heat scoring method:
+  - **Lap Count Scoring**: Averages the driver's lap count across completed heats (formatted using configured lap decimals, default 2).
+  - **Fastest Lap Scoring**: Averages the driver's best lap times across completed heats where a valid lap was recorded (formatted using configured time decimals, default 3).
+  - **Total Time Scoring**: Averages the driver's total heat times across completed heats (formatted with timer display options or time decimals).
+- **Show Partial Heats**:
+  - When unchecked (default), only fully completed heats count toward the average score.
+  - When checked, the widget incorporates the currently active heat in practice or progress by weighting its contribution by how far through the heat it is:
+    - **Lap Race**: If it is a 10-lap heat and the lead driver is on lap 4, the active heat counts as 0.4 in the denominator, and the driver's active heat score is added to the numerator.
+    - **Timed Race**: The heat progress fraction is determined by elapsed heat time relative to the target heat duration.
+    - **Unconfigured Finish Value**: If the race configuration does not allow determining heat progress (e.g. `finishValue <= 0` or undefined), partial heats are not counted.
+- **Decimal Precision**: Fully configurable in the Column Inspector (0–3 decimal places) for main cards and insets.
+
 ### Grid Sorting & Interaction Matrix
 
 The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its behavior depends directly on whether the grid's **Data Source** is set to **Heat Data** or **Overall Data**:

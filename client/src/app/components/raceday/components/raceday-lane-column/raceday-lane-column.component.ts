@@ -276,6 +276,9 @@ export class RacedayLaneColumnComponent
       return this.settings.columnKey;
     }
     const type = this.widget()?.widgetType;
+    if (type === "average-score" || type === "averageScore") {
+      return "averageScore";
+    }
     if (type && isCustomWidgetKey(type)) {
       return type;
     }

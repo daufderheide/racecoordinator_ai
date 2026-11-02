@@ -139,6 +139,23 @@ De widget **Laatste Ronden** (`lastLaps`) toont de recent gereden rondetijden va
 - **Dynamische schaling en pasvorm**: De kaart schaalt lettergroottes en regelafstanden automatisch om het geconfigureerde aantal ronden netjes in de kolomgeometrie te passen.
 - **Grid-synchronisatie**: In banengrids synchroniseert het configureren of toepassen van tijdopmaken het aantal weergegeven ronden en de vormgeving over alle deelnemende banen.
 
+#### Gemiddelde Score Widget (`averageScore`)
+
+De widget **Gemiddelde Score** (`averageScore`) toont de gemiddelde heatscore over alle heats die de coureur heeft voltooid:
+
+- **Alleen Heat-gegevens**: Behoort strikt tot de gereedschapskistgroep **Heat-gegevens** (`analysis`). In een algemene racegegevenscontext of voor een rustende coureur zonder actieve heat worden streepjes (`--`) weergegeven.
+- **Aanpassing aan scoremethode**: Berekent het gemiddelde automatisch op basis van de geconfigureerde heat-scoremethode:
+  - **Rondeaantal-telling**: Berekent het gemiddelde aantal ronden over voltooide heats (met geconfigureerde rondedecimalen, standaard 2).
+  - **Snelste-ronde-telling**: Berekent het gemiddelde van de snelste rondetijden over voltooide heats met geldige tijd (met tijddecimalen, standaard 3).
+  - **Totale-tijd-telling**: Berekent het gemiddelde van de totale heattijden over voltooide heats (met timerweergave of tijddecimalen).
+- **Gedeeltelijke heats weergeven**:
+  - Uitgeschakeld (standaard): alleen volledig voltooide heats tellen mee.
+  - Ingeschakeld: de actieve heat in oefensessie of wedstrijd wordt meegewogen op basis van de voortgang:
+    - **Ronderace**: Bij een heat van 10 ronden waarin de koploper in ronde 4 zit, telt de heat voor 0,4 mee in de noemer en wordt de actieve score aan de teller toegevoegd.
+    - **Tijdrace**: De voortgang wordt bepaald door de verstreken heattijd ten opzichte van de doeltijd.
+    - **Niet-geconfigureerde eindwaarde**: Kan de voortgang niet worden bepaald (`finishValue <= 0`), dan telt de gedeeltelijke heat niet mee.
+- **Decimale precisie**: Volledig instelbaar in de Kolominspecteur (0–3 decimalen) voor hoofdkaarten en insets.
+
 ### Rastersortering & Interactiematrix
 
 De keuzelijst **Raster Sortering** op het tabblad Raster bepaalt de rijenvolgorde. De werking hangt direct af van de gekozen **Gegevensbron** (**Heat-gegevens** of **Algemene Gegevens**):

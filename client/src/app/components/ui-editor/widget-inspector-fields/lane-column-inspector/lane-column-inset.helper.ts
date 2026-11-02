@@ -485,6 +485,52 @@ export class LaneColumnInsetHelper {
     );
   }
 
+  public static isInsetAverageScoreColumn(key: string | undefined): boolean {
+    if (!key) return false;
+    const baseKey = key.split("_")[0];
+    return baseKey === "averageScore";
+  }
+
+  public static getInsetShowPartialHeats(
+    currentSettings: any,
+    anchor: string,
+  ): boolean {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    return Boolean(cfg.showPartialHeats);
+  }
+
+  public static setInsetShowPartialHeats(
+    currentSettings: any,
+    anchor: string,
+    val: boolean,
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.showPartialHeats = val;
+  }
+
+  public static getInsetAverageScoreDecimalPlaces(
+    currentSettings: any,
+    anchor: string,
+  ): number {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    if (cfg.decimalPlaces !== undefined) return Number(cfg.decimalPlaces);
+    if (cfg.lapDecimalPlaces !== undefined) return Number(cfg.lapDecimalPlaces);
+    if (cfg.timeDecimalPlaces !== undefined)
+      return Number(cfg.timeDecimalPlaces);
+    return 2;
+  }
+
+  public static setInsetAverageScoreDecimalPlaces(
+    currentSettings: any,
+    anchor: string,
+    val: number,
+  ): void {
+    const cfg = this.getOrCreateInsetConfig(currentSettings, anchor);
+    cfg.decimalPlaces = val;
+    cfg.lapDecimalPlaces = val;
+    cfg.timeDecimalPlaces = val;
+  }
+
   public static getInsetGapTarget(
     currentSettings: any,
     anchor: string,
@@ -572,6 +618,7 @@ export class LaneColumnInsetHelper {
     if (
       this.isInsetTotalTime(key) ||
       this.isInsetGapColumn(key) ||
+      this.isInsetAverageScoreColumn(key) ||
       this.isInsetTimeColumn(key) ||
       this.isInsetLapColumn(key) ||
       this.isInsetHeatsCountColumn(key)
@@ -701,7 +748,7 @@ export class LaneColumnInsetHelper {
     return current;
   }
 
-  public static sanitizeSettings(
+  private static sanitizeDecimalSettings(
     currentSettings: any,
     isCustomWidget: boolean,
   ): void {
@@ -709,6 +756,11 @@ export class LaneColumnInsetHelper {
       currentSettings["timeDecimalPlaces"] = Math.min(
         3,
         Math.max(0, Number(currentSettings["timeDecimalPlaces"])),
+      );
+    }
+    if (currentSettings["showPartialHeats"] !== undefined) {
+      currentSettings["showPartialHeats"] = Boolean(
+        currentSettings["showPartialHeats"],
       );
     }
     if (currentSettings["decimalPlaces"] !== undefined) {
@@ -758,6 +810,9 @@ export class LaneColumnInsetHelper {
         Math.max(0, Number(currentSettings["timeSubsecondDecimals"])),
       );
     }
+  }
+
+  private static sanitizeLastLapsSettings(currentSettings: any): void {
     if (currentSettings["lastLapsCount"] !== undefined) {
       const parsed = Number(currentSettings["lastLapsCount"]);
       currentSettings["lastLapsCount"] =
@@ -797,6 +852,14 @@ export class LaneColumnInsetHelper {
           ? Math.min(32, Math.max(0, Math.round(parsed)))
           : 4;
     }
+  }
+
+  public static sanitizeSettings(
+    currentSettings: any,
+    isCustomWidget: boolean,
+  ): void {
+    this.sanitizeDecimalSettings(currentSettings, isCustomWidget);
+    this.sanitizeLastLapsSettings(currentSettings);
   }
 
   public static getPlacedInsetAnchors(
