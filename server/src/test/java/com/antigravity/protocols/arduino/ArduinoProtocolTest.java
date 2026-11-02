@@ -21,6 +21,7 @@ import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
@@ -448,6 +449,7 @@ public class ArduinoProtocolTest {
 
   @Before
   public void setUp() {
+    ClientSubscriptionManager.getInstance().setShuttingDown(false);
     scheduler = new MockScheduler();
     serialConnection = new MockSerialConnection();
     config = new ArduinoConfig();

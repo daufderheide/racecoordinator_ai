@@ -194,6 +194,10 @@ public class ClientSubscriptionManager {
     return databaseContext;
   }
 
+  public boolean isShuttingDown() {
+    return isShuttingDown;
+  }
+
   public void setShuttingDown(boolean shuttingDown) {
     this.isShuttingDown = shuttingDown;
     if (shuttingDown) {

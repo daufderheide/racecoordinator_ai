@@ -2,6 +2,7 @@ package com.antigravity.protocols;
 
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.protocols.interfaces.ISerialConnection;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
@@ -11,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
   protected ISerialConnection serialConnection;
+  protected volatile boolean writeFailed = false;
 
   public AbstractSerialProtocol(
       int numLanes, ISerialConnection serialConnection, ScheduledExecutorService statusScheduler) {
@@ -49,6 +51,12 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
   @Override
   public synchronized boolean open() {
+    if (ClientSubscriptionManager.getInstance().isShuttingDown()) {
+      logger.info("Server is shutting down, skipping serial open");
+      return false;
+    }
+    writeFailed = false;
+
     if (serialConnection.isOpen()) {
       logger.info("SerialProtocol already open");
       return true;
@@ -121,6 +129,7 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
       logger.info("Disconnecting serial port");
       serialConnection.disconnect();
     }
+    writeFailed = true;
   }
 
   @Override
@@ -138,12 +147,16 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
     return 128; // Default max buffer size, subclasses can override
   }
 
+  public boolean isWriteFailed() {
+    return writeFailed;
+  }
+
   public void writeData(byte[] message) {
     if (message == null || message.length == 0) {
       return;
     }
 
-    if (!isConnected()) {
+    if (writeFailed || ClientSubscriptionManager.getInstance().isShuttingDown() || !isConnected()) {
       return;
     }
 
@@ -159,7 +172,11 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
     try {
       serialConnection.writeData(message);
     } catch (IOException e) {
+      writeFailed = true;
       logger.error("Failed to write data to serial port: {}", e.getMessage());
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
+      }
     }
   }
 }
