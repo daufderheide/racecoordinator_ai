@@ -709,8 +709,25 @@ export function handleRestorePreMigrationBackup(comp: any): void {
   if (comp.editingLayout) {
     const res = restorePreMigrationLayout(comp.editingLayout, comp.allLayouts);
     if (res.restored) {
-      comp.captureState();
-      comp.cdr.markForCheck();
+      const parsed = parseLayoutConfig(comp.editingLayout);
+      comp.syncRacedayPreview?.(parsed);
+      comp.captureState?.();
+      comp.cdr?.markForCheck();
+    }
+  }
+}
+
+export function handleUpgradeLegacyHeatView(comp: any): void {
+  if (comp.editingLayout) {
+    const isPractice =
+      comp.editingLayout.entity_id === "practice_ui_layout_rc_ai" ||
+      comp.editingLayout.name?.toLowerCase().includes("practice");
+    const res = upgradePreservedHeatViewLayout(comp.editingLayout, isPractice);
+    if (res.upgraded && res.layout) {
+      const parsed = parseLayoutConfig(comp.editingLayout);
+      comp.syncRacedayPreview?.(parsed);
+      comp.captureState?.();
+      comp.cdr?.markForCheck();
     }
   }
 }

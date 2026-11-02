@@ -552,15 +552,18 @@ export function restorePreMigrationLayout(
   if (!layoutToRestore) {
     if (
       ui.entity_id === "default_ui_layout_rc_ai" ||
-      (ui.name && ui.name.trim().toLowerCase() === "racecoordinator ai")
+      (ui.name && ui.name.trim().toLowerCase() === "racecoordinator ai") ||
+      (ui.name && ui.name.trim().toLowerCase() === "rc ai")
     ) {
-      layoutToRestore = JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+      layoutToRestore = JSON.parse(
+        JSON.stringify(Settings.LEGACY_DEFAULT_LAYOUT),
+      );
     } else if (
       ui.entity_id === "practice_ui_layout_rc_ai" ||
       (ui.name && ui.name.trim().toLowerCase().includes("practice"))
     ) {
       layoutToRestore = JSON.parse(
-        JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
+        JSON.stringify(Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT),
       );
     }
   }
@@ -572,6 +575,9 @@ export function restorePreMigrationLayout(
   layoutToRestore.preserveLegacyHeatView = true;
   ui.layoutJson = JSON.stringify(layoutToRestore);
   delete (ui as any)._wasMigrated;
+  if (ui.entity_id) {
+    preMigrationLayoutCache.delete(ui.entity_id);
+  }
 
   if (backup) {
     if (backup.columnsJson) ui.columnsJson = backup.columnsJson;

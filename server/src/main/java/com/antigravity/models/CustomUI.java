@@ -3,6 +3,8 @@ package com.antigravity.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomUI extends Model {
@@ -158,46 +160,26 @@ public class CustomUI extends Model {
     return columnAnchorsJson;
   }
 
+  public static String loadResourceLayout(String resourcePath) {
+    try (InputStream is = CustomUI.class.getResourceAsStream(resourcePath)) {
+      if (is != null) {
+        java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[8192];
+        while ((nRead = is.read(data, 0, data.length)) != -1) {
+          buffer.write(data, 0, nRead);
+        }
+        buffer.flush();
+        return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+      }
+    } catch (Exception e) {
+      // ignore
+    }
+    return "{\"widgets\":[],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+  }
+
   public static CustomUI createDefault() {
-    String layoutJson =
-        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,"
-            + "\"width\":1920,\"height\":54,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-race-name\",\"widgetType\":\"race-name\",\"x\":0,\"y\":54,"
-            + "\"width\":200,\"height\":18,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-heat-info\",\"widgetType\":\"heat-info\",\"x\":640,\"y\":54,"
-            + "\"width\":200,\"height\":18,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-track-name\",\"widgetType\":\"track-name\",\"x\":1280,\"y\":54,"
-            + "\"width\":200,\"height\":18,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":90,"
-            + "\"width\":384,\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-qr\",\"widgetType\":\"qr\",\"x\":328,\"y\":273,\"width\":48,"
-            + "\"height\":48,\"zIndex\":110,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-flag\",\"widgetType\":\"flag\",\"x\":384,\"y\":90,\"width\":384,"
-            + "\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":768,\"y\":90,\"width\":384,"
-            + "\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\",\"customSettings\":{"
-            + "\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\","
-            + "\"timeSubsecondThreshold\":10,\"timeSubsecondDecimals\":2}},"
-            + "{\"id\":\"widget-records\",\"widgetType\":\"records\",\"x\":1152,\"y\":90,"
-            + "\"width\":384,\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-leaderboard\",\"widgetType\":\"leaderboard\",\"x\":1536,\"y\":90,"
-            + "\"width\":384,\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-lane-view\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":329,"
-            + "\"width\":1920,\"height\":751,\"zIndex\":111,\"scaleMode\":\"auto\","
-            + "\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\","
-            + "\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{"
-            + "\"isVertical\":false,\"highlightLapStyle\":\"shimmer\",\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":2,"
-            + "\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\","
-            + "\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\","
-            + "\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,"
-            + "\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\","
-            + "\"columnWidths\":{\"ghostPacingLeaderAvg\":200,\"averageLapTime\":310}},"
-            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":460,\"y\":390,"
-            + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
-            + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
-            + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
-            + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
-            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+    String layoutJson = loadResourceLayout("/defaults/default_ui_layout.json");
     String columnsJson =
         "[\"driver.nickname\",\"lapCount\",\"lastLapTime\",\"averageLapTime\",\"gap\","
             + "\"ghostPacingLeaderAvg\"]";
@@ -225,14 +207,7 @@ public class CustomUI extends Model {
   }
 
   public static CustomUI createPractice() {
-    String layoutJson =
-        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,\"width\":1920,\"height\":38,\"zIndex\":216,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
-            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":779,\"y\":38,\"width\":441,\"height\":111,\"zIndex\":218,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\"}},"
-            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":38,\"width\":469,\"height\":111,\"zIndex\":206,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"fontSize\":24,\"textColor\":\"\",\"textScaleFactor\":1,\"backgroundColor\":\"\"},"
-            + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":111,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":132,\"x\":469,\"y\":38,\"zIndex\":217},"
-            + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":601,\"y\":38,\"width\":178,\"height\":111,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
-            + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":149,\"width\":1920,\"height\":931,\"zIndex\":180,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"sortByStandings\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"shimmer\",\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
-            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":404,\"y\":386,\"width\":1111,\"height\":298,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+    String layoutJson = loadResourceLayout("/defaults/practice_ui_layout.json");
     String columnsJson =
         "[\"laneNumber\",\"lastLapTime\",\"bestLapTime\",\"lastLaps\",\"lapCount\"]";
     String columnLayoutsJson =
@@ -253,46 +228,7 @@ public class CustomUI extends Model {
   }
 
   public static CustomUI createFuel() {
-    String layoutJson =
-        "{\"widgets\":[{\"id\":\"widget-menu-bar\",\"widgetType\":\"menu-bar\",\"x\":0,\"y\":0,"
-            + "\"width\":1920,\"height\":54,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-race-name\",\"widgetType\":\"race-name\",\"x\":0,\"y\":54,"
-            + "\"width\":200,\"height\":18,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-heat-info\",\"widgetType\":\"heat-info\",\"x\":640,\"y\":54,"
-            + "\"width\":200,\"height\":18,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-track-name\",\"widgetType\":\"track-name\",\"x\":1280,\"y\":54,"
-            + "\"width\":200,\"height\":18,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-branding\",\"widgetType\":\"branding\",\"x\":0,\"y\":90,"
-            + "\"width\":384,\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-qr\",\"widgetType\":\"qr\",\"x\":328,\"y\":273,\"width\":48,"
-            + "\"height\":48,\"zIndex\":110,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-flag\",\"widgetType\":\"flag\",\"x\":384,\"y\":90,\"width\":384,"
-            + "\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-timer\",\"widgetType\":\"timer\",\"x\":768,\"y\":90,\"width\":384,"
-            + "\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\",\"customSettings\":{"
-            + "\"timeFontFamily\":\"\",\"timeFontSize\":100,\"timeTextColor\":\"\","
-            + "\"timeSubsecondThreshold\":10,\"timeSubsecondDecimals\":2}},"
-            + "{\"id\":\"widget-records\",\"widgetType\":\"records\",\"x\":1152,\"y\":90,"
-            + "\"width\":384,\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-leaderboard\",\"widgetType\":\"leaderboard\",\"x\":1536,\"y\":90,"
-            + "\"width\":384,\"height\":239,\"zIndex\":100,\"scaleMode\":\"auto\"},"
-            + "{\"id\":\"widget-lane-view\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":329,"
-            + "\"width\":1920,\"height\":751,\"zIndex\":111,\"scaleMode\":\"auto\","
-            + "\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\","
-            + "\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{"
-            + "\"isVertical\":false,\"highlightLapStyle\":\"shimmer\",\"highlightRowOnLap\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":2,"
-            + "\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\","
-            + "\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\","
-            + "\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,"
-            + "\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\","
-            + "\"columnWidths\":{\"lapCount\":210,\"imageset_fuel-gauge-builtin\":210,"
-            + "\"lastLapTime\":310,\"gap\":310}}},"
-            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":460,\"y\":390,"
-            + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
-            + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
-            + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
-            + "\"previewLampCount\":5,\"maxLamps\":5,\"fadeIn\":true,\"glowEffect\":true,\"glowOverlap\":30,"
-            + "\"glowRedOverlap\":30,\"glowGreenOverlap\":25}}],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+    String layoutJson = loadResourceLayout("/defaults/fuel_ui_layout.json");
     String columnsJson =
         "[\"driver.nickname\",\"imageset_fuel-gauge-builtin\",\"lapCount\",\"lastLapTime\","
             + "\"gap\"]";

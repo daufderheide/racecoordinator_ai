@@ -72,6 +72,9 @@ public class DatabaseInitializerTest {
       } else {
         assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
       }
+      assertFalse(CustomUI.hasLaneView(ui.getLayoutJson()));
+      assertFalse(ui.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
+      assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     }
 
     SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
@@ -162,6 +165,9 @@ public class DatabaseInitializerTest {
       } else {
         assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
       }
+      assertFalse(CustomUI.hasLaneView(ui.getLayoutJson()));
+      assertFalse(ui.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
+      assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     }
 
     initializer.resetThemes(context);

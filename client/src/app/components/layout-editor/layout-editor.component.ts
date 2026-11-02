@@ -23,6 +23,7 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
+import { normalizeLoadedCustomUis } from "@app/components/ui-editor/ui-editor-data.helper";
 import { findDefaultWidgetId } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { WidgetInspectorFieldsComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-inspector-fields.component";
 import { DataService } from "@app/data.service";
@@ -347,6 +348,7 @@ export class LayoutEditorComponent
               this.editingSettings.racedayLayout,
               this.editingSettings.practiceRacedayLayout,
             );
+      normalizeLoadedCustomUis(this.allLayouts, this.editingSettings);
       syncLayoutSettingsWithDefaults(
         this.allLayouts,
         this.editingSettings.racedayLayout,

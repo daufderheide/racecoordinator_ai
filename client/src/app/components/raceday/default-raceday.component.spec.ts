@@ -2535,6 +2535,13 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should render default avatar img tag in the table when avatarUrl is empty for valid driver", () => {
+      const legacyLayout = JSON.parse(
+        JSON.stringify(Settings.LEGACY_DEFAULT_LAYOUT),
+      );
+      legacyLayout.preserveLegacyHeatView = true;
+      mockSettings.racedayLayout = legacyLayout;
+      component.layout = legacyLayout;
+      component.invalidateGridCache();
       mockSettings.racedayColumns = ["driver.avatarUrl"];
       (component as any).loadColumns();
 
@@ -2570,6 +2577,13 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should not render img tag in the table when driver is empty", () => {
+      const legacyLayout = JSON.parse(
+        JSON.stringify(Settings.LEGACY_DEFAULT_LAYOUT),
+      );
+      legacyLayout.preserveLegacyHeatView = true;
+      mockSettings.racedayLayout = legacyLayout;
+      component.layout = legacyLayout;
+      component.invalidateGridCache();
       mockSettings.racedayColumns = ["driver.avatarUrl"];
       (component as any).loadColumns();
 

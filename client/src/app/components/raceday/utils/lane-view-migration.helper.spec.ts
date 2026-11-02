@@ -402,9 +402,9 @@ describe("LaneViewMigrationHelper", () => {
       }
     });
 
-    it("should successfully convert Settings.DEFAULT_LAYOUT into grid layout", () => {
+    it("should successfully convert Settings.LEGACY_DEFAULT_LAYOUT into grid layout", () => {
       const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-        layout: Settings.DEFAULT_LAYOUT,
+        layout: Settings.LEGACY_DEFAULT_LAYOUT,
       });
       expect(result.migrated).toBeTrue();
       expect(
@@ -415,9 +415,9 @@ describe("LaneViewMigrationHelper", () => {
       ).toBeTrue();
     });
 
-    it("should successfully convert Settings.DEFAULT_PRACTICE_LAYOUT into grid layout", () => {
+    it("should successfully convert Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT into grid layout", () => {
       const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-        layout: Settings.DEFAULT_PRACTICE_LAYOUT,
+        layout: Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT,
         isPractice: true,
       });
       expect(result.migrated).toBeTrue();

@@ -9,6 +9,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  canUpgradeLegacyHeatView,
   clearLayout,
   exportLayout,
   getCanvasViewportMaxHeight,
@@ -36,6 +37,7 @@ import {
   handleGridTemplateEdit,
   handleOpenReviewStackedColumnsModal,
   handleRestorePreMigrationBackup,
+  handleUpgradeLegacyHeatView,
   hasStackedColumns,
   isCountdownPreviewActive,
   isCustomWidget,
@@ -499,8 +501,18 @@ export abstract class LayoutEditorBase {
     return this.editingLayout ? isMigratedLayout(this.editingLayout) : false;
   }
 
+  canUpgradeLegacyHeatView(): boolean {
+    return this.editingLayout
+      ? canUpgradeLegacyHeatView(this.editingLayout)
+      : false;
+  }
+
   restorePreMigrationBackup(): void {
     handleRestorePreMigrationBackup(this);
+  }
+
+  upgradeLegacyHeatView(): void {
+    handleUpgradeLegacyHeatView(this);
   }
 
   exportMigrationDiagnostics(): void {

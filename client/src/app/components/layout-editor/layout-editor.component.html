@@ -271,6 +271,42 @@
         </div>
       }
 
+      @if (canUpgradeLegacyHeatView()) {
+        <div class="migration-notice-banner legacy-preserved-banner">
+          <div class="migration-notice-info">
+            <span class="material-icons migration-icon warning-icon"
+              >schedule</span
+            >
+            <div class="migration-notice-text">
+              <span class="migration-notice-title">{{
+                "UE_MIGRATION_PRESERVED_TITLE" | translate
+              }}</span>
+              <span class="migration-notice-desc">{{
+                "UE_MIGRATION_PRESERVED_DESC" | translate
+              }}</span>
+            </div>
+          </div>
+          <div class="migration-notice-actions">
+            <button
+              type="button"
+              class="migration-btn migration-btn-upgrade"
+              (click)="upgradeLegacyHeatView()"
+            >
+              <span class="material-icons">upgrade</span>
+              {{ "UE_MIGRATION_UPGRADE_BTN" | translate }}
+            </button>
+            <button
+              type="button"
+              class="migration-btn"
+              (click)="exportMigrationDiagnostics()"
+            >
+              <span class="material-icons">bug_report</span>
+              {{ "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN" | translate }}
+            </button>
+          </div>
+        </div>
+      }
+
       @if (hasStackedColumns()) {
         <div class="migration-notice-banner">
           <div class="migration-notice-info">
