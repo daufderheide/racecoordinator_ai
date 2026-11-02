@@ -147,7 +147,7 @@ export class RacedayActiveLayoutHelper {
     return host.parsedThemeLayouts.get(jsonStr);
   }
 
-  static getCurrentRacedayLayout(host: any): LayoutConfig | undefined {
+  private static resolveEditorLayout(host: any): LayoutConfig | undefined {
     if (host.isUIEditorMode() && host.activeCustomUi()) {
       const ui = host.activeCustomUi()!;
       if (ui.layoutJson && ui.layoutJson !== "[]") {
@@ -179,6 +179,17 @@ export class RacedayActiveLayoutHelper {
         ? host.editingSettings()!.practiceRacedayLayout
         : host.editingSettings()!.racedayLayout;
     }
+    return undefined;
+  }
+
+  static getCurrentRacedayLayout(host: any): LayoutConfig | undefined {
+    if (host._explicitRacedayLayout !== undefined) {
+      return host._explicitRacedayLayout ?? undefined;
+    }
+    const editorLayout = RacedayActiveLayoutHelper.resolveEditorLayout(host);
+    if (editorLayout !== undefined) {
+      return editorLayout;
+    }
     const settings = host.settingsService.getSettings();
     let customUI: CustomUI | undefined;
     const activeTheme = host.themeService.getActiveTheme();
@@ -201,29 +212,15 @@ export class RacedayActiveLayoutHelper {
       host.isDriverStationLayout || host.isDriverStation
         ? JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT))
         : host.isPracticeLayout
-          ? settings.practiceRacedayLayout
-          : settings.racedayLayout;
-    const resolvedLayout =
-      host.isDriverStationLayout || host.isDriverStation
-        ? RacedayActiveLayoutHelper.getParsedCustomUiProperty(
-            host,
-            customUI,
-            "layoutJson",
-            fallbackLayout,
-          )
-        : host.isPracticeLayout
-          ? RacedayActiveLayoutHelper.getParsedCustomUiProperty(
-              host,
-              customUI,
-              "layoutJson",
-              settings.practiceRacedayLayout,
-            )
-          : RacedayActiveLayoutHelper.getParsedCustomUiProperty(
-              host,
-              customUI,
-              "layoutJson",
-              settings.racedayLayout,
-            );
+          ? settings.practiceRacedayLayout ||
+            Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT
+          : settings.racedayLayout || Settings.LEGACY_DEFAULT_LAYOUT;
+    const resolvedLayout = RacedayActiveLayoutHelper.getParsedCustomUiProperty(
+      host,
+      customUI,
+      "layoutJson",
+      fallbackLayout,
+    );
     if (
       !host.isUIEditorMode() &&
       LaneViewMigrationHelper.hasLegacyLaneView(resolvedLayout)
@@ -250,6 +247,7 @@ export class RacedayActiveLayoutHelper {
     host: any,
     layout: LayoutConfig | undefined,
   ): void {
+    host._explicitRacedayLayout = layout;
     if (host.isUIEditorMode() && host.activeCustomUi()) {
       const ui = host.activeCustomUi()!;
       ui.layoutJson = layout ? JSON.stringify(layout) : "";

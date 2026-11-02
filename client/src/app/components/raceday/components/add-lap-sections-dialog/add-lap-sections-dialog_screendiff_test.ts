@@ -83,11 +83,16 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
     // Click the lap count cell by its text content "1.50"
     const lapCell = page
-      .locator("app-raceday-lane-view .body-cell")
+      .locator(
+        "app-raceday-lane-column .raceday-lane-column-card, app-raceday-lane-view .body-cell",
+      )
       .filter({ hasText: "1.50" })
       .first();
     await expect(lapCell).toBeVisible();
@@ -170,11 +175,16 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
     // Click the lap count cell by its text content "1.50" (autoCalculatedLaps excluded from cell until heat is over)
     const lapCell = page
-      .locator("app-raceday-lane-view .body-cell")
+      .locator(
+        "app-raceday-lane-column .raceday-lane-column-card, app-raceday-lane-view .body-cell",
+      )
       .filter({ hasText: "1.50" })
       .first();
     await expect(lapCell).toBeVisible();
@@ -287,7 +297,10 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     });
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
     // 1. Open the Race Director menu dropdown (the second top-level menu button)
     const raceDirectorMenuButton = page.locator(".menu-button-top").nth(1);

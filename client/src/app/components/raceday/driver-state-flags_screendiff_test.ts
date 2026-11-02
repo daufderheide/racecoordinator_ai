@@ -256,8 +256,13 @@ test.describe("Raceday Driver State Flags Visuals", () => {
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
     await TestSetupHelper.sendRaceFlag(page, RaceFlag.GREEN);
 
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
-    const laneView = page.locator("app-raceday-lane-view");
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await laneView
@@ -527,8 +532,13 @@ test.describe("Raceday Driver State Flags Visuals", () => {
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
     await TestSetupHelper.sendRaceFlag(page, RaceFlag.GREEN);
 
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
-    const laneView = page.locator("app-raceday-lane-view");
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await laneView
@@ -705,8 +715,13 @@ test.describe("Raceday Driver State Flags Visuals", () => {
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
     await TestSetupHelper.sendRaceFlag(page, RaceFlag.GREEN);
 
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
-    const laneView = page.locator("app-raceday-lane-view");
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await laneView
@@ -928,8 +943,13 @@ test.describe("Raceday Driver State Flags Visuals", () => {
     await TestSetupHelper.sendRaceState(page, RaceState.PAUSED);
     await TestSetupHelper.sendRaceFlag(page, RaceFlag.YELLOW);
 
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
-    const laneView = page.locator("app-raceday-lane-view");
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await laneView
@@ -1094,8 +1114,13 @@ test.describe("Raceday Driver State Flags Visuals", () => {
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
     await TestSetupHelper.sendRaceFlag(page, RaceFlag.WHITE);
 
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
-    const laneView = page.locator("app-raceday-lane-view");
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await laneView

@@ -626,7 +626,7 @@ export class RacedayTimedAudioHelper {
   }
 
   static updateAudioRelevance(host: any): void {
-    const layout = host.layout || host.currentRacedayLayout;
+    const layout = "layout" in host ? host.layout : host.currentRacedayLayout;
     const widgets = layout?.widgets;
     if (!widgets || widgets.length === 0) {
       host.audioService?.setRelevanceFilter({

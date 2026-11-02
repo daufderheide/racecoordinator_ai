@@ -119,7 +119,10 @@ test.describe("Anchor Scaling Visuals", () => {
     );
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
     await expect(page).toHaveScreenshot("raceday-anchor-scaling-corners.png", {
       maxDiffPixelRatio: 0.1,

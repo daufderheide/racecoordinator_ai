@@ -35,6 +35,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { TimerFormatOptions } from "@app/utils/timer-format.utils";
 
 export abstract class DefaultRacedayLayoutBase {
+  _explicitRacedayLayout?: LayoutConfig | null;
   parsedThemeLayouts: Map<string, any> = new Map<string, any>();
 
   getWidgets(): any[] {

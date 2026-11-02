@@ -115,7 +115,7 @@ test.describe("Drift Lap Indicator Visuals", () => {
 
     // Check Lane 2 (Normal Driver)
     const driftBadge2 = page
-      .locator(".table-row")
+      .locator("app-raceday-lane-column, .table-row")
       .nth(1)
       .locator(".drift-indicator");
     await expect(driftBadge2).not.toBeVisible();

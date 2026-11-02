@@ -143,7 +143,10 @@ test.describe("Raceday Visuals for Fuel", () => {
       },
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
@@ -241,7 +244,10 @@ test.describe("Raceday Visuals for Fuel", () => {
       },
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
@@ -319,7 +325,10 @@ test.describe("Raceday Visuals for Fuel", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
 
     // Fuel column visibility checked visually
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
@@ -428,7 +437,10 @@ test.describe("Raceday Visuals for Fuel", () => {
       },
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
@@ -524,7 +536,10 @@ test.describe("Raceday Visuals for Fuel", () => {
       },
     };
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
     await TestSetupHelper.waitForImagesLoaded(
       page.locator(".dashboard-wrapper"),
@@ -815,7 +830,10 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
 
     await expect(page).toHaveScreenshot("raceday-connection-recovery.png", {
@@ -882,7 +900,10 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
 
     await expect(page).toHaveScreenshot("default-practice-layout.png", {
@@ -941,7 +962,10 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
 
     // Emulate print media and manually dispatch beforeprint
@@ -1017,7 +1041,10 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
     await page.evaluate(() => new Promise(requestAnimationFrame));
 
     // Emulate print media with no background and dispatch beforeprint

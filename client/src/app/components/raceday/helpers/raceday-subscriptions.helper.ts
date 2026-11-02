@@ -634,12 +634,11 @@ export class RacedaySubscriptionsHelper {
     const shouldHighlight =
       laneWidgets.length > 0
         ? laneWidgets.some((w: any) => {
+            if (!fallbackEnabled) return false;
+            if (w.customSettings?.["highlightRowOnLap"] === false) return false;
             const style = w.customSettings?.["highlightLapStyle"];
             if (style === "none") return false;
-            if (style) return true;
-            return w.customSettings?.["highlightRowOnLap"] !== undefined
-              ? Boolean(w.customSettings["highlightRowOnLap"])
-              : fallbackEnabled;
+            return true;
           })
         : fallbackEnabled;
 

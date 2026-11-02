@@ -207,7 +207,9 @@ test.describe("Raceday Ghost Pacing Visuals", () => {
       expect(await harness.isVisible()).toBe(true);
     }).toPass();
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toHaveScreenshot(
       "raceday-ghost-pacing-lane-view.png",
     );

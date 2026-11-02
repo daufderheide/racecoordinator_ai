@@ -99,7 +99,10 @@ test.describe("Viewer Race Director Menu", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row, .raceday-grid-container")
+      .first()
+      .waitFor({ state: "visible" });
 
     // 1. Open the Race Director menu dropdown (the second top-level menu button)
     const raceDirectorMenuButton = page.locator(".menu-button-top").nth(1);
@@ -176,7 +179,10 @@ test.describe("Viewer Race Director Menu", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row, .raceday-grid-container")
+      .first()
+      .waitFor({ state: "visible" });
 
     // 1. Open the File menu dropdown (the first top-level menu button)
     const fileMenuButton = page.locator(".menu-button-top").first();

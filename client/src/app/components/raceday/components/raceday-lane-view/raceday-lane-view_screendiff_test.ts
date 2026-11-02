@@ -79,9 +79,14 @@ test.describe("Raceday Lane View Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await expect(laneView).toHaveScreenshot("raceday-lane-view-initial.png");
@@ -187,9 +192,14 @@ test.describe("Raceday Lane View Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     // Disable blinking cursor to prevent flaky screenshots
@@ -357,9 +367,14 @@ test.describe("Raceday Lane View Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     // Disable blinking cursor to prevent flaky screenshots
@@ -522,9 +537,14 @@ test.describe("Raceday Lane View Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await page.addStyleTag({
@@ -710,9 +730,14 @@ test.describe("Raceday Lane View Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await expect(laneView).toBeVisible();
 
     await page.addStyleTag({

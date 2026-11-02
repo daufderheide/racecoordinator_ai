@@ -126,9 +126,14 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await laneView.waitFor({ state: "visible" });
 
     await page.addStyleTag({
@@ -252,9 +257,14 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await laneView.waitFor({ state: "visible" });
 
     await page.addStyleTag({
@@ -380,9 +390,14 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await laneView.waitFor({ state: "visible" });
 
     await page.addStyleTag({
@@ -524,9 +539,14 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
-    const laneView = page.locator("app-raceday-lane-view");
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
     await laneView.waitFor({ state: "visible" });
 
     await page.addStyleTag({

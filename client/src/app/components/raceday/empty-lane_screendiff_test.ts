@@ -165,7 +165,10 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
 
     // Wait for the first driver row to be rendered
-    await page.locator(".table-row").nth(0).waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .nth(0)
+      .waitFor({ state: "visible" });
     await expect(page).toHaveScreenshot("raceday-empty-lanes.png", {
       maxDiffPixelRatio: 0.1,
       animations: "disabled",
@@ -265,7 +268,10 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
 
     // Wait for the second driver row (the empty one) to be rendered
-    await page.locator(".table-row").nth(1).waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .nth(1)
+      .waitFor({ state: "visible" });
     await expect(page).toHaveScreenshot("raceday-empty-lanes-blank-name.png", {
       maxDiffPixelRatio: 0.1,
       animations: "disabled",

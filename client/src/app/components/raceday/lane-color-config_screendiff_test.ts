@@ -140,7 +140,10 @@ test.describe("Raceday Grid Lane Color Configuration", () => {
     await TestSetupHelper.mockRaceData(page, raceData);
 
     // Wait for the first row to be visible (ensures the grid is rendered)
-    await page.locator(".table-row").first().waitFor({ state: "visible" });
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
 
     // Single screenshot assertion per test, with a modest diff tolerance.
     await expect(page).toHaveScreenshot("raceday-lane-color-config.png", {
