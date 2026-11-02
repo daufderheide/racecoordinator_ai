@@ -58,11 +58,33 @@ public final class DriverAudioParserHelper {
       return new AudioConfig("tts", "", val);
     }
 
+    String cleanVal = val;
+    while (cleanVal.startsWith("./")) {
+      cleanVal = cleanVal.substring(2);
+    }
+    while (cleanVal.startsWith(".\\")) {
+      cleanVal = cleanVal.substring(2);
+    }
+
     if (lower.startsWith("preset:")) {
-      String preset = val.substring(7).trim();
+      String preset = cleanVal.substring(7).trim();
+      while (preset.startsWith("./")) {
+        preset = preset.substring(2);
+      }
+      while (preset.startsWith(".\\")) {
+        preset = preset.substring(2);
+      }
       String presetLookupKey = preset.toLowerCase();
       if (assetUrlLookup != null && assetUrlLookup.containsKey(presetLookupKey)) {
         return new AudioConfig("preset", assetUrlLookup.get(presetLookupKey), "");
+      }
+      String normPresetKey = presetLookupKey.replace('\\', '/');
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(normPresetKey)) {
+        return new AudioConfig("preset", assetUrlLookup.get(normPresetKey), "");
+      }
+      String backPresetKey = presetLookupKey.replace('/', '\\');
+      if (assetUrlLookup != null && assetUrlLookup.containsKey(backPresetKey)) {
+        return new AudioConfig("preset", assetUrlLookup.get(backPresetKey), "");
       }
       String simplePresetKey = DriverImportParserHelper.getSimpleFileName(preset).toLowerCase();
       if (assetUrlLookup != null && assetUrlLookup.containsKey(simplePresetKey)) {
@@ -87,12 +109,20 @@ public final class DriverAudioParserHelper {
     }
 
     // Check if filename matches an imported asset
-    String lookupKey = val.toLowerCase();
+    String lookupKey = cleanVal.toLowerCase();
     if (assetUrlLookup != null && assetUrlLookup.containsKey(lookupKey)) {
       return new AudioConfig("preset", assetUrlLookup.get(lookupKey), "");
     }
+    String normLookupKey = lookupKey.replace('\\', '/');
+    if (assetUrlLookup != null && assetUrlLookup.containsKey(normLookupKey)) {
+      return new AudioConfig("preset", assetUrlLookup.get(normLookupKey), "");
+    }
+    String backLookupKey = lookupKey.replace('/', '\\');
+    if (assetUrlLookup != null && assetUrlLookup.containsKey(backLookupKey)) {
+      return new AudioConfig("preset", assetUrlLookup.get(backLookupKey), "");
+    }
 
-    String simpleLookupKey = DriverImportParserHelper.getSimpleFileName(val).toLowerCase();
+    String simpleLookupKey = DriverImportParserHelper.getSimpleFileName(cleanVal).toLowerCase();
     if (assetUrlLookup != null && assetUrlLookup.containsKey(simpleLookupKey)) {
       return new AudioConfig("preset", assetUrlLookup.get(simpleLookupKey), "");
     }

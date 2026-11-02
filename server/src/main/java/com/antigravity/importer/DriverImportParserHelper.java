@@ -408,24 +408,40 @@ public final class DriverImportParserHelper {
       ZipEntry entry;
       while ((entry = zis.getNextEntry()) != null) {
         if (entry.isDirectory()) continue;
-        String name = entry.getName();
+        String rawName = entry.getName();
+        if (rawName == null) continue;
         // Ignore OS X metadata
-        if (name.startsWith("__MACOSX") || name.endsWith(".DS_Store")) continue;
+        if (rawName.startsWith("__MACOSX")
+            || rawName.contains("/__MACOSX")
+            || rawName.contains("\\__MACOSX")
+            || rawName.endsWith(".DS_Store")) {
+          continue;
+        }
 
         byte[] data = readAllBytesFromStream(zis);
-        String lowerName = name.toLowerCase(Locale.ROOT);
-        String simpleName = getSimpleFileName(name);
+        String normName = rawName.replace('\\', '/').trim();
+        while (normName.startsWith("./")) {
+          normName = normName.substring(2);
+        }
+        while (normName.startsWith("/")) {
+          normName = normName.substring(1);
+        }
 
-        if (lowerName.endsWith(".csv")
-            || lowerName.endsWith(".xlsx")
-            || lowerName.endsWith(".xls")
-            || lowerName.endsWith(".json")) {
+        String lowerNorm = normName.toLowerCase(Locale.ROOT);
+        String simpleName = getSimpleFileName(normName);
+        String lowerSimple = simpleName.toLowerCase(Locale.ROOT);
+
+        if (lowerNorm.endsWith(".csv")
+            || lowerNorm.endsWith(".xlsx")
+            || lowerNorm.endsWith(".xls")
+            || lowerNorm.endsWith(".json")) {
           if (pkg.getPrimaryFileData() == null) {
             pkg.setPrimaryFileName(simpleName);
             pkg.setPrimaryFileData(data);
           }
-        } else if (isMediaFile(lowerName)) {
-          pkg.getCompanionAssets().put(simpleName.toLowerCase(Locale.ROOT), data);
+        } else if (isMediaFile(lowerNorm)) {
+          pkg.getCompanionAssets().putIfAbsent(lowerSimple, data);
+          pkg.getCompanionAssets().put(lowerNorm, data);
         }
       }
     }

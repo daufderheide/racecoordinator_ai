@@ -315,12 +315,15 @@ public class DriverExporter {
       return;
     }
 
-    String uniqueName = chooseUniqueEntryName(asset.suggestedName, mediaType, usedEntryNames);
-    usedEntryNames.add(uniqueName.toLowerCase(Locale.ROOT));
+    String folder = "image".equals(mediaType) ? "images/" : "audio/";
+    String uniqueName =
+        chooseUniqueEntryName(asset.suggestedName, mediaType, folder, usedEntryNames);
+    String zipEntryName = folder + uniqueName;
+    usedEntryNames.add(zipEntryName.toLowerCase(Locale.ROOT));
 
-    ExportedMediaFile exported = new ExportedMediaFile(uniqueName, asset.data, hash);
+    ExportedMediaFile exported = new ExportedMediaFile(zipEntryName, asset.data, hash);
     hashToFileMap.put(hash, exported);
-    registerUrlMappings(urlOrId, uniqueName, urlToZipEntryMap);
+    registerUrlMappings(urlOrId, zipEntryName, urlToZipEntryMap);
   }
 
   private void registerUrlMappings(
@@ -548,7 +551,7 @@ public class DriverExporter {
   }
 
   private String chooseUniqueEntryName(
-      String suggestedName, String mediaType, Set<String> usedEntryNames) {
+      String suggestedName, String mediaType, String folder, Set<String> usedEntryNames) {
     String baseName =
         suggestedName != null && !suggestedName.trim().isEmpty() ? suggestedName.trim() : "";
     baseName = baseName.replaceAll("[^a-zA-Z0-9.-]", "_");
@@ -572,7 +575,7 @@ public class DriverExporter {
     }
 
     int counter = 1;
-    while (usedEntryNames.contains(name.toLowerCase(Locale.ROOT))) {
+    while (usedEntryNames.contains((folder + name).toLowerCase(Locale.ROOT))) {
       name = nameWithoutExt + "_" + counter + ext;
       counter++;
     }

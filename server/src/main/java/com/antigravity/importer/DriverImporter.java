@@ -178,45 +178,81 @@ public class DriverImporter {
     List<String> imported = new ArrayList<>();
     if (assets == null || assetService == null) return imported;
 
+    Set<String> seenHashes = new HashSet<>();
     for (Map.Entry<String, byte[]> entry : assets.entrySet()) {
-      String name = entry.getKey();
+      String rawKey = entry.getKey();
       byte[] data = entry.getValue();
       if (data == null || data.length == 0) continue;
-      if (!DriverImportParserHelper.isMediaFile(name)) continue;
+      if (!DriverImportParserHelper.isMediaFile(rawKey)) continue;
 
-      String lower = name.toLowerCase(Locale.ROOT);
+      String simpleName = DriverImportParserHelper.getSimpleFileName(rawKey);
+      String lowerNorm = rawKey.toLowerCase(Locale.ROOT).replace('\\', '/');
+      String lowerSimple = simpleName.toLowerCase(Locale.ROOT);
+
       String type =
-          (lower.endsWith(".wav") || lower.endsWith(".mp3") || lower.endsWith(".ogg"))
+          (lowerSimple.endsWith(".wav")
+                  || lowerSimple.endsWith(".mp3")
+                  || lowerSimple.endsWith(".ogg"))
               ? "sound"
               : "image";
 
       try {
-        AssetMessage asset = assetService.saveAsset(name, type, data);
+        AssetMessage asset = assetService.saveAsset(simpleName, type, data);
         if (asset != null) {
-          lookup.put(lower, asset.getUrl());
-          if (lower.contains(".")) {
-            lookup.put(lower.substring(0, lower.lastIndexOf('.')), asset.getUrl());
+          String assetUrl = asset.getUrl();
+          String hash = AssetService.calculateSha256(data);
+          if (!seenHashes.contains(hash)) {
+            seenHashes.add(hash);
+            imported.add(asset.getName());
           }
-          lookup.put(asset.getName().toLowerCase(Locale.ROOT), asset.getUrl());
-          imported.add(asset.getName());
+
+          // Map normalized path, backslashed path, and simple filename
+          lookup.put(lowerNorm, assetUrl);
+          lookup.put(lowerNorm.replace('/', '\\'), assetUrl);
+          lookup.put(lowerSimple, assetUrl);
+
+          if (lowerSimple.contains(".")) {
+            lookup.put(lowerSimple.substring(0, lowerSimple.lastIndexOf('.')), assetUrl);
+          }
+          if (lowerNorm.contains(".")) {
+            lookup.put(lowerNorm.substring(0, lowerNorm.lastIndexOf('.')), assetUrl);
+            lookup.put(
+                lowerNorm.substring(0, lowerNorm.lastIndexOf('.')).replace('/', '\\'), assetUrl);
+          }
+          lookup.put(asset.getName().toLowerCase(Locale.ROOT), assetUrl);
+
+          // Cross-folder lookup mappings
+          if ("sound".equals(type)) {
+            lookup.put("audio/" + lowerSimple, assetUrl);
+            lookup.put("audio\\" + lowerSimple, assetUrl);
+            lookup.put("sounds/" + lowerSimple, assetUrl);
+            lookup.put("sounds\\" + lowerSimple, assetUrl);
+          } else if ("image".equals(type)) {
+            lookup.put("images/" + lowerSimple, assetUrl);
+            lookup.put("images\\" + lowerSimple, assetUrl);
+            lookup.put("image/" + lowerSimple, assetUrl);
+            lookup.put("image\\" + lowerSimple, assetUrl);
+          }
 
           // Also map matching default asset identifiers so imported drivers can resolve them
           for (DefaultAsset def : AssetDefaultsInitializer.getDefaultAudioAssets()) {
-            if (def.filename.equalsIgnoreCase(name)
-                || def.filename.toLowerCase(Locale.ROOT).endsWith("/" + lower)) {
-              lookup.put(def.id.toLowerCase(Locale.ROOT), asset.getUrl());
-              lookup.put("preset:" + def.id.toLowerCase(Locale.ROOT), asset.getUrl());
+            if (def.filename.equalsIgnoreCase(simpleName)
+                || def.filename.equalsIgnoreCase(rawKey)
+                || def.filename.toLowerCase(Locale.ROOT).endsWith("/" + lowerSimple)) {
+              lookup.put(def.id.toLowerCase(Locale.ROOT), assetUrl);
+              lookup.put("preset:" + def.id.toLowerCase(Locale.ROOT), assetUrl);
             }
           }
           for (DefaultAsset def : AssetDefaultsInitializer.getDefaultImageAssets()) {
-            if (def.filename.equalsIgnoreCase(name)
-                || def.filename.toLowerCase(Locale.ROOT).endsWith("/" + lower)) {
-              lookup.put(def.id.toLowerCase(Locale.ROOT), asset.getUrl());
+            if (def.filename.equalsIgnoreCase(simpleName)
+                || def.filename.equalsIgnoreCase(rawKey)
+                || def.filename.toLowerCase(Locale.ROOT).endsWith("/" + lowerSimple)) {
+              lookup.put(def.id.toLowerCase(Locale.ROOT), assetUrl);
             }
           }
         }
       } catch (Exception e) {
-        logger.error("Failed to auto-import asset: {}", name, e);
+        logger.error("Failed to auto-import asset: {}", rawKey, e);
       }
     }
     return imported;
@@ -830,44 +866,75 @@ public class DriverImporter {
   }
 
   private void populateDefaultAssetsInLookup(Map<String, String> lookup) {
+    populateDefaultImagesInLookup(lookup);
+    populateDefaultAudiosInLookup(lookup);
+    populateDefaultHelmetsInLookup(lookup);
+  }
+
+  private void populateDefaultImagesInLookup(Map<String, String> lookup) {
     for (DefaultAsset def : AssetDefaultsInitializer.getDefaultImageAssets()) {
       String defFn = AssetDefaultsInitializer.getDefaultFilename(def.id);
       String url = defFn != null ? "/assets/" + defFn : "/assets/" + def.id;
       if (lookup.containsKey(def.id.toLowerCase(Locale.ROOT))) {
         url = lookup.get(def.id.toLowerCase(Locale.ROOT));
       }
-      lookup.put(def.id.toLowerCase(Locale.ROOT), url);
-      lookup.put(def.filename.toLowerCase(Locale.ROOT), url);
-      if (def.filename.contains(".")) {
-        lookup.put(
-            def.filename.substring(0, def.filename.lastIndexOf('.')).toLowerCase(Locale.ROOT), url);
+      String lowerDefId = def.id.toLowerCase(Locale.ROOT);
+      String lowerDefFn = def.filename.toLowerCase(Locale.ROOT);
+      lookup.put(lowerDefId, url);
+      lookup.put(lowerDefFn, url);
+      lookup.put("images/" + lowerDefFn, url);
+      lookup.put("images\\" + lowerDefFn, url);
+      lookup.put("image/" + lowerDefFn, url);
+      lookup.put("image\\" + lowerDefFn, url);
+      if (lowerDefFn.contains(".")) {
+        String baseDefFn = lowerDefFn.substring(0, lowerDefFn.lastIndexOf('.'));
+        lookup.put(baseDefFn, url);
+        lookup.put("images/" + baseDefFn, url);
+        lookup.put("images\\" + baseDefFn, url);
       }
       String lowerName = def.displayName.toLowerCase(Locale.ROOT);
       lookup.put(lowerName, url);
       lookup.put(lowerName.replace(" ", "_"), url);
       lookup.put(lowerName.replace(" ", "-"), url);
     }
+  }
 
+  private void populateDefaultAudiosInLookup(Map<String, String> lookup) {
     for (DefaultAsset def : AssetDefaultsInitializer.getDefaultAudioAssets()) {
-      lookup.put(def.id.toLowerCase(Locale.ROOT), def.id);
-      lookup.put(def.filename.toLowerCase(Locale.ROOT), def.id);
-      if (def.filename.contains(".")) {
-        lookup.put(
-            def.filename.substring(0, def.filename.lastIndexOf('.')).toLowerCase(Locale.ROOT),
-            def.id);
+      String lowerDefId = def.id.toLowerCase(Locale.ROOT);
+      String lowerDefFn = def.filename.toLowerCase(Locale.ROOT);
+      lookup.put(lowerDefId, def.id);
+      lookup.put(lowerDefFn, def.id);
+      lookup.put("audio/" + lowerDefFn, def.id);
+      lookup.put("audio\\" + lowerDefFn, def.id);
+      lookup.put("sounds/" + lowerDefFn, def.id);
+      lookup.put("sounds\\" + lowerDefFn, def.id);
+      if (lowerDefFn.contains(".")) {
+        String baseDefFn = lowerDefFn.substring(0, lowerDefFn.lastIndexOf('.'));
+        lookup.put(baseDefFn, def.id);
+        lookup.put("audio/" + baseDefFn, def.id);
+        lookup.put("audio\\" + baseDefFn, def.id);
       }
       String lowerName = def.displayName.toLowerCase(Locale.ROOT);
       lookup.put(lowerName, def.id);
       lookup.put(lowerName.replace(" ", "_"), def.id);
       lookup.put(lowerName.replace(" ", "-"), def.id);
     }
+  }
 
+  private void populateDefaultHelmetsInLookup(Map<String, String> lookup) {
     String yellowUrl =
         lookup.getOrDefault(
             "default_black-yellow", "/assets/default_black-yellow_Helmet_Black-Yellow");
     lookup.put("assets/defaults/helmets/helmet_yellow.png", yellowUrl);
     lookup.put("helmet_yellow.png", yellowUrl);
     lookup.put("helmet_yellow", yellowUrl);
+    lookup.put("images/helmet_yellow.png", yellowUrl);
+    lookup.put("images\\helmet_yellow.png", yellowUrl);
+    lookup.put("images/black-yellow.png", yellowUrl);
+    lookup.put("images\\black-yellow.png", yellowUrl);
+    lookup.put("black-yellow.png", yellowUrl);
+    lookup.put("black-yellow", yellowUrl);
     lookup.put("helmet-yellow.png", yellowUrl);
     lookup.put("helmet-yellow", yellowUrl);
     lookup.put("yellow-helmet.png", yellowUrl);
@@ -877,6 +944,12 @@ public class DriverImporter {
     lookup.put("assets/defaults/helmets/helmet_red.png", redUrl);
     lookup.put("helmet_red.png", redUrl);
     lookup.put("helmet_red", redUrl);
+    lookup.put("images/helmet_red.png", redUrl);
+    lookup.put("images\\helmet_red.png", redUrl);
+    lookup.put("images/red-yellow.png", redUrl);
+    lookup.put("images\\red-yellow.png", redUrl);
+    lookup.put("red-yellow.png", redUrl);
+    lookup.put("red-yellow", redUrl);
     lookup.put("helmet-red.png", redUrl);
     lookup.put("helmet-red", redUrl);
     lookup.put("red-helmet.png", redUrl);
@@ -886,6 +959,12 @@ public class DriverImporter {
     lookup.put("assets/defaults/helmets/helmet_blue.png", blueUrl);
     lookup.put("helmet_blue.png", blueUrl);
     lookup.put("helmet_blue", blueUrl);
+    lookup.put("images/helmet_blue.png", blueUrl);
+    lookup.put("images\\helmet_blue.png", blueUrl);
+    lookup.put("images/blue-white.png", blueUrl);
+    lookup.put("images\\blue-white.png", blueUrl);
+    lookup.put("blue-white.png", blueUrl);
+    lookup.put("blue-white", blueUrl);
 
     String greenUrl =
         lookup.getOrDefault(
@@ -893,23 +972,47 @@ public class DriverImporter {
     lookup.put("assets/defaults/helmets/helmet_green.png", greenUrl);
     lookup.put("helmet_green.png", greenUrl);
     lookup.put("helmet_green", greenUrl);
+    lookup.put("images/helmet_green.png", greenUrl);
+    lookup.put("images\\helmet_green.png", greenUrl);
+    lookup.put("images/green-white.png", greenUrl);
+    lookup.put("images\\green-white.png", greenUrl);
+    lookup.put("green-white.png", greenUrl);
+    lookup.put("green-white", greenUrl);
 
     String blackUrl = lookup.getOrDefault("default_black", "/assets/default_black_Helmet_Black");
     lookup.put("assets/defaults/helmets/helmet_black.png", blackUrl);
     lookup.put("helmet_black.png", blackUrl);
     lookup.put("helmet_black", blackUrl);
+    lookup.put("images/helmet_black.png", blackUrl);
+    lookup.put("images\\helmet_black.png", blackUrl);
+    lookup.put("images/black.png", blackUrl);
+    lookup.put("images\\black.png", blackUrl);
+    lookup.put("black.png", blackUrl);
+    lookup.put("black", blackUrl);
 
     String whiteUrl =
         lookup.getOrDefault("default_white-blue", "/assets/default_white-blue_Helmet_White-Blue");
     lookup.put("assets/defaults/helmets/helmet_white.png", whiteUrl);
     lookup.put("helmet_white.png", whiteUrl);
     lookup.put("helmet_white", whiteUrl);
+    lookup.put("images/helmet_white.png", whiteUrl);
+    lookup.put("images\\helmet_white.png", whiteUrl);
+    lookup.put("images/white-blue.png", whiteUrl);
+    lookup.put("images\\white-blue.png", whiteUrl);
+    lookup.put("white-blue.png", whiteUrl);
+    lookup.put("white-blue", whiteUrl);
 
     String orangeUrl =
         lookup.getOrDefault("default_red-orange", "/assets/default_red-orange_Helmet_Red-Orange");
     lookup.put("assets/defaults/helmets/helmet_orange.png", orangeUrl);
     lookup.put("helmet_orange.png", orangeUrl);
     lookup.put("helmet_orange", orangeUrl);
+    lookup.put("images/helmet_orange.png", orangeUrl);
+    lookup.put("images\\helmet_orange.png", orangeUrl);
+    lookup.put("images/red-orange.png", orangeUrl);
+    lookup.put("images\\red-orange.png", orangeUrl);
+    lookup.put("red-orange.png", orangeUrl);
+    lookup.put("red-orange", orangeUrl);
 
     String silverUrl =
         lookup.getOrDefault(
@@ -917,6 +1020,12 @@ public class DriverImporter {
     lookup.put("assets/defaults/helmets/helmet_silver.png", silverUrl);
     lookup.put("helmet_silver.png", silverUrl);
     lookup.put("helmet_silver", silverUrl);
+    lookup.put("images/helmet_silver.png", silverUrl);
+    lookup.put("images\\helmet_silver.png", silverUrl);
+    lookup.put("images/silver-green.png", silverUrl);
+    lookup.put("images\\silver-green.png", silverUrl);
+    lookup.put("silver-green.png", silverUrl);
+    lookup.put("silver-green", silverUrl);
   }
 
   private String resolveAvatarUrl(String avatar, Map<String, String> lookup) {
@@ -924,10 +1033,24 @@ public class DriverImporter {
       return null;
     }
     String clean = avatar.trim();
+    while (clean.startsWith("./")) {
+      clean = clean.substring(2);
+    }
+    while (clean.startsWith(".\\")) {
+      clean = clean.substring(2);
+    }
     String lower = clean.toLowerCase(Locale.ROOT);
 
     if (lookup != null && lookup.containsKey(lower)) {
       return lookup.get(lower);
+    }
+    String normalized = lower.replace('\\', '/');
+    if (lookup != null && lookup.containsKey(normalized)) {
+      return lookup.get(normalized);
+    }
+    String backslashed = lower.replace('/', '\\');
+    if (lookup != null && lookup.containsKey(backslashed)) {
+      return lookup.get(backslashed);
     }
 
     String filename = clean;
@@ -952,6 +1075,12 @@ public class DriverImporter {
     String defaultRes = AssetDefaultsInitializer.resolveDefaultAssetUrl(clean);
     if (defaultRes != null && !defaultRes.equals(clean)) {
       return defaultRes;
+    }
+    if (defaultRes == null && (clean.contains("/") || clean.contains("\\"))) {
+      String simpleDefault = AssetDefaultsInitializer.resolveDefaultAssetUrl(filename);
+      if (simpleDefault != null && !simpleDefault.equals(filename)) {
+        return simpleDefault;
+      }
     }
 
     return clean;

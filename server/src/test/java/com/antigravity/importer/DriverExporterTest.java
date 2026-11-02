@@ -1,6 +1,7 @@
 package com.antigravity.importer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -140,13 +141,19 @@ public class DriverExporterTest {
     // 1. Primary CSV data file must exist
     assertTrue("drivers.csv must be present in zip", zipEntries.containsKey("drivers.csv"));
 
-    // 2. Audio files must be included (both custom and referenced defaults)
-    assertTrue("turbo_sound.wav must be present in zip", zipEntries.containsKey("turbo_sound.wav"));
-    assertTrue("engine_rev.wav must be present in zip", zipEntries.containsKey("engine_rev.wav"));
+    // 2. Audio and image files must be organized into audio/ and images/ subfolders
     assertTrue(
-        "speedy_avatar.png must be present in zip", zipEntries.containsKey("speedy_avatar.png"));
-    assertTrue("driveby.wav must be present in zip", zipEntries.containsKey("driveby.wav"));
-    assertTrue("beep.wav must be present in zip", zipEntries.containsKey("beep.wav"));
+        "audio/turbo_sound.wav must be present in zip",
+        zipEntries.containsKey("audio/turbo_sound.wav"));
+    assertTrue(
+        "audio/engine_rev.wav must be present in zip",
+        zipEntries.containsKey("audio/engine_rev.wav"));
+    assertTrue(
+        "images/speedy_avatar.png must be present in zip",
+        zipEntries.containsKey("images/speedy_avatar.png"));
+    assertTrue(
+        "audio/driveby.wav must be present in zip", zipEntries.containsKey("audio/driveby.wav"));
+    assertTrue("audio/beep.wav must be present in zip", zipEntries.containsKey("audio/beep.wav"));
 
     // 3. Deduplication check: all custom and referenced default audio must be packaged with
     // deduplication
@@ -159,12 +166,17 @@ public class DriverExporterTest {
     assertTrue(csvText.contains("Lightning McQueen"));
     assertTrue(csvText.contains("Mario Rossi"));
     assertTrue("EMPTY_LANE should not be in export", !csvText.contains("EMPTY_LANE"));
-    assertTrue("Should reference relative turbo_sound.wav", csvText.contains("turbo_sound.wav"));
-    assertTrue("Should reference relative engine_rev.wav", csvText.contains("engine_rev.wav"));
     assertTrue(
-        "Should reference relative speedy_avatar.png", csvText.contains("speedy_avatar.png"));
-    assertTrue("Should reference relative driveby.wav", csvText.contains("driveby.wav"));
-    assertTrue("Should reference relative beep.wav", csvText.contains("beep.wav"));
+        "Should reference relative audio/turbo_sound.wav",
+        csvText.contains("audio/turbo_sound.wav"));
+    assertTrue(
+        "Should reference relative audio/engine_rev.wav", csvText.contains("audio/engine_rev.wav"));
+    assertTrue(
+        "Should reference relative images/speedy_avatar.png",
+        csvText.contains("images/speedy_avatar.png"));
+    assertTrue(
+        "Should reference relative audio/driveby.wav", csvText.contains("audio/driveby.wav"));
+    assertTrue("Should reference relative audio/beep.wav", csvText.contains("audio/beep.wav"));
     assertTrue("Should include TTS", csvText.contains("tts:Fastest lap by ${nickname}!"));
 
     // 5. Test Round-Trip: pass the exported zip directly into DriverImporter.parseAndValidate
@@ -202,7 +214,7 @@ public class DriverExporterTest {
 
     Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
     assertTrue(zipEntries.containsKey("drivers.xlsx"));
-    assertTrue(zipEntries.containsKey("custom_horn.wav"));
+    assertTrue(zipEntries.containsKey("audio/custom_horn.wav"));
 
     // Verify drivers.xlsx can be parsed back by DriverImportParserHelper.parseExcel
     try (InputStream is = new ByteArrayInputStream(zipEntries.get("drivers.xlsx"))) {
@@ -211,7 +223,7 @@ public class DriverExporterTest {
       Map<String, String> row = parsed.getRows().get(0);
       assertEquals("Carlos Sainz", row.get("name"));
       assertEquals("Smooth Operator", row.get("nickname"));
-      assertEquals("custom_horn.wav", row.get("lap"));
+      assertEquals("audio/custom_horn.wav", row.get("lap"));
       assertEquals("tts:Smooth operator ${nickname}", row.get("heatBestLap"));
     }
   }
@@ -236,7 +248,7 @@ public class DriverExporterTest {
 
     Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
     assertTrue(zipEntries.containsKey("drivers.json"));
-    assertTrue(zipEntries.containsKey("pit_stop.wav"));
+    assertTrue(zipEntries.containsKey("audio/pit_stop.wav"));
 
     // Verify drivers.json can be parsed back by DriverImportParserHelper.parseJson
     try (InputStream is = new ByteArrayInputStream(zipEntries.get("drivers.json"))) {
@@ -245,7 +257,7 @@ public class DriverExporterTest {
       Map<String, String> row = parsed.getRows().get(0);
       assertEquals("Lewis Hamilton", row.get("name"));
       assertEquals("Sir Lewis", row.get("nickname"));
-      assertEquals("pit_stop.wav", row.get("pitIn"));
+      assertEquals("audio/pit_stop.wav", row.get("pitIn"));
       assertEquals("none", row.get("bestLap"));
     }
   }
@@ -563,33 +575,33 @@ public class DriverExporterTest {
     byte[] csvZip = exporter.exportDriversZip(Arrays.asList(d), "csv");
     Map<String, byte[]> csvEntries = extractZipEntries(csvZip);
     assertTrue(csvEntries.containsKey("drivers.csv"));
-    assertTrue(csvEntries.containsKey("black-yellow.png"));
-    assertTrue(csvEntries.containsKey("beep.wav"));
-    assertTrue(csvEntries.containsKey("driveby.wav"));
+    assertTrue(csvEntries.containsKey("images/black-yellow.png"));
+    assertTrue(csvEntries.containsKey("audio/beep.wav"));
+    assertTrue(csvEntries.containsKey("audio/driveby.wav"));
     String csvText = new String(csvEntries.get("drivers.csv"), StandardCharsets.UTF_8);
-    assertTrue(csvText.contains("black-yellow.png"));
-    assertTrue(csvText.contains("beep.wav"));
-    assertTrue(csvText.contains("driveby.wav"));
+    assertTrue(csvText.contains("images/black-yellow.png"));
+    assertTrue(csvText.contains("audio/beep.wav"));
+    assertTrue(csvText.contains("audio/driveby.wav"));
 
     // 2. XLSX
     byte[] xlsxZip = exporter.exportDriversZip(Arrays.asList(d), "xlsx");
     Map<String, byte[]> xlsxEntries = extractZipEntries(xlsxZip);
     assertTrue(xlsxEntries.containsKey("drivers.xlsx"));
-    assertTrue(xlsxEntries.containsKey("black-yellow.png"));
-    assertTrue(xlsxEntries.containsKey("beep.wav"));
-    assertTrue(xlsxEntries.containsKey("driveby.wav"));
+    assertTrue(xlsxEntries.containsKey("images/black-yellow.png"));
+    assertTrue(xlsxEntries.containsKey("audio/beep.wav"));
+    assertTrue(xlsxEntries.containsKey("audio/driveby.wav"));
 
     // 3. JSON
     byte[] jsonZip = exporter.exportDriversZip(Arrays.asList(d), "json");
     Map<String, byte[]> jsonEntries = extractZipEntries(jsonZip);
     assertTrue(jsonEntries.containsKey("drivers.json"));
-    assertTrue(jsonEntries.containsKey("black-yellow.png"));
-    assertTrue(jsonEntries.containsKey("beep.wav"));
-    assertTrue(jsonEntries.containsKey("driveby.wav"));
+    assertTrue(jsonEntries.containsKey("images/black-yellow.png"));
+    assertTrue(jsonEntries.containsKey("audio/beep.wav"));
+    assertTrue(jsonEntries.containsKey("audio/driveby.wav"));
     String jsonText = new String(jsonEntries.get("drivers.json"), StandardCharsets.UTF_8);
-    assertTrue(jsonText.contains("black-yellow.png"));
-    assertTrue(jsonText.contains("beep.wav"));
-    assertTrue(jsonText.contains("driveby.wav"));
+    assertTrue(jsonText.contains("images/black-yellow.png"));
+    assertTrue(jsonText.contains("audio/beep.wav"));
+    assertTrue(jsonText.contains("audio/driveby.wav"));
   }
 
   @Test
@@ -611,9 +623,9 @@ public class DriverExporterTest {
     assertNotNull(zipBytes);
 
     Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
-    assertTrue("Must export default helmet", zipEntries.containsKey("black-yellow.png"));
-    assertTrue("Must export default beep", zipEntries.containsKey("beep.wav"));
-    assertTrue("Must export default driveby", zipEntries.containsKey("driveby.wav"));
+    assertTrue("Must export default helmet", zipEntries.containsKey("images/black-yellow.png"));
+    assertTrue("Must export default beep", zipEntries.containsKey("audio/beep.wav"));
+    assertTrue("Must export default driveby", zipEntries.containsKey("audio/driveby.wav"));
 
     // Target database where default assets were deleted / do not exist
     String rootDir2 = tempFolder.newFolder("db_target").getAbsolutePath() + File.separator;
@@ -690,11 +702,50 @@ public class DriverExporterTest {
     Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
 
     // Both drivers reference black-yellow helmet and default beep
-    assertTrue(zipEntries.containsKey("black-yellow.png"));
-    assertTrue(zipEntries.containsKey("beep.wav"));
+    assertTrue(zipEntries.containsKey("images/black-yellow.png"));
+    assertTrue(zipEntries.containsKey("audio/beep.wav"));
 
     // Verify deduplication: there should NOT be black-yellow_1.png or beep_1.wav
-    org.junit.Assert.assertFalse(zipEntries.containsKey("black-yellow_1.png"));
-    org.junit.Assert.assertFalse(zipEntries.containsKey("beep_1.wav"));
+    org.junit.Assert.assertFalse(zipEntries.containsKey("images/black-yellow_1.png"));
+    org.junit.Assert.assertFalse(zipEntries.containsKey("audio/beep_1.wav"));
+  }
+
+  @Test
+  public void testExportDrivers_AllZipEntriesUseForwardSlashesAndOrganizedFolders()
+      throws Exception {
+    byte[] wavBytes = "RIFF....WAVEfmt ....test".getBytes(StandardCharsets.UTF_8);
+    byte[] imgBytes = new byte[] {(byte) 0x89, 'P', 'N', 'G', 1};
+    AssetMessage audio = assetService.saveAsset("engine.wav", "sound", wavBytes);
+    AssetMessage avatar = assetService.saveAsset("pic.png", "image", imgBytes);
+
+    Driver d =
+        new Driver.Builder()
+            .withEntityId("d_cross")
+            .withName("Cross Platform Driver")
+            .withNickname("Cross")
+            .withAvatarUrl(avatar.getUrl())
+            .withLapAudio(new AudioConfig("preset", audio.getUrl(), ""))
+            .build();
+
+    byte[] zipBytes = exporter.exportDriversZip(Arrays.asList(d), "csv");
+    Map<String, byte[]> zipEntries = extractZipEntries(zipBytes);
+
+    for (String entryName : zipEntries.keySet()) {
+      assertFalse(
+          "Zip entry name must not contain backslash: " + entryName, entryName.contains("\\"));
+      if (entryName.endsWith(".wav") || entryName.endsWith(".mp3") || entryName.endsWith(".ogg")) {
+        assertTrue(
+            "Audio file must be inside audio/ folder: " + entryName,
+            entryName.startsWith("audio/"));
+      } else if (entryName.endsWith(".png")
+          || entryName.endsWith(".jpg")
+          || entryName.endsWith(".jpeg")) {
+        assertTrue(
+            "Image file must be inside images/ folder: " + entryName,
+            entryName.startsWith("images/"));
+      } else {
+        assertEquals("Data file must be at root of zip: " + entryName, "drivers.csv", entryName);
+      }
+    }
   }
 }

@@ -18,6 +18,7 @@ import com.antigravity.service.AssetService;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -832,5 +835,126 @@ public class DriverImporterTest {
 
     String color2 = deterministicImporter.generateUniqueLabelColor(used);
     assertFalse(color1.equalsIgnoreCase(color2));
+  }
+
+  private byte[] createTestZip(Map<String, byte[]> files) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+      for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+        zos.putNextEntry(new ZipEntry(entry.getKey()));
+        zos.write(entry.getValue());
+        zos.closeEntry();
+      }
+    }
+    return baos.toByteArray();
+  }
+
+  @Test
+  public void testImportZipWithAssetsInFoldersMatchedByFolderPathsInCsv() throws Exception {
+    Map<String, byte[]> zipFiles = new HashMap<>();
+    String csv =
+        "Name,Nickname,Avatar,Lap Sound\nFolder Driver,FD,images/fd_avatar.png,audio/fd_lap.wav\n";
+    zipFiles.put("drivers.csv", csv.getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("audio/fd_lap.wav", "RIFF....WAVE....data".getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("images/fd_avatar.png", new byte[] {(byte) 0x89, 'P', 'N', 'G', 1, 2});
+
+    byte[] zipBytes = createTestZip(zipFiles);
+    DriverImportPreview preview =
+        importer.parseAndValidate(new ByteArrayInputStream(zipBytes), "drivers_export.zip", null);
+
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAvatarUrl());
+    assertTrue(row.getAvatarUrl().contains("fd_avatar.png"));
+    assertNotNull(row.getAudioSlots().get("lap"));
+    assertEquals("preset", row.getAudioSlots().get("lap").getType());
+    assertTrue(row.getAudioSlots().get("lap").getUrl().contains("fd_lap.wav"));
+  }
+
+  @Test
+  public void testImportZipWithAssetsInRootMatchedByFolderPathsInCsv() throws Exception {
+    Map<String, byte[]> zipFiles = new HashMap<>();
+    String csv =
+        "Name,Nickname,Avatar,Lap Sound\nRoot Driver,RD,images/rd_avatar.png,audio/rd_lap.wav\n";
+    zipFiles.put("drivers.csv", csv.getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("rd_lap.wav", "RIFF....WAVE....data".getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("rd_avatar.png", new byte[] {(byte) 0x89, 'P', 'N', 'G', 3, 4});
+
+    byte[] zipBytes = createTestZip(zipFiles);
+    DriverImportPreview preview =
+        importer.parseAndValidate(new ByteArrayInputStream(zipBytes), "drivers.zip", null);
+
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAvatarUrl());
+    assertTrue(row.getAvatarUrl().contains("rd_avatar.png"));
+    assertNotNull(row.getAudioSlots().get("lap"));
+    assertEquals("preset", row.getAudioSlots().get("lap").getType());
+    assertTrue(row.getAudioSlots().get("lap").getUrl().contains("rd_lap.wav"));
+  }
+
+  @Test
+  public void testImportZipWithAssetsInFoldersMatchedByRootNamesInCsv() throws Exception {
+    Map<String, byte[]> zipFiles = new HashMap<>();
+    String csv = "Name,Nickname,Avatar,Lap Sound\nCross Driver,CD,cd_avatar.png,cd_lap.wav\n";
+    zipFiles.put("drivers.csv", csv.getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("audio/cd_lap.wav", "RIFF....WAVE....data".getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("images/cd_avatar.png", new byte[] {(byte) 0x89, 'P', 'N', 'G', 5, 6});
+
+    byte[] zipBytes = createTestZip(zipFiles);
+    DriverImportPreview preview =
+        importer.parseAndValidate(new ByteArrayInputStream(zipBytes), "drivers.zip", null);
+
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAvatarUrl());
+    assertTrue(row.getAvatarUrl().contains("cd_avatar.png"));
+    assertNotNull(row.getAudioSlots().get("lap"));
+    assertEquals("preset", row.getAudioSlots().get("lap").getType());
+    assertTrue(row.getAudioSlots().get("lap").getUrl().contains("cd_lap.wav"));
+  }
+
+  @Test
+  public void testImportZipWithWindowsStyleBackslashesInCsvAndZipEntries() throws Exception {
+    Map<String, byte[]> zipFiles = new HashMap<>();
+    String csv =
+        "Name,Nickname,Avatar,Lap Sound\nWin Driver,WD,images\\wd_avatar.png,audio\\wd_lap.wav\n";
+    zipFiles.put("drivers.csv", csv.getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("audio\\wd_lap.wav", "RIFF....WAVE....data".getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("images\\wd_avatar.png", new byte[] {(byte) 0x89, 'P', 'N', 'G', 7, 8});
+
+    byte[] zipBytes = createTestZip(zipFiles);
+    DriverImportPreview preview =
+        importer.parseAndValidate(new ByteArrayInputStream(zipBytes), "drivers.zip", null);
+
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAvatarUrl());
+    assertTrue(row.getAvatarUrl().contains("wd_avatar.png"));
+    assertNotNull(row.getAudioSlots().get("lap"));
+    assertEquals("preset", row.getAudioSlots().get("lap").getType());
+    assertTrue(row.getAudioSlots().get("lap").getUrl().contains("wd_lap.wav"));
+  }
+
+  @Test
+  public void testImportZipWithRelativeDotSlashPaths() throws Exception {
+    Map<String, byte[]> zipFiles = new HashMap<>();
+    String csv =
+        "Name,Nickname,Avatar,Lap Sound\nDot Driver,DD,./images/dd_avatar.png,.\\audio\\dd_lap.wav\n";
+    zipFiles.put("drivers.csv", csv.getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("audio/dd_lap.wav", "RIFF....WAVE....data".getBytes(StandardCharsets.UTF_8));
+    zipFiles.put("images/dd_avatar.png", new byte[] {(byte) 0x89, 'P', 'N', 'G', 9, 10});
+
+    byte[] zipBytes = createTestZip(zipFiles);
+    DriverImportPreview preview =
+        importer.parseAndValidate(new ByteArrayInputStream(zipBytes), "drivers.zip", null);
+
+    assertEquals(1, preview.getValidCount());
+    DriverImportRow row = preview.getRows().get(0);
+    assertNotNull(row.getAvatarUrl());
+    assertTrue(row.getAvatarUrl().contains("dd_avatar.png"));
+    assertNotNull(row.getAudioSlots().get("lap"));
+    assertEquals("preset", row.getAudioSlots().get("lap").getType());
+    assertTrue(row.getAudioSlots().get("lap").getUrl().contains("dd_lap.wav"));
   }
 }
