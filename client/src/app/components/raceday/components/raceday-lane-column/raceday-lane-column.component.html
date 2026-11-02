@@ -118,17 +118,6 @@
 
     <!-- Body Content -->
     <div class="lane-col-body">
-      <!-- Drift Lap Badge -->
-      @if (isDriftLap()) {
-        <div
-          class="drift-indicator"
-          [style.background-color]="foregroundColor"
-          [style.color]="backgroundColor"
-        >
-          {{ "RD_DRIFT_LAP" | translate }}
-        </div>
-      }
-
       <!-- 3x3 Drop Zones overlay for editing -->
       @if (shouldRenderAnchorDropGrid) {
         <div class="anchor-drop-grid">
@@ -775,7 +764,7 @@
                     : 'center'
               "
               [style.align-items]="
-                hasTeamName
+                hasTeamName || isDriftLap()
                   ? settings.valueAlignment === 'start'
                     ? 'flex-start'
                     : settings.valueAlignment === 'end'
@@ -796,6 +785,15 @@
                 [class.allow-wrap]="shouldAllowValueWrap()"
                 >{{ formattedValue }}</span
               >
+              @if (isDriftLap()) {
+                <div
+                  class="drift-indicator"
+                  [style.background-color]="foregroundColor"
+                  [style.color]="backgroundColor"
+                >
+                  {{ "RD_DRIFT_LAP" | translate }}
+                </div>
+              }
               @if (
                 isTeamColumn &&
                 isTeamDriverSwapActive &&

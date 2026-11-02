@@ -799,6 +799,7 @@ export class RacedayLaneColumnComponent
       this.widget()?.textScaleFactor ?? 1,
       this.hasTeamName,
       this.columnKey,
+      this.isDriftLap(),
     );
   }
 
@@ -811,12 +812,12 @@ export class RacedayLaneColumnComponent
   }
 
   isImageProperty(key: string = this.columnKey): boolean {
-    if (this.isExtraGridRow) return false;
     return isLaneColumnImageProperty(key);
   }
 
   getImageUrl(key: string = this.columnKey, anchor?: string): string {
     if (this.isExtraGridRow) return "";
+    if (!this.isUIEditorMode && this.isEmptyDriver) return "";
     return resolveLaneColumnImageUrl(
       key,
       this.targetDriver,
@@ -884,12 +885,12 @@ export class RacedayLaneColumnComponent
   }
 
   getInsetValue(anchor: string): string {
+    const insetKey = this.getInsetKey(anchor);
+    if (!insetKey || this.isImageProperty(insetKey)) {
+      return "";
+    }
     if (this.isExtraGridRow) {
       if (this.emptyRowsMode === "blank") {
-        return "";
-      }
-      const insetKey = this.getInsetKey(anchor);
-      if (!insetKey) {
         return "";
       }
       if (
@@ -907,7 +908,7 @@ export class RacedayLaneColumnComponent
     return formatLaneColumnInsetValue(
       this.targetDriver,
       anchor,
-      this.getInsetKey(anchor),
+      insetKey,
       this.settings,
       this.parent(),
     );

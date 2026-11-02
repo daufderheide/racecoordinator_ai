@@ -94,11 +94,24 @@ test.describe("Raceday Visuals for Sorting", () => {
               objectId: "hd1",
               laneIndex: 0,
               driver: { objectId: "rp1", driver: { name: "Driver 1" } },
+              laps: [
+                { lapTime: 9.1 },
+                { lapTime: 9.0 },
+                { lapTime: 8.9 },
+                { lapTime: 8.85 },
+              ],
             },
             {
               objectId: "hd2",
               laneIndex: 1,
               driver: { objectId: "rp2", driver: { name: "Driver 2" } },
+              laps: [
+                { lapTime: 8.5 },
+                { lapTime: 8.4 },
+                { lapTime: 8.3 },
+                { lapTime: 8.2 },
+                { lapTime: 8.15 },
+              ],
             },
           ],
           standings: ["hd2", "hd1"], // Order: Driver 2 then Driver 1

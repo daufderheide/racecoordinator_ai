@@ -14,6 +14,7 @@ import {
   extractDroppedColumnKey,
   fitColumnLastLaps,
   formatAdjustedLapValue,
+  isLaneColumnImageProperty,
   isOverallOrSeedDataSource,
   isParentRaceOver,
   resolveEffectiveHeaderFontSize,
@@ -152,6 +153,7 @@ export function formatLaneColumnInsetValue(
   parent: any,
 ): string {
   if (!key) return "";
+  if (isLaneColumnImageProperty(key)) return "";
   if (!hd) {
     if (settings.emptyRowsMode === "blank") return "";
     if (

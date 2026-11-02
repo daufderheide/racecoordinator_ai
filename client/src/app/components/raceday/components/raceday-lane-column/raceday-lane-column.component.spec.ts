@@ -934,6 +934,11 @@ describe("RacedayLaneColumnComponent", () => {
     );
     fixture.detectChanges();
     expect(component.isDriftLap()).toBeTrue();
+    const driftBadge = fixture.nativeElement.querySelector(
+      ".lane-col-value .drift-indicator",
+    );
+    expect(driftBadge).toBeTruthy();
+    expect(driftBadge.textContent.trim()).toBe("RD_DRIFT_LAP");
   });
 
   it("should map pacing properties to benchmark types", () => {
@@ -2134,6 +2139,69 @@ describe("RacedayLaneColumnComponent", () => {
       expect(component.getInsetImageUrl("top-left")).toBe("");
       const img = fixture.nativeElement.querySelector(".lane-col-inset-image");
       expect(img).toBeFalsy();
+    });
+
+    it("should hide driver state flag image and not show text dashes for empty lane insets", () => {
+      const emptyDriver = new DriverHeatData(
+        "empty",
+        {
+          objectId: "empty",
+          isEmpty: true,
+          driver: { id: "EMPTY_DRIVER", name: "rd_empty_lane", avatarUrl: "" },
+        } as any,
+        0,
+      );
+      fixture.componentRef.setInput("parent", mockParent);
+      spyOnProperty(component, "targetDriver", "get").and.returnValue(
+        emptyDriver,
+      );
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lapCount",
+          insets: {
+            "bottom-left": "flag",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isImageProperty("flag")).toBeTrue();
+      expect(component.getInsetValue("bottom-left")).toBe("");
+      expect(component.getInsetImageUrl("bottom-left")).toBe("");
+
+      const blCell = fixture.nativeElement.querySelector(".inset-cell.bl");
+      expect(blCell).toBeTruthy();
+      expect(blCell.querySelector(".lane-col-inset-image")).toBeFalsy();
+      expect(blCell.textContent.trim()).toBe("");
+    });
+
+    it("should hide driver state flag image and not show text dashes on extra grid rows", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      // Lane 5 is an extra grid row with no driver
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          gridId: "grid-test",
+          bindingMode: "lane",
+          targetIndex: 5,
+          columnKey: "lapCount",
+          insets: {
+            "bottom-left": "flag",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isExtraGridRow).toBeTrue();
+      expect(component.isImageProperty("flag")).toBeTrue();
+      expect(component.getInsetValue("bottom-left")).toBe("");
+      expect(component.getInsetImageUrl("bottom-left")).toBe("");
+
+      const blCell = fixture.nativeElement.querySelector(".inset-cell.bl");
+      expect(blCell).toBeTruthy();
+      expect(blCell.querySelector(".lane-col-inset-image")).toBeFalsy();
+      expect(blCell.textContent.trim()).toBe("");
     });
 
     it("should fallback to default avatar on image error in onImageError", () => {

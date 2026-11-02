@@ -793,6 +793,53 @@ describe("raceday-lane-column.utils", () => {
         ),
       ).toBe("http://server/assets/images/default_avatar.svg");
     });
+
+    it("should return empty string for flag and imageset when driver is empty in race mode", () => {
+      const parent = {
+        formatColumnValue: jasmine
+          .createSpy("formatColumnValue")
+          .and.returnValue("http://server/flag.png"),
+        getCurrentFlagUrl: () => "http://server/flag.png",
+        findAssetById: () => ({ id: "set1" }),
+        getSelectedImageFromSet: () => "http://server/set.png",
+        isUIEditorMode: false,
+      };
+      const mockEmptyDriver = new DriverHeatData(
+        "empty",
+        { objectId: "empty", isEmpty: true } as any,
+        0,
+      );
+
+      expect(resolveLaneColumnImageUrl("flag", mockEmptyDriver, parent)).toBe(
+        "",
+      );
+      expect(
+        resolveLaneColumnImageUrl("imageset_set1", mockEmptyDriver, parent),
+      ).toBe("");
+      expect(parent.formatColumnValue).not.toHaveBeenCalled();
+    });
+
+    it("should resolve flag and imageset for valid driver in race mode", () => {
+      const parent = {
+        formatColumnValue: jasmine
+          .createSpy("formatColumnValue")
+          .and.returnValue("http://server/flag.png"),
+        findAssetById: () => ({ id: "set1" }),
+        getSelectedImageFromSet: () => "http://server/set.png",
+        isUIEditorMode: false,
+      };
+
+      expect(
+        resolveLaneColumnImageUrl("flag", mockDriverWithAvatar, parent),
+      ).toBe("http://server/flag.png");
+      expect(
+        resolveLaneColumnImageUrl(
+          "imageset_set1",
+          mockDriverWithAvatar,
+          parent,
+        ),
+      ).toBe("http://server/set.png");
+    });
   });
 
   describe("isEditorMode", () => {
@@ -1455,6 +1502,54 @@ describe("raceday-lane-column.utils", () => {
         "gapToLeader",
       );
       expect(txt.style.whiteSpace).toBe("nowrap");
+    });
+
+    it("should scale font size down when isDriftLap is true to leave room for the drift badge", () => {
+      const cardWithoutDrift = document.createElement("div");
+      fitColumnTextValue(
+        cardWithoutDrift,
+        "12.345",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        200,
+        100,
+        1,
+        false,
+        "lastLapTime",
+        false,
+      );
+      const fontWithoutDrift = parseFloat(
+        cardWithoutDrift.style.getPropertyValue("--lane-col-value-font-size"),
+      );
+
+      const cardWithDrift = document.createElement("div");
+      fitColumnTextValue(
+        cardWithDrift,
+        "12.345",
+        { gridId: "g1", showHeader: false } as any,
+        "auto",
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        200,
+        100,
+        1,
+        false,
+        "lastLapTime",
+        true,
+      );
+      const fontWithDrift = parseFloat(
+        cardWithDrift.style.getPropertyValue("--lane-col-value-font-size"),
+      );
+
+      expect(fontWithDrift).toBeLessThan(fontWithoutDrift);
     });
   });
 

@@ -393,6 +393,9 @@ export function resolveLaneColumnImageUrl(
     return "";
   }
   if (normalizedKey === "flag") {
+    if (!isEditor && hd && RacedayFormatUtils.isEmptyDriver(hd)) {
+      return "";
+    }
     if (parent.formatColumnValue && hd) {
       const colDef = parent.columns?.find(
         (c: any) => c.propertyName === normalizedKey,
@@ -422,6 +425,9 @@ export function resolveLaneColumnImageUrl(
     return "";
   }
   if (normalizedKey.startsWith("imageset_")) {
+    if (!isEditor && hd && RacedayFormatUtils.isEmptyDriver(hd)) {
+      return "";
+    }
     const assetId = normalizedKey.replace("imageset_", "");
     const asset = parent.findAssetById
       ? parent.findAssetById(assetId)
@@ -676,6 +682,7 @@ export function fitColumnTextValue(
   textScaleFactor: number = 1,
   hasTeamName: boolean = false,
   columnKey?: string,
+  isDriftLap: boolean = false,
 ): void {
   if (!text) return;
 
@@ -702,7 +709,7 @@ export function fitColumnTextValue(
     explicitWidth,
     explicitHeight,
     scaleMode,
-    hasTeamName,
+    hasTeamName || isDriftLap,
   );
   const dims = applyColumnInsetsAndPaddings(
     cardEl,
