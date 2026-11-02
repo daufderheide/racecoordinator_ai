@@ -1214,7 +1214,7 @@ describe("DataService", () => {
         const reqClose = httpMock.expectOne((r) =>
           r.url.endsWith("/api/close-interface"),
         );
-        reqClose.flush({ success: true });
+        reqClose.flush("OK");
       });
 
       const reqPhidget = httpMock.expectOne((r) =>

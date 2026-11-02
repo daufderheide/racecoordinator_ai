@@ -13,6 +13,7 @@ import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.interfaces.ISerialConnection;
+import com.antigravity.race.ClientSubscriptionManager;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,13 +135,15 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       ledFlashFuture = null;
     }
 
-    if (isConnected()) {
+    if (isConnected() && !writeFailed) {
       sendRaceStateMessage(8, 0);
       clearLeds();
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      if (!ClientSubscriptionManager.getInstance().isShuttingDown()) {
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
 
@@ -229,8 +232,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   }
 
   public void writePhysicalPinState(boolean isDigital, int pin, boolean physicalHigh) {
-    if (!isConnected()) {
-      logger.warn("Serial connection not open, cannot set pin state");
+    if (!isConnected() || writeFailed || ClientSubscriptionManager.getInstance().isShuttingDown()) {
+      logger.warn("Serial connection not open or unavailable, cannot set pin state");
       return;
     }
 

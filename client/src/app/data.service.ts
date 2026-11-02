@@ -832,8 +832,10 @@ export class DataService {
       );
   }
 
-  closeInterface(): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/close-interface`, {});
+  closeInterface(): Observable<{ success: boolean }> {
+    return this.http
+      .post(`${this.baseUrl}/api/close-interface`, {}, { responseType: "text" })
+      .pipe(map(() => ({ success: true })));
   }
 
   startRace(): Observable<IStartRaceResponse> {
