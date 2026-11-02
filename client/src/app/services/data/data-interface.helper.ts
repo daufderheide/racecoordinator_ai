@@ -360,7 +360,13 @@ export class DataInterfaceHelper {
       );
   }
 
-  closeInterface(): Observable<any> {
-    return this.http.post(`${this.getBaseUrl()}/api/close-interface`, {});
+  closeInterface(): Observable<{ success: boolean }> {
+    return this.http
+      .post(
+        `${this.getBaseUrl()}/api/close-interface`,
+        {},
+        { responseType: "text" },
+      )
+      .pipe(map(() => ({ success: true })));
   }
 }

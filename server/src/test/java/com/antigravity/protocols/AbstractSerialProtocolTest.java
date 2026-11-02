@@ -9,6 +9,7 @@ import com.antigravity.mocks.MockScheduler;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
@@ -220,6 +221,7 @@ public class AbstractSerialProtocolTest {
 
   @Before
   public void setUp() {
+    ClientSubscriptionManager.getInstance().setShuttingDown(false);
     scheduler = new MockScheduler();
     serialConnection = new MockSerialConnection();
     protocol = new TestSerialProtocol(2, serialConnection, scheduler);
@@ -349,5 +351,58 @@ public class AbstractSerialProtocolTest {
     protocol.writeData(new byte[0]);
     protocol.writeData(new byte[200]); // Max buffer size is 128
     assertTrue(serialConnection.allWrittenData.isEmpty());
+  }
+
+  @Test
+  public void testOpen_AbortsWhenShuttingDown() {
+    ClientSubscriptionManager.getInstance().setShuttingDown(true);
+    assertFalse(protocol.open());
+    assertFalse(protocol.isConnected());
+    ClientSubscriptionManager.getInstance().setShuttingDown(false);
+  }
+
+  @Test
+  public void testWriteData_AbortsWhenShuttingDown() {
+    protocol.open();
+    assertTrue(protocol.isConnected());
+    ClientSubscriptionManager.getInstance().setShuttingDown(true);
+    protocol.writeData(new byte[] {0x01, 0x02});
+    assertTrue(serialConnection.allWrittenData.isEmpty());
+    ClientSubscriptionManager.getInstance().setShuttingDown(false);
+  }
+
+  @Test
+  public void testWriteData_FastFailsAfterIOException() {
+    final int[] writeAttempts = new int[] {0};
+    MockSerialConnection failingSerial =
+        new MockSerialConnection() {
+          @Override
+          public void writeData(byte[] data) throws IOException {
+            writeAttempts[0]++;
+            throw new IOException("Port timeout");
+          }
+        };
+    TestSerialProtocol failingProtocol = new TestSerialProtocol(2, failingSerial, scheduler);
+    failingProtocol.setListener(listener);
+    failingProtocol.open();
+    assertTrue(failingProtocol.isConnected());
+    assertFalse(failingProtocol.isWriteFailed());
+
+    // First write fails with IOException
+    failingProtocol.writeData(new byte[] {0x01});
+    assertTrue(failingProtocol.isWriteFailed());
+    assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
+
+    // Second write fails fast without invoking serial connection writeData again
+    failingProtocol.writeData(new byte[] {0x02});
+    assertEquals(1, writeAttempts[0]);
+  }
+
+  @Test
+  public void testClose_SetsWriteFailed() {
+    protocol.open();
+    assertFalse(protocol.isWriteFailed());
+    protocol.close();
+    assertTrue(protocol.isWriteFailed());
   }
 }
