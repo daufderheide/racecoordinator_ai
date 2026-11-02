@@ -967,6 +967,70 @@ public class ClientSubscriptionManagerTest {
   }
 
   @Test
+  public void testAutoSaveAsync_DebouncesRapidCalls() throws Exception {
+    Race mockRace1 = mock(Race.class);
+    com.antigravity.models.Race raceModel1 =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("debounceRaceId")
+            .withId(null)
+            .withName("Debounce Race 1")
+            .build();
+    when(mockRace1.getRaceModel()).thenReturn(raceModel1);
+    when(mockRace1.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
+    when(mockRace1.getDrivers()).thenReturn(Collections.emptyList());
+    when(mockRace1.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace1.getState()).thenReturn(new Paused());
+
+    Race mockRace2 = mock(Race.class);
+    com.antigravity.models.Race raceModel2 =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("debounceRaceId")
+            .withId(null)
+            .withName("Debounce Race 2")
+            .build();
+    when(mockRace2.getRaceModel()).thenReturn(raceModel2);
+    when(mockRace2.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
+    when(mockRace2.getDrivers()).thenReturn(Collections.emptyList());
+    when(mockRace2.getHeats()).thenReturn(Collections.emptyList());
+    when(mockRace2.getState()).thenReturn(new com.antigravity.race.states.HeatOver());
+
+    DatabaseContext dc =
+        new DatabaseContext("test_debounce_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+    manager.setShuttingDown(false);
+
+    // Call autoSaveAsync twice in rapid succession
+    manager.autoSaveAsync(mockRace1);
+    CompletableFuture<Void> secondSaveFuture = manager.autoSaveAsync(mockRace2);
+    org.junit.Assert.assertNotNull(secondSaveFuture);
+    secondSaveFuture.get(5, java.util.concurrent.TimeUnit.SECONDS);
+
+    RaceSaveData saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_debounceRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(
+        com.antigravity.race.states.HeatOver.class.getName(), saved.getStateClassName());
+
+    manager.deleteAutoSave("debounceRaceId", false);
+  }
+
+  @Test
   public void testBroadcast_RaceTimeCoalescing() throws Exception {
     org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
         mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);

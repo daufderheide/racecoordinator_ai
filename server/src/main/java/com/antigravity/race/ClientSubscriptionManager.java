@@ -68,6 +68,9 @@ public class ClientSubscriptionManager {
   private long cleanupGracePeriodSeconds = 10;
   private boolean hasEverHadClient = false;
   private ScheduledFuture<?> autoShutdownFuture;
+  private final Object autoSaveLock = new Object();
+  private ScheduledFuture<?> pendingAutoSaveTask;
+  private CompletableFuture<Void> pendingAutoSaveFuture;
   private int autoShutdownDelaySeconds = 5;
   private ScheduledFuture<?> startupWatchdogFuture;
   private int startupWatchdogSeconds = 90;
@@ -220,6 +223,15 @@ public class ClientSubscriptionManager {
     if (shuttingDown) {
       logger.info("Server shutting down. Cleaning up race and protocols...");
       cancelStartupWatchdog();
+      synchronized (autoSaveLock) {
+        if (pendingAutoSaveTask != null) {
+          pendingAutoSaveTask.cancel(true);
+          pendingAutoSaveTask = null;
+        }
+        if (pendingAutoSaveFuture != null && !pendingAutoSaveFuture.isDone()) {
+          pendingAutoSaveFuture.complete(null);
+        }
+      }
       setRace(null);
       setProtocol(null);
       if (autoShutdownFuture != null) {
@@ -611,20 +623,42 @@ public class ClientSubscriptionManager {
     if (race == null || databaseContext == null || databaseContext.getConnection() == null) {
       return CompletableFuture.completedFuture(null);
     }
-    try {
-      final DatabaseContext ctx = databaseContext;
-      RaceSaveData saveData = buildRaceSaveData(race);
-      String filename = saveData.getSaveName();
+    synchronized (autoSaveLock) {
+      try {
+        final DatabaseContext ctx = databaseContext;
+        RaceSaveData saveData = buildRaceSaveData(race);
+        String filename = saveData.getSaveName();
 
-      return CompletableFuture.runAsync(
-          () -> executeUpsertAutoSave(ctx, saveData, filename), scheduler);
-    } catch (Exception e) {
-      if (!isShuttingDown) {
-        logger.error("Error preparing auto-save data", e);
+        if (pendingAutoSaveTask != null && !pendingAutoSaveTask.isDone()) {
+          pendingAutoSaveTask.cancel(false);
+        }
+        if (pendingAutoSaveFuture == null || pendingAutoSaveFuture.isDone()) {
+          pendingAutoSaveFuture = new CompletableFuture<>();
+        }
+        final CompletableFuture<Void> future = pendingAutoSaveFuture;
+
+        pendingAutoSaveTask =
+            scheduler.schedule(
+                () -> {
+                  try {
+                    executeUpsertAutoSave(ctx, saveData, filename);
+                    future.complete(null);
+                  } catch (Throwable t) {
+                    future.completeExceptionally(t);
+                  }
+                },
+                150,
+                TimeUnit.MILLISECONDS);
+
+        return future;
+      } catch (Exception e) {
+        if (!isShuttingDown) {
+          logger.error("Error preparing auto-save data", e);
+        }
+        CompletableFuture<Void> failed = new CompletableFuture<>();
+        failed.completeExceptionally(e);
+        return failed;
       }
-      CompletableFuture<Void> failed = new CompletableFuture<>();
-      failed.completeExceptionally(e);
-      return failed;
     }
   }
 
@@ -667,6 +701,14 @@ public class ClientSubscriptionManager {
   }
 
   public CompletableFuture<Void> deleteAutoSaveAsync(String raceId, boolean isDemo) {
+    synchronized (autoSaveLock) {
+      if (pendingAutoSaveTask != null && !pendingAutoSaveTask.isDone()) {
+        pendingAutoSaveTask.cancel(false);
+      }
+      if (pendingAutoSaveFuture != null && !pendingAutoSaveFuture.isDone()) {
+        pendingAutoSaveFuture.complete(null);
+      }
+    }
     if (databaseContext == null || databaseContext.getConnection() == null || raceId == null) {
       return CompletableFuture.completedFuture(null);
     }
