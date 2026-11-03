@@ -26,22 +26,44 @@ La barra degli strumenti superiore offre le seguenti azioni:
 - **Elimina Pilota**: Rimuove il profilo del pilota selezionato previa conferma.
 - **Guida (?)**: Avvia il tour guidato interattivo che illustra le sezioni dell'editor.
 
-## Dettagli del Pilota
+## Profilo del Pilota {: #driver-profile }
 
-- **Nome**: Il nome completo del pilota visualizzato nelle classifiche.
+Configura l'identità visiva, i nomi e le etichette di classificazione del pilota:
+
+- **Avatar**: Scegli un'immagine o un'icona personalizzata per il pilota. In modalità Modifica, fai clic per caricare una nuova immagine o sceglierne una esistente.
+- **Nome**: Il nome completo ufficiale del pilota visualizzato nelle classifiche.
 - **Soprannome**: Un nome breve o fonetico utilizzato per gli annunci vocali (TTS).
 - **Collega Nome e Soprannome**: Quando attivo, la digitazione del nome aggiorna automaticamente il soprannome.
-- **Avatar**: Scegli un'immagine o un'icona personalizzata per il pilota.
 - **Etichette pilota**: Assegna etichette con codice colore (simili alle etichette dei ticket di GitHub) per organizzare i piloti in gruppi personalizzati (come "Pro", "Rookie" o "Classe A"). I piloti possono appartenere a qualsiasi numero di gruppi. In modalità Modifica, fai clic su **Gestisci etichette** per creare, modificare, ricolorare, eliminare o assegnare etichette. Nella schermata di Configurazione del Giorno di Gara, puoi filtrare i partecipanti disponibili per etichetta per comporre rapidamente i gruppi di gara.
 
-## Annunci Audio ed Effetti Sonori
+## Annunci Audio e Suoni {: #audio-callouts-sounds }
 
 Configura effetti sonori o annunci vocali (TTS) per questo pilota:
 
-- **Audio Giro**: Ripprodotto al completamento di un giro normale.
-- **Miglior Giro Personale**: Ripprodotto quando il pilota stabilisce il suo miglior tempo.
-- **Traguardi e Record**: Suoni personalizzati per record della pista, della manche e cambio di leader.
-- **Ascolto Audio**: Il pulsante di riproduzione resta attivo in entrambe le modalità per ascoltare i suoni in qualsiasi momento.
+### Suoni giro personale {: #personal-lap-sounds }
+
+- **Audio Giro**: Riprodotto al completamento di un giro normale quando non ci sono record prioritari.
+- **Miglior Giro Personale**: Riprodotto quando il pilota stabilisce il suo miglior tempo della sessione attuale.
+
+### Suoni giro gara e manche {: #race-lap-sounds }
+
+- **Miglior Giro di Gara**: Riprodotto quando il pilota ottiene il giro più veloce dell'intera gara attiva.
+- **Miglior Giro Corsia Gara**: Riprodotto quando il pilota segna il miglior giro nella sua corsia assegnata.
+- **Miglior Giro di Manche**: Riprodotto quando il pilota segna il miglior giro della manche.
+- **Nuovo Leader di Gara**: Riprodotto quando questo pilota prende la testa della gara.
+- **Nuovo Leader di Manche**: Riprodotto quando questo pilota prende la testa della manche.
+
+### Suoni miglior giro assoluto {: #overall-best-lap-sounds }
+
+- **Miglior Giro Assoluto**: Riprodotto quando il pilota batte il record storico assoluto del tracciato.
+- **Miglior Giro Assoluto Corsia**: Riprodotto quando il pilota batte il record storico per una corsia specifica.
+
+### Suoni eventi e penalità {: #event-sounds }
+
+- **Ingresso ai Box**: Riprodotto quando il pilota entra nella corsia box per fare rifornimento.
+- **Livelli Carburante**: Avvisi vocali o suoni corrispondenti alle soglie carburante (Avviso, Basso, Vuoto, Pieno).
+- **Partenza Anticipata / Penalità**: Riprodotto in caso di falsa partenza o penalità.
+- **Giro in Derapata**: Riprodotto quando viene registrato un giro con derapata.
 
 ## Importazione Piloti
 

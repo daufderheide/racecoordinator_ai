@@ -292,7 +292,10 @@ export class DriverEditorComponent
 
     this.subscriptions.push(
       this.helpService.currentStep$.subscribe((step) => {
-        if (step?.selector?.includes("audio")) {
+        if (
+          step?.selector?.includes("audio") ||
+          step?.selector?.includes("-group")
+        ) {
           this.sectionsExpanded.audio = true;
           this.cdr.detectChanges();
         }

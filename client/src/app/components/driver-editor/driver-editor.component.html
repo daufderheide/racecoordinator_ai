@@ -30,6 +30,7 @@
     [copyDisabledTooltipKey]="'DE_TOOLTIP_COPY_DISABLED'"
     [isSaving]="isSaving"
     [undoManager]="undoManager"
+    [selectorTooltipKey]="'DE_TOOLTIP_DRIVER_SELECTOR'"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'driverEditorHelpShown'"
     (selectedIdChange)="onSelectDriverById($event)"
@@ -46,7 +47,7 @@
   @if (!isLoading && editingDriver) {
     <div class="content-split">
       <!-- Left Panel: Driver Config -->
-      <div class="editor-panel">
+      <div class="editor-panel" id="driver-profile-panel">
         <!-- Avatar Section -->
         <div id="driver-avatar-section" class="editor-section">
           <app-image-selector
@@ -56,6 +57,7 @@
             [assets]="avatarAssets"
             [size]="'large'"
             [disabled]="!isEditMode"
+            [title]="'DE_TOOLTIP_AVATAR' | translate"
           >
           </app-image-selector>
         </div>
@@ -77,6 +79,7 @@
             (ngModelChange)="onNameChange($event)"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
+            [title]="'DE_TOOLTIP_NAME' | translate"
             class="dm-input"
           />
         </div>
@@ -134,6 +137,7 @@
             (ngModelChange)="onNicknameChange($event)"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
+            [title]="'DE_TOOLTIP_NICKNAME' | translate"
             class="dm-input"
           />
         </div>

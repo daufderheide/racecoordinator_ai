@@ -10,7 +10,7 @@
       <span class="title-main">{{ titleKey() | translate }}</span>
       @if (items().length > 0) {
         <span class="item-separator">-</span>
-        <div class="editor-object-nav">
+        <div class="editor-object-nav" id="editor-object-nav">
           <button
             type="button"
             id="editor-prev-item-btn"
@@ -32,7 +32,10 @@
             [widestLabel]="longestItemName()"
             (change)="onSelectionChange($event)"
             [title]="
-              (isEditMode() ? 'EDITOR_LOCKED_SELECTOR_TOOLTIP' : '') | translate
+              (isEditMode()
+                ? 'EDITOR_LOCKED_SELECTOR_TOOLTIP'
+                : selectorTooltipKey()
+              ) | translate
             "
           >
             @for (item of items(); track item.id) {

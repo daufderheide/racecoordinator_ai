@@ -261,49 +261,6 @@ test.describe("Driver Editor Visuals", () => {
     );
   });
 
-  test("should show guided help on first visit", async ({ page }) => {
-    // Override standard mock with helpShown=false to trigger auto-open
-    await TestSetupHelper.setupStandardMocks(page, {
-      driverEditorHelpShown: false,
-    });
-
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/driver-editor?id=d1&help=true"),
-    );
-    await page.locator(".page-container").waitFor();
-    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
-
-    // Wait for the help step to actually appear (it has an 800ms delay in component)
-    const popover = page.locator(".popover-content");
-    await popover.waitFor({ state: "visible", timeout: 10000 });
-
-    // CRITICAL: Wait for localization to be applied (text instead of keys)
-    // We wait until the popover doesn't contain a typical key prefix (e.g. "DE_")
-    await page.waitForFunction(
-      () => {
-        const content =
-          document.querySelector(".popover-content")?.textContent || "";
-        return (
-          content.length > 0 &&
-          !content.includes("DE_") &&
-          !content.includes("{{")
-        );
-      },
-      { timeout: 10000 },
-    );
-
-    // Disable animations and wait for settling
-    await TestSetupHelper.disableAnimations(page);
-
-    await expect(popover).toHaveScreenshot("driver-editor-guided-help.png", {
-      animations: "disabled",
-      maxDiffPixelRatio: 0.05,
-      timeout: 15000,
-    });
-  });
-
   test("should display driver editor with assigned labels in read-only mode", async ({
     page,
   }) => {

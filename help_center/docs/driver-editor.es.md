@@ -26,22 +26,44 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Eliminar Piloto**: Elimina el perfil del piloto seleccionado tras su confirmación.
 - **Ayuda (?)**: Abre la guía interactiva que explica cada sección del editor.
 
-## Detalles del Piloto
+## Perfil del Piloto {: #driver-profile }
 
-- **Nombre**: El nombre completo del piloto que se muestra en las clasificaciones.
+Configure la identidad visual, nombres y etiquetas de clasificación del piloto:
+
+- **Avatar**: Seleccione una imagen o icono para el piloto. En el Modo Edición, haga clic para subir una nueva imagen o elegir un recurso existente.
+- **Nombre**: El nombre completo oficial del piloto que se muestra en las clasificaciones.
 - **Apodo**: Nombre abreviado o pronunciado utilizado para los anuncios de voz (TTS).
 - **Vincular Nombre y Apodo**: Al activarse, la edición del nombre se copia automáticamente en el apodo.
-- **Avatar**: Seleccione una imagen o icono para el piloto.
 - **Etiquetas de piloto**: Asigne etiquetas codificadas por colores (similar a las etiquetas de problemas de GitHub) para organizar a los pilotos en conjuntos personalizados (como "Pro", "Rookie" o "Clase A"). Los pilotos pueden pertenecer a cualquier cantidad de conjuntos. En el Modo Edición, haga clic en **Gestionar etiquetas** para crear, editar, cambiar de color, eliminar o asignar etiquetas. En la pantalla de Configuración del Día de Carrera, puede filtrar los participantes disponibles por etiqueta para configurar rápidamente las alineaciones de carrera.
 
-## Avisos de Audio y Efectos
+## Avisos de Audio y Sonidos {: #audio-callouts-sounds }
 
 Configure efectos de sonido o anuncios de voz (TTS) para este piloto:
 
-- **Audio de Vuelta**: Se reproduce al completar una vuelta estándar.
-- **Mejor Vuelta Personal**: Se reproduce cuando el piloto establece su mejor tiempo de vuelta.
-- **Hitos y Récords**: Sonidos personalizados para récords de pista, de manga y cambios de líder.
-- **Probar Audios**: El botón de reproducción permanece activo en ambos modos para escuchar los audios en cualquier momento.
+### Sonidos de vuelta personal {: #personal-lap-sounds }
+
+- **Audio de Vuelta**: Se reproduce al completar una vuelta estándar cuando no hay un récord de mayor prioridad.
+- **Mejor Vuelta Personal**: Se reproduce cuando el piloto establece su mejor tiempo de vuelta de la sesión actual.
+
+### Sonidos de vuelta de carrera y manga {: #race-lap-sounds }
+
+- **Mejor Vuelta de Carrera**: Se reproduce cuando el piloto establece la vuelta más rápida de la carrera activa.
+- **Mejor Vuelta en Carril de Carrera**: Se reproduce cuando el piloto marca la vuelta más rápida en su carril asignado.
+- **Mejor Vuelta de Manga**: Se reproduce cuando el piloto marca la vuelta más rápida de la manga actual.
+- **Nuevo Líder de Carrera**: Se reproduce cuando este piloto asume el liderato absoluto de la carrera.
+- **Nuevo Líder de Manga**: Se reproduce cuando este piloto toma el primer lugar en la manga.
+
+### Sonidos de mejor vuelta general {: #overall-best-lap-sounds }
+
+- **Mejor Vuelta General**: Se reproduce cuando el piloto rompe el récord histórico absoluto de la pista.
+- **Mejor Vuelta General de Carril**: Se reproduce cuando el piloto rompe el récord histórico de un carril específico.
+
+### Sonidos de eventos y penalizaciones {: #event-sounds }
+
+- **Entrada a Boxes**: Se reproduce cuando el piloto entra a boxes para repostar combustible.
+- **Nivel de Combustible**: Advertencias verbales o efectos correspondientes a los niveles de combustible (p. ej. Aviso, Bajo, Vacío, Lleno).
+- **Salida en Falso / Penalización**: Se reproduce cuando se detecta una salida en falso o penalización.
+- **Vuelta Drift**: Se reproduce cuando se registra una vuelta con derrape.
 
 ## Importar Pilotos
 

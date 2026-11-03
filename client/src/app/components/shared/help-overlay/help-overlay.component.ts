@@ -223,20 +223,29 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
       el = document.getElementById(this.currentStep.targetId);
     }
 
+    let highlightEl: HTMLElement | null = null;
+    if (this.currentStep.highlightSelector) {
+      highlightEl = document.querySelector(
+        this.currentStep.highlightSelector,
+      ) as HTMLElement;
+    } else if (this.currentStep.highlightTargetId) {
+      highlightEl = document.getElementById(this.currentStep.highlightTargetId);
+    }
+
     if (el) {
       // Ensure element is visible
       el.scrollIntoView({ behavior: "auto", block: "center" });
 
       // Immediate preliminary position
       const rect = el.getBoundingClientRect();
-      this.applyPosition(el, rect);
+      this.applyPosition(el, rect, highlightEl);
       this.cdr.detectChanges();
 
       // Refine position after layout settles
       requestAnimationFrame(() => {
         if (!el) return;
         const rectRefined = el.getBoundingClientRect();
-        this.applyPosition(el, rectRefined);
+        this.applyPosition(el, rectRefined, highlightEl);
         this.cdr.detectChanges();
 
         if (!this.isInitialized) {
@@ -264,14 +273,21 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     this.cdr.detectChanges();
   }
 
-  private applyPosition(el: HTMLElement, rect: DOMRect) {
+  private applyPosition(
+    el: HTMLElement,
+    rect: DOMRect,
+    highlightEl: HTMLElement | null = null,
+  ) {
     if (!this.isVisible || !this.currentStep || !el) return;
 
+    const maskTarget = highlightEl || el;
+    const maskRect = maskTarget.getBoundingClientRect();
+
     this.highlightStyle = {
-      top: Math.round(rect.top) + "px",
-      left: Math.round(rect.left) + "px",
-      width: Math.round(rect.width) + "px",
-      height: Math.round(rect.height) + "px",
+      top: Math.round(maskRect.top) + "px",
+      left: Math.round(maskRect.left) + "px",
+      width: Math.round(maskRect.width) + "px",
+      height: Math.round(maskRect.height) + "px",
       position: "fixed",
       zIndex: 10001, // Above overlay
       boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)", // The 'hole' effect

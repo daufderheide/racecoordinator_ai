@@ -26,22 +26,44 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Excluir Piloto**: Remove o perfil do piloto selecionado após confirmação.
 - **Ajuda (?)**: Inicia o tour guiado interativo sobre as seções do editor.
 
-## Detalhes do Piloto
+## Perfil do Piloto {: #driver-profile }
 
-- **Nome**: O nome completo do piloto exibido nas classificações.
+Configure a identidade visual, nomes e etiquetas de classificação do piloto:
+
+- **Avatar**: Escolha uma imagem ou ícone para o piloto. No Modo de Edição, clique para carregar uma nova imagem ou escolher uma existente.
+- **Nome**: O nome completo oficial do piloto exibido nas classificações.
 - **Apelido**: Nome abreviado ou falado usado para anúncios de voz (TTS).
 - **Vincular Nome e Apelido**: Quando ativado, o texto digitado no nome é copiado automaticamente para o apelido.
-- **Avatar**: Escolha uma imagem ou ícone para o piloto.
 - **Etiquetas de piloto**: Atribua etiquetas com código de cores (semelhantes às etiquetas de problemas do GitHub) para organizar os pilotos em conjuntos personalizados (como "Pro", "Rookie" ou "Classe A"). Os pilotos podem pertencer a qualquer número de conjuntos. No Modo de Edição, clique em **Gerenciar etiquetas** para criar, editar, alterar a cor, excluir ou atribuir etiquetas. Na tela de Configuração do Dia de Corrida, você pode filtrar os participantes disponíveis por etiqueta para montar rapidamente as listas de corrida.
 
-## Avisos de Áudio e Efeitos Sonoros
+## Avisos de Áudio e Sons {: #audio-callouts-sounds }
 
 Configure efeitos sonoros ou anúncios de voz (TTS) para este piloto:
 
-- **Áudio de Volta**: Tocado ao completar uma volta padrão.
-- **Melhor Volta Pessoal**: Tocado quando o piloto faz sua melhor volta.
-- **Marcos e Recordes**: Sons personalizados para recordes de pista, de bateria e liderança.
-- **Ouvir Áudios**: O botão de reprodução permanece ativo em ambos os modos para testar os sons a qualquer momento.
+### Sons de volta pessoal {: #personal-lap-sounds }
+
+- **Áudio de Volta**: Tocado ao completar uma volta padrão quando não há recorde prioritário.
+- **Melhor Volta Pessoal**: Tocado quando o piloto faz sua melhor volta da sessão atual.
+
+### Sons de volta de corrida e bateria {: #race-lap-sounds }
+
+- **Melhor Volta da Corrida**: Tocado quando o piloto estabelece a volta mais rápida da corrida ativa.
+- **Melhor Volta da Pista na Corrida**: Tocado quando o piloto marca a volta mais rápida em sua pista atribuída.
+- **Melhor Volta da Bateria**: Tocado na melhor volta da bateria atual.
+- **Novo Líder da Corrida**: Tocado quando este piloto assume a liderança geral da corrida.
+- **Novo Líder da Bateria**: Tocado quando este piloto assume a liderança da bateria.
+
+### Sons de melhor volta geral {: #overall-best-lap-sounds }
+
+- **Melhor Volta Geral**: Tocado quando o piloto quebra o recorde histórico absoluto da pista.
+- **Melhor Volta Geral por Pista**: Tocado quando o piloto quebra o recorde histórico de uma pista específica.
+
+### Sons de eventos e penalidades {: #event-sounds }
+
+- **Entrada nos Boxes**: Tocado quando o piloto entra nos boxes para reabastecer.
+- **Níveis de Combustível**: Alertas verbais ou sons correspondentes aos níveis de combustível (Alerta, Baixo, Vazio, Cheio).
+- **Queima de Largada / Penalidade**: Tocado em caso de queima de largada ou penalidade.
+- **Volta em Drift**: Tocado quando uma volta em drift é registrada.
 
 ## Importar Pilotos
 

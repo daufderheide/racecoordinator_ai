@@ -225,19 +225,20 @@ export class ToolbarComponent implements OnInit, OnDestroy {
   }
 
   getToolbarHelpSteps(): GuideStep[] {
-    return [
-      {
-        targetId: "toolbar-container",
-        selector: ".toolbar-container",
-        title: this.translationService.translate("TOOLBAR_HELP_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_CONTENT"),
-        position: "bottom",
-      },
-    ];
+    return [getEditorToolbarHelpStep(this.translationService, this.showEdit())];
   }
 
   onHelp() {
-    const steps = [...this.helpSteps(), ...this.getToolbarHelpSteps()];
+    const hasToolbarStep = this.helpSteps().some(
+      (s) =>
+        s.targetId === "toolbar-container" ||
+        s.targetId === "edit-track-btn" ||
+        s.highlightTargetId === "toolbar-container" ||
+        s.selector === ".toolbar-container",
+    );
+    const steps = hasToolbarStep
+      ? this.helpSteps()
+      : [...this.helpSteps(), ...this.getToolbarHelpSteps()];
     this.helpService.startGuide(steps);
     this.help.emit();
   }
@@ -301,4 +302,19 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     }
     return (this.undoManager()?.redoStackCount ?? 0) > 0;
   }
+}
+
+export function getEditorToolbarHelpStep(
+  translationService: TranslationService,
+  showEdit = true,
+): GuideStep {
+  return {
+    targetId: showEdit ? "edit-track-btn" : "toolbar-container",
+    selector: showEdit ? "#edit-track-btn" : ".toolbar-container",
+    highlightTargetId: "toolbar-container",
+    highlightSelector: ".toolbar-container",
+    title: translationService.translate("TOOLBAR_HELP_TITLE"),
+    content: translationService.translate("TOOLBAR_HELP_CONTENT"),
+    position: "bottom",
+  };
 }

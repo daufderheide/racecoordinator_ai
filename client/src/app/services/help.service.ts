@@ -7,6 +7,8 @@ import { AnalyticsService } from "@app/analytics.service";
 export interface GuideStep {
   targetId?: string; // ID of the element to highlight. If null/undefined, it's a general modal.
   selector?: string; // CSS selector of the element to highlight.
+  highlightTargetId?: string; // Optional ID of element to highlight if different from positioning target
+  highlightSelector?: string; // Optional selector of element to highlight if different from positioning target
   title: string;
   content: string;
   position?: "top" | "bottom" | "left" | "right" | "center"; // Preferred position relative to target

@@ -38,6 +38,7 @@ export class EditorTitleComponent implements AfterViewChecked, OnDestroy {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   private helpService = inject(HelpService, { optional: true });
   titleKey = input("");
+  selectorTooltipKey = input<string>("EDITOR_OBJECT_SELECTOR_TOOLTIP");
   itemName = input<string | undefined>(undefined);
   trimmedItemName = computed(() => {
     const name = this.itemName();

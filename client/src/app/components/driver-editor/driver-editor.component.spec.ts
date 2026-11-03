@@ -18,6 +18,7 @@ import { ConnectionMonitorService } from "@app/services/connection-monitor.servi
 import { HelpService } from "@app/services/help.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 
 @Component({
   selector: "app-audio-selector",
@@ -78,7 +79,14 @@ class MockItemSelectorComponent {
 @Component({
   selector: "app-editor-title",
   standalone: true,
-  template: "",
+  template: `
+    <div id="editor-object-nav">
+      <div id="editor-object-selector"></div>
+    </div>
+    <div id="toolbar-container" class="toolbar-container">
+      <button type="button" id="edit-track-btn" aria-label="Edit">Edit</button>
+    </div>
+  `,
   imports: [FormsModule],
 })
 class MockEditorTitleComponent {
@@ -1363,66 +1371,62 @@ describe("DriverEditorComponent", () => {
   });
 
   describe("guided help", () => {
-    it("should force expand audio section when step selector includes 'audio'", () => {
+    it("should force expand audio section when step selector includes 'audio' or '-group'", () => {
       component.sectionsExpanded.audio = false;
 
-      mockHelpStepSubject.next({ selector: "#driver-audio-section" });
+      mockHelpStepSubject.next({ selector: "#driver-personal-lap-group" });
       fixture.detectChanges();
 
       expect(component.sectionsExpanded.audio).toBeTrue();
     });
 
-    it("should not expand audio section when step selector does not include 'audio'", () => {
+    it("should not expand audio section when step selector does not include 'audio' or '-group'", () => {
       component.sectionsExpanded.audio = false;
 
-      mockHelpStepSubject.next({ selector: "#driver-name-section" });
+      mockHelpStepSubject.next({ selector: "#driver-profile-panel" });
       fixture.detectChanges();
 
       expect(component.sectionsExpanded.audio).toBeFalse();
     });
 
-    it("should provide all guide steps including the name and nickname link step in correct order", () => {
+    it("should provide all 8 guide steps in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(21);
+      expect(steps.length).toBe(8);
 
-      const selectors = steps.map((s) => s.selector).filter(Boolean);
-      expect(selectors).toEqual([
-        "#editor-object-selector",
-        "#driver-avatar-section",
-        "#driver-name-section",
-        "#driver-name-nickname-link-section",
-        "#driver-nickname-section",
-        "#driver-labels-section",
-        "#driver-audio-section",
-        "#driver-lap-audio",
-        "#driver-best-lap-audio",
-        "#driver-race-best-lap-audio",
-        "#driver-race-lane-best-lap-audio",
-        "#driver-heat-best-lap-audio",
-        "#driver-new-race-leader-audio",
-        "#driver-new-heat-leader-audio",
-        "#driver-overall-best-lap-audio",
-        "#driver-overall-lane-best-lap-audio",
-        "#driver-pit-in-audio",
-        "#driver-fuel-audio",
-        "#driver-false-start-audio",
-        "#driver-drift-lap-audio",
+      const targetIds = steps.map((s) => s.targetId);
+      expect(targetIds).toEqual([
+        undefined,
+        "editor-object-nav",
+        "edit-track-btn",
+        "driver-profile-panel",
+        "driver-personal-lap-group",
+        "driver-race-best-lap-group",
+        "driver-overall-best-lap-group",
+        "driver-event-sounds-group",
       ]);
 
-      const linkStep = steps.find(
-        (s) => s.selector === "#driver-name-nickname-link-section",
-      );
-      expect(linkStep).toBeDefined();
-      expect(linkStep?.title).toBe("DE_HELP_LINK_TITLE");
-      expect(linkStep?.content).toBe("DE_HELP_LINK_CONTENT");
-      expect(linkStep?.position).toBe("bottom");
+      const selectors = steps.map((s) => s.selector);
+      expect(selectors).toEqual([
+        undefined,
+        "#editor-object-nav",
+        "#edit-track-btn",
+        "#driver-profile-panel",
+        "#driver-personal-lap-group",
+        "#driver-race-best-lap-group",
+        "#driver-overall-best-lap-group",
+        "#driver-event-sounds-group",
+      ]);
 
-      const labelsStep = steps.find(
-        (s) => s.selector === "#driver-labels-section",
-      );
-      expect(labelsStep).toBeDefined();
-      expect(labelsStep?.title).toBe("DE_HELP_LABELS_TITLE");
-      expect(labelsStep?.content).toBe("DE_HELP_LABELS_CONTENT");
+      expect(steps[2].highlightTargetId).toBe("toolbar-container");
+      expect(steps[2].highlightSelector).toBe(".toolbar-container");
+    });
+
+    it("should verify that all guide step DOM targets exist in the component DOM", () => {
+      component.sectionsExpanded.audio = true;
+      fixture.detectChanges();
+
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
   });
 

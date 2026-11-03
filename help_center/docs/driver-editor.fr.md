@@ -26,22 +26,44 @@ La barre d'outils supérieure offre les actions suivantes :
 - **Supprimer le pilote** : Supprime le profil après confirmation.
 - **Aide (?)** : Ouvre le guide interactif présentant les différentes sections.
 
-## Détails du pilote
+## Profil du pilote {: #driver-profile }
 
-- **Nom** : Le nom complet du pilote affiché sur les classements et rapports.
+Configurez l'identité visuelle, les noms et les étiquettes de classification du pilote :
+
+- **Avatar** : Choisissez une image ou une icône personnalisée pour le pilote. En mode Édition, cliquez sur le sélecteur pour importer une image ou choisir un média existant.
+- **Nom** : Le nom complet officiel du pilote affiché sur les classements et rapports.
 - **Surnom** : Un nom court ou phonétique utilisé pour la synthèse vocale (TTS).
 - **Lier Nom et Surnom** : Lorsque cette option est activée, la saisie du nom se répercute automatiquement sur le surnom.
-- **Avatar** : Choisissez une image ou une icône personnalisée pour le pilote.
 - **Étiquettes de pilote** : Attribuez des étiquettes de couleur (similaires aux étiquettes d'issues GitHub) pour organiser les pilotes en groupes personnalisés (par exemple "Pro", "Rookie" ou "Classe A"). Les pilotes peuvent appartenir à plusieurs groupes. En mode Édition, cliquez sur **Gérer les étiquettes** pour créer, modifier, recolorer, supprimer ou attribuer des étiquettes. Sur l'écran de configuration du jour de course, vous pouvez filtrer les participants disponibles par étiquette pour composer rapidement vos plateaux.
 
-## Annonces audio et effets sonores
+## Annonces audio et sons {: #audio-callouts-sounds }
 
 Configurez des effets sonores ou des annonces vocales personnalisés pour ce pilote :
 
-- **Audio de tour** : Joué lors de la réalisation d'un tour standard.
-- **Meilleur tour personnel** : Joué lorsque le pilote réalise son meilleur tour.
-- **Records et jalons** : Sons personnalisés pour les records de piste, de manche et prises de tête.
-- **Écoute des sons** : Le bouton de lecture audio reste fonctionnel dans les deux modes pour prévisualiser les sons.
+### Sons de tour personnel {: #personal-lap-sounds }
+
+- **Audio de tour** : Joué lors de la réalisation d'un tour standard lorsqu'aucun son de priorité supérieure n'est déclenché.
+- **Meilleur tour personnel** : Joué lorsque le pilote réalise son meilleur tour de la session en cours.
+
+### Sons de tour de course et manche {: #race-lap-sounds }
+
+- **Meilleur tour de course** : Joué lorsque le pilote réalise le tour le plus rapide de la course active.
+- **Meilleur tour en piste de course** : Joué lorsque le pilote réalise le meilleur tour sur sa piste assignée.
+- **Meilleur tour de manche** : Joué lorsque le pilote réalise le meilleur tour de la manche.
+- **Nouveau leader de course** : Joué lorsque ce pilote prend la tête du classement général de la course.
+- **Nouveau leader de manche** : Joué lorsque ce pilote prend la tête de la manche.
+
+### Sons de meilleur tour absolu {: #overall-best-lap-sounds }
+
+- **Meilleur tour absolu** : Joué lorsque le pilote bat le record historique absolu du circuit.
+- **Meilleur tour absolu en piste** : Joué lorsque le pilote bat le record historique sur une piste spécifique.
+
+### Sons d'événements et pénalités {: #event-sounds }
+
+- **Entrée aux stands** : Joué lorsque le pilote entre dans la voie des stands pour ravitailler.
+- **Niveaux de carburant** : Alertes vocales ou sons correspondant aux seuils de carburant (Alerte, Bas, Vide, Plein).
+- **Faux départ / Pénalité** : Joué lorsqu'une pénalité ou un faux départ est détecté.
+- **Tour en drift** : Joué lorsqu'un tour en glisse est enregistré.
 
 ## Importer des pilotes
 

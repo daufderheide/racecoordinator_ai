@@ -582,12 +582,26 @@ describe("ToolbarComponent", () => {
       expect(steps.length).toBe(1);
       expect(steps[0].targetId).toBe("toolbar-container");
       expect(steps[0].selector).toBe(".toolbar-container");
+      expect(steps[0].highlightTargetId).toBe("toolbar-container");
+      expect(steps[0].highlightSelector).toBe(".toolbar-container");
       expect(steps[0].title).toBe("TOOLBAR_HELP_TITLE");
       expect(steps[0].content).toBe("TOOLBAR_HELP_CONTENT");
       expect(steps[0].position).toBe("bottom");
     });
 
+    it("should target edit-track-btn and highlight toolbar-container when showEdit is true", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.detectChanges();
+
+      const steps = component.getToolbarHelpSteps();
+      expect(steps[0].targetId).toBe("edit-track-btn");
+      expect(steps[0].selector).toBe("#edit-track-btn");
+      expect(steps[0].highlightTargetId).toBe("toolbar-container");
+      expect(steps[0].highlightSelector).toBe(".toolbar-container");
+    });
+
     it("should ensure the toolbar guide step targets an existing element in the rendered DOM", () => {
+      fixture.componentRef.setInput("showEdit", true);
       fixture.detectChanges();
       GuideStepTestHelper.verifyGuideStepsExistInDom(
         fixture,
@@ -609,11 +623,28 @@ describe("ToolbarComponent", () => {
         {
           targetId: "toolbar-container",
           selector: ".toolbar-container",
+          highlightTargetId: "toolbar-container",
+          highlightSelector: ".toolbar-container",
           title: "TOOLBAR_HELP_TITLE",
           content: "TOOLBAR_HELP_CONTENT",
           position: "bottom",
         },
       ]);
+    });
+
+    it("should not append duplicate toolbar step if helpSteps already contains a toolbar step", () => {
+      const toolbarStep: GuideStep = {
+        targetId: "edit-track-btn",
+        highlightTargetId: "toolbar-container",
+        title: "TOOLBAR_HELP_TITLE",
+        content: "TOOLBAR_HELP_CONTENT",
+      };
+      fixture.componentRef.setInput("helpSteps", [toolbarStep]);
+      fixture.detectChanges();
+
+      component.onHelp();
+
+      expect(helpServiceSpy.startGuide).toHaveBeenCalledWith([toolbarStep]);
     });
   });
 

@@ -70,6 +70,30 @@ export class GuideStepTestHelper {
           .not.toBeNull();
       }
 
+      if (step.highlightTargetId) {
+        let el = root.querySelector(`#${step.highlightTargetId}`);
+        if (!el && options.checkDocumentFallback) {
+          el = document.getElementById(step.highlightTargetId);
+        }
+        expect(el)
+          .withContext(
+            `${stepLabel}: element with highlightTargetId "#${step.highlightTargetId}" must exist in the rendered DOM`,
+          )
+          .not.toBeNull();
+      }
+
+      if (step.highlightSelector) {
+        let el = root.querySelector(step.highlightSelector);
+        if (!el && options.checkDocumentFallback) {
+          el = document.querySelector(step.highlightSelector);
+        }
+        expect(el)
+          .withContext(
+            `${stepLabel}: element matching highlightSelector "${step.highlightSelector}" must exist in the rendered DOM`,
+          )
+          .not.toBeNull();
+      }
+
       // 5. Clean up by running onLeave hook if present
       step.onLeave?.();
     }

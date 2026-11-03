@@ -6,7 +6,7 @@ The **Driver Editor** allows you to create, view, and customize driver profiles,
 
 The Driver Editor integrates driver selection and editing into a unified interface:
 
-- **Driver Selector**: Located at the top header next to the page title, this dropdown lists all existing drivers and allows you to quickly switch between drivers.
+- **Driver Selector**: Located at the top header next to the page title, this dropdown lists all existing drivers and allows you to quickly switch between drivers, using previous and next buttons to browse through your roster with an active position counter (e.g., 1 / 8).
 - **Read-Only Mode**: By default, opening the editor displays driver details in read-only mode. Form fields are locked to prevent accidental modifications while allowing you to audition audio clips.
 - **Edit Mode**: Clicking the **Edit** (pencil) icon on the toolbar unlocks the form inputs for editing. While in Edit Mode, the driver selector dropdown is locked to prevent accidental navigation away from unsaved edits.
 - **Saving Changes**: Clicking the **Done Editing** (checkmark) icon validates your changes, saves them to the server, and returns the editor to Read-Only Mode.
@@ -14,7 +14,7 @@ The Driver Editor integrates driver selection and editing into a unified interfa
 
 ## Toolbar Actions
 
-The top toolbar provides the following actions:
+The top toolbar provides quick access to common management actions. Click the pencil or checkmark button to switch between view and edit mode.
 
 - **Back**: Returns to the previous view or Race Day Setup.
 - **Add Driver (+)**: Creates a new driver template and enters Edit Mode.
@@ -26,22 +26,44 @@ The top toolbar provides the following actions:
 - **Delete Driver**: Deletes the selected driver profile after confirmation.
 - **Help (?)**: Opens the interactive guided tour highlighting each section of the editor.
 
-## Driver Details
+## Driver Profile {: #driver-profile }
 
-- **Name**: The full name of the driver displayed on leaderboards and race reports.
-- **Nickname**: A shortened or spoken callout name used for Text-to-Speech (TTS) announcements.
-- **Link Name & Nickname**: When enabled, editing the Name field automatically mirrors the text into the Nickname field.
-- **Avatar**: Choose a custom image or preset icon to represent the driver on race displays.
+Configure the driver's visual identity, text names, and classification labels:
+
+- **Avatar**: Choose a custom image or preset icon to represent the driver on leaderboards and race displays. Click the avatar selector in Edit Mode to upload a new graphic or pick an existing asset.
+- **Name**: The full official display name of the driver shown on leaderboards and race summary reports.
+- **Nickname**: A shortened or phonetic callout name used for Text-to-Speech (TTS) race announcements.
+- **Link Name & Nickname**: When linked, updating the Name field automatically mirrors the text into the Nickname field. Clicking the link icon unlinks them to allow distinct nicknames (e.g. "The Rocket" for "Dave Aufderheide").
 - **Driver Labels**: Assign color-coded labels (similar to GitHub issue labels) to organize drivers into custom sets (such as "Pro", "Rookie", or "Class A"). Drivers can belong to any number of sets. In Edit Mode, click **Manage Labels** to create, edit, recolor, delete, or assign labels. On the Race Day Setup screen, you can filter available participants by label to quickly configure race rosters.
 
-## Audio Callouts & SFX
+## Audio Callouts & Sounds {: #audio-callouts-sounds }
 
-Configure custom sound effects or Text-to-Speech (TTS) callouts for this driver:
+Configure personalized sound effects and Text-to-Speech (TTS) announcements for this driver across different racing events:
 
-- **Lap Audio**: Played upon completing a standard lap.
-- **Personal Best Lap**: Played when the driver sets their best lap time of the session.
-- **Milestone & Record Audio**: Custom sounds or announcements for track records, heat records, and race leads.
-- **Auditioning Sounds**: The audio play button remains active in both Read-Only and Edit modes, allowing you to sample sounds at any time.
+### Personal Lap Sounds {: #personal-lap-sounds }
+
+- **Lap Audio**: Played upon completing a standard lap when no higher-priority record or lead sound is triggered.
+- **Personal Best Lap**: Played when the driver records their best lap time of the current heat or session.
+
+### Race & Heat Lap Sounds {: #race-lap-sounds }
+
+- **Race Best Lap**: Played when the driver sets the fastest lap time of the active race across all lanes and competitors.
+- **Race Lane Best Lap**: Played when the driver sets the fastest lap time of the active race in their assigned lane.
+- **Heat Best Lap**: Played when the driver records the fastest lap time in the current heat.
+- **New Race Leader**: Played when this driver takes over 1st place in overall race standings.
+- **New Heat Leader**: Played when this driver takes over 1st place in the current heat.
+
+### Overall Best Lap Sounds {: #overall-best-lap-sounds }
+
+- **Overall Best Lap**: Played when the driver breaks the all-time track record fastest lap across all historical races.
+- **Overall Lane Best Lap**: Played when the driver sets the all-time record fastest lap for a specific track lane across all historical races.
+
+### Event Sounds {: #event-sounds }
+
+- **Pit In Audio**: Played when the driver enters pit lane and begins refueling.
+- **Fuel Level Sounds**: Verbal warnings or sound effects corresponding to driver fuel level thresholds (e.g. Warning, Low, Empty, Full).
+- **False Start / Penalty Audio**: Played when a false start or jump start infraction is assessed against this driver.
+- **Drift Lap Audio**: Played when a driver successfully triggers a drift sensor or drift condition.
 
 ## Importing Drivers
 

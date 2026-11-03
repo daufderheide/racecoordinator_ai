@@ -26,22 +26,44 @@ Die obere Symbolleiste bietet folgende Aktionen:
 - **Fahrer löschen**: Löscht das ausgewählte Fahrerprofil nach Bestätigung.
 - **Hilfe (?)**: Startet die interaktive Einführungstour für die Bereiche des Editors.
 
-## Fahrerdetails
+## Fahrerprofil {: #driver-profile }
 
+Konfigurieren Sie das Erscheinungsbild, die Namen und die Klassifizierungslabels des Fahrers:
+
+- **Avatar**: Wählen Sie ein Bild oder Symbol für den Fahrer aus. Klicken Sie im Bearbeitungsmodus auf den Avatar-Wähler, um eine neue Grafik hochzuladen oder ein vorhandenes Bild auszuwählen.
 - **Name**: Der vollständige Name des Fahrers, der auf Ranglisten und Berichten angezeigt wird.
 - **Spitzname**: Ein Kurzname oder gesprochener Name für Text-to-Speech (TTS)-Ansagen.
 - **Name & Spitzname verknüpfen**: Wenn aktiviert, wird die Eingabe im Namensfeld automatisch in das Spitznamenfeld übernommen.
-- **Avatar**: Wählen Sie ein Bild oder Symbol für den Fahrer aus.
 - **Fahrer-Labels**: Weisen Sie farbcodierte Labels zu (ähnlich wie GitHub-Issue-Labels), um Fahrer in Gruppen zu organisieren (z. B. "Pro", "Rookie" oder "Klasse A"). Fahrer können beliebig vielen Gruppen angehören. Im Bearbeitungsmodus klicken Sie auf **Labels verwalten**, um Labels zu erstellen, zu bearbeiten, umzufärben, zu löschen oder zuzuweisen. Auf dem Renntag-Setup-Bildschirm können Sie verfügbare Teilnehmer nach Label filtern, um Starterfelder schnell zusammenzustellen.
 
-## Audioansagen & Soundeffekte
+## Audioansagen & Sounds {: #audio-callouts-sounds }
 
 Konfigurieren Sie individuelle Soundeffekte oder Text-to-Speech (TTS)-Ansagen für diesen Fahrer:
 
-- **Runden-Audio**: Wird beim Beenden einer normalen Runde abgespielt.
-- **Persönliche Bestzeit**: Wird abgespielt, wenn der Fahrer seine schnellste Runde fährt.
-- **Meilensteine & Rekorde**: Eigene Sounds oder Ansagen für Bahnrekorde, Laufrekorde und Rennführung.
-- **Audiodateien testen**: Die Wiedergabetaste bleibt in beiden Modi aktiv, um Sounds jederzeit probehören zu können.
+### Persönliche Rundensounds {: #personal-lap-sounds }
+
+- **Runden-Audio**: Wird beim Beenden einer normalen Runde abgespielt, wenn kein höher priorisierter Rekord vorliegt.
+- **Persönliche Bestzeit**: Wird abgespielt, wenn der Fahrer seine schnellste Runde der aktuellen Session fährt.
+
+### Renn- & Lauf-Rundensounds {: #race-lap-sounds }
+
+- **Rennen-Bestzeit**: Wird abgespielt, wenn der Fahrer die schnellste Runde des aktuellen Rennens fährt.
+- **Rennspur-Bestzeit**: Wird abgespielt, wenn der Fahrer die schnellste Runde des Rennens auf seiner Spur erzielt.
+- **Lauf-Bestzeit**: Wird abgespielt, wenn der Fahrer die schnellste Runde im aktuellen Lauf fährt.
+- **Neuer Rennführender**: Wird abgespielt, wenn dieser Fahrer die Führung im Gesamtrennen übernimmt.
+- **Neuer Laufführender**: Wird abgespielt, wenn dieser Fahrer die Führung im aktuellen Lauf übernimmt.
+
+### Gesamt-Bestzeitsounds {: #overall-best-lap-sounds }
+
+- **Gesamt-Bestzeit**: Wird abgespielt, wenn der Fahrer den allzeitigen Bahnrekord aller bisherigen Rennen bricht.
+- **Gesamt-Spurbestzeit**: Wird abgespielt, wenn der Fahrer den allzeitigen Bahnrekord für eine bestimmte Spur bricht.
+
+### Event- & Strafensounds {: #event-sounds }
+
+- **Boxeneinfahrt**: Wird abgespielt, wenn der Fahrer in die Boxengasse einfährt und auftankt.
+- **Treibstoff-Warnungen**: Gesprochene Warnungen oder Sounds für Kraftstoffstände (z. B. Warnung, Niedrig, Leer, Voll).
+- **Frühstart / Strafe**: Wird abgespielt, wenn ein Frühstart oder eine Strafe festgestellt wird.
+- **Drift-Runde**: Wird abgespielt, wenn eine Drift-Runde registriert wird.
 
 ## Fahrer importieren
 

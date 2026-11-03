@@ -26,22 +26,44 @@ De bovenste werkbalk biedt de volgende opties:
 - **Coureur verwijderen**: Verwijdert het geselecteerde coureurprofiel na bevestiging.
 - **Help (?)**: Start de interactieve rondleiding door de verschillende onderdelen van de editor.
 
-## Coureurgegevens
+## Coureurprofiel {: #driver-profile }
 
-- **Naam**: De volledige naam van de coureur zoals getoond op scoreborden en rapporten.
+Configureer de visuele identiteit, namen en classificatielabels van de coureur:
+
+- **Avatar**: Kies een afbeelding of pictogram voor de coureur. Klik in de bewerkingsmodus op de avatar-kiezer om een afbeelding te uploaden of een bestaand bestand te kiezen.
+- **Naam**: De volledige officiële naam van de coureur zoals getoond op scoreborden en rapporten.
 - **Bijnaam**: Een korte of gesproken naam voor tekst-naar-spraak (TTS) meldingen.
 - **Koppel naam & bijnaam**: Indien ingeschakeld, wordt de ingevoerde naam automatisch overgenomen als bijnaam.
-- **Avatar**: Kies een afbeelding of pictogram voor de coureur.
 - **Coureur-labels**: Wijs kleurgecodeerde labels toe (vergelijkbaar met GitHub-issuelabels) om coureurs in aangepaste groepen te organiseren (zoals "Pro", "Rookie" of "Klasse A"). Coureurs kunnen tot meerdere groepen behoren. Klik in de bewerkingsmodus op **Labels beheren** om labels te maken, bewerken, van kleur te veranderen, verwijderen of toe te wijzen. Op het scherm Racedag-configuratie kunt u beschikbare deelnemers op label filteren om snel startvelden samen te stellen.
 
-## Audiomeldingen & geluidseffecten
+## Audiomeldingen & Geluiden {: #audio-callouts-sounds }
 
 Configureer aangepaste geluidseffecten of TTS-meldingen voor deze coureur:
 
-- **Rondemelding**: Wordt afgespeeld bij het voltooien van een standaardronde.
-- **Persoonlijk ronderecord**: Wordt afgespeeld wanneer de coureur zijn beste ronde rijdt.
-- **Mijlpalen & records**: Aangepaste geluiden voor baanrecords, manche-records en wisselingen van de leider.
-- **Geluiden beluisteren**: De afspeelknop blijft altijd actief om geluiden te testen.
+### Persoonlijke rondegeluiden {: #personal-lap-sounds }
+
+- **Rondemelding**: Wordt afgespeeld bij het voltooien van een standaardronde wanneer er geen prioriteitsrecord is.
+- **Persoonlijk ronderecord**: Wordt afgespeeld wanneer de coureur zijn beste ronde van de huidige sessie rijdt.
+
+### Race- en manche-rondegeluiden {: #race-lap-sounds }
+
+- **Race ronderecord**: Wordt afgespeeld wanneer de coureur de snelste ronde van de actieve race rijdt.
+- **Baanvak ronderecord in race**: Wordt afgespeeld wanneer de coureur de snelste ronde op zijn baanvak neerzet.
+- **Manche ronderecord**: Wordt afgespeeld bij de snelste ronde in de huidige manche.
+- **Nieuwe raceleider**: Wordt afgespeeld wanneer de coureur de leiding in het algemeen klassement overneemt.
+- **Nieuwe mancheleider**: Wordt afgespeeld wanneer de coureur de leiding in de manche pakt.
+
+### Algemene ronderecordgeluiden {: #overall-best-lap-sounds }
+
+- **Algemeen baanrecord**: Wordt afgespeeld wanneer de coureur het all-time baanrecord verbreekt.
+- **Algemeen baanvakrecord**: Wordt afgespeeld wanneer de coureur het all-time record voor een specifiek baanvak verbreekt.
+
+### Event- en strafgeluiden {: #event-sounds }
+
+- **Pitstraat in**: Wordt afgespeeld wanneer de coureur de pitstraat binnenrijdt om bij te tanken.
+- **Brandstofniveau**: Gesproken waarschuwingen of geluiden voor brandstofniveaus (bv. Waarschuwing, Laag, Leeg, Vol).
+- **Valse start / Straf**: Wordt afgespeeld bij een valse start of straf.
+- **Driftronde**: Wordt afgespeeld wanneer een driftronde wordt geregistreerd.
 
 ## Coureurs importeren
 
