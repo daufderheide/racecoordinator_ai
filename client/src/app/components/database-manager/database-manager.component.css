@@ -8,6 +8,12 @@
   letter-spacing: 1px;
 }
 
+.database-status-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .activate-btn {
   background: transparent;
   border: none;

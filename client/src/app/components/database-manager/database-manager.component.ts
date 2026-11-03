@@ -21,11 +21,15 @@ import {
   ConnectionMonitorService,
   ConnectionState,
 } from "@app/services/connection-monitor.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
+import { TranslationService } from "@app/services/translation.service";
 import { saveFileAs } from "@app/utils/file-download.utils";
+
+import { getDatabaseManagerHelpSteps } from "./database-manager-help";
 
 @Component({
   standalone: true,
@@ -99,6 +103,8 @@ export class DatabaseManagerComponent implements OnInit, OnDestroy {
     private raceConnectionService: RaceConnectionService,
     private logger: LoggerService,
     private printService: PrintService,
+    private translationService: TranslationService,
+    private helpService: HelpService,
   ) {}
 
   ngOnInit(): void {
@@ -558,20 +564,20 @@ export class DatabaseManagerComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  getHelpSteps() {
-    return [
-      {
-        targetId: "sidebar-list",
-        title: "DBM_HELP_SIDEBAR_TITLE",
-        content: "DBM_HELP_SIDEBAR_CONTENT",
-        position: "right" as const,
-      },
-      {
-        targetId: "detail-panel",
-        title: "DBM_HELP_DETAIL_TITLE",
-        content: "DBM_HELP_DETAIL_CONTENT",
-        position: "left" as const,
-      },
-    ];
+  ensureSelectedDatabase(): void {
+    if (!this.selectedDatabase && this.databases.length > 0) {
+      this.selectedDatabase = this.databases[0];
+      this.cdr.detectChanges();
+    }
+  }
+
+  getHelpSteps(): GuideStep[] {
+    return getDatabaseManagerHelpSteps(this.translationService, () =>
+      this.ensureSelectedDatabase(),
+    );
+  }
+
+  startHelp(): void {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 }

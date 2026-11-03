@@ -53,22 +53,24 @@
         <div class="detail-panel" id="detail-panel">
           <div class="detail-header">
             <h2>{{ selectedDatabase.name }}</h2>
-            @if (selectedDatabase.name !== currentDatabaseName) {
-              <button
-                class="activate-btn"
-                (click)="useDatabase()"
-                [title]="'DBM_BTN_USE' | translate"
-              >
-                <span class="material-icons">check_circle_outline</span>
-              </button>
-            } @else {
-              <div
-                class="active-indicator"
-                [title]="'DBM_BADGE_ACTIVE' | translate"
-              >
-                <span class="material-icons">check_circle</span>
-              </div>
-            }
+            <div id="database-active-status" class="database-status-wrapper">
+              @if (selectedDatabase.name !== currentDatabaseName) {
+                <button
+                  class="activate-btn"
+                  (click)="useDatabase()"
+                  [title]="'DBM_BTN_USE' | translate"
+                >
+                  <span class="material-icons">check_circle_outline</span>
+                </button>
+              } @else {
+                <div
+                  class="active-indicator"
+                  [title]="'DBM_BADGE_ACTIVE' | translate"
+                >
+                  <span class="material-icons">check_circle</span>
+                </div>
+              }
+            </div>
           </div>
           <div class="detail-content">
             <div class="stats-grid">

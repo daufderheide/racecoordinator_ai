@@ -16,6 +16,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_DATABASES } from "@app/testing/data/databases_data";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import {
   mockAnalyticsService,
   mockDataService,
@@ -579,5 +580,40 @@ describe("DatabaseManagerComponent", () => {
     const sizeStatItem = fixture.nativeElement.querySelector(".size-stat-item");
     expect(sizeStatItem).not.toBeNull();
     expect(sizeStatItem.textContent).toContain("DBM_STAT_RACE_RECORDS");
+  });
+
+  describe("guided help", () => {
+    it("should return 4 guided help steps in expected order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(4);
+      expect(steps[0].targetId).toBe("sidebar-list");
+      expect(steps[1].targetId).toBe("detail-panel");
+      expect(steps[2].targetId).toBe("database-active-status");
+      expect(steps[3].targetId).toBe("toolbar-container");
+    });
+
+    it("should delegate startHelp to helpService.startGuide", () => {
+      const helpService = TestBed.inject(HelpService);
+      const mockSteps: any[] = [{ title: "step1" }];
+      spyOn(component, "getHelpSteps").and.returnValue(mockSteps);
+      component.startHelp();
+      expect(helpService.startGuide).toHaveBeenCalledWith(mockSteps);
+    });
+
+    it("should select the first database if selectedDatabase is null when ensureSelectedDatabase is called", () => {
+      component.selectedDatabase = null;
+      component.databases = [...MOCK_DATABASES];
+      component.ensureSelectedDatabase();
+      expect(component.selectedDatabase).toEqual(MOCK_DATABASES[0]);
+    });
+
+    it("should ensure elements for all guided help steps exist in the rendered DOM", () => {
+      component.selectedDatabase = MOCK_DATABASES[0];
+      component.databases = [...MOCK_DATABASES];
+      fixture.detectChanges();
+
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
+    });
   });
 });
