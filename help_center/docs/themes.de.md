@@ -1,43 +1,145 @@
-# Designs (Themes)
+# Themes
 
-!!! note "Inhalt in Entwicklung"
-    Dieser Artikel befindet sich im Aufbau. Weitere Details folgen in Kürze.
+## Übersicht {: #overview }
 
-## Designs (Themes)
+Themes definieren die vollständige audiovisuelle Präsentation und die atmosphärische Gestaltung Ihrer Rennveranstaltungen in Race Coordinator AI. Anstatt Anzeigeelemente, Beleuchtungsgrafiken und Audioansagen für jedes Rennen einzeln zu konfigurieren, bündeln Themes diese visuellen und akustischen Komponenten in wiederverwendbaren Profilen.
 
-Jedes Theme bündelt visuelle Assets (Flaggen, Ampeln, Tankanzeigen), Audio-Ansagen und Layout-Zuweisungen:
+Wenn ein Theme aktiv ist, koordiniert es:
+- Das gekoppelte Bildschirmlayout auf dem Hauptbildschirm.
+- Synchronisierte Grafiken für Flaggen, Startampelleuchten und Tankanzeigen.
+- Systemweite Soundeffekte, Countdown-Signale und Sprachansagen.
+- Zentralisierte Audio-Überschreibungen für individuelle Fahrer-Soundeffekte.
 
-- **Benutzerdefiniertes UI-Layout:** Das gekoppelte Display-Layout, das während des Rennens geladen wird.
-- **Fahrerstand-Theme:** Das Theme, das beim Öffnen oder Scannen eines Fahrerstand-Fensters bzw. -Geräts verwendet wird.
-- **Fahreransicht-Theme:** Das Theme, das beim Öffnen oder Scannen des Fahreransicht-Zeitplanfensters bzw. Mobilgeräts verwendet wird.
+---
 
-## Audio
+## Theme-Einstellungen {: #top-selectors }
 
-Designs ermöglichen die Anpassung systemweiter Soundeffekte und Sprachansagen für Rennleitungsereignisse:
+In der oberen Steuerungsleiste des Theme-Editors legen Sie die Kerneigenschaften und verknüpften Layouts für das Theme fest:
 
-- **Start-Countdown:** Töne während der Startsequenz (`audio.countdown`).
-- **Grüne Lampe / START:** Signalton beim Umschalten der Startampel auf Grün (`audio.countdown.green`).
-- **Gelbe Flagge:** Warnsirenen während einer Gelbphase (`audio.yellowflag`).
-- **Automatischer Start verbleibende Sekunden:** Countdown-Ansagen für die verbleibende Zeit bis zum automatischen Start eines Durchgangs (`audio.auto_start`).
-- **Heat-Zeit (Verbleibende Sekunden):** Zeitansagen vor Durchgangsende (`audio.seconds_left`).
-- **Führender-Rundenzahl (Verbleibende Runden):** Rundenansagen für den Führenden vor Durchgangsende (`audio.laps_left`).
-- **Rennhälfte:** Ansage beim Erreichen der Halbzeit eines Durchgangs – sowohl für zeitbasierte Rennen (Halbzeit der Dauer) als auch für rundenbasierte Rennen (sobald der Führende die Hälfte der Runden absolviert hat) (`audio.seconds_left.halfway`).
-- **Durchgang & Rennen beendet:** Signale für das Ende eines Durchgangs (`audio.heat_over`) oder des Rennens (`audio.race_over`).
-- **Automatisches Weiterschalten verbleibende Sekunden:** Countdown-Ansagen für die verbleibende Zeit bis zum automatischen Weiterschalten zum nächsten Durchgang (`audio.auto_advance`).
-- **Regelverstöße:** Töne bei Unterschreitung der Mindestrundenzeit (`audio.min_lap_time`).
+- **Theme-Name:** Die eindeutige Kennung des Themes. Standardsystem-Themes (*RC AI*, *Formula*, *Endurance*) sind geschützt und können weder gelöscht noch umbenannt werden.
+- **Verknüpftes UI-Layout:** Wählt das im [Layout-Editor](layout-editor.de.md) erstellte Bildschirmlayout aus, das beim Start eines Rennens mit diesem Theme automatisch auf der Hauptanzeige geladen wird.
+- **Fahrerstand-Theme:** Bestimmt das Theme für dedizierte Einzelfahrspur-Fahrerstand-Displays oder wenn sich ein Fahrer per Mobilgerät oder Tablet verbindet.
+- **Fahreransicht-Theme:** Bestimmt das Theme für mehrspurige Fahreransicht-Zeitplananzeigen und Zuschauerbildschirme.
 
-Ausführliche Informationen zu Audio-Ducking, Prioritäten und Multi-Display-Filterung finden Sie in der Dokumentation zum [Audiosystem](audio.md).
+---
 
-## Fahrer-Audio-Überschreibungen
+## Flaggenbilder {: #flags }
 
-Themes können individuelle Fahreraudio-Einstellungen für alle Teilnehmer überschreiben, wenn das Theme aktiv ist. Standardmäßig werden die im [Fahrer-Editor](driver-editor.md) konfigurierten Töne der Fahrer abgespielt. Ein Theme kann jedoch selektiv jedes der 13 Fahrer-Audioereignisse überschreiben:
+Im Bereich Flaggenbilder können Sie die Grafiken anpassen, die auf der Rennanzeige, in Flaggen-Widgets und an Fahrerständen für jeden Rennzustand angezeigt werden:
 
-- **Persönliche Rundentöne:** Runde absolviert (`lapAudio`), Persönliche Bestzeit (`bestLapAudio`).
-- **Renn-Rundentöne:** Beste Rennrunde (`raceBestLapAudio`), Beste Renn-Spurrunde (`raceLaneBestLapAudio`), Beste Durchgangsrunde (`heatBestLapAudio`), Neue Rennführung (`newRaceLeaderAudio`), Neue Durchgangsführung (`newHeatLeaderAudio`).
-- **Gesamte Bestzeittöne:** Gesamt-Bestzeit (`overallBestLapAudio`), Gesamt-Spurbestzeit (`overallLaneBestLapAudio`).
-- **Ereignistöne:** Boxeneinfahrt (`pitInAudio`), Kraftstoffstand (`fuelAudio`), Fehlstart / Strafe (`penaltyAudio`), Driftrunde (`driftLapAudio`).
+- **Rennen (`flag.racing`):** Wird bei aktiven Rennbedingungen angezeigt, wenn die Strecke freigegeben ist.
+- **Lauf pausiert (`flag.heat_paused`):** Gelbe Vorsichtsflagge, die bei einer Bahnunterbrechung oder Rennpause angezeigt wird.
+- **Lauf beendet (`flag.heat_over`):** Zielflagge, die signalisiert, dass die Laufzeit oder die geforderten Runden abgelaufen sind.
+- **Rennen beendet (`flag.race_over`):** Finale Zielflagge zum Abschluss der gesamten Rennveranstaltung.
+- **Nicht gestartet (`flag.not_started`):** Flagge vor Beginn eines Laufs oder Rennens.
+- **Startet (`flag.starting`):** Rote Flagge während des anfänglichen Countdowns vor dem Umschalten auf Grün.
+- **Neustart (`flag.restarting`):** Flagge während des Neustart-Countdowns nach einer Gelbphase oder Bahnunterbrechung.
+- **Letzte Runde (`flag.one_lap_to_go`):** Weiße Flagge, die anzeigt, dass der Führende seine letzte Runde fährt.
+- **Lauf schließt ab (`flag.heat_finishing`):** Wird angezeigt, wenn der Sieger die Ziellinie überquert hat und nachfolgende Fahrzeuge ihre laufende Runde beenden.
+- **Aufwärmen (`flag.warmup`):** Flagge während Trainings- und Aufwärmphasen vor dem Rennen.
+- **Fahrer fertig (`flag.driver_finished`):** Spurspezifische oder individuelle Anzeige für Fahrer, die alle Runden absolviert haben.
+- **Strafe (`flag.penalty`):** Schwarze Flagge / Strafanzeige bei Frühstarts oder Rundenzeit-Unterschreitungen.
 
-### Überschreibungshierarchie & Konfiguration
-- **Deaktiviert (Standard):** Das Theme lässt den Slot unberührt; die individuelle Konfiguration des Fahrers wird verwendet.
-- **Aktivierte Überschreibung:** Das Theme hat für dieses spezifische Audioereignis bei allen Fahrern Vorrang. Es kann als **Voreingestellter Sound**, **Eigene Audiodatei**, **Text-zu-Sprache (TTS)** oder **Keine** (zur themenweiten Stummschaltung) konfiguriert werden.
-- **Alle Überschreibungen zurücksetzen:** Entfernt alle aktiven Überschreibungen im Theme und stellt die Steuerung über die Fahrereinstellungen wieder her.
+Für jede Flagge können Sie integrierte Vorlagen wählen oder benutzerdefinierte SVG-, PNG-, WebP- oder JPG-Grafiken über den [Asset-Manager](asset-manager.de.md) hochladen.
+
+---
+
+## Startampelleuchten {: #countdown }
+
+Der Bereich Startampeln konfiguriert die Leuchtengrafiken für Countdown-Widgets und Startampeln auf dem Bildschirm:
+
+- **Rote Lampe aus (`lamp.red.dim`):** Gedimmte oder unbeleuchtete rote Ampel im Ruhezustand.
+- **Rote Lampe ein (`lamp.red.on`):** Hell leuchtende rote Ampel während der Countdown-Stufen vor dem Start.
+- **Grüne Lampe (`lamp.green`):** Helle grüne Ampel im Moment des Rennstarts oder Neustarts, wenn Bahnstrom freigegeben wird.
+
+Diese Grafiken passen sich automatisch an horizontale und vertikale Startampel-Widgets in Ihren Layouts an.
+
+---
+
+## Tankanzeige {: #fuel-gauge }
+
+Der Bereich Tankanzeige konfiguriert mehrstufige Bildsets für analoge und digitale Kraftstoffsimulationen:
+
+- **Tankanzeigen-Set (`gauge.fuel`):** Ein Bildset mit mehreren Einzelbildern, das den Füllstand von 100% (voll) bis 0% (leer) darstellt.
+
+Bei aktiver Kraftstoffsimulation berechnet Race Coordinator AI den Verbrauch kontinuierlich und aktualisiert das Anzeige-Frame in Echtzeit. Bei Erreichen der Reserve warnt die Anzeige optisch, damit Fahrer die Boxengasse ansteuern.
+
+---
+
+## Soundeffekte {: #audio }
+
+Themes ermöglichen die Anpassung systemweiter Soundeffekte, Countdown-Töne, Zeitansagen und Sprachnachrichten:
+
+- **Start-Countdown (`audio.countdown`):** Tonsignale während des Start-Countdowns vor Laufbeginn.
+- **Grüne Lampe / START (`audio.countdown.green`):** Ton oder Signal beim Umschalten auf Grün.
+- **Gelbe Flagge (`audio.yellowflag`):** Warnsirenen oder Hupen bei einer Bahnunterbrechung.
+- **Automatischer Start Restsekunden (`audio.auto_start`):** Countdown-Sprachansagen vor automatischem Laufstart.
+- **Laufzeit Restsekunden (`audio.seconds_left`):** Regelmäßige Zeitansagen der verbleibenden Laufdauer.
+- **Halbzeit (`audio.seconds_left.halfway`):** Benachrichtigung bei Erreichen der Halbzeit eines Laufs.
+- **Führender Runden verbleibend (`audio.laps_left`):** Sprachansagen über verbleibende Runden des Führenden.
+- **Lauf beendet (`audio.heat_over`):** Tonsignal zum Abschluss des aktuellen Laufs.
+- **Rennen beendet (`audio.race_over`):** Fanfare oder Tonsignal zum Abschluss des gesamten Rennens.
+- **Automatisches Weiterschalten (`audio.auto_advance`):** Countdown-Ansagen vor automatischem Wechsel zum nächsten Lauf.
+- **Mindestrundenzeit-Verletzung (`audio.min_lap_time`):** Warnton bei Unterschreitung der Mindestrundenzeit.
+
+Jeder Audio-Slot kann konfiguriert werden als:
+1. **Preset-Sound:** Standard-Soundeffekt aus der integrierten Bibliothek.
+2. **Benutzerdefiniertes Audio:** Eigene WAV-, MP3- oder OGG-Dateien aus dem Asset-Manager.
+3. **Text-to-Speech (TTS):** Dynamische Sprachsynthese mit Variablen wie `{time}` und `{laps}`.
+
+Ausführliche Informationen zu Audio-Prioritäten und Display-Zuweisung finden Sie in der Dokumentation zum [Audio-System](audio.de.md).
+
+---
+
+## Fahrer-Audio-Überschreibungen {: #driver-audio-overrides }
+
+Im Standardbetrieb kann jeder Fahrer eigene Rundentöne und Sprachansagen im [Fahrer-Editor](driver-editor.de.md) festlegen. Bei Clubrennen oder Meisterschaften ist jedoch oft ein einheitliches Audioerlebnis für alle Teilnehmer erwünscht.
+
+Der Bereich **Fahrer-Audio-Überschreibungen** ermöglicht es dem Theme, einzelne oder alle Audioansagen fahrerübergreifend zentral zu überschreiben.
+
+### Verfügbare Fahrer-Audio-Überschreibungen
+
+Das Theme kann alle 13 individuellen Fahrer-Audioereignisse überschreiben:
+
+#### Persönliche Runden-Sounds
+- **Runde abgeschlossen (`lapAudio`):** Ton bei jeder regulär absolvierten Runde.
+- **Persönliche Bestzeit (`bestLapAudio`):** Signal bei Verbesserung der eigenen Rundenbestzeit in der aktuellen Session.
+
+#### Rennrunden-Sounds
+- **Renn-Bestzeit (`raceBestLapAudio`):** Ton bei Erzielung der schnellsten Runde des laufenden Rennens über alle Spuren hinweg.
+- **Spur-Bestzeit im Rennen (`raceLaneBestLapAudio`):** Signal für die schnellste Runde auf der jeweiligen Spur im aktuellen Rennen.
+- **Lauf-Bestzeit (`heatBestLapAudio`):** Ton für die schnellste Runde des aktiven Laufs.
+- **Neue Rennführung (`newRaceLeaderAudio`):** Sprachausruf oder Jubelsound bei Übernahme der Gesamtführung im Rennen.
+- **Neue Laufführung (`newHeatLeaderAudio`):** Signal bei Übernahme von Platz 1 im laufenden Durchgang.
+
+#### Gesamt-Bestzeit-Sounds
+- **Allzeit-Streckenrekord (`overallBestLapAudio`):** Hochpriorisierter Ton beim Aufstellen eines absoluten Streckenrekords.
+- **Allzeit-Spurrekord (`overallLaneBestLapAudio`):** Signal für den Allzeit-Rekord auf der jeweiligen Spur.
+
+#### Ereignis-Sounds
+- **Boxeneinfahrt (`pitInAudio`):** Signal bei Einfahrt in die Boxengasse oder Auslösung von Boxensensoren auf digitalen Bahnen.
+- **Treibstoffwarnung (`fuelAudio`):** Warnton oder Durchsage bei Erreichen des Reservebereichs oder Treibstoffmangel.
+- **Frühstart / Strafe (`penaltyAudio`):** Signalton oder Sirene bei Frühstart oder Strafen.
+- **Drift-Runde (`driftLapAudio`):** Stunt-Soundeffekt bei Überschreiten von Driftsensorschwellen.
+
+### Überschreibungs-Prioritäten & Modi
+
+Jedes Fahrer-Audioereignis kann unabhängig eingestellt werden:
+
+- **Deaktiviert (Kontrollkästchen nicht markiert):** Das Theme greift nicht ein. Race Coordinator AI spielt die individuellen Fahrer-Einstellungen ab (oder den Systemstandard).
+- **Aktiviert (Kontrollkästchen markiert):** Das Theme überschreibt das Ereignis für **alle Fahrer**, die unter diesem Theme fahren.
+
+Bei aktiver Überschreibung stehen vier Modi zur Verfügung:
+1. **Preset-Sound:** Auswahl eines Standardeffekts aus dem Katalog.
+2. **Eigenes Audio:** Auswahl einer hochgeladenen Tondatei aus dem Asset-Manager.
+3. **Text-to-Speech (TTS):** Eingabe eines benutzerdefinierten Textes mit Variablen-Interpolation:
+   - `{driver}` — Name oder Spitzname des Fahrers.
+   - `{time}` — Rundenzeit mit 3 Nachkommastellen (z. B. `3.142`).
+   - `{lane}` — Aktive Spurnummer.
+   - `{lap}` — Aktuelle Rundenzahl.
+   - `{gap}` — Zeitabstand zum Führenden.
+4. **Kein Ton (Stumm):** Schaltet das Ereignis theme-weit vollständig stumm.
+
+### Alle Überschreibungen zurücksetzen
+
+Klicken Sie auf **Alle Überschreibungen zurücksetzen** im Kopfbereich der Fahrer-Audio-Überschreibungen, um alle Überschreibungen mit einem Klick zu entfernen und die Kontrolle wieder den individuellen Fahrerprofilen zu übergeben.

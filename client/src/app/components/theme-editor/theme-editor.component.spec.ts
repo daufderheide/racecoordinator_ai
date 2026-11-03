@@ -12,12 +12,14 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 
 import { ThemeEditorComponent } from "./theme-editor.component";
 
@@ -34,6 +36,7 @@ describe("ThemeEditorComponent", () => {
   let mockNavigationService: any;
   let mockRaceConnectionService: any;
   let mockChildWindowManagerService: any;
+  let mockHelpService: any;
 
   let testThemes: Theme[];
   let testCustomUIs: CustomUI[];
@@ -209,6 +212,10 @@ describe("ThemeEditorComponent", () => {
       closeAllWindows: jasmine.createSpy("closeAllWindows"),
     };
 
+    mockHelpService = {
+      startGuide: jasmine.createSpy("startGuide"),
+    };
+
     await TestBed.configureTestingModule({
       imports: [FormsModule, ThemeEditorComponent],
       providers: [
@@ -225,6 +232,7 @@ describe("ThemeEditorComponent", () => {
           provide: ChildWindowManagerService,
           useValue: mockChildWindowManagerService,
         },
+        { provide: HelpService, useValue: mockHelpService },
       ],
     }).compileComponents();
 
@@ -524,16 +532,67 @@ describe("ThemeEditorComponent", () => {
       expect(component.areAllSectionsExpanded()).toBeFalse();
     });
 
-    it("getHelpSteps should return 11 guide steps and expand target sections", () => {
-      const steps = component.getHelpSteps();
-      expect(steps.length).toBe(11);
-
-      component.sectionsExpanded.countdown = false;
-      const countdownStep = steps.find(
-        (s) => s.selector === "#theme-countdown-section",
+    it("startHelp should trigger helpService.startGuide with theme-editor steps", () => {
+      mockHelpService.startGuide.calls.reset();
+      component.startHelp();
+      expect(mockHelpService.startGuide).toHaveBeenCalledWith(
+        jasmine.any(Array),
       );
-      countdownStep?.onEnter?.();
+    });
+
+    it("getHelpSteps should return 9 guide steps in expected order and expand target sections", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(9);
+
+      const targetIds = steps.map((s) => s.targetId);
+      expect(targetIds).toEqual([
+        undefined,
+        "editor-object-nav",
+        "edit-track-btn",
+        "theme-controls-bar",
+        "theme-flags-section",
+        "theme-countdown-section",
+        "theme-fuel-section",
+        "theme-audio-section",
+        "theme-driver-audio-section",
+      ]);
+
+      expect(steps[2].highlightTargetId).toBe("toolbar-container");
+      expect(steps[2].highlightSelector).toBe(".toolbar-container");
+
+      component.sectionsExpanded.flags = false;
+      component.sectionsExpanded.countdown = false;
+      component.sectionsExpanded.fuelGauge = false;
+      component.sectionsExpanded.audio = false;
+      component.sectionsExpanded.driverAudioOverrides = false;
+
+      steps[4].onEnter?.();
+      expect(component.sectionsExpanded.flags).toBeTrue();
+
+      steps[5].onEnter?.();
       expect(component.sectionsExpanded.countdown).toBeTrue();
+
+      steps[6].onEnter?.();
+      expect(component.sectionsExpanded.fuelGauge).toBeTrue();
+
+      steps[7].onEnter?.();
+      expect(component.sectionsExpanded.audio).toBeTrue();
+
+      steps[8].onEnter?.();
+      expect(component.sectionsExpanded.driverAudioOverrides).toBeTrue();
+    });
+
+    it("should verify that all guide step DOM targets exist in the component DOM", () => {
+      component.isLoading = false;
+      component.sectionsExpanded.flags = true;
+      component.sectionsExpanded.countdown = true;
+      component.sectionsExpanded.fuelGauge = true;
+      component.sectionsExpanded.audio = true;
+      component.sectionsExpanded.driverAudioOverrides = true;
+      fixture.detectChanges();
+
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
 
     it("canDeactivate should prompt discard when dirty", () => {

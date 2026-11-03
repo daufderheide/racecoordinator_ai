@@ -43,7 +43,7 @@ import { Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
-import { GuideStep } from "@app/services/help.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -74,7 +74,7 @@ import {
   handleThemeAudioChange,
   handleThemeSlotChange,
 } from "./theme-editor-actions.helper";
-import { buildThemeEditorHelpSteps } from "./theme-editor-help.helper";
+import { ThemeEditorHelpHelper } from "./theme-editor-help.helper";
 
 export interface ThemeEditorSections extends Record<string, boolean> {
   flags: boolean;
@@ -143,6 +143,7 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   public childWindowManagerService = inject(ChildWindowManagerService, {
     optional: true,
   });
+  private readonly helpService = inject(HelpService);
 
   private subscriptions: Subscription[] = [];
   private queryParamSub?: Subscription;
@@ -556,15 +557,15 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   // --- Guided Tour ---
   getHelpSteps(): GuideStep[] {
-    return buildThemeEditorHelpSteps({
-      translationService: this.translationService,
-      expandSection: (sectionKey: string) => {
-        if (sectionKey in this.sectionsExpanded) {
-          this.sectionsExpanded[sectionKey as keyof ThemeEditorSections] = true;
-          this.cdr.markForCheck();
-        }
-      },
-    });
+    return ThemeEditorHelpHelper.getHelpSteps(
+      this.translationService,
+      this.sectionsExpanded,
+      () => this.cdr.detectChanges(),
+    );
+  }
+
+  startHelp(): void {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 
   onBack(): void {
