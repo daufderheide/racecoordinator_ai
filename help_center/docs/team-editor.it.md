@@ -25,13 +25,27 @@ La barra degli strumenti superiore fornisce le seguenti azioni:
 - **Annulla / Ripeti**: Annulla o riapplica le modifiche recenti effettuate durante la sessione.
 - **Guida (?)**: Apre la guida interattiva che evidenzia ogni sezione dell'editor.
 
-## Configurazione del Team
+## Profilo del Team {: #team-profile }
 
-- **Nome del Team**: Il nome univoco del team visualizzato nelle classifiche e nelle schermate di gara.
+Il pannello di sinistra raccoglie le impostazioni principali di identità e categorizzazione del team:
+
+- **Nome del Team**: Il nome univoco del team visualizzato nelle classifiche, nelle tabelle dei record e nei tabelloni di gara.
 - **Immagine / Logo del Team**: Scegli un'icona preimpostata o carica un logo personalizzato per rappresentare il team.
-- **Etichette del Team**: Assegna etichette con codice colore (simili alle etichette di GitHub) per organizzare i team in gruppi o categorie personalizzate (come "GT3", "Pro" o "Amateur"). I team possono appartenere a qualsiasi numero di gruppi. In modalità modifica, fai clic su **Gestisci etichette** per creare, modificare, ricolorare, eliminare o assegnare etichette. Nella schermata Configurazione del giorno di gara, puoi filtrare i team disponibili per etichetta per comporre rapidamente le formazioni di gara.
+- **Etichette del Team**: Assegna etichette con codice colore (simili alle etichette di GitHub) per organizzare i team in categorie personalizzate (come "GT3", "Pro" o "Amateur"). I team possono appartenere a qualsiasi numero di etichette. In modalità modifica, fai clic su **Gestisci etichette** per creare, modificare, ricolorare, eliminare o assegnare etichette. Nella schermata Configurazione del Giorno di Gara, puoi filtrare i team disponibili per etichetta per comporre rapidamente le formazioni di gara.
 
-## Membri del Team & Formazione
+## Membri del Team & Formazione {: #team-members }
 
-- **Piloti Assegnati**: Piloti attualmente assegnati a questo team. In modalità modifica, trascina e rilascia i piloti per riordinare la formazione oppure fai clic sul pulsante elimina per rimuovere un pilota. Ogni pilota mostra le sue etichette pilota assegnate come badge accanto al proprio nome.
-- **Piloti Disponibili**: Piloti non ancora assegnati a questo team. In modalità modifica, fai clic su un pilota per aggiungerlo alla formazione del team. Ogni pilota mostra le sue etichette pilota assegnate come badge accanto al proprio nome per facilitare la composizione di formazioni equilibrate.
+La sezione superiore del pannello destro mostra i piloti attualmente assegnati a questo team:
+
+- **Gestione della Formazione**: In modalità modifica, puoi trascinare e rilasciare i piloti tramite la maniglia (`☰`) per riordinare la sequenza del team, oppure fare clic sul pulsante elimina (<span class="material-icons">delete</span>) per rimuovere un pilota dal team.
+- **Rotazione Round-Robin**: Quando un team disputa una gara, i piloti assegnati ruotano automaticamente tra le manche assegnate al team seguendo un ordine round-robin basato su questo elenco.
+- **Cambi di Pilota a Metà Manche**: A seconda della configurazione di gara del team, i piloti possono essere sostituiti anche a metà manche, durante una sosta ai box o in qualsiasi punto del circuito.
+- **Etichette Pilota**: Ciascun pilota mostra le etichette assegnate come badge accanto al proprio nome per verificare con facilità qualifiche e livelli di abilità.
+
+## Piloti Disponibili {: #available-drivers }
+
+La sezione inferiore del pannello destro elenca tutti i piloti registrati che non sono attualmente assegnati a questo team:
+
+- **Aggiunta Piloti**: In modalità modifica, fai clic sulla scheda di qualsiasi pilota o sull'icona di aggiunta (<span class="material-icons">add</span>) per aggiungerlo immediatamente alla formazione del team.
+- **Appartenenza a Più Team**: Un pilota può appartenere a più di un team nel tuo database.
+- **Prevenzione di Conflitti in Gara**: Sebbene un pilota possa appartenere a più team, nessun pilota può partecipare alla stessa gara più di una volta, né correndo per due team rivali né partecipando contemporaneamente come singolo e in squadra.

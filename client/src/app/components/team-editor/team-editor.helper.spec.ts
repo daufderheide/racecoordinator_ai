@@ -1,6 +1,8 @@
 import { Team } from "@app/models/team";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 
+import enJson from "../../../assets/i18n/en.json";
 import {
   areTeamsEqual,
   cloneTeam,
@@ -175,15 +177,87 @@ describe("team-editor.helper", () => {
   });
 
   describe("getTeamEditorHelpSteps", () => {
-    it("should build all 6 guide steps with correct selectors and localized keys", () => {
+    it("should build all 6 guide steps with correct selectors and localized keys in expected order", () => {
       const steps = getTeamEditorHelpSteps(mockTranslationService);
       expect(steps.length).toBe(6);
+
+      // 1) Overview
       expect(steps[0].position).toBe("center");
-      expect(steps[1].selector).toBe("#avatar-selector");
-      expect(steps[2].selector).toBe("#team-name-input");
-      expect(steps[3].selector).toBe("#team-labels-section");
-      expect(steps[4].selector).toBe("#assigned-drivers-list");
-      expect(steps[5].selector).toBe("#available-drivers-list");
+      expect(steps[0].targetId).toBeUndefined();
+      expect(steps[0].title).toBe("translated_TEM_HELP_WELCOME_TITLE");
+      expect(steps[0].content).toBe("translated_TEM_HELP_WELCOME_CONTENT");
+
+      // 2) Select team
+      expect(steps[1].targetId).toBe("editor-object-nav");
+      expect(steps[1].selector).toBe("#editor-object-nav");
+      expect(steps[1].position).toBe("bottom");
+      expect(steps[1].title).toBe("translated_TEM_HELP_SELECTOR_TITLE");
+      expect(steps[1].content).toBe("translated_TEM_HELP_SELECTOR_CONTENT");
+
+      // 3) Toolbar
+      expect(steps[2].targetId).toBe("edit-track-btn");
+      expect(steps[2].selector).toBe("#edit-track-btn");
+      expect(steps[2].highlightTargetId).toBe("toolbar-container");
+      expect(steps[2].highlightSelector).toBe(".toolbar-container");
+      expect(steps[2].position).toBe("bottom");
+      expect(steps[2].title).toBe("translated_TOOLBAR_HELP_TITLE");
+      expect(steps[2].content).toBe("translated_TOOLBAR_HELP_CONTENT");
+
+      // 4) LHS (team profile)
+      expect(steps[3].targetId).toBe("team-profile-panel");
+      expect(steps[3].selector).toBe("#team-profile-panel");
+      expect(steps[3].position).toBe("right");
+      expect(steps[3].title).toBe("translated_TEM_HELP_PROFILE_TITLE");
+      expect(steps[3].content).toBe("translated_TEM_HELP_PROFILE_CONTENT");
+
+      // 5) Team members section
+      expect(steps[4].targetId).toBe("assigned-drivers-section");
+      expect(steps[4].selector).toBe("#assigned-drivers-section");
+      expect(steps[4].position).toBe("left");
+      expect(steps[4].title).toBe("translated_TEM_HELP_MEMBERS_TITLE");
+      expect(steps[4].content).toBe("translated_TEM_HELP_MEMBERS_CONTENT");
+
+      // 6) Available drivers section
+      expect(steps[5].targetId).toBe("available-drivers-section");
+      expect(steps[5].selector).toBe("#available-drivers-section");
+      expect(steps[5].position).toBe("left");
+      expect(steps[5].title).toBe("translated_TEM_HELP_AVAILABLE_TITLE");
+      expect(steps[5].content).toBe("translated_TEM_HELP_AVAILABLE_CONTENT");
+    });
+
+    it("should verify that all help links in en.json for team editor steps are well-formed", () => {
+      const realTranslationService = jasmine.createSpyObj(
+        "TranslationService",
+        ["translate"],
+      );
+      realTranslationService.translate.and.callFake(
+        (key: string) => (enJson as Record<string, string>)[key] || key,
+      );
+
+      const steps = getTeamEditorHelpSteps(realTranslationService);
+      expect(steps.length).toBe(6);
+
+      for (const step of steps) {
+        expect(step.title).not.toBe("");
+        expect(step.content).not.toBe("");
+
+        if (step.content.includes("help-link")) {
+          GuideStepTestHelper.verifyHelpLinksInContent(
+            step.content,
+            `Step: ${step.title}`,
+          );
+        }
+      }
+
+      // Check specific article and section links
+      expect(steps[0].content).toContain("help-article-team-editor");
+      expect(steps[2].content).toContain("help-article-toolbar");
+      expect(steps[3].content).toContain("help-article-team-editor");
+      expect(steps[3].content).toContain("help-section-team-profile");
+      expect(steps[4].content).toContain("help-article-team-editor");
+      expect(steps[4].content).toContain("help-section-team-members");
+      expect(steps[5].content).toContain("help-article-team-editor");
+      expect(steps[5].content).toContain("help-section-available-drivers");
     });
   });
 });

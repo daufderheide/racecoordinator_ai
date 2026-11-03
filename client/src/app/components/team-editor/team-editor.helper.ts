@@ -1,3 +1,4 @@
+import { getEditorToolbarHelpStep } from "@app/components/shared/toolbar/toolbar.component";
 import { Team } from "@app/models/team";
 import { GuideStep } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -88,40 +89,46 @@ export function getTeamUnsavedReasons(
 export function getTeamEditorHelpSteps(
   translationService: TranslationService,
 ): GuideStep[] {
+  const t = translationService;
   return [
+    // 1) Team editor: Brief overview of the team editor and a link to the help center
     {
-      title: translationService.translate("TEM_HELP_WELCOME_TITLE"),
-      content: translationService.translate("TEM_HELP_WELCOME_CONTENT"),
+      title: t.translate("TEM_HELP_WELCOME_TITLE"),
+      content: t.translate("TEM_HELP_WELCOME_CONTENT"),
       position: "center",
     },
+    // 2) Select team: Setup same as the driver editor. Highlight the selector and count
     {
-      selector: "#avatar-selector",
-      title: translationService.translate("TEM_HELP_AVATAR_TITLE"),
-      content: translationService.translate("TEM_HELP_AVATAR_CONTENT"),
+      targetId: "editor-object-nav",
+      selector: "#editor-object-nav",
+      title: t.translate("TEM_HELP_SELECTOR_TITLE"),
+      content: t.translate("TEM_HELP_SELECTOR_CONTENT"),
+      position: "bottom",
+    },
+    // 3) Toolbar: use the same text and help center link as the driver. Point to the pencil directly.
+    getEditorToolbarHelpStep(t, true),
+    // 4) LHS: Points to the avatar, name, and label selector. Generically describe with link to help center
+    {
+      targetId: "team-profile-panel",
+      selector: "#team-profile-panel",
+      title: t.translate("TEM_HELP_PROFILE_TITLE"),
+      content: t.translate("TEM_HELP_PROFILE_CONTENT"),
       position: "right",
     },
+    // 5) Point to the entire team member section and quickly explain it
     {
-      selector: "#team-name-input",
-      title: translationService.translate("TEM_HELP_NAME_TITLE"),
-      content: translationService.translate("TEM_HELP_NAME_CONTENT"),
-      position: "bottom",
-    },
-    {
-      selector: "#team-labels-section",
-      title: translationService.translate("TEM_HELP_LABELS_TITLE"),
-      content: translationService.translate("TEM_HELP_LABELS_CONTENT"),
-      position: "bottom",
-    },
-    {
-      selector: "#assigned-drivers-list",
-      title: translationService.translate("TEM_HELP_ASSIGNED_TITLE"),
-      content: translationService.translate("TEM_HELP_ASSIGNED_CONTENT"),
+      targetId: "assigned-drivers-section",
+      selector: "#assigned-drivers-section",
+      title: t.translate("TEM_HELP_MEMBERS_TITLE"),
+      content: t.translate("TEM_HELP_MEMBERS_CONTENT"),
       position: "left",
     },
+    // 6) Point to the available driver section with a brief description and help center link
     {
-      selector: "#available-drivers-list",
-      title: translationService.translate("TEM_HELP_AVAILABLE_TITLE"),
-      content: translationService.translate("TEM_HELP_AVAILABLE_CONTENT"),
+      targetId: "available-drivers-section",
+      selector: "#available-drivers-section",
+      title: t.translate("TEM_HELP_AVAILABLE_TITLE"),
+      content: t.translate("TEM_HELP_AVAILABLE_CONTENT"),
       position: "left",
     },
   ];

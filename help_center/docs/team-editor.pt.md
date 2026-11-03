@@ -25,13 +25,27 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Desfazer / Refazer**: Reverte ou reaplica edições recentes realizadas durante a sessão.
 - **Ajuda (?)**: Abre o tour guiado interativo destacando cada seção do editor.
 
-## Configuração da Equipe
+## Perfil da Equipe {: #team-profile }
 
-- **Nome da Equipe**: O nome exclusivo da equipe exibido em tabelas de classificação e telas de corrida.
+O painel esquerdo reúne as principais configurações de identidade e categorização da equipe:
+
+- **Nome da Equipe**: O nome exclusivo da equipe exibido em tabelas de classificação, placares e telas do dia de corrida.
 - **Imagem / Logotipo da Equipe**: Escolha um ícone predefinido ou envie um logotipo personalizado para representar a equipe.
-- **Etiquetas da Equipe**: Atribua etiquetas codificadas por cores (semelhantes às etiquetas de problemas do GitHub) para organizar as equipes em conjuntos ou categorias personalizados (como "GT3", "Pro" ou "Amateur"). As equipes podem pertencer a qualquer número de conjuntos. No modo de edição, clique em **Gerenciar etiquetas** para criar, editar, recolorir, excluir ou atribuir etiquetas. Na tela de Configuração do Dia de Corrida, você pode filtrar as equipes disponíveis por etiqueta para preencher rapidamente as escalações de corrida de equipes.
+- **Etiquetas da Equipe**: Atribua etiquetas codificadas por cores (semelhantes às etiquetas do GitHub) para organizar as equipes em categorias personalizadas (como "GT3", "Pro" ou "Amateur"). As equipes podem pertencer a várias etiquetas. No modo de edição, clique em **Gerenciar etiquetas** para criar, editar, recolorir, excluir ou atribuir etiquetas. Na tela de Configuração do Dia de Corrida, você pode filtrar as equipes disponíveis por etiqueta para preencher rapidamente as escalações.
 
-## Membros da Equipe & Escalação
+## Membros da Equipe & Escalação {: #team-members }
 
-- **Pilotos Atribuídos**: Pilotos atualmente designados para esta equipe. No modo de edição, arraste e solte os pilotos para reordenar a escalação ou clique no botão excluir para desatribuir um piloto. Cada piloto exibe suas etiquetas de piloto atribuídas como selos ao lado do seu nome.
-- **Pilotos Disponíveis**: Pilotos que ainda não estão atribuídos a esta equipe. No modo de edição, clique em um piloto para adicioná-lo à escalação da equipe. Cada piloto exibe suas etiquetas de piloto atribuídas como selos ao lado do seu nome para facilitar a composição de escalações equilibradas.
+A seção superior do painel direito exibe os pilotos atualmente designados para esta equipe:
+
+- **Gestão da Escalação**: No modo de edição, você pode arrastar e soltar os pilotos usando a alça (`☰`) para reordenar a sequência da equipe, ou clicar no botão excluir (<span class="material-icons">delete</span>) para remover um piloto da equipe.
+- **Rotação Round-Robin**: Quando uma equipe participa de uma corrida, os pilotos atribuídos são rotacionados automaticamente pelas baterias da equipe em ordem round-robin de acordo com esta lista.
+- **Revezamento no Meio da Bateria**: Dependendo da configuração de corrida por equipe, os pilotos também podem se revezar no meio de uma bateria, seja durante um pit stop ou em qualquer ponto da pista.
+- **Etiquetas de Piloto**: Cada piloto exibe suas etiquetas atribuídas como selos ao lado do seu nome para verificar com facilidade qualificações e níveis de habilidade.
+
+## Pilotos Disponíveis {: #available-drivers }
+
+A seção inferior do painel direito lista todos os pilotos registrados que não estão atualmente atribuídos a esta equipe:
+
+- **Adicionar Pilotos**: No modo de edição, clique no cartão de qualquer piloto ou no botão de adicionar (<span class="material-icons">add</span>) para adicioná-lo imediatamente à escalação da equipe.
+- **Membro de Múltiplas Equipes**: Um piloto pode pertencer a mais de uma equipe em seu banco de dados.
+- **Prevenção de Conflitos na Corrida**: Embora um piloto possa pertencer a várias equipes, nenhum piloto pode participar mais de uma vez na mesma corrida, seja correndo por duas equipes rivais ou participando simultaneamente de forma individual e em equipe.

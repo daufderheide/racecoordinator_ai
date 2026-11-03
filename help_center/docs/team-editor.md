@@ -25,13 +25,27 @@ The top toolbar provides the following actions:
 - **Undo / Redo**: Reverts or reapplies recent edits made during your editing session.
 - **Help (?)**: Opens the interactive guided tour highlighting each section of the editor.
 
-## Team Configuration
+## Team Profile {: #team-profile }
 
-- **Team Name**: The unique name of the team displayed on standings and race displays.
-- **Team Image / Avatar**: Choose a preset icon or custom logo to represent the team.
-- **Team Labels**: Assign color-coded labels (similar to GitHub issue labels) to organize teams into custom sets or categories (such as "GT3", "Pro", or "Amateur"). Teams can belong to any number of sets. In Edit Mode, click **Manage Labels** to create, edit, recolor, delete, or assign labels. On the Race Day Setup screen, you can filter available teams by label to quickly populate team race rosters.
+The left-hand panel contains the core identity and categorization settings for the team:
 
-## Team Members & Lineup
+- **Team Name**: The unique name of the team displayed on race standings, leaderboards, and race day boards.
+- **Team Image / Avatar**: Choose a preset icon or upload a custom logo to represent the team.
+- **Team Labels**: Assign color-coded labels (similar to GitHub issue labels) to organize teams into custom sets or categories (such as "GT3", "Pro", or "Amateur"). Teams can belong to any number of labels. In Edit Mode, click **Manage Labels** to create, edit, recolor, delete, or assign labels. On the Race Day Setup screen, you can filter available teams by label to quickly populate team race rosters.
 
-- **Assigned Drivers**: Drivers currently assigned to this team. In Edit Mode, drag and drop drivers to reorder the lineup or click the delete button to unassign a driver. Each driver displays their assigned driver labels as badges next to their name.
-- **Available Drivers**: Drivers that are not currently assigned to this team. In Edit Mode, click on a driver to add them to the team lineup. Each driver displays their assigned driver labels as badges next to their name to help identify qualifications when assembling rosters.
+## Team Members & Lineup {: #team-members }
+
+The upper section of the right-hand panel displays the drivers currently assigned to this team:
+
+- **Roster Management**: In Edit Mode, you can drag and drop drivers using the handle (`☰`) to reorder the team lineup, or click the delete button (<span class="material-icons">delete</span>) to remove a driver from the roster.
+- **Round-Robin Rotation**: When a team participates in a race, assigned drivers are automatically rotated through the team's heat assignments in round-robin order based on this roster sequence.
+- **Mid-Heat Driver Swaps**: Depending on the race's team configuration, team drivers can also be swapped out mid-heat—either during a pit stop or at any point on the track.
+- **Driver Labels**: Each driver displays their assigned driver labels as badges next to their name to help you verify driver qualifications and skill tiers.
+
+## Available Drivers {: #available-drivers }
+
+The lower section of the right-hand panel lists all registered drivers who are not currently assigned to this team:
+
+- **Adding Drivers**: In Edit Mode, click on any driver card or the add button (<span class="material-icons">add</span>) to immediately add them to the team roster.
+- **Multiple Team Membership**: A driver can be a member of more than one team in your database.
+- **Race Entry Conflict Prevention**: Although a driver may belong to multiple teams, no single driver can participate in the same race more than once—either as a member of two different competing teams or by racing both individually and on a team.

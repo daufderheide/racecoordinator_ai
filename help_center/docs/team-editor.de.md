@@ -25,13 +25,27 @@ Die obere Symbolleiste bietet folgende Aktionen:
 - **Rückgängig / Wiederholen**: Nimmt kürzliche Änderungen während der Bearbeitungssitzung zurück oder wendet sie erneut an.
 - **Hilfe (?)**: Startet die interaktive Einführung, die jeden Abschnitt des Editors hervorhebt.
 
-## Team-Konfiguration
+## Team-Profil {: #team-profile }
 
-- **Teamname**: Der eindeutige Name des Teams, der in Ranglisten und Rennanzeigen dargestellt wird.
-- **Teambild / Logo**: Wählen Sie ein vordefiniertes Symbol oder ein eigenes Logo zur Darstellung des Teams.
-- **Team-Labels**: Weisen Sie farbcodierte Labels (ähnlich wie GitHub-Issue-Labels) zu, um Teams in benutzerdefinierten Gruppen oder Kategorien (wie „GT3“, „Pro“ oder „Amateur“) zu organisieren. Teams können beliebig vielen Gruppen angehören. Klicken Sie im Bearbeitungsmodus auf **Labels verwalten**, um Labels zu erstellen, zu bearbeiten, umzufärben, zu löschen oder zuzuweisen. Auf dem Renntag-Setup-Bildschirm können Sie verfügbare Teams nach Label filtern, um Teamaufstellungen schnell zusammenzustellen.
+Das linke Bedienfeld enthält die zentralen Identitäts- und Kategorisierungseinstellungen für das Team:
 
-## Teammitglieder & Aufstellung
+- **Teamname**: Der eindeutige Name des Teams, der in Ranglisten, Anzeigen und Übersichten dargestellt wird.
+- **Teambild / Logo**: Wählen Sie ein vordefiniertes Symbol oder laden Sie ein benutzerdefiniertes Logo hoch.
+- **Team-Labels**: Weisen Sie farbcodierte Labels (ähnlich wie GitHub-Issue-Labels) zu, um Teams in benutzerdefinierten Gruppen oder Kategorien (wie „GT3“, „Pro“ oder „Amateur“) zu organisieren. Teams können beliebig vielen Labels angehören. Klicken Sie im Bearbeitungsmodus auf **Labels verwalten**, um Labels zu erstellen, zu bearbeiten, umzufärben, zu löschen oder zuzuweisen. Auf dem Renntag-Setup-Bildschirm können Sie verfügbare Teams nach Label filtern, um Teamaufstellungen schnell zusammenzustellen.
 
-- **Zugewiesene Fahrer**: Fahrer, die derzeit diesem Team zugewiesen sind. Im Bearbeitungsmodus können Fahrer per Drag & Drop neu angeordnet oder mit der Löschen-Schaltfläche entfernt werden. Jeder Fahrer zeigt seine zugewiesenen Fahrer-Labels als Abzeichen neben seinem Namen an.
-- **Verfügbare Fahrer**: Fahrer, die diesem Team noch nicht zugewiesen sind. Im Bearbeitungsmodus klicken Sie auf einen Fahrer, um ihn der Teamaufstellung hinzuzufügen. Jeder Fahrer zeigt seine zugewiesenen Fahrer-Labels als Abzeichen neben seinem Namen an, um die Auswahl ausgewogener Aufstellungen zu erleichtern.
+## Teammitglieder & Aufstellung {: #team-members }
+
+Der obere Bereich des rechten Bedienfelds zeigt die dem Team derzeit zugewiesenen Fahrer:
+
+- **Kaderverwaltung**: Im Bearbeitungsmodus können Fahrer mithilfe des Ziehpunkts (`☰`) per Drag & Drop in ihrer Reihenfolge angepasst oder mit der Löschen-Schaltfläche (<span class="material-icons">delete</span>) aus dem Team entfernt werden.
+- **Round-Robin-Rotation**: Wenn ein Team an einem Rennen teilnimmt, werden die zugewiesenen Fahrer automatisch im Round-Robin-Verfahren gemäß dieser Aufstellungsreihenfolge auf die einzelnen Durchgänge des Teams verteilt.
+- **Fahrerwechsel während des Durchgangs**: Je nach Rennkonfiguration können Teamfahrer auch mitten im Durchgang gewechselt werden – entweder bei einem Boxenstopp oder an jedem beliebigen Punkt auf der Strecke.
+- **Fahrer-Labels**: Jeder Fahrer zeigt seine zugewiesenen Labels als Abzeichen neben seinem Namen an, um Qualifikationen und Leistungsklassen schnell zu überprüfen.
+
+## Verfügbare Fahrer {: #available-drivers }
+
+Der untere Bereich des rechten Bedienfelds listet alle registrierten Fahrer auf, die diesem Team derzeit nicht zugewiesen sind:
+
+- **Fahrer hinzufügen**: Klicken Sie im Bearbeitungsmodus auf eine Fahrerkarte oder das Plus-Symbol (<span class="material-icons">add</span>), um den Fahrer sofort der Teamaufstellung hinzuzufügen.
+- **Mitgliedschaft in mehreren Teams**: Ein Fahrer kann in Ihrer Datenbank Mitglied mehrerer verschiedener Teams sein.
+- **Konfliktvermeidung bei Rennen**: Obwohl ein Fahrer mehreren Teams angehören kann, darf kein Fahrer mehrfach an demselben Rennen teilnehmen – weder für zwei konkurrierende Teams noch gleichzeitig als Einzelfahrer und Teammitglied.

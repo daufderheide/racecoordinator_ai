@@ -4,7 +4,7 @@
   height: 100vh;
   background-color: #000;
   color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   overflow: hidden;
   position: relative;
 }
@@ -19,14 +19,26 @@
   flex-direction: column;
   background-color: #0f172a;
   background-image:
-    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 40%),
-    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 40%),
+    radial-gradient(
+      circle at 15% 50%,
+      rgba(56, 189, 248, 0.15),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 85% 30%,
+      rgba(139, 92, 246, 0.15),
+      transparent 40%
+    ),
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+  background-size:
+    100% 100%,
+    100% 100%,
+    30px 30px,
+    30px 30px;
   overflow: hidden;
 }
-@import '../shared/shared-editor-layout.css';
+@import "../shared/shared-editor-layout.css";
 
 .editor-panel {
   padding-top: 15px;
@@ -139,7 +151,6 @@
   border-left: 1px solid rgba(56, 189, 248, 0.15);
   gap: 20px;
 }
-
 
 .config-section {
   background: rgba(15, 23, 42, 0.4);
@@ -386,7 +397,9 @@
   justify-content: center;
   color: inherit;
   opacity: 0.7;
-  transition: opacity 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
   width: 16px;
   height: 16px;
 }

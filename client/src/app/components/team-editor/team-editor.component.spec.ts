@@ -32,6 +32,7 @@ import {
   MOCK_TEAM_INSTANCES,
   MOCK_TEAMS as _MOCK_TEAMS,
 } from "@app/testing/data/teams_data";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import {
   mockAnalyticsService,
   mockLoggerService,
@@ -65,11 +66,19 @@ class MockImageSelectorComponent {
 @Component({
   selector: "app-editor-title",
   standalone: true,
-  template: "",
+  template: `
+    <div id="editor-object-nav">
+      <div id="editor-object-selector"></div>
+    </div>
+    <div id="toolbar-container" class="toolbar-container">
+      <button type="button" id="edit-track-btn" aria-label="Edit">Edit</button>
+    </div>
+  `,
   imports: [FormsModule, DragDropModule],
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  selectorTooltipKey = input<string>("");
   itemName = input<string | undefined>(undefined);
   items = input<{ id: string; name: string }[]>([]);
   selectedId = input<string | undefined>(undefined);
@@ -933,15 +942,6 @@ describe("TeamEditorComponent", () => {
       expect(component.getDriverLabels(driverNoLabels)).toEqual([]);
     });
 
-    it("should include #team-labels-section in getHelpSteps()", () => {
-      const steps = component.getHelpSteps();
-      const labelStep = steps.find(
-        (s) => s.selector === "#team-labels-section",
-      );
-      expect(labelStep).toBeDefined();
-      expect(labelStep?.title).toBe("TEM_HELP_LABELS_TITLE");
-    });
-
     it("should correctly compare teams with different labels in areTeamsEqual", () => {
       const teamA = new Team("t1", "Team", undefined, ["d1"], ["lbl-pro"]);
       const teamB = new Team("t1", "Team", undefined, ["d1"], ["lbl-am"]);
@@ -1000,6 +1000,42 @@ describe("TeamEditorComponent", () => {
       expect(dots1[0].getAttribute("title")).toBe("Pro");
       expect(dots1[1].getAttribute("title")).toBe("Rookie");
       expect(dots1[2].getAttribute("title")).toBe("Vintage");
+    });
+  });
+
+  describe("guided help", () => {
+    it("should provide all 6 guide steps in correct order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(6);
+
+      const targetIds = steps.map((s) => s.targetId);
+      expect(targetIds).toEqual([
+        undefined,
+        "editor-object-nav",
+        "edit-track-btn",
+        "team-profile-panel",
+        "assigned-drivers-section",
+        "available-drivers-section",
+      ]);
+
+      const selectors = steps.map((s) => s.selector);
+      expect(selectors).toEqual([
+        undefined,
+        "#editor-object-nav",
+        "#edit-track-btn",
+        "#team-profile-panel",
+        "#assigned-drivers-section",
+        "#available-drivers-section",
+      ]);
+
+      expect(steps[2].highlightTargetId).toBe("toolbar-container");
+      expect(steps[2].highlightSelector).toBe(".toolbar-container");
+    });
+
+    it("should verify that all guide step DOM targets exist in the component DOM", () => {
+      fixture.detectChanges();
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
   });
 });

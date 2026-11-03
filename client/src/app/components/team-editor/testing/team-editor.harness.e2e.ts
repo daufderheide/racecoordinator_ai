@@ -1,17 +1,29 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { TeamEditorHarnessBase } from './team-editor.harness.base';
+import { TeamEditorHarnessBase } from "./team-editor.harness.base";
 
 export class TeamEditorHarnessE2e implements TeamEditorHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return TeamEditorHarnessBase; }
+  private get base() {
+    return TeamEditorHarnessBase;
+  }
 
-  private get nameInput() { return this.locator.locator(this.base.selectors.nameInput); }
-  private get saveBtn() { return this.locator.locator(this.base.selectors.saveBtn); }
-  private get saveAsNewBtn() { return this.locator.locator(this.base.selectors.saveAsNewBtn); }
-  private get driverItems() { return this.locator.locator(this.base.selectors.driverItem); }
-  private get avatarSelector() { return this.locator.locator(this.base.selectors.avatarSelector); }
+  private get nameInput() {
+    return this.locator.locator(this.base.selectors.nameInput);
+  }
+  private get saveBtn() {
+    return this.locator.locator(this.base.selectors.saveBtn);
+  }
+  private get saveAsNewBtn() {
+    return this.locator.locator(this.base.selectors.saveAsNewBtn);
+  }
+  private get driverItems() {
+    return this.locator.locator(this.base.selectors.driverItem);
+  }
+  private get avatarSelector() {
+    return this.locator.locator(this.base.selectors.avatarSelector);
+  }
 
   async getName(): Promise<string> {
     return await this.nameInput.inputValue();
@@ -40,8 +52,8 @@ export class TeamEditorHarnessE2e implements TeamEditorHarnessBase {
 
   async isDriverSelected(index: number): Promise<boolean> {
     const item = this.driverItems.nth(index);
-    const classes = await item.getAttribute('class');
-    return classes ? classes.includes('selected') : false;
+    const classes = await item.getAttribute("class");
+    return classes ? classes.includes("selected") : false;
   }
 
   async toggleDriver(index: number): Promise<void> {

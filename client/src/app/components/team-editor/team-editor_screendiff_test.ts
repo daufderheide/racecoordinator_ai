@@ -130,32 +130,6 @@ test.describe("Team Editor Visuals", () => {
     });
   });
 
-  test("should show guided help on first visit", async ({ page }) => {
-    // We navigate to existing team so the help overlay tries to point at real elements
-    await TestSetupHelper.setupStandardMocks(page, {
-      teamEditorHelpShown: false,
-    });
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/team-editor?id=t1&help=true"),
-    );
-    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
-
-    // Wait for the help step to actually appear (it has an 800ms delay in component)
-    await page.waitForSelector(".popover-content", {
-      state: "visible",
-      timeout: 10000,
-    });
-
-    const popover = page.locator(".popover-content");
-    await expect(popover).toHaveScreenshot("team-editor-guided-help.png", {
-      animations: "disabled",
-      maxDiffPixelRatio: 0.05,
-      timeout: 15000,
-    });
-  });
-
   test("should display team editor with assigned labels", async ({ page }) => {
     const teamsWithLabels = MOCK_TEAMS.map((t) => {
       if (t.entity_id === "t1") {

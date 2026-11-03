@@ -25,13 +25,27 @@ La barre d'outils supérieure propose les actions suivantes :
 - **Annuler / Rétablir** : Annule ou réapplique les modifications récentes apportées pendant la session.
 - **Aide (?)** : Ouvre le guide interactif présentant chaque section de l'éditeur.
 
-## Configuration de l'Équipe
+## Profil de l'Équipe {: #team-profile }
 
-- **Nom de l'Équipe** : Le nom unique de l'équipe affiché sur les classements et écrans de course.
-- **Image / Logo de l'Équipe** : Choisissez une icône prédéfinie ou un logo personnalisé pour représenter l'équipe.
-- **Étiquettes d'Équipe** : Attribuez des étiquettes colorées (similaires aux étiquettes GitHub) pour organiser les équipes en groupes ou catégories personnalisés (comme « GT3 », « Pro » ou « Amateur »). Les équipes peuvent appartenir à plusieurs groupes. En mode édition, cliquez sur **Gérer les étiquettes** pour créer, modifier, recolorer, supprimer ou attribuer des étiquettes. Sur l'écran Configuration du Jour de Course, vous pouvez filtrer les équipes disponibles par étiquette pour composer rapidement les compositions d'équipes.
+Le panneau gauche rassemble les paramètres d'identité et de catégorisation essentiels de l'équipe :
 
-## Membres de l'Équipe & Alignement
+- **Nom de l'Équipe** : Le nom unique de l'équipe affiché sur les classements, les tableaux des meneurs et les écrans de course.
+- **Image / Logo de l'Équipe** : Choisissez une icône prédéfinie ou téléchargez un logo personnalisé pour représenter l'équipe.
+- **Étiquettes d'Équipe** : Attribuez des étiquettes colorées (similaires aux étiquettes GitHub) pour organiser les équipes en groupes ou catégories personnalisés (comme « GT3 », « Pro » ou « Amateur »). Les équipes peuvent appartenir à plusieurs étiquettes. En mode édition, cliquez sur **Gérer les étiquettes** pour créer, modifier, recolorer, supprimer ou attribuer des étiquettes. Sur l'écran Configuration du Jour de Course, vous pouvez filtrer les équipes disponibles par étiquette pour composer rapidement les compositions d'équipes.
 
-- **Pilotes Assignés** : Pilotes actuellement assignés à cette équipe. En mode édition, glissez-déposez pour réorganiser l'alignement ou cliquez sur le bouton Supprimer pour désassigner un pilote. Chaque pilote affiche ses étiquettes de pilote attribuées sous forme de badges à côté de son nom.
-- **Pilotes Disponibles** : Pilotes non assignés à cette équipe. En mode édition, cliquez sur un pilote pour l'ajouter à l'équipe. Chaque pilote affiche ses étiquettes de pilote attribuées sous forme de badges à côté de son nom pour faciliter la composition d'équipes équilibrées.
+## Membres de l'Équipe & Alignement {: #team-members }
+
+La partie supérieure du panneau droit affiche les pilotes actuellement assignés à cette équipe :
+
+- **Gestion de l'Effectif** : En mode édition, vous pouvez faire glisser et déposer les pilotes à l'aide de la poignée (`☰`) pour réordonner l'ordre de passage, ou cliquer sur l'icône de suppression (<span class="material-icons">delete</span>) pour retirer un pilote de l'équipe.
+- **Rotation Round-Robin** : Lorsqu'une équipe dispute une course, les pilotes assignés tournent automatiquement d'une manche à l'autre selon le principe du round-robin d'après cet ordre d'effectif.
+- **Relais en Cours de Manche** : Selon la configuration de course de l'épreuve, les pilotes d'une équipe peuvent également se relayer en cours de manche, soit lors d'un arrêt aux stands, soit à n'importe quel moment sur la piste.
+- **Étiquettes de Pilote** : Chaque pilote affiche ses étiquettes attribuées sous forme de badges à côté de son nom pour faciliter le contrôle des compétences et qualifications.
+
+## Pilotes Disponibles {: #available-drivers }
+
+La partie inférieure du panneau droit répertorie tous les pilotes enregistrés qui ne sont pas actuellement assignés à cette équipe :
+
+- **Ajouter des Pilotes** : En mode édition, cliquez sur la fiche d'un pilote ou sur le bouton d'ajout (<span class="material-icons">add</span>) pour l'intégrer immédiatement à l'effectif de l'équipe.
+- **Appartenance à Plusieurs Équipes** : Un pilote peut faire partie de plusieurs équipes différentes dans votre base de données.
+- **Règle de Non-Cumul en Course** : Bien qu'un pilote puisse appartenir à plusieurs équipes, aucun pilote ne peut participer plusieurs fois à une même course, que ce soit au sein de deux équipes concurrentes ou en courant à la fois en individuel et en équipe.

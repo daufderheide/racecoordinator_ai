@@ -25,13 +25,27 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Deshacer / Rehacer**: Revierte o vuelve a aplicar ediciones recientes realizadas durante la sesión.
 - **Ayuda (?)**: Abre la guía interactiva que destaca cada sección del editor.
 
-## Configuración del Equipo
+## Perfil del Equipo {: #team-profile }
 
-- **Nombre del Equipo**: El nombre único del equipo que se muestra en clasificaciones y pantallas de carrera.
-- **Imagen / Logotipo del Equipo**: Seleccione un icono preestablecido o una imagen personalizada para representar al equipo.
-- **Etiquetas de Equipo**: Asigne etiquetas codificadas por colores (similares a las etiquetas de incidencias de GitHub) para organizar a los equipos en conjuntos o categorías personalizados (como "GT3", "Pro" o "Amateur"). Los equipos pueden pertenecer a cualquier cantidad de conjuntos. En el modo de edición, haga clic en **Administrar Etiquetas** para crear, editar, cambiar el color, eliminar o asignar etiquetas. En la pantalla Configuración del Día de Carrera, puede filtrar los equipos disponibles por etiqueta para completar rápidamente las alineaciones de carreras de equipos.
+El panel izquierdo contiene los ajustes principales de identidad y categorización del equipo:
 
-## Miembros del Equipo y Alineación
+- **Nombre del Equipo**: El nombre único del equipo que se muestra en clasificaciones, tablas de líderes y pantallas de carrera.
+- **Imagen / Logotipo del Equipo**: Seleccione un icono preestablecido o suba una imagen personalizada para representar al equipo.
+- **Etiquetas de Equipo**: Asigne etiquetas codificadas por colores (similares a las etiquetas de GitHub) para organizar a los equipos en conjuntos o categorías personalizados (como "GT3", "Pro" o "Amateur"). Los equipos pueden pertenecer a cualquier cantidad de etiquetas. En el modo de edición, haga clic en **Administrar Etiquetas** para crear, editar, cambiar el color, eliminar o asignar etiquetas. En la pantalla Configuración del Día de Carrera, puede filtrar los equipos disponibles por etiqueta para completar rápidamente las alineaciones de carreras.
 
-- **Pilotos Asignados**: Pilotos actualmente asignados a este equipo. En el modo de edición, arrastre y suelte para reordenar la alineación o haga clic en el botón eliminar para desasignar un piloto. Cada piloto muestra sus etiquetas de piloto asignadas como insignias junto a su nombre.
-- **Pilotos Disponibles**: Pilotos que aún no están asignados a este equipo. En el modo de edición, haga clic en un piloto para agregarlo a la alineación del equipo. Cada piloto muestra sus etiquetas de piloto asignadas como insignias junto a su nombre para ayudar a identificar cualificaciones al armar las alineaciones.
+## Miembros del Equipo y Alineación {: #team-members }
+
+La sección superior del panel derecho muestra los pilotos actualmente asignados a este equipo:
+
+- **Gestión de la Alineación**: En el modo de edición, puede arrastrar y soltar pilotos usando el tirador (`☰`) para reordenar la secuencia del equipo, o hacer clic en el botón eliminar (<span class="material-icons">delete</span>) para quitar a un piloto del equipo.
+- **Rotación Round-Robin**: Cuando un equipo participa en una carrera, los pilotos asignados rotan automáticamente por las mangas asignadas al equipo en orden round-robin según esta lista.
+- **Cambios de Piloto en Manga**: Según la configuración de la carrera para equipos, los pilotos de un equipo también pueden intercambiarse a mitad de manga, ya sea durante una parada en boxes o en cualquier punto de la pista.
+- **Etiquetas de Piloto**: Cada piloto muestra sus etiquetas asignadas como insignias junto a su nombre para verificar fácilmente calificaciones y niveles de habilidad.
+
+## Pilotos Disponibles {: #available-drivers }
+
+La sección inferior del panel derecho enumera todos los pilotos registrados que actualmente no están asignados a este equipo:
+
+- **Agregar Pilotos**: En el modo de edición, haga clic en la tarjeta de cualquier piloto o en el botón de agregar (<span class="material-icons">add</span>) para agregarlo inmediatamente a la alineación del equipo.
+- **Pertenencia a Múltiples Equipos**: Un piloto puede ser miembro de más de un equipo en su base de datos.
+- **Prevención de Conflictos en Carrera**: Aunque un piloto pertenezca a varios equipos, ningún piloto puede participar en la misma carrera más de una vez, ya sea representando a dos equipos rivales o compitiendo individualmente y en equipo al mismo tiempo.

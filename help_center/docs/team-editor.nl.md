@@ -25,13 +25,27 @@ De bovenste werkbalk biedt de volgende acties:
 - **Ongedaan maken / Opnieuw**: Maakt recente wijzigingen tijdens de sessie ongedaan of past ze opnieuw toe.
 - **Help (?)**: Start de interactieve rondleiding die elk onderdeel van de editor toelicht.
 
-## Teamconfiguratie
+## Teamprofiel {: #team-profile }
 
-- **Teamnaam**: De unieke naam van het team die wordt weergegeven op ranglijsten en raceschermen.
+Het linkerpaneel bevat de belangrijkste identiteits- en indelingsinstellingen voor het team:
+
+- **Teamnaam**: De unieke naam van het team die wordt weergegeven op ranglijsten, scoreborden en schermen van de racedag.
 - **Teamlogo / Afbeelding**: Kies een vooraf ingesteld pictogram of upload een eigen logo voor het team.
-- **Teamlabels**: Wijs kleurgecodeerde labels toe (vergelijkbaar met GitHub-issuelabels) om teams in aangepaste groepen of categorieën te organiseren (zoals "GT3", "Pro" of "Amateur"). Teams kunnen tot een willekeurig aantal groepen behoren. Klik in de bewerkingsmodus op **Labels beheren** om labels te maken, bewerken, herkleuren, verwijderen of toe te wijzen. Op het scherm Racedag-instellingen kunt u beschikbare teams op label filteren om snel teamopstellingen samen te stellen.
+- **Teamlabels**: Wijs kleurgecodeerde labels toe (vergelijkbaar met GitHub-labels) om teams in categorieën te organiseren (zoals "GT3", "Pro" of "Amateur"). Teams kunnen aan meerdere labels worden gekoppeld. Klik in de bewerkingsmodus op **Labels beheren** om labels te maken, bewerken, herkleuren, verwijderen of toe te wijzen. Op het scherm Racedag Setup kunt u beschikbare teams op label filteren om snel teamopstellingen samen te stellen.
 
-## Teamleden & Opstelling
+## Teamleden & Opstelling {: #team-members }
 
-- **Toegewezen Coureurs**: Coureurs die momenteel aan dit team zijn toegewezen. In de bewerkingsmodus kunt u coureurs slepen en neerzetten om de volgorde te wijzigen of op het verwijderpictogram klikken. Elke coureur toont de toegewezen coureurlabels als badges naast de naam.
-- **Beschikbare Coureurs**: Coureurs die nog niet aan dit team zijn toegewezen. In de bewerkingsmodus klikt u op een coureur om deze aan de opstelling toe te voegen. Elke coureur toont de toegewezen coureurlabels als badges naast de naam om evenwichtige opstellingen samen te stellen.
+Het bovenste deel van het rechterpaneel toont de coureurs die momenteel aan dit team zijn toegewezen:
+
+- **Opstellingsbeheer**: In de bewerkingsmodus kunt u coureurs met de handgreep (`☰`) slepen en neerzetten om de startvolgorde aan te passen, of op de verwijderknop (<span class="material-icons">delete</span>) klikken om een coureur uit het team te halen.
+- **Round-Robin Rotatie**: Wanneer een team deelneemt aan een race, worden de toegewezen coureurs automatisch volgens een round-robin volgorde verdeeld over de heats van het team op basis van deze volgorde.
+- **Coureurswissel Halverwege de Heat**: Afhankelijk van de teamraceconfiguratie kunnen teamcoureurs ook halverwege een heat worden gewisseld, tijdens een pitstop of op ieder willekeurig punt op de baan.
+- **Coureurlabels**: Elke coureur toont de toegekende labels als badges naast de naam om kwalificaties en niveaus eenvoudig te controleren.
+
+## Beschikbare Coureurs {: #available-drivers }
+
+Het onderste deel van het rechterpaneel toont alle geregistreerde coureurs die momenteel niet aan dit team zijn toegewezen:
+
+- **Coureurs Toevoegen**: Klik in de bewerkingsmodus op de kaart van een coureur of op de toevoegknop (<span class="material-icons">add</span>) om deze direct aan de teamopstelling toe te voegen.
+- **Lidmaatschap van Meerdere Teams**: Een coureur kan in uw database lid zijn van meerdere verschillende teams.
+- **Voorkomen van Deelnameconflicten**: Hoewel een coureur lid kan zijn van meerdere teams, mag geen enkele coureur vaker dan één keer deelnemen aan dezelfde race — noch bij twee concurrerende teams, noch gelijktijdig individueel en in teamverband.

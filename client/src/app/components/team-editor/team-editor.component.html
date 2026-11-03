@@ -17,6 +17,7 @@
     [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'teamEditorHelpShown'"
+    [selectorTooltipKey]="'TEM_TOOLTIP_SELECTOR'"
     [isSaving]="isSaving"
     [undoManager]="undoManager"
     (selectedIdChange)="onSelectTeamById($event)"
@@ -30,17 +31,22 @@
   @if (editingTeam) {
     <div class="content-split">
       <!-- LEFT PANEL: TEAM CONFIGURATION -->
-      <div class="editor-panel">
+      <div class="editor-panel" id="team-profile-panel">
         <div class="sections-wrapper">
           <div class="config-section">
             <div class="config-form">
               <!-- AVATAR SECTION -->
-              <div id="avatar-selector" class="avatar-column">
+              <div
+                id="avatar-selector"
+                class="avatar-column"
+                [title]="'TEM_TOOLTIP_AVATAR' | translate"
+              >
                 <app-image-selector
                   [(imageUrl)]="editingTeam.avatarUrl"
                   (imageUrlChange)="captureState()"
                   [assets]="avatarAssets"
                   [disabled]="!isEditMode"
+                  [title]="'TEM_TOOLTIP_AVATAR' | translate"
                 >
                 </app-image-selector>
               </div>
@@ -59,6 +65,7 @@
                   class="dm-input"
                   (focus)="onInputFocus()"
                   (blur)="onInputBlur()"
+                  [title]="'TEM_TOOLTIP_NAME' | translate"
                   autocomplete="off"
                   data-dashlane-ignore="true"
                   data-1p-ignore="true"
@@ -68,7 +75,11 @@
                 />
               </div>
               <!-- LABELS SECTION -->
-              <div id="team-labels-section" class="editor-section">
+              <div
+                id="team-labels-section"
+                class="editor-section"
+                [title]="'TEM_TOOLTIP_LABELS' | translate"
+              >
                 <div class="labels-section-header">
                   <label class="track-name-label">{{
                     "TEM_SECTION_LABELS" | translate
