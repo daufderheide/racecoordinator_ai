@@ -78,6 +78,12 @@ app-editor-title:has(.custom-select-container.open) {
   width: 100%;
 }
 
+.layout-panel-toggles {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 /* --- Control Select Widths --- */
 .control-select-aspect-ratio {
   width: 220px;

@@ -35,7 +35,7 @@ La barre d'outils supérieure fournit des actions de gestion standardisées :
 
 ---
 
-## Commandes de Canevas & Résolution
+## Commandes de Canevas & Résolution {: #layout-controls }
 
 Situées dans la barre de commandes sous la barre d'outils :
 
@@ -55,7 +55,7 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 ### Aperçu du Compte à Rebours de Départ
 - Cliquez sur **Aperçu des Feux** (<span class="material-icons">timer</span>) pour prévisualiser la séquence de feux de départ sur le canevas sans démarrer une vraie course.
 
-### Bibliothèque de widgets & contrôles de configuration
+### Bibliothèque de widgets & contrôles de configuration {: #widget-panels }
 - **Bibliothèque de widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante. Un clic la restaure également si elle est réduite ou hors de l'écran visible.
 - **Configuration de widgets (<span class="material-icons">tune</span>)** : Bascule la visibilité du panneau latéral de configuration des widgets. Lorsqu'il est masqué, le canevas peut s'étendre sur toute la largeur de la page si les proportions de la disposition le permettent (comme en mode lecture seule).
 - **Réinitialiser la position (<span class="material-icons">restart_alt</span>)** : Situé dans l'en-tête de la boîte à outils flottante pour la replacer instantanément à l'origine `(0, 0)` en haut à gauche.
@@ -63,18 +63,59 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 
 ---
 
-## Canevas de Widgets & Inspecteur
+## Canevas de Widgets & Inspecteur {: #canvas-and-widgets }
 
-- **Placement & Sélection** : Cliquez sur n'importe quel widget sur le canevas ou sélectionnez-le dans la liste déroulante des widgets.
-- **Repositionnement & Redimensionnement** : Faites glisser librement les widgets dans les limites du canevas. Utilisez la barre latérale de l'Inspecteur pour saisir des valeurs numériques précises en **X**, **Y**, **Largeur** et **Hauteur**.
+Le canevas sert d'authentique aperçu en direct de votre disposition exactement telle que les pilotes et spectateurs la verront pendant une course. En **Mode Édition**, vous pouvez ajouter, supprimer, repositionner, redimensionner et configurer les widgets composant la disposition.
+
+### Interactions sur le Canevas
+- **Placement & Sélection** : Cliquez sur n'importe quel widget directement sur le canevas ou sélectionnez-le dans la liste déroulante de la barre de commandes supérieure.
+- **Repositionnement & Redimensionnement** : Faites glisser librement les widgets dans les limites du canevas. Utilisez l'Inspecteur pour saisir des coordonnées numériques précises en **X**, **Y**, **Largeur** et **Hauteur**.
 - **Déplacement au Clavier** :
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> : Déplace le widget sélectionné de 1px.
   - <kbd>Shift</kbd> + Touches fléchées : Déplace le widget sélectionné de 10px.
   - <kbd>Suppr</kbd> ou <kbd>Retour arrière</kbd> : Supprime le widget sélectionné.
 - **Dupliquer les Voies** : Duplique une carte de colonne de voie sélectionnée sur toutes les voies actives, positions, classements généraux ou têtes de série.
-- **Détection & Réparation des Colonnes Superposées** :
-  - L'éditeur détecte automatiquement les colonnes dupliquées ou superposées dans les grilles de voies.
-  - Une bannière d'alerte propose une **Correction Rapide** en un clic ou **Examiner les Problèmes** dans une boîte de dialogue interactive.
+- **Détection & Réparation des Colonnes Superposées** : L'éditeur détecte automatiquement les colonnes dupliquées ou superposées dans les grilles de voies. Une bannière d'alerte propose une **Correction Rapide** en un clic ou **Examiner les Problèmes** dans une boîte de dialogue interactive.
+
+### Widgets Disponibles & Options de Configuration
+
+Race Coordinator AI comprend une collection complète de widgets intégrés :
+
+1. **Tableau des Scores / Grille (Leaderboard / Grid)** :
+   - **Rôle** : Affiche un classement en direct sous forme de tableau des pilotes, positions, tours, métriques et écarts.
+   - **Options de Configuration** : Source des données (**Données de Manche** vs. **Données Générales de Course**), ordre et visibilité des colonnes, hauteur des lignes, règles de tri, défilement automatique et typographie.
+2. **Colonne de Voie (Lane Column - Cartes Modulaires)** :
+   - **Rôle** : Présente les données d'une voie, position ou classement général sous forme de carte modulaire indépendante.
+   - **Options de Configuration** : Voie cible (**Voie 1–8**, **Position en Manche**, **Classement Général** ou **Tête de Série**), jusqu'à 8 **Emplacements d'Encart (Insets)** pour photos ou badges, alignement et échelle de police.
+3. **Chronomètre & Temps Total (Timer & Total Time)** :
+   - **Rôle** : Affiche le temps restant ou écoulé de la manche ou la durée totale de l'événement.
+   - **Options de Configuration** : Formats d'affichage (**Dynamique**, **Minutes & Secondes**, **Horloge Complète**, **Secondes Totales**), seuils de précision sous la seconde et aperçu de mise en forme.
+4. **Feux de Départ (Countdown)** :
+   - **Rôle** : Feux de départ visuels avec signaux sonores synchronisés.
+   - **Options de Configuration** : Nombre de feux (1 à 10), orientation horizontale ou verticale, fondu d'apparition, flou d'arrière-plan et halos lumineux.
+5. **Boutons d'Action (Action Buttons)** :
+   - **Rôle** : Commandes tactiles ou cliquables pour la direction de course.
+   - **Options de Configuration** : Actions déclenchées (**Départ/Pause**, **Drapeau Jaune**, **Annonce Vocale**, **Réinitialisation**, **Changement de Disposition**), texte, icônes Material Icons et couleurs.
+6. **Widget des Records (Records)** :
+   - **Rôle** : Affiche les records de la piste et de la session (meilleur tour absolu, record par voie, record de tours) et les exploits des pilotes.
+   - **Options de Configuration** : Types de métriques de record, mise en forme des titres, typographie et arrière-plan.
+7. **Widget d'Image (Image)** :
+   - **Rôle** : Affiche les tracés de circuit, bannières publicitaires, logos de clubs et éléments graphiques.
+   - **Options de Configuration** : Emplacement de l'image, mode de mise à l'échelle (**Ajuster**, **Remplir**, **Étirer**), opacité et coins arrondis.
+8. **Widget d'Information Texte** :
+   - **Rôle** : Affiche des textes statiques ou des métadonnées de course dynamiques (Nom de la Course, Manche Actuelle, Nom de la Piste).
+   - **Options de Configuration** : Modèle de texte avec interpolation de variables (`{race_name}`, `{heat_number}`), taille de police, alignement et couleurs.
+9. **Widget de Menu** :
+   - **Rôle** : Menu compact en surimpression pour accéder aux réglages audio, au changement de disposition et aux commandes de course.
+   - **Options de Configuration** : Style d'icône, éléments visibles et position d'ancrage.
+10. **Manches à Venir (On Deck)** :
+    - **Rôle** : Informe les pilotes des prochaines manches programmées et des rotations de voies.
+    - **Options de Configuration** : Nombre de manches affichées, format des noms et espacement.
+11. **Widgets Personnalisés (Custom Widgets)** :
+    - **Rôle** : Charge dynamiquement des composants web externes et jauges de télémétrie depuis votre dossier de widgets personnalisés.
+    - **Options de Configuration** : Propriétés personnalisées (couleurs, seuils, bascules, libellés) définies dans le manifeste.
+
+Pour plus de détails sur le style des widgets et la création de widgets personnalisés, consultez le [Guide de l'Éditeur d'Interface](ui-editor.fr.md) et le [Guide des Widgets Personnalisés](custom-widgets.fr.md).
 
 ---
 

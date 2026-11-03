@@ -35,7 +35,7 @@ De bovenste werkbalk biedt gestandaardiseerde beheeracties:
 
 ---
 
-## Canvas & Resolutiebediening
+## Canvas & Resolutiebediening {: #layout-controls }
 
 Gelegen in de bedieningsbalk onder de werkbalk:
 
@@ -55,7 +55,7 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 ### Startlichten Voorvertoning
 - Klik op **Startlichten Voorvertoning** (<span class="material-icons">timer</span>) om een live voorvertoning van de startlichtenvolgorde op het canvas te bekijken zonder een race te starten.
 
-### Widgetbibliotheek & configuratieknoppen
+### Widgetbibliotheek & configuratieknoppen {: #widget-panels }
 - **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit. Een klik herstelt de gereedschapskist ook als deze geminimaliseerd is of buiten het zichtbare scherm is verplaatst.
 - **Widget-configuratie (<span class="material-icons">tune</span>)**: Schakelt de weergave van het zijpaneel Widget-configuratie in of uit. Wanneer het verborgen is, kan het canvas zich over de volledige breedte van de pagina uitstrekken als de beeldverhouding van de lay-out dit toelaat (net als in de alleen-lezen-modus).
 - **Positie resetten (<span class="material-icons">restart_alt</span>)**: Geplaatst in de koptekst van de zwevende gereedschapskist om deze direct terug te zetten naar de standaardpositie linksboven `(0, 0)`.
@@ -63,18 +63,59 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 
 ---
 
-## Widget Canvas & Inspector
+## Widget Canvas & Inspector {: #canvas-and-widgets }
 
-- **Plaatsing & Selectie**: Klik op een willekeurige widget op het canvas of selecteer deze uit de vervolgkeuzelijst.
-- **Verplaatsen & Grootte Wijzigen**: Sleep widgets vrij binnen de canvasgrenzen. Gebruik de inspector om exacte numerieke waarden in te voeren voor **X**, **Y**, **Breedte** en **Hoogte**.
+Het canvas fungeert als een levensechte preview van uw lay-out, precies zoals coureurs en toeschouwers deze tijdens een race-evenement zullen ervaren. In **Bewerkingsmodus** kunt u de widgets die de lay-out vormen toevoegen, verwijderen, verplaatsen, schalen en configureren.
+
+### Interacties op het Canvas
+- **Plaatsing & Selectie**: Klik op een willekeurige widget op het canvas of selecteer deze uit het dropdownmenu **Widget Selecteren** in de bovenste bedieningsbalk.
+- **Verplaatsen & Grootte Wijzigen**: Sleep widgets vrij binnen de canvasgrenzen. Gebruik het configuratiepaneel om exacte numerieke waarden in te voeren voor **X**, **Y**, **Breedte** en **Hoogte**.
 - **Toetsenbordverplaatsing**:
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 1px.
-  - <kbd>Shift</kbd> + Pijltjestoetsen: Verplaatst de geselecteerde widget met 10px.
+  - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 10px.
   - <kbd>Delete</kbd> of <kbd>Backspace</kbd>: Verwijdert de geselecteerde widget.
 - **Banen Repliceren**: Repliceer een geselecteerde baankolomkaart over alle actieve banen, posities, tussenstanden of coureurkwalificaties.
-- **Gestapelde Kolommen Detectie & Reparatie**:
-  - De editor detecteert automatisch dubbele of overlappende kolommen in baangrids.
-  - Een waarschuwingsbalk biedt een **Snelle Oplossing** met één klik of **Problemen Beoordelen** in een interactief venster.
+- **Gestapelde Kolommen Detectie & Reparatie**: De editor detecteert automatisch dubbele of overlappende kolommen in baangrids. Een waarschuwingsbalk biedt een **Snelle Oplossing** met één klik of **Problemen Beoordelen** in een interactief venster.
+
+### Beschikbare Widgets & Configuratieopties
+
+Race Coordinator AI bevat een complete collectie ingebouwde widgets:
+
+1. **Scorebord / Grid (Leaderboard)**:
+   - **Doel**: Toont een realtime tabelklassement van coureurs, posities, ronden, telemetrische gegevens en tijdsverschillen.
+   - **Configuratieopties**: Gegevensbron (**Heatgegevens** vs. **Algemene Racegegevens**), aangepaste kolomvolgorde en -zichtbaarheid, rijhoogtes, sorteerregels, automatische paginering en typografie.
+2. **Baankolom (Modulaire Kaarten)**:
+   - **Doel**: Geeft telemetrische data voor een enkele baan, finishpositie of algemene stand weer als een zelfstandige modulaire kaart.
+   - **Configuratieopties**: Doelkoppeling (**Baan 1–8**, **Heatpositie**, **Algemene Stand** of **Coureurkwalificatie**), tot 8 **Inzetslots** (voor avatars, secundaire statistieken of badges), tekstuitlijning en lettergrootte.
+3. **Timer & Totale Tijd**:
+   - **Doel**: Toont de resterende heattijd, verstreken tijd of de totale duur van het evenement.
+   - **Configuratieopties**: Weergave-voorinstellingen (**Dynamisch**, **Minuten & Seconden**, **Volledige Klok**, **Totale Seconden**), precisiedrempels voor fracties van seconden en voorbeeldweergave van de notatie.
+4. **Aftelwidget (Startlichten)**:
+   - **Doel**: Visuele startvolgorde van lichten met gesynchroniseerde startaudio.
+   - **Configuratieopties**: Aantal lampen (1 tot 10), horizontale of verticale oriëntatie, fade-in animatie, achtergrondonscherpte en lampgloei-effecten.
+5. **Actieknoppen**:
+   - **Doel**: Interactieve aanraak- en klikknoppen voor racebesturing.
+   - **Configuratieopties**: Acties (**Start/Pauze**, **Gele Vlag / Baanoproep**, **Geluidsoproep**, **Reset**, **Lay-out Wisselen**), aangepaste knoptekst, vector Material Icons en kleurstijlen.
+6. **Records-widget**:
+   - **Doel**: Toont baan- en sessierecords (all-time snelste ronde, snelste ronde per baan, totaal aantal ronden record) en coureurprestaties.
+   - **Configuratieopties**: Recordmetriektypes, titelopmaak, typografie en achtergrondstijl.
+7. **Afbeeldingswidget**:
+   - **Doel**: Rendert circuitkaarten, sponsorbanners, clublogo's en grafische middelen.
+   - **Configuratieopties**: Afbeeldings-URL of -pad van mediabeheer, schaalmodus (**Passend**, **Vullend**, **Uitrekken**), dekking en randstraal.
+8. **Tekstinformatiewidget**:
+   - **Doel**: Toont statische titels, mededelingen of dynamische racemetadatatags (Racenaam, Huidige Heat, Baannaam).
+   - **Configuratieopties**: Tekstsjabloon met variabele interpolatie (`{race_name}`, `{heat_number}`), lettergrootte, uitlijning en kleuren.
+9. **Menuwidget**:
+   - **Doel**: Compact in-race overlaymenu voor snelle toegang tot geluidsopties, lay-outwisseling en racebesturing.
+   - **Configuratieopties**: Icoonstijl, zichtbaarheid van menu-items en ankerpositionering.
+10. **Aankomende Heats (On Deck)**:
+    - **Doel**: Informeert coureurs over aankomende heatschema's en geplande baanrotaties.
+    - **Configuratieopties**: Aantal te bekijken heats, opmaak van coureurnamen en tussenruimte.
+11. **Aangepaste Widgets**:
+    - **Doel**: Laadt dynamisch externe webcomponenten en telemetriemeters uit uw map met aangepaste widgets.
+    - **Configuratieopties**: Aangepaste eigenschapsvelden (kleuren, drempelwaarden, schakelaars, tekstlabels) gedefinieerd in het widgetmanifest.
+
+Voor volledige details over widgetstijlen, formules en de ontwikkeling van aangepaste widgets, zie de [UI Editor Gids](ui-editor.nl.md) en de [Handleiding Aangepaste Widgets](custom-widgets.nl.md).
 
 ---
 

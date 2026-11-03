@@ -74,7 +74,7 @@
   @if (!isLoading && editingLayout) {
     <div class="layout-editor-content">
       <!-- Controls Bar -->
-      <div class="layout-controls-bar">
+      <div id="layout-controls-toolbar" class="layout-controls-bar">
         <div class="layout-controls-left">
           <!-- Layout Name Input -->
           <div class="layout-control-group">
@@ -202,36 +202,38 @@
             </div>
           </div>
 
-          <!-- Widget Library Toggle Button -->
-          <div id="help-raceday-widget-library" class="layout-control-group">
-            <button
-              id="toggle-widget-library-btn"
-              type="button"
-              class="layout-widget-library-btn"
-              [class.active]="isEditMode && isWidgetLibraryVisible"
-              [disabled]="!isEditMode"
-              (click)="toggleWidgetLibrary()"
-              [title]="'UE_LABEL_LAYOUT_EDITOR' | translate"
-            >
-              <span class="material-icons">widgets</span>
-              <span>{{ "UE_LABEL_LAYOUT_EDITOR" | translate }}</span>
-            </button>
-          </div>
+          <div id="layout-panel-toggles" class="layout-panel-toggles">
+            <!-- Widget Library Toggle Button -->
+            <div id="help-raceday-widget-library" class="layout-control-group">
+              <button
+                id="toggle-widget-library-btn"
+                type="button"
+                class="layout-widget-library-btn"
+                [class.active]="isEditMode && isWidgetLibraryVisible"
+                [disabled]="!isEditMode"
+                (click)="toggleWidgetLibrary()"
+                [title]="'UE_LABEL_LAYOUT_EDITOR' | translate"
+              >
+                <span class="material-icons">widgets</span>
+                <span>{{ "UE_LABEL_LAYOUT_EDITOR" | translate }}</span>
+              </button>
+            </div>
 
-          <!-- Widget Configuration Toggle Button -->
-          <div id="help-raceday-widget-config" class="layout-control-group">
-            <button
-              id="toggle-widget-config-btn"
-              type="button"
-              class="layout-widget-config-btn"
-              [class.active]="isEditMode && isWidgetConfigVisible"
-              [disabled]="!isEditMode"
-              (click)="toggleWidgetConfig()"
-              [title]="'UE_INSPECTOR_TITLE' | translate"
-            >
-              <span class="material-icons">tune</span>
-              <span>{{ "UE_INSPECTOR_TITLE" | translate }}</span>
-            </button>
+            <!-- Widget Configuration Toggle Button -->
+            <div id="help-raceday-widget-config" class="layout-control-group">
+              <button
+                id="toggle-widget-config-btn"
+                type="button"
+                class="layout-widget-config-btn"
+                [class.active]="isEditMode && isWidgetConfigVisible"
+                [disabled]="!isEditMode"
+                (click)="toggleWidgetConfig()"
+                [title]="'UE_INSPECTOR_TITLE' | translate"
+              >
+                <span class="material-icons">tune</span>
+                <span>{{ "UE_INSPECTOR_TITLE" | translate }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -35,7 +35,7 @@ Die obere Symbolleiste bietet standardisierte Verwaltungsaktionen:
 
 ---
 
-## Arbeitsfläche & Auflösungssteuerung
+## Arbeitsfläche & Auflösungssteuerung {: #layout-controls }
 
 In der Steuerleiste unterhalb der Symbolleiste:
 
@@ -55,7 +55,7 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 ### Start-Countdown-Vorschau
 - Klicken Sie auf **Startampel-Vorschau** (<span class="material-icons">timer</span>), um eine Live-Vorschau der Startampel-Sequenz auf dem Canvas zu testen, ohne ein echtes Rennen zu starten.
 
-### Widget-Bibliothek & Konfigurationssteuerung
+### Widget-Bibliothek & Konfigurationssteuerung {: #widget-panels }
 - **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.
 - **Widget-Konfiguration (<span class="material-icons">tune</span>)**: Schaltet die Sichtbarkeit des Widget-Konfigurationspanels um. Wenn es ausgeblendet ist, kann sich die Arbeitsfläche über die gesamte Seitenbreite erstrecken, sofern es das Seitenverhältnis des Layouts erlaubt (wie im schreibgeschützten Modus).
 - **Position zurücksetzen (<span class="material-icons">restart_alt</span>)**: Setzt den Werkzeugkasten über die Schaltfläche in der Kopfzeile sofort an die Standardursprungsposition `(0, 0)` oben links zurück.
@@ -63,18 +63,59 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 
 ---
 
-## Widget-Arbeitsfläche & Inspector
+## Widget-Arbeitsfläche & Inspector {: #canvas-and-widgets }
 
-- **Platzierung & Auswahl**: Klicken Sie auf ein beliebiges Widget auf der Arbeitsfläche oder wählen Sie es aus dem Dropdown-Menü aus.
-- **Neupositionierung & Dimensionierung**: Ziehen Sie Widgets frei innerhalb der Arbeitsflächengrenzen. Verwenden Sie den Inspector, um exakte numerische Werte für **X**, **Y**, **Breite** und **Höhe** einzugeben.
+Die Arbeitsfläche dient als authentische Live-Vorschau Ihres Layouts, genau so, wie Fahrer und Zuschauer es während eines Rennens erleben. Im **Bearbeitungsmodus** können Sie alle Widgets des Layouts hinzufügen, entfernen, neu positionieren, skalieren und konfigurieren.
+
+### Arbeitsflächen-Interaktionen
+- **Platzierung & Auswahl**: Klicken Sie direkt auf ein Widget auf der Arbeitsfläche oder wählen Sie es aus dem Dropdown-Menü in der oberen Leiste aus.
+- **Neupositionierung & Dimensionierung**: Ziehen Sie Widgets frei über die Arbeitsfläche. Verwenden Sie den Inspector, um exakte numerische Werte für **X**, **Y**, **Breite** und **Höhe** einzugeben.
 - **Tastaturnavigation**:
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verschiebt das ausgewählte Widget um 1 Pixel.
   - <kbd>Shift</kbd> + Pfeiltasten: Verschiebt das Widget um 10 Pixel.
   - <kbd>Entf</kbd> oder <kbd>Rücktaste</kbd>: Entfernt das ausgewählte Widget.
 - **Spuren replizieren**: Replizieren Sie eine ausgewählte Spurenspaltenkarte über alle aktiven Spuren, Positionen, Gesamtwertungen oder Fahrer-Startnummern.
-- **Erkennung & Reparatur gestapelter Spalten**:
-  - Der Editor erkennt automatisch doppelte oder überlappende Spalten in Spurgittern.
-  - Ein Warnbanner bietet eine Ein-Klick-Schnellkorrektur oder eine Prüfung im Dialog an.
+- **Erkennung & Reparatur gestapelter Spalten**: Der Editor erkennt automatisch doppelte oder überlappende Spalten in Spurgittern. Ein Warnbanner bietet eine Ein-Klick-Schnellkorrektur oder eine Prüfung im Dialog an.
+
+### Verfügbare Widgets & Konfigurationsoptionen
+
+Race Coordinator AI enthält eine umfangreiche Sammlung integrierter Widgets:
+
+1. **Bestenliste / Tabelle (Leaderboard / Grid)**:
+   - **Zweck**: Zeigt eine tabellarische Live-Bestenliste der Fahrer, Positionen, Rundenanzahlen, Telemetriewerte und Abstände an.
+   - **Konfigurationsoptionen**: Datenquelle (**Heat-Daten** vs. **Gesamt-Renndaten**), benutzerdefinierte Spaltenreihenfolge und -sichtbarkeit, Zeilenhöhen, Sortierregeln, automatisches Blättern und benutzerdefinierte Typografie.
+2. **Spurenspalte (Lane Column - Modulare Karten)**:
+   - **Zweck**: Zeigt Telemetriedaten für eine einzelne Spur, Position oder Gesamtwertung als eigenständige modulare Karte an.
+   - **Konfigurationsoptionen**: Zielbindung (**Streckenspur 1–8**, **Heat-Position**, **Gesamtwertung** oder **Fahrer-Startplatz**), bis zu 8 umlaufende **Einschub-Slots (Insets)** für Fahrerfotos, Zusatzmetriken oder Badges, Textausrichtung und Schriftgrößen.
+3. **Timer & Gesamtzeit (Total Time)**:
+   - **Zweck**: Zeigt die verbleibende Heat-Zeit, abgelaufene Heat-Zeit oder gesamte Event-Dauer an.
+   - **Konfigurationsoptionen**: Anzeige-Voreinstellungen (**Dynamisch**, **Minuten & Sekunden**, **Volle Uhrzeit**, **Sekunden gesamt**), Schwellenwerte für Untersekunden-Präzision und Format-Vorschau.
+4. **Startampel-Widget (Countdown)**:
+   - **Zweck**: Visuelle Startampel-Sequenz mit synchronisierten Tonsignalen.
+   - **Konfigurationsoptionen**: Lampenanzahl (1 bis 10), horizontale oder vertikale Ausrichtung, Einblend-Animation, Hintergrundunschärfe und Leuchteffekte.
+5. **Aktionstasten (Action Buttons)**:
+   - **Zweck**: Interaktive Schaltflächen für die Rennleitung.
+   - **Konfigurationsoptionen**: Aktionen (**Start/Pause**, **Gelbe Flagge / Bahnruf**, **Audioansage**, **Zurücksetzen**, **Layout-Wechsel**), Beschriftungen, Material-Icons und Farbgestaltung.
+6. **Rekorde-Widget (Records)**:
+   - **Zweck**: Zeigt Strecken- und Session-Rekorde (schnellste Runde aller Zeiten, Spur-Rekorde, Rundenrekorde) an.
+   - **Konfigurationsoptionen**: Rekordtypen, Titelformatierung, Schriftarten und Hintergrundstile.
+7. **Bild-Widget (Image)**:
+   - **Zweck**: Zeigt Streckengrafiken, Sponsorenbanner, Clublogos und Grafikelemente an.
+   - **Konfigurationsoptionen**: Bildpfad, Skalierungsmodus (**Einpassen**, **Füllen**, **Dehnen**), Deckkraft und Eckenabrundung.
+8. **Text-Info-Widget**:
+   - **Zweck**: Zeigt statische Texte oder dynamische Rennmetadaten (Rennname, aktuelle Heat, Streckenname) an.
+   - **Konfigurationsoptionen**: Textvorlage mit Variablenersetzung (`{race_name}`, `{heat_number}`), Schriftgröße, Ausrichtung und Farben.
+9. **Menü-Widget (Menu)**:
+   - **Zweck**: Kompaktes In-Race-Menü für schnellen Zugriff auf Sound-Einstellungen, Layout-Umschaltung und Rennsteuerung.
+   - **Konfigurationsoptionen**: Symbolstil, Menüpunkte und Ankerpositionierung.
+10. **Kommende Heats (On Deck)**:
+    - **Zweck**: Informiert Fahrer über anstehende Heat-Gruppen und Spurenwechsel.
+    - **Konfigurationsoptionen**: Anzahl der Vorschau-Heats, Namensformatierung und Abstände.
+11. **Benutzerdefinierte Widgets (Custom Widgets)**:
+    - **Zweck**: Lädt dynamisch externe Webkomponenten und Telemetrieanzeigen aus Ihrem benutzerdefinierten Widget-Ordner.
+    - **Konfigurationsoptionen**: Benutzerdefinierte Eigenschaften (Farben, Schwellenwerte, Schalter, Texte) aus dem Widget-Manifest.
+
+Ausführliche Informationen zur Widget-Gestaltung und Entwicklung eigener Widgets finden Sie im [UI-Editor-Leitfaden](ui-editor.de.md) und im [Leitfaden für benutzerdefinierte Widgets](custom-widgets.de.md).
 
 ---
 

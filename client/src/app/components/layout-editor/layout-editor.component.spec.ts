@@ -22,11 +22,13 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
+import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 
 import { LayoutEditorComponent } from "./layout-editor.component";
 
@@ -76,6 +78,7 @@ describe("LayoutEditorComponent", () => {
   let mockRaceConnectionService: any;
   let mockChildWindowManagerService: any;
   let mockCustomUiService: any;
+  let mockHelpService: any;
 
   let testCustomUIs: CustomUI[];
   let testSettings: Settings;
@@ -237,6 +240,11 @@ describe("LayoutEditorComponent", () => {
       clearLastEditedId: jasmine.createSpy("clearLastEditedId"),
     };
 
+    mockHelpService = {
+      startGuide: jasmine.createSpy("startGuide"),
+      currentStep$: of(null),
+    };
+
     TestBed.overrideComponent(LayoutEditorComponent, {
       remove: { imports: [DefaultRacedayComponent] },
       add: { imports: [MockDefaultRacedayComponent] },
@@ -258,6 +266,7 @@ describe("LayoutEditorComponent", () => {
           useValue: mockChildWindowManagerService,
         },
         { provide: CustomUiService, useValue: mockCustomUiService },
+        { provide: HelpService, useValue: mockHelpService },
       ],
     }).compileComponents();
 
@@ -1095,30 +1104,49 @@ describe("LayoutEditorComponent", () => {
       });
     });
 
-    it("should return guide help steps and activate widget on inspector step onEnter", () => {
-      const steps = component.getHelpSteps();
-      expect(steps.length).toBeGreaterThan(2);
-      expect(steps[0].selector).toBe("#editor-object-selector");
+    describe("guided help", () => {
+      it("should start guide via HelpService when startHelp is called", () => {
+        component.startHelp();
+        expect(mockHelpService.startGuide).toHaveBeenCalledWith(
+          component.getHelpSteps(),
+        );
+      });
 
-      const inspectorStep = steps.find(
-        (s) => s.selector === "#help-widget-inspector",
-      );
-      expect(inspectorStep).toBeDefined();
-      inspectorStep?.onEnter?.();
-      expect(component.currentSelectedWidget).toBeTruthy();
-    });
+      it("should provide all 6 guide steps in correct order with matching target IDs and selectors", () => {
+        const steps = component.getHelpSteps();
+        expect(steps.length).toBe(6);
 
-    it("should include widget library step in guide help", () => {
-      const steps = component.getHelpSteps();
-      const widgetLibStep = steps.find(
-        (s) => s.selector === "#help-raceday-widget-library",
-      );
-      expect(widgetLibStep).toBeDefined();
+        const targetIds = steps.map((s) => s.targetId);
+        expect(targetIds).toEqual([
+          undefined,
+          "editor-object-nav",
+          "edit-track-btn",
+          "layout-controls-toolbar",
+          "layout-panel-toggles",
+          "help-raceday-canvas",
+        ]);
 
-      const widgetConfigStep = steps.find(
-        (s) => s.selector === "#help-raceday-widget-config",
-      );
-      expect(widgetConfigStep).toBeDefined();
+        const selectors = steps.map((s) => s.selector);
+        expect(selectors).toEqual([
+          undefined,
+          "#editor-object-nav",
+          "#edit-track-btn",
+          "#layout-controls-toolbar",
+          "#layout-panel-toggles",
+          "#help-raceday-canvas",
+        ]);
+
+        expect(steps[2].highlightTargetId).toBe("toolbar-container");
+        expect(steps[2].highlightSelector).toBe(".toolbar-container");
+      });
+
+      it("should verify that all guide step DOM targets exist in the component DOM", () => {
+        component.isLoading = false;
+        fixture.detectChanges();
+
+        const steps = component.getHelpSteps();
+        GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
+      });
     });
 
     it("should handle toggleWidgetConfig in edit mode and preserve selected item when hidden", () => {

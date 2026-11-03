@@ -35,7 +35,7 @@ The top toolbar provides standardized management actions:
 
 ---
 
-## Canvas & Resolution Controls
+## Canvas & Resolution Controls {: #layout-controls }
 
 Located in the controls bar beneath the toolbar:
 
@@ -55,7 +55,7 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 ### Start Countdown Preview
 - Click **Preview Lights** (<span class="material-icons">timer</span>) to toggle a live countdown light sequence preview on the canvas without starting an actual race.
 
-### Widget Library & Configuration Controls
+### Widget Library & Configuration Controls {: #widget-panels }
 - **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox. Clicking also unminimizes the toolbox and ensures it is clamped within the visible screen area if previously moved off-screen.
 - **Widget Configuration (<span class="material-icons">tune</span>)**: Toggles visibility of the Widget Configuration sidebar panel. When hidden, the canvas can extend across the full width of the page if it makes sense for the layout's aspect ratio (just like in read-only mode).
 - **Reset Position (<span class="material-icons">restart_alt</span>)**: Located in the floating toolbox header to instantly return the toolbox to its default top-left origin `(0, 0)`.
@@ -63,18 +63,59 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 
 ---
 
-## Widget Canvas & Inspector
+## Widget Canvas & Inspector {: #canvas-and-widgets }
 
-- **Placement & Selection**: Click any widget on the canvas or select it from the widget dropdown selector.
-- **Repositioning & Sizing**: Drag widgets freely within the canvas bounds. Use the Inspector sidebar to enter exact numeric **X**, **Y**, **Width**, and **Height** values.
+The canvas serves as an authentic live preview of your layout exactly as drivers and spectators will experience it during a race event. In **Edit Mode**, you can add, remove, reposition, resize, and configure the widgets that make up the layout.
+
+### Canvas Interactions
+- **Placement & Selection**: Click any widget directly on the canvas or pick it from the **Select Widget** dropdown in the top controls bar.
+- **Repositioning & Sizing**: Drag widgets freely across the canvas. Use the Configuration Inspector panel to enter exact numeric **X**, **Y**, **Width**, and **Height** coordinates.
 - **Keyboard Nudging**:
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 1px.
   - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 10px.
   - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget.
-- **Replicate Lanes**: Replicate a selected lane column card across all active lanes, positions, overall standings, or driver seeds.
-- **Stacked Columns Detection & Repair**:
-  - The editor automatically detects duplicate or overlapping columns across lane grids.
-  - An alert banner provides one-click **Quick Fix** or **Review Issues** in an interactive dialog.
+- **Replicate Lanes**: Replicate a selected lane column card across all active track lanes, heat positions, overall standings, or driver seeds.
+- **Stacked Columns Detection & Repair**: The editor automatically detects duplicate or overlapping columns across lane grids. An alert banner provides one-click **Quick Fix** or **Review Issues** in an interactive dialog.
+
+### Available Widgets & Configuration Options
+
+Race Coordinator AI includes a comprehensive collection of built-in widgets:
+
+1. **Leaderboard / Grid**:
+   - **Purpose**: Displays a live tabular leaderboard of drivers, positions, lap counts, telemetry metrics, and gaps.
+   - **Configuration Options**: Data source (**Heat Data** vs. **Overall Race Data**), custom column order and visibility, row heights, sorting rules, automatic paging for fields larger than the screen, and custom typography.
+2. **Lane Column (Modular Cards)**:
+   - **Purpose**: Renders telemetry data for a single lane, finishing position, or overall rank as an independent modular card.
+   - **Configuration Options**: Target binding (**Track Lane 1–8**, **Heat Position**, **Overall Standings**, or **Driver Seed**), up to 8 perimeter **Inset Slots** (for avatars, secondary metrics, or custom badges), text alignment, and font scaling.
+3. **Timer & Total Time**:
+   - **Purpose**: Displays the heat remaining time, heat elapsed time, or overall event duration.
+   - **Configuration Options**: Display presets (**Dynamic**, **Minutes & Seconds**, **Full Clock**, **Total Seconds**), sub-second precision thresholds (e.g. show decimals in the final 10 seconds), and format preview.
+4. **Countdown Widget (Start Lights)**:
+   - **Purpose**: Visual start sequence lights with synchronized start audio.
+   - **Configuration Options**: Lamp count (1 to 10), horizontal or vertical orientation, fade-in animation, background blur, and lamp glow effects.
+5. **Action Buttons**:
+   - **Purpose**: Interactive touch and click buttons for race control.
+   - **Configuration Options**: Trigger actions (**Start/Pause**, **Yellow Flag / Track Call**, **Audio Callout**, **Reset**, **Layout Switch**), custom button text, vector Material Icons, and color styling.
+6. **Records Widget**:
+   - **Purpose**: Displays track and session records (all-time fastest lap, fastest lane lap, total laps record) and driver achievements.
+   - **Configuration Options**: Record metric types, title formatting, typography, and background styling.
+7. **Image Widget**:
+   - **Purpose**: Renders circuit diagrams, sponsor banners, club logos, and graphic assets.
+   - **Configuration Options**: Image URL/path from asset manager, scaling mode (**Fit**, **Fill**, **Stretch**), opacity, and border radius.
+8. **Text Info Widget**:
+   - **Purpose**: Displays static titles, announcements, or dynamic race metadata tags (Race Name, Current Heat, Track Name).
+   - **Configuration Options**: Text template with variable interpolation (`{race_name}`, `{heat_number}`), font size, alignment, and colors.
+9. **Menu Widget**:
+   - **Purpose**: Compact in-race overlay menu for quick access to sound toggles, layout switching, and race controls.
+   - **Configuration Options**: Icon style, menu item visibility, and anchor positioning.
+10. **Upcoming Heats (On Deck)**:
+    - **Purpose**: Informs drivers of upcoming heat schedules and scheduled lane rotations.
+    - **Configuration Options**: Number of upcoming heats to preview, driver name formatting, and layout spacing.
+11. **Custom Widgets**:
+    - **Purpose**: Dynamically loads external web components and telemetry gauges from your custom widgets folder.
+    - **Configuration Options**: Custom property fields (colors, thresholds, toggles, text labels) defined in the widget manifest.
+
+For complete widget styling details, formulas, and custom widget development, see the [UI Editor Guide](ui-editor.md) and [Custom Widgets Guide](custom-widgets.md).
 
 ---
 

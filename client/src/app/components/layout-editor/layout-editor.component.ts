@@ -34,7 +34,7 @@ import { LayoutConfig, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
-import { GuideStep } from "@app/services/help.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -67,7 +67,7 @@ import {
   loadLayoutZoomFromStorage,
   parseLayoutConfig,
 } from "./layout-editor-actions.helper";
-import { buildLayoutEditorHelpSteps } from "./layout-editor-help.helper";
+import { LayoutEditorHelpHelper } from "./layout-editor-help.helper";
 import { NewLayoutModalComponent } from "./new-layout-modal/new-layout-modal.component";
 
 @Component({
@@ -164,6 +164,7 @@ export class LayoutEditorComponent
     optional: true,
   });
   public customUiService = inject(CustomUiService, { optional: true });
+  public helpService = inject(HelpService, { optional: true });
 
   constructor(
     public dataService: DataService,
@@ -731,15 +732,11 @@ export class LayoutEditorComponent
   }
 
   getHelpSteps(): GuideStep[] {
-    return buildLayoutEditorHelpSteps(this.translationService, () => {
-      this.isWidgetConfigVisible = true;
-      if (!this.currentSelectedWidget) {
-        const widgets = this.getLayoutWidgets();
-        if (widgets.length > 0) {
-          this.onWidgetDropdownSelect(widgets[0].id);
-        }
-      }
-    });
+    return LayoutEditorHelpHelper.getHelpSteps(this.translationService);
+  }
+
+  startHelp(): void {
+    this.helpService?.startGuide(this.getHelpSteps());
   }
 
   syncRacedayPreview(layout: LayoutConfig): void {

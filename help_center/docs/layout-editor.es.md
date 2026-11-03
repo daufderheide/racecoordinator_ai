@@ -35,7 +35,7 @@ La barra de herramientas superior proporciona acciones de gestión estandarizada
 
 ---
 
-## Controles de Lienzo y Resolución
+## Controles de Lienzo y Resolución {: #layout-controls }
 
 Ubicados en la barra de controles debajo de la barra de herramientas:
 
@@ -55,7 +55,7 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 ### Vista Previa de la Cuenta Regresiva de Salida
 - Haga clic en **Vista Previa de Luces** (<span class="material-icons">timer</span>) para alternar una vista previa de la secuencia de luces de salida en el lienzo sin iniciar una carrera real.
 
-### Biblioteca de widgets y controles de configuración
+### Biblioteca de widgets y controles de configuración {: #widget-panels }
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
 - **Configuración de Widgets (<span class="material-icons">tune</span>)**: Alterna la visibilidad del panel lateral de Configuración de Widgets. Cuando está oculto, el lienzo puede extenderse a lo largo de toda la página si la relación de aspecto del diseño lo permite (igual que en modo de solo lectura).
 - **Restablecer posición (<span class="material-icons">restart_alt</span>)**: Ubicado en el encabezado del cuadro flotante para devolverlo instantáneamente a su origen predeterminado `(0, 0)` arriba a la izquierda.
@@ -63,18 +63,59 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 
 ---
 
-## Lienzo de Widgets e Inspector
+## Lienzo de Widgets e Inspector {: #canvas-and-widgets }
 
-- **Colocación y Selección**: Haga clic en cualquier widget del lienzo o selecciónelo en el menú desplegable de widgets.
-- **Reposicionamiento y Dimensionamiento**: Arrastre widgets libremente dentro de los límites del lienzo. Utilice la barra lateral del Inspector para introducir valores numéricos exactos de **X**, **Y**, **Ancho** y **Alto**.
+El lienzo actúa como una vista previa auténtica y en vivo de su diseño, exactamente como lo verán los pilotos y espectadores durante una carrera. En el **Modo de Edición**, puede añadir, eliminar, reposicionar, redimensionar y configurar los widgets que componen el diseño.
+
+### Interacciones en el Lienzo
+- **Colocación y Selección**: Haga clic en cualquier widget del lienzo o selecciónelo en el menú desplegable de widgets de la barra de controles superior.
+- **Reposicionamiento y Dimensionamiento**: Arrastre widgets libremente dentro de los límites del lienzo. Utilice el Inspector para introducir valores numéricos exactos de **X**, **Y**, **Ancho** y **Alto**.
 - **Desplazamiento con el Teclado**:
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Desplaza el widget seleccionado 1px.
   - <kbd>Shift</kbd> + Teclas de flecha: Desplaza el widget seleccionado 10px.
   - <kbd>Supr</kbd> o <kbd>Retroceso</kbd>: Elimina el widget seleccionado.
 - **Replicar Carriles**: Replica una tarjeta de columna de carril seleccionada en todos los carriles activos, posiciones, clasificaciones generales o cabezas de serie de pilotos.
-- **Detección y Reparación de Columnas Apiladas**:
-  - El editor detecta automáticamente columnas duplicadas o superpuestas en las cuadrículas de carriles.
-  - Un banner de alerta ofrece una **Corrección Rápida** con un solo clic o **Revisar Problemas** en un diálogo interactivo.
+- **Detección y Reparación de Columnas Apiladas**: El editor detecta automáticamente columnas duplicadas o superpuestas en las cuadrículas de carriles. Un banner de alerta ofrece **Corrección Rápida** con un solo clic o **Revisar Problemas** en un diálogo interactivo.
+
+### Widgets Disponibles y Opciones de Configuración
+
+Race Coordinator AI incluye una completa gama de widgets integrados:
+
+1. **Tabla de Clasificación / Cuadrícula (Leaderboard / Grid)**:
+   - **Propósito**: Muestra una tabla de clasificación en vivo con pilotos, posiciones, vueltas, telemetría y diferencias.
+   - **Opciones de Configuración**: Fuente de datos (**Datos de Manga** vs. **Datos Generales de Carrera**), orden y visibilidad de columnas, altura de filas, reglas de ordenación, paginación automática y tipografía personalizada.
+2. **Columna de Carril (Lane Column - Tarjetas Modulares)**:
+   - **Propósito**: Muestra telemetría para un carril, posición o clasificación general como una tarjeta modular independiente.
+   - **Opciones de Configuración**: Vinculación de objetivo (**Carril 1–8**, **Posición en Manga**, **Clasificación General** o **Cabeza de Serie**), hasta 8 **Ranuras de Inserción (Insets)** para avatares o métricas secundarias, alineación y escala de texto.
+3. **Temporizador y Tiempo Total (Timer & Total Time)**:
+   - **Propósito**: Muestra el tiempo restante o transcurrido de la manga o la duración total del evento.
+   - **Opciones de Configuración**: Preajustes de visualización (**Dinámico**, **Minutos y Segundos**, **Reloj Completo**, **Segundos Totales**), umbrales de precisión por debajo del segundo y vista previa del formato.
+4. **Widget de Cuenta Regresiva (Luces de Salida)**:
+   - **Propósito**: Luces visuales de la secuencia de salida con sonido sincronizado.
+   - **Opciones de Configuración**: Número de luces (1 a 10), orientación horizontal o vertical, animación de desvanecimiento, desenfoque de fondo y resplandor.
+5. **Botones de Acción (Action Buttons)**:
+   - **Propósito**: Botones táctiles e interactivos para el control de carrera.
+   - **Opciones de Configuración**: Acciones (**Iniciar/Pausar**, **Bandera Amarilla**, **Llamada de Audio**, **Restablecer**, **Cambiar Diseño**), etiquetas personalizadas, iconos Material Icons y estilo de color.
+6. **Widget de Récords (Records)**:
+   - **Propósito**: Muestra récords de la pista y de la sesión (vuelta rápida histórica, récord por carril, récord de vueltas) y logros de pilotos.
+   - **Opciones de Configuración**: Tipos de métricas de récord, formato de título, tipografía y estilos de fondo.
+7. **Widget de Imagen (Image)**:
+   - **Propósito**: Muestra diagramas de circuito, pancartas de patrocinadores, logotipos de clubes y gráficos.
+   - **Opciones de Configuración**: Ruta de imagen, modo de escala (**Ajustar**, **Rellenar**, **Estirar**), opacidad y esquinas redondeadas.
+8. **Widget de Información de Texto**:
+   - **Propósito**: Muestra textos fijos o etiquetas de metadatos dinámicas de carrera (Nombre de Carrera, Manga Actual, Nombre de Pista).
+   - **Opciones de Configuración**: Plantilla de texto con variables (`{race_name}`, `{heat_number}`), tamaño de fuente, alineación y colores.
+9. **Widget de Menú**:
+   - **Propósito**: Menú superpuesto en carrera para acceso rápido a sonido, cambio de diseño y control de carrera.
+   - **Opciones de Configuración**: Estilo de icono, visibilidad de elementos y posición de anclaje.
+10. **Próximas Mangas (En Espera)**:
+    - **Propósito**: Informa a los pilotos sobre los próximos horarios de mangas y rotaciones de carriles.
+    - **Opciones de Configuración**: Número de mangas a previsualizar, formato de nombres y espaciado.
+11. **Widgets Personalizados (Custom Widgets)**:
+    - **Propósito**: Carga componentes web externos e indicadores de telemetría desde su carpeta de widgets personalizados.
+    - **Opciones de Configuración**: Campos de propiedades personalizadas (colores, umbrales, interruptores, textos) definidos en el manifiesto.
+
+Para obtener detalles completos sobre estilo de widgets y desarrollo de widgets personalizados, consulte la [Guía del Editor de Interfaz](ui-editor.es.md) y la [Guía de Widgets Personalizados](custom-widgets.es.md).
 
 ---
 

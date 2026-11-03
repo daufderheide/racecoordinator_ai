@@ -35,7 +35,7 @@ A barra de ferramentas superior oferece ações de gerenciamento padronizadas:
 
 ---
 
-## Controles de Tela e Resolução
+## Controles de Tela e Resolução {: #layout-controls }
 
 Localizados na barra de controles abaixo da barra de ferramentas:
 
@@ -55,7 +55,7 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 ### Pré-visualização da Contagem Regressiva de Largada
 - Clique em **Pré-visualizar Luzes** (<span class="material-icons">timer</span>) para alternar uma prévia ao vivo da sequência de luzes de largada na tela sem iniciar uma corrida real.
 
-### Biblioteca de widgets e controles de configuração
+### Biblioteca de widgets e controles de configuração {: #widget-panels }
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante. Um clique também a restaura se estiver minimizada ou fora da tela visível.
 - **Configuração de Widgets (<span class="material-icons">tune</span>)**: Alterna a visibilidade do painel lateral Configuração de Widgets. Quando oculto, a tela pode se estender por toda a largura da página se a proporção da tela permitir (assim como no modo somente leitura).
 - **Redefinir posição (<span class="material-icons">restart_alt</span>)**: Localizado no cabeçalho da caixa de ferramentas para retorná-la instantaneamente à origem padrão `(0, 0)` no canto superior esquerdo.
@@ -63,18 +63,59 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 
 ---
 
-## Tela de Widgets e Inspetor
+## Tela de Widgets e Inspetor {: #canvas-and-widgets }
 
-- **Posicionamento e Seleção**: Clique em qualquer widget na tela ou selecione-o no menu suspenso de widgets.
-- **Reposicionamento e Dimensionamento**: Arraste os widgets livremente dentro dos limites da tela. Use a barra lateral do Inspetor para inserir valores numéricos exatos de **X**, **Y**, **Largura** e **Altura**.
+A tela serve como uma prévia autêntica em tempo real do seu layout, exatamente como pilotos e espectadores o verão durante uma corrida. No **Modo de Edição**, você pode adicionar, remover, reposicionar, redimensionar e configurar os widgets que compõem o layout.
+
+### Interações na Tela
+- **Posicionamento e Seleção**: Clique em qualquer widget diretamente na tela ou selecione-o no menu suspenso **Selecionar Widget** na barra de ferramentas superior.
+- **Reposicionamento e Dimensionamento**: Arraste os widgets livremente dentro dos limites da tela. Use o painel Inspetor de Configuração para inserir valores numéricos exatos de **X**, **Y**, **Largura** e **Altura**.
 - **Deslocamento pelo Teclado**:
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado em 1px.
-  - <kbd>Shift</kbd> + Teclas de seta: Move o widget selecionado em 10px.
+  - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado em 10px.
   - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado.
-- **Replicar Pistas**: Replica um cartão de coluna de pista selecionado em todas as pistas ativas, posições, classificações gerais ou cabeças de chave de pilotos.
-- **Detecção e Correção de Colunas Sobrepostas**:
-  - O editor detecta automaticamente colunas duplicadas ou sobrepostas em grades de pistas.
-  - Um banner de alerta oferece **Correção Rápida** em um clique ou **Revisar Problemas** em uma caixa de diálogo interativa.
+- **Replicar Pistas**: Replica um cartão de coluna de pista selecionado em todas as pistas ativas, posições da bateria, classificação geral ou cabeças de chave de pilotos.
+- **Detecção e Correção de Colunas Sobrepostas**: O editor detecta automaticamente colunas duplicadas ou sobrepostas em grades de pistas. Um banner de alerta oferece **Correção Rápida** em um clique ou **Revisar Problemas** em uma caixa de diálogo interativa.
+
+### Widgets Disponíveis e Opções de Configuração
+
+O Race Coordinator AI inclui uma coleção abrangente de widgets integrados:
+
+1. **Classificação / Grade (Leaderboard)**:
+   - **Objetivo**: Exibe uma tabela de classificação ao vivo de pilotos, posições, voltas, métricas telemétricas e intervalos.
+   - **Opções de Configuração**: Fonte de dados (**Dados da Bateria** vs. **Dados Gerais da Corrida**), ordem e visibilidade de colunas personalizadas, altura das linhas, regras de ordenação, paginação automática e tipografia.
+2. **Coluna de Pista (Cartões Modulares)**:
+   - **Objetivo**: Renderiza dados telemétricos de uma única pista, posição final ou classificação geral como um cartão modular independente.
+   - **Opções de Configuração**: Vinculação de destino (**Pista 1–8**, **Posição da Bateria**, **Classificação Geral** ou **Cabeça de Chave do Piloto**), até 8 **Slots Internos** perimetrais (para avatares, métricas secundárias ou emblemas), alinhamento de texto e dimensionamento de fontes.
+3. **Cronômetro e Tempo Total**:
+   - **Objetivo**: Exibe o tempo restante da bateria, tempo decorrido ou a duração total do evento.
+   - **Opções de Configuração**: Predefinições de exibição (**Dinâmico**, **Minutos e Segundos**, **Relógio Completo**, **Segundos Totais**), limites de precisão para frações de segundo e pré-visualização de formato.
+4. **Widget de Contagem Regressiva (Luzes de Largada)**:
+   - **Objetivo**: Sequência visual de luzes de largada com áudio sincronizado.
+   - **Opções de Configuração**: Quantidade de lâmpadas (1 a 10), orientação horizontal ou vertical, animação de fade-in, desfoque de fundo e efeitos de brilho da lâmpada.
+5. **Botões de Ação**:
+   - **Objetivo**: Botões interativos de toque e clique para controle da corrida.
+   - **Opções de Configuração**: Ações acionadas (**Iniciar/Pausar**, **Bandeira Amarela / Chamada de Pista**, **Chamada de Áudio**, **Redefinir**, **Alternar Layout**), texto personalizado do botão, ícones vetoriais Material Icons e estilos de cor.
+6. **Widget de Recordes**:
+   - **Objetivo**: Exibe recordes da pista e da sessão (volta mais rápida histórica, volta mais rápida na pista, recorde de voltas totais) e conquistas dos pilotos.
+   - **Opções de Configuração**: Tipos de métricas de recorde, formatação de títulos, tipografia e estilo de fundo.
+7. **Widget de Imagem**:
+   - **Objetivo**: Renderiza mapas de circuitos, banners de patrocinadores, logotipos de clubes e recursos gráficos.
+   - **Opções de Configuração**: URL ou caminho da imagem do gerenciador de mídia, modo de escala (**Ajustar**, **Preencher**, **Esticar**), opacidade e raio da borda.
+8. **Widget de Texto Informativo**:
+   - **Objetivo**: Exibe títulos estáticos, avisos ou tags dinâmicas de metadados da corrida (Nome da Corrida, Bateria Atual, Nome da Pista).
+   - **Opções de Configuração**: Modelo de texto com interpolação de variáveis (`{race_name}`, `{heat_number}`), tamanho da fonte, alinhamento e cores.
+9. **Widget de Menu**:
+   - **Objetivo**: Menu sobreposto compacto durante a corrida para acesso rápido a configurações de som, troca de layout e controles de corrida.
+   - **Opções de Configuração**: Estilo de ícone, visibilidade de itens de menu e posicionamento de âncora.
+10. **Próximas Baterias (On Deck)**:
+    - **Objetivo**: Informa os pilotos sobre a programação das próximas baterias e rotações planejadas de pistas.
+    - **Opções de Configuração**: Número de baterias a serem pré-visualizadas, formatação de nomes de pilotos e espaçamento do layout.
+11. **Widgets Personalizados**:
+    - **Objetivo**: Carrega dinamicamente componentes web externos e medidores telemétricos de sua pasta de widgets personalizados.
+    - **Opções de Configuração**: Campos de propriedades personalizadas (cores, limites, seletores, rótulos de texto) definidos no manifesto do widget.
+
+Para obter detalhes completos sobre estilos de widgets, fórmulas e desenvolvimento de widgets personalizados, consulte o [Guia do Editor de UI](ui-editor.pt.md) e o [Guia de Widgets Personalizados](custom-widgets.pt.md).
 
 ---
 

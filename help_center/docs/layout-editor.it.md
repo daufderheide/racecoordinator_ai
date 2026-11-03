@@ -35,7 +35,7 @@ La barra degli strumenti superiore fornisce azioni di gestione standardizzate:
 
 ---
 
-## Controlli Canvas e Risoluzione
+## Controlli Canvas e Risoluzione {: #layout-controls }
 
 Posizionati nella barra dei controlli sotto la barra degli strumenti:
 
@@ -55,7 +55,7 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 ### Anteprima Semaforo di Partenza
 - Fare clic su **Anteprima Luci** (<span class="material-icons">timer</span>) per visualizzare in anteprima la sequenza delle luci del conto alla rovescia sul canvas senza avviare una gara reale.
 
-### Libreria dei widget e controlli di configurazione
+### Libreria dei widget e controlli di configurazione {: #widget-panels }
 - **Libreria dei widget (<span class="material-icons">widgets</span>)**: Attiva/disattiva la visibilità della casella degli strumenti mobile. Un clic ripristina la casella se è ridotta a icona o posizionata fuori dallo schermo visibile.
 - **Configurazione Widget (<span class="material-icons">tune</span>)**: Attiva/disattiva la visibilità del pannello laterale Configurazione Widget. Quando è nascosto, il canvas può estendersi sull'intera larghezza della pagina se le proporzioni del layout lo consentono (proprio come in modalità di sola lettura).
 - **Ripristina posizione (<span class="material-icons">restart_alt</span>)**: Situato nell'intestazione della casella mobile per riportarla istantaneamente all'origine `(0, 0)` in alto a sinistra.
@@ -63,18 +63,59 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 
 ---
 
-## Canvas dei Widget e Ispettore
+## Canvas dei Widget e Ispettore {: #canvas-and-widgets }
 
-- **Posizionamento e Selezione**: Fare clic su qualsiasi widget nel canvas o selezionarlo dal menu a discesa dei widget.
-- **Riposizionamento e Dimensionamento**: Trascinare liberamente i widget entro i limiti del canvas. Utilizzare la barra laterale dell'Ispettore per inserire valori numerici precisi di **X**, **Y**, **Larghezza** e **Altezza**.
+Il canvas funge da anteprima dal vivo autentica del layout, esattamente come piloti e spettatori lo vedranno durante un evento di gara. In **Modalità Modifica**, è possibile aggiungere, rimuovere, riposizionare, ridimensionare e configurare i widget che compongono il layout.
+
+### Interazioni sul Canvas
+- **Posizionamento e Selezione**: Fare clic su qualsiasi widget direttamente nel canvas o selezionarlo dal menu a discesa **Seleziona Widget** nella barra degli strumenti dei controlli superiori.
+- **Riposizionamento e Dimensionamento**: Trascinare liberamente i widget entro i limiti del canvas. Utilizzare il pannello laterale Configurazione Widget per inserire coordinate numeriche precise di **X**, **Y**, **Larghezza** e **Altezza**.
 - **Spostamento da Tastiera**:
   - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Sposta il widget selezionato di 1px.
-  - <kbd>Shift</kbd> + Tasti freccia: Sposta il widget selezionato di 10px.
+  - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Sposta il widget selezionato di 10px.
   - <kbd>Canc</kbd> o <kbd>Backspace</kbd>: Rimuove il widget selezionato.
-- **Replica Corsie**: Replica una scheda di colonna corsia selezionata su tutte le corsie attive, posizioni, classifiche generali o teste di serie dei piloti.
-- **Rilevamento e Riparazione Colonne Sovrapposte**:
-  - L'editor rileva automaticamente colonne duplicate o sovrapposte nelle griglie di corsia.
-  - Un banner di avviso fornisce una **Correzione Rapida** in un clic o l'opzione **Esamina Problemi** in una finestra di dialogo interattiva.
+- **Replica Corsie**: Replica una scheda di colonna corsia selezionata su tutte le corsie attive, posizioni della manche, classifiche generali o teste di serie dei piloti.
+- **Rilevamento e Riparazione Colonne Sovrapposte**: L'editor rileva automaticamente colonne duplicate o sovrapposte nelle griglie di corsia. Un banner di avviso fornisce una **Correzione Rapida** in un clic o l'opzione **Esamina Problemi** in una finestra di dialogo interattiva.
+
+### Widget Disponibili e Opzioni di Configurazione
+
+Race Coordinator AI include una collezione completa di widget integrati:
+
+1. **Tabellone / Griglia (Leaderboard)**:
+   - **Scopo**: Mostra una classifica tabellare in tempo reale di piloti, posizioni, giri, metriche telemetriche e distacchi.
+   - **Opzioni di Configurazione**: Origine dati (**Dati Manche** vs. **Dati Gara Generale**), ordine e visibilità delle colonne personalizzati, altezza delle righe, regole di ordinamento, impaginazione automatica e tipografia.
+2. **Colonna Corsia (Schede Modulari)**:
+   - **Scopo**: Visualizza i dati telemetrici per una singola corsia, posizione di arrivo o classifica generale come scheda modulare indipendente.
+   - **Opzioni di Configurazione**: Associazione bersaglio (**Corsia 1–8**, **Posizione Manche**, **Classifica Generale** o **Testa di Serie Pilota**), fino a 8 **Slot Interni** perimetrali (per avatar, metriche secondarie o badge), allineamento del testo e ridimensionamento caratteri.
+3. **Timer e Tempo Totale**:
+   - **Scopo**: Mostra il tempo rimanente della manche, il tempo trascorso o la durata complessiva dell'evento.
+   - **Opzioni di Configurazione**: Preimpostazioni di visualizzazione (**Dinamico**, **Minuti e Secondi**, **Orologio Completo**, **Secondi Totali**), soglie di precisione al decimo/centesimo di secondo e anteprima del formato.
+4. **Widget Conto alla Rovescia (Luci di Partenza)**:
+   - **Scopo**: Sequenza visiva delle luci di partenza con audio sincronizzato.
+   - **Opzioni di Configurazione**: Numero di luci (da 1 a 10), orientamento orizzontale o verticale, animazione di dissolvenza, sfocatura di sfondo ed effetti di bagliore.
+5. **Pulsanti Azione**:
+   - **Scopo**: Pulsanti interattivi touch e clic per il controllo della gara.
+   - **Opzioni di Configurazione**: Azioni di attivazione (**Avvia/Pausa**, **Bandiera Gialla / Chiamata Pista**, **Chiamata Audio**, **Ripristina**, **Cambio Layout**), testo personalizzato del pulsante, icone vettoriali Material Icons e stili di colore.
+6. **Widget Record**:
+   - **Scopo**: Mostra i record della pista e della sessione (giro più veloce di sempre, giro più veloce su corsia, record giri totali) e i risultati dei piloti.
+   - **Opzioni di Configurazione**: Tipi di metriche dei record, formattazione del titolo, tipografia e stile dello sfondo.
+7. **Widget Immagine**:
+   - **Scopo**: Mostra tracciati del circuito, banner degli sponsor, loghi del club e risorse grafiche.
+   - **Opzioni di Configurazione**: URL o percorso immagine dal gestore risorse, modalità di adattamento (**Adatta**, **Riempi**, **Allunga**), opacità e raggio del bordo.
+8. **Widget Testo Informativo**:
+   - **Scopo**: Mostra titoli statici, annunci o tag dinamici dei metadati di gara (Nome Gara, Manche Attuale, Nome Pista).
+   - **Opzioni di Configurazione**: Modello di testo con interpolazione di variabili (`{race_name}`, `{heat_number}`), dimensione del carattere, allineamento e colori.
+9. **Widget Menu**:
+   - **Scopo**: Menu compatto sovrapposto in gara per un rapido accesso ai controlli audio, cambio di layout e controlli di gara.
+   - **Opzioni di Configurazione**: Stile delle icone, visibilità delle voci di menu e posizionamento di ancoraggio.
+10. **Prossime Manche (On Deck)**:
+    - **Scopo**: Informa i piloti sul programma delle prossime manche e sulle rotazioni delle corsie pianificate.
+    - **Opzioni di Configurazione**: Numero di manche imminenti in anteprima, formattazione del nome pilota e spaziatura del layout.
+11. **Widget Personalizzati**:
+    - **Scopo**: Carica dinamicamente componenti web esterni e indicatori telemetrici dalla cartella dei widget personalizzati.
+    - **Opzioni di Configurazione**: Campi di proprietà personalizzati (colori, soglie, selettori, etichette di testo) definiti nel manifest del widget.
+
+Per informazioni dettagliate sullo stile dei widget, formule e sviluppo di widget personalizzati, consultare la [Guida all'Editor UI](ui-editor.it.md) e la [Guida ai Widget Personalizzati](custom-widgets.it.md).
 
 ---
 
