@@ -22,7 +22,7 @@
   <div class="content-area">
     <!-- LEFT PANEL: STATS -->
     <div class="sidebar-list stats-panel">
-      <div class="stats-content">
+      <div id="asset-stats-panel" class="stats-content">
         <!-- Database Icon -->
         <div class="db-icon-container">
           <img
@@ -163,71 +163,76 @@
         </div>
       </div>
 
-      <!-- Upload Zone -->
-      <input
-        type="file"
-        #fileInput
-        (change)="onUpload($event)"
-        style="display: none"
-        multiple
-      />
-      <div
-        class="upload-zone"
-        [class.disabled]="isUploading"
-        [class.drag-over]="isDragOver"
-        (click)="!isUploading && fileInput.click()"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave($event)"
-        (drop)="onDrop($event)"
-      >
-        @if (!isUploading) {
-          <img
-            src="assets/images/am_icon_upload.png"
-            alt="Upload"
-            class="upload-bg-icon"
-          />
-          <div class="upload-content">
-            <div class="upload-btn">{{ "AM_BTN_UPLOAD_NEW" | translate }}</div>
-            <div class="upload-hint">{{ "AM_UPLOAD_HINT" | translate }}</div>
-          </div>
-        }
-        @if (isUploading) {
-          <div class="upload-content loading">
-            <!-- Simple spinner equivalent -->
-            <div class="spinner"></div>
-            <div class="upload-btn">{{ "AM_UPLOADING" | translate }}</div>
-          </div>
-        }
-      </div>
+      <!-- Creation Actions (Upload + New Set Buttons) -->
+      <div id="asset-creation-actions" class="asset-creation-actions">
+        <!-- Upload Zone -->
+        <input
+          type="file"
+          #fileInput
+          (change)="onUpload($event)"
+          style="display: none"
+          multiple
+        />
+        <div
+          class="upload-zone"
+          [class.disabled]="isUploading"
+          [class.drag-over]="isDragOver"
+          (click)="!isUploading && fileInput.click()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+        >
+          @if (!isUploading) {
+            <img
+              src="assets/images/am_icon_upload.png"
+              alt="Upload"
+              class="upload-bg-icon"
+            />
+            <div class="upload-content">
+              <div class="upload-btn">
+                {{ "AM_BTN_UPLOAD_NEW" | translate }}
+              </div>
+              <div class="upload-hint">{{ "AM_UPLOAD_HINT" | translate }}</div>
+            </div>
+          }
+          @if (isUploading) {
+            <div class="upload-content loading">
+              <!-- Simple spinner equivalent -->
+              <div class="spinner"></div>
+              <div class="upload-btn">{{ "AM_UPLOADING" | translate }}</div>
+            </div>
+          }
+        </div>
 
-      <div class="new-set-zone">
-        <button
-          class="btn-new-set btn-image-set"
-          (click)="openNewImageSetEditor()"
-          [disabled]="isUploading"
-        >
-          {{ "AM_BTN_NEW_IMAGE_SET" | translate }}
-        </button>
-        <button
-          class="btn-new-set btn-audio-set"
-          (click)="openNewAudioSetEditor()"
-          [disabled]="isUploading"
-        >
-          {{ "AM_BTN_NEW_AUDIO_SET" | translate }}
-        </button>
-        <button
-          class="btn-new-set btn-custom-rotation"
-          (click)="openNewCustomRotationEditor()"
-          [disabled]="isUploading"
-        >
-          {{ "AM_BTN_NEW_CUSTOM_ROTATION" | translate }}
-        </button>
+        <div class="new-set-zone">
+          <button
+            class="btn-new-set btn-image-set"
+            (click)="openNewImageSetEditor()"
+            [disabled]="isUploading"
+          >
+            {{ "AM_BTN_NEW_IMAGE_SET" | translate }}
+          </button>
+          <button
+            class="btn-new-set btn-audio-set"
+            (click)="openNewAudioSetEditor()"
+            [disabled]="isUploading"
+          >
+            {{ "AM_BTN_NEW_AUDIO_SET" | translate }}
+          </button>
+          <button
+            class="btn-new-set btn-custom-rotation"
+            (click)="openNewCustomRotationEditor()"
+            [disabled]="isUploading"
+          >
+            {{ "AM_BTN_NEW_CUSTOM_ROTATION" | translate }}
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- RIGHT PANEL: ASSET LIBRARY -->
     <div class="rhs-wrapper">
-      <div class="detail-panel library-panel">
+      <div id="asset-library-panel" class="detail-panel library-panel">
         <!-- Loading Overlay -->
         @if (isLoading) {
           <div class="loading-overlay">
@@ -239,7 +244,7 @@
         <div class="panel-header library-header">
           <!-- Filter Controls -->
           <div class="library-controls">
-            <div class="filter-tabs">
+            <div id="asset-filter-tabs" class="filter-tabs">
               <div
                 class="tab filter-all"
                 [class.active]="filterType === 'all'"
@@ -298,6 +303,7 @@
         <div class="filter-bar-container">
           <input
             type="text"
+            id="asset-filter-input"
             class="filter-input"
             [placeholder]="'AM_FILTER_PLACEHOLDER' | translate"
             [(ngModel)]="filterName"

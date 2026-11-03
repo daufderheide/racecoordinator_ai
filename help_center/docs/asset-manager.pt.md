@@ -1,48 +1,83 @@
-# Gerenciador de Assets
+# Gestor de Recursos
 
-O **Gerenciador de Assets** permite que você carregue, organize e gerencie todos os seus assets digitais de corrida, incluindo arquivos de áudio, imagens personalizadas, conjuntos de imagens e esquemas de rotação.
+## Visão Geral {: #overview }
 
-## Visão Geral
+O **Gestor de Recursos** permite carregar, organizar e gerir todos os ficheiros multimédia das suas corridas, incluindo ficheiros de áudio, imagens personalizadas, conjuntos de imagens e esquemas de rotação no Race Coordinator AI.
 
-Assets são recursos personalizados usados em todo o aplicativo para personalizar a experiência de corrida:
+Os recursos são ficheiros personalizáveis que tornam as corridas únicas:
 
-- **Arquivos de Som:** Chamadas de áudio personalizadas, bipes de início, buzinas de chegada e clipes de narração.
-- **Conjuntos de Áudio:** Coleções agrupadas de arquivos de áudio ou chamadas de conversão de texto em fala (TTS) mapeadas para valores de ativação específicos (tempo em segundos, voltas restantes ou porcentagem de combustível).
-- **Imagens:** Gráficos de carros, avatares de pilotos, bandeiras personalizadas, logotipos de patrocinadores e imagens de fundo.
-- **Conjuntos de Imagens:** Coleções de imagens relacionadas (como medidores de combustível ou sequências de contagem regressiva).
-- **Rotações Personalizadas:** Assets de rotação de baterias definidos pelo usuário para formatos complexos.
+- **Ficheiros de som:** Avisos de áudio personalizados, sinais de partida, buzinas de meta e comentários.
+- **Conjuntos de áudio:** Coleções agrupadas de ficheiros sonoros ou frases de conversão de texto em voz (TTS) associadas a limites específicos (segundos restantes, voltas restantes ou nível de combustível).
+- **Imagens:** Gráficos de carros, avatares de pilotos, bandeiras personalizadas, logótipos e fundos.
+- **Conjuntos de imagens:** Sequências de imagens relacionadas (como medidores de combustível ou luzes de partida).
+- **Rotações personalizadas:** Esquemas de rotação de pistas definidos pelo utilizador para formatos especiais de corrida.
 
-## Carregar Ativos
+---
 
-Para carregar novos assets para sua biblioteca:
+## Adicionar Recursos {: #adding-assets }
 
-1. Abra o **Gerenciador de Assets** no menu principal ou na barra de ferramentas de configuração.
-2. Arraste e solte um ou mais arquivos na seção **Carregar Ativos**, ou clique para navegar no seu computador.
-3. Os formatos suportados incluem `.wav`, `.mp3`, `.ogg` para áudio e `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp` para imagens.
+O painel esquerdo do Gestor de Recursos disponibiliza quatro controlos para adicionar novos recursos à biblioteca, individualmente ou em lote:
 
-## Conjuntos de Áudio e Valores de Ativação
+1. **Zona de carregamento (Drop Zone):** Arraste e solte ficheiros diretamente na área tracejada ou clique para abrir o explorador de ficheiros. Pode carregar vários ficheiros em simultâneo.
+   - Formatos de imagem suportados: `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp`.
+   - Formatos de áudio suportados: `.wav`, `.mp3`, `.ogg`.
+2. **Novo conjunto de imagens:** Abre o Editor de conjuntos de imagens para combinar várias imagens em animações e medidores visuais de estado.
+3. **Novo conjunto de áudio:** Abre o Editor de conjuntos de áudio para programar sequências de sons acionadas por temporizadores, voltas restantes ou combustível.
+4. **Nova rotação personalizada:** Abre o Editor de rotação para desenhar esquemas especializados de alternância de pistas.
 
-Um **Conjunto de Áudio** permite configurar uma sequência de sons ou avisos falados acionados em limites numéricos específicos. Dependendo de onde o conjunto de áudio é atribuído no Race Coordinator AI, os valores representam unidades diferentes:
+---
 
-*   **Tempo em Segundos:** Usado nas configurações de Tema para **Contagem regressiva de largada**, **Segundos restantes**, **Início automático** e **Avanço automático** (por exemplo, entradas em `5`, `4`, `3`, `2`, `1` e `0` segundos).
-*   **Contagem de Voltas:** Usado nas configurações de Tema para anúncios de **Voltas restantes**. As entradas definem avisos quando o líder atinge contagens específicas de voltas restantes (por exemplo, `10`, `5`, `1` e `0` voltas restantes).
-*   **Porcentagem de Combustível (%):** Usado nas configurações de Piloto para **Sons de nível de combustível**. As entradas definem avisos quando o nível de combustível atinge limites de aviso, crítico ou cheio (por exemplo, `20%`, `10%`, `0%` vazio ou `100%` abastecido).
+## Biblioteca de Recursos & Ações {: #asset-library }
 
-No **Editor de Conjuntos de Áudio**, você pode adicionar entradas, selecionar arquivos de áudio predefinidos ou escrever frases TTS (com variáveis de modelo como `{driver.nickname}`), definir valores de ativação e usar o botão **Extrair valores automaticamente dos nomes** para preencher automaticamente os valores a partir de nomes de arquivos numerados (por exemplo, `10.mp3`, `5.mp3`).
+O painel principal da biblioteca apresenta todos os recursos visuais e sonoros armazenados na sua base de dados.
 
-### Modos de ativação duplos: Restante vs. Decorrido
+Ao passar o cursor sobre qualquer cartão de recurso são reveladas ações rápidas:
+- **Reprodução de áudio:** Clique no botão de reprodução nos cartões de som para ouvir o áudio imediatamente sem abrir nenhum editor.
+- **Pré-visualização de imagem:** Apresenta a imagem em resolução total e detalha cada fotograma dos conjuntos de imagens.
+- **Renomear diretamente:** Clique no nome para renomear rapidamente o recurso na própria grelha.
+- **Eliminar recurso:** Clique no ícone do caixote do lixo para remover ficheiros desnecessários da base de dados.
 
-Cada entrada em um Conjunto de Áudio pode ser configurada com um **Modo de ativação**:
+Também pode clicar nos recursos para os selecionar. Com elementos selecionados, a barra de ferramentas superior oferece ações para edição e eliminação em lote.
 
-*   **Restante (Contagem regressiva):** É acionado quando a corrida se aproxima de zero ou da linha de chegada (por exemplo, quando restam 10 voltas ou 30 segundos na bateria). Este é o modo padrão para contagens regressivas.
-*   **Decorrido (Contagem progressiva):** É acionado à medida que a corrida avança a partir da largada (por exemplo, quando o líder completa 10 voltas ou após 30 segundos decorridos).
+---
 
-#### Dois avisos com o mesmo valor numérico
-O Race Coordinator AI suporta configurar duas entradas com exatamente o mesmo valor numérico (por exemplo, valor `10`):
-- Uma entrada configurada como **Decorrido** tocará quando o líder alcançar esse marco inicial (ex. aos 10 giros completados).
-- Outra entrada configurada como **Restante** tocará quando a corrida se aproximar do final (ex. quando restarem 10 giros).
+## Filtros e Opções de Visualização {: #filter-tabs }
 
-#### Pré-visualização na ordem natural da corrida
-Ao pré-visualizar ou reproduzir automaticamente um Conjunto de Áudio no Gerenciador de Assets ou no Seletor de Áudio, os sons são executados na ordem cronológica da corrida:
-1. Todas as entradas **Decorrido** tocam primeiro em ordem crescente (0 → N).
-2. Todas as entradas **Restante** tocam em seguida em ordem decrescente de contagem regressiva (N → 0).
+O Gestor de Recursos disponibiliza ferramentas superiores para encontrar e organizar os seus ficheiros com facilidade:
+
+- **Separadores de filtro:** Filtre a biblioteca por tipo de recurso:
+  - **Todos:** Apresenta todos os ficheiros armazenados na base de dados.
+  - **Imagens:** Ficheiros de imagem estáticos (`.png`, `.jpg`, `.svg`, etc.).
+  - **Conjuntos de imagens:** Animações e medidores formados por várias imagens.
+  - **Sons:** Ficheiros de som individuais (`.wav`, `.mp3`, `.ogg`).
+  - **Conjuntos de áudio:** Coleções sonoras vinculadas a valores numéricos.
+  - **Rotações personalizadas:** Esquemas de rotação de pistas das mangas.
+- **Modos de visualização:** Alterne entre **Vista de lista**, **Miniaturas pequenas**, **Miniaturas médias** e **Miniaturas grandes**.
+- **Filtrar por nome:** Campo de pesquisa em tempo real que filtra instantaneamente a lista à medida que escreve.
+
+---
+
+## Conjuntos de áudio e valores de acionamento
+
+Um **Conjunto de áudio** permite programar sons ou mensagens de voz associadas a marcos concretos da corrida:
+
+*   **Tempo em segundos:** Utilizado nos temas para contagens decrescentes e avisos de tempo restante da manga.
+*   **Número de voltas:** Utilizado nos temas para anunciar as voltas restantes do líder da corrida.
+*   **Percentagem de combustível (%):** Utilizado nas opções de piloto para alertas de reserva e abastecimento concluído.
+
+### Modos duplos: Restante vs. Decorrido
+
+Cada entrada pode ser configurada com um modo específico:
+*   **Restante (Contagem decrescente):** É acionado à medida que a corrida se aproxima do final ou do zero.
+*   **Decorrido (Contagem progressiva):** É acionado à medida que a corrida avança desde a partida.
+
+---
+
+## Utilização de recursos na aplicação
+
+Assim que forem carregados ou criados, os seus ficheiros ficam imediatamente disponíveis em todos os módulos:
+
+- Selecione efeitos sonoros no [Editor de Temas](themes.pt.md) para voltas rápidas e fanfarras de final de corrida.
+- Associe imagens no [Editor de Pilotos](driver-editor.pt.md) para carros e avatares.
+- Configure indicadores visuais no [Editor de Layout](layout-editor.pt.md).
+- Associe ficheiros de rotação no [Editor de Corridas](race-editor.pt.md).

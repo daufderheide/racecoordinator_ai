@@ -139,3 +139,22 @@ export function calculateListGridDimensions(
 
   return { cols, rows };
 }
+
+export function readAssetFile(
+  file: File,
+): Promise<{ name: string; type: string; data: Uint8Array }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const arrayBuffer = e.target.result;
+      const bytes = new Uint8Array(arrayBuffer);
+      const isImage =
+        (file.type && file.type.startsWith("image/")) ||
+        /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
+      const type = isImage ? "image" : "audio";
+      resolve({ name: file.name, type, data: bytes });
+    };
+    reader.onerror = (e) => reject(e);
+    reader.readAsArrayBuffer(file);
+  });
+}

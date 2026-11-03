@@ -1,5 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
-import { Pipe, PipeTransform } from "@angular/core";
+import { CUSTOM_ELEMENTS_SCHEMA, Pipe, PipeTransform } from "@angular/core";
 import {
   ComponentFixture,
   fakeAsync,
@@ -19,6 +18,7 @@ import { HelpService } from "@app/services/help.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import {
   mockAnalyticsService,
   mockDataService,
@@ -1205,19 +1205,35 @@ describe("AssetManagerComponent", () => {
       expect(component.showAudioSetEditor).toBeFalse();
     });
 
-    it("should return guide steps for help walkthrough including layout switcher", () => {
+    it("should return all 8 guide steps in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBeGreaterThan(0);
-      const layoutStep = steps.find(
-        (s) => s.selector === "#asset-layout-switcher",
+      expect(steps.length).toBe(8);
+
+      const targetIds = steps.map((s) => s.targetId);
+      expect(targetIds).toEqual([
+        undefined,
+        "toolbar-container",
+        "asset-stats-panel",
+        "asset-creation-actions",
+        "asset-library-panel",
+        "asset-filter-tabs",
+        "asset-layout-switcher",
+        "asset-filter-input",
+      ]);
+    });
+
+    it("should start guide via HelpService when startHelp is called", () => {
+      const helpService = TestBed.inject(HelpService);
+      component.startHelp();
+      expect(helpService.startGuide).toHaveBeenCalledWith(
+        component.getHelpSteps(),
       );
-      expect(layoutStep).toBeDefined();
-      expect(layoutStep?.title).toBe("AM_HELP_LAYOUT_TITLE");
-      for (const step of steps) {
-        if (step.onEnter) {
-          step.onEnter();
-        }
-      }
+    });
+
+    it("should verify that all guide step DOM targets exist in the component DOM", () => {
+      fixture.detectChanges();
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
 
     it("should default layoutMode to medium and reflect in DOM", () => {

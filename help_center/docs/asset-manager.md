@@ -1,8 +1,8 @@
 # Asset Manager
 
-The **Asset Manager** allows you to upload, organize, and manage all your digital race assets, including audio files, custom images, image sets, and rotation schemes used throughout Race Coordinator AI.
+## Overview {: #overview }
 
-## Overview
+The **Asset Manager** allows you to upload, organize, and manage all your digital race assets, including audio files, custom images, image sets, and rotation schemes used throughout Race Coordinator AI.
 
 Assets are custom resources used across the application to personalize the race experience. These include:
 
@@ -12,13 +12,50 @@ Assets are custom resources used across the application to personalize the race 
 - **Image Sets:** Collections of related images (such as fuel gauges or countdown sequences).
 - **Custom Rotations:** User-defined heat rotation assets for complex or custom rotation schemes.
 
-## Uploading Assets
+---
 
-To upload new assets to your library:
+## Adding Assets {: #adding-assets }
 
-1. Open the **Asset Manager** from the main menu or configuration toolbar.
-2. Drag and drop single or multiple files into the **Upload Assets** section, or click to browse your local computer.
-3. Supported formats include `.wav`, `.mp3`, `.ogg` for audio, and `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp` for images.
+The left panel of the Asset Manager provides four controls to add new assets to your library individually or in bulk:
+
+1. **Upload Assets Drop Zone:** Drag and drop one or more files directly into the dashed upload area, or click the zone to open your computer's file browser. You can upload multiple files at once.
+   - Supported image formats: `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp`.
+   - Supported audio formats: `.wav`, `.mp3`, `.ogg`.
+2. **New Image Set:** Opens the Image Set Editor to create a grouped collection of image frames. Image sets are used for multi-frame animations and state indicators, such as progressive fuel gauges or countdown sequences.
+3. **New Audio Set:** Opens the Audio Set Editor to create multi-cue audio sequences triggered by countdown timers, remaining laps, or fuel percentage levels.
+4. **New Custom Rotation:** Opens the Custom Rotation Editor to design or import specialized lane rotation schemes for unique race formats.
+
+---
+
+## Asset Library & Actions {: #asset-library }
+
+The main library panel displays all visual and audio assets stored in your database. 
+
+Hovering over any asset card in the library reveals quick-action controls:
+- **Audio Playback:** Click the play button on audio cards to preview sound effects and audio sets directly without opening an editor.
+- **Image Preview:** Displays full-resolution previews of graphic assets and frame progressions for image sets.
+- **Inline Rename:** Click the asset name or edit action to quickly rename the asset directly in the grid.
+- **Delete Asset:** Click the trashcan icon to remove an unused asset from the database.
+
+You can also click assets to select them. When assets are selected, the top toolbar provides batch editing and deletion actions.
+
+---
+
+## Filtering & Layout Options {: #filter-tabs }
+
+The Asset Manager provides powerful controls along the top of the library to find and display assets:
+
+- **Filter Tabs:** Quickly filter the library by resource type:
+  - **All:** Displays every asset in the database.
+  - **Images:** Shows only individual static image files (`.png`, `.jpg`, `.svg`, etc.).
+  - **Image Sets:** Shows only grouped multi-frame image animations and fuel gauge sequences.
+  - **Sounds:** Shows only individual audio clips (`.wav`, `.mp3`, `.ogg`).
+  - **Audio Sets:** Shows only multi-cue threshold-triggered audio collections.
+  - **Custom Rotations:** Shows only custom lane rotation schemes.
+- **View Layout Switcher:** Switch between **List View**, **Small Thumbnails**, **Medium Thumbnails**, and **Large Thumbnails** to fit more assets on screen or inspect detailed image previews.
+- **Filter by Name:** Real-time search input that narrows the asset list instantly as you type.
+
+---
 
 ## Audio Sets & Trigger Values
 
@@ -47,17 +84,13 @@ When previewing or auto-playing an Audio Set in the Asset Manager or Audio Selec
 1. All **Elapsed** entries play first in ascending count-up order (0 → N).
 2. All **Remaining** entries play next in descending countdown order (N → 0).
 
-## Managing & Organizing Assets
-
-- **Category Filtering:** Filter your asset list by type (Images, Sounds, Image Sets, Rotations).
-- **Preview & Playback:** Click on any audio file to preview playback or any image to view its resolution and preview.
-- **Renaming & Tagging:** Give your assets clear, recognizable names for easy selection in the UI Editor and Theme Manager.
-- **Deleting Assets:** Remove unused assets to clean up your database storage.
+---
 
 ## Using Assets in Themes & UI Layouts
 
-Once uploaded, your assets become immediately available across the application:
+Once uploaded or created, your assets become immediately available across the application:
 
-- Select custom sound effects in the **Theme Manager** for lap callouts, leader changes, and start/finish tones.
-- Assign custom images to driver profiles, car models, and track layouts.
-- Link custom rotation files within the **Race Editor** for advanced rotation formats.
+- Select custom sound effects in the [Theme Editor](themes.md) for lap callouts, leader changes, countdown cues, and finish fanfare.
+- Assign custom graphics in the [Driver Editor](driver-editor.md) for car images, driver avatars, and nicknames.
+- Configure visual widgets and gauge animations in the [Layout Editor](layout-editor.md).
+- Link custom rotation files within the [Race Editor](race-editor.md) for advanced heat rotations.

@@ -126,6 +126,12 @@
   margin-top: 2px;
 }
 
+.asset-creation-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Upload Zone */
 .upload-zone {
   box-sizing: border-box;

@@ -58,6 +58,7 @@ import {
   getAssetBytesByType,
   getAssetCountByType,
   parseAssetSize,
+  readAssetFile,
   sortAudioSetEntries,
 } from "./asset-manager.utils";
 import { getAssetManagerHelpSteps } from "./asset-manager-help";
@@ -722,20 +723,7 @@ export class AssetManagerComponent
   readFile(
     file: File,
   ): Promise<{ name: string; type: string; data: Uint8Array }> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const arrayBuffer = e.target.result;
-        const bytes = new Uint8Array(arrayBuffer);
-        const isImage =
-          (file.type && file.type.startsWith("image/")) ||
-          /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
-        const type = isImage ? "image" : "audio";
-        resolve({ name: file.name, type, data: bytes });
-      };
-      reader.onerror = (e) => reject(e);
-      reader.readAsArrayBuffer(file);
-    });
+    return readAssetFile(file);
   }
 
   onDelete(id: string) {
@@ -1144,5 +1132,9 @@ export class AssetManagerComponent
 
   getHelpSteps(): GuideStep[] {
     return getAssetManagerHelpSteps(this.translationService);
+  }
+
+  startHelp(): void {
+    this.helpService.startGuide(this.getHelpSteps());
   }
 }

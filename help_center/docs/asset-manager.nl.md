@@ -1,48 +1,83 @@
-# Asset Manager
+# Assetbeheer
 
-Met de **Asset Manager** kunt u al uw digitale race-assets uploaden, organiseren en beheren, inclusief audiobestanden, aangepaste afbeeldingen, afbeeldingensets en rotatieschema's.
+## Overzicht {: #overview }
 
-## Overzicht
+Met **Assetbeheer** kunt u al uw digitale racemedia uploaden, organiseren en beheren, waaronder audiobestanden, afbeeldingen, afbeeldingenseries en rotatieschema's in Race Coordinator AI.
 
-Assets zijn aangepaste bronnen die in de toepassing worden gebruikt om de race-ervaring te personaliseren:
+Assets zijn aanpasbare bestanden om de race-ervaring persoonlijk te maken:
 
-- **Geluidsbestanden:** Aangepaste audiomeldingen, starttonen, finishsignalen en commentaarclips.
-- **Audiosets:** Gegroepeerde verzamelingen van audiobestanden of tekst-naar-spraak (TTS) berichten gekoppeld aan specifieke triggerwaarden (tijd in seconden, resterende ronden of brandstofpercentage).
-- **Afbeeldingen:** Autografieën, coureursavatars, aangepaste vlaggen, sponsorlogo's en achtergrondafbeeldingen.
-- **Afbeeldingensets:** Verzamelingen van gerelateerde afbeeldingen (zoals brandstofmeters of aftelsequenties).
-- **Aangepaste Rotaties:** Door de gebruiker gedefinieerde rotatie-assets voor complexe rotatie-indelingen.
+- **Geluidsbestanden:** Aangepaste audiomeldingen, startsignalen, finishhoorns en commentaren.
+- **Audiosets:** Gegroepeerde verzamelingen geluidsbestanden of tekst-naar-spraak (TTS)-meldingen gekoppeld aan specifieke drempelwaarden (seconden, resterende ronden of brandstofniveau).
+- **Afbeeldingen:** Auto-afbeeldingen, coureursavatars, aangepaste vlaggen, sponsorlogo's en achtergronden.
+- **Afbeeldingenseries:** Reeksen opeenvolgende afbeeldingen voor animaties (zoals brandstofmeters of startlichten).
+- **Aangepaste rotaties:** Gebruikersgedefinieerde baanrotaties voor speciale raceformats.
 
-## Assets Uploaden
+---
 
-Om nieuwe assets naar uw bibliotheek te uploaden:
+## Assets toevoegen {: #adding-assets }
 
-1. Open de **Asset Manager** vanuit het hoofdmenu of de configuratie-werkbalk.
-2. Sleep een of meer bestanden naar het gedeelte **Assets Uploaden**, of klik om op uw computer te zoeken.
-3. Ondersteunde formaten zijn onder meer `.wav`, `.mp3`, `.ogg` voor audio en `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp` voor afbeeldingen.
+Het linkerpaneel van Assetbeheer biedt vier knoppen om nieuwe assets toe te voegen aan uw bibliotheek, afzonderlijk of in bulk:
 
-## Audiosets en Triggerwaarden
+1. **Uploadzone (Drop Zone):** Sleep bestanden rechtstreeks naar het gestreepte vak of klik erop om de bestandsverkenner te openen. U kunt meerdere bestanden tegelijk uploaden.
+   - Ondersteunde afbeeldingsformaten: `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp`.
+   - Ondersteunde audioformaten: `.wav`, `.mp3`, `.ogg`.
+2. **Nieuwe afbeeldingenset:** Opent de Afbeeldingenset-editor om meerdere opeenvolgende afbeeldingen te combineren tot animaties en statusmeters.
+3. **Nieuwe audioset:** Opent de Audioset-editor om sequenties van geluiden te programmeren op basis van tijd, resterende ronden of brandstof.
+4. **Nieuwe aangepaste rotatie:** Opent de Rotatie-editor om gespecialiseerde baanwisselschema's te ontwerpen.
 
-Met een **Audioset** kunt u een reeks geluiden of gesproken meldingen configureren die worden geactiveerd bij specifieke numerieke drempelwaarden. Afhankelijk van waar de audioset is toegewezen in Race Coordinator AI, vertegenwoordigen de waarden verschillende eenheden:
+---
 
-*   **Tijd in Seconden:** Gebruikt in Thema-instellingen voor **Start countdown**, **Resterende seconden**, **Automatische start** en **Automatisch doorgaan** (bijvoorbeeld vermeldingen bij `5`, `4`, `3`, `2`, `1` en `0` seconden).
-*   **Rondenaantal:** Gebruikt in Thema-instellingen voor **Resterende ronden** meldingen. Vermeldingen bepalen meldingen wanneer de leider specifieke resterende rondenaantallen bereikt (bijvoorbeeld `10`, `5`, `1` en `0` resterende ronden).
-*   **Brandstofpercentage (%):** Gebruikt in Coureur-instellingen voor **Brandstofniveau-geluiden**. Vermeldingen bepalen meldingen wanneer het brandstofniveau van de coureur waarschuwings-, kritieke of vol-drempelwaarden bereikt (bijvoorbeeld `20%`, `10%`, `0%` leeg of `100%` volgetankt).
+## Assetbibliotheek & Acties {: #asset-library }
 
-In de **Audioset-editor** kunt u vermeldingen toevoegen, vooraf ingestelde audiobestanden selecteren of TTS-zinnen schrijven (met sjabloonvariabelen zoals `{driver.nickname}`), triggerwaarden instellen en de knop **Waarden automatisch extraheren uit namen** gebruiken om waarden automatisch in te vullen op basis van genummerde bestandsnamen (bijv. `10.mp3`, `5.mp3`).
+Het hoofdpaneel toont alle opgeslagen beeld- en audio-assets in uw database.
+
+Wanneer u met de muis over een assetkaart beweegt, verschijnen handige snelacties:
+- **Audio afspelen:** Klik op de afspeelknop op audiokaarten om het geluid meteen te beluisteren zonder een editor te openen.
+- **Afbeeldingsvoorbeeld:** Toont afbeeldingen in volledige resolutie en details van afzonderlijke frames in series.
+- **Direct hernoemen:** Klik op de naam om de asset meteen in het overzicht te hernoemen.
+- **Asset verwijderen:** Klik op het prullenbak-icoon om overbodige bestanden uit de database te wissen.
+
+U kunt ook assets aanklikken om ze te selecteren. Bij geselecteerde items biedt de bovenste werkbalk acties voor bulksgewijs bewerken en verwijderen.
+
+---
+
+## Filters & Weergaveopties {: #filter-tabs }
+
+Bovenaan de bibliotheek vindt u diverse functies om snel het juiste bestand te vinden:
+
+- **Filtertabbladen:** Filter de bibliotheek op assettype:
+  - **Alles:** Toont elk bestand in de database.
+  - **Afbeeldingen:** Enkelvoudige statische afbeeldingen (`.png`, `.jpg`, `.svg`, enz.).
+  - **Afbeeldingensets:** Animaties en brandstofmeters bestaande uit meerdere afbeeldingen.
+  - **Geluiden:** Losse audioclips (`.wav`, `.mp3`, `.ogg`).
+  - **Audiosets:** Geluidsverzamelingen gekoppeld aan numerieke drempelwaarden.
+  - **Aangepaste rotaties:** Baanrotatieschema's voor heats.
+- **Weergave-indeling:** Schakel tussen **Lijstweergave**, **Kleine miniaturen**, **Middelgrote miniaturen** en **Grote miniaturen**.
+- **Filteren op naam:** Zoekveld dat de lijst in realtime filtert terwijl u typt.
+
+---
+
+## Audiosets en drempelwaarden
+
+Met een **Audioset** kunt u geluiden of gesproken meldingen koppelen aan concrete meetpunten in de race:
+
+*   **Tijd in seconden:** Gebruikt in thema's voor startaftellingen en meldingen over resterende heattijd.
+*   **Aantal ronden:** Gebruikt in thema's voor aankondigingen van resterende ronden voor de leider.
+*   **Brandstofpercentage (%):** Gebruikt bij coureursinstellingen voor tankwaarschuwingen en voltankmeldingen.
 
 ### Dubbele triggermodi: Resterend vs. Verstreken
 
-Elke vermelding in een Audioset kan worden geconfigureerd met een **Triggermodus**:
+Elke melding kan worden ingesteld met een specifieke modus:
+*   **Resterend (Aftellen):** Wordt geactiveerd wanneer de heat het nulpunt of de finish nadert.
+*   **Verstreken (Optellen):** Wordt geactiveerd naarmate de race vordert vanaf de start.
 
-*   **Resterend (Aftellen):** Wordt geactiveerd naarmate de race het einde of de tijdslimiet nadert (bijvoorbeeld wanneer er nog 10 ronden of 30 seconden over zijn in de heat). Dit is de standaardmodus voor aftellingen.
-*   **Verstreken (Optellen):** Wordt geactiveerd naarmate de race vordert vanaf de start (bijvoorbeeld wanneer de leider 10 ronden voltooit of 30 seconden zijn verstreken).
+---
 
-#### Twee meldingen met dezelfde numerieke waarde
-Race Coordinator AI ondersteunt het configureren van twee vermeldingen met exact dezelfde numerieke waarde (bijvoorbeeld waarde `10`):
-- Een vermelding geconfigureerd als **Verstreken** wordt afgespeeld wanneer de leider die vroege mijlpaal bereikt (bijv. 10 verstreken ronden).
-- Een andere vermelding geconfigureerd als **Resterend** wordt afgespeeld wanneer de race het einde nadert (bijv. wanneer er nog 10 ronden over zijn).
+## Assets gebruiken in thema's en lay-outs
 
-#### Natuurlijke raceverloop-voorvertoning
-Bij het voorbeluisteren of automatisch afspelen van een Audioset in de Asset Manager of Audiokiezer worden de geluiden in natuurlijke racevolgorde afgespeeld:
-1. Alle **Verstreken** vermeldingen spelen eerst in oplopende volgorde (0 → N).
-2. Alle **Resterend** vermeldingen spelen vervolgens in aflopende aftelvolgorde (N → 0).
+Zodra uw bestanden zijn geüpload of gemaakt, zijn ze direct beschikbaar in alle onderdelen van Race Coordinator AI:
+
+- Kies geluidseffecten in de [Thema-editor](themes.nl.md) voor rondetijden en finishfanfares.
+- Koppel afbeeldingen in de [Coureureditor](driver-editor.nl.md) voor profielfoto's en avatars.
+- Configureer visuele meters in de [Lay-outeditor](layout-editor.nl.md).
+- Koppel rotatieschema's in de [Race-editor](race-editor.nl.md).

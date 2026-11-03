@@ -1,48 +1,83 @@
 # Gestionnaire de Ressources
 
-Le **Gestionnaire de Ressources** vous permet de télécharger, d'organiser et de gérer toutes vos ressources numériques de course, notamment les fichiers audio, les images personnalisées, les ensembles d'images et les schémas de rotation.
+## Présentation {: #overview }
 
-## Aperçu
+Le **Gestionnaire de Ressources** vous permet de téléverser, d'organiser et de gérer l'ensemble de vos fichiers multimédias de course, notamment les fichiers audio, les images personnalisées, les ensembles d'images et les schémas de rotation dans Race Coordinator AI.
 
-Les ressources sont des fichiers personnalisés utilisés dans toute l'application pour personnaliser l'expérience de course :
+Les ressources sont des fichiers personnalisés utilisés pour enrichir l'expérience de course :
 
-- **Fichiers sonores :** Annonces sonores personnalisées, bips de départ, klaxons d'arrivée et clips de commentaires.
-- **Ensembles audio :** Collections groupées de fichiers audio ou d'annonces de synthèse vocale (TTS) associées à des valeurs de déclenchement spécifiques (temps en secondes, tours restants ou pourcentage de carburant).
-- **Images :** Graphiques de voitures, avatars de pilotes, drapeaux personnalisés, logos de sponsors et images de fond.
-- **Ensembles d'images :** Collections d'images associées (telles que les jauges de carburant ou les comptes à rebours).
-- **Rotations personnalisées :** Schémas de rotation des manches définis par l'utilisateur pour les formats complexes.
+- **Fichiers audio :** Annonces vocales personnalisées, bips de départ, signaux de fin de course et commentaires.
+- **Ensembles audio :** Collections regroupées de fichiers sonores ou de phrases de synthèse vocale (TTS) associées à des seuils précis (secondes restantes, tours restants ou niveau de carburant).
+- **Images :** Graphismes de véhicules, avatars de pilotes, drapeaux, logos de sponsors et arrière-plans.
+- **Ensembles d'images :** Séries d'images séquentielles (jauges de carburant ou feux de départ).
+- **Rotations personnalisées :** Schémas de rotation de voies définis par l'utilisateur pour des formats de course spécifiques.
 
-## Télécharger des ressources
+---
 
-Pour télécharger de nouvelles ressources dans votre bibliothèque :
+## Ajouter des ressources {: #adding-assets }
 
-1. Ouvrez le **Gestionnaire de Ressources** depuis le menu principal ou la barre d'outils de configuration.
-2. Glissez-déposez un ou plusieurs fichiers dans la zone **Télécharger des ressources**, ou cliquez pour parcourir votre ordinateur.
-3. Les formats pris en charge incluent `.wav`, `.mp3`, `.ogg` pour l'audio et `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp` pour les images.
+Le panneau latéral gauche propose quatre commandes pour enrichir votre bibliothèque, individuellement ou par lot :
 
-## Ensembles Audio et Valeurs de Déclenchement
+1. **Zone de téléversement :** Glissez-déposez des fichiers dans la zone en pointillés ou cliquez dessus pour ouvrir l'explorateur de fichiers. Vous pouvez téléverser plusieurs fichiers en une seule opération.
+   - Formats d'image acceptés : `.png`, `.jpg`, `.jpeg`, `.svg`, `.gif`, `.webp`.
+   - Formats audio acceptés : `.wav`, `.mp3`, `.ogg`.
+2. **Nouvel ensemble d'images :** Ouvre l'éditeur d'ensembles d'images pour regrouper plusieurs images séquentielles en animations ou jauges d'état.
+3. **Nouvel ensemble audio :** Ouvre l'éditeur d'ensembles audio pour programmer des séquences sonores selon le temps, les tours restants ou le carburant.
+4. **Nouvelle rotation personnalisée :** Ouvre l'éditeur de rotation pour concevoir des alternances de voies personnalisées.
 
-Un **Ensemble Audio** vous permet de configurer une séquence de sons ou de phrases parlées déclenchées à des seuils numériques précis. Selon l'endroit où l'ensemble audio est assigné dans Race Coordinator AI, ses valeurs représentent différentes unités :
+---
 
-*   **Temps en Secondes :** Utilisé dans les paramètres de Thème pour le **Compte à rebours de départ**, les **Secondes restantes**, le **Démarrage automatique** et l'**Avancement automatique** (par exemple, entrées à `5`, `4`, `3`, `2`, `1` et `0` secondes).
-*   **Nombre de Tours :** Utilisé dans les paramètres de Thème pour les annonces des **Tours restants**. Les entrées définissent des annonces lorsque le meneur atteint un nombre de tours restants spécifique (par exemple, `10`, `5`, `1` et `0` tours restants).
-*   **Pourcentage de Carburant (%) :** Utilisé dans les paramètres de Pilote pour les **Sons de niveau de carburant**. Les entrées définissent des annonces lorsque le niveau atteint des seuils d'avertissement, critique ou plein (par exemple, `20%`, `10%`, `0%` vide ou `100%` plein).
+## Bibliothèque de ressources & Actions {: #asset-library }
 
-Dans l'**Éditeur d'Ensembles Audio**, vous pouvez ajouter des entrées, choisir des fichiers audio ou rédiger des phrases TTS (avec variables de modèle comme `{driver.nickname}`), définir les valeurs et utiliser le bouton **Extraire automatiquement les valeurs des noms** pour préremplir automatiquement les valeurs depuis des fichiers numérotés (ex. `10.mp3`, `5.mp3`).
+Le panneau principal affiche l'ensemble des ressources visuelles et audio enregistrées dans votre base de données.
 
-### Modes de déclenchement doubles : Restant vs Écoulé
+Survoler une vignette de ressource fait apparaître des commandes rapides :
+- **Lecture audio :** Cliquez sur le bouton de lecture d'une carte audio pour écouter immédiatement le son sans ouvrir d'éditeur.
+- **Aperçu d'image :** Affiche l'image en pleine résolution et détaille les étapes d'un ensemble d'images.
+- **Renommage direct :** Cliquez sur le nom de l'élément pour le renommer directement dans la grille.
+- **Supprimer :** Cliquez sur l'icône de corbeille pour retirer une ressource inutile de la base de données.
 
-Chaque entrée d'un Ensemble Audio peut être configurée avec un **Mode de déclenchement** :
+Vous pouvez aussi cliquer sur les ressources pour les sélectionner. Avec des éléments sélectionnés, la barre d'outils supérieure permet l'édition et la suppression groupées.
 
-*   **Restant (Compte à rebours) :** Se déclenche à l'approche de zéro ou de l'arrivée (par exemple, quand il reste 10 tours ou 30 secondes dans la manche). C'est le mode par défaut pour les comptes à rebours.
-*   **Écoulé (Compte progressif) :** Se déclenche à mesure que la course progresse depuis le départ (par exemple, quand le meneur a bouclé 10 tours ou que 30 secondes se sont écoulées).
+---
 
-#### Deux annonces avec la même valeur numérique
-Race Coordinator AI prend en charge deux entrées ayant exactement la même valeur numérique (par exemple, la valeur `10`) :
-- Une entrée configurée en **Écoulé** retentira lorsque le meneur franchira ce cap initial (ex. 10 tours parcourus).
-- Une autre entrée configurée en **Restant** retentira à l'approche de la fin de course (ex. lorsqu'il ne reste que 10 tours).
+## Filtres et modes d'affichage {: #filter-tabs }
 
-#### Aperçu dans l'ordre naturel de course
-Lors de la prévisualisation ou lecture automatique d'un Ensemble Audio dans le Gestionnaire de Ressources ou le Sélecteur Audio, les sons sont joués dans l'ordre chronologique de course :
-1. Toutes les entrées **Écoulé** retentissent d'abord par ordre croissant (0 → N).
-2. Toutes les entrées **Restant** retentissent ensuite par ordre décroissant de compte à rebours (N → 0).
+Le Gestionnaire de Ressources met à disposition des outils pour retrouver vos éléments facilement :
+
+- **Onglets de filtrage :** Filtrez la bibliothèque par type de ressource :
+  - **Tous :** Présente l'intégralité des ressources enregistrées.
+  - **Images :** Fichiers images statiques (`.png`, `.jpg`, `.svg`, etc.).
+  - **Ensembles d'images :** Animations et jauges composées de plusieurs images.
+  - **Sons :** Fichiers audio individuels (`.wav`, `.mp3`, `.ogg`).
+  - **Ensembles audio :** Collections sonores liées à des seuils numériques.
+  - **Rotations personnalisées :** Schémas de rotation de voies des manches.
+- **Disposition d'affichage :** Basculez entre **Vue en liste**, **Petites miniatures**, **Miniatures moyennes** et **Grandes miniatures**.
+- **Filtrer par nom :** Champ de recherche en temps réel filtrant instantanément la liste à la saisie.
+
+---
+
+## Ensembles audio et valeurs de déclenchement
+
+Un **Ensemble audio** permet de programmer des sons ou annonces vocales déclenchés à des seuils précis :
+
+*   **Temps en secondes :** Utilisé dans les thèmes pour les comptes à rebours et annonces de temps restant.
+*   **Nombre de tours :** Utilisé dans les thèmes pour annoncer les tours restants du leader.
+*   **Pourcentage de carburant (%) :** Utilisé dans le profil des pilotes pour les alertes de réserve et de ravitaillement.
+
+### Modes double déclencheur : Restant vs Écoulé
+
+Chaque élément peut être configuré selon deux modes :
+*   **Restant (Compte à rebours) :** Se déclenche à l'approche de la fin de manche ou du zéro.
+*   **Écoulé (Compte ascendant) :** Se déclenche au fur et à mesure que la course progresse depuis le départ.
+
+---
+
+## Utilisation des ressources dans l'application
+
+Vos ressources créées ou téléversées sont exploitables dans tous les modules :
+
+- Sélectionnez des sons dans l'[Éditeur de thèmes](themes.fr.md) pour les tours rapides et signaux de départ/arrivée.
+- Associez des visuels dans l'[Éditeur de pilotes](driver-editor.fr.md) pour les photos de véhicules et avatars.
+- Configurez des widgets graphiques dans l'[Éditeur de mise en page](layout-editor.fr.md).
+- Liez des fichiers de rotation dans l'[Éditeur de courses](race-editor.fr.md).

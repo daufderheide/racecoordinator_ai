@@ -7,6 +7,7 @@ import {
   getAssetBytesByType,
   getAssetCountByType,
   parseAssetSize,
+  readAssetFile,
   sortAudioSetEntries,
 } from "./asset-manager.utils";
 
@@ -148,6 +149,52 @@ describe("asset-manager.utils", () => {
       expect(sorted[1].timeSeconds).toBe(10); // elapsed 10
       expect(sorted[2].timeSeconds).toBe(60); // remaining 60
       expect(sorted[3].timeSeconds).toBe(30); // remaining 30
+    });
+  });
+
+  describe("readAssetFile", () => {
+    it("should read an image file and determine type as image from mime type", async () => {
+      const file = new File([new Uint8Array([1, 2, 3])], "photo.dat", {
+        type: "image/png",
+      });
+      const result = await readAssetFile(file);
+      expect(result.name).toBe("photo.dat");
+      expect(result.type).toBe("image");
+      expect(result.data.length).toBe(3);
+      expect(Array.from(result.data)).toEqual([1, 2, 3]);
+    });
+
+    it("should read an image file and determine type as image from extension", async () => {
+      const file = new File([new Uint8Array([7, 8])], "avatar.JPG", {
+        type: "",
+      });
+      const result = await readAssetFile(file);
+      expect(result.name).toBe("avatar.JPG");
+      expect(result.type).toBe("image");
+      expect(result.data.length).toBe(2);
+    });
+
+    it("should read an audio file and determine type as audio", async () => {
+      const file = new File([new Uint8Array([10, 20])], "track.wav", {
+        type: "audio/wav",
+      });
+      const result = await readAssetFile(file);
+      expect(result.name).toBe("track.wav");
+      expect(result.type).toBe("audio");
+      expect(result.data.length).toBe(2);
+    });
+
+    it("should reject when FileReader encounters an error", async () => {
+      const fakeFile = new File([], "broken.bin");
+      spyOn(window as any, "FileReader").and.returnValue({
+        readAsArrayBuffer: function () {
+          if (this.onerror) {
+            this.onerror(new Error("Read failed") as any);
+          }
+        },
+      } as any);
+
+      await expectAsync(readAssetFile(fakeFile)).toBeRejected();
     });
   });
 });

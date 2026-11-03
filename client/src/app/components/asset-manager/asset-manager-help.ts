@@ -1,122 +1,73 @@
+import { getEditorToolbarHelpStep } from "@app/components/shared/toolbar/toolbar.component";
 import { GuideStep } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
 
-function getManagementHelpSteps(
-  translationService: TranslationService,
-): GuideStep[] {
-  return [
-    {
-      title: translationService.translate("AM_HELP_WELCOME_TITLE"),
-      content: translationService.translate("AM_HELP_WELCOME_CONTENT"),
-      position: "center",
-    },
-    {
-      selector: ".stats-content",
-      title: translationService.translate("AM_HELP_STATS_TITLE"),
-      content: translationService.translate("AM_HELP_STATS_CONTENT"),
-      position: "right",
-    },
-    {
-      selector: ".upload-zone",
-      title: translationService.translate("AM_HELP_UPLOAD_TITLE"),
-      content: translationService.translate("AM_HELP_UPLOAD_CONTENT"),
-      position: "right",
-    },
-    {
-      selector: ".btn-image-set",
-      title: translationService.translate("AM_HELP_IMAGE_SET_TITLE"),
-      content: translationService.translate("AM_HELP_IMAGE_SET_CONTENT"),
-      position: "right",
-    },
-    {
-      selector: ".btn-audio-set",
-      title: translationService.translate("AM_HELP_AUDIO_SET_TITLE"),
-      content: translationService.translate("AM_HELP_AUDIO_SET_CONTENT"),
-      position: "right",
-    },
-    {
-      selector: ".btn-custom-rotation",
-      title: translationService.translate("AM_HELP_CUSTOM_ROTATION_TITLE"),
-      content: translationService.translate("AM_HELP_CUSTOM_ROTATION_CONTENT"),
-      position: "right",
-    },
-    {
-      selector: ".library-panel",
-      title: translationService.translate("AM_HELP_LIBRARY_TITLE"),
-      content: translationService.translate("AM_HELP_LIBRARY_CONTENT"),
-      position: "left",
-    },
-  ];
-}
-
-function getFilterHelpSteps(
-  translationService: TranslationService,
-): GuideStep[] {
-  return [
-    {
-      selector: ".filter-all",
-      title: translationService.translate("AM_HELP_FILTER_ALL_TITLE"),
-      content: translationService.translate("AM_HELP_FILTER_ALL_CONTENT"),
-      position: "bottom",
-    },
-    {
-      selector: ".filter-images",
-      title: translationService.translate("AM_HELP_FILTER_IMAGES_TITLE"),
-      content: translationService.translate("AM_HELP_FILTER_IMAGES_CONTENT"),
-      position: "bottom",
-    },
-    {
-      selector: ".filter-image-sets",
-      title: translationService.translate("AM_HELP_FILTER_IMAGE_SETS_TITLE"),
-      content: translationService.translate(
-        "AM_HELP_FILTER_IMAGE_SETS_CONTENT",
-      ),
-      position: "bottom",
-    },
-    {
-      selector: ".filter-sounds",
-      title: translationService.translate("AM_HELP_FILTER_SOUNDS_TITLE"),
-      content: translationService.translate("AM_HELP_FILTER_SOUNDS_CONTENT"),
-      position: "bottom",
-    },
-    {
-      selector: ".filter-audio-sets",
-      title: translationService.translate("AM_HELP_FILTER_AUDIO_SETS_TITLE"),
-      content: translationService.translate(
-        "AM_HELP_FILTER_AUDIO_SETS_CONTENT",
-      ),
-      position: "bottom",
-    },
-    {
-      selector: ".filter-custom-rotations",
-      title: translationService.translate(
-        "AM_HELP_FILTER_CUSTOM_ROTATIONS_TITLE",
-      ),
-      content: translationService.translate(
-        "AM_HELP_FILTER_CUSTOM_ROTATIONS_CONTENT",
-      ),
-      position: "bottom",
-    },
-    {
-      selector: "#asset-layout-switcher",
-      title: translationService.translate("AM_HELP_LAYOUT_TITLE"),
-      content: translationService.translate("AM_HELP_LAYOUT_CONTENT"),
-      position: "bottom",
-    },
-    {
-      selector: ".filter-input",
-      title: translationService.translate("AM_HELP_FILTER_NAME_TITLE"),
-      content: translationService.translate("AM_HELP_FILTER_NAME_CONTENT"),
-      position: "bottom",
-    },
-  ];
+export class AssetManagerHelpHelper {
+  static getHelpSteps(translationService: TranslationService): GuideStep[] {
+    const t = translationService;
+    return [
+      // 1) Asset Manager Overview
+      {
+        title: t.translate("AM_HELP_WELCOME_TITLE"),
+        content: t.translate("AM_HELP_WELCOME_CONTENT"),
+        position: "center",
+      },
+      // 2) Toolbar
+      getEditorToolbarHelpStep(t, false),
+      // 3) Database Statistics
+      {
+        targetId: "asset-stats-panel",
+        selector: "#asset-stats-panel",
+        title: t.translate("AM_HELP_STATS_TITLE"),
+        content: t.translate("AM_HELP_STATS_CONTENT"),
+        position: "right",
+      },
+      // 4) Add Assets (All 4 buttons on LHS)
+      {
+        targetId: "asset-creation-actions",
+        selector: "#asset-creation-actions",
+        title: t.translate("AM_HELP_ADD_ASSETS_TITLE"),
+        content: t.translate("AM_HELP_ADD_ASSETS_CONTENT"),
+        position: "right",
+      },
+      // 5) Asset Library (with hover actions: rename, delete, play)
+      {
+        targetId: "asset-library-panel",
+        selector: "#asset-library-panel",
+        title: t.translate("AM_HELP_LIBRARY_TITLE"),
+        content: t.translate("AM_HELP_LIBRARY_CONTENT"),
+        position: "left",
+      },
+      // 6) Filter Tabs (Filter by asset type)
+      {
+        targetId: "asset-filter-tabs",
+        selector: "#asset-filter-tabs",
+        title: t.translate("AM_HELP_FILTER_TABS_TITLE"),
+        content: t.translate("AM_HELP_FILTER_TABS_CONTENT"),
+        position: "bottom",
+      },
+      // 7) View Layout Options
+      {
+        targetId: "asset-layout-switcher",
+        selector: "#asset-layout-switcher",
+        title: t.translate("AM_HELP_LAYOUT_TITLE"),
+        content: t.translate("AM_HELP_LAYOUT_CONTENT"),
+        position: "bottom",
+      },
+      // 8) Filter by Name
+      {
+        targetId: "asset-filter-input",
+        selector: "#asset-filter-input",
+        title: t.translate("AM_HELP_FILTER_NAME_TITLE"),
+        content: t.translate("AM_HELP_FILTER_NAME_CONTENT"),
+        position: "bottom",
+      },
+    ];
+  }
 }
 
 export function getAssetManagerHelpSteps(
   translationService: TranslationService,
 ): GuideStep[] {
-  return [
-    ...getManagementHelpSteps(translationService),
-    ...getFilterHelpSteps(translationService),
-  ];
+  return AssetManagerHelpHelper.getHelpSteps(translationService);
 }
