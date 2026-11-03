@@ -30,7 +30,7 @@
   @if (!isLoading) {
     <div class="content-split">
       <!-- Left Panel: Form Settings -->
-      <div class="editor-panel-left">
+      <div id="season-config-panel" class="editor-panel-left">
         <div
           class="editor-section"
           [class.invalid]="isNameDuplicate || (!editingSeason.name && isDirty)"
@@ -100,7 +100,7 @@
 
       <!-- Right Panel: Summary & Race Expanders -->
       <div class="editor-panel-right">
-        <div class="panel-header">
+        <div id="season-info-bar" class="panel-header">
           <div class="header-title-group">
             <div id="season-editor-meta" class="season-meta">
               <span id="season-editor-races-run" class="meta-pill">

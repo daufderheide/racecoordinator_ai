@@ -44,9 +44,9 @@ import {
   cloneSeason,
   extractDemoHistorySet,
   getDroppedPoints,
-  getSeasonEditorHelpSteps,
   tagSeasonRaces,
 } from "./season-editor.utils";
+import { SeasonEditorHelpHelper } from "./season-editor-help.helper";
 
 @Component({
   standalone: true,
@@ -1025,6 +1025,6 @@ export class SeasonEditorComponent
   }
 
   getHelpSteps(): GuideStep[] {
-    return getSeasonEditorHelpSteps(this.hasDemoRaces, this.translationService);
+    return SeasonEditorHelpHelper.getHelpSteps(this.translationService);
   }
 }
