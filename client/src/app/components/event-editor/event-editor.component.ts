@@ -38,6 +38,8 @@ import {
   mapToSelectItems,
 } from "@app/utils/editor-utils";
 
+import { EventEditorHelpHelper } from "./event-editor-help.helper";
+
 @Component({
   standalone: true,
   selector: "app-event-editor",
@@ -842,46 +844,6 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("EE_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("EE_HELP_WELCOME_CONTENT"),
-        position: "center",
-      },
-      {
-        selector: "#event-name",
-        title: this.translationService.translate("EE_HELP_NAME_TITLE"),
-        content: this.translationService.translate("EE_HELP_NAME_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: "#event-description",
-        title: this.translationService.translate("EE_HELP_DESCRIPTION_TITLE"),
-        content: this.translationService.translate(
-          "EE_HELP_DESCRIPTION_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: "#event-auto-advance",
-        title: this.translationService.translate("EE_HELP_AUTO_ADVANCE_TITLE"),
-        content: this.translationService.translate(
-          "EE_HELP_AUTO_ADVANCE_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: "#btn-add-race",
-        title: this.translationService.translate("EE_HELP_ADD_RACE_TITLE"),
-        content: this.translationService.translate("EE_HELP_ADD_RACE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#event-race-list",
-        title: this.translationService.translate("EE_HELP_RACE_LIST_TITLE"),
-        content: this.translationService.translate("EE_HELP_RACE_LIST_CONTENT"),
-        position: "left",
-      },
-    ];
+    return EventEditorHelpHelper.getHelpSteps(this.translationService);
   }
 }

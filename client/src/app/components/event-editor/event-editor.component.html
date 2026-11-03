@@ -33,7 +33,7 @@
   @if (!isLoading) {
     <div class="content-split">
       <!-- Left Panel: Form Settings -->
-      <div class="editor-panel-left">
+      <div id="event-config-panel" class="editor-panel-left">
         <div
           class="editor-section"
           [class.invalid]="!editingEvent.name || isDuplicateName()"

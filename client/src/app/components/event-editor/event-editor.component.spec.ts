@@ -11,6 +11,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import {
   mockLoggerService,
   mockSettingsService,
@@ -22,7 +23,14 @@ import { EventEditorComponent } from "./event-editor.component";
 @Component({
   standalone: true,
   selector: "app-editor-title",
-  template: "",
+  template: `
+    <div id="editor-object-nav">
+      <div id="editor-object-selector"></div>
+    </div>
+    <div id="toolbar-container" class="toolbar-container">
+      <button type="button" id="edit-track-btn" aria-label="Edit">Edit</button>
+    </div>
+  `,
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
@@ -398,35 +406,46 @@ describe("EventEditorComponent", () => {
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(6);
+      expect(steps.length).toBe(5);
 
-      // Welcome Step
+      // Step 0: Welcome Step
       expect(steps[0].title).toBe("EE_HELP_WELCOME_TITLE");
       expect(steps[0].content).toBe("EE_HELP_WELCOME_CONTENT");
       expect(steps[0].position).toBe("center");
-      expect(steps[0].selector).toBeUndefined();
+      expect(steps[0].targetId).toBeUndefined();
 
-      // Form inputs
-      expect(steps[1].selector).toBe("#event-name");
-      expect(steps[1].title).toBe("EE_HELP_NAME_TITLE");
-      expect(steps[1].position).toBe("right");
+      // Step 1: Select Event
+      expect(steps[1].targetId).toBe("editor-object-nav");
+      expect(steps[1].selector).toBe("#editor-object-nav");
+      expect(steps[1].title).toBe("EE_HELP_SELECTOR_TITLE");
+      expect(steps[1].position).toBe("bottom");
 
-      expect(steps[2].selector).toBe("#event-description");
-      expect(steps[2].title).toBe("EE_HELP_DESCRIPTION_TITLE");
-      expect(steps[2].position).toBe("right");
+      // Step 2: Toolbar Actions
+      expect(steps[2].targetId).toBe("edit-track-btn");
+      expect(steps[2].highlightTargetId).toBe("toolbar-container");
+      expect(steps[2].selector).toBe("#edit-track-btn");
+      expect(steps[2].highlightSelector).toBe(".toolbar-container");
+      expect(steps[2].title).toBe("TOOLBAR_HELP_TITLE");
+      expect(steps[2].position).toBe("bottom");
 
-      expect(steps[3].selector).toBe("#event-auto-advance");
-      expect(steps[3].title).toBe("EE_HELP_AUTO_ADVANCE_TITLE");
+      // Step 3: LHS Panel (Event Configuration)
+      expect(steps[3].targetId).toBe("event-config-panel");
+      expect(steps[3].selector).toBe("#event-config-panel");
+      expect(steps[3].title).toBe("EE_HELP_LHS_TITLE");
       expect(steps[3].position).toBe("right");
 
-      // Right panel actions & sequence
-      expect(steps[4].selector).toBe("#btn-add-race");
-      expect(steps[4].title).toBe("EE_HELP_ADD_RACE_TITLE");
-      expect(steps[4].position).toBe("bottom");
+      // Step 4: Right Panel (Race Sequence)
+      expect(steps[4].targetId).toBe("event-race-list");
+      expect(steps[4].selector).toBe("#event-race-list");
+      expect(steps[4].title).toBe("EE_HELP_RACE_LIST_TITLE");
+      expect(steps[4].position).toBe("left");
+    });
 
-      expect(steps[5].selector).toBe("#event-race-list");
-      expect(steps[5].title).toBe("EE_HELP_RACE_LIST_TITLE");
-      expect(steps[5].position).toBe("left");
+    it("should verify that all guide step DOM targets exist in the component DOM", () => {
+      component.isLoading = false;
+      fixture.detectChanges();
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
   });
 
