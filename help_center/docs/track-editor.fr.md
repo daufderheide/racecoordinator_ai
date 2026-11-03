@@ -26,7 +26,7 @@ Toutes les modifications effectuées dans l'Éditeur de Circuits sont **automati
 
 ---
 
-## Configuration Générale du Circuit
+## Configuration Générale du Circuit {: #track-settings }
 
 L'en-tête définit les propriétés fondamentales de votre circuit :
 
@@ -56,7 +56,7 @@ Sélectionnez l'échelle de votre circuit dans le menu déroulant :
 
 ---
 
-## Configuration des Voies (Lane Configuration)
+## Configuration des Voies (Lane Configuration) {: #lane-configuration }
 
 La section **Éditeur de Voies (Lane Editor)** permet d'ajuster la géométrie, l'ordre sur la grille de départ et l'apparence visuelle de chaque voie.
 
@@ -103,7 +103,7 @@ Chaque voie dispose de deux sélecteurs de couleur :
 
 ---
 
-## Architecture des Interfaces Matérielles
+## Architecture des Interfaces Matérielles {: #hardware-interfaces }
 
 Race Coordinator AI permet d'associer plusieurs équipements de chronométrage en parallèle.
 
@@ -129,7 +129,7 @@ Chaque carte d'interface affiche son statut en temps réel :
 
 ## Interfaces Matérielles Prises en Charge
 
-### 1. Interface Arduino
+### 1. Interface Arduino {: #arduino-interface }
 
 L'interface **Arduino** est la solution la plus adaptable. Avec une carte Arduino Uno, Mega ou compatible, vous gérez le comptage des tours, les relais d'alimentation, les boutons de pause, les temps intermédiaires, la télémétrie de poignée et les LED RGB adressables FastLED.
 
@@ -192,7 +192,7 @@ Permet de mesurer la tension des poignées ($0\text{--}5\text{V}$) pour les cour
 
 ---
 
-### 2. Interface Trackmate
+### 2. Interface Trackmate {: #trackmate-interface }
 
 Gestion native des cartes Trackmate branchées via port série COM (USB ou RS-232).
 
@@ -205,7 +205,7 @@ Gestion native des cartes Trackmate branchées via port série COM (USB ou RS-23
 
 ---
 
-### 3. Interface Phidget
+### 3. Interface Phidget {: #phidget-interface }
 
 Prise en charge des boîtiers d'E/S USB et VINT de Phidgets (InterfaceKit 0/16/16, 8/8/8, relais 1014 et hubs VINT).
 
@@ -220,7 +220,7 @@ Prise en charge des boîtiers d'E/S USB et VINT de Phidgets (InterfaceKit 0/16/1
 
 ---
 
-### 4. Interface BART (Chronomètre Bluetooth Policar)
+### 4. Interface BART (Chronomètre Bluetooth Policar) {: #bart-interface }
 
 Liaison sans fil avec les ponts de détection et transpondeurs Policar BART Bluetooth Low Energy (BLE).
 

@@ -26,7 +26,7 @@ All modifications made in the Track Editor are **automatically validated and sav
 
 ---
 
-## General Track Configuration
+## General Track Configuration {: #track-settings }
 
 The header section of the Track Editor defines the foundational properties of your layout:
 
@@ -56,7 +56,7 @@ Select the physical scale of your track from the dropdown menu:
 
 ---
 
-## Lane Configuration
+## Lane Configuration {: #lane-configuration }
 
 The **Lane Editor** section allows you to customize the geometry, starting grid order, and visual styling of every lane on your track.
 
@@ -103,7 +103,7 @@ Each lane features two dedicated color pickers:
 
 ---
 
-## Hardware Interface Architecture
+## Hardware Interface Architecture {: #hardware-interfaces }
 
 Race Coordinator AI supports connecting multiple hardware timing and control systems simultaneously.
 
@@ -129,7 +129,7 @@ Each interface card features a prominent real-time status badge:
 
 ## Supported Hardware Interfaces
 
-### 1. Arduino Interface
+### 1. Arduino Interface {: #arduino-interface }
 
 The **Arduino** interface is the most versatile and extensible timing solution supported by Race Coordinator AI. Using an official Arduino Uno, Mega, or compatible clone, you can manage lap timing, track power relays, call buttons, segment split timing, analog throttle telemetry, and multi-string addressable FastLED RGB lighting.
 
@@ -209,7 +209,7 @@ The Race Coordinator AI sketch features integrated FastLED support for digital R
 
 ---
 
-### 2. Trackmate Interface
+### 2. Trackmate Interface {: #trackmate-interface }
 
 The **Trackmate** interface provides native integration for commercial Trackmate timing boards connected via USB or RS-232 serial COM ports.
 
@@ -223,7 +223,7 @@ The **Trackmate** interface provides native integration for commercial Trackmate
 
 ---
 
-### 3. Phidget Interface
+### 3. Phidget Interface {: #phidget-interface }
 
 The **Phidget** interface integrates industrial Phidgets USB and VINT I/O modules, including the PhidgetInterfaceKit 0/16/16 (16 digital inputs, 16 digital outputs), 8/8/8 (8 digital inputs, 8 digital outputs, 8 analog inputs), and 1014 Relay modules.
 
@@ -238,7 +238,7 @@ The **Phidget** interface integrates industrial Phidgets USB and VINT I/O module
 
 ---
 
-### 4. BART (Policar Bluetooth Automated Race Timer)
+### 4. BART (Policar Bluetooth Automated Race Timer) {: #bart-interface }
 
 The **BART** interface connects wirelessly to Policar BART Bluetooth Low Energy (BLE) timing sensors and transponder gantries.
 

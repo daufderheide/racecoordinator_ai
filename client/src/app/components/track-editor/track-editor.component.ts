@@ -302,14 +302,6 @@ export class TrackEditorComponent
     }
 
     this.subscriptions.push(
-      this.helpService.isVisible$.subscribe((visible) => {
-        if (visible) {
-          setTimeout(() => this.ensureSectionsExpandedForHelp());
-        }
-      }),
-    );
-
-    this.subscriptions.push(
       this.undoManager.stateCommitted$.subscribe((event) => {
         if (
           event.type === "push" ||
@@ -713,7 +705,10 @@ export class TrackEditorComponent
   }
 
   getBaseHelpSteps(): GuideStep[] {
-    return TrackEditorHelpHelper.getBaseHelpSteps(this.translationService);
+    return TrackEditorHelpHelper.getBaseHelpSteps(
+      this.translationService,
+      this.sectionsExpanded,
+    );
   }
 
   getHelpSteps(): GuideStep[] {
@@ -731,6 +726,7 @@ export class TrackEditorComponent
         phidgetConfigs: this.phidgetConfigs,
         trackmateConfigs: this.trackmateConfigs,
       },
+      this.sectionsExpanded,
     );
   }
 
@@ -761,11 +757,7 @@ export class TrackEditorComponent
   }
 
   startHelp() {
-    this.ensureSectionsExpandedForHelp();
-    const toolbarSteps = TrackEditorHelpHelper.getToolbarHelpSteps(
-      this.translationService,
-    );
-    this.helpService.startGuide([...this.getHelpSteps(), ...toolbarSteps]);
+    this.helpService.startGuide(this.getHelpSteps());
   }
 
   onInputFocus() {

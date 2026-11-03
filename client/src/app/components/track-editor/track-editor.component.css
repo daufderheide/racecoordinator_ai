@@ -48,6 +48,11 @@
 
 /* Scrollbar styling removed from .editor-panel */
 
+.track-general-settings {
+  display: flex;
+  flex-direction: column;
+}
+
 .editor-section {
   margin-bottom: 30px;
   display: flex;

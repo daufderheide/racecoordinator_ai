@@ -26,7 +26,7 @@ Alle wijzigingen in de Baan-Editor worden **automatisch gevalideerd en opgeslage
 
 ---
 
-## Algemene Baanconfiguratie
+## Algemene Baanconfiguratie {: #track-settings }
 
 Het bovenste gedeelte definieert de basiseigenschappen van uw circuit:
 
@@ -56,7 +56,7 @@ Selecteer de schaal van uw baan in het keuzemenu:
 
 ---
 
-## Spoorconfiguratie (Lane Configuration)
+## Spoorconfiguratie (Lane Configuration) {: #lane-configuration }
 
 In het onderdeel **Spoor-Editor (Lane Editor)** stelt u de geometrie, startvolgorde en kleuren van elk spoor in.
 
@@ -103,7 +103,7 @@ Elk spoor beschikt over twee kleurkiezers:
 
 ---
 
-## Hardware-Interface Architectuur
+## Hardware-Interface Architectuur {: #hardware-interfaces }
 
 Race Coordinator AI ondersteunt het gelijktijdig koppelen van meerdere hardware-systemen.
 
@@ -129,7 +129,7 @@ Elke interfacekaart toont een duidelijke statusindicator:
 
 ## Ondersteunde Hardware-Interfaces
 
-### 1. Arduino-Interface
+### 1. Arduino-Interface {: #arduino-interface }
 
 De **Arduino**-interface is de meest veelzijdige oplossing in Race Coordinator AI. Met een Arduino Uno, Mega of compatibele microcontroller stuurt u rondetelling, baanstroomrelais, baantoetsen, sectortijden, gaspedaaltelemetrie en FastLED adresseerbare RGB-verlichting aan.
 
@@ -192,7 +192,7 @@ Meet de regelaarspanning ($0\text{--}5\text{V}$) voor digitale brandstofraces:
 
 ---
 
-### 2. Trackmate-Interface
+### 2. Trackmate-Interface {: #trackmate-interface }
 
 Directe ondersteuning voor commerciële Trackmate-tijdwaarnemingskaarten via seriële COM-poorten (USB of RS-232).
 
@@ -205,7 +205,7 @@ Directe ondersteuning voor commerciële Trackmate-tijdwaarnemingskaarten via ser
 
 ---
 
-### 3. Phidget-Interface
+### 3. Phidget-Interface {: #phidget-interface }
 
 Aansturing van industriële Phidgets USB- en VINT-modules (o.a. InterfaceKit 0/16/16, 8/8/8, 1014 Relais en VINT-hubs).
 
@@ -220,7 +220,7 @@ Aansturing van industriële Phidgets USB- en VINT-modules (o.a. InterfaceKit 0/1
 
 ---
 
-### 4. BART-Interface (Policar Bluetooth Timer)
+### 4. BART-Interface (Policar Bluetooth Timer) {: #bart-interface }
 
 Draadloze verbinding met Policar BART Bluetooth Low Energy (BLE) sensorbruggen en transponders.
 

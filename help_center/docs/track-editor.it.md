@@ -26,7 +26,7 @@ Tutte le modifiche apportate nell'Editor dei Tracciati vengono **validate e salv
 
 ---
 
-## Configurazione Generale del Tracciato
+## Configurazione Generale del Tracciato {: #track-settings }
 
 La sezione superiore definisce le proprietà fondamentali del tracciato:
 
@@ -56,7 +56,7 @@ Seleziona la scala fisica della pista dal menu a discesa:
 
 ---
 
-## Configurazione delle Corsie (Lane Configuration)
+## Configurazione delle Corsie (Lane Configuration) {: #lane-configuration }
 
 La sezione **Editor delle Corsie (Lane Editor)** consente di personalizzare la geometria, l'ordine di partenza in griglia e l'aspetto visivo di ogni corsia.
 
@@ -103,7 +103,7 @@ Ciascuna corsia dispone di due selettori di colore:
 
 ---
 
-## Architettura delle Interfacce Hardware
+## Architettura delle Interfacce Hardware {: #hardware-interfaces }
 
 Race Coordinator AI supporta la connessione simultanea di più sistemi di cronometraggio e controllo.
 
@@ -129,7 +129,7 @@ Ogni scheda di interfaccia include un badge di stato ben visibile:
 
 ## Interfacce Hardware Supportate
 
-### 1. Interfaccia Arduino
+### 1. Interfaccia Arduino {: #arduino-interface }
 
 L'interfaccia **Arduino** è la soluzione più versatile ed espandibile. Con un Arduino Uno, Mega o compatibile, gestisci giri, relè di alimentazione, pulsanti di chiamata, tempi intermedi, telemetria dell'acceleratore e illuminazione LED RGB indirizzabile con FastLED.
 
@@ -192,7 +192,7 @@ Permette di monitorare la tensione del pulsante ($0\text{--}5\text{V}$) per le g
 
 ---
 
-### 2. Interfaccia Trackmate
+### 2. Interfaccia Trackmate {: #trackmate-interface }
 
 Integrazione nativa per schede commerciali Trackmate collegate tramite porta seriale COM (USB o RS-232).
 
@@ -205,7 +205,7 @@ Integrazione nativa per schede commerciali Trackmate collegate tramite porta ser
 
 ---
 
-### 3. Interfaccia Phidget
+### 3. Interfaccia Phidget {: #phidget-interface }
 
 Supporto per moduli industriali USB e VINT di Phidgets (es. InterfaceKit 0/16/16, 8/8/8, relè 1014 e hub VINT).
 
@@ -220,7 +220,7 @@ Supporto per moduli industriali USB e VINT di Phidgets (es. InterfaceKit 0/16/16
 
 ---
 
-### 4. Interfaccia BART (Cronometro Bluetooth Policar)
+### 4. Interfaccia BART (Cronometro Bluetooth Policar) {: #bart-interface }
 
 Connessione wireless a ponti di cronometraggio e transponder Policar BART Bluetooth Low Energy (BLE).
 

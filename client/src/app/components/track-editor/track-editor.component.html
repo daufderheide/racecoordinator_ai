@@ -34,59 +34,61 @@
     <div class="content-split">
       <!-- Editor Panel -->
       <div class="editor-panel">
-        <div
-          id="track-name-section"
-          class="editor-section fixed-header"
-          [class.invalid]="isNameInvalid"
-        >
-          <label class="track-name-label">{{
-            "TE_TRACK_NAME" | translate
-          }}</label>
-          <input
-            id="track-name-input"
-            type="text"
-            [disabled]="!isEditMode"
-            [(ngModel)]="trackName"
-            [appAutoSelectDefault]="defaultTrackName"
-            (focus)="onInputFocus()"
-            (blur)="onInputBlur()"
-            (ngModelChange)="onInputChange()"
-          />
-        </div>
-
-        <div id="num-track-sections-section" class="editor-section">
-          <label>{{ "TE_NUM_TRACK_SECTIONS" | translate }}</label>
-          <input
-            id="num-track-sections-input"
-            type="number"
-            [disabled]="!isEditMode"
-            [(ngModel)]="numTrackSections"
-            (focus)="onInputFocus()"
-            (blur)="onInputBlur()"
-            (ngModelChange)="onInputChange()"
-            min="1"
-          />
-        </div>
-
-        <div id="track-scale-section" class="editor-section">
-          <label for="track-scale-select">{{
-            "TE_TRACK_SCALE" | translate
-          }}</label>
-          <app-custom-select
-            id="track-scale-select"
-            [disabled]="!isEditMode"
-            [ngModel]="trackScale"
-            (ngModelChange)="onTrackScaleChange($event)"
-            (focus)="onInputFocus()"
-            (blur)="onInputBlur()"
-            name="trackScaleSelect"
+        <div id="track-general-settings" class="track-general-settings">
+          <div
+            id="track-name-section"
+            class="editor-section fixed-header"
+            [class.invalid]="isNameInvalid"
           >
-            @for (opt of trackScaleOptions; track opt.label) {
-              <app-custom-option [value]="opt.value">{{
-                opt.label
-              }}</app-custom-option>
-            }
-          </app-custom-select>
+            <label class="track-name-label">{{
+              "TE_TRACK_NAME" | translate
+            }}</label>
+            <input
+              id="track-name-input"
+              type="text"
+              [disabled]="!isEditMode"
+              [(ngModel)]="trackName"
+              [appAutoSelectDefault]="defaultTrackName"
+              (focus)="onInputFocus()"
+              (blur)="onInputBlur()"
+              (ngModelChange)="onInputChange()"
+            />
+          </div>
+
+          <div id="num-track-sections-section" class="editor-section">
+            <label>{{ "TE_NUM_TRACK_SECTIONS" | translate }}</label>
+            <input
+              id="num-track-sections-input"
+              type="number"
+              [disabled]="!isEditMode"
+              [(ngModel)]="numTrackSections"
+              (focus)="onInputFocus()"
+              (blur)="onInputBlur()"
+              (ngModelChange)="onInputChange()"
+              min="1"
+            />
+          </div>
+
+          <div id="track-scale-section" class="editor-section">
+            <label for="track-scale-select">{{
+              "TE_TRACK_SCALE" | translate
+            }}</label>
+            <app-custom-select
+              id="track-scale-select"
+              [disabled]="!isEditMode"
+              [ngModel]="trackScale"
+              (ngModelChange)="onTrackScaleChange($event)"
+              (focus)="onInputFocus()"
+              (blur)="onInputBlur()"
+              name="trackScaleSelect"
+            >
+              @for (opt of trackScaleOptions; track opt.label) {
+                <app-custom-option [value]="opt.value">{{
+                  opt.label
+                }}</app-custom-option>
+              }
+            </app-custom-select>
+          </div>
         </div>
 
         <div class="sections-wrapper">
@@ -187,6 +189,7 @@
           </app-editor-section>
 
           <app-editor-section
+            sectionId="interface-list-section"
             customClass="interface-config-section"
             titleKey="TE_INTERFACES"
             [(expanded)]="sectionsExpanded.interfaces"

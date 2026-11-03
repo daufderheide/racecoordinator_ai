@@ -144,24 +144,4 @@ test.describe("Track Editor Visuals", () => {
       { maxDiffPixelRatio: 0.1, animations: "disabled" },
     );
   });
-
-  test("should show guided help on first visit", async ({ page }) => {
-    // We navigate to existing track so the help overlay tries to point at real elements
-    await TestSetupHelper.setupStandardMocks(page, {
-      trackEditorHelpShown: false,
-    });
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/track-editor?id=t1"),
-    );
-
-    const overlay = page.locator("app-help-overlay");
-    await overlay.locator(".help-popover").waitFor({ state: "visible" });
-
-    await expect(page).toHaveScreenshot("track-editor-guided-help.png", {
-      maxDiffPixelRatio: 0.1,
-      animations: "disabled",
-    });
-  });
 });

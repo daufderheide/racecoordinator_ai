@@ -26,7 +26,7 @@ Todas as alterações efetuadas no Editor de Pistas são **automaticamente valid
 
 ---
 
-## Configuração Geral da Pista
+## Configuração Geral da Pista {: #track-settings }
 
 A secção superior define as propriedades fundamentais do seu circuito:
 
@@ -56,7 +56,7 @@ Selecione a escala física da pista no menu pendente:
 
 ---
 
-## Configuração de Calhas (Lane Configuration)
+## Configuração de Calhas (Lane Configuration) {: #lane-configuration }
 
 A secção **Editor de Calhas (Lane Editor)** permite personalizar a geometria, a ordem de partida na grelha e o aspeto visual de cada calha.
 
@@ -103,7 +103,7 @@ Cada calha possui dois seletores de cor:
 
 ---
 
-## Arquitetura de Interfaces de Hardware
+## Arquitetura de Interfaces de Hardware {: #hardware-interfaces }
 
 O Race Coordinator AI permite ligar vários equipamentos de cronometragem em simultâneo.
 
@@ -129,7 +129,7 @@ Cada interface apresenta um distintivo visual de estado:
 
 ## Interfaces de Hardware Suportadas
 
-### 1. Interface Arduino
+### 1. Interface Arduino {: #arduino-interface }
 
 A interface **Arduino** é a solução mais flexível e extensível. Com um Arduino Uno, Mega ou compatível, controla voltas, relés, botões de chamada, tempos de setor, telemetria de acelerador e iluminação LED RGB endereçável com FastLED.
 
@@ -192,7 +192,7 @@ Monitoriza a voltagem do punho ($0\text{--}5\text{V}$) para corridas com combust
 
 ---
 
-### 2. Interface Trackmate
+### 2. Interface Trackmate {: #trackmate-interface }
 
 Suporte nativo para placas comerciais Trackmate ligadas por porta série COM (USB ou RS-232).
 
@@ -205,7 +205,7 @@ Suporte nativo para placas comerciais Trackmate ligadas por porta série COM (US
 
 ---
 
-### 3. Interface Phidget
+### 3. Interface Phidget {: #phidget-interface }
 
 Integração de módulos industriais USB e VINT da Phidgets (ex.: InterfaceKit 0/16/16, 8/8/8, 1014 Relays e concentradores VINT).
 
@@ -220,7 +220,7 @@ Integração de módulos industriais USB e VINT da Phidgets (ex.: InterfaceKit 0
 
 ---
 
-### 4. Interface BART (Cronómetro Bluetooth Policar)
+### 4. Interface BART (Cronómetro Bluetooth Policar) {: #bart-interface }
 
 Ligação sem fios a pontes de cronometragem e transponders Policar BART Bluetooth Low Energy (BLE).
 

@@ -26,7 +26,7 @@ Alle Änderungen im Strecken-Editor werden **automatisch validiert und in Echtze
 
 ---
 
-## Allgemeine Streckenkonfiguration
+## Allgemeine Streckenkonfiguration {: #track-settings }
 
 Im oberen Bereich des Strecken-Editors legen Sie die grundlegenden Eigenschaften Ihres Streckenlayouts fest:
 
@@ -56,7 +56,7 @@ Wählen Sie den Maßstab Ihrer Rennstrecke aus dem Dropdown-Menü:
 
 ---
 
-## Spurkonfiguration (Lane Configuration)
+## Spurkonfiguration (Lane Configuration) {: #lane-configuration }
 
 Im Bereich **Spur-Editor (Lane Editor)** passen Sie die Geometrie, Startaufstellung und Farbgebung jeder Spur an.
 
@@ -103,7 +103,7 @@ Für jede Spur stehen zwei Farbwähler zur Verfügung:
 
 ---
 
-## Hardware-Schnittstellen-Architektur
+## Hardware-Schnittstellen-Architektur {: #hardware-interfaces }
 
 Race Coordinator AI unterstützt den gleichzeitigen Anschluss mehrerer Hardware-Systeme.
 
@@ -129,7 +129,7 @@ Jede Schnittstellenkarte besitzt eine gut sichtbare Statusanzeige:
 
 ## Unterstützte Hardware-Schnittstellen
 
-### 1. Arduino-Schnittstelle
+### 1. Arduino-Schnittstelle {: #arduino-interface }
 
 Die **Arduino**-Schnittstelle ist die flexibelste und am weitesten verbreitete Lösung in Race Coordinator AI. Mit einem Arduino Uno, Mega oder kompatiblen Mikrocontroller steuern Sie Rundenzählung, Bahnstromrelais, Chaostasten, Sektorzeitmessung, analoge Gas-Telemetrie und adressierbare FastLED RGB-Beleuchtung.
 
@@ -195,7 +195,7 @@ Unterstützung für digitale LED-Streifen (WS2812B, NeoPixel, WS2811, SK6812):
 
 ---
 
-### 2. Trackmate-Schnittstelle
+### 2. Trackmate-Schnittstelle {: #trackmate-interface }
 
 Unterstützt kommerzielle Trackmate-Zeitmesskarten über serielle Schnittstellen (USB oder RS-232 COM-Port).
 
@@ -209,7 +209,7 @@ Unterstützt kommerzielle Trackmate-Zeitmesskarten über serielle Schnittstellen
 
 ---
 
-### 3. Phidget-Schnittstelle
+### 3. Phidget-Schnittstelle {: #phidget-interface }
 
 Integration industrieller Phidgets USB- und VINT-Module (z. B. PhidgetInterfaceKit 0/16/16, 8/8/8, 1014 Relais und VINT-Hubs).
 
@@ -224,7 +224,7 @@ Integration industrieller Phidgets USB- und VINT-Module (z. B. PhidgetInterfaceK
 
 ---
 
-### 4. BART-Schnittstelle (Policar Bluetooth Timer)
+### 4. BART-Schnittstelle (Policar Bluetooth Timer) {: #bart-interface }
 
 Drahtlose Anbindung an Policar BART Bluetooth Low Energy (BLE) Zeitmessbrücken und Transponder-Sensoren.
 

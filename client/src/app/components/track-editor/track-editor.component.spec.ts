@@ -29,6 +29,7 @@ import {
   MOCK_TRACK_INSTANCES,
   MOCK_TRACKS as _MOCK_TRACKS,
 } from "@app/testing/data/tracks_data";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import {
   mockAnalyticsService,
   mockLoggerService,
@@ -806,119 +807,28 @@ describe("TrackEditorComponent", () => {
         helpService.startGuide as jasmine.Spy
       ).calls.mostRecent().args[0];
       const targetIds = calledSteps.map((s: any) => s.targetId).filter(Boolean);
-      expect(targetIds).toContain("toolbar-container");
+      expect(targetIds).toContain("edit-track-btn");
     });
 
-    it("should expand lanes, interfaces, and sub-editors sections if collapsed during help", () => {
+    it("should expand lanes and interfaces sections via onEnter hooks during help", () => {
       component.sectionsExpanded.lanes = false;
       component.sectionsExpanded.interfaces = false;
-      component.lanes = [new Lane("l1", "white", "black", 100)];
+      const steps = component.getHelpSteps();
 
-      const mockArduino = jasmine.createSpyObj("ArduinoEditorComponent", [
-        "ensureSectionsExpanded",
-        "getHelpSteps",
-      ]);
-      mockArduino.getHelpSteps.and.returnValue([]);
-      const mockBart = jasmine.createSpyObj("BartEditorComponent", [
-        "ensureSectionsExpanded",
-        "getHelpSteps",
-      ]);
-      mockBart.getHelpSteps.and.returnValue([]);
-      const mockPhidget = jasmine.createSpyObj("PhidgetEditorComponent", [
-        "ensureSectionsExpanded",
-        "getHelpSteps",
-      ]);
-      mockPhidget.getHelpSteps.and.returnValue([]);
-      const mockTrackmate = jasmine.createSpyObj("TrakmateEditorComponent", [
-        "ensureSectionsExpanded",
-        "getHelpSteps",
-      ]);
-      mockTrackmate.getHelpSteps.and.returnValue([]);
-
-      component.arduinoConfigs = [
-        {
-          name: "A1",
-          digitalIds: [],
-          analogIds: [],
-          ledStrings: [],
-        } as any,
-      ];
-      component.bartConfigs = [
-        {
-          deviceName: "B1",
-          lapPinBehaviors: [],
-        } as any,
-      ];
-      component.phidgetConfigs = [
-        {
-          name: "P1",
-          digitalInIds: [],
-          digitalOutIds: [],
-          analogIds: [],
-        } as any,
-      ];
-      component.trackmateConfigs = [
-        {
-          name: "T1",
-          lapPinBehaviors: [],
-        } as any,
-      ];
-
-      component.arduinoEditors = { length: 1, first: mockArduino } as any;
-      component.bartEditors = { length: 1, first: mockBart } as any;
-      component.phidgetEditors = { length: 1, first: mockPhidget } as any;
-      component.trakmateEditors = { length: 1, first: mockTrackmate } as any;
-
-      component.startHelp();
-
+      const laneStep = steps.find((s) => s.targetId === "lane-editor-section");
+      expect(laneStep).toBeDefined();
+      laneStep?.onEnter?.();
       expect(component.sectionsExpanded.lanes).toBeTrue();
+
+      const interfaceStep = steps.find(
+        (s) => s.targetId === "interface-list-section",
+      );
+      expect(interfaceStep).toBeDefined();
+      interfaceStep?.onEnter?.();
       expect(component.sectionsExpanded.interfaces).toBeTrue();
-      expect(mockArduino.ensureSectionsExpanded).toHaveBeenCalled();
-      expect(mockBart.ensureSectionsExpanded).toHaveBeenCalled();
-      expect(mockPhidget.ensureSectionsExpanded).toHaveBeenCalled();
-      expect(mockTrackmate.ensureSectionsExpanded).toHaveBeenCalled();
     });
 
     it("should only include guided help for the first instance of each configured interface type", () => {
-      const mockArduino1 = jasmine.createSpyObj("ArduinoEditorComponent", [
-        "getHelpSteps",
-        "ensureSectionsExpanded",
-      ]);
-      mockArduino1.getHelpSteps.and.returnValue([
-        { selector: "#arduino-editor-0", title: "A1 Help", content: "A1" },
-      ]);
-      const mockArduino2 = jasmine.createSpyObj("ArduinoEditorComponent", [
-        "getHelpSteps",
-        "ensureSectionsExpanded",
-      ]);
-      mockArduino2.getHelpSteps.and.returnValue([
-        { selector: "#arduino-editor-1", title: "A2 Help", content: "A2" },
-      ]);
-
-      const mockBart1 = jasmine.createSpyObj("BartEditorComponent", [
-        "getHelpSteps",
-        "ensureSectionsExpanded",
-      ]);
-      mockBart1.getHelpSteps.and.returnValue([
-        { selector: "#bart-editor-0", title: "B1 Help", content: "B1" },
-      ]);
-
-      const mockPhidget1 = jasmine.createSpyObj("PhidgetEditorComponent", [
-        "getHelpSteps",
-        "ensureSectionsExpanded",
-      ]);
-      mockPhidget1.getHelpSteps.and.returnValue([
-        { selector: "#phidget-editor-0", title: "P1 Help", content: "P1" },
-      ]);
-
-      const mockTrackmate1 = jasmine.createSpyObj("TrakmateEditorComponent", [
-        "getHelpSteps",
-        "ensureSectionsExpanded",
-      ]);
-      mockTrackmate1.getHelpSteps.and.returnValue([
-        { selector: "#trakmate-editor-0", title: "T1 Help", content: "T1" },
-      ]);
-
       component.arduinoConfigs = [
         { name: "A1", digitalIds: [], analogIds: [], ledStrings: [] } as any,
         { name: "A2", digitalIds: [], analogIds: [], ledStrings: [] } as any,
@@ -940,18 +850,137 @@ describe("TrackEditorComponent", () => {
         { name: "T2", lapPinBehaviors: [] } as any,
       ];
 
-      component.arduinoEditors = { length: 2, first: mockArduino1 } as any;
-      component.bartEditors = { length: 2, first: mockBart1 } as any;
-      component.phidgetEditors = { length: 1, first: mockPhidget1 } as any;
-      component.trakmateEditors = { length: 2, first: mockTrackmate1 } as any;
-
       const helpSteps = component.getHelpSteps();
-      const titles = helpSteps.map((s) => s.title);
-      expect(titles).toContain("A1 Help");
-      expect(titles).not.toContain("A2 Help");
-      expect(titles).toContain("B1 Help");
-      expect(titles).toContain("P1 Help");
-      expect(titles).toContain("T1 Help");
+      const selectors = helpSteps.map((s) => s.selector).filter(Boolean);
+
+      expect(selectors).toContain("#interface-arduino-0");
+      expect(selectors).not.toContain("#interface-arduino-1");
+      expect(selectors).toContain("#interface-trackmate-0");
+      expect(selectors).not.toContain("#interface-trackmate-1");
+      expect(selectors).toContain("#interface-phidget-0");
+      expect(selectors).toContain("#interface-bart-0");
+      expect(selectors).not.toContain("#interface-bart-1");
+    });
+
+    it("should provide base guide steps in correct order", () => {
+      component.arduinoConfigs = [];
+      component.trackmateConfigs = [];
+      component.phidgetConfigs = [];
+      component.bartConfigs = [];
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(6);
+
+      // Step 0: Welcome Step
+      expect(steps[0].title).toBe("TE_HELP_WELCOME_TITLE");
+      expect(steps[0].content).toBe("TE_HELP_WELCOME_CONTENT");
+      expect(steps[0].position).toBe("center");
+      expect(steps[0].targetId).toBeUndefined();
+      expect(steps[0].selector).toBeUndefined();
+
+      // Step 1: Select Track
+      expect(steps[1].targetId).toBe("editor-object-nav");
+      expect(steps[1].selector).toBe("#editor-object-nav");
+      expect(steps[1].title).toBe("TE_HELP_SELECTOR_TITLE");
+      expect(steps[1].position).toBe("bottom");
+
+      // Step 2: Toolbar Actions
+      expect(steps[2].targetId).toBe("edit-track-btn");
+      expect(steps[2].highlightTargetId).toBe("toolbar-container");
+      expect(steps[2].selector).toBe("#edit-track-btn");
+      expect(steps[2].highlightSelector).toBe(".toolbar-container");
+      expect(steps[2].title).toBe("TOOLBAR_HELP_TITLE");
+      expect(steps[2].position).toBe("bottom");
+
+      // Step 3: LHS Panel (Track Settings)
+      expect(steps[3].targetId).toBe("track-general-settings");
+      expect(steps[3].selector).toBe("#track-general-settings");
+      expect(steps[3].title).toBe("TE_HELP_LHS_TITLE");
+      expect(steps[3].position).toBe("right");
+
+      // Step 4: Lanes Section
+      expect(steps[4].targetId).toBe("lane-editor-section");
+      expect(steps[4].selector).toBe("#lane-editor-section");
+      expect(steps[4].title).toBe("TE_HELP_LANES_TITLE");
+      expect(steps[4].position).toBe("right");
+
+      // Step 5: Interface List Section
+      expect(steps[5].targetId).toBe("interface-list-section");
+      expect(steps[5].selector).toBe("#interface-list-section");
+      expect(steps[5].title).toBe("TE_HELP_INTERFACE_LIST_TITLE");
+      expect(steps[5].position).toBe("right");
+    });
+
+    it("should provide all guide steps in correct order when interfaces are configured", () => {
+      component.arduinoConfigs = [
+        { name: "A1", digitalIds: [], analogIds: [], ledStrings: [] } as any,
+      ];
+      component.trackmateConfigs = [{ name: "T1", lapPinBehaviors: [] } as any];
+      component.phidgetConfigs = [
+        {
+          name: "P1",
+          digitalInIds: [],
+          digitalOutIds: [],
+          analogIds: [],
+        } as any,
+      ];
+      component.bartConfigs = [
+        { deviceName: "B1", lapPinBehaviors: [] } as any,
+      ];
+
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(10);
+
+      const targetIds = steps.map((s) => s.targetId);
+      expect(targetIds).toEqual([
+        undefined,
+        "editor-object-nav",
+        "edit-track-btn",
+        "track-general-settings",
+        "lane-editor-section",
+        "interface-list-section",
+        "interface-arduino-0",
+        "interface-trackmate-0",
+        "interface-phidget-0",
+        "interface-bart-0",
+      ]);
+
+      const selectors = steps.map((s) => s.selector);
+      expect(selectors).toEqual([
+        undefined,
+        "#editor-object-nav",
+        "#edit-track-btn",
+        "#track-general-settings",
+        "#lane-editor-section",
+        "#interface-list-section",
+        "#interface-arduino-0",
+        "#interface-trackmate-0",
+        "#interface-phidget-0",
+        "#interface-bart-0",
+      ]);
+    });
+
+    it("should verify that all guide step DOM targets exist in the component DOM", () => {
+      component.arduinoConfigs = [
+        { name: "A1", digitalIds: [], analogIds: [], ledStrings: [] } as any,
+      ];
+      component.trackmateConfigs = [{ name: "T1", lapPinBehaviors: [] } as any];
+      component.phidgetConfigs = [
+        {
+          name: "P1",
+          digitalInIds: [],
+          digitalOutIds: [],
+          analogIds: [],
+        } as any,
+      ];
+      component.bartConfigs = [
+        { deviceName: "B1", lapPinBehaviors: [] } as any,
+      ];
+      component.sectionsExpanded.lanes = true;
+      component.sectionsExpanded.interfaces = true;
+      fixture.detectChanges();
+
+      const steps = component.getHelpSteps();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
   });
 
@@ -1462,14 +1491,14 @@ describe("TrackEditorComponent", () => {
         ).toBeFalse();
       });
 
-      it("should include track scale help step in getBaseHelpSteps", () => {
+      it("should include track general settings help step in getBaseHelpSteps", () => {
         const steps = (component as any).getBaseHelpSteps();
-        const scaleStep = steps.find(
-          (s: any) => s.selector === "#track-scale-section",
+        const generalStep = steps.find(
+          (s: any) => s.selector === "#track-general-settings",
         );
-        expect(scaleStep).toBeTruthy();
-        expect(scaleStep.title).toBe("TE_HELP_TRACK_SCALE_TITLE");
-        expect(scaleStep.content).toBe("TE_HELP_TRACK_SCALE_CONTENT");
+        expect(generalStep).toBeTruthy();
+        expect(generalStep.title).toBe("TE_HELP_LHS_TITLE");
+        expect(generalStep.content).toBe("TE_HELP_LHS_CONTENT");
       });
     });
 

@@ -26,7 +26,7 @@ Todas las modificaciones realizadas en el Editor de Pistas se **validan y guarda
 
 ---
 
-## Configuración General de la Pista
+## Configuración General de la Pista {: #track-settings }
 
 La sección superior define las propiedades fundamentales de su circuito:
 
@@ -56,7 +56,7 @@ Seleccione la escala física de su trazado en el menú desplegable:
 
 ---
 
-## Configuración de Carriles (Lane Configuration)
+## Configuración de Carriles (Lane Configuration) {: #lane-configuration }
 
 La sección **Editor de Carriles (Lane Editor)** permite personalizar la geometría, el orden de salida en parrilla y el aspecto visual de cada carril.
 
@@ -103,7 +103,7 @@ Cada carril cuenta con dos selectores de color:
 
 ---
 
-## Arquitectura de Interfaces de Hardware
+## Arquitectura de Interfaces de Hardware {: #hardware-interfaces }
 
 Race Coordinator AI permite conectar varios sistemas de control y cronometraje en paralelo.
 
@@ -129,7 +129,7 @@ Cada interfaz muestra un distintivo en tiempo real:
 
 ## Interfaces de Hardware Compatibles
 
-### 1. Interfaz Arduino
+### 1. Interfaz Arduino {: #arduino-interface }
 
 La interfaz **Arduino** es la más versátil en Race Coordinator AI. Con un Arduino Uno, Mega o compatible, puede controlar vueltas, relés, pulsadores de pausa, sectores, telemetría de acelerador y tiras LED RGB direccionables con FastLED.
 
@@ -192,7 +192,7 @@ Permite monitorizar el voltaje del mando ($0\text{--}5\text{V}$) para carreras c
 
 ---
 
-### 2. Interfaz Trackmate
+### 2. Interfaz Trackmate {: #trackmate-interface }
 
 Soporte nativo para placas comerciales Trackmate conectadas mediante puerto serie COM (USB o RS-232).
 
@@ -205,7 +205,7 @@ Soporte nativo para placas comerciales Trackmate conectadas mediante puerto seri
 
 ---
 
-### 3. Interfaz Phidget
+### 3. Interfaz Phidget {: #phidget-interface }
 
 Integración de módulos industriales USB y VINT de Phidgets (ej. InterfaceKit 0/16/16, 8/8/8, 1014 Relays y concentradores VINT).
 
@@ -220,7 +220,7 @@ Integración de módulos industriales USB y VINT de Phidgets (ej. InterfaceKit 0
 
 ---
 
-### 4. Interfaz BART (Policar Bluetooth Timer)
+### 4. Interfaz BART (Policar Bluetooth Timer) {: #bart-interface }
 
 Conexión inalámbrica a puentes de cronometraje y transpondedores Policar BART Bluetooth Low Energy (BLE).
 
