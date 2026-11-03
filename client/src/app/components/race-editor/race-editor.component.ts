@@ -1081,6 +1081,7 @@ export class RaceEditorComponent
     return RaceEditorHelpHelper.getHelpSteps(
       this.translationService,
       this.sectionsExpanded,
+      () => this.cdr.detectChanges(),
     );
   }
 

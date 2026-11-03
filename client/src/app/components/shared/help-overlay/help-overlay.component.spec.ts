@@ -319,6 +319,152 @@ describe("HelpOverlayComponent", () => {
     document.body.removeChild(target);
   }));
 
+  it("should clamp without vertically flipping above when target is near bottom for left position", fakeAsync(() => {
+    const target = document.createElement("div");
+    target.id = "target-bottom-left";
+    target.style.position = "absolute";
+    // Place target near bottom of window
+    target.style.top = `${window.innerHeight - 80}px`;
+    target.style.left = "400px";
+    target.style.width = "200px";
+    target.style.height = "40px";
+    document.body.appendChild(target);
+
+    isVisibleSubject.next(true);
+    currentStepSubject.next({
+      title: "Bottom Left Step",
+      content: "Content",
+      targetId: "target-bottom-left",
+      position: "left",
+    });
+    fixture.detectChanges();
+    tick(50);
+    fixture.detectChanges();
+
+    // Popover must be to the left of the target
+    expect(component.popoverClass).toBe("arrow-right");
+
+    const popoverTop = parseInt(component.popoverStyle.top, 10);
+    // Should NOT flip completely above target (which would have been targetTop - popoverHeight - 15)
+    // Instead it stays clamped beside the target
+    expect(popoverTop).toBeLessThanOrEqual(window.innerHeight - 10);
+    expect(component.popoverStyle["--arrow-top"]).toBeDefined();
+
+    document.body.removeChild(target);
+  }));
+
+  it("should flip above target when target is near bottom for bottom position", fakeAsync(() => {
+    const target = document.createElement("div");
+    target.id = "target-bottom-flip";
+    target.style.position = "absolute";
+    target.style.top = `${window.innerHeight - 60}px`;
+    target.style.left = "200px";
+    target.style.width = "100px";
+    target.style.height = "40px";
+    document.body.appendChild(target);
+
+    isVisibleSubject.next(true);
+    currentStepSubject.next({
+      title: "Bottom Step",
+      content: "Content",
+      targetId: "target-bottom-flip",
+      position: "bottom",
+    });
+    fixture.detectChanges();
+    tick(50);
+    fixture.detectChanges();
+
+    // When space below is unavailable, it flips above target
+    expect(component.popoverClass).toBe("arrow-bottom");
+
+    document.body.removeChild(target);
+  }));
+
+  it("should flip to right when target has insufficient space on left for left position", fakeAsync(() => {
+    const target = document.createElement("div");
+    target.id = "target-left-edge";
+    target.style.position = "absolute";
+    target.style.top = "200px";
+    target.style.left = "20px";
+    target.style.width = "50px";
+    target.style.height = "40px";
+    document.body.appendChild(target);
+
+    isVisibleSubject.next(true);
+    currentStepSubject.next({
+      title: "Left Edge Step",
+      content: "Content",
+      targetId: "target-left-edge",
+      position: "left",
+    });
+    fixture.detectChanges();
+    tick(50);
+    fixture.detectChanges();
+
+    // Not enough space on left (target left is 20px), so flips to right
+    expect(component.popoverClass).toBe("arrow-left");
+
+    document.body.removeChild(target);
+  }));
+
+  it("should scroll container so that the top of the expander/target is near the top and not scrolled off-screen", fakeAsync(() => {
+    // Create scrollable container
+    const container = document.createElement("div");
+    container.style.position = "absolute";
+    container.style.top = "100px";
+    container.style.left = "100px";
+    container.style.width = "600px";
+    container.style.height = "400px";
+    container.style.overflowY = "auto";
+    container.id = "test-scroll-container";
+
+    // Create spacer before target
+    const spacer = document.createElement("div");
+    spacer.style.height = "600px";
+    container.appendChild(spacer);
+
+    // Create target element (representing an expander)
+    const target = document.createElement("div");
+    target.id = "test-expander-target";
+    target.style.height = "500px";
+    container.appendChild(target);
+
+    // Create trailing content
+    const trailing = document.createElement("div");
+    trailing.style.height = "800px";
+    container.appendChild(trailing);
+
+    document.body.appendChild(container);
+
+    let scrolledTop = -1;
+    spyOn(container, "scrollTo").and.callFake((options?: any) => {
+      scrolledTop = options?.top ?? 0;
+      container.scrollTop = scrolledTop;
+    });
+
+    isVisibleSubject.next(true);
+    currentStepSubject.next({
+      title: "Expander Step",
+      content: "Content",
+      targetId: "test-expander-target",
+      position: "left",
+    });
+    fixture.detectChanges();
+    tick(50);
+    fixture.detectChanges();
+
+    // Verify container was scrolled so that target is near top (within margin)
+    expect(container.scrollTo).toHaveBeenCalled();
+    // Target was 600px down in container, targetScroll should be close to 600 - 12 = 588px
+    expect(scrolledTop).toBeGreaterThanOrEqual(580);
+    expect(scrolledTop).toBeLessThanOrEqual(600);
+
+    // Ensure it never scrolled so far that target top was off the top (> 600)
+    expect(scrolledTop).toBeLessThanOrEqual(600);
+
+    document.body.removeChild(container);
+  }));
+
   it("should ignore keydown events when overlay is not visible", fakeAsync(() => {
     isVisibleSubject.next(false);
     tick();

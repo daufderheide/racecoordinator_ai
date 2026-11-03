@@ -5,7 +5,7 @@
 >
   <div
     class="section-header"
-    [id]="headerId() || null"
+    [id]="headerId() || (sectionId() ? sectionId() + '-header' : null)"
     [class.collapsible]="collapsible()"
     [class.bordered]="bordered()"
     [attr.role]="collapsible() ? 'button' : null"

@@ -36,7 +36,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private scrollListener = () => {
     if (this.isVisible) {
-      this.updatePosition();
+      this.updatePosition(0, false);
     }
   };
 
@@ -93,7 +93,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostListener("window:scroll")
   onResize() {
     if (this.isVisible) {
-      this.updatePosition();
+      this.updatePosition(0, false);
     }
   }
 
@@ -206,7 +206,71 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     }, 10);
   }
 
-  private updatePosition(retries = 3) {
+  private getScrollParent(node: HTMLElement | null): HTMLElement | null {
+    if (!node) return null;
+    let parent = node.parentElement;
+    while (
+      parent &&
+      parent !== document.body &&
+      parent !== document.documentElement
+    ) {
+      const style = window.getComputedStyle(parent);
+      const overflowY = style.overflowY;
+      if (overflowY === "auto" || overflowY === "scroll") {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+    return null;
+  }
+
+  private scrollElementIntoView(el: HTMLElement) {
+    const margin = 12;
+    const container = this.getScrollParent(el);
+
+    if (container) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const elTopRelativeToContainer =
+        elRect.top - containerRect.top + container.scrollTop;
+
+      // Scroll so that the top of the element is near the top of the container (with margin).
+      // This brings as much of the expander/element onto the screen as possible,
+      // and guarantees the element's top is never scrolled off the top of the container.
+      const maxScroll = Math.max(
+        0,
+        container.scrollHeight - container.clientHeight,
+      );
+      const targetScrollTop = Math.max(
+        0,
+        Math.min(maxScroll, elTopRelativeToContainer - margin),
+      );
+
+      container.scrollTo({
+        top: targetScrollTop,
+        behavior: "auto",
+      });
+    } else {
+      const elRect = el.getBoundingClientRect();
+      const currentScrollY = window.scrollY || window.pageYOffset;
+      if (elRect.top < margin || elRect.bottom > window.innerHeight - margin) {
+        const maxWindowScroll = Math.max(
+          0,
+          document.documentElement.scrollHeight - window.innerHeight,
+        );
+        const targetScrollY = Math.max(
+          0,
+          Math.min(maxWindowScroll, currentScrollY + elRect.top - margin),
+        );
+        window.scrollTo({
+          top: targetScrollY,
+          behavior: "auto",
+        });
+      }
+    }
+  }
+
+  private updatePosition(retries = 3, scroll = true) {
     if (!this.isVisible || !this.currentStep) {
       this.highlightStyle = null;
       this.isInitialized = false;
@@ -234,16 +298,21 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (el) {
       // Ensure element is visible
-      el.scrollIntoView({ behavior: "auto", block: "center" });
+      if (scroll) {
+        this.scrollElementIntoView(el);
+      }
 
       // Immediate preliminary position
       const rect = el.getBoundingClientRect();
       this.applyPosition(el, rect, highlightEl);
       this.cdr.detectChanges();
 
-      // Refine position after layout settles
+      // Refine position after layout settles (e.g. accordion expansion)
       requestAnimationFrame(() => {
         if (!el) return;
+        if (scroll) {
+          this.scrollElementIntoView(el);
+        }
         const rectRefined = el.getBoundingClientRect();
         this.applyPosition(el, rectRefined, highlightEl);
         this.cdr.detectChanges();
@@ -256,7 +325,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
       });
     } else if (retries > 0) {
       // Target not found, wait for DOM updates and retry
-      setTimeout(() => this.updatePosition(retries - 1), 50);
+      setTimeout(() => this.updatePosition(retries - 1, scroll), 50);
       return;
     } else {
       // Target not found after retries, fallback to center
@@ -280,46 +349,96 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   ) {
     if (!this.isVisible || !this.currentStep || !el) return;
 
-    const maskTarget = highlightEl || el;
-    const maskRect = maskTarget.getBoundingClientRect();
+    this.highlightStyle = this.computeHighlightStyle(highlightEl || el);
 
-    this.highlightStyle = {
-      top: Math.round(maskRect.top) + "px",
-      left: Math.round(maskRect.left) + "px",
-      width: Math.round(maskRect.width) + "px",
-      height: Math.round(maskRect.height) + "px",
-      position: "fixed",
-      zIndex: 10001, // Above overlay
-      boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)", // The 'hole' effect
-      pointerEvents: "none", // Allow clicks through if needed
-    };
-
-    // Get actual popover dimensions
-    let popoverHeight = 200; // Default fallback
-    let popoverWidth = 300; // Default width
-
+    let popoverHeight = 200;
+    let popoverWidth = 300;
     if (this.popoverRef && this.popoverRef.nativeElement) {
       popoverHeight = this.popoverRef.nativeElement.offsetHeight;
       popoverWidth = this.popoverRef.nativeElement.offsetWidth;
     }
 
-    // Position popover relative to target
+    const position = this.currentStep.position || "bottom";
+    const coords = this.computePopoverCoordinates(
+      rect,
+      position,
+      popoverWidth,
+      popoverHeight,
+    );
+
+    this.popoverClass = this.computeArrowClass(
+      coords.left,
+      coords.top,
+      rect,
+      popoverWidth,
+      popoverHeight,
+      position,
+    );
+
+    const arrowOffsets = this.computeArrowOffsets(
+      coords.left,
+      coords.top,
+      rect,
+      popoverWidth,
+      popoverHeight,
+      position,
+    );
+
+    this.popoverStyle = {
+      top: coords.top + "px",
+      left: coords.left + "px",
+      position: "fixed",
+      "--arrow-top": `${arrowOffsets.arrowTop}px`,
+      "--arrow-left": `${arrowOffsets.arrowLeft}px`,
+    };
+
+    this.cdr.detectChanges();
+  }
+
+  private computeHighlightStyle(maskTarget: HTMLElement): any {
+    const maskRect = maskTarget.getBoundingClientRect();
+    return {
+      top: Math.round(maskRect.top) + "px",
+      left: Math.round(maskRect.left) + "px",
+      width: Math.round(maskRect.width) + "px",
+      height: Math.round(maskRect.height) + "px",
+      position: "fixed",
+      zIndex: 10001,
+      boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+      pointerEvents: "none",
+    };
+  }
+
+  private computePopoverCoordinates(
+    rect: DOMRect,
+    position: string,
+    popoverWidth: number,
+    popoverHeight: number,
+  ): { top: number; left: number } {
+    const margin = 15;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
     let top = 0;
     let left = 0;
-    const margin = 15;
-
-    // Default to bottom if not specified
-    const position = this.currentStep!.position || "bottom";
 
     switch (position) {
       case "right":
-        top = rect.top + rect.height / 2 - popoverHeight / 2;
-        left = rect.right + margin;
+      case "left": {
+        const visibleTop = Math.max(rect.top, 10);
+        const visibleBottom = Math.min(rect.bottom, windowHeight - 10);
+        const effectiveCenterY =
+          visibleBottom > visibleTop
+            ? visibleTop + (visibleBottom - visibleTop) / 2
+            : rect.top + rect.height / 2;
+
+        top = effectiveCenterY - popoverHeight / 2;
+        left =
+          position === "right"
+            ? rect.right + margin
+            : rect.left - popoverWidth - margin;
         break;
-      case "left":
-        top = rect.top + rect.height / 2 - popoverHeight / 2;
-        left = rect.left - popoverWidth - margin;
-        break;
+      }
       case "top":
         top = rect.top - popoverHeight - margin;
         left = rect.left + rect.width / 2 - popoverWidth / 2;
@@ -331,70 +450,141 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
         break;
     }
 
-    // Basic boundary checks
-    if (left < 10) left = 10;
-    if (top < 10) top = 10;
+    return this.constrainCoordinates(
+      top,
+      left,
+      rect,
+      position,
+      popoverWidth,
+      popoverHeight,
+      windowWidth,
+      windowHeight,
+      margin,
+    );
+  }
 
-    // If positioned right, ensure it doesn't overlap
-    if (position === "right" && left < rect.right + margin) {
-      left = rect.right + margin;
-    }
+  private constrainCoordinates(
+    top: number,
+    left: number,
+    rect: DOMRect,
+    position: string,
+    popoverWidth: number,
+    popoverHeight: number,
+    windowWidth: number,
+    windowHeight: number,
+    margin: number,
+  ): { top: number; left: number } {
+    let constrainedTop = top;
+    let constrainedLeft = left;
 
-    // --- Boundary Check & Flip Logic ---
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const estimatedHeight = popoverHeight;
-
-    // Check Bottom edge
-    if (top + estimatedHeight > windowHeight) {
-      if (
-        position === "bottom" ||
-        position === "right" ||
-        position === "left"
-      ) {
-        if (rect.top - estimatedHeight - margin > 0) {
-          top = rect.top - estimatedHeight - margin;
+    if (position === "bottom") {
+      if (constrainedTop + popoverHeight > windowHeight - 10) {
+        if (rect.top - popoverHeight - margin > 10) {
+          constrainedTop = rect.top - popoverHeight - margin;
         } else {
-          top = windowHeight - estimatedHeight - 10;
+          constrainedTop = Math.max(10, windowHeight - popoverHeight - 10);
         }
-      } else {
-        top = windowHeight - estimatedHeight - 10;
       }
-    }
-
-    // Check Top edge
-    if (top < 10) top = 10;
-
-    // Check Right edge
-    if (left + popoverWidth > windowWidth) {
-      if (position === "right") {
-        if (rect.left - popoverWidth - margin > 0) {
-          left = rect.left - popoverWidth - margin;
+      constrainedLeft = Math.max(
+        10,
+        Math.min(windowWidth - popoverWidth - 10, constrainedLeft),
+      );
+    } else if (position === "top") {
+      if (constrainedTop < 10) {
+        if (rect.bottom + popoverHeight + margin < windowHeight - 10) {
+          constrainedTop = rect.bottom + margin;
         } else {
-          left = windowWidth - popoverWidth - 10;
+          constrainedTop = 10;
         }
-      } else {
-        left = windowWidth - popoverWidth - 10;
       }
+      constrainedLeft = Math.max(
+        10,
+        Math.min(windowWidth - popoverWidth - 10, constrainedLeft),
+      );
+    } else if (position === "right") {
+      if (constrainedLeft + popoverWidth > windowWidth - 10) {
+        if (rect.left - popoverWidth - margin > 10) {
+          constrainedLeft = rect.left - popoverWidth - margin;
+        } else {
+          constrainedLeft = Math.max(10, windowWidth - popoverWidth - 10);
+        }
+      } else if (constrainedLeft < 10) {
+        constrainedLeft = 10;
+      }
+      constrainedTop = Math.max(
+        10,
+        Math.min(windowHeight - popoverHeight - 10, constrainedTop),
+      );
+    } else if (position === "left") {
+      if (constrainedLeft < 10) {
+        if (rect.right + popoverWidth + margin < windowWidth - 10) {
+          constrainedLeft = rect.right + margin;
+        } else {
+          constrainedLeft = 10;
+        }
+      } else if (constrainedLeft + popoverWidth > windowWidth - 10) {
+        constrainedLeft = Math.max(10, windowWidth - popoverWidth - 10);
+      }
+      constrainedTop = Math.max(
+        10,
+        Math.min(windowHeight - popoverHeight - 10, constrainedTop),
+      );
     }
 
-    // Check Left edge
-    if (left < 10) left = 10;
+    return { top: constrainedTop, left: constrainedLeft };
+  }
 
-    let arrowClass = "";
-    if (left >= rect.right) arrowClass = "arrow-left";
-    else if (left + popoverWidth <= rect.left) arrowClass = "arrow-right";
-    else if (top >= rect.bottom) arrowClass = "arrow-top";
-    else if (top + estimatedHeight <= rect.top) arrowClass = "arrow-bottom";
-    this.popoverClass = arrowClass;
+  private computeArrowClass(
+    left: number,
+    top: number,
+    rect: DOMRect,
+    popoverWidth: number,
+    popoverHeight: number,
+    position: string,
+  ): string {
+    if (left >= rect.right) {
+      return "arrow-left";
+    }
+    if (left + popoverWidth <= rect.left) {
+      return "arrow-right";
+    }
+    if (top >= rect.bottom) {
+      return "arrow-top";
+    }
+    if (top + popoverHeight <= rect.top) {
+      return "arrow-bottom";
+    }
+    if (position === "right") return "arrow-left";
+    if (position === "left") return "arrow-right";
+    if (position === "top") return "arrow-bottom";
+    return "arrow-top";
+  }
 
-    this.popoverStyle = {
-      top: top + "px",
-      left: left + "px",
-      position: "fixed",
-    };
+  private computeArrowOffsets(
+    left: number,
+    top: number,
+    rect: DOMRect,
+    popoverWidth: number,
+    popoverHeight: number,
+    position: string,
+  ): { arrowTop: number; arrowLeft: number } {
+    const targetCenterY =
+      position === "left" || position === "right"
+        ? Math.max(rect.top, Math.min(rect.bottom, top + popoverHeight / 2))
+        : rect.top + rect.height / 2;
 
-    this.cdr.detectChanges();
+    const arrowTop = Math.max(
+      20,
+      Math.min(popoverHeight - 20, targetCenterY - top),
+    );
+
+    const targetCenterX = rect.left + rect.width / 2;
+    const arrowLeft = Math.max(
+      20,
+      Math.min(popoverWidth - 20, targetCenterX - left),
+    );
+
+    return { arrowTop, arrowLeft };
   }
 
   private centerPopover() {

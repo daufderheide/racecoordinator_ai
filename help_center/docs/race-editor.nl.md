@@ -1,6 +1,6 @@
 # Race-editor
 
-De **Race-editor** is de centrale configuratie-interface voor het ontwerpen, configureren en testen van uw slotcar-raceformaten, scoreregels, heat-rotaties, brandstofsimulaties en timerinstellingen.
+Met de **Race-editor** kunt u raceconfiguraties maken, aanpassen en beheren. Hier kunt u scoringsregels, heat-rotaties, brandstofsimulaties en race-opties instellen.
 
 ---
 
@@ -22,76 +22,116 @@ De werkruimte is verdeeld in twee gesynchroniseerde panelen:
 
 ---
 
-## Raceconfiguratie & Opties
+---
 
-### Racenaam & Baankoppeling
-- **Racenaam**: Unieke naam die het raceformaat identificeert.
-- **Baan**: De gekoppelde fysieke baan bepaalt of analoge of digitale brandstofsimulatie beschikbaar is.
-- **Thema**: Visueel UI-thema voor weergave op de racedag.
+## Race-instellingen {: #race-setup }
 
-### Heat-rotatieformaat
-- **Rotatietype**: Standaard rotaties (**Round Robin**, **Ladder**, **Toernooi**) of aangepaste reeksen.
-- **Aantal heat-cycli**: Hoe vaak elke rijder de volledige heat-rotatie doorloopt.
-- **Omgekeerde heats**: Draait de volgorde van de heats om.
+Het linkerpaneel configureert het basisformaat en de bijbehorende baan voor uw race:
 
-### Score-opties
-- **Heat-score**: Voltooiing op ronden of tijdslimiet, rangschikkingsmethode en tiebreakers.
-  - **Finish Toestaan**: Bepaal hoe auto's hun ronden voltooien wanneer de leider finisht of de tijd verstrijkt:
-    - *Finish niet toestaan*: Heat eindigt onmiddellijk.
-    - *Finish Toestaan*: Alle coureurs rijden door tot de heat-doelen zijn bereikt.
-    - *Finish Toestaan (enkele ronde)*: Coureurs mogen hun huidige ronde afmaken; die telt mee voor het totaal.
-    - *Finish niet toestaan (automatische segmenten)*: Heat eindigt meteen en deeltijdtegoed wordt berekend uit de verstreken tijd in de huidige ronde gedeeld door de mediaan-rondetijd van de coureur (`autoSegments = timeSinceLastLap / medianLapTime`, met een maximum van 0,99).
-    - *Finish Toestaan (enkele ronde) (automatische segmenten)*: Coureurs maken hun ronde op de baan af; de ronde telt niet als volle ronde, maar als percentage berekend uit de rijtijd voor het einde gedeeld door de mediaan-rondetijd van de coureur (`autoSegments = partialLapTime / medianLapTime`, met een maximum van 0,99).
-- **Algemene score**: Algemene rangschikkingsmethode, tiebreaker-regels en schrapresultaten.
-- **Seizoensscore**: Puntenverdeling per positie voor kampioenschappen.
+- **Racenaam**: Unieke naam om het raceformaat te identificeren op de racedag en in statistieken.
+- **Baan**: De fysieke baan die aan deze race is gekoppeld. Bepaalt of analoge of digitale brandstofsimulatie beschikbaar is.
+- **Thema**: Visueel thema voor het scherm op de racedag.
+- **Heat-rotatieformaat**: Kies tussen standaard rotaties (**Round Robin**, **Ladder**, **Toernooi**) of aangepaste reeksen.
+- **Aantal heat-doorgangen**: Geeft aan hoe vaak elke coureur de complete heat-rotatie doorloopt.
+- **Omgekeerde heats**: Draait de volgorde van de heats om zodat coureurs in omgekeerde volgorde rijden.
+- **Voorbeeld coureursaantal**: Toont een dynamisch voorbeeld van de gegenereerde heatlijst op basis van het ingestelde coureursaantal.
 
-#### Ronde- en Tijdaanpassingen (Impact op Rangschikking en Statistieken)
-
-Met Race Coordinator AI kunnen wedstrijdleiders handmatig het aantal ronden en de totale heattijd van een coureur aanpassen tijdens of na een heat (via klikken op ronde-/tijdcellen, sneltoetsen of via het Wedstrijdleidermenu). Aangezien de server de enige gezaghebbende bron is voor alle berekeningen, werken handmatige aanpassingen deterministisch door in heatstanden, het algemeen klassement en telemetriestatistieken:
-
-- **Aangepaste Ronden (`userLaps`)**:
-  - **Formule**: $\text{Aangepast Rondenaantal} = \text{Fysieke Ronden} + \text{Straf-ronden} + \text{Gebruikers-ronden} + \text{Automatische Segmenten}$.
-  - **Rangschikking**: Wanneer de scoringsmethode **Meeste Ronden** is, bepalen de aangepaste ronden rechtstreeks de positie in de heat en het algemeen klassement.
-  - **Statistieken**: Het aantal fysieke ronden blijft ongewijzigd (weerspiegelt daadwerkelijke sensordoorkomsten). De gemiddelde rondetijd ($\text{Totale Tijd} / \text{Fysieke Ronden}$), snelste ronde en mediaan-rondetijd worden niet beïnvloed. Rondeverschillen worden onmiddellijk bijgewerkt.
-- **Aangepaste Tijd (`userTime`)**:
-  - **Formule**: $\text{Aangepaste Totale Tijd} = \sum (\text{Fysieke Rondetijden}) + \text{Gebruikers-tijd}$.
-  - **Rangschikking**: Wanneer de scoringsmethode **Snelste Totale Tijd** is, bepaalt de aangepaste tijd rechtstreeks de positie (lagere tijd scoort beter). Bij **Meeste Ronden** fungeert de aangepaste tijd als de primaire tiebreaker voor coureurs met een gelijk aantal ronden. Het algemeen klassement sommeert de aangepaste totale tijden van alle meetellende heats.
-  - **Statistieken**: De gemiddelde rondetijd ($\text{Aangepaste Totale Tijd} / \text{Fysieke Ronden}$) wordt direct beïnvloed: het toevoegen van straftijd verhoogt de gemiddelde rondetijd (langzamere pace). Tijdsverschillen (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) worden opnieuw berekend om de aanpassing weer te geven.
-  - **Beschermde Statistieken**: De **snelste ronde** en de **mediaan-rondetijd** worden **NIET beïnvloed** door tijdaanpassingen. De snelste ronde vertegenwoordigt strikt de snelste individuele fysieke ronde, en de mediaan-rondetijd vertegenwoordigt de middelste fysieke rondetijd.
-
-| Statistiek / Functie | Aangepaste Ronden (`userLaps`) | Aangepaste Tijd (`userTime`) |
-| :--- | :--- | :--- |
-| **Aangepast Rondenaantal** | **Verandert direct** ($\pm\text{segmenten}/\text{ronden}$) | Geen effect |
-| **Fysiek Rondenaantal** | Geen effect (alleen echte sensorronden) | Geen effect (alleen echte sensorronden) |
-| **Totale Heattijd** | Geen effect | **Verandert direct** ($+ \text{userTime}$) |
-| **Totale Algemene Tijd** | Geen effect | **Verandert direct** (som van heats) |
-| **Stand (Meeste Ronden)** | **Primaire rangschikkingsfactor** | **Tiebreaker-factor** (laagste tijd wint) |
-| **Stand (Snelste Totale Tijd)** | Tiebreaker-factor | **Primaire rangschikkingsfactor** (laagste tijd wint) |
-| **Gemiddelde Rondetijd** | Geen effect ($\text{Tijd} / \text{Fysieke Ronden}$) | **Verandert direct** ($\text{Aangepaste Tijd} / \text{Fysieke Ronden}$) |
-| **Snelste Ronde** | **Geen invloed** (snelste fysieke ronde) | **Geen invloed** (snelste fysieke ronde) |
-| **Mediaan-Rondetijd** | **Geen invloed** (mediaan fysieke ronde) | **Geen invloed** (mediaan fysieke ronde) |
-| **Gaps (`gapLeader`, `gapPosition`)** | Werkt rondeverschil bij | Werkt tijd- en pace-verschil bij |
-
-### Timerinstellingen
-- **Start- / Herstartvertraging**: Afteltijd in seconden voor de start.
-- **Minimale rondetijd**: Minimale tijd om valse sensortriggers te filteren.
-- **Drifttijd**: Detectievenster voor driftende auto's over de finishlijn.
-- **Starten achter sensor**: Verplicht starten achter de finishsensor in ronde nul.
-
-## Brandstofinstellingen
-
-Race Coordinator AI ondersteunt een uitgebreide brandstofsimulatie voor zowel analoge als digitale banen, inclusief aanpasbare brandstoftankcapaciteit, startniveau, pitstopvertragingen, tanksnelheden, strafmaatregelen bij een lege tank en brandstofverbruiksmodellen.
-
-### Baancompatibiliteit en selectie van het brandstofsysteem
-
-De race-editor bevat twee specifieke configuratiesecties voor brandstof: **Analoge brandstof** en **Digitale brandstof**. Welk systeem beschikbaar en actief is, wordt automatisch bepaald door de gekozen baan voor de race:
-
-- **Analoge banen**: Traditionele slotracebanen waar auto's rechtstreeks via de stroomrails van de sleuf worden gevoed, zonder digitale decoders of telemetrie tussen auto en baan. Wanneer een analoge baan is geselecteerd, is de sectie **Analoge brandstof** ingeschakeld en wordt het selectievakje voor **Digitale brandstof** automatisch uitgeschakeld (als u de muisaanwijzer op het uitgeschakelde selectievakje plaatst, verschijnt er een verklarende tooltip).
-- **Digitale banen**: Digitale slotracesystemen (zoals Carrera Digital, Scalextric Digital, Scorpius of oXigen) waarbij de interface digitale telemetrie communiceert (auto-ID, gaspercentage, sensoren in de pitstraat). Wanneer een digitale baan is geselecteerd, is de sectie **Digitale brandstof** ingeschakeld en wordt het selectievakje voor **Analoge brandstof** automatisch uitgeschakeld (als u de muisaanwijzer op het uitgeschakelde selectievakje plaatst, verschijnt er een verklarende tooltip).
+Het rechterpaneel toont het **Live heat-voorbeeld**, dat de volledige lijst met heats, coureursrotaties en baantoewijzingen in realtime bijwerkt terwijl u instellingen aanpast.
 
 ---
 
-### Analoge brandstofsimulatie
+## Navigatietabbladen {: #navigation-tabs }
+
+De tabbladenbalk bovenaan de race-editor biedt snelkoppelingen om direct naar elk configuratiegedeelte te springen:
+
+- **Algemeen**: Thema's, spraakmeldingen, rondetijdfilters en interfacevoorkeuren.
+- **Heats**: Tijden voor automatisch starten en doorgaan, heat-herhalingen en omgekeerde volgorde.
+- **Scoring**: Rangschikkingsmethoden voor heats en eindstand, finishvoorwaarden, tiebreakers en schrapresultaten.
+- **Groepen**: Toernooifasen, kwalificatierondes en coureurspromotie.
+- **Startmethoden**: Start- en herstarttijden, startposities op de baan, vliegende starts en valse-startstraffen.
+- **Teamopties**: Duurzaamheidsraces voor teams, coureurswissels en stintlimieten.
+- **Analoge brandstof**: Verbruik per ronde, tankinhoud en bijtanksnelheden.
+- **Digitale brandstof**: Continu verbruik op basis van gashendel en aangepaste curven.
+- **Seizoenspunten**: Kampioenschapspuntentabel, heat-punten en bonuspunten.
+
+Door op een tabblad te klikken, scrolt de weergave direct naar dat uitklapgedeelte en opent het.
+
+---
+
+## Algemene instellingen {: #general-settings }
+
+Het uitklapgedeelte Algemene instellingen regelt de presentatie, tijdfilters en het gedrag van de wedstrijdleider:
+
+- **Themaselectie**: Wijs aangepaste kleurenschema's en scorebordindelingen toe.
+- **Spraakmeldingen**: Automatische gesproken meldingen voor positiewisselingen, snelste rondes, pitstops en finishes.
+- **Minimale rondetijd (s)**: Minimale toegestane rondetijd om sensorstoringen of valse triggers weg te filteren.
+- **Drifttijd (s)**: Detectievenster voor driftende of glijdende auto's over de finishlijn.
+- **Gele-vlagregels**: Automatische of handmatige onderbrekingen met stroomonderbreking op de baan.
+- **Aangepaste UI-opties**: Selecteer gespecialiseerde ranglijsten en telemetrie-widgets.
+
+---
+
+## Heat-opties {: #heat-options }
+
+Het uitklapgedeelte Heat-opties regelt geautomatiseerde timing, herhalingscycli en de heat-volgorde:
+
+- **Automatische doorlooptijd (s)**: Aantal seconden wachten na het einde van een heat voordat automatisch naar de volgende heat wordt gegaan.
+- **Opwarmtijd voor doorlopen (s)**: Wachttijd voordat het automatisch doorgaan actief wordt.
+- **Automatische starttijd (s)**: Aftelvertraging voordat de volgende heat automatisch van start gaat.
+- **Opwarmtijd voor start (s)**: Opwarmduur voorafgaand aan de automatische startaftelling.
+- **Aantal heat-doorgangen**: Bepaalt hoe vaak elke coureur de complete heat-rotatie doorloopt.
+- **Omgekeerde heats**: Draait de volgorde van de heats om zodat coureurs in omgekeerde volgorde rijden.
+---
+
+## Scoringsregels {: #scoring-rules }
+
+#### Ronde- en Tijdaanpassingen (Impact op Rangschikking en Statistieken)
+
+- **Rangschikkingsmethode heats**: Rangschik coureurs in elke heat op basis van **Meeste ronden**, **Snelste ronde** of **Snelste totale tijd**, met instelbare tiebreakers.
+- **Finishmethode**: Bepaalt hoe het einde van een heat wordt vastgesteld (op basis van **Rondenaantal** of verstreken **Tijd** in seconden).
+- **Finish toestaan**: Kies hoe auto's hun rondes voltooien wanneer de leider finisht of de tijd verstrijkt (bijv. direct einde, iedereen laten finishen, enkele ronde of automatische segmenten).
+- **Rangschikkingsmethode eindstand**: Rangschik de algemene race-eindstand over alle voltooide heats met aanpasbare tiebreakers en schrapresultaten.
+
+## Groepen en fases {: #groups-and-stages }
+
+Het uitklapgedeelte Groepen en fases scheidt coureurs in afzonderlijke groepen die op de baan niet tegen elkaar racen:
+
+- **Groepsscheiding**: Coureurs worden ingedeeld in geïsoleerde groepen en rijden hun heats onafhankelijk volgens de ingestelde rotatie.
+- **Maximaal aantal groepen**: Bepaalt het maximale aantal toegestane groepen voor de race.
+- **Groepen balanceren**: Verdeelt coureurs automatisch gelijkmatig over alle groepen.
+- **Lege banen toestaan**: Staat heats met onbezette banen toe wanneer groepen niet precies overeenkomen met het aantal banen.
+- **Veelvoud van maximum forceren**: Zorgt ervoor dat het totale aantal heats in veelvouden van de maximale groepscapaciteit wordt gereden.
+- **Groepsheats afwisselen**: Wisselt heats tussen verschillende groepen af in plaats van eerst één groep volledig af te ronden.
+- **Minimaal aantal doorstromers**: Plaatst de beste coureurs van elke groep automatisch bovenaan het algemene klassement.
+- **Groepsnamen**: Wijst aangepaste namen toe aan elke groep (bijv. Pro, Semi-Pro, Groep A/B/C).
+---
+
+## Startmethoden {: #start-methods }
+
+Het uitklapgedeelte Startmethoden regelt de start van heats, autoposities op de baan en startstraffen:
+
+- **Start- / herstarttijd (s)**: Aftelduur voordat een heat start of herstart na een onderbreking.
+- **Willekeurige vertraging (s)**: Willekeurige vertraging toegevoegd aan het aftellen om anticiperen te voorkomen.
+- **Starten achter sensor**: Vereist dat auto's op ronde nul achter de start-/finishsensor worden opgesteld.
+- **Starten op huidige positie**: Laat auto's na een onderbreking herstarten vanaf hun huidige positie op de baan.
+- **Vliegende starts**: Houdt baanvoeding actief zodat auto's direct kunnen optrekken bij het startsignaal.
+- **Herstarten bij valse start**: Stopt en herstart het aftellen automatisch wanneer een valse start optreedt.
+- **Valse-startstraffen**: Stelt rondenaftrek of tijdstraffen in voor coureurs die te vroeg starten.
+---
+
+## Teamrace-opties {: #team-racing }
+
+Het uitklapgedeelte Teamrace-opties maakt duurzaamheidsraces met meerdere coureurs per team mogelijk:
+
+- **Teamracemodus**: Schakelt teamscoring in waarbij teamleden gezamenlijk heats rijden.
+- **Wisselstrategie coureurs**: Wisselt coureurs automatisch in een round-robinvolgorde over opeenvolgende heats.
+- **Wissels tijdens de heat**: Laat coureurs wisselen tijdens pitstops of bij bepaalde rondenaantallen.
+- **Stintlimieten**: Minimale en maximale rijtijd per coureur om evenredige deelname te waarborgen.
+- **Verplichte wissels**: Verplicht een minimumaantal pitstops en coureurswissels per heat of race.
+
+---
+
+## Race-editor - Analoge brandstofsimulatie {: #analog-fuel-simulation }
 
 Analoge brandstof simuleert het verbruik **per ronde**. Omdat analoge banen auto's detecteren wanneer ze over de start/finish-tijdmeting rijden, wordt brandstof berekend en afgetrokken bij elke voltooide ronde.
 
@@ -139,53 +179,22 @@ $$\text{Racetijd} = \text{Rondetijd} - \text{Opgebouwde tanktijd}$$
 
 ---
 
-### Digitale brandstofsimulatie
+---
 
-Digitale brandstof simuleert het verbruik **continu in realtime** op basis van gastelemetrie die door digitale controllers en decoders wordt verzonden.
+## Race-editor - Digitale brandstofsimulatie {: #digital-fuel-simulation }
 
-#### Continu gasgestuurd verbruik
-
-In tegenstelling tot analoog (waarbij brandstof pas bij de finishlijn wordt berekend), berekent digitaal het verbruik bij elk ontvangen telemetriepakket:
-
-$$\text{Verbruikte brandstof} = \text{Verbruik per seconde} \times \Delta t$$
-
-Coureurs die vloeiend rijden of gas terugnemen in bochten verbruiken aanzienlijk minder brandstof dan coureurs die overal vol gas geven.
-
-#### Configuratieopties
-
-- **Digitale brandstof inschakelen**: Hoofdschakelaar voor digitale brandstofmeting.
-- **Type brandstofverbruik**: Wiskundig model toegepast op de gasstand ($0\,\%$ tot $100\,\%$):
-    - **Lineair**: Het verbruik is recht evenredig met de stand van de gashendel.
-    - **Kwadratisch**: Het verbruik stijgt gematigd bij half gas en accelereert richting vol gas.
-    - **Kubisch**: Vol gas verbruikt exponentieel meer brandstof dan rijden op deellast.
-    - **Aangepaste curve**: Maakt een aangepaste gas-verbruiksrespons mogelijk over het bereik van 0% tot 100% gas.
-- **Verbruikssnelheid**: Maximaal verbruik in eenheden per seconde bij **100% vol gas**.
-- **Capaciteit**, **Startniveau (%)**, **Tanksnelheid (%/s)**, **Pitstopvertraging (s)**, **Brandstof resetten bij start heat**: Identieke werking als bij analoge brandstof.
-- **Actie bij lege tank**:
-    - **Ronden niet tellen**: Auto blijft bestuurbaar, maar ronden met een lege tank tellen niet mee.
-    - **Heat beëindigen**: Coureur valt direct uit zodra de brandstoftank leeg is.
-
-#### Grafische voorbeelden (Digitaal)
-
-- **Gelijktijdige modelvergelijking**: Toont gelijktijdig lineaire, kwadratische en kubische responscurven met het actieve model gemarkeerd en de overige modellen als achtergrondreferentie.
-- **Digitaal brandstofverbruik**: Zet het gaspercentage ($0\,\%$ tot $100\,\%$) uit tegen het verbruik per seconde voor alle modellen.
-- **Tijd tot leeg**: Zet het gaspercentage uit tegen het aantal seconden continu rijden tot de tank volledig leeg is.
-- **Interactieve legenda en dynamische schaling**: Schakel afzonderlijke curven in/uit via de legenda, waardoor de assen automatisch opnieuw worden geschaald.
-- **Vergelijkende hover-kaarten**: Bij het bewegen over de grafiek worden de realtime meetwaarden van alle zichtbare curven bij dat specifieke gaspercentage getoond.
+Digitale brandstof simuleert het verbruik **continu in realtime** op basis van gastelemetrie die door digitale controllers en decoders wordt ver
 
 ---
 
-### Interactieve bewerking van de aangepaste curve
+## Seizoensscore {: #season-scoring }
 
-Wanneer **Aangepaste curve** is geselecteerd als verbruikstype (analoog of digitaal), verschijnen handgrepen direct op de SVG-verbruikscurve:
+Het uitklapgedeelte Seizoensscore definieert de toekenning van kampioenschapspunten:
 
-- **Initiële curve-generatie**: Bij de eerste overstap naar Aangepaste curve worden de eerste 5 punten rechtstreeks overgenomen van de actieve voorinstelling (Lineair, Kwadratisch of Kubisch) zonder visuele sprong.
-- **Interactief slepen en neerzetten**: Klik en sleep een punt omhoog, omlaag, naar links of naar rechts om de curve te hervormen.
-- **Afgedwongen monotonie**:
-    - *Analoge brandstof*: Snellere rondetijden verbruiken altijd meer of evenveel brandstof als langzamere rondetijden (monotoon niet-stijgende curve). Slepen is begrensd zodat punten niet kunnen omkeren.
-    - *Digitale brandstof*: Hogere gasstanden verbruiken altijd meer of evenveel brandstof als lagere gasstanden (monotoon niet-dalende curve).
-- **Punten toevoegen**: Klik op de curvelijn om op de exacte geïnterpoleerde positie een nieuw controlepunt in te voegen.
-- **Punten verwijderen**: Klik met de rechtermuisknop op een tussenpunt om het te verwijderen (minimaal 2 eindpunten blijven behouden).
-- **Herstelknoppen voor voorinstellingen**: Herstel de aangepaste curve snel naar de standaarden Lineair, Kwadratisch of Kubisch met de knoppen boven de grafiek.
-- **Achtergrond-persistentie**: Als u overschakelt naar een voorinstelling en later terugkeert naar de Aangepaste curve, blijven uw punten bewaard.
-- **Gagheiligde serverberekeningen**: De server berekent het verbruik tijdens actieve heats met hetzelfde stuksgewijze lineaire interpolatie-algoritme, zodat de grafiekweergave identiek is aan de actieve race.
+- **Punten per positie**: Wijs kampioenschapspunten toe voor elke finishpositie (bijv. 25 voor 1e, 18 voor 2e, etc.).
+- **Heat-punten**: Optioneel punten toekennen voor individuele heat-resultaten naast de eindstand.
+- **Bonuspunten**:
+    - *Snelste ronde*: Extra punten voor de coureur met de snelste ronde van de race.
+    - *Pole position*: Bonuspunten voor de beste kwalificatiepositie.
+    - *Meeste ronden aan de leiding*: Bonuspunten voor de coureur die de meeste ronden aan kop lag.
+- **Kampioenschapsaggregatie**: Automatische puntentelling over het hele seizoen met ondersteuning voor schrapresultaten.

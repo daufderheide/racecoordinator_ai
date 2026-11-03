@@ -1,6 +1,6 @@
 # Editor de Carreras
 
-El **Editor de Carreras** es la interfaz de configuración completa para diseñar, configurar y probar sus formatos de carreras de slot cars, reglas de puntuación, rotaciones de mangas, simulaciones de combustible y ajustes de temporizador.
+El **Editor de carreras** le permite crear, personalizar y administrar configuraciones de carrera. Aquí puede configurar reglas de puntuación, rotaciones de tandas, simulaciones de combustible y opciones de carrera.
 
 ---
 
@@ -22,55 +22,75 @@ El espacio de trabajo se divide en dos paneles sincronizados:
 
 ---
 
-## Configuración de Carrera y Opciones
+---
 
-### Nombre de Carrera y Asociación de Pista
-- **Nombre de Carrera**: Nombre único que identifica el formato de carrera.
-- **Pista**: La pista física asociada determina si está disponible la simulación de combustible analógica o digital.
-- **Tema**: Tema visual de interfaz aplicado a la pantalla de carrera.
+## Configuración de carrera {: #race-setup }
 
-### Formato de Rotación de Mangas
-- **Tipo de Rotación**: Rotaciones estándar (**Round Robin**, **Escalera**, **Torneo**) o secuencias personalizadas.
-- **Ciclos de Mangas**: Cantidad de veces que cada piloto completa la rotación entera de mangas.
-- **Mangas Invertidas**: Invierte el orden de la secuencia de mangas.
+El panel izquierdo configura el formato básico y la pista asociada para su carrera:
 
-### Opciones de Puntuación
-- **Puntuación de Mangas**: Finalización por vueltas o tiempo límite, método de clasificación y desempates.
-  - **Permitir terminar**: Defina cómo completan sus vueltas los coches cuando el líder finaliza o expira el tiempo:
-    - *No permitir finalizar*: La manga finaliza inmediatamente.
-    - *Permitir terminar*: Todos los pilotos continúan hasta completar los requisitos.
-    - *Permitir terminar (una vuelta)*: Los pilotos pueden terminar su vuelta actual; esa vuelta cuenta en el total.
-    - *No permitir terminar (segmentos automáticos)*: La manga termina de inmediato y la fracción de vuelta se calcula a partir del tiempo transcurrido en la vuelta actual dividido por el tiempo de vuelta mediano del piloto (`autoSegments = timeSinceLastLap / medianLapTime`, con un límite de 0,99).
-    - *Permitir terminar (una vuelta) (segmentos automáticos)*: Los pilotos terminan su vuelta en pista; la vuelta no cuenta como una vuelta completa, sino que la fracción de vuelta se calcula a partir del tiempo transcurrido antes del final dividido por el tiempo de vuelta mediano del piloto (`autoSegments = partialLapTime / medianLapTime`, con un límite de 0,99).
-- **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
-- **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
+- **Nombre de carrera**: Nombre único para identificar el formato de carrera el día de la carrera y en estadísticas.
+- **Pista**: La pista física asignada a esta carrera. Determina la disponibilidad de simulación de combustible analógico o digital.
+- **Tema**: Tema visual de la interfaz aplicado a la pantalla de carrera.
+- **Formato de rotación de tandas**: Elija entre rotaciones estándar (**Round Robin**, **Escalera**, **Torneo**) o secuencias personalizadas.
+- **Pasadas por tanda**: Especifica cuántas veces cada piloto completa la rotación entera de tandas.
+- **Tandas invertidas**: Invierte el orden de las tandas para que los pilotos compitan en sentido inverso.
+- **Vista previa de número de pilotos**: Previsualiza dinámicamente la lista de tandas según el número de pilotos configurado.
+
+El panel derecho muestra la **Vista previa de tandas en vivo**, generando dinámicamente la lista completa de tandas, rotaciones de pilotos y carriles en tiempo real a medida que ajusta la configuración.
+
+---
+
+## Pestañas de navegación {: #navigation-tabs }
+
+La barra de pestañas superior proporciona accesos directos de un clic para saltar directamente a cada sección de configuración:
+
+- **General**: Temas, locuciones de voz, filtros de tiempo de vuelta y preferencias de interfaz.
+- **Tandas**: Tiempos de inicio y avance automático, repeticiones de tandas y orden inverso.
+- **Puntuación**: Métodos de clasificación de tandas y general, condiciones de finalización, desempates y mangas descartadas.
+- **Grupos**: Separación de pilotos en grupos, rotaciones independientes y promoción en la clasificación.
+- **Método de salida**: Tiempos de salida y reinicio, posición de salida en pista, salidas lanzadas y penalizaciones por salida falsa.
+- **Opciones de equipo**: Resistencia por equipos, relevos de pilotos y límites de turnos.
+- **Combustible analógico**: Consumo por vuelta, capacidad del depósito y tasas de repostaje.
+- **Combustible digital**: Consumo continuo basado en aceleración y curvas personalizadas.
+- **Puntos de temporada**: Tabla de puntos del campeonato, puntos por tanda y puntos de bonificación.
+
+Al hacer clic en una pestaña, se desplaza inmediatamente a esa sección del acordeón y la expande.
+
+---
+
+## Ajustes generales {: #general-settings }
+
+El expansor de Ajustes generales controla la presentación, los filtros de tiempo y el comportamiento del director de carrera:
+
+- **Selección de tema**: Asigne esquemas de color y distribuciones de marcadores personalizadas.
+- **Locuciones de voz**: Habilite avisos de voz automáticos para cambios de líder, vueltas rápidas, paradas en boxes y finales.
+- **Tiempo mínimo de vuelta (s)**: Tiempo mínimo permitido para filtrar fallos eléctricos o falsos sensores.
+- **Tiempo de deslizamiento (s)**: Ventana de detección para gestionar coches derrapando sobre la línea de meta.
+- **Reglas de bandera amarilla**: Pausas automáticas o manuales de bandera amarilla con corte de energía en pista.
+- **Opciones de interfaz personalizada**: Tablas de clasificación y widgets de telemetría especializados.
+
+---
+
+## Opciones de tanda {: #heat-options }
+
+El expansor de Opciones de tanda configura los tiempos automatizados, los ciclos de carrera y la secuencia de rotación:
+
+- **Tiempo de avance automático (s)**: Segundos de espera tras finalizar una tanda antes de avanzar automáticamente a la siguiente.
+- **Tiempo de calentamiento para avance (s)**: Intervalo previo antes de que se active el avance automático.
+- **Tiempo de inicio automático (s)**: Retardo de cuenta atrás antes de iniciar automáticamente la siguiente tanda.
+- **Tiempo de calentamiento para inicio (s)**: Duración del calentamiento previo al inicio automático.
+- **Pasadas por tanda**: Especifica cuántas veces cada piloto completa la rotación total de tandas.
+- **Tandas invertidas**: Invierte el orden programado de las tandas para correr en sentido inverso.
+---
+
+## Reglas de puntuación {: #scoring-rules }
 
 #### Ajustes de Vueltas y Tiempo (Impacto en Clasificaciones y Métricas)
 
-Race Coordinator AI permite a los directores de carrera ajustar manualmente la cantidad de vueltas y el tiempo total de una manga para un piloto durante o después de la carrera (haciendo clic en las celdas de vueltas/tiempo, mediante atajos de teclado o desde el Menú del Director de Carrera). Dado que el servidor actúa como la única fuente de verdad autorizada para todos los cálculos, los ajustes manuales se reflejan de forma determinista en las clasificaciones de la manga, la tabla general y las estadísticas de telemetría:
-
-- **Vueltas Ajustadas (`userLaps`)**:
-  - **Fórmula**: $\text{Recuento de Vueltas Ajustado} = \text{Vueltas Físicas} + \text{Vueltas de Penalización} + \text{Vueltas de Usuario} + \text{Segmentos Automáticos}$.
-  - **Clasificaciones**: Cuando el método de clasificación es **Mayor Número de Vueltas**, las vueltas ajustadas determinan directamente las posiciones en la manga y en la general.
-  - **Métricas**: El recuento de vueltas físicas no se modifica (refleja los pasos reales por sensor). El tiempo promedio de vuelta ($\text{Tiempo Total} / \text{Vueltas Físicas}$), la mejor vuelta y la vuelta mediana no se ven afectados. Las diferencias de vueltas se actualizan de inmediato.
-- **Tiempo Ajustado (`userTime`)**:
-  - **Fórmula**: $\text{Tiempo Total Ajustado} = \sum (\text{Tiempos de Vueltas Físicas}) + \text{Tiempo de Usuario}$.
-  - **Clasificaciones**: Cuando el método de clasificación es **Tiempo Total Más Rápido**, el tiempo ajustado determina directamente la posición (menor tiempo clasifica mejor). Cuando se clasifica por **Mayor Número de Vueltas**, el tiempo ajustado actúa como el criterio de desempate principal entre pilotos empatados en vueltas. La clasificación general suma los tiempos totales ajustados de todas las mangas puntuadas.
-  - **Métricas**: El tiempo promedio de vuelta ($\text{Tiempo Total Ajustado} / \text{Vueltas Físicas}$) se ve directamente impactado: agregar tiempo de penalización incrementa el promedio de vuelta (ritmo más lento). Las métricas de distancia (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) se recalculan para reflejar el ajuste de tiempo.
-  - **Métricas Protegidas**: La **mejor vuelta** y la **vuelta mediana** **NO se ven afectadas** por los ajustes de tiempo. La mejor vuelta representa estrictamente la vuelta física individual más rápida registrada, y la vuelta mediana representa la vuelta física intermedia.
-
-| Métrica / Característica de Clasificación | Vueltas Ajustadas (`userLaps`) | Tiempo Ajustado (`userTime`) |
-| :--- | :--- | :--- |
-| **Recuento de Vueltas Ajustado** | **Cambia directamente** ($\pm\text{secciones}/\text{vueltas}$) | Sin efecto |
-| **Vueltas Físicas** | Sin efecto (solo pasos reales por sensor) | Sin efecto (solo pasos reales por sensor) |
-| **Tiempo Total de Manga** | Sin efecto | **Cambia directamente** ($+ \text{userTime}$) |
-| **Tiempo Total General** | Sin efecto | **Cambia directamente** (suma tiempos de mangas) |
-| **Clasificación (Mayor Número de Vueltas)** | **Factor principal de posición** | **Factor de desempate** (menor tiempo gana) |
-| **Clasificación (Tiempo Más Rápido)** | Factor de desempate | **Factor principal de posición** (menor tiempo gana) |
-| **Tiempo Promedio de Vuelta** | Sin efecto ($\text{Tiempo} / \text{Vueltas Físicas}$) | **Cambia directamente** ($\text{Tiempo Ajustado} / \text{Vueltas Físicas}$) |
-| **Mejor Vuelta** | **Sin impacto** (vuelta física más rápida) | **Sin impacto** (vuelta física más rápida) |
-| **Vuelta Mediana** | **Sin impacto** (vuelta física mediana) | **Sin impacto** (vuelta física mediana) |
-| **Diferencias (`gapLeader`, `gapPosition`)** | Actualiza diferencia de vueltas | Actualiza diferencia de tiempo y ritmo |
+- **Método de clasificación de tanda**: Clasifique a los pilotos en cada tanda por **Más vueltas**, **Vuelta rápida** o **Tiempo total más rápido**, con criterios de desempate configurables.
+- **Método de finalización**: Establece cómo se determina el final de una tanda (por **Número de vueltas** o **Tiempo** transcurrido en segundos).
+- **Permitir llegada**: Elija cómo completan las vueltas los coches al terminar el líder o expirar el tiempo (por ejemplo, final inmediato, permitir terminar a todos, vuelta única o crédito de segmentos automáticos).
+- **Método de clasificación general**: Clasifique la tabla general de la carrera tras todas las tandas con desempates y descartes personalizados.
 
 ### Ajustes de Temporizador
 - **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.
@@ -78,20 +98,48 @@ Race Coordinator AI permite a los directores de carrera ajustar manualmente la c
 - **Tiempo de Drift**: Ventana de detección para deslizamientos sobre la línea de meta.
 - **Iniciar Detrás del Sensor**: Exige que los coches comiencen detrás del sensor en la vuelta cero.
 
-## Ajustes de combustible
+---
 
-Race Coordinator AI admite simulaciones integrales de combustible para pistas analógicas y digitales, incluyendo capacidad de combustible personalizable, nivel inicial, demoras en paradas en boxes, tasas de repostaje, penalizaciones por quedarse sin combustible y modelos de consumo de combustible.
+## Grupos y etapas {: #groups-and-stages }
 
-### Compatibilidad de pistas y selección del sistema de combustible
+El expansor de Grupos y etapas separa a los pilotos en grupos diferenciados que no compiten entre sí en la pista:
 
-El editor de carreras ofrece dos secciones dedicadas a la configuración de combustible: **Combustible analógico** y **Combustible digital**. El sistema disponible y activo se determina automáticamente según la pista seleccionada para la carrera:
+- **Separación por grupos**: Los pilotos se organizan en grupos aislados y disputan sus tandas de forma independiente según la rotación configurada.
+- **Máximo de grupos**: Establece el número máximo de grupos permitidos para la carrera.
+- **Equilibrar grupos**: Distribuye automáticamente el número de pilotos de manera uniforme entre todos los grupos.
+- **Permitir carriles vacíos**: Permite disputar tandas con carriles desocupados cuando los grupos no dividen uniformemente las pistas.
+- **Forzar múltiplo del máximo**: Garantiza que el total de tandas se dispute en múltiplos de la capacidad máxima de grupo.
+- **Rotar tandas de grupo**: Alterna las tandas entre distintos grupos en lugar de completar un grupo antes de comenzar el siguiente.
+- **Mínimo de clasificados**: Sitúa automáticamente a los mejores pilotos de cada grupo en la parte superior de la clasificación general.
+- **Nombres de grupo**: Asigna nombres personalizados a cada grupo (por ejemplo, Pro, Semipro, Grupo A/B/C).
+---
 
-- **Pistas analógicas**: Pistas tradicionales de slot donde los coches reciben energía directamente a través de los raíles del carril, sin decodificadores digitales ni telemetría del vehículo a la pista. Cuando se selecciona una pista analógica, la sección **Combustible analógico** queda habilitada y la casilla de **Combustible digital** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
-- **Pistas digitales**: Sistemas digitales de slot (como Carrera Digital, Scalextric Digital, Scorpius u oXigen) donde la interfaz transmite telemetría digital (identificador del coche, porcentaje de acelerador, sensores de línea de boxes). Cuando se selecciona una pista digital, la sección **Combustible digital** queda habilitada y la casilla de **Combustible analógico** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
+## Métodos de salida {: #start-methods }
+
+El expansor de Métodos de salida configura el inicio de las tandas, la posición de los coches en la pista y las penalizaciones:
+
+- **Tiempo de salida / reinicio (s)**: Duración de la cuenta atrás antes de iniciar o reiniciar una tanda.
+- **Retardo aleatorio (s)**: Retardo aleatorio añadido a la cuenta atrás para evitar anticipaciones a la señal de salida.
+- **Salida detrás del sensor**: Obliga a posicionar los coches detrás del sensor de meta en la vuelta cero.
+- **Salida en posición actual**: Permite reanudar la carrera desde la posición física actual en pista tras una pausa.
+- **Salidas lanzadas**: Mantiene la corriente activa en la salida para acelerar inmediatamente al terminar la cuenta atrás.
+- **Reiniciar en salida falsa**: Detiene y reinicia automáticamente la cuenta atrás si se detecta una salida falsa.
+- **Penalizaciones por salida falsa**: Configura deducciones de vueltas o penalizaciones de tiempo para salidas anticipadas.
+---
+
+## Opciones de carrera en equipo {: #team-racing }
+
+El expansor de Opciones de carrera en equipo habilita formatos de resistencia con varios pilotos por equipo:
+
+- **Modo de carrera en equipo**: Activa la puntuación por equipos donde los pilotos comparten las tandas.
+- **Estrategia de rotación de pilotos**: Alterna automáticamente a los pilotos en orden rotativo a lo largo de las tandas.
+- **Relevos durante la tanda**: Permite a los pilotos relevarse durante las paradas en boxes o en hitos de vueltas.
+- **Límites de turnos (stints)**: Turnos de conducción mínimos y máximos por piloto para garantizar una participación equilibrada.
+- **Relevos obligatorios**: Exige un número mínimo de paradas y cambios de piloto por tanda o carrera.
 
 ---
 
-### Simulación de combustible analógico
+## Editor de carreras - Simulación de combustible analógico {: #analog-fuel-simulation }
 
 El combustible analógico simula el consumo **por vuelta**. Dado que las pistas analógicas detectan los coches al cruzar los sensores de cronometraje de meta, el combustible se calcula y descuenta cada vez que se completa una vuelta.
 
@@ -139,7 +187,9 @@ $$\text{Tiempo de carrera} = \text{Tiempo de vuelta} - \text{Tiempo acumulado de
 
 ---
 
-### Simulación de combustible digital
+---
+
+## Editor de carreras - Simulación de combustible digital {: #digital-fuel-simulation }
 
 El combustible digital simula el consumo **continuamente en tiempo real** en función de la telemetría de aceleración transmitida por mandos y decodificadores digitales.
 
@@ -158,34 +208,18 @@ Los pilotos que conducen con suavidad o levantan el gatillo en curvas consumen m
     - **Lineal**: El consumo escala en proporción directa a la posición del acelerador.
     - **Cuadrático**: El consumo crece con moderación a medio gas y se acelera hacia el acelerador a fondo.
     - **Cúbico**: Las aceleraciones máximas consumen exponencialmente más combustible que la conducción a medio gas.
-    - **Curva personalizada**: Permite personalizar la curva de respuesta acelerador-consumo entre 0 % y 100 % de gas.
-- **Tasa de consumo**: Unidades máximas de combustible consumidas por segundo al **100 % de aceleración**.
-- **Capacidad**, **Nivel inicial (%)**, **Tasa de repostaje (%/s)**, **Demora en parada en boxes (s)**, **Restablecer combustible al inicio de la tanda**: Funcionamiento análogo a la configuración analógica.
-- **Acción al quedarse sin combustible**:
-    - **No contar vueltas**: El coche permanece operativo, pero las vueltas completadas sin combustible no se registran.
-    - **Finalizar tanda**: El piloto queda fuera de la tanda en cuanto agota el combustible.
-
-#### Vistas previas gráficas (Digital)
-
-- **Comparación simultánea multimodelo**: Representa simultáneamente las curvas de respuesta lineal, cuadrática y cúbica con el modelo seleccionado resaltado y los otros modelos visibles como referencia de fondo.
-- **Consumo de combustible digital**: Traza el porcentaje de acelerador ($0\,\%$ a $100\,\%$) frente al consumo por segundo para todos los modelos.
-- **Tiempo hasta vaciar**: Traza el porcentaje de acelerador frente a los segundos continuos de conducción hasta agotar el depósito por completo.
-- **Leyenda interactiva y escala dinámica**: Active o desactive curvas individuales haciendo clic en la leyenda, ajustando automáticamente la escala de los ejes.
-- **Tarjetas flotantes comparativas**: Al recorrer el gráfico con el cursor se muestran los valores en tiempo real de cada curva visible para esa posición del acelerador.
+    - **Curva personali
 
 ---
 
-### Edición interactiva de curvas personalizadas
+## Puntuación de temporada {: #season-scoring }
 
-Cuando se selecciona **Curva personalizada** como tipo de consumo (tanto en combustible analógico como digital), los controles interactivos aparecen directamente sobre la curva SVG:
+El expansor de Puntuación de temporada define la distribución de puntos para campeonatos y series:
 
-- **Generación inicial de la curva**: Al cambiar por primera vez a Curva personalizada, los 5 puntos iniciales se muestrean directamente del ajuste activo (Lineal, Cuadrático o Cúbico) sin saltos visuales.
-- **Arrastrar y soltar interactivo**: Haga clic y arrastre cualquier punto hacia arriba, abajo, izquierda o derecha para remodelar la curva.
-- **Monotonía forzada**:
-    - *Combustible analógico*: Las vueltas más rápidas siempre consumen más o igual combustible que las más lentas (curva monótona no creciente). El arrastre está restringido para que los puntos no se inviertan.
-    - *Combustible digital*: Los niveles más altos de aceleración siempre consumen más o igual combustible que los más bajos (curva monótona no decreciente).
-- **Añadir puntos**: Haga clic en la línea de la curva para insertar un nuevo punto de control en la posición interpolada exacta.
-- **Eliminar puntos**: Haga clic con el botón derecho en un punto de control intermedio para eliminarlo (se preservan al menos los 2 puntos finales).
-- **Botones de restablecimiento**: Restablezca rápidamente la curva personalizada a las plantillas Lineal, Cuadrática o Cúbica mediante los botones de la barra superior.
-- **Persistencia en segundo plano**: Si cambia de Curva personalizada a un ajuste predeterminado y luego regresa, sus puntos personalizados se preservan en segundo plano.
-- **Cálculos autorizados en el servidor**: El servidor evalúa el consumo durante las carreras utilizando el mismo algoritmo de interpolación lineal por tramos, garantizando que la vista previa sea idéntica a la carrera real.
+- **Tabla de puntos por posición**: Asigne puntos para cada posición final (por ejemplo, 25 al 1º, 18 al 2º, etc.).
+- **Puntos por tanda**: Otorgue opcionalmente puntos por resultados de tandas individuales además del resultado general.
+- **Puntos de bonificación**:
+    - *Vuelta rápida*: Puntos adicionales para el piloto con la vuelta más rápida de la carrera.
+    - *Pole position*: Puntos de bonificación por la mejor posición de clasificación.
+    - *Más vueltas lideradas*: Puntos por liderar la mayor cantidad de vueltas.
+- **Agregación del campeonato**: Suma automática de puntos de temporada con soporte para descartar los peores resultados.

@@ -1,6 +1,6 @@
 # Éditeur de Course
 
-L'**Éditeur de Course** est l'interface complète de configuration pour concevoir, configurer et tester vos formats de course de slot cars, règles de score, rotations de manches, simulations de carburant et paramètres de chronométrage.
+L'**Éditeur de course** vous permet de créer, personnaliser et gérer les configurations de course. Vous pouvez y configurer les règles de pointage, les rotations de manches, les simulations de carburant et les options de course.
 
 ---
 
@@ -22,76 +22,116 @@ L'espace de travail est divisé en deux panneaux synchronisés :
 
 ---
 
-## Configuration de la Course & Options
+---
 
-### Nom de Course & Association de Piste
-- **Nom de Course** : Nom unique identifiant le format de course.
-- **Piste** : La piste physique associée détermine la disponibilité de la simulation de carburant analogique ou numérique.
-- **Thème** : Thème visuel d'interface appliqué pendant la course.
+## Configuration de la course {: #race-setup }
 
-### Format de Rotation des Manches
-- **Type de Rotation** : Rotations standards (**Round Robin**, **Échelle**, **Tournoi**) ou séquences personnalisées.
-- **Passages de Manches** : Nombre de fois que chaque pilote effectue la rotation complète des manches.
-- **Manches Inversées** : Inverse l'ordre de la séquence des manches.
+Le panneau gauche configure le format de base et la piste associée pour votre course :
 
-### Options de Score
-- **Score de Manche** : Fin par nombre de tours ou durée limite, méthode de classement et départages.
-  - **Autoriser l'arrivée** : Choisissez comment les voitures terminent leurs tours lorsque le meneur finit ou que le temps expire :
-    - *Ne pas autoriser l'arrivée* : La manche se termine immédiatement.
-    - *Autoriser l'arrivée* : Tous les pilotes continuent jusqu'à satisfaire aux exigences.
-    - *Autoriser l'arrivée (un tour)* : Les pilotes peuvent terminer leur tour actuel ; ce tour compte dans le total.
-    - *Ne pas autoriser l'arrivée (segments automatiques)* : La manche se termine immédiatement et la fraction de tour est calculée d'après le temps écoulé sur le tour en cours divisé par le temps au tour médian du pilote (`autoSegments = timeSinceLastLap / medianLapTime`, plafonné à 0,99).
-    - *Autoriser l'arrivée (un tour) (segments automatiques)* : Les pilotes terminent leur tour en piste ; le tour ne compte pas comme un tour complet, le crédit partiel est calculé d'après le temps couru avant la fin divisé par le temps au tour médian du pilote (`autoSegments = partialLapTime / medianLapTime`, plafonné à 0,99).
-- **Score Général** : Méthode de classement général, règles de départage et manches retirées.
-- **Score de Saison** : Distribution des points par position pour les championnats.
+- **Nom de la course** : Nom unique identifiant le format lors du jour de course et dans les statistiques.
+- **Piste** : La piste physique associée à cette course. Détermine si la simulation analogique ou numérique est disponible.
+- **Thème** : Thème visuel appliqué à l'affichage le jour de la course.
+- **Format de rotation des manches** : Choisissez entre rotations standard (**Round Robin**, **Échelle**, **Tournoi**) ou séquences personnalisées.
+- **Passages de manche** : Nombre de fois où chaque pilote effectue la rotation complète des manches.
+- **Manches inversées** : Inverse l'ordre des manches pour que les pilotes concourent dans l'ordre inverse.
+- **Aperçu du nombre de pilotes** : Prévisualise dynamiquement la liste des manches selon le nombre de pilotes configuré.
 
-#### Ajustements de Tours et de Temps (Impact sur les Classements et Métriques)
-
-Race Coordinator AI permet aux directeurs de course d'ajuster manuellement le nombre de tours et le temps total de manche d'un pilote pendant ou après une manche (en cliquant sur les colonnes de tours/temps, par raccourcis clavier ou via le menu Directeur de Course). Le serveur étant l'unique source faisant autorité pour tous les calculs, ces ajustements manuels se répercutent de façon déterministe sur les classements de manche, le classement général et les statistiques de télémétrie :
-
-- **Tours Ajustés (`userLaps`)** :
-  - **Formule** : $\text{Nombre de Tours Ajusté} = \text{Tours Physiques} + \text{Tours de Pénalité} + \text{Tours Utilisateur} + \text{Segments Automatiques}$.
-  - **Classements** : Lorsque la méthode de classement est **Plus Grand Nombre de Tours**, les tours ajustés déterminent directement les positions dans la manche et au général.
-  - **Métriques** : Le nombre de tours physiques reste inchangé (reflète les passages réels sur capteur). Le temps au tour moyen ($\text{Temps Total} / \text{Tours Physiques}$), le meilleur tour et le tour médian ne sont pas affectés. Les écarts en tours sont mis à jour immédiatement.
-- **Temps Ajusté (`userTime`)** :
-  - **Formule** : $\text{Temps Total Ajusté} = \sum (\text{Temps au Tour Physiques}) + \text{Temps Utilisateur}$.
-  - **Classements** : Lorsque la méthode de classement est **Temps Total le Plus Rapide**, le temps ajusté détermine directement le classement (un temps inférieur classe mieux). Lors d'un classement au **Plus Grand Nombre de Tours**, le temps ajusté sert de critère de départage principal pour les pilotes à égalité de tours. Le classement général additionne les temps totaux ajustés de toutes les manches comptabilisées.
-  - **Métriques** : Le temps au tour moyen ($\text{Temps Total Ajusté} / \text{Tours Physiques}$) est directement affecté : l'ajout d'une pénalité de temps augmente le temps au tour moyen (rythme plus lent). Les métriques d'écart (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) sont recalculées pour refléter l'ajustement temporel.
-  - **Métriques Protégées** : Le **meilleur tour** et le **tour médian** ne sont **PAS impactés** par les ajustements de temps. Le meilleur tour représente strictement le tour physique individuel le plus rapide enregistré, et le tour médian représente le tour physique médian.
-
-| Métrique / Fonctionnalité de Classement | Tours Ajustés (`userLaps`) | Temps Ajusté (`userTime`) |
-| :--- | :--- | :--- |
-| **Nombre de Tours Ajusté** | **Modifié directement** ($\pm\text{sections}/\text{tours}$) | Aucun effet |
-| **Tours Physiques** | Aucun effet (passages réels uniquement) | Aucun effet (passages réels uniquement) |
-| **Temps Total de Manche** | Aucun effet | **Modifié directement** ($+ \text{userTime}$) |
-| **Temps Total Général** | Aucun effet | **Modifié directement** (somme des manches) |
-| **Classement (Plus Grand Nombre de Tours)** | **Critère principal de classement** | **Critère de départage** (temps inférieur gagne) |
-| **Classement (Temps Total le Plus Rapide)** | Critère de départage | **Critère principal de classement** (temps inférieur gagne) |
-| **Temps au Tour Moyen** | Aucun effet ($\text{Temps} / \text{Tours Physiques}$) | **Modifié directement** ($\text{Temps Ajusté} / \text{Tours Physiques}$) |
-| **Meilleur Tour** | **Aucun impact** (tour physique le plus rapide) | **Aucun impact** (tour physique le plus rapide) |
-| **Tour Médian** | **Aucun impact** (tour physique médian) | **Aucun impact** (tour physique médian) |
-| **Écarts (`gapLeader`, `gapPosition`)** | Met à jour l'écart en tours | Met à jour l'écart en temps et en rythme |
-
-### Paramètres de Chronométrage
-- **Délai de Départ / Reprise** : Compte à rebours avant le départ ou la reprise.
-- **Temps de Tour Minimum** : Temps minimum de tour pour filtrer les faux déclenchements de capteurs.
-- **Temps de Dérive** : Fenêtre de déclenchement pour les voitures en glisse sur la ligne d'arrivée.
-- **Démarrer Derrière le Capteur** : Impose le départ des voitures derrière le capteur au tour zéro.
-
-## Paramètres de carburant
-
-Race Coordinator AI prend en charge une simulation complète du carburant pour les pistes analogiques et numériques, comprenant la capacité du réservoir, le niveau initial, les délais d'arrêt aux stands, les taux de ravitaillement, les pénalités de panne sèche et les modèles d'utilisation du carburant.
-
-### Compatibilité de la piste et sélection du système de carburant
-
-L'éditeur de course propose deux sections dédiées à la configuration du carburant : **Carburant analogique** et **Carburant numérique**. Le système disponible et actif est déterminé automatiquement par la piste sélectionnée pour la course :
-
-- **Pistes analogiques** : Pistes de slot traditionnelles où les voitures sont alimentées directement par les rails, sans décodeurs numériques ni télémétrie embarquée. Lorsqu'une piste analogique est sélectionnée, la section **Carburant analogique** est activée et la case à cocher **Carburant numérique** est automatiquement désactivée (survoler la case désactivée affiche une infobulle explicative).
-- **Pistes numériques** : Systèmes de slot numériques (tels que Carrera Digital, Scalextric Digital, Scorpius ou oXigen) où l'interface communique une télémétrie numérique (identifiant de la voiture, pourcentage d'accélérateur, capteurs de voie des stands). Lorsqu'une piste numérique est sélectionnée, la section **Carburant numérique** est activée et la case à cocher **Carburant analogique** est automatiquement désactivée (survoler la case désactivée affiche une infobulle explicative).
+Le panneau droit affiche l'**Aperçu des manches en direct**, générant dynamiquement la liste complète des manches, rotations de pilotes et attributions de voies en temps réel.
 
 ---
 
-### Simulation de carburant analogique
+## Onglets de navigation {: #navigation-tabs }
+
+La barre d'onglets supérieure fournit des raccourcis en un clic pour accéder directement à chaque section :
+
+- **Général** : Thèmes, annonces vocales, filtres de temps au tour et préférences d'interface.
+- **Manches** : Durée de manche, conditions d'arrivée, rotation des voies et fenêtres de ravitaillement.
+- **Pointage** : Méthodes de classement, bris d'égalité, manches éliminées et ajustements manuels.
+- **Groupes** : Étapes de tournoi, qualifications et qualification des pilotes.
+- **Méthode de départ** : Départs automatiques/manuels, départs échelonnés et règles de faux départ.
+- **Options d'équipe** : Endurance par équipe, changements de pilotes et limites de relais.
+- **Carburant analogique** : Consommation par tour, capacité du réservoir et débits de ravitaillement.
+- **Carburant numérique** : Consommation continue selon l'accélérateur et courbes personnalisées.
+- **Points de saison** : Barème de points du championnat, points par manche et points bonus.
+
+Cliquer sur un onglet fait défiler immédiatement l'accordéon jusqu'à cette section et la développe.
+
+---
+
+## Paramètres généraux {: #general-settings }
+
+L'accordéon Paramètres généraux contrôle la présentation, les filtres de temps et le comportement de direction de course :
+
+- **Sélection du thème** : Schémas de couleurs et dispositions de tableau d'affichage personnalisés.
+- **Annonces vocales** : Annonces audio pour changements de meneur, tours rapides, arrêts aux stands et arrivées.
+- **Temps au tour minimum (s)** : Temps au tour minimum pour éliminer les déclenchements parasites du capteur.
+- **Temps de glisse (s)** : Fenêtre de détection pour gérer les voitures en dérapage sur la ligne d'arrivée.
+- **Règles de drapeau jaune** : Pauses automatiques ou manuelles sous drapeau jaune avec coupure d'alimentation.
+- **Options d'interface personnalisée** : Classements spécialisés et widgets de télémétrie.
+
+---
+
+## Options de manche {: #heat-options }
+
+L'accordéon Options de manche configure le rythme automatisé, les cycles et la séquence des manches :
+
+- **Délai d'avancement automatique (s)** : Secondes d'attente après la fin d'une manche avant de passer automatiquement à la suivante.
+- **Délai d'échauffement avant avancement (s)** : Intervalle d'attente avant l'avancement automatique.
+- **Délai de départ automatique (s)** : Compte à rebours avant de démarrer automatiquement la manche suivante.
+- **Délai d'échauffement avant départ (s)** : Durée d'échauffement avant le début du compte à rebours automatique.
+- **Passages de manche** : Nombre de fois où chaque pilote effectue la rotation complète des manches.
+- **Manches inversées** : Inverse l'ordre prévu des manches pour concourir dans l'ordre inverse.
+---
+
+## Règles de pointage {: #scoring-rules }
+
+#### Ajustements de Tours et de Temps (Impact sur les Classements et Métriques)
+
+- **Méthode de classement de manche** : Classement des pilotes dans chaque manche par **Plus de tours**, **Meilleur tour** ou **Temps total le plus rapide**, avec bris d'égalité configurables.
+- **Méthode de fin** : Détermine comment la fin d'une manche est établie (par **Nombre de tours** ou **Temps** écoulé en secondes).
+- **Autoriser l'arrivée** : Détermine comment les voitures finissent leurs tours lorsque le leader termine ou le temps expire (ex. fin immédiate, autoriser tous à finir, tour unique ou crédit de segments automatiques).
+- **Méthode de classement général** : Classement général sur l'ensemble des manches avec bris d'égalité et manches éliminées configurables.
+
+## Groupes et étapes {: #groups-and-stages }
+
+L'accordéon Groupes et étapes sépare les pilotes en groupes distincts qui ne s'affrontent pas directement sur la piste :
+
+- **Séparation des groupes** : Les pilotes sont organisés en groupes isolés et disputent leurs manches de manière autonome selon la rotation configurée.
+- **Groupes maximaux** : Définit le nombre maximal de groupes autorisés pour la course.
+- **Équilibrer les groupes** : Répartit automatiquement le nombre de pilotes de façon équitable entre tous les groupes.
+- **Autoriser les voies vides** : Permet aux manches de se dérouler avec des voies libres lorsque les groupes ne correspondent pas exactement au nombre de voies.
+- **Forcer un multiple du maximum** : Assure que le total des manches se déroule en multiples de la capacité maximale du groupe.
+- **Alterner les manches de groupe** : Alterne les manches entre différents groupes au lieu de terminer entièrement un groupe avant d'entamer le suivant.
+- **Qualifiés minimum** : Place automatiquement les meilleurs pilotes de chaque groupe au sommet du classement général.
+- **Noms des groupes** : Attribue des noms personnalisés à chaque groupe (ex. Pro, Semi-Pro, Groupe A/B/C).
+---
+
+## Méthodes de départ {: #start-methods }
+
+L'accordéon Méthodes de départ configure le début des manches, le positionnement sur la piste et les pénalités de départ :
+
+- **Délai de départ / redémarrage (s)** : Durée du compte à rebours avant de démarrer ou relancer une manche.
+- **Délai aléatoire (s)** : Intervalle aléatoire ajouté au compte à rebours pour éviter les départs anticipés.
+- **Départ derrière le capteur** : Exige que les voitures soient placées derrière la ligne de détection au tour zéro.
+- **Départ à la position actuelle** : Permet aux voitures de repartir de leur position physique après une pause.
+- **Départs lancés** : Maintient l'alimentation de piste active au départ pour accélérer dès la fin du décompte.
+- **Redémarrer en cas de faux départ** : Interrompt et redémarre automatiquement le décompte lors d'un faux départ.
+- **Pénalités de faux départ** : Déductions de tours ou pénalités de temps appliquées en cas d'anticipation.
+---
+
+## Options de course en équipe {: #team-racing }
+
+L'accordéon Options de course en équipe active les formats d'endurance avec plusieurs pilotes par équipe :
+
+- **Mode course en équipe** : Active le classement par équipes où les pilotes partagent les manches.
+- **Stratégie de relais** : Rotation automatique des pilotes en round-robin au fil des manches.
+- **Relais en cours de manche** : Permet aux pilotes de se relayer aux stands ou à des tours clés.
+- **Limites de relais** : Temps de conduite minimum et maximum par pilote.
+- **Changements obligatoires** : Nombre minimum d'arrêts et de changements de pilote par manche ou course.
+
+---
+
+## Éditeur de course - Simulation de carburant analogique {: #analog-fuel-simulation }
 
 Le carburant analogique simule la consommation **au tour**. Les pistes analogiques détectant les voitures lors du franchissement de la ligne de chronométrage départ/arrivée, le carburant est calculé et déduit à chaque tour complété.
 
@@ -139,7 +179,9 @@ $$\text{Temps de course} = \text{Temps au tour} - \text{Temps de ravitaillement 
 
 ---
 
-### Simulation de carburant numérique
+---
+
+## Éditeur de course - Simulation de carburant numérique {: #digital-fuel-simulation }
 
 Le carburant numérique simule la consommation **en continu et en temps réel** à partir de la télémétrie d'accélération transmise par les poignées et décodeurs numériques.
 
@@ -149,43 +191,18 @@ Contrairement à l'analogique (qui déduit le carburant sur la ligne d'arrivée)
 
 $$\text{Carburant consommé} = \text{Consommation par seconde} \times \Delta t$$
 
-Les pilotes souples qui relâchent l'accélérateur en virage consomment nettement moins que ceux qui restent plein gaz en permanence.
-
-#### Options de configuration
-
-- **Activer le carburant numérique** : Interrupteur principal du suivi numérique.
-- **Type d'utilisation du carburant** : Modèle mathématique appliqué à la position de l'accélérateur ($0\,\%$ à $100\,\%$) :
-    - **Linéaire** : La consommation est strictement proportionnelle à la pression sur la gâchette.
-    - **Quadratique** : La consommation progresse modérément à mi-régime et s'accélère vers le plein gaz.
-    - **Cubique** : Les fortes accélérations consomment exponentiellement plus que la conduite sur un filet de gaz.
-    - **Courbe personnalisée** : Permet de définir une réponse personnalisée accélérateur-consommation de 0 % à 100 % de gaz.
-- **Taux d'utilisation** : Consommation maximale en unités par seconde à **100 % plein régime**.
-- **Capacité**, **Niveau initial (%)**, **Taux de ravitaillement (%/s)**, **Délai d'arrêt aux stands (s)**, **Réinitialiser le carburant au début de la manche** : Fonctionnement identique au carburant analogique.
-- **Action en cas de panne sèche** :
-    - **Ne pas compter les tours** : La voiture reste pilotable mais les tours franchis à sec ne sont pas validés.
-    - **Terminer la manche** : Le pilote est immédiatement éliminé de la manche dès que le réservoir est vide.
-
-#### Aperçus graphiques (Numérique)
-
-- **Comparaison multi-modèles simultanée** : Trace simultanément les courbes de réponse linéaire, quadratique et cubique, avec le modèle actif mis en évidence et les autres modèles visibles en arrière-plan.
-- **Utilisation du carburant numérique** : Graphique reliant le pourcentage d'accélérateur ($0\,\%$ à $100\,\%$) à la consommation par seconde pour tous les modèles.
-- **Temps jusqu'à épuisement** : Graphique reliant le pourcentage d'accélérateur aux secondes de pilotage continu avant la panne sèche.
-- **Légende interactive et mise à l'échelle dynamique** : Activez ou masquez les courbes en cliquant sur la légende pour adapter automatiquement l'échelle des axes.
-- **Cartes de survol comparatives** : Balayer le graphique affiche les valeurs en temps réel de chaque courbe visible pour ce pourcentage d'accélération.
+Les pilotes souples qui relâchent l'accélérateur en virage consomment nettement moins que ceux qui restent plein ga
 
 ---
 
-### Modification interactive de la courbe personnalisée
+## Pointage de la saison {: #season-scoring }
 
-Lorsque **Courbe personnalisée** est sélectionnée comme type d'utilisation (en analogique ou en numérique), des poignées de contrôle interactives apparaissent directement sur la courbe SVG :
+L'accordéon Pointage de la saison définit l'attribution des points pour les championnats :
 
-- **Génération initiale de la courbe** : Lors du premier basculement vers la Courbe personnalisée, les 5 points initiaux sont échantillonnés directement à partir du préréglage actif (Linéaire, Quadratique ou Cubique) sans saut visuel.
-- **Glisser-déposer interactif** : Cliquez et faites glisser n'importe quel point vers le haut, le bas, la gauche ou la droite pour remodeler la courbe.
-- **Monotonie stricte** :
-    - *Carburant analogique* : Les tours plus rapides consomment toujours plus ou autant de carburant que les tours plus lents (courbe monotone décroissante). Le glissement est verrouillé pour empêcher les inversions.
-    - *Carburant numérique* : Les niveaux d'accélération plus élevés consomment toujours plus ou autant de carburant que les niveaux plus faibles (courbe monotone croissante).
-- **Ajout de points** : Cliquez sur la courbe pour insérer un nouveau point de contrôle à la position interpolée exacte.
-- **Suppression de points** : Cliquez avec le bouton droit sur un point intermédiaire pour le supprimer (les 2 extrémités sont préservées).
-- **Boutons de réinitialisation** : Réinitialisez rapidement la courbe sur les modèles Linéaire, Quadratique ou Cubique grâce aux boutons au-dessus du graphique.
-- **Persistance en arrière-plan** : Si vous quittez la courbe personnalisée pour un préréglage puis revenez, vos points personnalisés sont conservés.
-- **Calculs serveur faisant autorité** : Le serveur calcule la consommation pendant les courses avec le même algorithme d'interpolation linéaire par morceaux, garantissant une cohérence parfaite entre l'aperçu UI et la course.
+- **Tableau des points par position** : Points attribués à chaque place (ex. : 25 pour le 1er, 18 pour le 2e, etc.).
+- **Points par manche** : Points supplémentaires accordés pour les résultats des manches individuelles.
+- **Points bonus** :
+    - *Meilleur tour* : Points additionnels accordés au pilote ayant réalisé le meilleur tour.
+    - *Pole position* : Points bonus pour la première place aux qualifications.
+    - *Plus de tours en tête* : Points bonus pour le pilote ayant mené le plus grand nombre de tours.
+- **Cumul du championnat** : Cumul automatique des points de la saison avec prise en compte des manches décomptées.

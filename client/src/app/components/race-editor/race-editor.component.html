@@ -46,6 +46,7 @@
     [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'raceEditorHelpShown'"
+    [selectorTooltipKey]="'RE_TOOLTIP_RACE_SELECTOR'"
     [isSaving]="isSaving"
     [undoManager]="undoManager"
     (selectedIdChange)="onSelectRaceById($event)"
@@ -60,7 +61,11 @@
   @if (!isLoading) {
     <div class="content-split">
       <!-- Editor Panel (Left) -->
-      <div class="editor-panel" [class.read-only]="!isEditMode">
+      <div
+        class="editor-panel"
+        id="race-config-panel"
+        [class.read-only]="!isEditMode"
+      >
         <div
           id="race-name-section"
           class="editor-section fixed-header"
@@ -76,6 +81,7 @@
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
+            [title]="'RE_TOOLTIP_NAME' | translate"
             autocomplete="off"
             data-dashlane-ignore="true"
             data-1p-ignore="true"
@@ -91,6 +97,7 @@
             [disabled]="!isEditMode"
             [(ngModel)]="editingRace.heat_rotation_type"
             (ngModelChange)="onRotationTypeChange()"
+            [title]="'RE_TOOLTIP_ROTATION' | translate"
           >
             <app-custom-option value="RoundRobin">
               {{ "RE_ROTATION_ROUND_ROBIN" | translate }}
@@ -192,6 +199,7 @@
                 (ngModelChange)="onDriverCountChange()"
                 min="1"
                 max="100"
+                [title]="'RE_TOOLTIP_DRIVER_COUNT' | translate"
                 autocomplete="off"
                 data-lpignore="true"
                 data-form-type="other"
@@ -218,6 +226,7 @@
       <!-- Config Panel (Right) -->
       <div class="rhs-wrapper">
         <app-editor-tabs
+          id="race-editor-tabs"
           [tabs]="raceTabs"
           (tabClicked)="scrollToAndExpandSection($event)"
         ></app-editor-tabs>
@@ -256,6 +265,7 @@
                     [disabled]="!isEditMode"
                     [(ngModel)]="editingRace.track_entity_id"
                     (ngModelChange)="captureState()"
+                    [title]="'RE_TOOLTIP_TRACK' | translate"
                   >
                     <app-custom-option value="">
                       -- {{ "RE_SELECT_TRACK" | translate }} --
@@ -274,6 +284,7 @@
                     [disabled]="!isEditMode"
                     [(ngModel)]="editingRace.theme_id"
                     (ngModelChange)="captureState()"
+                    [title]="'RE_TOOLTIP_THEME' | translate"
                   >
                     @for (theme of themes; track theme.entity_id) {
                       <app-custom-option [value]="theme.entity_id">
@@ -495,6 +506,7 @@
                       [disabled]="!isEditMode"
                       [(ngModel)]="editingRace.heat_scoring.heat_ranking"
                       (ngModelChange)="captureState()"
+                      [title]="'RE_TOOLTIP_HEAT_RANKING' | translate"
                     >
                       <app-custom-option value="LAP_COUNT"
                         >Lap Count</app-custom-option
@@ -618,6 +630,7 @@
                       [disabled]="!isEditMode"
                       [(ngModel)]="editingRace.overall_scoring.ranking_method"
                       (ngModelChange)="captureState()"
+                      [title]="'RE_TOOLTIP_OVERALL_RANKING' | translate"
                     >
                       <app-custom-option value="LAP_COUNT"
                         >Lap Count</app-custom-option

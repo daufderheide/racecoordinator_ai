@@ -1,6 +1,6 @@
 # Race Editor
 
-The **Race Editor** is the comprehensive configuration interface for designing, configuring, and testing your slot car racing formats, scoring rules, heat rotations, fuel simulations, and timer setups.
+The **Race Editor** allows you to create, customize, and manage race configurations. Here you can set up scoring rules, heat rotations, fuel simulations, and race options.
 
 ---
 
@@ -22,30 +22,75 @@ The editor workspace is split into two synchronized working panels:
 
 ---
 
-## Race Configuration & Options
+## Race Setup {: #race-setup }
 
-### Race Name & Track Association
-- **Race Name**: Unique name identifying the race format.
+The left panel configures the core format and track association for your race:
+
+- **Race Name**: Unique name identifying the race format across race day and statistics.
 - **Track**: The physical track associated with this race. The selected track determines whether Analog Fuel or Digital Fuel simulation is available.
 - **Theme**: Visual UI theme applied to the race display during raceday.
-
-### Heat Rotation Format
-- **Rotation Type**: Choose between standard rotations (**Round Robin**, **Ladder**, **Tournament**) or custom defined sequences.
+- **Heat Rotation Format**: Choose between standard rotations (**Round Robin**, **Ladder**, **Tournament**) or custom defined sequences.
 - **Heat Times Through**: Specifies how many times each driver cycles through the complete heat rotation.
 - **Reverse Heats**: Inverts the rotation order so drivers run heats in reverse sequence.
+- **Driver Count Preview**: Dynamically previews the generated heat list based on the configured driver count.
 
-### Scoring Options
-- **Heat Scoring**: Configure heat completion by lap count or elapsed time limit, heat ranking method (laps or lap times), and tiebreakers.
-  - **Allow Finish**: Choose how cars complete their laps when the race leader finishes or heat time expires:
-    - *Do not allow finish*: Heat ends immediately when the condition is met.
-    - *Allow Finish*: All drivers continue until they complete the heat requirements.
-    - *Allow Finish (single lap)*: Drivers are allowed to finish their current lap; that single lap counts towards their total.
-    - *Do not allow finish (auto segments)*: Heat ends immediately and partial lap credit is calculated from the time elapsed on the current lap divided by the driver's median lap time (`autoSegments = timeSinceLastLap / medianLapTime`, capped at 0.99).
-    - *Allow Finish (single lap) (auto segments)*: Drivers are allowed to finish their current lap on the track; the single lap does not count as a full lap, but partial lap credit is calculated from the time spent racing before heat end divided by the driver's median lap time (`autoSegments = partialLapTime / medianLapTime`, capped at 0.99).
-- **Overall Scoring**: Configure overall race standings ranking method, tiebreaker rules, and dropped heats.
-- **Season Scoring**: Assign points distribution per position for season-long championships.
+The right panel displays the **Live Heat Preview**, dynamically generating the complete list of heats, driver rotations, and lane assignments in real time as you adjust settings.
 
-#### Lap and Time Adjustments (Impact on Rankings and Metrics)
+---
+
+## Navigation Tabs {: #navigation-tabs }
+
+The tab bar at the top of the race editor provides one-click navigation shortcuts to jump directly to any configuration section:
+
+- **General**: Themes, audio callouts, lap filters, and UI preferences.
+- **Heats**: Auto start and advance timing, heat repetitions, and reverse heat order.
+- **Scoring**: Heat and overall ranking methods, finish conditions, tiebreakers, and dropped heats.
+- **Groups**: Driver group separation, independent rotation schedules, and leaderboard advancement.
+- **Start Method**: Start and restart timing, track starting positions, hot starts, and false start penalties.
+- **Team Options**: Endurance racing, driver swaps, and stint limits.
+- **Analog Fuel**: Per-lap fuel consumption, tank capacity, and refuel rates.
+- **Digital Fuel**: Continuous throttle-driven fuel consumption and custom curves.
+- **Season Points**: Championship points schedule, heat points, and bonus points.
+
+Clicking any tab immediately scrolls to and expands that accordion section.
+
+---
+
+## General Settings {: #general-settings }
+
+The General Settings expander controls presentation, timing filters, and race management behavior:
+
+- **Theme Selection**: Assign custom color schemes and scoreboard layouts for raceday displays.
+- **Audio Callouts**: Enable automated voice announcements for lead changes, fast laps, pit stops, and race finishes.
+- **Minimum Lap Time (s)**: Minimum allowable lap time to filter out electrical glitches or false sensor triggers.
+- **Drift Time (s)**: Sensor trigger window to handle car drift or sliding over the finish line.
+- **Yellow Flag Rules**: Automatic or manual yellow flag pauses and track power cutoff.
+- **Custom UI Options**: Select specialized leaderboards and custom telemetry widgets.
+
+---
+
+## Heat Options {: #heat-options }
+
+The Heat Options expander configures automated pacing, heat cycle counts, and rotation sequencing:
+
+- **Auto Advance Time (s)**: Seconds to wait after a heat concludes before automatically moving to the next heat in the schedule.
+- **Auto Advance Warmup / Cooldown Time (s)**: Warmup lead-in interval before auto advance takes effect.
+- **Auto Start Time (s)**: Automated countdown delay before initiating the next heat once drivers are staged.
+- **Auto Start Warmup Time (s)**: Staging warmup duration before the auto start countdown begins.
+- **Heat Times Through**: Specifies how many times each driver cycles through the entire heat rotation schedule.
+- **Reverse Heats**: Inverts the scheduled heat sequence so drivers run heats in reverse order.
+---
+
+## Scoring Rules {: #scoring-rules }
+
+The Scoring Rules expander defines how drivers are ranked in heats and across the entire race:
+
+- **Heat Ranking Method**: Rank drivers in each heat by **Most Laps**, **Fastest Lap**, or **Fastest Total Time**, with configurable tiebreakers.
+- **Finish Method**: Set how the end of a heat is determined (by target **Lap Count** or elapsed **Time** in seconds).
+- **Allow Finish**: Choose how cars complete their laps when the leader finishes or time expires (e.g., immediate end, allow all to finish, single lap finish, or automatic segment credit).
+- **Overall Ranking Method**: Rank overall race standings across all completed heats with customizable tiebreakers and dropped heats.
+
+### Lap and Time Adjustments (Impact on Rankings and Metrics)
 
 Race Coordinator AI allows race directors to manually adjust a driver's lap count and total heat time during or after a heat (via cell click on lap/time columns, keyboard shortcuts, or the Race Director Menu). Because the server acts as the authoritative source of truth for all calculations, manual adjustments flow deterministically into heat standings, overall rankings, and telemetry statistics:
 
@@ -72,30 +117,52 @@ Race Coordinator AI allows race directors to manually adjust a driver's lap coun
 | **Median Lap Time** | **No impact** (median physical lap) | **No impact** (median physical lap) |
 | **Gaps (`gapLeader`, `gapPosition`)** | Updates lap differential | Updates time and pace differential |
 
-### Timer Settings
-- **Start / Restart Delay**: Countdown lead-in seconds before race starts or restarts after a yellow flag.
-- **Minimum Lap Time**: Minimum allowable lap time (in seconds) to filter out false or glitch sensor triggers.
-- **Drift Time**: Maximum sensor trigger window to handle car drift or sliding over the finish line.
-- **Start Behind Sensor**: Enforces cars starting behind the finish sensor on lap zero.
+---
 
-## Fuel Settings
+## Groups & Stages {: #groups-and-stages }
 
-Race Coordinator AI supports comprehensive fuel simulation for both analog and digital tracks, including customizable fuel capacity, start level, pit stop delays, refuel rates, out-of-fuel penalty actions, and fuel usage models.
+The Groups & Stages expander separates drivers into distinct groups that do not compete directly on the track against each other:
 
-### Track Compatibility and Fuel System Selection
+- **Group Separation**: Drivers are organized into isolated groups, running their own heats according to the rotation setup independently.
+- **Max Groups**: Set the maximum number of distinct groups permitted for the race.
+- **Balance Groups**: Automatically balances driver counts evenly across all groups.
+- **Allow Empty Lanes**: Permits heats to run with unoccupied lanes when groups do not divide evenly across track lanes.
+- **Force Multiple of Max**: Ensures total heats run in multiples of the maximum group capacity.
+- **Rotate Group Heats**: Alternates heats across different groups rather than completing one group's heats entirely before starting the next.
+- **Minimum Advancing**: Automatically advances top finishers from each group to the top of the overall standings leaderboard.
+- **Group Names**: Assign custom names to each group (e.g., Pro, Semi-Pro, Amateur, or Group A/B/C).
+---
 
-The race editor provides two dedicated fuel configuration sections: **Analog Fuel** and **Digital Fuel**. Which system is available and active is determined automatically by the track selected for the race:
+## Start Methods {: #start-methods }
 
-- **Analog Tracks**: Traditional slot car tracks where cars are powered directly by lane rails without digital decoders or car-to-track telemetry. When an analog track is selected, the **Analog Fuel** section is enabled and the **Digital Fuel** toggle is automatically disabled (hovering over the disabled toggle displays an explanatory tooltip).
-- **Digital Tracks**: Digital slot car systems (such as Carrera Digital, Scalextric Digital, Scorpius, or oXigen) where the track interface communicates digital telemetry (car ID, throttle percentage, pit lane sensors). When a digital track is selected, the **Digital Fuel** section is enabled and the **Analog Fuel** toggle is automatically disabled (hovering over the disabled toggle displays an explanatory tooltip).
+The Start Methods expander configures how heats begin, car positioning on the track, and start penalties:
+
+- **Start / Restart Time (s)**: Countdown duration before a heat begins or restarts after a track call.
+- **Randomizer Delays (s)**: Random delay added to the countdown to prevent drivers from timing the start lights.
+- **Start Behind Sensor**: Requires cars to be positioned behind the start/finish timing sensors on lap zero.
+- **Start at Current Position**: Allows cars to restart from their current physical location on the track after a pause rather than returning to the start line.
+- **Hot Starts**: Enables power to remain on at the start of a heat so cars can accelerate immediately when the countdown finishes.
+- **Restart on False Start**: Automatically halts and restarts the heat countdown if a false start is detected.
+- **False Start Penalties**: Configures lap count deductions or time penalties assessed against drivers who jump the start.
+---
+
+## Team Racing Options {: #team-racing }
+
+The Team Racing Options expander enables endurance racing formats with multi-driver teams:
+
+- **Team Racing Mode**: Toggle team-based scoring where teams of drivers share heat assignments.
+- **Driver Rotation Strategy**: Automatically cycle team drivers round-robin through successive heats.
+- **Mid-Heat Driver Swaps**: Allow team drivers to swap places during pit stops or at designated lap milestones.
+- **Stint Limits**: Set minimum and maximum driving stints per driver to guarantee balanced participation.
+- **Mandatory Driver Swaps**: Enforce minimum pit stops and driver changes per heat or race.
 
 ---
 
-### Analog Fuel Simulation
+## Analog Fuel Simulation {: #analog-fuel-simulation }
 
 Analog fuel simulates fuel consumption on a **per-lap basis**. Because analog tracks detect cars when they cross the start/finish timing sensors, fuel is calculated and deducted each time a lap is completed.
 
-#### Configuration Options
+### Configuration Options
 
 - **Enable Analog Fuel**: Master toggle for analog fuel tracking. When unchecked, fuel simulation is disabled for the race and cars run without fuel restrictions.
 - **Fuel Usage Type**: Determines the mathematical curve used to calculate fuel consumption based on lap pace:
@@ -123,13 +190,13 @@ Analog fuel simulates fuel consumption on a **per-lap basis**. Because analog tr
         - **Power On Time (s)**: The duration lane power remains on during each stutter pulse.
         - **Power Off Time (s)**: The duration lane power is turned off during each stutter pulse.
 
-#### Pit Stops and Racing Time in Analog Fuel
+### Pit Stops and Racing Time in Analog Fuel
 
 To prevent pit stop time from being misinterpreted as an unusually slow lap (which would incorrectly reduce fuel consumption), Race Coordinator AI tracks **accumulated refuel time**. Any time spent stationary in the pit lane is subtracted from the total lap duration before computing fuel consumption:
 
 $$\text{Racing Time} = \text{Lap Time} - \text{Accumulated Refuel Time}$$
 
-#### Visual Graph Previews (Analog)
+### Visual Graph Previews (Analog)
 
 - **Simultaneous Multi-Model Comparison**: All 3 preset mathematical models (**Linear**, **Quadratic**, and **Cubic**) are plotted simultaneously on both graphs. The currently selected type is highlighted in bold with a vibrant glow, while the remaining models serve as muted reference baselines (~40% opacity).
 - **Fuel Usage per Lap**: Displays the exact fuel units consumed across the lap time spectrum (from Fastest Time to Slowest Time). In Custom Curve mode, draggable control nodes and preset reset buttons allow instant reshaping while the 3 baseline models remain visible for benchmarking.
@@ -139,11 +206,11 @@ $$\text{Racing Time} = \text{Lap Time} - \text{Accumulated Refuel Time}$$
 
 ---
 
-### Digital Fuel Simulation
+## Digital Fuel Simulation {: #digital-fuel-simulation }
 
 Digital fuel simulates fuel consumption **continuously in real time** based on throttle telemetry transmitted from digital controllers and decoders.
 
-#### Continuous Throttle-Driven Consumption
+### Continuous Throttle-Driven Consumption
 
 Unlike analog fuel (which deducts fuel only at the lap line), digital fuel recalculates fuel consumption on every telemetry packet received from the track interface:
 
@@ -151,7 +218,7 @@ $$\text{Fuel Consumed} = \text{Usage per Second} \times \Delta t$$
 
 Drivers who drive smoothly or lift in corners consume significantly less fuel than drivers who stay full throttle down long straights.
 
-#### Configuration Options
+### Configuration Options
 
 - **Enable Digital Fuel**: Master toggle for digital fuel tracking.
 - **Fuel Usage Type**: Mathematical model applied to throttle input ($0\%$ to $100\%$):
@@ -169,7 +236,7 @@ Drivers who drive smoothly or lift in corners consume significantly less fuel th
     - **Do Not Count Laps**: Car remains operational, but laps completed while empty are not recorded.
     - **End Heat**: Driver is retired from the heat upon fuel depletion.
 
-#### Visual Graph Previews (Digital)
+### Visual Graph Previews (Digital)
 
 - **Simultaneous Multi-Model Comparison**: Plots Linear, Quadratic, and Cubic response curves simultaneously with the selected model highlighted and non-selected models visible as background baselines.
 - **Digital Fuel Usage**: Plots throttle percentage ($0\%$ to $100\%$) against fuel consumed per second across all models.
@@ -194,23 +261,16 @@ When **Custom Curve** is selected as the Fuel Usage Type (in either Analog or Di
 - **Background Persistence**: If you switch from Custom Curve to a preset and later switch back, your custom curve points are preserved in the background.
 - **Authoritative Server Calculations**: The server evaluates fuel consumption using the exact same piecewise linear interpolation algorithm during live heats, ensuring the UI graph preview is identical to race execution.
 
-## Group Options
+---
 
-*Content coming soon.*
+## Season Scoring {: #season-scoring }
 
-## False Start Detection
+The Season Scoring expander defines championship points distributions for series and season-long competitions:
 
-*Content coming soon.*
-
-## Warmup Settings
-
-*Content coming soon.*
-
-## Countdown Settings
-
-*Content coming soon.*
-
-## Saving Changes
-
-*Content coming soon.*
-
+- **Position Points Table**: Assign championship points for each finishing position (e.g., 25 for 1st, 18 for 2nd, 15 for 3rd, down through 10th or 20th place).
+- **Heat Points**: Optionally award points for individual heat results in addition to overall finishing order.
+- **Bonus Points**:
+    - *Fastest Lap*: Extra points awarded to the driver recording the fastest single lap of the race.
+    - *Pole Position*: Bonus points awarded for the top qualifying position.
+    - *Most Laps Led*: Bonus points for leading the highest number of laps.
+- **Championship Aggregation**: Season standings automatically aggregate scored points across races with support for dropped rounds.

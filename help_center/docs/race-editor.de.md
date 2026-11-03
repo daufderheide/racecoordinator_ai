@@ -1,6 +1,6 @@
 # Rennen-Editor
 
-Der **Rennen-Editor** ist die zentrale Konfigurationsoberfläche zum Entwerfen, Konfigurieren und Testen Ihrer Slotcar-Rennformate, Wertungsregeln, Laufläufe, Kraftstoffsimulationen und Zeiteinstellungen.
+Der **Rennen-Editor** ermöglicht es Ihnen, Rennkonfigurationen zu erstellen, anzupassen und zu verwalten. Hier richten Sie Wertungsregeln, Laufläufe, Kraftstoffsimulationen und Rennoptionen ein.
 
 ---
 
@@ -22,76 +22,116 @@ Der Arbeitsbereich ist in zwei synchronisierte Bereiche unterteilt:
 
 ---
 
-## Rennenkonfiguration & Optionen
+---
 
-### Rennenname & Streckenzuordnung
-- **Rennenname**: Eindeutiger Name für das Rennformat.
-- **Strecke**: Die zugeordnete Strecke bestimmt die Verfügbarkeit von analogem oder digitalem Kraftstoff.
+## Renneinrichtung {: #race-setup }
+
+Das linke Bedienfeld konfiguriert das Kernformat und die Streckenzuordnung für Ihr Rennen:
+
+- **Rennenname**: Eindeutiger Name zur Identifizierung des Rennformats am Renntag und in Statistiken.
+- **Strecke**: Die diesem Rennen zugewiesene physische Strecke. Die ausgewählte Strecke bestimmt, ob analoge oder digitale Kraftstoffsimulation verfügbar ist.
 - **Design**: Visuelles UI-Design für die Anzeige am Renntag.
+- **Laufrotationsformat**: Wählen Sie zwischen Standard-Rotationen (**Round Robin**, **Leiter**, **Turnier**) oder benutzerdefinierten Sequenzen.
+- **Laufdurchläufe**: Gibt an, wie oft jeder Fahrer die komplette Laufrotation durchläuft.
+- **Umgekehrte Läufe**: Dreht die Laufreihenfolge um, sodass Fahrer Läufe in umgekehrter Reihenfolge fahren.
+- **Fahreranzahl-Vorschau**: Zeigt eine dynamische Vorschau der generierten Laufliste basierend auf der eingestellten Fahreranzahl.
 
-### Lauflauf-Format
-- **Rotationstyp**: Standard-Rotationen (**Round Robin**, **Leiter**, **Turnier**) oder benutzerdefinierte Sequenzen.
-- **Laufdurchläufe**: Wie oft jeder Fahrer die komplette Laufrotation durchläuft.
-- **Umgekehrte Läufe**: Dreht die Laufreihenfolge um.
-
-### Wertungsoptionen
-- **Laufwertung**: Abschluss nach Runden oder Zeit, Platzierungsmethode und Tiebreaker.
-  - **Zielerlaubnis**: Legen Sie fest, wie Fahrzeuge ihre Runden beenden, wenn der Führende das Ziel erreicht oder die Zeit abläuft:
-    - *Sofort beenden*: Lauf endet sofort bei Zielerreichung.
-    - *Zu Ende fahren lassen*: Alle Fahrer fahren weiter, bis sie die Vorgaben erfüllen.
-    - *Eine weitere Runde*: Fahrer dürfen ihre aktuelle Runde beenden; diese Runde zählt vollständig.
-    - *Zieleinlauf nicht erlauben (Auto-Segmente)*: Lauf endet sofort und die Teilrundengutschrift wird aus der verstrichenen Zeit auf der aktuellen Runde geteilt durch die Median-Rundenzeit des Fahrers berechnet (`autoSegments = timeSinceLastLap / medianLapTime`, maximal 0,99).
-    - *Eine weitere Runde (Auto-Segmente)*: Fahrer beenden ihre aktuelle Runde auf der Strecke; die Runde zählt nicht als volle Runde, sondern die Teilrundengutschrift wird aus der Rennzeit vor Laufende geteilt durch die Median-Rundenzeit des Fahrers berechnet (`autoSegments = partialLapTime / medianLapTime`, maximal 0,99).
-- **Gesamtwertung**: Ranglistenmethode, Tiebreaker-Regeln und Streichergebnisse.
-- **Saisonwertung**: Punkteverteilung pro Position für Meisterschaften.
-
-#### Runden- und Zeitanpassungen (Auswirkungen auf Ranglisten und Metriken)
-
-Race Coordinator AI ermöglicht es Rennleitern, die Rundenanzahl und die Gesamtlaufzeit eines Fahrers während oder nach einem Lauf manuell anzupassen (durch Klicken auf Runden-/Zeitspalten, Tastaturkürzel oder über das Rennleiter-Menü). Da der Server als maßgebliche Quelle für alle Berechnungen dient, fließen manuelle Anpassungen deterministisch in Laufranglisten, Gesamtwertungen und Telemetriestatistiken ein:
-
-- **Angepasste Runden (`userLaps`)**:
-  - **Formel**: $\text{Bereinigte Rundenzahl} = \text{Physische Runden} + \text{Strafe-Runden} + \text{Benutzer-Runden} + \text{Auto-Segmente}$.
-  - **Ranglisten**: Wenn die Wertungsmethode **Meiste Runden** ist, bestimmen die angepassten Runden direkt die Lauf- und Gesamtrangliste.
-  - **Metriken**: Die physische Rundenanzahl bleibt unberührt (spiegelt tatsächliche Sensordurchfahrten wider). Durchschnittliche Rundenzeit ($\text{Gesamtzeit} / \text{Physische Runden}$), beste Rundenzeit und Median-Rundenzeit bleiben unbeeinflusst. Rundenabstände werden sofort aktualisiert.
-- **Angepasste Zeit (`userTime`)**:
-  - **Formel**: $\text{Bereinigte Gesamtzeit} = \sum (\text{Physische Rundenzeiten}) + \text{Benutzer-Zeit}$.
-  - **Ranglisten**: Wenn die Wertungsmethode **Schnellste Gesamtzeit** ist, bestimmt die bereinigte Zeit direkt die Platzierung (geringere Zeit platziert weiter vorne). Bei Wertung nach **Meiste Runden** dient die bereinigte Zeit als primärer Tiebreaker für rundengleiche Fahrer. Die Gesamtwertung summiert die bereinigten Gesamtzeiten aller gewerteten Läufe.
-  - **Metriken**: Die durchschnittliche Rundenzeit ($\text{Bereinigte Gesamtzeit} / \text{Physische Runden}$) wird direkt beeinflusst – das Hinzufügen von Strafzeit erhöht die durchschnittliche Rundenzeit (langsamere Pace). Abstandswerte (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) werden neu berechnet, um den Zeitunterschied widerzuspiegeln.
-  - **Geschützte Metriken**: **Beste Rundenzeit** und **Median-Rundenzeit** werden durch Zeitanpassungen **NICHT beeinflusst**. Die beste Rundenzeit repräsentiert strikt die schnellste einzelne physische Sensorrunde, und die Median-Rundenzeit stellt die statistische mittlere physische Rundenzeit dar.
-
-| Metrik / Wertungsmerkmal | Angepasste Runden (`userLaps`) | Angepasste Zeit (`userTime`) |
-| :--- | :--- | :--- |
-| **Bereinigte Rundenzahl** | **Ändert sich direkt** ($\pm\text{Segmente}/\text{Runden}$) | Unverändert |
-| **Physische Rundenanzahl** | Unverändert (nur tatsächliche Sensorrunden) | Unverändert (nur tatsächliche Sensorrunden) |
-| **Lauf-Gesamtzeit** | Unverändert | **Ändert sich direkt** ($+ \text{userTime}$) |
-| **Gesamtzeit (Rennen)** | Unverändert | **Ändert sich direkt** (summiert Laufzeiten) |
-| **Rangliste (Meiste Runden)** | **Primärer Rankingfaktor** | **Tiebreaker-Faktor** (geringere Zeit gewinnt) |
-| **Rangliste (Schnellste Gesamtzeit)** | Tiebreaker-Faktor | **Primärer Rankingfaktor** (geringere Zeit gewinnt) |
-| **Durchschnittliche Rundenzeit** | Unverändert ($\text{Zeit} / \text{Physische Runden}$) | **Ändert sich direkt** ($\text{Bereinigte Zeit} / \text{Physische Runden}$) |
-| **Beste Rundenzeit** | **Kein Einfluss** (schnellste physische Runde) | **Kein Einfluss** (schnellste physische Runde) |
-| **Median-Rundenzeit** | **Kein Einfluss** (mittlere physische Runde) | **Kein Einfluss** (mittlere physische Runde) |
-| **Abstände (`gapLeader`, `gapPosition`)** | Aktualisiert Rundenabstand | Aktualisiert Zeit- und Pace-Abstand |
-
-### Zeiteinstellungen
-- **Start- / Neustartverzögerung**: Countdown-Vorlaufzeit in Sekunden.
-- **Minimale Rundenzeit**: Mindestrundenzeit zur Filterung von Fehlauslösungen.
-- **Driftzeit**: Sensor-Auslösefenster für driftende Fahrzeuge über die Ziellinie.
-- **Hinter Sensor starten**: Erzwingt den Start hinter dem Zielsensor in Runde null.
-
-## Kraftstoffeinstellungen
-
-Race Coordinator AI unterstützt umfassende Kraftstoffsimulationen für analoge und digitale Strecken, einschließlich anpassbarer Tankkapazität, Startlevel, Boxenstoppverzögerungen, Auftankraten, Strafaktionen bei leerem Tank und Kraftstoffverbrauchsmodellen.
-
-### Streckenkompatibilität und Auswahl des Kraftstoffsystems
-
-Der Rennen-Editor bietet zwei dedizierte Konfigurationsbereiche für Kraftstoff: **Analoger Kraftstoff** und **Digitaler Kraftstoff**. Welches System verfügbar und aktiv ist, wird automatisch anhand der für das Rennen ausgewählten Strecke bestimmt:
-
-- **Analoge Strecken**: Traditionelle Slotcar-Bahnen, bei denen Fahrzeuge direkt über die Spuren versorgt werden, ohne digitale Decoder oder Fahrzeugtelemetrie. Bei Auswahl einer analogen Strecke ist der Bereich **Analoger Kraftstoff** aktiviert und der Umschalter für **Digitalen Kraftstoff** wird automatisch deaktiviert (beim Bewegen des Mauszeigers über das deaktivierte Kontrollkästchen wird ein erklärender Tooltip angezeigt).
-- **Digitale Strecken**: Digitale Slotcar-Systeme (wie Carrera Digital, Scalextric Digital, Scorpius oder oXigen), bei denen die Schnittstelle digitale Telemetrie überträgt (Fahrzeug-ID, Gasstellung in Prozent, Boxengassensensoren). Bei Auswahl einer digitalen Strecke ist der Bereich **Digitaler Kraftstoff** aktiviert und der Umschalter für **Analogen Kraftstoff** wird automatisch deaktiviert (beim Bewegen des Mauszeigers über das deaktivierte Kontrollkästchen wird ein erklärender Tooltip angezeigt).
+Das rechte Bedienfeld zeigt die **Live-Laufvorschau**, die die vollständige Liste der Läufe, Fahrerrotationen und Spurzuweisungen in Echtzeit dynamisch generiert, während Sie Einstellungen anpassen.
 
 ---
 
-### Analoge Kraftstoffsimulation
+## Navigations-Tabs {: #navigation-tabs }
+
+Die Tableiste am oberen Rand des Rennen-Editors bietet Ein-Klick-Verknüpfungen, um direkt zu jedem Konfigurationsbereich zu springen:
+
+- **Allgemein**: Designs, Audio-Ansagen, Rundenzeitfilter und UI-Einstellungen.
+- **Läufe**: Zeiten für automatischen Start und Weiterlauf, Laufdurchläufe und umgekehrte Laufreihenfolge.
+- **Wertung**: Lauf- und Gesamtwertungsmethoden, Zielbedingungen, Tiebreaker und Streichergebnisse.
+- **Gruppen**: Gruppentrennung der Fahrer, unabhängige Laufpläne und Ranglistenaufstieg.
+- **Startmethode**: Start- und Neustartzeiten, Streckenstartpositionen, fliegende Starts und Frühstartstrafen.
+- **Team-Optionen**: Langstreckenrennen, Fahrerwechsel und Stint-Limits.
+- **Analoger Kraftstoff**: Rundenbasierter Kraftstoffverbrauch, Tankkapazität und Nachtankraten.
+- **Digitaler Kraftstoff**: Kontinuierlicher verbrauchsgesteuerter Kraftstoffverbrauch und benutzerdefinierte Kurven.
+- **Saisonpunkte**: Meisterschafts-Punktetabelle, Laufpunkte und Bonuspunkte.
+
+Durch Klicken auf einen Tab wird der entsprechende Akkordeonbereich sofort aufgerufen und erweitert.
+
+---
+
+## Allgemeine Einstellungen {: #general-settings }
+
+Der Bereich Allgemeine Einstellungen steuert Präsentation, Zeitfilter und das Rennleiterverhalten:
+
+- **Designauswahl**: Zuweisung benutzerdefinierter Farbschemata und Anzeigelayouts für den Renntag.
+- **Audio-Ansagen**: Automatische Sprachansagen für Führungswechsel, schnellste Runden, Boxenstopps und Rennabschlüsse.
+- **Minimale Rundenzeit (s)**: Kürzeste zulässige Rundenzeit zur Filterung von Sensorstörungen oder Fehlmessungen.
+- **Driftzeit (s)**: Sensor-Erfassungsfenster zur Bewältigung von schleudernden Fahrzeugen auf der Ziellinie.
+- **Gelbe-Flagge-Regeln**: Automatische oder manuelle Rennpausen bei Gelbphase mit Bahnstromabschaltung.
+- **Benutzerdefinierte UI-Optionen**: Auswahl spezialisierter Bestenlisten und Telemetrie-Widgets.
+
+---
+
+## Lauf-Optionen {: #heat-options }
+
+Der Bereich Lauf-Optionen konfiguriert automatisierte Zeitsteuerungen, Durchläufe und die Reihenfolge:
+
+- **Automatische Weiterschaltzeit (s)**: Wartezeit nach Ende eines Laufs, bevor automatisch zum nächsten Lauf gewechselt wird.
+- **Aufwärmzeit für Weiterschaltung (s)**: Vorlaufzeit vor dem automatischen Weiterschalten.
+- **Automatische Startzeit (s)**: Automatischer Verzögerungscountdown vor dem Start des nächsten Laufs.
+- **Aufwärmzeit für Start (s)**: Vorlaufzeit vor Beginn des automatischen Start-Countdowns.
+- **Laufdurchläufe**: Bestimmt, wie oft jeder Fahrer die gesamte Laufrotation durchläuft.
+- **Umgekehrte Läufe**: Dreht die geplante Laufreihenfolge um, sodass Läufe rückwärts ausgetragen werden.
+---
+
+## Wertungsregeln {: #scoring-rules }
+
+#### Runden- und Zeitanpassungen (Auswirkungen auf Ranglisten und Metriken)
+
+- **Laufwertungsmethode**: Platzierung der Fahrer in jedem Lauf nach **Meiste Runden**, **Schnellste Runde** oder **Schnellste Gesamtzeit** mit konfigurierbaren Tiebreakern.
+- **Zielmethode**: Legt fest, wie das Ende eines Laufs bestimmt wird (nach **Rundenzahl** oder verstrichener **Zeit** in Sekunden).
+- **Zielerlaubnis**: Bestimmt, wie Fahrzeuge ihre Runden beenden, wenn der Führende das Ziel erreicht oder die Zeit abläuft (z. B. sofortiges Ende, alle beenden lassen, Einzelrundenabschluss oder automatische Segmentgutschrift).
+- **Gesamtwertungsmethode**: Platzierung der Gesamtrangliste über alle Läufe mit anpassbaren Tiebreakern und Streichergebnissen.
+
+## Gruppen & Stufen {: #groups-and-stages }
+
+Der Bereich Gruppen & Stufen teilt Fahrer in getrennte Gruppen ein, die auf der Strecke nicht gegeneinander fahren:
+
+- **Gruppentrennung**: Fahrer werden in isolierte Gruppen eingeteilt und bestreiten ihre Läufe unabhängig nach der Rotationskonfiguration.
+- **Maximale Gruppen**: Legt die maximale Anzahl zulässiger Gruppen für das Rennen fest.
+- **Gruppen ausgleichen**: Verteilt die Fahreranzahl automatisch gleichmäßig auf alle Gruppen.
+- **Leere Spuren erlauben**: Ermöglicht Läufe mit unbesetzten Spuren, wenn Gruppen nicht exakt auf die Spurenanzahl passen.
+- **Vielfaches des Maximums erzwingen**: Stellt sicher, dass die Gesamtzahl der Läufe einem Vielfachen der maximalen Gruppenkapazität entspricht.
+- **Gruppenläufe rotieren**: Wechselt Läufe zwischen verschiedenen Gruppen ab, anstatt eine Gruppe vollständig vor der nächsten abzuschließen.
+- **Mindestaufsteiger**: Setzt die besten Fahrer jeder Gruppe automatisch an die Spitze der Gesamtrangliste.
+- **Gruppennamen**: Weist jeder Gruppe individuelle Namen zu (z. B. Profi, Halbprofi, Gruppe A/B/C).
+---
+
+## Startmethoden {: #start-methods }
+
+Der Bereich Startmethoden konfiguriert den Start von Läufen, die Fahrzeugpositionierung auf der Strecke und Startstrafen:
+
+- **Start- / Neustartzeit (s)**: Countdown-Dauer vor Beginn oder Wiederaufnahme eines Laufs.
+- **Zufallsverzögerungen (s)**: Zufällige Verzögerung zum Countdown, um ein Antizipieren des Startsignals zu verhindern.
+- **Hinter Sensor starten**: Schreibt vor, dass Fahrzeuge auf Runde Null hinter den Start-/Ziellinien-Sensoren stehen müssen.
+- **An aktueller Position starten**: Ermöglicht es Fahrzeugen, nach einer Gelbphase an ihrer aktuellen Position weiterzufahren.
+- **Fliegende Starts**: Hält den Bahnstrom beim Start aktiv, sodass Fahrzeuge bei Grün sofort beschleunigen können.
+- **Neustart bei Frühstart**: Startet den Countdown bei Erkennung eines Frühstarts automatisch neu.
+- **Frühstartstrafen**: Konfiguriert Runden- oder Zeitabzüge für Fahrer, die einen Frühstart verursachen.
+---
+
+## Teamrennen-Optionen {: #team-racing }
+
+Der Bereich Teamrennen-Optionen ermöglicht Langstreckenrennen mit mehreren Fahrern pro Team:
+
+- **Teamrennen-Modus**: Aktiviert teambasierte Wertungen, bei denen Fahrer eines Teams Laufläufe gemeinsam bestreiten.
+- **Fahrerwechsel-Strategie**: Automatischer Round-Robin-Wechsel der Teamfahrer über aufeinanderfolgende Läufe.
+- **Fahrerwechsel während des Laufs**: Erlaubt Teamfahrern den Wechsel bei Boxenstopps oder bestimmten Rundenzahlen.
+- **Stint-Limits**: Minimale und maximale Fahrzeit pro Fahrer zur Gewährleistung ausgewogener Einsätze.
+- **Pflicht-Fahrerwechsel**: Vorschreiben einer Mindestanzahl von Fahrerwechseln pro Lauf oder Rennen.
+
+---
+
+## Rennen-Editor - Analoge Kraftstoffsimulation {: #analog-fuel-simulation }
 
 Analoger Kraftstoff simuliert den Verbrauch auf **Rundenbasis**. Da analoge Strecken Fahrzeuge erfassen, wenn sie die Start-/Ziellinie überqueren, wird der Kraftstoff bei jeder vollendeten Runde berechnet und abgezogen.
 
@@ -139,53 +179,22 @@ $$\text{Reine Rennzeit} = \text{Rundenzeit} - \text{Aufgelaufene Auftankzeit}$$
 
 ---
 
-### Digitale Kraftstoffsimulation
+---
 
-Digitaler Kraftstoff simuliert den Verbrauch **kontinuierlich in Echtzeit** auf Basis von Gasstellungsdaten, die von digitalen Reglern und Decodern übertragen werden.
+## Rennen-Editor - Digitale Kraftstoffsimulation {: #digital-fuel-simulation }
 
-#### Kontinuierlicher gasabhängiger Verbrauch
-
-Im Gegensatz zum analogen Kraftstoff wird der Verbrauch bei jedem empfangenen Telemetriepaket neu berechnet:
-
-$$\text{Verbrauchter Kraftstoff} = \text{Verbrauch pro Sekunde} \times \Delta t$$
-
-Fahrer, die gleichmäßig fahren oder vor Kurven vom Gas gehen, verbrauchen deutlich weniger Kraftstoff als Fahrer, die dauerhaft Vollgas geben.
-
-#### Konfigurationsoptionen
-
-- **Digitalen Kraftstoff aktivieren**: Hauptschalter für die digitale Kraftstofferfassung.
-- **Verbrauchstyp**: Mathematisches Modell angewendet auf die Gasstellung ($0\,\%$ bis $100\,\%$):
-    - **Linear**: Der Verbrauch skaliert direkt proportional zur Gasstellung.
-    - **Quadratisch**: Der Verbrauch steigt im mittleren Gasbereich moderat und beschleunigt gegen Vollgas.
-    - **Kubisch**: Hohe Gasstellungen verbrauchen exponentiell mehr Kraftstoff als Teillastfahrten.
-    - **Benutzerdefinierte Kurve**: Ermöglicht individuelle Gas-Verbrauchs-Charakteristiken von 0 % bis 100 % Gas.
-- **Verbrauchsrate**: Maximaler Verbrauch in Einheiten pro Sekunde bei **100 % Vollgas**.
-- **Kapazität**, **Startlevel (%)**, **Auftankrate (%/s)**, **Boxenstopp-Verzögerung (s)**, **Kraftstoff bei Laufstart zurücksetzen**: Funktionsweise analog zum analogen Kraftstoff.
-- **Aktion bei leerem Tank**:
-    - **Runden nicht zählen**: Fahrzeug bleibt fahrbar, Runden werden bei leerem Tank jedoch nicht gezählt.
-    - **Lauf beenden**: Fahrer scheidet bei leerem Tank sofort aus dem Lauf aus.
-
-#### Diagrammvorschau (Digital)
-
-- **Gleichzeitiger Modellvergleich**: Stellt lineare, quadratische und kubische Reaktionskurven gleichzeitig dar, wobei das ausgewählte Modell hervorgehoben wird und die anderen Modelle als Hintergrundreferenzen dienen.
-- **Digitaler Kraftstoffverbrauch**: Trägt die Gasstellung ($0\,\%$ bis $100\,\%$) gegen den Verbrauch pro Sekunde für alle Modelle auf.
-- **Zeit bis Tank leer**: Trägt die Gasstellung gegen die verbleibenden Fahrsekunden bis zum leeren Tank auf.
-- **Interaktive Legende und Skalierung**: Kurven lassen sich über die Legende ein- und ausschalten, wodurch die Achsen automatisch neu skaliert werden.
-- **Vergleichende Hover-Karten**: Zeigt beim Überstreichen des Diagramms die Echtzeit-Messwerte aller sichtbaren Kurven bei der jeweiligen Gasstellung an.
+Digitaler Kraftstoff simuliert den Verbrauch **kontinuierlich in Echt
 
 ---
 
-### Interaktives Bearbeiten der benutzerdefinierten Kurve
+## Saisonwertung {: #season-scoring }
 
-Wenn **Benutzerdefinierte Kurve** als Verbrauchstyp (analog oder digital) ausgewählt ist, erscheinen Kontrollgriffe direkt auf der SVG-Verbrauchskurve:
+Der Bereich Saisonwertung definiert die Verteilung von Meisterschaftspunkten für Rennserien:
 
-- **Initiale Kurvengenerierung**: Beim ersten Wechsel zu Benutzerdefinierte Kurve werden die anfänglichen 5 Punkte ohne sichtbaren Sprung direkt von der aktiven Vorgabe (Linear, Quadratisch oder Kubisch) abgetastet.
-- **Interaktives Drag-and-Drop**: Klicken und ziehen Sie jeden Punkt nach oben, unten, links oder rechts, um die Kurve anzupassen.
-- **Erzwungene Monotonie**:
-    - *Analoger Kraftstoff*: Schnellere Rundenzeiten verbrauchen immer mehr oder gleich viel Kraftstoff wie langsamere Rundenzeiten (monoton fallende Kurve). Das Ziehen ist so eingeschränkt, dass Punkte nicht invertiert werden können.
-    - *Digitaler Kraftstoff*: Höhere Gasstellungen verbrauchen immer mehr oder gleich viel Kraftstoff wie niedrigere Gasstellungen (monoton steigende Kurve).
-- **Punkte hinzufügen**: Klicken Sie auf die Kurvenlinie, um an der exakt interpolierten Position einen neuen Kontrollpunkt einzufügen.
-- **Punkte löschen**: Klicken Sie mit der rechten Maustaste auf einen Zwischenpunkt, um ihn zu entfernen (mindestens 2 Endpunkte bleiben erhalten).
-- **Vorgaben-Schaltflächen**: Setzen Sie die benutzerdefinierte Kurve über die Schaltflächen oberhalb des Diagramms schnell auf Linear, Quadratisch oder Kubisch zurück.
-- **Hintergrund-Persistenz**: Wenn Sie von der benutzerdefinierten Kurve zu einer Vorgabe und später zurück wechseln, bleiben Ihre benutzerdefinierten Punkte im Hintergrund erhalten.
-- **Autoritative Server-Berechnungen**: Der Server berechnet den Kraftstoffverbrauch während der Rennen mit demselben stückweise linearen Interpolationsalgorithmus, sodass UI-Vorschau und Rennausführung absolut identisch sind.
+- **Platzierungspunkte-Tabelle**: Punkteverteilung pro Platzierung (z. B. 25 für Platz 1, 18 für Platz 2 usw.).
+- **Laufpunkte**: Optionale zusätzliche Punkte für Einzellaufergebnisse neben dem Gesamtergebnis.
+- **Bonuspunkte**:
+    - *Schnellste Runde*: Zusatzpunkte für die absolut schnellste Rennrunde.
+    - *Pole Position*: Bonuspunkte für die beste Qualifikationsplatzierung.
+    - *Meiste Führungsrunden*: Bonuspunkte für die meisten Runden in Führung.
+- **Meisterschafts-Aggregation**: Automatische Zusammenrechnung der Punkte über Rennen hinweg inklusive Streichergebnissen.

@@ -1,6 +1,6 @@
 # Editor de Corridas
 
-O **Editor de Corridas** é a interface completa de configuração para desenhar, configurar e testar formatos de corrida de slot cars, regras de pontuação, rotações de baterias, simulações de combustível e configurações de temporizador.
+O **Editor de corridas** permite criar, personalizar e gerenciar configurações de corrida. Aqui você pode configurar regras de pontuação, rotações de baterias, simulações de combustível e opções de corrida.
 
 ---
 
@@ -22,55 +22,75 @@ O espaço de trabalho é dividido em dois painéis sincronizados:
 
 ---
 
-## Configuração da Corrida & Opções
+---
 
-### Nome da Corrida & Associação de Pista
-- **Nome da Corrida**: Nome exclusivo que identifica o formato de corrida.
-- **Pista**: A pista física associada determina se a simulação de combustível analógica ou digital está disponível.
-- **Tema**: Tema visual de interface aplicado durante o dia de corrida.
+## Configuração da corrida {: #race-setup }
 
-### Formato de Rotação de Baterias
-- **Tipo de Rotação**: Rotações padrão (**Round Robin**, **Escada**, **Torneio**) ou sequências personalizadas.
-- **Ciclos de Baterias**: Quantidade de vezes que cada piloto completa a rotação inteira de baterias.
-- **Baterias Invertidas**: Inverte a ordem da sequência de baterias.
+O painel esquerdo configura o formato principal e a pista associada para sua corrida:
 
-### Opções de Pontuação
-- **Pontuação da Bateria**: Conclusão por voltas ou tempo limite, método de classificação e desempates.
-  - **Permitir terminar**: Defina como os carros completam suas voltas quando o líder finaliza ou o tempo expira:
-    - *Não permitir finalizar*: A bateria termina imediatamente.
-    - *Permitir terminar*: Todos os pilotos continuam até cumprirem os requisitos.
-    - *Permitir terminar (uma volta)*: Os pilotos podem concluir sua volta atual; essa volta conta no total.
-    - *Não permitir finalizar (segmentos automáticos)*: A bateria termina imediatamente e o crédito de volta parcial é calculado a partir do tempo decorrido na volta atual dividido pelo tempo de volta mediano do piloto (`autoSegments = timeSinceLastLap / medianLapTime`, limitado a 0,99).
-    - *Permitir terminar (uma volta) (segmentos automáticos)*: Os pilotos concluem a volta na pista; a volta não conta como uma volta inteira, mas a fração é calculada a partir do tempo de corrida antes do término dividido pelo tempo de volta mediano do piloto (`autoSegments = partialLapTime / medianLapTime`, limitado a 0,99).
-- **Pontuação Geral**: Método de classificação geral, regras de desempate e baterias descartadas.
-- **Pontuação da Temporada**: Distribuição de pontos por posição para campeonatos.
+- **Nome da corrida**: Nome exclusivo para identificar o formato no dia da corrida e em estatísticas.
+- **Pista**: A pista física vinculada a esta corrida. Determina se a simulação analógica ou digital de combustível estará disponível.
+- **Tema**: Tema visual aplicado à exibição no dia da corrida.
+- **Formato de rotação de baterias**: Escolha entre rotações padrão (**Round Robin**, **Escada**, **Torneio**) ou sequências personalizadas.
+- **Passagens por bateria**: Especifica quantas vezes cada piloto completa a rotação inteira de baterias.
+- **Baterias invertidas**: Inverte a ordem das baterias para que os pilotos corram em sequência contrária.
+- **Prévia da contagem de pilotos**: Exibe uma prévia dinâmica da lista de baterias gerada com base no número de pilotos.
+
+O painel direito exibe a **Prévia ao vivo de baterias**, gerando a lista completa de baterias, rotações de pilotos e pistas em tempo real conforme você altera as configurações.
+
+---
+
+## Guias de navegação {: #navigation-tabs }
+
+A barra de guias superior oferece atalhos com um clique para navegar diretamente para qualquer seção de configuração:
+
+- **Geral**: Temas, alertas de voz, filtros de tempo de volta e preferências de interface.
+- **Baterias**: Tempos de largada e avanço automático, repetições de baterias e ordem invertida.
+- **Pontuação**: Métodos de classificação, desempates, baterias descartadas e ajustes manuais.
+- **Grupos**: Separação de pilotos em grupos, programações de rotação independentes e avanço na classificação.
+- **Método de largada**: Contagens regressivas automáticas/manuais, largadas escalonadas e regras de queima de largada.
+- **Opções de equipe**: Corridas de endurance em equipe, troca de pilotos e limites de turnos.
+- **Combustível analógico**: Consumo por volta, capacidade do tanque e taxas de reabastecimento.
+- **Combustível digital**: Consumo contínuo baseado no acelerador e curvas personalizadas.
+- **Pontos da temporada**: Tabela de pontuação do campeonato, pontos por bateria e pontos de bônus.
+
+Ao clicar em uma guia, a página rola imediatamente até aquela seção do acordeão e a expande.
+
+---
+
+## Configurações gerais {: #general-settings }
+
+O acordeão de Configurações gerais controla a apresentação, filtros de tempo e o comportamento do diretor de prova:
+
+- **Seleção de tema**: Esquemas de cores e layouts de placar personalizados.
+- **Alertas de voz**: Avisos sonoros automatizados para mudanças de liderança, voltas mais rápidas, pit stops e chegadas.
+- **Tempo mínimo de volta (s)**: Tempo mínimo permitido para filtrar falhas elétricas ou acionamentos falsos de sensores.
+- **Tempo de derrapagem (s)**: Janela de detecção para gerenciar carros derrapando sobre a linha de chegada.
+- **Regras de bandeira amarela**: Pausas automáticas ou manuais sob bandeira amarela com corte de energia na pista.
+- **Opções de interface personalizada**: Tabelas de classificação e widgets de telemetria dedicados.
+
+---
+
+## Opções de bateria {: #heat-options }
+
+O acordeão de Opções de bateria configura os tempos automatizados, ciclos de corrida e sequência de rotação:
+
+- **Tempo de avanço automático (s)**: Segundos de espera após o término de uma bateria antes de avançar automaticamente para a próxima.
+- **Tempo de aquecimento para avanço (s)**: Intervalo de preparação antes do avanço automático entrar em vigor.
+- **Tempo de largada automática (s)**: Atraso de contagem regressiva antes de iniciar automaticamente a próxima bateria.
+- **Tempo de aquecimento para largada (s)**: Duração do aquecimento antes de iniciar a contagem da largada automática.
+- **Passagens por bateria**: Especifica quantas vezes cada piloto completa o ciclo inteiro de baterias.
+- **Baterias invertidas**: Inverte a sequência programada das baterias para correr em ordem contrária.
+---
+
+## Regras de pontuação {: #scoring-rules }
 
 #### Ajustes de Voltas e Tempo (Impacto nas Classificações e Métricas)
 
-O Race Coordinator AI permite que os diretores de prova ajustem manualmente a contagem de voltas e o tempo total de bateria de um piloto durante ou após uma bateria (clicando nas células de volta/tempo, por atalhos de teclado ou pelo Menu do Diretor de Prova). Como o servidor é a única fonte autorizada para todos os cálculos, os ajustes manuais refletem-se de maneira determinística nas classificações da bateria, na classificação geral e nas estatísticas de telemetria:
-
-- **Voltas Ajustadas (`userLaps`)**:
-  - **Fórmula**: $\text{Contagem de Voltas Ajustada} = \text{Voltas Físicas} + \text{Voltas de Penalidade} + \text{Voltas do Usuário} + \text{Segmentos Automáticos}$.
-  - **Classificações**: Quando o método de classificação for **Maior Número de Voltas**, as voltas ajustadas determinam diretamente as posições na bateria e na classificação geral.
-  - **Métricas**: A contagem de voltas físicas permanece inalterada (reflete as passagens reais pelo sensor). O tempo médio de volta ($\text{Tempo Total} / \text{Voltas Físicas}$), a melhor volta e a volta mediana não são afetados. As diferenças de voltas são atualizadas imediatamente.
-- **Tempo Ajustado (`userTime`)**:
-  - **Fórmula**: $\text{Tempo Total Ajustado} = \sum (\text{Tempos das Voltas Físicas}) + \text{Tempo do Usuário}$.
-  - **Classificações**: Quando o método de classificação for **Tempo Total Mais Rápido**, o tempo ajustado determina diretamente a colocação (menor tempo classifica melhor). Quando classificado por **Maior Número de Voltas**, o tempo ajustado atua como critério de desempate principal para pilotos empatados em voltas. A classificação geral soma os tempos totais ajustados de todas as baterias pontuadas.
-  - **Métricas**: O tempo médio de volta ($\text{Tempo Total Ajustado} / \text{Voltas Físicas}$) é diretamente afetado: adicionar tempo de penalidade aumenta o tempo médio de volta (ritmo mais lento). As métricas de diferença (`gapLeader`, `gapPosition`, `gapLeaderF1`, `gapPositionF1`) são recalculadas para refletir o ajuste de tempo.
-  - **Métricas Protegidas**: A **melhor volta** e a **volta mediana** **NÃO são afetadas** por ajustes de tempo. A melhor volta representa estritamente a volta física individual mais rápida registrada, e a volta mediana representa a volta física intermediária.
-
-| Métrica / Recurso de Classificação | Voltas Ajustadas (`userLaps`) | Tempo Ajustado (`userTime`) |
-| :--- | :--- | :--- |
-| **Contagem de Voltas Ajustada** | **Muda diretamente** ($\pm\text{seções}/\text{voltas}$) | Sem efeito |
-| **Voltas Físicas** | Sem efeito (apenas passagens reais por sensor) | Sem efeito (apenas passagens reais por sensor) |
-| **Tempo Total da Bateria** | Sem efeito | **Muda diretamente** ($+ \text{userTime}$) |
-| **Tempo Total Geral** | Sem efeito | **Muda diretamente** (soma das baterias) |
-| **Classificação (Maior Número de Voltas)** | **Fator principal de classificação** | **Fator de desempate** (menor tempo vence) |
-| **Classificação (Tempo Mais Rápido)** | Fator de desempate | **Fator principal de classificação** (menor tempo vence) |
-| **Tempo Médio de Volta** | Sem efeito ($\text{Tempo} / \text{Voltas Físicas}$) | **Muda diretamente** ($\text{Tempo Ajustado} / \text{Voltas Físicas}$) |
-| **Melhor Volta** | **Sem impacto** (volta física mais rápida) | **Sem impacto** (volta física mais rápida) |
-| **Volta Mediana** | **Sem impacto** (volta física mediana) | **Sem impacto** (volta física mediana) |
-| **Diferenças (`gapLeader`, `gapPosition`)** | Atualiza diferença de voltas | Atualiza diferença de tempo e ritmo |
+- **Método de classificação da bateria**: Classifique os pilotos em cada bateria por **Mais voltas**, **Volta mais rápida** ou **Tempo total mais rápido**, com desempates configuráveis.
+- **Método de término**: Define como o final de uma bateria é determinado (por **Contagem de voltas** ou **Tempo** decorrido em segundos).
+- **Permitir chegada**: Escolha como os carros concluem suas voltas quando o líder termina ou o tempo se esgota (por exemplo, término imediato, permitir que todos terminem, volta única ou crédito de segmentos automáticos).
+- **Método de classificação geral**: Classifique a classificação geral da corrida em todas as baterias com desempates e baterias descartadas personalizáveis.
 
 ### Configurações de Temporizador
 - **Atraso de Início / Reinício**: Segundos de contagem regressiva prévia.
@@ -78,20 +98,48 @@ O Race Coordinator AI permite que os diretores de prova ajustem manualmente a co
 - **Tempo de Drift**: Janela de detecção para deslizamento de carros sobre a linha de chegada.
 - **Iniciar Atrás do Sensor**: Exige que os carros comecem atrás do sensor na volta zero.
 
-## Configurações de combustível
+---
 
-O Race Coordinator AI oferece suporte a simulação abrangente de combustível para pistas analógicas e digitais, incluindo capacidade personalizável, nível inicial, atrasos de paragem nas boxes, taxas de reabastecimento, penalidades por falta de combustível e modelos de consumo.
+## Grupos e etapas {: #groups-and-stages }
 
-### Compatibilidade de pistas e seleção do sistema de combustível
+O acordeão de Grupos e etapas separa os pilotos em grupos distintos que não competem diretamente na pista entre si:
 
-O editor de corridas disponibiliza duas secções dedicadas à configuração do combustível: **Combustível analógico** e **Combustível digital**. O sistema disponível e ativo é determinado automaticamente pela pista selecionada para a corrida:
+- **Separação de grupos**: Os pilotos são organizados em grupos isolados e disputam suas baterias de maneira independente segundo a rotação configurada.
+- **Máximo de grupos**: Define o número máximo de grupos permitidos para a corrida.
+- **Equilibrar grupos**: Distribui automaticamente os pilotos de forma equilibrada entre todos os grupos.
+- **Permitir frestas vazias**: Permite baterias com frestas/pistas desocupadas quando os grupos não preenchem todas as frestas da pista.
+- **Forçar múltiplo do máximo**: Garante que o total de baterias seja disputado em múltiplos da capacidade máxima do grupo.
+- **Alternar baterias de grupo**: Alterna as baterias entre diferentes grupos em vez de concluir um grupo inteiro antes de iniciar o próximo.
+- **Mínimo de classificados**: Coloca automaticamente os melhores pilotos de cada grupo no topo da classificação geral.
+- **Nomes dos grupos**: Atribui nomes personalizados a cada grupo (ex.: Pro, Semi-Pro, Grupo A/B/C).
+---
 
-- **Pistas analógicas**: Pistas de slot car tradicionais onde os carros são alimentados diretamente pelos carris da calha, sem descodificadores digitais nem telemetria entre o carro e a pista. Quando uma pista analógica é selecionada, a secção **Combustível analógico** fica ativada e a caixa de seleção de **Combustível digital** é automaticamente desativada (ao passar o cursor sobre a caixa de seleção desativada, é apresentado um tooltip explicativo).
-- **Pistas digitais**: Sistemas digitais de slot car (como Carrera Digital, Scalextric Digital, Scorpius ou oXigen) onde a interface comunica telemetria digital (ID do carro, percentagem de aceleração, sensores de entrada na linha de boxes). Quando uma pista digital é selecionada, a secção **Combustível digital** fica ativada e a caixa de seleção de **Combustível analógico** é automaticamente desativada (ao passar o cursor sobre a caixa de seleção desativada, é apresentado um tooltip explicativo).
+## Métodos de largada {: #start-methods }
+
+O acordeão de Métodos de largada configura o início das baterias, posicionamento dos carros na pista e penalidades:
+
+- **Tempo de largada / reinício (s)**: Duração da contagem regressiva antes de iniciar ou reiniciar uma bateria.
+- **Atraso aleatório (s)**: Atraso aleatório adicionado à contagem para evitar antecipação ao sinal verde.
+- **Largada atrás do sensor**: Exige que os carros fiquem posicionados atrás do sensor de chegada na volta zero.
+- **Largada na posição atual**: Permite retomar a corrida a partir da posição física atual na pista após uma pausa.
+- **Largadas lançadas**: Mantém a energia ligada na pista para acelerar imediatamente ao término da contagem.
+- **Reiniciar em queima de largada**: Interrompe e reinicia automaticamente a contagem ao detectar queima de largada.
+- **Penalidades por queima de largada**: Deduções de volta ou penalidades de tempo para quem queimar a largada.
+---
+
+## Opções de corrida em equipe {: #team-racing }
+
+O acordeão de Opções de corrida em equipe habilita formatos de endurance com múltiplos pilotos por equipe:
+
+- **Modo corrida em equipe**: Ativa pontuação por equipe na qual os pilotos compartilham as baterias.
+- **Estratégia de revezamento de pilotos**: Alterna automaticamente os pilotos em round-robin ao longo das baterias.
+- **Trocas de piloto durante a bateria**: Permite a troca de pilotos durante paradas nos boxes ou em voltas pré-definidas.
+- **Limites de turno (stints)**: Tempos mínimos e máximos de condução por piloto para garantir participação equilibrada.
+- **Trocas obrigatórias**: Exige um número mínimo de pit stops e trocas de piloto por bateria ou corrida.
 
 ---
 
-### Simulação de combustível analógico
+## Editor de corridas - Simulação de combustível analógico {: #analog-fuel-simulation }
 
 O combustível analógico simula o consumo **por volta**. Como as pistas analógicas detetam os carros na passagem pelos sensores de cronometragem da linha de meta, o combustível é calculado e deduzido sempre que uma volta é concluída.
 
@@ -139,7 +187,9 @@ $$\text{Tempo de corrida} = \text{Tempo de volta} - \text{Tempo acumulado de rea
 
 ---
 
-### Simulação de combustível digital
+---
+
+## Editor de corridas - Simulação de combustível digital {: #digital-fuel-simulation }
 
 O combustível digital simula o consumo **continuamente em tempo real** com base na telemetria de aceleração transmitida por comandos e descodificadores digitais.
 
@@ -153,39 +203,18 @@ Pilotos com condução suave que desaceleram nas curvas consomem consideravelmen
 
 #### Opções de configuração
 
-- **Ativar combustível digital**: Interruptor principal da monitorização digital.
-- **Tipo de consumo de combustível**: Modelo matemático aplicado à aceleração ($0\,\%$ a $100\,\%$):
-    - **Linear**: O consumo varia em proporção direta com a posição do acelerador.
-    - **Quadrático**: O consumo sobe moderadamente a meio acelerador e acelera em direção à aceleração máxima.
-    - **Cúbico**: As acelerações máximas consomem exponencialmente mais combustível do que a condução a meio regime.
-    - **Curva personalizada**: Permite personalizar a resposta aceleração-consumo entre 0% e 100% de acelerador.
-- **Taxa de consumo**: Consumo máximo em unidades por segundo a **100% de aceleração máxima**.
-- **Capacidade**, **Nível inicial (%)**, **Taxa de reabastecimento (%/s)**, **Atraso de paragem nas boxes (s)**, **Repor combustível no início da manga**: Funcionamento idêntico ao combustível analógico.
-- **Ação por falta de combustível**:
-    - **Não contar voltas**: O carro continua operacional, mas as voltas efetuadas sem combustível não são registadas.
-    - **Terminar manga**: O piloto é retirado da manga assim que o depósito fica vazio.
-
-#### Pré-visualizações gráficas (Digital)
-
-- **Comparação simultânea multimodelo**: Traça em simultâneo as curvas de resposta linear, quadrática e cúbica com o modelo selecionado em destaque e os restantes modelos visíveis em segundo plano.
-- **Consumo de combustível digital**: Representa a percentagem de aceleração ($0\,\%$ a $100\,\%$) em relação ao consumo por segundo para todos os modelos.
-- **Tempo até esgotar**: Representa a percentagem de aceleração em relação aos segundos contínuos de condução até esvaziar totalmente o depósito.
-- **Legenda interativa e escala dinâmica**: Ative ou desative curvas clicando na legenda, recalculando automaticamente a escala dos eixos.
-- **Cartões flutuantes comparativos**: Percorrer o gráfico exibe os valores em tempo real de cada curva visível para essa percentagem de acelerador.
+- **Ativar combustível digital**: Interruptor principal da monitori
 
 ---
 
-### Edição interativa de curvas personalizadas
+## Pontuação da temporada {: #season-scoring }
 
-Quando **Curva personalizada** é selecionada como tipo de consumo (tanto no combustível analógico como digital), os pontos de controlo surgem diretamente na curva SVG:
+O acordeão de Pontuação da temporada define a distribuição de pontos para campeonatos:
 
-- **Geração inicial da curva**: Ao mudar pela primeira vez para Curva personalizada, os 5 pontos iniciais são amostrados diretamente a partir do perfil ativo (Linear, Quadrático ou Cúbico) sem saltos visuais.
-- **Arrastar e largar interativo**: Clique e arraste qualquer ponto para cima, baixo, esquerda ou direita para remodelar a curva.
-- **Monotonia garantida**:
-    - *Combustível analógico*: Voltas mais rápidas consomem sempre combustível igual ou superior a voltas mais lentas (curva monótona não crescente). O arrastamento é limitado para evitar inversões.
-    - *Combustível digital*: Níveis de aceleração mais altos consomem sempre combustível igual ou superior a níveis mais baixos (curva monótona não decrescente).
-- **Adicionar pontos**: Clique na linha da curva para inserir um novo ponto de controlo na posição interpolada exata.
-- **Eliminar pontos**: Clique com o botão direito do rato num ponto intermédio para o remover (são preservados pelo menos os 2 pontos finais).
-- **Botões de reposição**: Redefina rapidamente a curva para os modelos Linear, Quadrático ou Cúbico através dos botões na barra superior.
-- **Persistência em segundo plano**: Se mudar para uma predefinição e mais tarde voltar à Curva personalizada, os seus pontos são mantidos.
-- **Cálculos autoritários no servidor**: O servidor calcula o consumo durante as corridas utilizando o mesmo algoritmo de interpolação linear por troços, garantindo que a pré-visualização seja idêntica à corrida ativa.
+- **Tabela de pontos por posição**: Atribua pontos para cada posição final (por exemplo, 25 para 1º, 18 para 2º, etc.).
+- **Pontos por bateria**: Conceda opcionalmente pontos para resultados de baterias individuais além da classificação geral.
+- **Pontos de bônus**:
+    - *Volta mais rápida*: Pontos adicionais concedidos ao piloto com a melhor volta da corrida.
+    - *Pole position*: Pontos de bônus pela melhor posição na qualificação.
+    - *Mais voltas na liderança*: Pontos de bônus por liderar o maior número de voltas.
+- **Totalização do campeonato**: Totalização automática de pontos da temporada com suporte ao descarte de piores resultados.
