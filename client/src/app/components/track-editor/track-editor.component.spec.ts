@@ -799,15 +799,14 @@ describe("TrackEditorComponent", () => {
       mockSettingsServiceLocal.settings = new Settings();
     });
 
-    it("should trigger help when startHelp is called manually including undo/redo toolbar steps", () => {
+    it("should trigger help when startHelp is called manually including toolbar step", () => {
       component.startHelp();
       expect(helpService.startGuide).toHaveBeenCalled();
       const calledSteps = (
         helpService.startGuide as jasmine.Spy
       ).calls.mostRecent().args[0];
       const targetIds = calledSteps.map((s: any) => s.targetId).filter(Boolean);
-      expect(targetIds).toContain("undo-btn");
-      expect(targetIds).toContain("redo-btn");
+      expect(targetIds).toContain("toolbar-container");
     });
 
     it("should expand lanes, interfaces, and sub-editors sections if collapsed during help", () => {

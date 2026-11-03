@@ -1,7 +1,7 @@
 @if (translationsLoaded) {
   <div class="page-container setup-container">
     <!-- Modernized Horizontal Menu/Dropdown Toolbar sitting right above the Title Bar -->
-    <div class="setup-menu-bar">
+    <div class="setup-menu-bar" id="setup-menu-bar">
       @for (item of menuItems; track item) {
         <div
           class="setup-menu-item-wrapper"
@@ -14,6 +14,7 @@
             class="setup-menu-item"
             (click)="item.action($event)"
             (mouseenter)="onMenuItemHover(item.label)"
+            [title]="item.tooltip || item.label | translate"
           >
             {{ item.label | translate }}
           </div>
@@ -263,7 +264,7 @@
               <button
                 class="icon-button available-pill teams-pill"
                 (click)="openTeamManager()"
-                title="{{ 'TMM_HEADER_TEAMS' | translate }}"
+                [title]="'RDS_TOOLTIP_TEAM_MANAGER' | translate"
               >
                 <!-- SVG: 3 overlapping helmets triad -->
                 <svg
@@ -385,7 +386,7 @@
               <button
                 class="icon-button available-pill drivers-pill"
                 (click)="openDriverManager()"
-                title="{{ 'DM_HEADER_DRIVERS' | translate }}"
+                [title]="'RDS_TOOLTIP_DRIVER_MANAGER' | translate"
               >
                 <!-- SVG: Single helmet -->
                 <svg
@@ -457,6 +458,7 @@
                 type="text"
                 class="search-input"
                 [placeholder]="'RDS_SEARCH_AVAILABLE' | translate"
+                [title]="'RDS_TOOLTIP_SEARCH_AVAILABLE_DRIVERS' | translate"
                 [(ngModel)]="availableSearchQuery"
                 (ngModelChange)="onAvailableSearchQueryChange()"
                 (keydown)="onAvailableSearchKeydown($event, availSearch)"
@@ -649,7 +651,7 @@
                 (click)="openRacingRosterDialog()"
                 (mousedown)="$event.preventDefault()"
                 tabindex="-1"
-                [title]="'RDS_BTN_VIEW_ROSTER' | translate"
+                [title]="'RDS_TOOLTIP_VIEW_ROSTER' | translate"
                 data-testid="btn-view-roster"
               >
                 <span class="material-icons">visibility</span>
@@ -659,7 +661,7 @@
                 (click)="addAllParticipants()"
                 (mousedown)="$event.preventDefault()"
                 tabindex="-1"
-                [title]="'RDS_BTN_ADD_ALL' | translate"
+                [title]="'RDS_TOOLTIP_ADD_ALL' | translate"
                 data-testid="btn-add-all"
               >
                 <span class="material-icons">add</span>
@@ -669,7 +671,7 @@
                 (click)="removeAllParticipants()"
                 (mousedown)="$event.preventDefault()"
                 tabindex="-1"
-                [title]="'RDS_BTN_REMOVE_ALL' | translate"
+                [title]="'RDS_TOOLTIP_REMOVE_ALL' | translate"
                 data-testid="btn-remove-all"
               >
                 <span class="material-icons">remove</span>
@@ -679,7 +681,7 @@
                 (click)="randomizeParticipants()"
                 (mousedown)="$event.preventDefault()"
                 tabindex="-1"
-                [title]="'RDS_BTN_RANDOMIZE' | translate"
+                [title]="'RDS_TOOLTIP_RANDOMIZE' | translate"
                 data-testid="btn-randomize"
               >
                 <span class="material-icons">shuffle</span>
@@ -694,6 +696,7 @@
                 type="text"
                 class="search-input"
                 [placeholder]="'RDS_SEARCH_RACING' | translate"
+                [title]="'RDS_TOOLTIP_SEARCH_RACING_DRIVERS' | translate"
                 [(ngModel)]="racingSearchQuery"
                 (ngModelChange)="onRacingSearchQueryChange()"
                 (keydown)="onRacingSearchKeydown($event, racingSearch)"
@@ -875,334 +878,357 @@
 
       <!-- Right Panel: Race Configuration (Beautiful Dark Cards and Neon start) -->
       <div class="preview-panel">
-        <div class="quick-start-grid">
-          @for (race of quickStartRaces; track race.entity_id; let i = $index) {
-            <div
-              class="race-card"
-              id="race-card-{{ i }}"
-              [class.active]="
-                selectedRace?.entity_id === race.entity_id ||
-                selectedEvent?.entity_id === race.entity_id
-              "
-              [ngClass]="getRaceCardBackgroundClass(i)"
-              (click)="selectQuickStartItem(race)"
-            >
-              <div class="card-content">
-                <div class="card-title">{{ race.name }}</div>
-                <div class="card-btn">Select</div>
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="rigid-spacer"></div>
-
-        <div class="setup-bottom-section">
-          <div class="all-races-selector">
-            <div class="custom-dropdown-container">
-              <div class="dropdown-trigger" (click)="toggleDropdown($event)">
-                <span class="selected-value">{{
-                  selectedEvent?.name || selectedRace?.name || "Select a Race"
-                }}</span>
-                <div class="dropdown-arrow" [class.open]="isDropdownOpen">
-                  ▼
+        <div class="race-config-content" id="race-selection-section">
+          <div class="quick-start-grid">
+            @for (
+              race of quickStartRaces;
+              track race.entity_id;
+              let i = $index
+            ) {
+              <div
+                class="race-card"
+                id="race-card-{{ i }}"
+                [class.active]="
+                  selectedRace?.entity_id === race.entity_id ||
+                  selectedEvent?.entity_id === race.entity_id
+                "
+                [ngClass]="getRaceCardBackgroundClass(i)"
+                [title]="'RDS_TOOLTIP_RECENT_RACE' | translate"
+                (click)="selectQuickStartItem(race)"
+              >
+                <div class="card-content">
+                  <div class="card-title">{{ race.name }}</div>
+                  <div class="card-btn">Select</div>
                 </div>
               </div>
-              @if (isDropdownOpen) {
-                <div class="dropdown-menu">
-                  @for (race of filteredRaces; track race.entity_id) {
-                    <div
-                      class="dropdown-item"
-                      (click)="selectRace(race)"
-                      [class.selected]="
-                        selectedRace?.entity_id === race.entity_id
-                      "
-                    >
-                      <span class="check-slot">{{
-                        selectedRace?.entity_id === race.entity_id ? "✓" : ""
-                      }}</span>
-                      <span class="dropdown-item-label">{{ race.name }}</span>
-                    </div>
-                  }
-                  @if (filteredEvents.length > 0) {
-                    <div class="dropdown-header">
-                      {{ "RDS_MENU_EVENT" | translate }}
-                    </div>
-                    @for (ev of filteredEvents; track ev.entity_id) {
+            }
+          </div>
+
+          <div class="rigid-spacer"></div>
+
+          <div class="setup-bottom-section">
+            <div class="all-races-selector">
+              <div
+                class="custom-dropdown-container"
+                [title]="'RDS_TOOLTIP_RACE_SELECTOR' | translate"
+              >
+                <div
+                  class="dropdown-trigger"
+                  (click)="toggleDropdown($event)"
+                  [title]="'RDS_TOOLTIP_RACE_SELECTOR' | translate"
+                >
+                  <span class="selected-value">{{
+                    selectedEvent?.name || selectedRace?.name || "Select a Race"
+                  }}</span>
+                  <div class="dropdown-arrow" [class.open]="isDropdownOpen">
+                    ▼
+                  </div>
+                </div>
+                @if (isDropdownOpen) {
+                  <div class="dropdown-menu">
+                    @for (race of filteredRaces; track race.entity_id) {
                       <div
-                        class="dropdown-item event-item"
-                        (click)="selectEvent(ev)"
+                        class="dropdown-item"
+                        (click)="selectRace(race)"
                         [class.selected]="
-                          selectedEvent?.entity_id === ev.entity_id
+                          selectedRace?.entity_id === race.entity_id
                         "
                       >
                         <span class="check-slot">{{
-                          selectedEvent?.entity_id === ev.entity_id ? "✓" : ""
+                          selectedRace?.entity_id === race.entity_id ? "✓" : ""
                         }}</span>
-                        <span class="dropdown-item-label"
-                          >{{ ev.name }} ({{
-                            ev.races ? ev.races.length : 0
-                          }}
-                          races)</span
-                        >
+                        <span class="dropdown-item-label">{{ race.name }}</span>
                       </div>
                     }
+                    @if (filteredEvents.length > 0) {
+                      <div class="dropdown-header">
+                        {{ "RDS_MENU_EVENT" | translate }}
+                      </div>
+                      @for (ev of filteredEvents; track ev.entity_id) {
+                        <div
+                          class="dropdown-item event-item"
+                          (click)="selectEvent(ev)"
+                          [class.selected]="
+                            selectedEvent?.entity_id === ev.entity_id
+                          "
+                        >
+                          <span class="check-slot">{{
+                            selectedEvent?.entity_id === ev.entity_id ? "✓" : ""
+                          }}</span>
+                          <span class="dropdown-item-label"
+                            >{{ ev.name }} ({{
+                              ev.races ? ev.races.length : 0
+                            }}
+                            races)</span
+                          >
+                        </div>
+                      }
+                    }
+                    @if (
+                      filteredRaces.length === 0 && filteredEvents.length === 0
+                    ) {
+                      <div class="dropdown-no-results">
+                        No races or events found
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="search-wrapper">
+                <input
+                  type="text"
+                  class="search-input race-search"
+                  [placeholder]="'RDS_SEARCH_RACES' | translate"
+                  [title]="'RDS_TOOLTIP_RACE_SEARCH' | translate"
+                  [(ngModel)]="raceSearchQuery"
+                  (ngModelChange)="onSearchChange()"
+                  autocomplete="off"
+                  data-dashlane-ignore="true"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                />
+                <svg
+                  class="search-icon"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                  />
+                </svg>
+              </div>
+
+              <div
+                class="season-selection-wrapper"
+                [title]="'RDS_TOOLTIP_SEASON_SELECTOR' | translate"
+              >
+                <app-custom-select
+                  class="season-select-input"
+                  [title]="'RDS_TOOLTIP_SEASON_SELECTOR' | translate"
+                  [(ngModel)]="selectedSeason"
+                  (ngModelChange)="onSeasonChange()"
+                  [compareWith]="compareSeasons"
+                >
+                  <app-custom-option [value]="undefined">
+                    {{ "RDS_SEASON_NONE" | translate }}
+                  </app-custom-option>
+                  @for (season of seasons; track season.entity_id) {
+                    <app-custom-option [value]="season">{{
+                      season.name
+                    }}</app-custom-option>
                   }
-                  @if (
-                    filteredRaces.length === 0 && filteredEvents.length === 0
-                  ) {
-                    <div class="dropdown-no-results">
-                      No races or events found
+                </app-custom-select>
+              </div>
+            </div>
+
+            <div class="setup-summaries-row">
+              @if (selectedEvent) {
+                <div class="event-details-card">
+                  <div class="event-detail-header">
+                    <div class="event-detail-title">
+                      {{ selectedEvent.name }}
                     </div>
-                  }
+                    <div class="event-detail-sub">
+                      Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
+                    </div>
+                  </div>
+                  <div class="event-races-table-header">
+                    <table class="race-sequence-table header-table">
+                      <thead>
+                        <tr>
+                          <th class="col-num">#</th>
+                          <th class="col-name">Race Name</th>
+                          <th class="col-method">
+                            {{ "RM_LABEL_FINISH_METHOD" | translate }}
+                          </th>
+                          <th class="col-value">
+                            {{ "RM_LABEL_FINISH_VALUE" | translate }}
+                          </th>
+                          <th class="col-drivers">
+                            {{ "EE_LABEL_MAX_DRIVERS" | translate }}
+                          </th>
+                        </tr>
+                      </thead>
+                    </table>
+                  </div>
+                  <div class="event-races-summary">
+                    <table class="race-sequence-table body-table">
+                      <tbody>
+                        @for (
+                          item of selectedEvent.races;
+                          track item;
+                          let idx = $index
+                        ) {
+                          <tr>
+                            <td class="col-num">{{ idx + 1 }}</td>
+                            <td class="col-name">
+                              {{ getRaceName(getItemRaceId(item)) }}
+                            </td>
+                            <td class="col-method">
+                              {{ getRaceFinishMethod(getItemRaceId(item)) }}
+                            </td>
+                            <td class="col-value">
+                              {{ getRaceFinishValue(getItemRaceId(item)) }}
+                            </td>
+                            <td class="col-drivers">
+                              @if (getItemMaxDrivers(item) > 0) {
+                                {{ getItemMaxDrivers(item) }}
+                              } @else {
+                                {{ "EE_UNLIMITED" | translate }}
+                              }
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              } @else if (selectedRace) {
+                <div class="event-details-card race-summary-card">
+                  <div class="event-detail-header">
+                    <div class="event-detail-title">
+                      {{ selectedRace.name }}
+                    </div>
+                    <button
+                      type="button"
+                      class="action-btn edit-race-btn"
+                      id="edit-selected-race-btn"
+                      (click)="editSelectedRace()"
+                      (mousedown)="$event.preventDefault()"
+                      [title]="'RDS_TOOLTIP_EDIT_RACE' | translate"
+                      data-testid="edit-selected-race-btn"
+                    >
+                      <span class="material-icons">edit</span>
+                    </button>
+                  </div>
+                  <div class="summary-grid">
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        getHeatRankingDisplay(selectedRace)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        getOverallRankingDisplay(selectedRace)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_FINISH_METHOD" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        formatEnumDisplay(
+                          $any(selectedRace).heat_scoring?.finish_method
+                        )
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        getFinishValueDisplay(selectedRace)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_HEAT_ROTATION" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        getHeatRotationTypeDisplay(
+                          $any(selectedRace).heat_rotation_type
+                        )
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        $any(selectedRace).fuel_options?.enabled ||
+                        $any(selectedRace).digital_fuel_options?.enabled
+                          ? ("GEN_YES" | translate)
+                          : ("GEN_NO" | translate)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_HANDS_FREE" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        isHandsFree(selectedRace)
+                          ? ("GEN_YES" | translate)
+                          : ("GEN_NO" | translate)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_WARMUP_TIME" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        hasWarmup(selectedRace)
+                          ? ("GEN_YES" | translate)
+                          : ("GEN_NO" | translate)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_THEME" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        getThemeDisplay(selectedRace)
+                      }}</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label"
+                        >{{ "RM_LABEL_TRACK" | translate }}:</span
+                      >
+                      <span class="summary-value">{{
+                        getTrackName(selectedRace)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              @if (selectedSeason) {
+                <div class="event-details-card season-summary-card">
+                  <app-season-summary
+                    [season]="selectedSeason"
+                    [standings]="seasonStandings"
+                    [compact]="true"
+                    [showEdit]="true"
+                    (edit)="editSelectedSeason()"
+                  ></app-season-summary>
+                </div>
+              } @else {
+                <div
+                  class="event-details-card season-summary-card empty-season-card"
+                >
+                  <div class="empty-standings">
+                    {{ "RDS_NO_SEASON_SELECTED" | translate }}
+                  </div>
                 </div>
               }
             </div>
 
-            <div class="search-wrapper">
-              <input
-                type="text"
-                class="search-input race-search"
-                [placeholder]="'RDS_SEARCH_RACES' | translate"
-                [(ngModel)]="raceSearchQuery"
-                (ngModelChange)="onSearchChange()"
-                autocomplete="off"
-                data-dashlane-ignore="true"
-                data-1p-ignore="true"
-                data-lpignore="true"
-                data-bwignore="true"
-                data-form-type="other"
-              />
-              <svg
-                class="search-icon"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                />
-              </svg>
-            </div>
-
-            <div class="season-selection-wrapper">
-              <app-custom-select
-                class="season-select-input"
-                [(ngModel)]="selectedSeason"
-                (ngModelChange)="onSeasonChange()"
-                [compareWith]="compareSeasons"
-              >
-                <app-custom-option [value]="undefined">
-                  {{ "RDS_SEASON_NONE" | translate }}
-                </app-custom-option>
-                @for (season of seasons; track season.entity_id) {
-                  <app-custom-option [value]="season">{{
-                    season.name
-                  }}</app-custom-option>
-                }
-              </app-custom-select>
-            </div>
-          </div>
-
-          <div class="setup-summaries-row">
-            @if (selectedEvent) {
-              <div class="event-details-card">
-                <div class="event-detail-header">
-                  <div class="event-detail-title">{{ selectedEvent.name }}</div>
-                  <div class="event-detail-sub">
-                    Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
-                  </div>
-                </div>
-                <div class="event-races-table-header">
-                  <table class="race-sequence-table header-table">
-                    <thead>
-                      <tr>
-                        <th class="col-num">#</th>
-                        <th class="col-name">Race Name</th>
-                        <th class="col-method">
-                          {{ "RM_LABEL_FINISH_METHOD" | translate }}
-                        </th>
-                        <th class="col-value">
-                          {{ "RM_LABEL_FINISH_VALUE" | translate }}
-                        </th>
-                        <th class="col-drivers">
-                          {{ "EE_LABEL_MAX_DRIVERS" | translate }}
-                        </th>
-                      </tr>
-                    </thead>
-                  </table>
-                </div>
-                <div class="event-races-summary">
-                  <table class="race-sequence-table body-table">
-                    <tbody>
-                      @for (
-                        item of selectedEvent.races;
-                        track item;
-                        let idx = $index
-                      ) {
-                        <tr>
-                          <td class="col-num">{{ idx + 1 }}</td>
-                          <td class="col-name">
-                            {{ getRaceName(getItemRaceId(item)) }}
-                          </td>
-                          <td class="col-method">
-                            {{ getRaceFinishMethod(getItemRaceId(item)) }}
-                          </td>
-                          <td class="col-value">
-                            {{ getRaceFinishValue(getItemRaceId(item)) }}
-                          </td>
-                          <td class="col-drivers">
-                            @if (getItemMaxDrivers(item) > 0) {
-                              {{ getItemMaxDrivers(item) }}
-                            } @else {
-                              {{ "EE_UNLIMITED" | translate }}
-                            }
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            } @else if (selectedRace) {
-              <div class="event-details-card race-summary-card">
-                <div class="event-detail-header">
-                  <div class="event-detail-title">{{ selectedRace.name }}</div>
-                  <button
-                    type="button"
-                    class="action-btn edit-race-btn"
-                    id="edit-selected-race-btn"
-                    (click)="editSelectedRace()"
-                    (mousedown)="$event.preventDefault()"
-                    [title]="'RDS_BTN_EDIT_RACE' | translate"
-                    data-testid="edit-selected-race-btn"
-                  >
-                    <span class="material-icons">edit</span>
-                  </button>
-                </div>
-                <div class="summary-grid">
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      getHeatRankingDisplay(selectedRace)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      getOverallRankingDisplay(selectedRace)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_FINISH_METHOD" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      formatEnumDisplay(
-                        $any(selectedRace).heat_scoring?.finish_method
-                      )
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      getFinishValueDisplay(selectedRace)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_HEAT_ROTATION" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      getHeatRotationTypeDisplay(
-                        $any(selectedRace).heat_rotation_type
-                      )
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      $any(selectedRace).fuel_options?.enabled ||
-                      $any(selectedRace).digital_fuel_options?.enabled
-                        ? ("GEN_YES" | translate)
-                        : ("GEN_NO" | translate)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_HANDS_FREE" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      isHandsFree(selectedRace)
-                        ? ("GEN_YES" | translate)
-                        : ("GEN_NO" | translate)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_WARMUP_TIME" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      hasWarmup(selectedRace)
-                        ? ("GEN_YES" | translate)
-                        : ("GEN_NO" | translate)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_THEME" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      getThemeDisplay(selectedRace)
-                    }}</span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label"
-                      >{{ "RM_LABEL_TRACK" | translate }}:</span
-                    >
-                    <span class="summary-value">{{
-                      getTrackName(selectedRace)
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-            }
-
-            @if (selectedSeason) {
-              <div class="event-details-card season-summary-card">
-                <app-season-summary
-                  [season]="selectedSeason"
-                  [standings]="seasonStandings"
-                  [compact]="true"
-                  [showEdit]="true"
-                  (edit)="editSelectedSeason()"
-                ></app-season-summary>
-              </div>
-            } @else {
-              <div
-                class="event-details-card season-summary-card empty-season-card"
-              >
-                <div class="empty-standings">
-                  {{ "RDS_NO_SEASON_SELECTED" | translate }}
-                </div>
+            @if (getEventDriverLimitWarning()) {
+              <div class="event-warning-banner">
+                {{ getEventDriverLimitWarning() }}
               </div>
             }
           </div>
-
-          @if (getEventDriverLimitWarning()) {
-            <div class="event-warning-banner">
-              {{ getEventDriverLimitWarning() }}
-            </div>
-          }
         </div>
 
         <div class="action-footer" id="race-controls">
@@ -1226,6 +1252,7 @@
               class="btn-start"
               (click)="startRace(false)"
               [disabled]="selectedParticipants.length === 0"
+              [title]="'RDS_TOOLTIP_START_RACE' | translate"
             >
               <svg
                 width="24"
@@ -1241,6 +1268,7 @@
               class="btn-demo"
               (click)="startRace(true)"
               [disabled]="selectedParticipants.length === 0"
+              [title]="'RDS_TOOLTIP_DEMO_RACE' | translate"
             >
               <span>{{ "RDS_BTN_DEMO_RACE" | translate }}</span>
             </button>

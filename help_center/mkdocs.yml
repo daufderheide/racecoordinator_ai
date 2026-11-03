@@ -86,6 +86,7 @@ nav:
     - Saving & Loading Races: saving-loading.md
     - Exporting Data: exporting-data.md
   - Reference:
+    - Toolbar Actions: toolbar.md
     - Race Formats: race-formats.md
     - Keyboard Shortcuts: keyboard-shortcuts.md
     - Troubleshooting: troubleshooting.md

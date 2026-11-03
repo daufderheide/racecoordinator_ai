@@ -91,6 +91,92 @@ describe("HelpService", () => {
     );
   });
 
+  it("should not start guide if steps array is empty or undefined", () => {
+    service.startGuide([]);
+    expect(service.isVisible).toBeFalse();
+    expect(service.steps.length).toBe(0);
+
+    service.startGuide(undefined as any);
+    expect(service.isVisible).toBeFalse();
+  });
+
+  it("should execute onEnter on the initial step and onLeave / onEnter across transitions", () => {
+    const step1OnEnter = jasmine.createSpy("step1OnEnter");
+    const step1OnLeave = jasmine.createSpy("step1OnLeave");
+    const step2OnEnter = jasmine.createSpy("step2OnEnter");
+    const step2OnLeave = jasmine.createSpy("step2OnLeave");
+
+    const steps: GuideStep[] = [
+      {
+        title: "Step 1",
+        content: "C1",
+        onEnter: step1OnEnter,
+        onLeave: step1OnLeave,
+      },
+      {
+        title: "Step 2",
+        content: "C2",
+        onEnter: step2OnEnter,
+        onLeave: step2OnLeave,
+      },
+    ];
+
+    service.startGuide(steps);
+    expect(step1OnEnter).toHaveBeenCalledTimes(1);
+    expect(step1OnLeave).not.toHaveBeenCalled();
+
+    service.nextStep();
+    expect(step1OnLeave).toHaveBeenCalledTimes(1);
+    expect(step2OnEnter).toHaveBeenCalledTimes(1);
+
+    service.previousStep();
+    expect(step2OnLeave).toHaveBeenCalledTimes(1);
+    expect(step1OnEnter).toHaveBeenCalledTimes(2);
+  });
+
+  it("should correctly update hasNext and hasPrevious observable streams", () => {
+    const hasNextValues: boolean[] = [];
+    const hasPrevValues: boolean[] = [];
+    service.hasNext$.subscribe((val) => hasNextValues.push(val));
+    service.hasPrevious$.subscribe((val) => hasPrevValues.push(val));
+
+    const steps: GuideStep[] = [
+      { title: "Step 1", content: "C1" },
+      { title: "Step 2", content: "C2" },
+      { title: "Step 3", content: "C3" },
+    ];
+
+    service.startGuide(steps);
+    expect(hasNextValues[hasNextValues.length - 1]).toBeTrue();
+    expect(hasPrevValues[hasPrevValues.length - 1]).toBeFalse();
+
+    service.nextStep(); // Step 2 (middle)
+    expect(hasNextValues[hasNextValues.length - 1]).toBeTrue();
+    expect(hasPrevValues[hasPrevValues.length - 1]).toBeTrue();
+
+    service.nextStep(); // Step 3 (last)
+    expect(hasNextValues[hasNextValues.length - 1]).toBeFalse();
+    expect(hasPrevValues[hasPrevValues.length - 1]).toBeTrue();
+
+    service.previousStep(); // Back to Step 2
+    expect(hasNextValues[hasNextValues.length - 1]).toBeTrue();
+    expect(hasPrevValues[hasPrevValues.length - 1]).toBeTrue();
+  });
+
+  it("should do nothing when previousStep is called on the first step", () => {
+    const step1OnLeave = jasmine.createSpy("step1OnLeave");
+    const steps: GuideStep[] = [
+      { title: "Step 1", content: "C1", onLeave: step1OnLeave },
+      { title: "Step 2", content: "C2" },
+    ];
+    service.startGuide(steps);
+    expect(service.currentStepIndex).toBe(0);
+
+    service.previousStep();
+    expect(service.currentStepIndex).toBe(0);
+    expect(step1OnLeave).not.toHaveBeenCalled();
+  });
+
   it("should update isVisible property when starting and ending guide", () => {
     expect(service.isVisible).toBeFalse();
     const steps: GuideStep[] = [{ title: "Step 1", content: "Content 1" }];

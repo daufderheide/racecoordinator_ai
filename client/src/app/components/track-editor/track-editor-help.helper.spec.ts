@@ -97,19 +97,15 @@ describe("TrackEditorHelpHelper", () => {
   });
 
   describe("getToolbarHelpSteps", () => {
-    it("should return the 6 toolbar guide steps", () => {
+    it("should return the single toolbar guide step", () => {
       const toolbarSteps = TrackEditorHelpHelper.getToolbarHelpSteps(
         mockTranslationService,
       );
-      expect(toolbarSteps.length).toBe(6);
-      expect(toolbarSteps.map((s) => s.targetId)).toEqual([
-        "undo-btn",
-        "redo-btn",
-        "edit-track-btn",
-        "expand-collapse-all-btn",
-        "copy-item-btn",
-        "help-track-btn",
-      ]);
+      expect(toolbarSteps.length).toBe(1);
+      expect(toolbarSteps[0].targetId).toBe("toolbar-container");
+      expect(toolbarSteps[0].title).toBe("TOOLBAR_HELP_TITLE");
+      expect(toolbarSteps[0].content).toBe("TOOLBAR_HELP_CONTENT");
+      expect(toolbarSteps[0].position).toBe("bottom");
     });
   });
 

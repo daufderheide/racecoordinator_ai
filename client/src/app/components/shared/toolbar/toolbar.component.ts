@@ -224,148 +224,16 @@ export class ToolbarComponent implements OnInit, OnDestroy {
     this.edit.emit();
   }
 
-  private createGuideStep(
-    targetId: string,
-    titleKey: string,
-    contentKey: string,
-  ): GuideStep {
-    return {
-      targetId,
-      title: this.translationService.translate(titleKey),
-      content: this.translationService.translate(contentKey),
-      position: "bottom",
-    };
-  }
-
-  private getActionHelpSteps(): GuideStep[] {
-    const steps: GuideStep[] = [];
-    if (this.showActivate()) {
-      steps.push(
-        this.createGuideStep(
-          "activate-item-btn",
-          "TOOLBAR_HELP_ACTIVATE_TITLE",
-          "TOOLBAR_HELP_ACTIVATE_CONTENT",
-        ),
-      );
-    }
-    if (this.showUndo()) {
-      steps.push(
-        this.createGuideStep(
-          "undo-btn",
-          "TOOLBAR_HELP_UNDO_TITLE",
-          "TOOLBAR_HELP_UNDO_CONTENT",
-        ),
-      );
-    }
-    if (this.showRedo()) {
-      steps.push(
-        this.createGuideStep(
-          "redo-btn",
-          "TOOLBAR_HELP_REDO_TITLE",
-          "TOOLBAR_HELP_REDO_CONTENT",
-        ),
-      );
-    }
-    if (this.showEdit()) {
-      steps.push(
-        this.createGuideStep(
-          "edit-track-btn",
-          "TOOLBAR_HELP_EDIT_TITLE",
-          "TOOLBAR_HELP_EDIT_CONTENT",
-        ),
-      );
-    }
-    if (this.showExpandCollapse()) {
-      steps.push(
-        this.createGuideStep(
-          "expand-collapse-all-btn",
-          "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE",
-          "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT",
-        ),
-      );
-    }
-    if (this.showCopy()) {
-      steps.push(
-        this.createGuideStep(
-          "copy-item-btn",
-          "TOOLBAR_HELP_COPY_TITLE",
-          "TOOLBAR_HELP_COPY_CONTENT",
-        ),
-      );
-    }
-    if (this.showAdd()) {
-      steps.push(
-        this.createGuideStep(
-          "add-item-btn",
-          "TOOLBAR_HELP_ADD_TITLE",
-          "TOOLBAR_HELP_ADD_CONTENT",
-        ),
-      );
-    }
-    if (this.showImport()) {
-      steps.push(
-        this.createGuideStep(
-          "import-btn",
-          this.importHelpTitleKey(),
-          this.importHelpContentKey(),
-        ),
-      );
-    }
-    if (this.showExport()) {
-      steps.push(
-        this.createGuideStep(
-          "export-btn",
-          this.exportHelpTitleKey(),
-          this.exportHelpContentKey(),
-        ),
-      );
-    }
-    if (this.showDelete()) {
-      steps.push(
-        this.createGuideStep(
-          "delete-track-btn",
-          "TOOLBAR_HELP_DELETE_TITLE",
-          "TOOLBAR_HELP_DELETE_CONTENT",
-        ),
-      );
-    }
-    return steps;
-  }
-
-  private getDataAndUtilityHelpSteps(): GuideStep[] {
-    const steps: GuideStep[] = [];
-    if (this.showReset()) {
-      steps.push(
-        this.createGuideStep(
-          "reset-btn",
-          "TOOLBAR_HELP_RESET_TITLE",
-          "TOOLBAR_HELP_RESET_CONTENT",
-        ),
-      );
-    }
-    if (this.showAnalytics()) {
-      steps.push(
-        this.createGuideStep(
-          "analytics-btn",
-          "TOOLBAR_HELP_ANALYTICS_TITLE",
-          "TOOLBAR_HELP_ANALYTICS_CONTENT",
-        ),
-      );
-    }
-    if (this.showHelp()) {
-      steps.push(
-        this.createGuideStep(
-          "help-track-btn",
-          "TOOLBAR_HELP_HELP_TITLE",
-          "TOOLBAR_HELP_HELP_CONTENT",
-        ),
-      );
-    }
-    return steps;
-  }
-
   getToolbarHelpSteps(): GuideStep[] {
-    return [...this.getActionHelpSteps(), ...this.getDataAndUtilityHelpSteps()];
+    return [
+      {
+        targetId: "toolbar-container",
+        selector: ".toolbar-container",
+        title: this.translationService.translate("TOOLBAR_HELP_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_CONTENT"),
+        position: "bottom",
+      },
+    ];
   }
 
   onHelp() {

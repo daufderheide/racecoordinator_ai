@@ -856,6 +856,14 @@
   min-width: 0;
 }
 
+.race-config-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .quick-start-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

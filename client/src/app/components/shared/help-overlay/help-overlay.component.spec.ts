@@ -149,6 +149,17 @@ describe("HelpOverlayComponent", () => {
     expect(helpServiceMock.endGuide).toHaveBeenCalled();
   }));
 
+  it("should call endGuide on close button click", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    currentStepSubject.next({ title: "Step 1", content: "Content" });
+    tick();
+    fixture.detectChanges();
+
+    harness.clickClose();
+    tick();
+    expect(helpServiceMock.endGuide).toHaveBeenCalled();
+  }));
+
   it("should calculate position correctly for target element and delay isInitialized", fakeAsync(() => {
     // Create a dummy target element in the DOM
     const target = document.createElement("div");
@@ -233,6 +244,97 @@ describe("HelpOverlayComponent", () => {
     expect(component.highlightStyle).toBeNull();
     expect(component.popoverStyle.top).toBe("50%");
     expect(component.popoverStyle.left).toBe("50%");
+  }));
+
+  it("should calculate position correctly when targetId is provided", fakeAsync(() => {
+    const target = document.createElement("div");
+    target.id = "target-by-id";
+    target.style.position = "absolute";
+    target.style.top = "200px";
+    target.style.left = "200px";
+    target.style.width = "60px";
+    target.style.height = "40px";
+    document.body.appendChild(target);
+
+    isVisibleSubject.next(true);
+    const step: GuideStep = {
+      title: "TargetId Step",
+      content: "Content",
+      targetId: "target-by-id",
+      position: "top",
+    };
+    currentStepSubject.next(step);
+    fixture.detectChanges();
+
+    // Advance rAFs
+    tick(16);
+    fixture.detectChanges();
+    tick(16);
+    fixture.detectChanges();
+    tick(16);
+    fixture.detectChanges();
+
+    expect(component.highlightStyle).toBeTruthy();
+    expect(component.highlightStyle.top).toBe("200px");
+    expect(component.highlightStyle.left).toBe("200px");
+
+    document.body.removeChild(target);
+  }));
+
+  it("should calculate right and left positions correctly", fakeAsync(() => {
+    const target = document.createElement("div");
+    target.id = "target-horiz";
+    target.style.position = "absolute";
+    target.style.top = "300px";
+    target.style.left = "400px";
+    target.style.width = "100px";
+    target.style.height = "80px";
+    document.body.appendChild(target);
+
+    isVisibleSubject.next(true);
+    currentStepSubject.next({
+      title: "Right Step",
+      content: "Content",
+      targetId: "target-horiz",
+      position: "right",
+    });
+    fixture.detectChanges();
+    tick(50);
+    fixture.detectChanges();
+
+    expect(component.popoverStyle.left).toBeDefined();
+
+    currentStepSubject.next({
+      title: "Left Step",
+      content: "Content",
+      targetId: "target-horiz",
+      position: "left",
+    });
+    fixture.detectChanges();
+    tick(50);
+    fixture.detectChanges();
+
+    expect(component.popoverStyle.left).toBeDefined();
+
+    document.body.removeChild(target);
+  }));
+
+  it("should ignore keydown events when overlay is not visible", fakeAsync(() => {
+    isVisibleSubject.next(false);
+    tick();
+    fixture.detectChanges();
+
+    const escEvent = new KeyboardEvent("keydown", { key: "Escape" });
+    window.dispatchEvent(escEvent);
+    const rightEvent = new KeyboardEvent("keydown", { key: "ArrowRight" });
+    window.dispatchEvent(rightEvent);
+    const leftEvent = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+    window.dispatchEvent(leftEvent);
+    tick();
+
+    expect(helpServiceMock.endGuide).not.toHaveBeenCalled();
+    expect(helpServiceMock.nextStep).not.toHaveBeenCalled();
+    expect(helpServiceMock.previousStep).not.toHaveBeenCalled();
   }));
 
   it("should call endGuide when Escape key is pressed", fakeAsync(() => {

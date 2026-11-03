@@ -35,6 +35,7 @@ import { MOCK_DRIVERS as _MOCK_DRIVERS } from "@app/testing/data/drivers_data";
 import { MOCK_RACES as _MOCK_RACES } from "@app/testing/data/races_data";
 import { createDefaultSettings } from "@app/testing/data/settings_data";
 import { MOCK_TEAMS as _MOCK_TEAMS } from "@app/testing/data/teams_data";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import {
   mockAnalyticsService,
   mockLoggerService,
@@ -2820,15 +2821,17 @@ describe("DefaultRacedaySetupComponent", () => {
   });
 
   describe("getHelpSteps", () => {
-    it("should return the complete list of guide steps in correct order", () => {
+    it("should return the simplified list of 6 guide steps in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(15);
+      expect(steps.length).toBe(6);
 
+      // Step 1: General info (modal, centered)
       expect(steps[0]).toEqual({
         title: "RDS_HELP_WELCOME_TITLE",
         content: "RDS_HELP_WELCOME_CONTENT",
       });
 
+      // Step 2: Available drivers
       expect(steps[1]).toEqual({
         targetId: "available-drivers-section",
         title: "RDS_HELP_DRIVER_AVAILABLE_TITLE",
@@ -2836,96 +2839,55 @@ describe("DefaultRacedaySetupComponent", () => {
         position: "right",
       });
 
+      // Step 3: Racing drivers
       expect(steps[2]).toEqual({
-        selector: "#available-drivers-section .header-actions",
-        title: "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
-        content: "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
-        position: "bottom",
-      });
-
-      expect(steps[3]).toEqual({
-        selector: "#available-drivers-section .list-search",
-        title: "RDS_HELP_SEARCH_AVAILABLE_DRIVERS_TITLE",
-        content: "RDS_HELP_SEARCH_AVAILABLE_DRIVERS_CONTENT",
-        position: "bottom",
-      });
-
-      expect(steps[4]).toEqual({
         targetId: "racing-drivers-section",
         title: "RDS_HELP_DRIVER_RACING_TITLE",
         content: "RDS_HELP_DRIVER_RACING_CONTENT",
         position: "right",
       });
 
-      expect(steps[5]).toEqual({
-        selector: "#racing-drivers-section .section-header",
-        title: "RDS_HELP_DRIVER_ACTIONS_TITLE",
-        content: "RDS_HELP_DRIVER_ACTIONS_CONTENT",
-        position: "bottom",
+      // Step 4: Race and season selectors (including recent race cards)
+      expect(steps[3]).toEqual({
+        targetId: "race-selection-section",
+        title: "RDS_HELP_RACE_SEASON_TITLE",
+        content: "RDS_HELP_RACE_SEASON_CONTENT",
+        position: "left",
       });
 
-      expect(steps[6]).toEqual({
-        selector: "#racing-drivers-section .list-search",
-        title: "RDS_HELP_SEARCH_DRIVERS_TITLE",
-        content: "RDS_HELP_SEARCH_DRIVERS_CONTENT",
-        position: "bottom",
-      });
-
-      expect(steps[7]).toEqual({
-        selector: ".custom-dropdown-container",
-        title: "RDS_HELP_RACE_SELECTION_TITLE",
-        content: "RDS_HELP_RACE_SELECTION_CONTENT",
-        position: "top",
-      });
-
-      expect(steps[8]).toEqual({
-        selector: ".event-details-card",
-        title: "RDS_HELP_SELECTION_SUMMARY_TITLE",
-        content: "RDS_HELP_SELECTION_SUMMARY_CONTENT",
-        position: "top",
-      });
-
-      expect(steps[9]).toEqual({
-        selector: ".preview-panel .search-wrapper",
-        title: "RDS_HELP_SEARCH_TITLE",
-        content: "RDS_HELP_SEARCH_CONTENT",
-        position: "top",
-      });
-
-      expect(steps[10]).toEqual({
-        selector: ".season-selection-wrapper",
-        title: "RDS_HELP_SEASON_TITLE",
-        content: "RDS_HELP_SEASON_CONTENT",
-        position: "top",
-      });
-
-      expect(steps[11]).toEqual({
-        targetId: "race-card-0",
-        title: "RDS_HELP_RECENT_RACE_TITLE",
-        content: "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT",
-        position: "bottom",
-      });
-
-      expect(steps[12]).toEqual({
-        targetId: "race-card-1",
-        title: "RDS_HELP_RECENT_RACE_TITLE",
-        content: "RDS_HELP_RECENT_RACE_CONTENT",
-        position: "bottom",
-      });
-
-      expect(steps[13]).toEqual({
-        selector: ".btn-start",
+      // Step 5: Start race and Start demo race buttons
+      expect(steps[4]).toEqual({
+        targetId: "race-controls",
         title: "RDS_HELP_START_RACE_TITLE",
         content: "RDS_HELP_START_RACE_CONTENT",
         position: "top",
       });
 
-      expect(steps[14]).toEqual({
-        selector: ".btn-demo",
-        title: "RDS_HELP_START_DEMO_TITLE",
-        content: "RDS_HELP_START_DEMO_CONTENT",
-        position: "top",
+      // Step 6: Menu bar
+      expect(steps[5]).toEqual({
+        targetId: "setup-menu-bar",
+        title: "RDS_HELP_MENU_BAR_TITLE",
+        content: "RDS_HELP_MENU_BAR_CONTENT",
+        position: "bottom",
       });
+    });
+
+    it("should ensure every guided help step targets an existing element in the rendered DOM", () => {
+      fixture.detectChanges();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(
+        fixture,
+        component.getHelpSteps(),
+      );
+    });
+
+    it("should provide tooltips for all menu bar items", () => {
+      expect(component.menuItems.length).toBe(4);
+      expect(component.menuItems.map((i) => i.tooltip)).toEqual([
+        "RDS_TOOLTIP_MENU_FILE",
+        "RDS_TOOLTIP_MENU_CONFIG",
+        "RDS_TOOLTIP_MENU_OPTIONS",
+        "RDS_TOOLTIP_MENU_HELP",
+      ]);
     });
 
     it("should render season-summary-card with empty-standings message when selectedSeason has no races", () => {

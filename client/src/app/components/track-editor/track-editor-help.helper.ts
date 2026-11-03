@@ -157,43 +157,10 @@ export class TrackEditorHelpHelper {
   ): GuideStep[] {
     return [
       {
-        targetId: "undo-btn",
-        title: translationService.translate("TOOLBAR_HELP_UNDO_TITLE"),
-        content: translationService.translate("TOOLBAR_HELP_UNDO_CONTENT"),
-        position: "bottom",
-      },
-      {
-        targetId: "redo-btn",
-        title: translationService.translate("TOOLBAR_HELP_REDO_TITLE"),
-        content: translationService.translate("TOOLBAR_HELP_REDO_CONTENT"),
-        position: "bottom",
-      },
-      {
-        targetId: "edit-track-btn",
-        title: translationService.translate("TOOLBAR_HELP_EDIT_TITLE"),
-        content: translationService.translate("TOOLBAR_HELP_EDIT_CONTENT"),
-        position: "bottom",
-      },
-      {
-        targetId: "expand-collapse-all-btn",
-        title: translationService.translate(
-          "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE",
-        ),
-        content: translationService.translate(
-          "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        targetId: "copy-item-btn",
-        title: translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
-        content: translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),
-        position: "bottom",
-      },
-      {
-        targetId: "help-track-btn",
-        title: translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
-        content: translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
+        targetId: "toolbar-container",
+        selector: ".toolbar-container",
+        title: translationService.translate("TOOLBAR_HELP_TITLE"),
+        content: translationService.translate("TOOLBAR_HELP_CONTENT"),
         position: "bottom",
       },
     ];

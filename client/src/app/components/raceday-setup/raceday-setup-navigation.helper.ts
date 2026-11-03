@@ -3,22 +3,26 @@ import { Season } from "@app/models/season";
 export class RacedaySetupNavigationHelper {
   static buildMenuItems(
     host: any,
-  ): { label: string; action: (event: MouseEvent) => void }[] {
+  ): { label: string; tooltip: string; action: (event: MouseEvent) => void }[] {
     return [
       {
         label: "RDS_MENU_FILE",
+        tooltip: "RDS_TOOLTIP_MENU_FILE",
         action: (event: MouseEvent) => host.toggleFileDropdown(event),
       },
       {
         label: "RDS_MENU_CONFIG",
+        tooltip: "RDS_TOOLTIP_MENU_CONFIG",
         action: (event: MouseEvent) => host.toggleConfigDropdown(event),
       },
       {
         label: "RDS_MENU_OPTIONS",
+        tooltip: "RDS_TOOLTIP_MENU_OPTIONS",
         action: (event: MouseEvent) => host.toggleOptionsDropdown(event),
       },
       {
         label: "RDS_MENU_HELP",
+        tooltip: "RDS_TOOLTIP_MENU_HELP",
         action: (event: MouseEvent) => host.toggleHelpDropdown(event),
       },
     ];

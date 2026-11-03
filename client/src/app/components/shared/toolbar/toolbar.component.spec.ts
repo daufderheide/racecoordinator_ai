@@ -15,9 +15,10 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
-import { HelpService } from "@app/services/help.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import { createTestSettings } from "@app/testing/unit-test-mocks";
 
 import { ToolbarHarness } from "./testing/toolbar.harness";
@@ -576,98 +577,42 @@ describe("ToolbarComponent", () => {
   });
 
   describe("getToolbarHelpSteps", () => {
-    it("should include expand-collapse-all-btn step when showExpandCollapse is true", () => {
-      fixture.componentRef.setInput("showExpandCollapse", true);
-      fixture.detectChanges();
-
+    it("should return a single high-level toolbar guide step", () => {
       const steps = component.getToolbarHelpSteps();
-      const step = steps.find((s) => s.targetId === "expand-collapse-all-btn");
-
-      expect(step).toBeDefined();
-      expect(step?.title).toBe("TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE");
-      expect(step?.content).toBe("TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT");
-      expect(step?.position).toBe("bottom");
+      expect(steps.length).toBe(1);
+      expect(steps[0].targetId).toBe("toolbar-container");
+      expect(steps[0].selector).toBe(".toolbar-container");
+      expect(steps[0].title).toBe("TOOLBAR_HELP_TITLE");
+      expect(steps[0].content).toBe("TOOLBAR_HELP_CONTENT");
+      expect(steps[0].position).toBe("bottom");
     });
 
-    it("should NOT include expand-collapse-all-btn step when showExpandCollapse is false", () => {
-      fixture.componentRef.setInput("showExpandCollapse", false);
+    it("should ensure the toolbar guide step targets an existing element in the rendered DOM", () => {
       fixture.detectChanges();
-
-      const steps = component.getToolbarHelpSteps();
-      const step = steps.find((s) => s.targetId === "expand-collapse-all-btn");
-
-      expect(step).toBeUndefined();
+      GuideStepTestHelper.verifyGuideStepsExistInDom(
+        fixture,
+        component.getToolbarHelpSteps(),
+      );
     });
 
-    it("should place expand-collapse-all-btn step between edit-track-btn and copy-item-btn", () => {
-      fixture.componentRef.setInput("showEdit", true);
-      fixture.componentRef.setInput("showExpandCollapse", true);
-      fixture.componentRef.setInput("showCopy", true);
+    it("should start the guide with helpSteps followed by the toolbar step on onHelp()", () => {
+      const customSteps: GuideStep[] = [
+        { title: "Custom Step", content: "Custom Content" },
+      ];
+      fixture.componentRef.setInput("helpSteps", customSteps);
       fixture.detectChanges();
 
-      const steps = component.getToolbarHelpSteps();
-      const targetIds = steps.map((s) => s.targetId);
+      component.onHelp();
 
-      const editIdx = targetIds.indexOf("edit-track-btn");
-      const expandCollapseIdx = targetIds.indexOf("expand-collapse-all-btn");
-      const copyIdx = targetIds.indexOf("copy-item-btn");
-
-      expect(editIdx).toBeGreaterThanOrEqual(0);
-      expect(expandCollapseIdx).toBe(editIdx + 1);
-      expect(copyIdx).toBe(expandCollapseIdx + 1);
-    });
-
-    it("should place export-btn step immediately after import-btn", () => {
-      fixture.componentRef.setInput("showImport", true);
-      fixture.componentRef.setInput("showExport", true);
-      fixture.componentRef.setInput("showDelete", true);
-      fixture.detectChanges();
-
-      const steps = component.getToolbarHelpSteps();
-      const targetIds = steps.map((s) => s.targetId);
-
-      const importIdx = targetIds.indexOf("import-btn");
-      const exportIdx = targetIds.indexOf("export-btn");
-      const deleteIdx = targetIds.indexOf("delete-track-btn");
-
-      expect(importIdx).toBeGreaterThanOrEqual(0);
-      expect(exportIdx).toBe(importIdx + 1);
-      expect(deleteIdx).toBe(exportIdx + 1);
-    });
-
-    it("should return all toolbar help steps in correct order when all actions are enabled", () => {
-      fixture.componentRef.setInput("showActivate", true);
-      fixture.componentRef.setInput("showUndo", true);
-      fixture.componentRef.setInput("showRedo", true);
-      fixture.componentRef.setInput("showEdit", true);
-      fixture.componentRef.setInput("showExpandCollapse", true);
-      fixture.componentRef.setInput("showCopy", true);
-      fixture.componentRef.setInput("showAdd", true);
-      fixture.componentRef.setInput("showDelete", true);
-      fixture.componentRef.setInput("showImport", true);
-      fixture.componentRef.setInput("showExport", true);
-      fixture.componentRef.setInput("showReset", true);
-      fixture.componentRef.setInput("showAnalytics", true);
-      fixture.componentRef.setInput("showHelp", true);
-      fixture.detectChanges();
-
-      const steps = component.getToolbarHelpSteps();
-      const targetIds = steps.map((s) => s.targetId);
-
-      expect(targetIds).toEqual([
-        "activate-item-btn",
-        "undo-btn",
-        "redo-btn",
-        "edit-track-btn",
-        "expand-collapse-all-btn",
-        "copy-item-btn",
-        "add-item-btn",
-        "import-btn",
-        "export-btn",
-        "delete-track-btn",
-        "reset-btn",
-        "analytics-btn",
-        "help-track-btn",
+      expect(helpServiceSpy.startGuide).toHaveBeenCalledWith([
+        customSteps[0],
+        {
+          targetId: "toolbar-container",
+          selector: ".toolbar-container",
+          title: "TOOLBAR_HELP_TITLE",
+          content: "TOOLBAR_HELP_CONTENT",
+          position: "bottom",
+        },
       ]);
     });
   });
