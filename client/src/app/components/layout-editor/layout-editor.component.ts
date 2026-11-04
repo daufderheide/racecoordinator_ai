@@ -176,6 +176,7 @@ export class LayoutEditorComponent
     public router: Router,
   ) {
     super();
+    this.editingSettings = this.settingsService.getSettings() || new Settings();
   }
 
   get showDiscardConfirm(): boolean {
@@ -574,8 +575,6 @@ export class LayoutEditorComponent
     if (!this.isWidgetLibraryVisible) {
       this.isWidgetLibraryVisible = true;
       this.racedayComp?.ensureToolboxVisible?.();
-    } else if (this.racedayComp?.isLayoutEditorMinimized) {
-      this.racedayComp?.ensureToolboxVisible?.();
     } else if (
       this.racedayComp?.layoutEditorPosition &&
       (this.racedayComp.layoutEditorPosition.x >= 9000 ||
@@ -612,6 +611,14 @@ export class LayoutEditorComponent
       this.isSaving = true;
     }
     try {
+      if (this.racedayComp) {
+        this.editingSettings.layoutEditorMinimized =
+          this.racedayComp.isLayoutEditorMinimized ?? false;
+        this.editingSettings.layoutEditorPositionX =
+          this.racedayComp.layoutEditorPosition?.x ?? 0;
+        this.editingSettings.layoutEditorPositionY =
+          this.racedayComp.layoutEditorPosition?.y ?? 0;
+      }
       const saved = await firstValueFrom(
         this.dataService.updateCustomUI(
           this.editingLayout.entity_id,
@@ -630,6 +637,8 @@ export class LayoutEditorComponent
           this.editingSettings.practiceRacedayLayout = parseLayoutConfig(
             this.editingLayout,
           );
+          this.settingsService.saveSettings(this.editingSettings);
+        } else {
           this.settingsService.saveSettings(this.editingSettings);
         }
         this.customUiService?.initialize();

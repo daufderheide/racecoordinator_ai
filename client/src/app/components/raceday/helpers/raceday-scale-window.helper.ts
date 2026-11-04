@@ -4,18 +4,24 @@ export class RacedayScaleWindowHelper {
   static toggleLayoutEditorMinimize(host: any, event: Event): void {
     event.stopPropagation();
     host.isLayoutEditorMinimized = !host.isLayoutEditorMinimized;
+    host.layoutEditorPosition = host.clampLayoutEditorPosition(
+      host.layoutEditorPosition,
+    );
 
     const settings =
       host.editingSettings() || host.settingsService.getSettings();
     settings.layoutEditorMinimized = host.isLayoutEditorMinimized;
+    settings.layoutEditorPositionX = host.layoutEditorPosition.x;
+    settings.layoutEditorPositionY = host.layoutEditorPosition.y;
 
     const globalSettings = host.settingsService.getSettings();
     globalSettings.layoutEditorMinimized = host.isLayoutEditorMinimized;
+    globalSettings.layoutEditorPositionX = host.layoutEditorPosition.x;
+    globalSettings.layoutEditorPositionY = host.layoutEditorPosition.y;
     host.settingsService.saveSettings(globalSettings);
   }
 
   static ensureToolboxVisible(host: any): void {
-    host.isLayoutEditorMinimized = false;
     host.layoutEditorPosition = host.clampLayoutEditorPosition(
       host.layoutEditorPosition,
     );

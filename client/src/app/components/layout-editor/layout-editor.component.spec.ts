@@ -1269,9 +1269,13 @@ describe("LayoutEditorComponent", () => {
       expect(component.isWidgetLibraryVisible).toBeTrue();
       expect(mockRaceday.ensureToolboxVisible).toHaveBeenCalled();
 
-      // If visible but minimized, unminimize via ensureToolboxVisible
+      // If visible, toggles to hidden even if minimized
       mockRaceday.ensureToolboxVisible.calls.reset();
       mockRaceday.isLayoutEditorMinimized = true;
+      component.toggleWidgetLibrary();
+      expect(component.isWidgetLibraryVisible).toBeFalse();
+
+      // If hidden and minimized, toggling on makes it visible and calls ensureToolboxVisible
       component.toggleWidgetLibrary();
       expect(component.isWidgetLibraryVisible).toBeTrue();
       expect(mockRaceday.ensureToolboxVisible).toHaveBeenCalled();
@@ -1287,6 +1291,23 @@ describe("LayoutEditorComponent", () => {
       mockRaceday.layoutEditorPosition = { x: 50, y: 50 };
       component.toggleWidgetLibrary();
       expect(component.isWidgetLibraryVisible).toBeFalse();
+    });
+
+    it("should preserve widget library collapsed state when toggling edit mode", () => {
+      const mockRaceday = {
+        ensureToolboxVisible: jasmine.createSpy("ensureToolboxVisible"),
+        isLayoutEditorMinimized: true,
+        layoutEditorPosition: { x: 100, y: 150 },
+      };
+      component.racedayComp = mockRaceday as any;
+      component.isEditMode = false;
+
+      component.onToggleEditMode();
+
+      expect(component.isEditMode).toBeTrue();
+      expect(component.isWidgetLibraryVisible).toBeTrue();
+      expect(mockRaceday.ensureToolboxVisible).toHaveBeenCalled();
+      expect(mockRaceday.isLayoutEditorMinimized).toBeTrue();
     });
 
     it("should render widget library toggle button and reflect edit mode and click interactions", () => {
@@ -1657,6 +1678,23 @@ describe("LayoutEditorComponent", () => {
         component.editingSettings.practiceRacedayLayout?.widgets?.[0]
           ?.customSettings?.["lastLapsCount"],
       ).toBe(12);
+    });
+
+    it("should sync and persist layoutEditorMinimized and positioning from racedayComp when saving layout", async () => {
+      component.selectLayoutById("custom_test_ui");
+      mockSettingsService.saveSettings.calls.reset();
+      component.isEditMode = true;
+      component.racedayComp = {
+        isLayoutEditorMinimized: true,
+        layoutEditorPosition: { x: 250, y: 350 },
+      } as any;
+
+      await component.saveCurrentLayout();
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+      expect(component.editingSettings.layoutEditorMinimized).toBeTrue();
+      expect(component.editingSettings.layoutEditorPositionX).toBe(250);
+      expect(component.editingSettings.layoutEditorPositionY).toBe(350);
     });
 
     it("should sync editingSettings from loaded default and practice UIs during loadData", async () => {

@@ -340,8 +340,20 @@ describe("DefaultRacedayComponent", () => {
       expect(clamped).toEqual(pos);
     });
 
-    it("should unminimize and clamp position when ensureToolboxVisible is called", () => {
+    it("should preserve minimized state and clamp position when ensureToolboxVisible is called", () => {
       component.isLayoutEditorMinimized = true;
+      component.layoutEditorPosition = { x: 2000, y: 1000 };
+      spyOn(component, "isUIEditorMode").and.returnValue(false);
+
+      component.ensureToolboxVisible();
+
+      expect(component.isLayoutEditorMinimized).toBeTrue();
+      expect(component.layoutEditorPosition.x).toBeLessThanOrEqual(1760);
+      expect(component.layoutEditorPosition.y).toBeLessThanOrEqual(1040);
+    });
+
+    it("should keep expanded state and clamp position when ensureToolboxVisible is called while expanded", () => {
+      component.isLayoutEditorMinimized = false;
       component.layoutEditorPosition = { x: 2000, y: 1000 };
       spyOn(component, "isUIEditorMode").and.returnValue(false);
 
