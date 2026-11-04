@@ -2683,5 +2683,49 @@ describe("LaneColumnInspectorComponent", () => {
       component.setInsetAverageScoreDecimalPlaces("top-right", 1);
       expect(component.getInsetAverageScoreDecimalPlaces("top-right")).toBe(1);
     });
+
+    it("should correctly classify text, image, pacing, and fuel gauge columns", () => {
+      component.currentSettings["columnKey"] = "driver.name";
+      expect(component.isTextColumn).toBeTrue();
+      expect(component.isImageColumn).toBeFalse();
+      expect(component.isPacingColumn).toBeFalse();
+      expect(component.isFuelGaugeColumn).toBeFalse();
+
+      component.currentSettings["columnKey"] = "driver.avatarUrl";
+      expect(component.isImageColumn).toBeTrue();
+      expect(component.isTextColumn).toBeFalse();
+
+      component.currentSettings["columnKey"] = "ghostPacingLeaderBest";
+      expect(component.isPacingColumn).toBeTrue();
+      expect(component.isTextColumn).toBeFalse();
+
+      component.currentSettings["columnKey"] = "imageset_fuel-gauge-builtin";
+      expect(component.isFuelGaugeColumn).toBeTrue();
+      expect(component.isTextColumn).toBeFalse();
+    });
+
+    it("should update minFontSize and clamp maxFontSize when min exceeds max", () => {
+      spyOn(component.change, "emit");
+      component.currentSettings["minFontSize"] = 10;
+      component.currentSettings["maxFontSize"] = 20;
+
+      component.onMinFontSizeChange(30);
+      expect(component.currentSettings["minFontSize"]).toBe(30);
+      expect(component.currentSettings["maxFontSize"]).toBe(30);
+      expect(component.currentSettings["_syncAction"]).toBe("value");
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should update maxFontSize and clamp minFontSize when max drops below min", () => {
+      spyOn(component.change, "emit");
+      component.currentSettings["minFontSize"] = 25;
+      component.currentSettings["maxFontSize"] = 40;
+
+      component.onMaxFontSizeChange(15);
+      expect(component.currentSettings["maxFontSize"]).toBe(15);
+      expect(component.currentSettings["minFontSize"]).toBe(15);
+      expect(component.currentSettings["_syncAction"]).toBe("value");
+      expect(component.change.emit).toHaveBeenCalled();
+    });
   });
 });

@@ -783,6 +783,7 @@
               <span
                 class="lane-col-text"
                 [class.allow-wrap]="shouldAllowValueWrap()"
+                [class.numeric-value]="isNumericValue"
                 >{{ formattedValue }}</span
               >
               @if (isDriftLap()) {

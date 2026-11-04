@@ -110,6 +110,8 @@ describe("WIDGET_REGISTRY", () => {
     const laneColumnSettings =
       WIDGET_REGISTRY["lane-column"].defaultSettings!();
     expect(laneColumnSettings["columnKey"]).toBe("lastLapTime");
+    expect(laneColumnSettings["minFontSize"]).toBe(0);
+    expect(laneColumnSettings["maxFontSize"]).toBe(60);
     expect(laneColumnSettings["bindingMode"]).toBe("lane");
     expect(laneColumnSettings["targetIndex"]).toBe(0);
     expect(laneColumnSettings["layoutOrientation"]).toBe("vertical");

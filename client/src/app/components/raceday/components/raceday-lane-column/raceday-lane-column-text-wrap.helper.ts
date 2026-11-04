@@ -22,6 +22,62 @@ export function isNumericalOrTimeText(text: string): boolean {
   );
 }
 
+export function checkWordsWrapFit(
+  ctx: CanvasRenderingContext2D,
+  words: string[],
+  testSize: number,
+  availWidth: number,
+  availHeight: number,
+  family: string,
+): boolean {
+  if (testSize <= 0) return false;
+  const lineHeight = Math.ceil(testSize * 1.15);
+  const maxLines = Math.floor(availHeight / lineHeight);
+  if (maxLines < 2) return false;
+
+  ctx.font = `700 ${testSize}px ${family}`;
+  let linesCount = 1;
+  let currentLineWidth = 0;
+
+  for (const word of words) {
+    const wordW = ctx.measureText(word).width;
+    if (wordW > availWidth) {
+      return false;
+    }
+    const spaceW = currentLineWidth > 0 ? ctx.measureText(" ").width : 0;
+    if (currentLineWidth + spaceW + wordW <= availWidth) {
+      currentLineWidth += spaceW + wordW;
+    } else {
+      linesCount++;
+      currentLineWidth = wordW;
+      if (linesCount > maxLines) {
+        return false;
+      }
+    }
+  }
+
+  return linesCount <= maxLines;
+}
+
+export function findBestWrapFontSize(
+  ctx: CanvasRenderingContext2D,
+  words: string[],
+  maxSize: number,
+  minSize: number,
+  availWidth: number,
+  availHeight: number,
+  family: string,
+): number {
+  for (let testSize = maxSize; testSize >= minSize; testSize--) {
+    if (
+      checkWordsWrapFit(ctx, words, testSize, availWidth, availHeight, family)
+    ) {
+      return testSize;
+    }
+  }
+  return 0;
+}
+
 export function computeBestWrapTextFontSize(
   ctx: CanvasRenderingContext2D,
   words: string[],
@@ -32,35 +88,9 @@ export function computeBestWrapTextFontSize(
   family: string,
 ): number {
   for (let testSize = baseFontSize; testSize > singleLineSize; testSize--) {
-    const lineHeight = Math.ceil(testSize * 1.15);
-    const maxLines = Math.floor(availHeight / lineHeight);
-    if (maxLines < 2) continue;
-
-    ctx.font = `700 ${testSize}px ${family}`;
-    let linesCount = 1;
-    let currentLineWidth = 0;
-    let possible = true;
-
-    for (const word of words) {
-      const wordW = ctx.measureText(word).width;
-      if (wordW > availWidth) {
-        possible = false;
-        break;
-      }
-      const spaceW = currentLineWidth > 0 ? ctx.measureText(" ").width : 0;
-      if (currentLineWidth + spaceW + wordW <= availWidth) {
-        currentLineWidth += spaceW + wordW;
-      } else {
-        linesCount++;
-        currentLineWidth = wordW;
-        if (linesCount > maxLines) {
-          possible = false;
-          break;
-        }
-      }
-    }
-
-    if (possible && linesCount <= maxLines) {
+    if (
+      checkWordsWrapFit(ctx, words, testSize, availWidth, availHeight, family)
+    ) {
       return testSize;
     }
   }
@@ -104,17 +134,23 @@ export function applyValueWrapStyles(
       textEl.style.wordBreak = "break-word";
       textEl.style.overflowWrap = "break-word";
       textEl.style.lineHeight = "1.15";
+      textEl.style.textOverflow = "clip";
     }
     if (valueEl) {
       valueEl.style.whiteSpace = "normal";
       valueEl.style.lineHeight = "1.15";
     }
-  } else if (!allowWrap) {
+  } else {
     if (textEl) {
       textEl.style.whiteSpace = "nowrap";
+      textEl.style.wordBreak = "";
+      textEl.style.overflowWrap = "";
+      textEl.style.lineHeight = "";
+      textEl.style.textOverflow = allowWrap ? "ellipsis" : "clip";
     }
     if (valueEl) {
       valueEl.style.whiteSpace = "nowrap";
+      valueEl.style.lineHeight = "";
     }
   }
 }

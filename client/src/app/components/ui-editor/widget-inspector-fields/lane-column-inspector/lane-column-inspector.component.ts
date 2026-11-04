@@ -16,6 +16,7 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { CustomWidgetInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/custom-widget-inspector/custom-widget-inspector.component";
+import { LaneViewColumnGroupHelper } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -922,6 +923,48 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     return RacedayLayoutUtils.isImageProperty(
       this.currentSettings["columnKey"] || "",
     );
+  }
+
+  get isPacingColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return RacedayLayoutUtils.isPacingProperty(key);
+  }
+
+  get isFuelGaugeColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return LaneViewColumnGroupHelper.isFuelGaugeColumn(key);
+  }
+
+  get isTextColumn(): boolean {
+    return (
+      !this.isImageColumn && !this.isPacingColumn && !this.isFuelGaugeColumn
+    );
+  }
+
+  onMinFontSizeChange(val: number): void {
+    const num = Math.max(0, Number(val) || 0);
+    this.currentSettings["minFontSize"] = num;
+    if (
+      this.currentSettings["maxFontSize"] != null &&
+      this.currentSettings["maxFontSize"] < num
+    ) {
+      this.currentSettings["maxFontSize"] = num;
+    }
+    this.currentSettings["_syncAction"] = "value";
+    this.onFieldChange();
+  }
+
+  onMaxFontSizeChange(val: number): void {
+    const num = Math.max(0, Number(val) || 0);
+    this.currentSettings["maxFontSize"] = num;
+    if (
+      this.currentSettings["minFontSize"] != null &&
+      this.currentSettings["minFontSize"] > num
+    ) {
+      this.currentSettings["minFontSize"] = num;
+    }
+    this.currentSettings["_syncAction"] = "value";
+    this.onFieldChange();
   }
 
   get hasAnyInsets(): boolean {

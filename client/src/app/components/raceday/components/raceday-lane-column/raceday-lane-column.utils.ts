@@ -11,6 +11,7 @@ import {
   applyValueWrapStyles,
   computeBestWrapTextFontSize,
   computeSingleLineTextScale,
+  findBestWrapFontSize,
   isNameOrTeamProperty,
   isNumericalOrTimeText,
 } from "./raceday-lane-column-text-wrap.helper";
@@ -643,7 +644,7 @@ function resolveColumnBaseFontSize(
     ? DEFAULT_GRID_LANE_COLUMN_VALUE_FONT_SIZE
     : DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE;
 
-  if (scaleMode !== "auto") {
+  if (scaleMode === "fixed") {
     return settings.valueFontSize || defaultBaseSize;
   }
 
@@ -665,6 +666,87 @@ function resolveColumnBaseFontSize(
     16,
     Math.min(maxVal, Math.round(availHeight * heightRatio * factor)),
   );
+}
+
+export function resolveMinMaxFontSize(
+  settings: LaneColumnWidgetSettings,
+  scaleMode: string | undefined,
+): { minSize: number; maxSize: number } {
+  let minSize: number;
+  let maxSize: number;
+
+  if (settings.minFontSize != null && settings.maxFontSize != null) {
+    minSize = Math.max(0, Number(settings.minFontSize));
+    maxSize = Math.max(minSize, Number(settings.maxFontSize));
+  } else if (settings.minFontSize != null) {
+    minSize = Math.max(0, Number(settings.minFontSize));
+    maxSize = Math.max(minSize, Number(settings.maxFontSize ?? 60));
+  } else if (settings.maxFontSize != null) {
+    maxSize = Math.max(0, Number(settings.maxFontSize));
+    minSize = Math.min(maxSize, Number(settings.minFontSize ?? 0));
+  } else if (scaleMode !== undefined && scaleMode !== "auto") {
+    const fixedVal = Number(
+      settings.valueFontSize || DEFAULT_LANE_COLUMN_VALUE_FONT_SIZE,
+    );
+    minSize = fixedVal;
+    maxSize = fixedVal;
+  } else {
+    minSize = 0;
+    maxSize = 60;
+  }
+  return { minSize, maxSize };
+}
+
+export function calculateTextFittingSize(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  minSize: number,
+  scaledMaxSize: number,
+  availWidth: number,
+  availHeight: number,
+  computedFamily: string,
+  columnKey?: string,
+): { targetSize: number; isWrapped: boolean; isNameOrTeam: boolean } {
+  const cleanText = text.trim();
+  const testFont = Math.max(10, scaledMaxSize);
+  ctx.font = `700 ${testFont}px ${computedFamily}`;
+  const measuredWidth = ctx.measureText(cleanText).width || 1;
+
+  const fitWidthSize = Math.floor((availWidth * testFont) / measuredWidth);
+  const fitHeightSize = Math.max(1, Math.floor(availHeight / 1.1));
+
+  const maxFittingSingleLine = Math.min(
+    scaledMaxSize,
+    fitWidthSize,
+    fitHeightSize,
+  );
+  const singleLineFits = maxFittingSingleLine >= minSize;
+  const singleLineSize = Math.max(minSize, maxFittingSingleLine);
+
+  const isNameOrTeam = columnKey
+    ? isNameOrTeamProperty(columnKey)
+    : !isNumericalOrTimeText(text);
+
+  const words = cleanText.split(/\s+/).filter(Boolean);
+  const canWrap = isNameOrTeam && words.length > 1 && availHeight >= 20;
+
+  let bestWrapSize = 0;
+  if (canWrap) {
+    const minWrapTest = singleLineFits ? singleLineSize + 1 : minSize;
+    bestWrapSize = findBestWrapFontSize(
+      ctx,
+      words,
+      scaledMaxSize,
+      minWrapTest,
+      availWidth,
+      availHeight,
+      computedFamily,
+    );
+  }
+
+  const isWrapped = canWrap && bestWrapSize > 0;
+  const targetSize = isWrapped ? bestWrapSize : singleLineSize;
+  return { targetSize, isWrapped, isNameOrTeam };
 }
 
 export function fitColumnTextValue(
@@ -721,61 +803,35 @@ export function fitColumnTextValue(
     effectiveInsetFontSize,
   );
 
-  const baseFontSize = resolveColumnBaseFontSize(
-    settings,
-    dims.availHeight,
-    scaleMode,
-    isHorizontal,
-    textScaleFactor,
-  );
-
-  const isCustomScaling = scaleMode !== undefined && scaleMode !== "auto";
-
-  if (isCustomScaling) {
-    cardEl.style.setProperty("--lane-col-value-font-size", `${baseFontSize}px`);
+  const { minSize, maxSize } = resolveMinMaxFontSize(settings, scaleMode);
+  if (maxSize <= 0) {
+    cardEl.style.setProperty("--lane-col-value-font-size", "0px");
     return;
   }
 
+  const factor = textScaleFactor && textScaleFactor > 0 ? textScaleFactor : 1;
+  const scaledMaxSize = Math.max(minSize, Math.round(maxSize * factor));
+
   const ctx = getSharedCanvasContext();
-  if (!ctx) return;
+  if (!ctx || dims.availWidth <= 0 || dims.availHeight <= 0) {
+    cardEl.style.setProperty("--lane-col-value-font-size", `${minSize}px`);
+    return;
+  }
 
   const computedFamily = resolveCardFontFamily(cardEl, settings);
-  const minSize = 10;
-  const singleLineSize = computeSingleLineTextScale(
+  const colKey = columnKey || settings.columnKey;
+  const { targetSize, isWrapped, isNameOrTeam } = calculateTextFittingSize(
     ctx,
     text,
-    baseFontSize,
+    minSize,
+    scaledMaxSize,
     dims.availWidth,
     dims.availHeight,
     computedFamily,
-    minSize,
+    colKey,
   );
 
-  const colKey = columnKey || settings.columnKey;
-  const isNameOrTeam = colKey
-    ? isNameOrTeamProperty(colKey)
-    : !isNumericalOrTimeText(text);
-  const allowWrap = scaleMode === "auto" && isNameOrTeam;
-
-  let bestWrapSize = 0;
-  const cleanText = text.trim();
-  const words = cleanText.split(/\s+/).filter(Boolean);
-  if (allowWrap && words.length > 1 && dims.availHeight >= 20) {
-    bestWrapSize = computeBestWrapTextFontSize(
-      ctx,
-      words,
-      baseFontSize,
-      singleLineSize,
-      dims.availWidth,
-      dims.availHeight,
-      computedFamily,
-    );
-  }
-
-  const isWrapped = allowWrap && bestWrapSize > singleLineSize;
-  const targetSize = isWrapped ? bestWrapSize : singleLineSize;
-  applyValueWrapStyles(cardEl, isWrapped, allowWrap);
-
+  applyValueWrapStyles(cardEl, isWrapped, isNameOrTeam);
   cardEl.style.setProperty("--lane-col-value-font-size", `${targetSize}px`);
   safeguardTextOverflow(cardEl, targetSize, minSize);
 }

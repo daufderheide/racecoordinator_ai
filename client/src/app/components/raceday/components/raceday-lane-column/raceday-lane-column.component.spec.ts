@@ -1826,7 +1826,7 @@ describe("RacedayLaneColumnComponent", () => {
       "--lane-col-value-font-size",
     );
 
-    spy.and.returnValue("00:00:08.52");
+    spy.and.returnValue("00:00:08.520");
     component.ngAfterViewChecked();
     const sizeLong = cardEl?.style.getPropertyValue(
       "--lane-col-value-font-size",

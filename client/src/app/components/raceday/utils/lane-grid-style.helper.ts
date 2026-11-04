@@ -71,6 +71,8 @@ export class LaneGridStyleHelper {
         return [
           "valueFontFamily",
           "valueFontSize",
+          "minFontSize",
+          "maxFontSize",
           "valueTextColor",
           "valueAlignment",
           "backgroundColor",

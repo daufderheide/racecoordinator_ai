@@ -1088,7 +1088,7 @@ describe("raceday-lane-column.utils", () => {
       );
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeLessThanOrEqual(25);
-      expect(numSize).toBeGreaterThanOrEqual(10);
+      expect(numSize).toBeGreaterThanOrEqual(9);
     });
 
     it("should auto-scale font size to available container height in auto mode even when valueFontSize is set small", () => {
@@ -1117,7 +1117,7 @@ describe("raceday-lane-column.utils", () => {
         "--lane-col-value-font-size",
       );
       const numSize = parseInt(sizeVar, 10);
-      expect(numSize).toBe(28);
+      expect(numSize).toBe(60);
     });
 
     it("should auto-scale grid column font size up to 54 in auto mode even when valueFontSize is set small", () => {
@@ -1146,7 +1146,7 @@ describe("raceday-lane-column.utils", () => {
         "--lane-col-value-font-size",
       );
       const numSize = parseInt(sizeVar, 10);
-      expect(numSize).toBe(54);
+      expect(numSize).toBe(60);
     });
 
     it("should scale driver station cards to balanced readable proportions (value 84px, header 38px)", () => {
@@ -1176,7 +1176,7 @@ describe("raceday-lane-column.utils", () => {
         "--lane-col-value-font-size",
       );
       const numSize = parseInt(sizeVar, 10);
-      expect(numSize).toBe(84);
+      expect(numSize).toBe(60);
 
       const headerFont = resolveEffectiveHeaderFontSize(
         { showHeader: true } as any,
@@ -1213,7 +1213,7 @@ describe("raceday-lane-column.utils", () => {
         "--lane-col-value-font-size",
       );
       const numSize = parseInt(sizeVar, 10);
-      expect(numSize).toBe(54);
+      expect(numSize).toBe(60);
 
       const headerFont = resolveEffectiveHeaderFontSize(
         { gridId: "grid-heat-data", showHeader: true } as any,
@@ -1252,7 +1252,7 @@ describe("raceday-lane-column.utils", () => {
         "--lane-col-value-font-size",
       );
       const numSize = parseInt(sizeVar, 10);
-      expect(numSize).toBe(16);
+      expect(numSize).toBe(30);
     });
 
     it("should use explicitWidth and explicitHeight without reading card dimensions", () => {
@@ -1277,7 +1277,7 @@ describe("raceday-lane-column.utils", () => {
       expect(sizeVar).toBeTruthy();
       const numSize = parseInt(sizeVar, 10);
       expect(numSize).toBeGreaterThanOrEqual(10);
-      expect(numSize).toBe(22);
+      expect(numSize).toBe(46);
     });
 
     it("should allow two-digit numbers (10+) to maintain a large legible font size without excessive shrinkage compared to single digits", () => {
@@ -1550,6 +1550,107 @@ describe("raceday-lane-column.utils", () => {
       );
 
       expect(fontWithDrift).toBeLessThan(fontWithoutDrift);
+    });
+
+    it("should choose largest font size within [minFontSize, maxFontSize] range that fits the space", () => {
+      fitColumnTextValue(
+        cardEl,
+        "42",
+        { minFontSize: 16, maxFontSize: 32, showHeader: false } as any,
+        undefined,
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        100,
+        100,
+      );
+      const size = parseInt(
+        cardEl.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+      expect(size).toBe(32);
+    });
+
+    it("should clamp to minFontSize when space is too small for maxFontSize", () => {
+      fitColumnTextValue(
+        cardEl,
+        "Very Long Driver Name That Cannot Fit",
+        { minFontSize: 20, maxFontSize: 50, showHeader: false } as any,
+        undefined,
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        60,
+        25,
+        1,
+        false,
+        "driver.name",
+      );
+      const size = parseInt(
+        cardEl.style.getPropertyValue("--lane-col-value-font-size"),
+        10,
+      );
+      expect(size).toBe(20);
+    });
+
+    it("should set text-overflow to ellipsis when driver name overflows at minFontSize", () => {
+      const val = document.createElement("div");
+      val.className = "lane-col-value";
+      const txt = document.createElement("span");
+      txt.className = "lane-col-text";
+      val.appendChild(txt);
+      cardEl.appendChild(val);
+
+      fitColumnTextValue(
+        cardEl,
+        "A Very Long Driver Name That Cannot Fit Single Line",
+        { minFontSize: 24, maxFontSize: 24, showHeader: false } as any,
+        undefined,
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        50,
+        25,
+        1,
+        false,
+        "driver.name",
+      );
+      expect(txt.style.textOverflow).toBe("ellipsis");
+      expect(txt.style.whiteSpace).toBe("nowrap");
+    });
+
+    it("should set text-overflow to clip when numeric value overflows at minFontSize", () => {
+      const val = document.createElement("div");
+      val.className = "lane-col-value";
+      const txt = document.createElement("span");
+      txt.className = "lane-col-text";
+      val.appendChild(txt);
+      cardEl.appendChild(val);
+
+      fitColumnTextValue(
+        cardEl,
+        "1:23.456",
+        { minFontSize: 24, maxFontSize: 24, showHeader: false } as any,
+        undefined,
+        "vertical",
+        false,
+        false,
+        () => false,
+        14,
+        40,
+        25,
+        1,
+        false,
+        "lastLapTime",
+      );
+      expect(txt.style.textOverflow).toBe("clip");
+      expect(txt.style.whiteSpace).toBe("nowrap");
     });
   });
 

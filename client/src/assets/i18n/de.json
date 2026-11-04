@@ -2845,6 +2845,8 @@
   "UE_INSPECTOR_VERTICAL_ALIGNMENT": "Vertikale Ausrichtung",
   "UE_INSPECTOR_VALUE_FONT_FAMILY": "Schriftart des Werts",
   "UE_INSPECTOR_VALUE_FONT_SIZE": "Schriftgröße des Werts",
+  "UE_INSPECTOR_MIN_FONT_SIZE": "Min. Schriftgröße",
+  "UE_INSPECTOR_MAX_FONT_SIZE": "Max. Schriftgröße",
   "UE_INSPECTOR_HEATS_SECTION": "Heat-Konfiguration",
   "UE_INSPECTOR_HEATS_MODE": "Heat-Anzeigemodus",
   "UE_INSPECTOR_HEATS_MODE_RACED": "Gefahrene Heats",

@@ -2814,6 +2814,8 @@
   "UE_INSPECTOR_VALUE_ALIGNMENT": "Waarde Uitlijning",
   "UE_INSPECTOR_VALUE_FONT_FAMILY": "Lettertype Waarde",
   "UE_INSPECTOR_VALUE_FONT_SIZE": "Lettergrootte Waarde",
+  "UE_INSPECTOR_MIN_FONT_SIZE": "Min. Lettergrootte",
+  "UE_INSPECTOR_MAX_FONT_SIZE": "Max. Lettergrootte",
   "UE_INSPECTOR_VERTICAL_ALIGNMENT": "Verticale Uitlijning",
   "UE_INSPECTOR_WIDGET_TYPE": "Widget Type",
   "UE_INSPECTOR_WIDTH": "Breedte",

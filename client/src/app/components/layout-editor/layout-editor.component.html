@@ -422,32 +422,6 @@
                   }}
                 </div>
               </div>
-              @if (
-                !isCustomWidget(currentSelectedWidget.widgetType) &&
-                currentSelectedWidget.widgetType !== "branding" &&
-                currentSelectedWidget.widgetType !== "qr" &&
-                currentSelectedWidget.widgetType !== "flag" &&
-                currentSelectedWidget.widgetType !== "countdown"
-              ) {
-                <div class="inspector-section">
-                  <label class="inspector-label">{{
-                    "UE_INSPECTOR_SCALING_MODE" | translate
-                  }}</label>
-                  <div class="select-container select-sm">
-                    <app-custom-select
-                      [value]="currentSelectedWidget.scaleMode || ''"
-                      (change)="onWidgetScaleModeChange($event)"
-                    >
-                      <app-custom-option value="">
-                        {{ "UE_INSPECTOR_SCALING_DEFAULT" | translate }}
-                      </app-custom-option>
-                      <app-custom-option value="auto">
-                        {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
-                      </app-custom-option>
-                    </app-custom-select>
-                  </div>
-                </div>
-              }
 
               <!-- Geometry Section -->
               <div class="inspector-geometry-title">

@@ -690,6 +690,8 @@ describe("LaneViewMigrationHelper", () => {
               gapTarget: "position",
               gapMode: "always_laps",
               highlightLapStyle: "classic",
+              minFontSize: 0,
+              maxFontSize: 60,
             },
           },
         ],
@@ -789,6 +791,8 @@ describe("LaneViewMigrationHelper", () => {
               columnKey: "lastLapTime",
               highlightLapStyle: "shimmer",
               highlightRowOnLap: true,
+              minFontSize: 0,
+              maxFontSize: 60,
             },
           },
         ],
@@ -871,6 +875,112 @@ describe("LaneViewMigrationHelper", () => {
       expect(layouts["gap"]).toBeDefined();
       expect(layouts["gap"]["center-center"]).toBe("gap");
       expect(layouts["gap"]["bottom-right"]).toBe("gap");
+    });
+  });
+
+  describe("migrateWidgetFontScaling", () => {
+    it("should return false for null or undefined or empty layouts", () => {
+      expect(
+        LaneViewMigrationHelper.migrateWidgetFontScaling(null),
+      ).toBeFalse();
+      expect(
+        LaneViewMigrationHelper.migrateWidgetFontScaling(undefined),
+      ).toBeFalse();
+      expect(
+        LaneViewMigrationHelper.migrateWidgetFontScaling({ widgets: [] }),
+      ).toBeFalse();
+    });
+
+    it("should migrate scaleMode 'auto' to minFontSize 0 and maxFontSize 60", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "lane-column",
+            scaleMode: "auto",
+            customSettings: {
+              columnKey: "driver.name",
+            },
+          } as any,
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateWidgetFontScaling(layout);
+      expect(migrated).toBeTrue();
+      expect(layout.widgets[0].customSettings?.["minFontSize"]).toBe(0);
+      expect(layout.widgets[0].customSettings?.["maxFontSize"]).toBe(60);
+    });
+
+    it("should migrate scaleMode undefined / default to minFontSize 0 and maxFontSize 60", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "driver.name",
+            },
+          } as any,
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateWidgetFontScaling(layout);
+      expect(migrated).toBeTrue();
+      expect(layout.widgets[0].customSettings?.["minFontSize"]).toBe(0);
+      expect(layout.widgets[0].customSettings?.["maxFontSize"]).toBe(60);
+    });
+
+    it("should migrate custom / fixed scaleMode to same min and max font size", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "lane-column",
+            scaleMode: "fixed",
+            customSettings: {
+              columnKey: "driver.name",
+              valueFontSize: 42,
+            },
+          } as any,
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateWidgetFontScaling(layout);
+      expect(migrated).toBeTrue();
+      expect(layout.widgets[0].customSettings?.["minFontSize"]).toBe(42);
+      expect(layout.widgets[0].customSettings?.["maxFontSize"]).toBe(42);
+    });
+
+    it("should not modify widgets that already have minFontSize and maxFontSize defined", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "driver.name",
+              minFontSize: 14,
+              maxFontSize: 28,
+            },
+          } as any,
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateWidgetFontScaling(layout);
+      expect(migrated).toBeFalse();
+      expect(layout.widgets[0].customSettings?.["minFontSize"]).toBe(14);
+      expect(layout.widgets[0].customSettings?.["maxFontSize"]).toBe(28);
+    });
+
+    it("should ignore non-lane-column widgets", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "timer",
+            scaleMode: "auto",
+            customSettings: {},
+          } as any,
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateWidgetFontScaling(layout);
+      expect(migrated).toBeFalse();
     });
   });
 });

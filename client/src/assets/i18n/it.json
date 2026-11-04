@@ -2814,6 +2814,8 @@
   "UE_INSPECTOR_VALUE_ALIGNMENT": "Allineamento Valore",
   "UE_INSPECTOR_VALUE_FONT_FAMILY": "Famiglia Carattere Valore",
   "UE_INSPECTOR_VALUE_FONT_SIZE": "Dimensione Carattere Valore",
+  "UE_INSPECTOR_MIN_FONT_SIZE": "Dimensione Minima Carattere",
+  "UE_INSPECTOR_MAX_FONT_SIZE": "Dimensione Massima Carattere",
   "UE_INSPECTOR_VERTICAL_ALIGNMENT": "Allineamento Verticale",
   "UE_INSPECTOR_WIDGET_TYPE": "Tipo di Widget",
   "UE_INSPECTOR_WIDTH": "Larghezza",

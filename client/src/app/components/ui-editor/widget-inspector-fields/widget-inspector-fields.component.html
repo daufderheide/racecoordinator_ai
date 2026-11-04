@@ -3,7 +3,6 @@
     [settings]="widget().customSettings"
     [widget]="widget()"
     [availableColumns]="availableColumns()"
-    [disableFontSizes]="widget().scaleMode === 'auto'"
     [totalLanes]="totalLanes()"
     [selectedAnchor]="selectedAnchor()"
     (anchorChange)="onAnchorChange($event)"
@@ -26,7 +25,6 @@
     @case ("leaderboard") {
       <app-leaderboard-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-leaderboard-inspector>
     }
@@ -34,21 +32,18 @@
       <app-leaderboard-inspector
         [settings]="widget().customSettings"
         [isGroup]="true"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-leaderboard-inspector>
     }
     @case ("records") {
       <app-records-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-records-inspector>
     }
     @case ("timer") {
       <app-timer-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-timer-inspector>
     }
@@ -56,7 +51,6 @@
       <app-progress-gauge-inspector
         [settings]="widget().customSettings"
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         [totalLanes]="totalLanes()"
         (change)="onSettingsChange()"
       ></app-progress-gauge-inspector>
@@ -88,7 +82,6 @@
         [customUi]="customUi()"
         [availableColumns]="availableColumns()"
         [isPracticeMode]="isPracticeMode()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-lane-view-inspector>
     }
@@ -97,7 +90,6 @@
         [settings]="widget().customSettings"
         [widget]="widget()"
         [availableColumns]="availableColumns()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         [totalLanes]="totalLanes()"
         [selectedAnchor]="selectedAnchor()"
         (anchorChange)="onAnchorChange($event)"
@@ -114,28 +106,24 @@
     @case ("on-deck") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
     }
     @case ("next-heat") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
     }
     @case ("heat-list") {
       <app-heat-list-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-heat-list-inspector>
     }
     @case ("heat-info") {
       <app-text-info-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
         valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
         (change)="onSettingsChange()"
@@ -144,7 +132,6 @@
     @case ("race-name") {
       <app-text-info-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
         valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
         (change)="onSettingsChange()"
@@ -153,7 +140,6 @@
     @case ("event-name") {
       <app-text-info-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
         valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
         (change)="onSettingsChange()"
@@ -162,7 +148,6 @@
     @case ("season-name") {
       <app-text-info-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
         valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
         (change)="onSettingsChange()"
@@ -172,14 +157,12 @@
     @case ("season-race-leaderboard") {
       <app-leaderboard-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-leaderboard-inspector>
     }
     @case ("track-name") {
       <app-text-info-inspector
         [settings]="widget().customSettings"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
         valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
         (change)="onSettingsChange()"
@@ -188,154 +171,132 @@
     @case ("menu-bar") {
       <app-menu-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-menu-inspector>
     }
     @case ("action-start-resume") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-pause") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-next-heat") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-restart-heat") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-defer-heat") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-skip-heat") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-skip-race") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-add-lap") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-modify-heats") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-export-pdf") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-export-csv") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-export-xls") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-open-heat-results") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-open-race-results") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-open-season-results") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-open-prediction-results") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-master-power-on") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-master-power-off") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-back") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-forward") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
     @case ("action-close") {
       <app-action-button-inspector
         [widget]="widget()"
-        [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }

@@ -24,6 +24,8 @@ function defaultLaneColumnSettings(): Record<string, any> {
     headerBackgroundColor: "",
     valueFontFamily: "",
     valueFontSize: 36,
+    minFontSize: 0,
+    maxFontSize: 60,
     valueTextColor: "",
     valueAlignment: "center",
     timeDecimalPlaces: 3,

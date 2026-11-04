@@ -90,6 +90,8 @@ export interface AbsoluteWidgetNode {
   fontFamily?: string;
   scaleMode?: "auto" | "fixed" | "";
   fontSize?: number;
+  minFontSize?: number;
+  maxFontSize?: number;
   textScaleFactor?: number;
   textColor?: string;
   backgroundColor?: string;
@@ -171,6 +173,8 @@ export interface LaneColumnWidgetSettings {
   headerBackgroundColor?: string;
   valueFontFamily: string;
   valueFontSize: number;
+  minFontSize?: number;
+  maxFontSize?: number;
   valueTextColor: string;
   valueAlignment: "start" | "center" | "end";
   timeDecimalPlaces: number;

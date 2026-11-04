@@ -2814,6 +2814,8 @@
   "UE_INSPECTOR_VALUE_ALIGNMENT": "Alineación del Valor",
   "UE_INSPECTOR_VALUE_FONT_FAMILY": "Tipografía del Valor",
   "UE_INSPECTOR_VALUE_FONT_SIZE": "Tamaño de Fuente del Valor",
+  "UE_INSPECTOR_MIN_FONT_SIZE": "Tamaño de Fuente Mínimo",
+  "UE_INSPECTOR_MAX_FONT_SIZE": "Tamaño de Fuente Máximo",
   "UE_INSPECTOR_VERTICAL_ALIGNMENT": "Alineación Vertical",
   "UE_INSPECTOR_WIDGET_TYPE": "Tipo de Widget",
   "UE_INSPECTOR_WIDTH": "Ancho",

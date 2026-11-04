@@ -187,6 +187,31 @@ function migrateHighlightLapStyle(
   return false;
 }
 
+function migrateWidgetFontScalingForWidget(
+  w: any,
+  s: Record<string, any>,
+): boolean {
+  if (w.widgetType !== "lane-column") {
+    return false;
+  }
+  if (s["minFontSize"] !== undefined && s["maxFontSize"] !== undefined) {
+    return false;
+  }
+  const isAuto =
+    w.scaleMode === "auto" ||
+    (w.scaleMode === undefined && s["scaleMode"] === "auto");
+  if (isAuto || (w.scaleMode === undefined && s["scaleMode"] === undefined)) {
+    if (s["minFontSize"] === undefined) s["minFontSize"] = 0;
+    if (s["maxFontSize"] === undefined) s["maxFontSize"] = 60;
+  } else {
+    // Custom / fixed scale mode -> min and max set to same value
+    const customVal = s["valueFontSize"] ?? w.fontSize ?? 36;
+    if (s["minFontSize"] === undefined) s["minFontSize"] = customVal;
+    if (s["maxFontSize"] === undefined) s["maxFontSize"] = customVal;
+  }
+  return true;
+}
+
 export class LaneViewMigrationHelper {
   public static migrateGapWidgets(
     layout: LayoutConfig | null | undefined,
@@ -208,6 +233,26 @@ export class LaneViewMigrationHelper {
       if (migrateInsets(s)) migrated = true;
       if (migrateInsetsConfig(s)) migrated = true;
       if (migrateHighlightLapStyle(w, s)) migrated = true;
+      if (migrateWidgetFontScalingForWidget(w, s)) migrated = true;
+    }
+    return migrated;
+  }
+
+  public static migrateWidgetFontScaling(
+    layout: LayoutConfig | null | undefined,
+  ): boolean {
+    if (!layout?.widgets || !Array.isArray(layout.widgets)) {
+      return false;
+    }
+    let migrated = false;
+    for (const w of layout.widgets) {
+      if (w.widgetType === "lane-column" && !w.customSettings) {
+        w.customSettings = {};
+      }
+      if (!w.customSettings) continue;
+      if (migrateWidgetFontScalingForWidget(w, w.customSettings)) {
+        migrated = true;
+      }
     }
     return migrated;
   }
@@ -625,6 +670,8 @@ export class LaneViewMigrationHelper {
         headerAlignment: "center",
         valueFontFamily: params.valueFontFamily,
         valueFontSize: params.valueFontSize,
+        minFontSize: 0,
+        maxFontSize: 60,
         valueTextColor: params.valueTextColor,
         valueAlignment: "center",
         timeDecimalPlaces:
@@ -901,6 +948,8 @@ export class LaneViewMigrationHelper {
         headerAlignment: "center",
         valueFontFamily: params.valueFontFamily,
         valueFontSize: params.valueFontSize,
+        minFontSize: 0,
+        maxFontSize: 60,
         valueTextColor: params.valueTextColor,
         valueAlignment: "center",
         timeDecimalPlaces:

@@ -2279,7 +2279,6 @@
         min="8"
         max="48"
         [(ngModel)]="currentSettings['headerFontSize']"
-        [disabled]="disableFontSizes()"
         (input)="onFieldChange()"
         (change)="onFieldChange()"
         class="inspector-slider"
@@ -2490,7 +2489,7 @@
       }
     }
 
-    @if (!isImageColumn) {
+    @if (isTextColumn) {
       <hr class="inspector-divider" />
 
       <!-- Typography Settings -->
@@ -2514,23 +2513,42 @@
         </div>
       </div>
 
+      <!-- Min Font Size -->
       <div class="inspector-section">
         <div class="inspector-label-row">
           <label class="inspector-label">{{
-            "UE_INSPECTOR_VALUE_FONT_SIZE" | translate
+            "UE_INSPECTOR_MIN_FONT_SIZE" | translate
           }}</label>
           <span class="inspector-val-badge"
-            >{{ currentSettings["valueFontSize"] || 36 }}px</span
+            >{{ currentSettings["minFontSize"] ?? 0 }}px</span
           >
         </div>
         <input
           type="range"
-          min="10"
+          min="0"
           max="120"
-          [(ngModel)]="currentSettings['valueFontSize']"
-          [disabled]="disableFontSizes()"
-          (input)="onFieldChange()"
-          (change)="onFieldChange()"
+          [ngModel]="currentSettings['minFontSize'] ?? 0"
+          (ngModelChange)="onMinFontSizeChange($event)"
+          class="inspector-slider"
+        />
+      </div>
+
+      <!-- Max Font Size -->
+      <div class="inspector-section">
+        <div class="inspector-label-row">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_MAX_FONT_SIZE" | translate
+          }}</label>
+          <span class="inspector-val-badge"
+            >{{ currentSettings["maxFontSize"] ?? 60 }}px</span
+          >
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="120"
+          [ngModel]="currentSettings['maxFontSize'] ?? 60"
+          (ngModelChange)="onMaxFontSizeChange($event)"
           class="inspector-slider"
         />
       </div>

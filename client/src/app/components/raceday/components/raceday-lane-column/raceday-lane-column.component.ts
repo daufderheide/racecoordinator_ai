@@ -84,6 +84,7 @@ import {
   resolveLaneColumnForegroundColor,
   resolveLaneColumnFormattedValue,
 } from "./raceday-lane-column-interaction.helper";
+import { isNumericalOrTimeText } from "./raceday-lane-column-text-wrap.helper";
 
 export { HeatDataLapItem };
 
@@ -808,7 +809,17 @@ export class RacedayLaneColumnComponent
   }
 
   shouldAllowValueWrap(): boolean {
-    return this.isScaleAuto() && isNameOrTeamProperty(this.columnKey);
+    if (this.widget()?.scaleMode === "fixed") {
+      return false;
+    }
+    return isNameOrTeamProperty(this.columnKey);
+  }
+
+  get isNumericValue(): boolean {
+    return (
+      !isNameOrTeamProperty(this.columnKey) ||
+      isNumericalOrTimeText(this.formattedValue)
+    );
   }
 
   isImageProperty(key: string = this.columnKey): boolean {

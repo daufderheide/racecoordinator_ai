@@ -35,6 +35,8 @@ export class LaneColumnFitHelper {
   private lastFittedHeight = 0;
   private lastFittedInsets = "";
   private lastFittedValueFontSize?: number;
+  private lastFittedMinFontSize?: number;
+  private lastFittedMaxFontSize?: number;
   private lastFittedValueFontFamily?: string;
   private lastFittedScaleMode?: string;
   private lastFittedHasTeamName?: boolean;
@@ -94,6 +96,8 @@ export class LaneColumnFitHelper {
         this.lastInsetsKey = insetsKey;
       }
       const valSize = ctx.settings.valueFontSize ?? 0;
+      const minValSize = ctx.settings.minFontSize;
+      const maxValSize = ctx.settings.maxFontSize;
       const valFamily = ctx.settings.valueFontFamily || "";
       const scaleMode = ctx.widget?.scaleMode || "";
       const hasTeamName = Boolean(ctx.hasTeamName);
@@ -106,6 +110,8 @@ export class LaneColumnFitHelper {
         h === this.lastFittedHeight &&
         insetsKey === this.lastFittedInsets &&
         valSize === this.lastFittedValueFontSize &&
+        minValSize === this.lastFittedMinFontSize &&
+        maxValSize === this.lastFittedMaxFontSize &&
         valFamily === this.lastFittedValueFontFamily &&
         scaleMode === this.lastFittedScaleMode &&
         hasTeamName === this.lastFittedHasTeamName
@@ -117,6 +123,8 @@ export class LaneColumnFitHelper {
       this.lastFittedHeight = h;
       this.lastFittedInsets = insetsKey;
       this.lastFittedValueFontSize = valSize;
+      this.lastFittedMinFontSize = minValSize;
+      this.lastFittedMaxFontSize = maxValSize;
       this.lastFittedValueFontFamily = valFamily;
       this.lastFittedScaleMode = scaleMode;
       this.lastFittedHasTeamName = hasTeamName;

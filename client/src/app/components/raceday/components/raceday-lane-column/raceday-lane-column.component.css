@@ -651,6 +651,10 @@
   text-overflow: clip;
 }
 
+.lane-col-text.numeric-value {
+  text-overflow: clip;
+}
+
 .lane-col-value:has(.team-name),
 .lane-col-value:has(.drift-indicator) {
   flex-direction: column;
