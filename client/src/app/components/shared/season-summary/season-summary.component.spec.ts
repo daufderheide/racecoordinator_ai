@@ -443,4 +443,94 @@ describe("SeasonSummaryComponent", () => {
     btn.click();
     expect(editSpy).toHaveBeenCalled();
   });
+
+  it("should set title tooltip on races header and prevent text wrapping with white-space nowrap", () => {
+    const season: Season = {
+      entity_id: "s1",
+      name: "Championship Season",
+      drops: 0,
+      races: [
+        {
+          race_id: "r1",
+          race_name: "Race 1",
+          timestamp: 1000,
+          driver_results: [],
+        },
+      ],
+    };
+    const standings: SeasonStandingItem[] = [
+      {
+        driver_id: "d1",
+        driver_name: "Driver 1",
+        net_points: 25,
+        gross_points: 25,
+        races_run: 1,
+        race_scores: [],
+      },
+    ];
+    fixture.componentRef.setInput("season", season);
+    fixture.componentRef.setInput("standings", standings);
+    fixture.componentRef.setInput("compact", true);
+    fixture.detectChanges();
+
+    const racesHeader = fixture.nativeElement.querySelector(
+      "th.col-races",
+    ) as HTMLElement;
+    expect(racesHeader).toBeTruthy();
+    expect(racesHeader.getAttribute("title")).toBe("SM_RACES");
+    expect(racesHeader.textContent?.trim()).toBe("SM_RACES");
+
+    const computed = window.getComputedStyle(racesHeader);
+    expect(computed.whiteSpace).toBe("nowrap");
+
+    // Also verify non-compact mode
+    fixture.componentRef.setInput("compact", false);
+    fixture.detectChanges();
+    const nonCompactRacesHeader = fixture.nativeElement.querySelector(
+      "th.col-races",
+    ) as HTMLElement;
+    expect(window.getComputedStyle(nonCompactRacesHeader).whiteSpace).toBe(
+      "nowrap",
+    );
+  });
+
+  it("should extend data rows to line up with the column header by removing right padding in compact mode", () => {
+    const season: Season = {
+      entity_id: "s1",
+      name: "Championship Season",
+      drops: 0,
+      races: [
+        {
+          race_id: "r1",
+          race_name: "Race 1",
+          timestamp: 1000,
+          driver_results: [],
+        },
+      ],
+    };
+    const standings: SeasonStandingItem[] = [
+      {
+        driver_id: "d1",
+        driver_name: "Driver 1",
+        net_points: 25,
+        gross_points: 25,
+        races_run: 1,
+        race_scores: [],
+      },
+    ];
+    fixture.componentRef.setInput("season", season);
+    fixture.componentRef.setInput("standings", standings);
+    fixture.componentRef.setInput("compact", true);
+    fixture.detectChanges();
+
+    const headerContainer = fixture.nativeElement.querySelector(
+      ".standings-header-container",
+    ) as HTMLElement;
+    const bodyContainer = fixture.nativeElement.querySelector(
+      ".standings-body-container",
+    ) as HTMLElement;
+
+    expect(window.getComputedStyle(headerContainer).paddingRight).toBe("0px");
+    expect(window.getComputedStyle(bodyContainer).paddingRight).toBe("0px");
+  });
 });

@@ -243,6 +243,10 @@
   text-align: center;
 }
 
+.standings-table th.col-races {
+  white-space: nowrap;
+}
+
 .net-highlight {
   color: #38bdf8;
   font-size: 1.15rem;
@@ -305,9 +309,14 @@
   max-width: 100%;
 }
 
+.season-summary-container.compact .standings-header-container,
+.season-summary-container.compact .standings-body-container {
+  padding-right: 0;
+}
+
 .season-summary-container.compact .standings-table th,
 .season-summary-container.compact .standings-table td {
-  padding: 4px 14px;
+  padding: 4px 2px;
   font-size: 1.05rem;
 }
 
@@ -319,35 +328,48 @@
   vertical-align: bottom;
   overflow: hidden;
   text-overflow: ellipsis;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
-.season-summary-container.compact .col-rank {
-  width: 14%;
+.season-summary-container.compact .col-rank,
+.season-summary-container.compact .standings-table th.col-rank,
+.season-summary-container.compact .standings-table td.col-rank {
+  width: 9%;
   text-align: center;
   padding-left: 2px;
   padding-right: 2px;
 }
 
-.season-summary-container.compact .col-driver {
+.season-summary-container.compact .col-driver,
+.season-summary-container.compact .standings-table th.col-driver,
+.season-summary-container.compact .standings-table td.col-driver {
   width: auto;
   font-size: 1.05rem;
   padding-left: 4px;
+  padding-right: 4px;
 }
 
-.season-summary-container.compact .col-pts {
+.season-summary-container.compact .col-pts,
+.season-summary-container.compact .standings-table th.col-pts,
+.season-summary-container.compact .standings-table td.col-pts {
   width: 16%;
   text-align: right;
   padding-right: 4px;
   padding-left: 2px;
 }
 
-.season-summary-container.compact .col-races {
-  width: 10%;
+.season-summary-container.compact .col-races,
+.season-summary-container.compact .standings-table th.col-races,
+.season-summary-container.compact .standings-table td.col-races {
+  width: 15%;
   text-align: center;
   padding-left: 2px;
   padding-right: 2px;
+}
+
+.season-summary-container.compact .standings-table th.col-races {
+  white-space: nowrap;
 }
 
 .season-summary-container.compact .net-highlight {
