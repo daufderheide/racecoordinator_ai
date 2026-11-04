@@ -73,6 +73,26 @@ cp -r client/dist/client/* release/RaceCoordinator_Offline/web/
 cp -r server/src/main/resources/arduino release/RaceCoordinator_Offline/
 cp -r server/lib release/RaceCoordinator_Offline/lib
 
+# Bundle Help Center into Release Web Directory
+echo "Checking Help Center..."
+if command -v mkdocs >/dev/null 2>&1; then
+    echo "Building Help Center with MkDocs..."
+    mkdocs build --config-file help_center/mkdocs.yml
+elif python3 -m mkdocs --version >/dev/null 2>&1; then
+    echo "Building Help Center with python3 -m mkdocs..."
+    python3 -m mkdocs build --config-file help_center/mkdocs.yml
+fi
+
+if [ -d "help_center/site" ]; then
+    echo "Bundling Help Center into release web assets..."
+    mkdir -p release/RaceCoordinator/web/help
+    cp -r help_center/site/* release/RaceCoordinator/web/help/
+    mkdir -p release/RaceCoordinator_Offline/web/help
+    cp -r help_center/site/* release/RaceCoordinator_Offline/web/help/
+else
+    echo "WARNING: help_center/site directory not found. Offline help center will not be included."
+fi
+
 # 3. Download Dependencies for Offline Installer
 echo "Downloading Dependencies for Offline Installer..."
 mkdir build_cache 2>/dev/null || true

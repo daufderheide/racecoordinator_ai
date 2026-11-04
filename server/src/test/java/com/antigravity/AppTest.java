@@ -20,6 +20,7 @@ import io.javalin.http.Context;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.file.Files;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -159,6 +160,97 @@ public class AppTest {
 
       App.removeTrayIcon();
       assertNull(App.getCurrentTrayIcon());
+    }
+  }
+
+  @Test
+  public void testResolveHelpFilePath_WhenBundledDirectoryExists() throws Exception {
+    File tempDir = Files.createTempDirectory("app_static_test").toFile();
+    File helpDir = new File(tempDir, "help");
+    helpDir.mkdirs();
+    try {
+      String resolved = App.resolveHelpFilePath(tempDir.getAbsolutePath());
+      assertEquals(helpDir.getAbsolutePath(), resolved);
+    } finally {
+      helpDir.delete();
+      tempDir.delete();
+    }
+  }
+
+  @Test
+  public void testResolveHelpFilePath_WhenBundledMissing_FallsBackToHelpCenterSite()
+      throws Exception {
+    File tempDir = Files.createTempDirectory("app_static_no_help").toFile();
+    try {
+      String resolved = App.resolveHelpFilePath(tempDir.getAbsolutePath());
+      if (new File("help_center/site").isDirectory()) {
+        assertEquals("help_center/site", resolved);
+      } else if (new File("../help_center/site").isDirectory()) {
+        assertEquals("../help_center/site", resolved);
+      } else {
+        assertNull(resolved);
+      }
+    } finally {
+      tempDir.delete();
+    }
+  }
+
+  @Test
+  public void testHandleNotFound_IgnoresNonHtmlRequests() {
+    Context ctx = mock(Context.class);
+    when(ctx.header("Accept")).thenReturn("application/json");
+
+    App.handleNotFound(ctx, "non_existent_dir");
+
+    verify(ctx, never()).result(org.mockito.ArgumentMatchers.anyString());
+  }
+
+  @Test
+  public void testHandleNotFound_HelpPath_Serves404Html() throws Exception {
+    File tempDir = Files.createTempDirectory("app_help_404_test").toFile();
+    File helpDir = new File(tempDir, "help");
+    helpDir.mkdirs();
+    File help404 = new File(helpDir, "404.html");
+    try (FileWriter writer = new FileWriter(help404)) {
+      writer.write("<h1>Help Not Found</h1>");
+    }
+
+    try {
+      Context ctx = mock(Context.class);
+      when(ctx.header("Accept")).thenReturn("text/html,application/xhtml+xml");
+      when(ctx.path()).thenReturn("/help/invalid-page");
+
+      App.handleNotFound(ctx, tempDir.getAbsolutePath());
+
+      verify(ctx).contentType("text/html");
+      verify(ctx).result("<h1>Help Not Found</h1>");
+    } finally {
+      help404.delete();
+      helpDir.delete();
+      tempDir.delete();
+    }
+  }
+
+  @Test
+  public void testHandleNotFound_SpaFallback_ServesIndexHtml() throws Exception {
+    File tempDir = Files.createTempDirectory("app_spa_fallback_test").toFile();
+    File indexHtml = new File(tempDir, "index.html");
+    try (FileWriter writer = new FileWriter(indexHtml)) {
+      writer.write("<html><body>App</body></html>");
+    }
+
+    try {
+      Context ctx = mock(Context.class);
+      when(ctx.header("Accept")).thenReturn("text/html");
+      when(ctx.path()).thenReturn("/race-setup");
+
+      App.handleNotFound(ctx, tempDir.getAbsolutePath());
+
+      verify(ctx).contentType("text/html");
+      verify(ctx).result("<html><body>App</body></html>");
+    } finally {
+      indexHtml.delete();
+      tempDir.delete();
     }
   }
 }

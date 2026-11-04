@@ -219,6 +219,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-cache-
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Build Help Center
+        run: |
+          pip install mkdocs-material mkdocs-static-i18n
+          mkdocs build --config-file help_center/mkdocs.yml
+
       - name: Build Artifacts
         env:
           VERSION: ${{ needs.check-changes.outputs.version }}
@@ -227,7 +237,7 @@ jobs:
       - name: Verify Release Artifacts
         run: |
           VERSION="${{ needs.check-changes.outputs.version }}"
-          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator/web server/src/main/java/com/antigravity/App.java installer_base.iss client/src/app/version.ts
+          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator/web server/src/main/java/com/antigravity/App.java installer_base.iss client/src/app/version.ts --require-help
 
       - name: Upload Release Directory
         uses: actions/upload-artifact@v4
@@ -320,7 +330,7 @@ jobs:
       - name: Verify Linux Release Artifacts
         run: |
           VERSION="${{ needs.check-changes.outputs.version }}"
-          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator_Linux_ARM64/web "" "" ""
+          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator_Linux_ARM64/web "" "" "" --require-help
 
       - name: Upload Linux Package
         uses: actions/upload-artifact@v4

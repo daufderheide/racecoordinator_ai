@@ -167,6 +167,44 @@ describe('verify_release_artifacts', () => {
       assert.strictEqual(args.serverFile, 'server/src/main/java/com/antigravity/App.java');
       assert.strictEqual(args.installerFile, '');
       assert.strictEqual(args.versionFile, 'client/src/app/version.ts');
+      assert.strictEqual(args.requireHelp, false);
+    });
+
+    test('parseCliArgs should detect --require-help flag', () => {
+      const argv = [
+        'node',
+        'verify.js',
+        '1.0.0',
+        'release/web',
+        'server/App.java',
+        'installer.iss',
+        'version.ts',
+        '--require-help'
+      ];
+      const args = parseCliArgs(argv, {});
+      assert.strictEqual(args.requireHelp, true);
+    });
+
+    test('should fail when requireHelp is true and help/index.html is missing', () => {
+      const webDir = path.join(tmpDir, 'web');
+      fs.mkdirSync(webDir);
+      fs.writeFileSync(path.join(webDir, 'main.1234.js'), 'console.log("CLIENT_VERSION_BUILD: 1.0.0");');
+
+      const result = verifyReleaseArtifacts({ version: '1.0.0', webDir, requireHelp: true });
+      assert.strictEqual(result.isValid, false);
+      assert.ok(result.errors.some(e => e.includes('Help center index not found')));
+    });
+
+    test('should succeed when requireHelp is true and help/index.html exists', () => {
+      const webDir = path.join(tmpDir, 'web');
+      fs.mkdirSync(webDir);
+      fs.writeFileSync(path.join(webDir, 'main.1234.js'), 'console.log("CLIENT_VERSION_BUILD: 1.0.0");');
+      fs.mkdirSync(path.join(webDir, 'help'));
+      fs.writeFileSync(path.join(webDir, 'help', 'index.html'), '<html>Help</html>');
+
+      const result = verifyReleaseArtifacts({ version: '1.0.0', webDir, requireHelp: true });
+      assert.strictEqual(result.isValid, true);
+      assert.strictEqual(result.errors.length, 0);
     });
   });
 });

@@ -24,6 +24,7 @@ import com.antigravity.util.PortConflictInspector;
 import com.antigravity.util.PortConflictReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
+import io.javalin.core.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.plugin.json.JavalinJackson;
@@ -456,6 +457,7 @@ public class App {
     return Javalin.create(
         config -> {
           config.addStaticFiles(staticFilePath, Location.EXTERNAL);
+          configureHelpStaticFiles(config, staticFilePath);
           config.enableCorsForAllOrigins();
           config.maxRequestSize = 250_000_000L;
 
@@ -492,6 +494,32 @@ public class App {
                 return server;
               });
         });
+  }
+
+  static void configureHelpStaticFiles(JavalinConfig config, String staticFilePath) {
+    String helpPath = resolveHelpFilePath(staticFilePath);
+    if (helpPath != null && !Paths.get(staticFilePath, "help").equals(Paths.get(helpPath))) {
+      config.addStaticFiles(
+          staticFiles -> {
+            staticFiles.hostedPath = "/help";
+            staticFiles.directory = helpPath;
+            staticFiles.location = Location.EXTERNAL;
+          });
+    }
+  }
+
+  static String resolveHelpFilePath(String staticFilePath) {
+    Path bundledHelp = Paths.get(staticFilePath, "help");
+    if (Files.isDirectory(bundledHelp)) {
+      return bundledHelp.toString();
+    }
+    String[] possibleHelpPaths = {"help_center/site", "../help_center/site"};
+    for (String path : possibleHelpPaths) {
+      if (Files.isDirectory(Paths.get(path))) {
+        return path;
+      }
+    }
+    return null;
   }
 
   private static void registerUpdateRoutes(
@@ -736,6 +764,11 @@ public class App {
   private static void configureJavalinMiddleware(Javalin app, String staticFilePath) {
     app.before(
         ctx -> {
+          if ("/help".equals(ctx.req.getRequestURI())) {
+            ctx.redirect("/help/");
+            return;
+          }
+
           String path = ctx.path();
 
           if (!path.startsWith("/api/")
@@ -777,21 +810,44 @@ public class App {
           }
         });
 
-    app.error(
-        404,
-        ctx -> {
-          String accept = ctx.header("Accept");
-          if (accept != null && accept.contains("text/html")) {
-            Path indexPath = Paths.get(staticFilePath, "index.html");
-            if (Files.exists(indexPath)) {
-              applyNoCacheHeaders(ctx);
-              ctx.contentType("text/html");
-              ctx.result(new String(Files.readAllBytes(indexPath)));
-            } else {
-              logger.error("SPA Fallback: index.html not found at {}", indexPath.toAbsolutePath());
-            }
+    app.error(404, ctx -> handleNotFound(ctx, staticFilePath));
+  }
+
+  static void handleNotFound(Context ctx, String staticFilePath) {
+    String accept = ctx.header("Accept");
+    if (accept != null && accept.contains("text/html")) {
+      if (ctx.path().startsWith("/help")) {
+        Path help404 = Paths.get(staticFilePath, "help", "404.html");
+        if (!Files.exists(help404)) {
+          help404 = Paths.get("help_center", "site", "404.html");
+        }
+        if (!Files.exists(help404)) {
+          help404 = Paths.get("..", "help_center", "site", "404.html");
+        }
+        if (Files.exists(help404)) {
+          applyNoCacheHeaders(ctx);
+          ctx.contentType("text/html");
+          try {
+            ctx.result(new String(Files.readAllBytes(help404)));
+            return;
+          } catch (Exception e) {
+            logger.error("Error reading help 404 page", e);
           }
-        });
+        }
+      }
+      Path indexPath = Paths.get(staticFilePath, "index.html");
+      if (Files.exists(indexPath)) {
+        applyNoCacheHeaders(ctx);
+        ctx.contentType("text/html");
+        try {
+          ctx.result(new String(Files.readAllBytes(indexPath)));
+        } catch (Exception e) {
+          logger.error("Error reading index.html", e);
+        }
+      } else {
+        logger.error("SPA Fallback: index.html not found at {}", indexPath.toAbsolutePath());
+      }
+    }
   }
 
   private static String resolveStaticFilePath() {

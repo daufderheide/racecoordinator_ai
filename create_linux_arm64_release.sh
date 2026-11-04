@@ -76,6 +76,10 @@ if [ "$FROM_ARTIFACTS" = "true" ]; then
 else
     cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar "$DIST_DIR/RaceCoordinator.jar"
     cp -r client/dist/client/* "$DIST_DIR/web/"
+    if [ -d "help_center/site" ]; then
+        mkdir -p "$DIST_DIR/web/help"
+        cp -r help_center/site/* "$DIST_DIR/web/help/"
+    fi
     cp -r server/src/main/resources/arduino/* "$DIST_DIR/arduino/"
 fi
 

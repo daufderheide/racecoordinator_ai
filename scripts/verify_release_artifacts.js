@@ -63,6 +63,16 @@ function verifyReleaseArtifacts(options = {}) {
           );
         }
       }
+
+      // 1b. Verify Help Center is present if required
+      if (options.requireHelp) {
+        const helpIndex = path.join(webDirPath, 'help', 'index.html');
+        if (!fs.existsSync(helpIndex)) {
+          errors.push(
+            `Help center index not found in release web artifacts: ${path.relative(process.cwd(), helpIndex)}`
+          );
+        }
+      }
     }
   }
 
@@ -154,12 +164,15 @@ function parseCliArgs(argv = process.argv, env = process.env) {
   const installerFileArg = resolveArg(argv[5], 'installer_base.iss');
   const versionFileArg = resolveArg(argv[6], 'client/src/app/version.ts');
 
+  const requireHelp = argv.includes('--require-help');
+
   return {
     version: versionArg,
     webDir: webDirArg,
     serverFile: serverFileArg,
     installerFile: installerFileArg,
-    versionFile: versionFileArg
+    versionFile: versionFileArg,
+    requireHelp
   };
 }
 

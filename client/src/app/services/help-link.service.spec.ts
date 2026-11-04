@@ -178,4 +178,60 @@ describe("HelpLinkService", () => {
       );
     });
   });
+
+  describe("reachability and offline fallback", () => {
+    it("should return false from isOnline when navigator is offline", () => {
+      spyOnProperty(navigator, "onLine", "get").and.returnValue(false);
+      expect(service.isOnline()).toBe(false);
+    });
+
+    it("should return true from isOnline when navigator is online and reachable", () => {
+      spyOnProperty(navigator, "onLine", "get").and.returnValue(true);
+      (service as any).onlineReachable = true;
+      expect(service.isOnline()).toBe(true);
+    });
+
+    it("should return false from isOnline when navigator is online but reachable is false", () => {
+      spyOnProperty(navigator, "onLine", "get").and.returnValue(true);
+      (service as any).onlineReachable = false;
+      expect(service.isOnline()).toBe(false);
+    });
+
+    it("should set onlineReachable to false when navigator is offline in checkOnlineReachability", () => {
+      spyOnProperty(navigator, "onLine", "get").and.returnValue(false);
+      (service as any).onlineReachable = true;
+      service.checkOnlineReachability();
+      expect((service as any).onlineReachable).toBe(false);
+    });
+
+    it("should probe online site and set onlineReachable to true on fetch success", async () => {
+      spyOnProperty(navigator, "onLine", "get").and.returnValue(true);
+      spyOn(window, "fetch").and.returnValue(Promise.resolve(new Response()));
+
+      await service.checkOnlineReachability();
+
+      expect((service as any).onlineReachable).toBe(true);
+    });
+
+    it("should probe online site and set onlineReachable to false on fetch failure", async () => {
+      spyOnProperty(navigator, "onLine", "get").and.returnValue(true);
+      spyOn(window, "fetch").and.returnValue(
+        Promise.reject(new Error("Network Error")),
+      );
+
+      await service.checkOnlineReachability();
+
+      expect((service as any).onlineReachable).toBe(false);
+    });
+
+    it("should handle window offline event", () => {
+      (service as any).onlineReachable = true;
+      window.dispatchEvent(new Event("offline"));
+      expect((service as any).onlineReachable).toBe(false);
+    });
+
+    it("should return relative /help path from getOfflineBase when port is not 4200", () => {
+      expect(service.getOfflineBase()).toBe("/help");
+    });
+  });
 });

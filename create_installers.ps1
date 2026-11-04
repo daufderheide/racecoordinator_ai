@@ -119,6 +119,29 @@ if (Test-Path "server\lib") {
     Copy-Item "server\lib" "release\RaceCoordinator_Offline\lib" -Recurse
 }
 
+# Bundle Help Center into Release Web Directory
+Write-Host "Checking Help Center..." -ForegroundColor Cyan
+if (Get-Command mkdocs -ErrorAction SilentlyContinue) {
+    Write-Host "Building Help Center with MkDocs..." -ForegroundColor Cyan
+    mkdocs build --config-file help_center/mkdocs.yml
+} elseif (Get-Command python -ErrorAction SilentlyContinue) {
+    try {
+        python -m mkdocs build --config-file help_center/mkdocs.yml
+    } catch {
+        Write-Warning "Failed to build Help Center with python -m mkdocs: $_"
+    }
+}
+
+if (Test-Path "help_center\site") {
+    Write-Host "Bundling Help Center into release web assets..." -ForegroundColor Cyan
+    New-Item -ItemType Directory -Path "release\RaceCoordinator\web\help" -Force
+    New-Item -ItemType Directory -Path "release\RaceCoordinator_Offline\web\help" -Force
+    Copy-Item "help_center\site\*" "release\RaceCoordinator\web\help\" -Recurse -Force
+    Copy-Item "help_center\site\*" "release\RaceCoordinator_Offline\web\help\" -Recurse -Force
+} else {
+    Write-Warning "help_center\site directory not found. Offline help center will not be included."
+}
+
 # Extract and Bundle Dependencies
 function Extract-To-Release {
     param($ZipName, $DestSubDir, $BundleName)
