@@ -1,256 +1,133 @@
-# UI Editor
+# Customize UI
 
-## Overview
-
-The UI Editor allows you to design custom raceday layouts, configure driver leaderboard columns, customize theme sound effects and assets, and load modular [Custom Widgets](custom-widgets.md).
-
-## Custom Widgets & Widget Folder
-
-Custom widgets can be added to your Custom UI layouts:
-- **Custom Widgets Folder**: Set your local widgets folder in the **Custom UI** section at the bottom of the editor.
-- **Update Sample Widgets**: Click **Update Sample Widgets** to generate or update ready-to-use sample widgets in a `sample/` folder (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Widget Library Groups**: The Widget Library organizes widgets into groups (**Race Coordinator AI**, **Custom Root**, and custom folders like **sample**) with nested sub-groups (such as **Actions** and **Heat Data** with categorized subfolders) and an instant search filter.
-- **Dynamic Configuration**: When a custom widget is selected on the canvas, its custom properties (colors, thresholds, toggles, text fields) appear dynamically in the Widget Configuration panel.
-
-For complete widget development details, see the [Custom Widgets Guide](custom-widgets.md).
-
-## Layout & Column Configuration
-
-- Drag and drop widgets from the palette onto the canvas.
-- Resize, reposition, and align widgets to match your screen resolution. All widgets are bounded to prevent dragging or resizing past the canvas frame.
-- **Widget Configuration Controls**:
-  - **Position & Size**: Precisely position and dimension the selected widget using the **X**, **Y**, **Width**, and **Height** numeric inputs.
-  - **Delete Widget**: Click the trash icon in the configuration header to remove the selected widget.
-- **Keyboard Shortcuts**:
-  - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget from the layout.
-  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 1px (or 10px holding <kbd>Shift</kbd>).
-  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Undo previous action (including widget deletions and nudges).
-  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>: Redo previous action.
-- Configure column order, column visibility, anchors, and width preferences.
-
-## Timer Widget Configuration
-
-The **Timer** widget displays the elapsed or remaining heat/race time with configurable presentation styles:
-
-- **Display Format**:
-  - **Dynamic (1:23 / 45s)**: Compact display that omits leading zeros and drops the minute unit when under one minute.
-  - **Minutes & Seconds (01:23 / 00:45)**: Constant two-digit minutes and seconds, preventing character length jumps and auto-scale font resizing when dropping below one minute.
-  - **Minutes & Seconds (1:23 / 0:45)**: Keeps minutes displayed below one minute (`0:45`), using single-digit minutes when over one minute (`1:23`).
-  - **Full Clock (00:01:23 / 00:00:45)**: Fixed eight-character digital clock (`HH:MM:SS`), ideal for endurance racing.
-  - **Total Seconds (83s / 45s)**: Displays total remaining or elapsed seconds without minute or hour subdivision.
-- **Sub-second Timing**:
-  - **When Below Threshold**: Shows fractional seconds (1 to 3 decimal places) when time drops below the configured threshold (e.g. final 10 seconds).
-  - **Always**: Displays fractional seconds continuously throughout the entire heat.
-  - **Never**: Restricts the timer to whole seconds only.
-- **Live Preview**: The configuration panel includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
+The **Customize UI** page allows you to configure system-wide interface settings, directory locations for custom UI files and modular custom widgets, post-race Excel export templates, screen transition animations, and master audio and Text-to-Speech (TTS) parameters.
 
 > [!NOTE]
-> These exact time formatting options (Display Format presets, Sub-second timing modes, threshold, and decimals slider with live preview) are also supported for **Total Time** widgets (Heat Total Time and Race/Overall Total Time) and for **Total Time** columns in the Lane View. In the Lane View column list, click the timer options icon (<span class="material-icons">more_time</span>) next to any Total Time column to customize its time format.
+> To visually design custom raceday screens and leaderboards, visit the [Layout Editor](layout-editor.md). To configure visual flag, countdown, and fuel gauge image sets or race sound effects, visit the [Theme Editor](theme-editor.md).
 
-## Countdown Widget Configuration
+---
 
-The **Countdown** widget displays visual start lights and triggers start audio during the starting sequence:
+## Overview {: #overview }
 
-- **Maximum Lamps**: Sets the maximum number of lamps to display (defaults to 5, range 1 to 10). When the start countdown duration exceeds this number (for example, a 6-second start countdown with 5 maximum lamps), all lamps remain off/dim for the initial difference (1 second) before sequentially illuminating the countdown lamps.
-- **Fade In Animation**: Controls whether the countdown overlay and background blur smoothly fade in when the countdown begins. When unchecked, the lights and background appear immediately.
-- **Orientation**: Switch between **Horizontal** and **Vertical** light bar arrangements.
-- **Glow & Blur Effects**: Customize lamp illumination halos, red/green overlap scaling, and background blur amount or target area.
+The Customize UI settings page provides centralized control over global interface behaviors and application-level audio configurations:
 
-## Lane Column Widgets & Replication
+- **Global Scope**: Changes made on this page apply across the entire application and all race sessions.
+- **Continuous Auto-Save**: Adjustments to volume, voice pitch, queue timings, directory selections, and transitions take effect immediately and are saved automatically.
+- **Collapsible Setting Expanders**: Settings are organized into dedicated, collapsible sections for **Customize UI Settings** and **Audio Settings**.
+- **Undo / Redo Support**: Modifications made during your current session can be quickly undone or reapplied using the toolbar controls.
 
-The **Lane Column** widget allows individual data columns from the lane view (such as Driver Info, Last Lap Time, Best Lap / Personal Record, Fuel %, Last Laps history, Sector Speeds, Position, etc.) to be placed anywhere on the canvas as independent modular cards.
+---
 
-- **Target Driver & Standalone Cards**:
-  - Individual cards placed outside of a grid select which driver to display: by **Track Lane** (Lane 1 through Lane 8), by **Heat Position** (1st, 2nd, etc.), by **Overall Standings** rank, or by **Driver Seed**.
+## Toolbar Actions {: #toolbar-actions }
 
-### Inset Widgets & Alignment
+The top toolbar provides essential navigation and session-level actions:
 
-Each Lane Column card supports up to 8 secondary **Inset Slots** arranged around the perimeter of the primary data metric (Top-Left, Top-Center, Top-Right, Center-Left, Center-Right, Bottom-Left, Bottom-Center, Bottom-Right):
+- **Back**: Returns to the previous screen or navigation menu.
+- **Undo / Redo**: Reverts or reapplies recent setting changes made during the current editing session.
+- **Help (?)**: Launches the interactive guided tour highlighting each section and expander on the page.
 
-- **Data Binding**: Insets can display secondary metrics (e.g. Best Lap, Lap Count, Fuel %, Heats Raced, Driver Name), images/avatars, or embedded Custom Widgets.
-- **Horizontal & Vertical Alignment**:
-  - In the Inspector's Inset tab, each placed inset provides **Horizontal Alignment** (**Left**, **Center**, **Right**) and **Vertical Alignment** (**Top**, **Center**, **Bottom**) dropdowns.
-  - Insets default to their natural perimeter positions (e.g. `Top-Left` defaults to Left/Top, `Bottom-Right` defaults to Right/Bottom), ensuring complete visual compatibility with existing layouts while providing full control over positioning within each inset slot.
-- **Custom Styling**: Insets can inherit column fonts and colors or configure custom typography, text colors, decimal places, and format thresholds.
+---
 
-### Grid Data Sources: Heat Data vs. Overall Race Data
+## Customize UI Settings {: #customize-ui-settings }
 
-Every data grid in the UI Editor has a **Data Source** setting on the Grid tab that dictates which drivers populate the grid rows:
+The **Customize UI Settings** section configures local filesystem directories, custom Excel export templates, and application screen animations:
 
-- **Heat Data (`heat`)**:
-  - **Driver Scope**: Binds exclusively to the participants actively racing in the current heat (`heatDrivers`).
-  - **Display Behavior**: Only drivers currently on track in the active heat are shown. Resting drivers or participants scheduled in other heats are omitted.
-  - **Paging & Scrolling**: Row count is bounded by the active heat drivers and physical track lanes. The grid will never scroll past the active heat participants into empty rows.
-- **Overall Race Data (`overall`)**:
-  - **Driver Scope**: Binds to **all registered participants** across the entire tournament or event (`participants`).
-  - **Display Behavior**: Every driver registered in the event can be displayed in the grid, regardless of whether they are on track in the current heat or resting.
-  - **Paging & Scrolling**: Row count reflects the entire tournament field (e.g. 16, 24, or 32 racers across multiple heats). If the grid has fewer visible rows than total participants, it automatically supports multi-page auto-scrolling to cycle through the full event standings.
-  - **Off-Track Drivers**: For drivers not currently on track, cumulative participant statistics are supplied automatically.
+### Custom UI Directory
 
-### Widgets: Heat Data Widgets vs. Overall Race Data Widgets
+Specifies a local folder used to override built-in application templates and store client log files when needed:
 
-The Toolbox organizes data columns and cards into **Heat Data** and **Overall Data** groups. The choice of widget determines what statistics are calculated and displayed for each row:
+- **Directory Path**: Displays the active folder name and absolute file path. When unset, the application uses default internal locations.
+- **Select Directory**: Opens a native folder selection dialog to browse and select a local directory.
+- **Enter Path**: Opens a modal allowing you to manually type or paste an absolute filesystem directory path (useful when running headless or across network shares).
+- **Reset to Default**: Clears the custom directory path and restores built-in defaults.
 
-- **Heat Data Widgets** (e.g. *Lap Count, Last Lap Time, Heat Best Lap, Segment Time, Reaction Time, Heat Position / Rank, Heat Gaps, Fuel / Telemetry, Ghost Pacing*):
-  - Extract performance metrics strictly from the **active heat**.
-  - **In a Heat Data Grid**: Every row displays live, real-time telemetry and lap times for the cars currently racing on track.
-  - **In an Overall Race Data Grid**: Drivers currently on track display their live heat telemetry; however, inactive or resting drivers who are not on track in this heat display dashes (`--`) or zeros for heat-specific metrics because they have no live heat data.
-- **Overall Race Data Widgets** (e.g. *Overall Rank, Overall Total Laps, Overall Physical Laps, Overall Total Time, Best Race Lap Time, Overall Average Lap Time, Overall Median Lap Time, Overall Consistency, Overall Gaps, Win Probability / Predictions, Heats Raced / Heats Remaining*):
-  - Extract cumulative performance metrics across **all completed heats** in the tournament.
-  - **In an Overall Race Data Grid**: Every driver row (whether currently racing or resting in the pits between heats) displays their full cumulative race statistics, total tournament laps, event-best lap time, and tournament standing.
-  - **In a Heat Data Grid**: The active heat drivers display their cumulative overall standings and event-wide statistics alongside their live heat metrics (e.g. showing a driver's overall tournament rank while watching their active heat laps).
+> [!WARNING]
+> Setting a custom UI directory overrides core application templates and is intended only for advanced users developing custom interfaces or troubleshooting client logs.
 
-#### Heats Raced & Remaining Widget
+### Custom Widgets Directory
 
-The **Heats Raced** (`heatsRaced`) widget displays heat participation progress for each competitor:
+Configures the root directory where Race Coordinator AI searches for modular [Custom Widgets](custom-widgets.md):
 
-- **Heats Raced (Default Mode)**: Displays the number of heats the competitor has already completed or is currently racing in during the event.
-- **Heats Remaining Mode**: When the widget's **Heats Display Mode** setting is toggled from *Heats Raced* to *Heats Remaining*, the card displays how many scheduled heats the driver still has left to run. If no custom column header label is provided, the header automatically changes from `HEATS RACED` to `HEATS REMAINING`.
-- This configuration is also available for insets attached to any lane column card.
+- **Directory Path**: Displays the selected custom widget folder name and path.
+- **Select Directory**: Opens a folder picker to choose a local folder containing custom widget packages.
+- **Enter Path**: Manually enter an absolute folder path.
+- **Export Starter Widgets**: Copies ready-to-use starter widget packages into a `sample/` subfolder within your selected widgets directory (including `sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, and `sample-detailed-leaderboard`). This button is enabled once a valid widget directory is selected.
+- **Reset to Default**: Clears the custom widget directory path.
 
-#### Gap Widgets (Gaps & Intervals)
+For full technical specifications on creating custom widgets, see the [Custom Widgets Guide](custom-widgets.md).
 
-Race Coordinator AI provides **2 configurable gap widgets** across Heat Data and Overall Race Data:
+### Custom Export Template
 
-1. **Heat Gap (`gap`)**: Evaluates real-time intervals strictly between cars actively competing in the current heat.
-2. **Overall Gap (`overallGap`)**: Evaluates cumulative intervals across all event participants.
+Manages the custom Microsoft Excel (`.xlsx`) template used when exporting race results and statistics:
 
-Each gap widget can be customized in the Column Inspector with two key configuration options:
-- **Target**:
-  - **Leader**: Interval relative to the current race leader (P1).
-  - **Position Ahead**: Interval relative to the competitor running immediately ahead in the standings (e.g. P3 vs P2).
-- **Calculation Mode**:
-  - **Always Time**: Continuous mathematical pace projection in seconds (`+X.XXX`).
-  - **Time and Laps Down**: Formula 1 style gap displaying time on the lead lap, or lap count (`+1 Lap`, `+N Laps`) when lapped.
-  - **Always Laps**: Exact lap delta between competitors calculated on lap completion, incorporating partial lap progress of the compared driver.
+- **Template Status**: Displays the file name of the currently active custom Excel workbook template, or indicates when the system default template is active.
+- **Select Template**: Uploads a custom `.xlsx` workbook from your local computer to embed as your export template.
+- **Download Template**: Downloads the currently active template file to your computer for viewing or editing in Microsoft Excel.
+- **Test Export**: Generates and downloads a sample `.xlsx` export file populated with dummy race results, heats, and telemetry data to test your template formatting, formulas, and charts.
+- **Template Variables**: Opens an interactive reference modal listing all supported replacement tags (such as `{{RACE_NAME}}`, `{{HEAT_NUMBER}}`, `{{DRIVER_NAME}}`, `{{LAP_TIME}}`, etc.) that you can place in Excel cells to dynamically insert race data.
+- **Reset to Default**: Reverts to the built-in standard Excel export template.
 
-> [!NOTE]
-> Multiple gap widgets with distinct configurations (e.g. a Leader Gap column and a Position Gap column) can be placed on the same grid or layout simultaneously.
+> [!TIP]
+> If you edit your Excel template file externally in Microsoft Excel or another spreadsheet program, be sure to re-upload it using **Select Template** so the updated workbook is saved into Race Coordinator AI. For complete template token details, see the [Custom XLS Export Guide](custom-xls-export.md).
 
-For complete mathematical formulas, finish type adaptations, and timing specifications, see the [Gap Calculations Guide](gap-calculations.md).
+### Page Transitions
 
-#### Last Laps Widget (`lastLaps`)
+Controls the visual animation style used when navigating between screens and views in the application:
 
-The **Last Laps** (`lastLaps`) widget displays recent lap times completed by the driver in the active heat:
+- **Slide** (Default): Smooth horizontal sliding transition between pages.
+- **Fade**: Smooth opacity dissolve between views.
+- **Zoom**: Modern zoom-in scale transition.
+- **Flip**: 3D card flip transition effect.
+- **None**: Instantaneous page switching without animation (recommended for lower-power devices or dedicated kiosks).
 
-- **Last Laps to Display**: Configures how many recent laps to render within the widget (slider range 1–20, input range 1–50). Defaults to `5`.
-- **Lap Separation & Borders**: Configures how individual laps are separated. Options include border style (solid, dashed, dotted, double), border color, border width (1–10px), border margin (-20px to 40px+ to control how far in or out borders sit and seamlessly align with neighboring column borders), corner radius (0–32px), and separation mode (a divider line between laps or an individual border box around each lap).
-- **Best Lap Highlighting**: Highlights if a lap in the list is the driver's best lap time. Options include custom text color, background badge color, font weight (normal, bold, bolder/900), underline, italic, and dedicated best lap accent borders.
-- **Dynamic Sizing & Fit**: The card automatically scales font sizes and line heights to fit the configured number of laps cleanly within the allocated column geometry.
-- **Cross-Grid Synchronization**: In lane grids, configuring or applying time formats synchronizes the last laps display count and styling across all competing lanes.
+---
 
-#### Average Score Widget (`averageScore`)
+## Audio Settings {: #audio-settings }
 
-The **Average Score** (`averageScore`) widget displays the average heat score across all heats the driver has finished:
+The **Audio Settings** section manages system-wide master volume levels, dispatcher queue behaviors, and synthesized Text-to-Speech (TTS) callouts:
 
-- **Heat Data Only**: Belongs strictly to the **Heat Data** toolbox group (`analysis`). When placed in an overall race data context or bound to a non-heat resting driver, it displays dashes (`--`).
-- **Scoring Method Adaptation**: Automatically calculates the average based on the race's configured heat scoring method:
-  - **Lap Count Scoring**: Averages the driver's lap count across completed heats (formatted using configured lap decimals, default 2).
-  - **Fastest Lap Scoring**: Averages the driver's best lap times across completed heats where a valid lap was recorded (formatted using configured time decimals, default 3).
-  - **Total Time Scoring**: Averages the driver's total heat times across completed heats (formatted with timer display options or time decimals).
-- **Show Partial Heats**:
-  - When unchecked (default), only fully completed heats count toward the average score.
-  - When checked, the widget incorporates the currently active heat in practice or progress by weighting its contribution by how far through the heat it is:
-    - **Lap Race**: If it is a 10-lap heat and the lead driver is on lap 4, the active heat counts as 0.4 in the denominator, and the driver's active heat score is added to the numerator.
-    - **Timed Race**: The heat progress fraction is determined by elapsed heat time relative to the target heat duration.
-    - **Unconfigured Finish Value**: If the race configuration does not allow determining heat progress (e.g. `finishValue <= 0` or undefined), partial heats are not counted.
-- **Decimal Precision**: Fully configurable in the Column Inspector (0–3 decimal places) for main cards and insets.
+### Master Volume
 
-### Grid Sorting & Interaction Matrix
+Controls the overall master volume level (0% to 100%) for all audio output in Race Coordinator AI. Adjusting this slider scales all sound effects, countdown beeps, warning horns, and voice announcements simultaneously.
 
-The **Grid Sorting** dropdown on the Grid tab controls the row ordering. Its behavior depends directly on whether the grid's **Data Source** is set to **Heat Data** or **Overall Data**:
+### Urgent Queue Timeout
 
-| Sorting Option | In a Heat Data Grid (`gridType: heat`) | In an Overall Data Grid (`gridType: overall`) |
-| :--- | :--- | :--- |
-| **Track Lane** | Static ordering by physical track lane (Lane 1, Lane 2, ...). Each row is tied to a specific lane and its active driver. | Active drivers currently on track appear first in physical lane order (Lane 1, Lane 2, ...), followed by all resting/off-track participants sorted by their overall standings rank. |
-| **Heat Position** | Dynamic live reordering by running position in the active heat (1st, 2nd, 3rd in the heat). Rows reorder live as cars cross the finish line and pass each other. | Active heat drivers appear at the top sorted by their live heat position (1st, 2nd, ...), followed by all inactive participants sorted by overall tournament rank. |
-| **Overall Standings** | Sorts the **active heat drivers only** by their tournament/event standing. (For example, if drivers ranked 2nd, 5th, 8th, and 14th overall are competing in the heat, the 4 rows order them #2, #5, #8, #14). The grid never displays non-heat drivers or scrolls into empty rows. | Sorts the **entire field of event participants** by their overall race standings (1st overall, 2nd overall, 3rd overall, ...). The entire field dynamically reorders as cumulative points and laps update across the event. |
-| **Driver Seed** | Sorts the active heat drivers by their initial qualifying/seed number (lowest seed first). | Sorts all event participants by initial qualifying/seed position (Seed 1, Seed 2, Seed 3, ...) across the entire field. |
-- **Orientation**: Supports **Vertical** (stacked header over value) and **Horizontal** (side-by-side header and value) layouts.
-- **Title Bar Styling & Customization**:
-  - The title bar is styled identically to the Lane View column header by default (semi-transparent dark background `rgba(68, 68, 68, 0.7)`, bold white text, rounded top corners, and divider border).
-  - **Show Header**: Toggle the title bar on or off. When disabled, the title bar is completely removed from the card, maximizing the area for primary values and insets.
-  - **Custom Header Label**: Override the default data point name with custom title text.
-  - **Typography & Alignment**: Customize the header font family, font size, and text alignment (Left, Center, Right).
-  - **Header Text & Background Color**: Customize the title bar background color and text color with full color picker support and one-click reset to default.
-- **Color Inheritance & Overrides**: Cards default to inheriting the assigned lane's background and foreground colors (`Use Lane Colors`), or can be given custom background, text, and border color overrides.
-- **Replicate Across Lanes / Positions**:
-  - Rather than creating and aligning cards for each lane manually, configure a single lane or position setup and click **Replicate Across Lanes / Positions...** in the configuration panel.
-  - Choose the layout direction (**Horizontal** side-by-side or **Vertical** stacked), total target lanes/positions (defaulting to the maximum lane count across all tracks in the database), spacing mode (**Auto-fit to Canvas** or **Preserve Spacing**), and optionally replace existing widgets on target lanes.
-  - **Realtime Replication Mode**: When replicating, the editor enters an interactive blueprint replication mode with visual lane cell guides and magnetic snapping. While in this mode, you place, resize, and design widgets in Lane 1 (Master), and changes immediately mirror in real time across all lanes. Mirrored widgets in Lanes 2..N are non-editable live previews; clicking on any mirrored widget directs focus to the Lane 1 master.
-  - **Intelligent Grid Bounds & Resizing**: The replication space automatically expands in all four directions to fill available canvas space until meeting the boundary of any existing non-grid widget. You can adjust the overall replication area dynamically using the 8 perimeter resize handles on the blueprint overlay.
-  - Clicking **Done** bakes the layout into independent widgets.
-  - **Template Re-entry & Detach**: Selecting any baked grid widget later shows a configuration card allowing you to click **Edit Grid Template** to re-enter realtime replication mode anytime, or **Detach from Grid** to permanently break the link.
+Sets how long high-priority urgent alerts (such as *Yellow Flag*, *Heat Finished*, or *False Start*) will wait in the audio queue if another urgent message is already being spoken:
 
-### Grid Synchronization: Mirror Columns vs. Mirror Rows
+- **3 Seconds**: Aggressive timeout; discards queued alerts quickly to ensure spoken notifications stay tightly synchronized with real-time track action.
+- **5 Seconds** (Default): Balanced duration ensuring urgent alerts are heard without falling significantly behind live events.
+- **10 Seconds**: Relaxed timeout; allows longer announcements to finish before skipping subsequent urgent notifications.
 
-A grid in Race Coordinator AI is a two-dimensional matrix organized into competitor slots and data metrics:
+Expired alerts that exceed the timeout limit are automatically dropped so old alerts are not played out of context.
 
-- **Vertical Orientation (Default)**:
-  - **Rows (Competitor Slots)**: Representing each individual physical track lane (**Lane 1, Lane 2, ...**) or race running position (**Position 1, Position 2, ...**).
-  - **Columns (Data Fields)**: Representing each data metric displayed within a slot (e.g. *Driver Name, Heat Lap Count, Last Lap Time, Best Lap, Gap, Car Image*).
-  - **Mirror Columns**: Governs visual styling synchronization across all data columns.
-  - **Mirror Rows**: Governs row-to-row replication and geometry synchronization from the **Master Row (Lane 1 / Position 1)** to all other rows (**Lanes 2..N**).
-- **Horizontal Orientation**:
-  - **Columns (Competitor Slots)**: Representing each individual physical track lane (**Lane 1, Lane 2, ...**) or race running position (**Position 1, Position 2, ...**). Each lane in a heat view is a column.
-  - **Rows (Data Fields)**: Representing each data metric displayed within a slot stacked vertically.
-  - **Mirror Columns**: Governs column-to-column replication and geometry synchronization from the **Master Column (Lane 1 / Position 1)** to all other columns (**Lanes 2..N**). When unchecked, columns (lanes) become independent and the **Re-mirror to All Columns** button appears.
-  - **Mirror Rows**: Governs visual styling synchronization across all data rows (metrics).
+### Callout Spacing
 
-The Grid Inspector provides two core synchronization controls in the **Grid Structure & Layout** section: **Mirror Columns** and **Mirror Rows**.
+Configures the minimum silence buffer between consecutive spoken announcements to prevent overlapping or clipped audio:
 
-#### Mirror Columns
+- **None (0ms)**: Consecutive announcements play immediately back-to-back.
+- **Short (500ms)** (Default): Brief half-second pause between callouts, providing natural pacing while keeping announcements timely.
+- **Normal (1000ms)**: 1-second pause between callouts for clearer separation.
+- **Relaxed (1500ms)**: 1.5-second pause between announcements for a relaxed commentary pace.
 
-**Mirror Columns** synchronizes columns across the grid:
-- In **Vertical Orientation**, columns represent different data fields/metrics. Mirror Columns synchronizes visual styling across these metric columns.
-- In **Horizontal Orientation**, columns represent individual track lanes/positions. Mirror Columns synchronizes column-to-column replication, sizing, and styling from the **Master Column (Lane 1 / Position 1)** across all competitor lanes.
+### Text-to-Speech (TTS) Voice
 
-- **Checked (Default)**:
-  - Columns share linked styling (in vertical orientation) or full master replication (in horizontal orientation).
-  - Modifying properties on the master propagates immediately across columns.
-  - **Synchronized Properties**:
-    - **Header Styling**: Font family, font size, text color, background color, text alignment, and header height/width.
-    - **Data Cell Styling**: Font family, font size, text color, background color, lane color toggling (`useLaneColors`), and value alignment.
-    - **Border Styling**: Border visibility, border color, border width, and corner radius.
-    - **Time Formatting**: Decimal places, display format, and subsecond precision settings.
-    - **Lap Telemetry Highlights**: Row/column highlight on lap trigger.
-- **Unchecked**:
-  - Decouples column synchronization.
-  - In vertical orientation, each data column can have independent font sizes, colors, and borders, and manual **Apply Style to All Columns** buttons appear.
-  - In horizontal orientation, each competitor lane column becomes independent, widgets show the **Independent** badge (e.g. `Lane 2 (Independent)`), and a **Re-mirror to All Columns** button appears.
-- **Re-checking Behavior**:
-  - Re-engages column synchronization. In horizontal orientation, re-checking or clicking **Re-mirror to All Columns** immediately re-synchronizes all columns from the master lane.
+Selects which synthesized voice is used for spoken lap times, positions, leader announcements, and fuel status callouts:
 
-#### Mirror Rows
+- **System Default**: Uses the operating system or browser default synthesized voice.
+- **Installed Voices**: Lists all speech synthesis voices detected on your operating system or browser, displaying each voice's display name and language/locale tag (e.g. `en-US`, `de-DE`, `es-ES`, `fr-FR`).
 
-**Mirror Rows** synchronizes rows across the grid:
-- In **Vertical Orientation**, rows represent individual track lanes/positions. Mirror Rows governs row-to-row replication and geometry synchronization from the **Master Row (Lane 1 / Position 1)** to all other rows (**Lanes 2..N**).
-- In **Horizontal Orientation**, rows represent different data fields/metrics stacked within each lane. Mirror Rows governs visual styling synchronization across metric rows.
+### Speech Rate
 
-- **Checked (Default)**:
-  - Rows strictly follow the master template (in vertical orientation) or share synchronized styling (in horizontal orientation).
-  - Any movement, resizing, or property changes made to the Master cell replicate to all other lanes/positions in real time.
-  - In vertical orientation, non-master widgets display the **Mirrored** badge (e.g. `Lane 2 (Mirrored)`).
-- **Unchecked**:
-  - Decouples rows.
-  - In vertical orientation, non-master rows display the **Independent** badge (e.g. `Lane 2 (Independent)`), individual lanes can be customized independently, and a **Re-mirror to All Rows** button appears.
-  - In horizontal orientation, each metric row can have independent styles without affecting other rows.
-- **Re-checking Behavior**:
-  - Re-enables row replication and synchronization. In vertical orientation, clicking **Re-mirror to All Rows** or re-checking immediately snaps all rows back to the master.
+Controls the playback speed of spoken Text-to-Speech announcements via a slider ranging from **0.1x** (very slow) to **2.0x** (double speed) in increments of 0.05. The default speed is **1.0x**.
 
-#### Extra Rows
+### Voice Pitch
 
-When a grid has unfilled rows (such as when there are fewer drivers in a race or heat than configured grid rows/lanes), the **Extra Rows** setting in the Grid Inspector controls how these unfilled rows are handled:
+Controls the vocal pitch/frequency of Text-to-Speech announcements via a slider ranging from **0.0x** (low pitch) to **2.0x** (high pitch) in increments of 0.05. The default pitch is **1.0x**.
 
-- **Remove**: Automatically removes the extra unfilled rows and columns, shrinking the grid to fit the actual driver count cleanly without dead space. (Default for **Overall Standings** and **Driver Seed** grids).
-- **Show Empty**: Keeps the extra rows visible, displaying `--` for all metric and inset values while preserving card structures and column headers. (Default for **Heat** and **Lane** grids).
-- **Show Blank**: Keeps the extra rows visible, showing only the card borders and background colors with no values or headers inside.
+### Voice Volume
 
-#### Summary Comparison
+Independent volume slider (0% to 100%) specifically controlling Text-to-Speech voice announcements. This allows you to fine-tune the volume of spoken commentary relative to master sound effects and countdown horns.
 
-| Control | Orientation | Scope | What It Synchronizes | Behavior When Unchecked | Behavior When Re-checked |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Mirror Columns** | Vertical | Columns (Data Metrics) | Visual styling: fonts, sizes, text/bg colors, borders, header styles, time formats | Columns become independent; existing styles retained; manual "Apply to All" buttons appear | Re-engages auto-sync for subsequent edits |
-| **Mirror Columns** | Horizontal | Columns (Lanes / Competitors) | Geometry, replication, and styles from Master Lane 1 across all lane columns | Lane columns become independent; `Independent` badges appear; `Re-mirror to All Columns` button appears | Re-establishes master replication; snaps all columns to Master |
-| **Mirror Rows** | Vertical | Rows (Lanes / Competitors) | Geometry, replication, and settings from Master Lane 1 across all lane rows | Lane rows become independent; `Independent` badges appear; `Re-mirror to All Rows` button appears | Re-establishes master replication; snaps all rows to Master |
-| **Mirror Rows** | Horizontal | Rows (Data Metrics) | Visual styling: fonts, sizes, text/bg colors, borders across metric rows | Metric rows become independent; existing styles retained | Re-engages auto-sync for subsequent edits |
+### Test Voice
+
+Click the **Test Voice** button to speak a sample test sentence using your currently selected voice, speech rate, pitch, and volume settings to verify clarity and intelligibility.

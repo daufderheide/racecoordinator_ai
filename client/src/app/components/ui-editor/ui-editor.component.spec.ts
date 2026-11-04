@@ -21,11 +21,13 @@ import { ChildWindowManagerService } from "@app/services/child-window-manager.se
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { FileSystemService } from "@app/services/file-system.service";
+import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 import { deepCopy } from "@app/utils/clone.utils";
 
 import {
@@ -72,7 +74,7 @@ class MockAssetPreviewComponent {
 @Component({
   selector: "app-editor-title",
   standalone: true,
-  template: "",
+  template: '<div class="toolbar-container" id="toolbar-container"></div>',
   imports: [FormsModule],
 })
 class MockEditorTitleComponent {
@@ -2839,80 +2841,41 @@ describe("UIEditorComponent", () => {
   });
 
   describe("getHelpSteps", () => {
-    it("should execute all onEnter hooks in help steps and expand sections", () => {
-      component.editingSettings.activeThemeId = "1";
-      const defaultUi: CustomUI = {
-        entity_id: "default_ui_layout_rc_ai",
-        name: "Default UI",
-        is_default: true,
-      };
-      component.displayCustomUIs = [defaultUi];
-      component.activeCustomUiId = "default_ui_layout_rc_ai";
+    it("should return all 4 expected help steps in order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(4);
+      expect(steps[0].title).toBe("UE_HELP_WELCOME_TITLE");
+      expect(steps[1].targetId).toBe("toolbar-container");
+      expect(steps[2].targetId).toBe("ui-config-section");
+      expect(steps[3].targetId).toBe("audio-settings-section");
+    });
+
+    it("should execute onEnter hooks in help steps and expand corresponding sections", () => {
+      component.sectionsExpanded["config"] = false;
+      component.sectionsExpanded["audioSettings"] = false;
 
       const steps = component.getHelpSteps();
-      expect(steps.length).toBeGreaterThan(0);
-
       for (const step of steps) {
-        if (step.onEnter) {
-          step.onEnter();
-        }
+        step.onEnter?.();
       }
 
-      expect(component.sectionsExpanded["customUIs"]).toBeTrue();
-      expect(component.sectionsExpanded["themes"]).toBeTrue();
       expect(component.sectionsExpanded["config"]).toBeTrue();
       expect(component.sectionsExpanded["audioSettings"]).toBeTrue();
     });
 
-    it("should include all new custom UI and theme steps with valid selectors", () => {
+    it("should verify that all guide step DOM targets exist in the rendered component DOM", () => {
+      fixture.detectChanges();
       const steps = component.getHelpSteps();
-      const selectors = steps.map((s) => s.selector).filter(Boolean);
-
-      expect(selectors).toContain("#help-custom-uis");
-      expect(selectors).toContain("#btn-open-layout-editor");
-      expect(selectors).toContain("#help-themes");
-      expect(selectors).toContain("#btn-open-theme-editor");
-      expect(selectors).toContain("#help-custom-ui");
-      expect(selectors).toContain("#help-custom-ui-dir");
-      expect(selectors).toContain("#help-export-template");
-      expect(selectors).toContain("#help-page-transition");
-
-      // Verify old theme detail selectors are no longer in UI Editor (moved to Theme Editor)
-      expect(selectors).not.toContain("#help-theme-flags");
-      expect(selectors).not.toContain("#help-theme-countdown");
-      expect(selectors).not.toContain("#help-theme-fuel");
-      expect(selectors).not.toContain("#help-theme-audio");
-
-      // Verify no obsolete badge or button selectors remain
-      expect(selectors).not.toContain("#help-default-badge");
-      expect(selectors).not.toContain("#help-readonly-badge");
-      expect(selectors).not.toContain("#help-active-badge");
-      expect(selectors).not.toContain("#activate-item-btn");
-      expect(selectors).not.toContain("#copy-item-btn");
-      expect(selectors).not.toContain("#add-item-btn");
+      GuideStepTestHelper.verifyGuideStepsExistInDom(fixture, steps);
     });
 
-    it("should select lane-view widget when onEnter is called on widget configuration step", () => {
-      const customUi: CustomUI = {
-        entity_id: "custom_ui_1",
-        name: "Custom UI 1",
-        is_default: false,
-        layoutJson: JSON.stringify({
-          widgets: [{ id: "w-lane-view", widgetType: "lane-view" }],
-        }),
-      };
-      component.displayCustomUIs = [customUi];
-      component.activeCustomUiId = "custom_ui_1";
-
-      const steps = component.getHelpSteps();
-      const openLayoutEditorStep = steps.find(
-        (s) => s.selector === "#btn-open-layout-editor",
-      );
-      expect(openLayoutEditorStep).toBeDefined();
-
-      component.sectionsExpanded["customUIs"] = false;
-      openLayoutEditorStep?.onEnter?.();
-      expect(component.sectionsExpanded["customUIs"]).toBeTrue();
+    it("should delegate startHelp to helpService.startGuide", () => {
+      const helpService = TestBed.inject(HelpService);
+      spyOn(helpService, "startGuide");
+      const mockSteps: any[] = [{ title: "step1" }];
+      spyOn(component, "getHelpSteps").and.returnValue(mockSteps as any);
+      component.startHelp();
+      expect(helpService.startGuide).toHaveBeenCalledWith(mockSteps);
     });
   });
 

@@ -1,258 +1,133 @@
-# Editor di Interfaccia
+# Personalizza interfaccia
 
-## Panoramica
-
-L'Editor di Interfaccia consente di progettare layout personalizzati per il giorno della gara, configurare le colonne della classifica dei piloti, personalizzare gli effetti sonori e la grafica del tema e caricare [Widget personalizzati](custom-widgets.md) modulari.
-
-## Widget personalizzati e cartella dei widget
-
-È possibile aggiungere widget personalizzati ai layout di interfaccia personalizzati:
-- **Cartella dei widget personalizzati**: Imposta la cartella locale dei widget nella sezione **Interfaccia personalizzata** in fondo all'editor.
-- **Aggiorna widget di esempio**: Fai clic su **Aggiorna widget di esempio** per generare o aggiornare widget di esempio pronti all'uso in una cartella `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Gruppi della libreria dei widget**: La libreria dei widget organizza i widget in gruppi (**Race Coordinator AI**, **Radice personalizzata** e cartelle personalizzate come **sample**) con sottogruppi nidificati (come **Azioni** e **Dati della manche** con sottocartelle categorizzate) e un filtro di ricerca istantaneo.
-- **Configurazione dinamica**: Quando un widget personalizzato viene selezionato nell'area di disegno, le sue proprietà personalizzate (colori, soglie, levette, campi di testo) appaiono dinamicamente nella Configurazione widget.
-
-Per tutti i dettagli sullo sviluppo dei widget, consulta la [Guida ai widget personalizzati](custom-widgets.md).
-
-## Configurazione layout e colonne
-
-- Trascina e rilascia i widget dalla tavolozza sull'area di lavoro.
-- Ridimensiona, riposiziona e allinea i widget in base alla risoluzione dello schermo. Tutti i widget rimangono delimitati all'interno dell'area di lavoro.
-- **Controlli della Configurazione Widget**:
-  - **Posizione e dimensioni**: Posiziona e dimensiona con precisione il widget selezionato tramite i campi numerici **X**, **Y**, **Larghezza** e **Altezza**.
-  - **Elimina widget**: Fai clic sull'icona del cestino nell'intestazione di configurazione.
-- **Scorciatoie da tastiera**:
-  - <kbd>Canc</kbd> o <kbd>Backspace</kbd>: Rimuove il widget selezionato dal layout.
-  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Sposta il widget selezionato di 1px (o 10px tenendo premuto <kbd>Maiusc</kbd>).
-  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Annulla l'azione precedente.
-  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Maiusc</kbd>+<kbd>Z</kbd>: Ripristina.
-- Configura l'ordine delle colonne, la visibilità, gli ancoraggi e le preferenze di larghezza.
-
-## Configurazione del Widget Cronometro
-
-Il widget **Cronometro** mostra il tempo trascorso o rimanente della manche/gara con stili di visualizzazione configurabili:
-
-- **Formato di visualizzazione**:
-  - **Dinamico (1:23 / 45s)**: Visualizzazione compatta che omette gli zeri iniziali e nasconde i minuti quando il tempo è inferiore a un minuto.
-  - **Minuti e secondi (01:23 / 00:45)**: Due cifre fisse per minuti e secondi, evitando salti di lunghezza e bruschi cambi di dimensione del font in modalità di adattamento automatico.
-  - **Minuti e secondi (1:23 / 0:45)**: Mantiene i minuti sotto il minuto (`0:45`), utilizzando una sola cifra per i minuti sopra il minuto (`1:23`).
-  - **Orologio completo (00:01:23 / 00:00:45)**: Orologio digitale a otto caratteri (`HH:MM:SS`), ideale per gare di durata.
-  - **Secondi totali (83s / 45s)**: Mostra i secondi totali trascorsi o rimanenti senza suddivisione in minuti o ore.
-- **Frazioni di secondo (Subsecondi)**:
-  - **Sotto la soglia**: Mostra le frazioni di secondo (da 1 a 3 cifre decimali) quando il tempo scende sotto la soglia configurata (ad es. ultimi 10 secondi).
-  - **Sempre**: Mostra le frazioni di secondo costantemente per l'intera manche.
-  - **Mai**: Limita il cronometro esclusivamente ai secondi interi.
-- **Anteprima dal vivo**: Il pannello di configurazione include un'anteprima istantanea che dimostra come le opzioni selezionate vengono visualizzate a vari intervalli di gara (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+La pagina **Personalizza interfaccia** consente di configurare le impostazioni di sistema dell'interfaccia, le directory per i file di interfaccia e i widget modulari personalizzati, i modelli di esportazione delle gare in Excel, le animazioni di transizione delle schermate e i parametri del volume principale e della sintesi vocale (TTS).
 
 > [!NOTE]
-> Queste stesse opzioni di formattazione del tempo (preimpostazioni del formato di visualizzazione, modalità frazioni di secondo, soglia e cursore decimali con anteprima in tempo reale) sono supportate anche per i widget **Tempo Totale** (Tempo Totale Manche e Tempo Totale Gara/Generale) e per le colonne di **Tempo Totale** nella Vista Corsie. Nell'elenco delle colonne della Vista Corsie, fare clic sull'icona delle opzioni di tempo (<span class="material-icons">more_time</span>) accanto a qualsiasi colonna Tempo Totale per personalizzarne il formato.
+> Per progettare visivamente schermate personalizzate per il giorno della gara e classifiche, visita l'[Editor di layout](layout-editor.it.md). Per configurare set di immagini per bandiere, conti alla rovescia e indicatori di carburante o effetti sonori, visita l'[Editor dei temi](theme-editor.it.md).
 
-## Configurazione del widget di conto alla rovescia
+---
 
-Il widget **Conto alla rovescia** mostra il semaforo visivo di partenza ed emette i suoni corrispondenti durante la sequenza di avvio:
+## Panoramica {: #overview }
 
-- **Lampade massime**: Imposta il numero massimo di luci da visualizzare (predefinito 5, intervallo da 1 a 10). Quando la durata della partenza supera tale valore (ad esempio, una partenza di 6 secondi con un massimo di 5 lampade), tutte le luci rimangono spente/attenuate per la differenza iniziale (1 secondo) prima di accendersi in sequenza.
-- **Animazione dissolvenza in entrata**: Controlla se la schermata delle luci e la sfocatura dello sfondo appaiono con una transizione fluida. Se disattivata, le luci e lo sfondo compaiono istantaneamente.
-- **Orientamento**: Alterna tra disposizione **Orizzontale** e **Verticale**.
-- **Effetti bagliore e sfocatura**: Personalizza l'alone luminoso delle lampade, l'ingrandimento delle luci rosse/verdi e l'intensità o l'area di sfocatura dello sfondo.
+La pagina di personalizzazione dell'interfaccia offre un controllo centralizzato sulle impostazioni globali dell'interfaccia e sui parametri audio a livello di applicazione:
 
-## Widget Colonna Corsia e Duplicazione
+- **Ambito globale**: Le modifiche apportate in questa pagina si applicano all'intera applicazione e a tutte le sessioni di gara.
+- **Salvataggio automatico continuo**: Le modifiche a volume, tonalità della voce, tempi di attesa della coda, percorsi delle cartelle e transizioni hanno effetto immediato e vengono salvate automaticamente.
+- **Sezioni espandibili dedicate**: Le impostazioni sono suddivise in sezioni comprimibili per **Impostazioni interfaccia utente** e **Impostazioni audio**.
+- **Supporto Annulla / Ripeti**: Le modifiche apportate durante la sessione corrente possono essere rapidamente annullate o riapplicate tramite i comandi della barra degli strumenti.
 
-Il widget **Colonna Corsia** consente di posizionare le singole colonne di dati della vista corsia (come informazioni pilota, tempo dell'ultimo giro, miglior giro / record personale, livello carburante %, storico dei giri, velocità di settore, posizione, ecc.) in qualsiasi punto dell'area di lavoro sotto forma di schede modulari indipendenti.
+---
 
-- **Pilota di Riferimento e Schede Singole**:
-  - Le singole schede posizionate fuori da una griglia scelgono quale pilota mostrare: per **Corsia Pista** (Corsia 1 fino a Corsia 8), per **Posizione Manche** (1°, 2°, ecc.), per posizione nella **Classifica Generale** o per **Testa di Serie**.
+## Azioni della barra degli strumenti {: #toolbar-actions }
 
-### Widget inset e allineamento
+La barra degli strumenti superiore fornisce azioni essenziali di navigazione e gestione della sessione:
 
-Ogni scheda colonna corsia supporta fino a 8 **slot inset secondari** disposti lungo il perimetro della metrica principale (In alto a sinistra, In alto al centro, In alto a destra, Al centro a sinistra, Al centro a destra, In basso a sinistra, In basso al centro, In basso a destra):
+- **Indietro**: Ritorna alla schermata o al menu di navigazione precedente.
+- **Annulla / Ripeti**: Annulla o ripristina le modifiche recenti apportate durante la sessione di modifica corrente.
+- **Guida (?)**: Avvia il tour guidato interattivo che evidenzia ciascuna sezione e pannello della pagina.
 
-- **Associazione dati**: Gli inset possono visualizzare metriche secondarie (es. giro migliore, conteggio giri, carburante %, manche disputate, nome pilota), immagini/avatar o widget personalizzati incorporati.
-- **Allineamento orizzontale e verticale**:
-  - Nella scheda Inset dell'ispettore, ogni inset posizionato dispone di controlli per l'**Allineamento orizzontale** (**Sinistra**, **Centro**, **Destra**) e l'**Allineamento verticale** (**In alto**, **Al centro**, **In basso**).
-  - Gli inset utilizzano per impostazione predefinita la loro posizione perimetrale naturale (es. `In alto a sinistra` predefinito su Sinistra/In alto, `In basso a destra` su Destra/In basso), garantendo totale compatibilità visiva con i layout esistenti e consentendo una regolazione precisa all'interno di ciascuno slot.
-- **Stile personalizzato**: Gli inset possono ereditare caratteri e colori dalla colonna oppure definire tipografia, colori del testo, decimali e soglie di formato personalizzati.
+---
 
-### Origini Dati Griglia: Dati Manche vs. Dati Generali di Gara
+## Impostazioni interfaccia utente {: #customize-ui-settings }
 
-Ogni griglia di dati nell'Editor UI dispone di un'impostazione **Origine dati** nella scheda Griglia, che determina quali piloti popolano le righe:
+La sezione **Impostazioni interfaccia utente** configura le cartelle del file system locale, i modelli di esportazione in Excel e le animazioni delle schermate:
 
-- **Dati Manche (`heat`)**:
-  - **Ambito Piloti**: Vincolato esclusivamente ai partecipanti che gareggiano attivamente nella manche corrente sulla pista (`heatDrivers`).
-  - **Visualizzazione**: Vengono mostrati solo i piloti attualmente in pista nella manche attiva. I piloti a riposo o assegnati ad altre manche vengono omessi.
-  - **Paginazione e Scorrimento**: Il conteggio delle righe è limitato ai piloti della manche attiva e alle corsie fisiche. La griglia non scorre mai oltre i partecipanti attivi su righe vuote.
-- **Dati Generali di Gara (`overall`)**:
-  - **Ambito Piloti**: Vincolato a **tutti i partecipanti iscritti** all'intero torneo o evento (`participants`).
-  - **Visualizzazione**: Qualsiasi pilota iscritto all'evento può essere visualizzato nella griglia, sia che stia gareggiando nella manche corrente o sia in pausa ai box.
-  - **Paginazione e Scorrimento**: Il conteggio delle righe riflette l'intero schieramento dell'evento (es. 16, 24 o 32 piloti su più manche). Se la griglia ha meno righe visibili rispetto ai partecipanti totali, supporta lo scorrimento automatico multipagina per mostrare l'intera classifica generale.
-  - **Piloti Fuori Pista**: Per i piloti che non sono attualmente in pista, vengono fornite automaticamente le statistiche complessive accumulate.
+### Directory dell'interfaccia personalizzata
 
-### Widget: Widget Dati Manche vs. Widget Dati Generali
+Specifica una cartella locale utilizzata per ignorare i modelli predefiniti dell'applicazione e salvare i registri del client quando necessario:
 
-La Casella degli strumenti suddivide le colonne e le schede dati nei gruppi **Dati Manche** e **Dati Generali**. La scelta del widget determina quali statistiche vengono calcolate e visualizzate per ciascuna riga:
+- **Percorso directory**: Mostra il nome della cartella attiva e il percorso assoluto del file. Se non impostato, l'applicazione utilizza le posizioni interne predefinite.
+- **Seleziona directory**: Apre una finestra di dialogo nativa per sfogliare e selezionare una directory locale.
+- **Inserisci percorso**: Apre una finestra modale per digitare o incollare manualmente un percorso assoluto del file system.
+- **Ripristina impostazioni predefinite**: Cancella il percorso personalizzato e ripristina i valori predefiniti.
 
-- **Widget Dati Manche** (es. *Conteggio Giri, Tempo Ultimo Giro, Miglior Giro Manche, Tempo Settore, Tempo Reazione, Posizione Manche / Piazzamento, Distacchi Manche, Carburante / Telemetria, Ritmo Fantasma*):
-  - Calcolano le metriche prestazionali riferite esclusivamente alla **manche attiva**.
-  - **In una Griglia Dati Manche**: Ciascuna riga mostra la telemetria in tempo reale e i tempi sul giro delle vetture attualmente in pista.
-  - **In una Griglia Dati Generali**: I piloti in pista mostrano la loro telemetria in tempo reale; i piloti a riposo o inattivi mostrano trattini (`--`) o zeri per le metriche di manche, in quanto non producono dati nella manche in corso.
-- **Widget Dati Generali di Gara** (es. *Piazzamento Generale, Giri Totali, Giri Fisici Totali, Tempo Totale Generale, Miglior Giro Assoluto, Media Generale, Mediana Generale, Regolarità Generale, Distacchi Generali, Probabilità di Vittoria / Previsioni, Manche Disputate / Manche Rimanenti*):
-  - Calcolano le metriche prestazionali complessive su **tutte le manche disputate** nel torneo.
-  - **In una Griglia Dati Generali**: Ogni riga di pilota (in pista o ai box tra una manche e l'altra) mostra le statistiche complete dell'evento, i giri totali del torneo, il miglior giro assoluto e la posizione generale.
-  - **In una Griglia Dati Manche**: I piloti attivi mostrano la loro posizione generale e le statistiche complessive dell'evento accanto ai giri della manche in corso (es. seguire la posizione in classifica generale mentre si corre la manche).
+> [!WARNING]
+> L'impostazione di una directory di interfaccia personalizzata sostituisce i modelli principali dell'applicazione ed è riservata solo agli utenti esperti che sviluppano interfacce personalizzate o analizzano i log.
 
-#### Widget Manche Disputate e Rimanenti
+### Directory dei widget personalizzati
 
-Il widget **Manche Disputate** (`heatsRaced`) mostra l'avanzamento della partecipazione alle manche di ciascun pilota:
+Configura la directory principale in cui Race Coordinator AI cerca i [widget personalizzati](custom-widgets.it.md) modulari:
 
-- **Manche Disputate (Modalità Predefinita)**: Visualizza il numero di manche che il pilota ha già completato o che sta disputando nell'evento.
-- **Modalità Manche Rimanenti**: Quando l'opzione **Modalità visualizzazione manche** viene commutata da *Manche disputate* a *Manche rimanenti*, la scheda visualizza quante manche programmate restano ancora da correre per il pilota. Se non è specificata un'etichetta personalizzata per l'intestazione, il titolo passa automaticamente da `MANCHE DISPUTATE` a `MANCHE RIMANENTI`.
-- Questa configurazione è disponibile anche per gli elementi inset associati a qualsiasi scheda colonna.
+- **Percorso directory**: Mostra il nome e il percorso della cartella dei widget personalizzati selezionata.
+- **Seleziona directory**: Apre un selettore di cartelle per scegliere una directory locale contenente i pacchetti di widget.
+- **Inserisci percorso**: Inserisci manualmente un percorso di cartella assoluto.
+- **Esporta widget iniziali**: Copia pacchetti di widget iniziali pronti all'uso in una sottocartella `sample/` all'interno della directory selezionata (inclusi `sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner` e `sample-detailed-leaderboard`). Questo pulsante si attiva non appena viene selezionata una directory valida.
+- **Ripristina impostazioni predefinite**: Cancella il percorso della directory dei widget personalizzati.
 
-#### Widget Distacchi (Gaps e Intervalli)
+Per i dettagli tecnici completi sulla creazione di widget personalizzati, consulta la [Guida ai widget personalizzati](custom-widgets.it.md).
 
-Race Coordinator AI fornisce **2 widget distacco configurabili** per i Dati Manche e i Dati Generali:
+### Modello di esportazione personalizzato
 
-1. **Distacco Manche (`gap`)**: Valuta gli intervalli in tempo reale esclusivamente tra le auto in pista nella manche attiva.
-2. **Distacco Generale (`overallGap`)**: Valuta gli intervalli cumulativi tra tutti i partecipanti all'evento.
+Gestisce il modello Microsoft Excel personalizzato (`.xlsx`) utilizzato durante l'esportazione dei risultati e delle statistiche di gara:
 
-Ciascun widget distacco può essere configurato nell'Ispettore Colonne tramite due opzioni principali:
-- **Obiettivo**:
-  - **Leader**: Intervallo rispetto al leader attuale della gara (P1).
-  - **Posizione precedente**: Intervallo rispetto al concorrente immediatamente davanti in classifica (es. P3 vs P2).
-- **Modalità di calcolo**:
-  - **Sempre tempo**: Proiezione matematica continua del passo in secondi (`+X.XXX`).
-  - **Tempo e giri di ritardo**: Stile Formula 1 che mostra il tempo nello stesso giro o il distacco in giri (`+1 Giro`, `+N Giri`) in caso di doppiaggio.
-  - **Sempre giri**: Distacco esatto in giri calcolato al completamento di ogni giro, incorporando l'avanzamento parziale del pilota confrontato.
+- **Stato del modello**: Mostra il nome file del modello di cartella di lavoro Excel attualmente attivo o indica se è in uso il modello predefinito del sistema.
+- **Seleziona modello**: Carica una cartella di lavoro `.xlsx` personalizzata dal computer per incorporarla come modello di esportazione.
+- **Scarica modello**: Scarica il file di modello attualmente attivo sul computer per visualizzarlo o modificarlo in Microsoft Excel.
+- **Esportazione di prova**: Genera e scarica un file `.xlsx` di esempio compilato con dati fittizi per verificare layout, formule e grafici.
+- **Variabili del modello**: Apre una finestra modale con l'elenco di tutti i tag di sostituzione supportati (come `{{RACE_NAME}}`, `{{HEAT_NUMBER}}`, `{{DRIVER_NAME}}`, `{{LAP_TIME}}`, ecc.) da inserire nelle celle di Excel per iniettare dinamicamente i dati di gara.
+- **Ripristina impostazioni predefinite**: Ripristina il modello di esportazione Excel standard predefinito.
 
-> [!NOTE]
-> È possibile posizionare contemporaneamente più widget distacco con configurazioni distinte (ad esempio una colonna Distacco Leader e una Distacco Posizione) sulla stessa griglia o layout.
+> [!TIP]
+> Se modifichi il file del modello esternamente in Microsoft Excel o in un altro programma, ricordati di caricarlo nuovamente con **Seleziona modello** per salvare la versione aggiornata in Race Coordinator AI. Per tutti i dettagli sui token, consulta la [Guida all'esportazione XLS personalizzata](custom-xls-export.it.md).
 
-Per consultare le formule matematiche complete e le specifiche di cronometraggio, consultare la [Guida ai Calcoli dei Distacchi](gap-calculations.md).
+### Transizioni di pagina
 
-#### Widget Ultimi Giri (`lastLaps`)
+Controlla lo stile dell'animazione visiva utilizzata durante il passaggio da una schermata all'altra nell'applicazione:
 
-Il widget **Ultimi Giri** (`lastLaps`) visualizza i tempi dei giri recenti completati dal pilota nella manche attiva:
+- **Scorri (Slide)** (Predefinito): Transizione di scorrimento orizzontale fluido tra le pagine.
+- **Dissolvenza (Fade)**: Dissolvenza di opacità fluida tra le visualizzazioni.
+- **Zoom**: Transizione moderna con effetto di ingrandimento.
+- **Capovolgi (Flip)**: Effetto di capovolgimento 3D stile scheda.
+- **Nessuna (None)**: Cambio di pagina istantaneo senza animazione (consigliato per dispositivi con prestazioni ridotte o chioschi).
 
-- **Ultimi giri da visualizzare**: Configura quanti giri recenti mostrare all'interno del widget (cursore 1–20, inserimento numerico 1–50). Il valore predefinito è `5`.
-- **Separazione dei giri e bordi**: Configura come separare i singoli giri. Le opzioni includono stile del bordo (continuo, tratteggiato, puntinato, doppio), colore del bordo, spessore (1–10px), margine del bordo (da -20px a 40px+ per controllare quanto il bordo rientri o sporga e allinearsi perfettamente ai bordi delle colonne adiacenti), raggio angoli (0–32px) e modalità di separazione (linea divisoria tra i giri o riquadro attorno a ciascun giro).
-- **Evidenziazione del miglior giro**: Evidenzia se un giro nell'elenco corrisponde al miglior tempo del pilota. Le opzioni includono colore del testo, colore di sfondo del badge, spessore carattere (normale, grassetto, molto grassetto/900), sottolineato, corsivo e bordi dedicati per il miglior giro.
-- **Ridimensionamento e adattamento dinamico**: La scheda scala automaticamente le dimensioni dei caratteri e le spaziature per adattare ordinatamente il numero configurato di giri nella geometria della colonna.
-- **Sincronizzazione della griglia**: Nelle griglie di corsia, la configurazione o l'applicazione dei formati orari sincronizza il conteggio degli ultimi giri e il relativo stile su tutte le corsie in gara.
+---
 
-#### Widget Punteggio Medio (`averageScore`)
+## Impostazioni audio {: #audio-settings }
 
-Il widget **Punteggio Medio** (`averageScore`) mostra il punteggio medio di manche su tutte le manche completate dal pilota:
+La sezione **Impostazioni audio** gestisce i livelli di volume principale del sistema, i comportamenti della coda del gestore audio e la sintesi vocale (TTS):
 
-- **Solo Dati di Manche**: Appartiene rigorosamente al gruppo di strumenti **Dati Manche** (`analysis`). In un contesto di dati generali o per un pilota a riposo senza manche attiva, vengono visualizzati trattini (`--`).
-- **Adattamento al metodo di punteggio**: Calcola automaticamente la media in base al metodo di punteggio configurato per la gara:
-  - **Punteggio per numero di giri**: Calcola la media dei giri del pilota sulle manche completate (con decimali giri configurati, default 2).
-  - **Punteggio per miglior giro**: Calcola la media dei migliori tempi sul giro sulle manche completate con giro valido (con decimali tempo, default 3).
-  - **Punteggio per tempo totale**: Calcola la media dei tempi totali di manche sulle manche completate (con opzioni timer o decimali tempo).
-- **Mostra manche parziali**:
-  - Deselezionato (predefinito), contano solo le manche completamente terminate.
-  - Selezionato, include la manche in corso ponderando il contributo in base all'avanzamento:
-    - **Gara a giri**: In una manche da 10 giri con il leader al 4° giro, la manche conta come 0,4 al denominatore e il punteggio attivo si somma al numeratore.
-    - **Gara a tempo**: L'avanzamento dipende dal tempo trascorso rispetto alla durata prevista.
-    - **Valore finale non configurato**: Se non è possibile calcolare l'avanzamento (`finishValue <= 0`), la manche parziale non viene conteggiata.
-- **Precisione decimale**: Configurabile nell'Ispettore Colonne (0–3 decimali) per schede principali e riquadri interni (insets).
+### Volume principale
 
-### Ordinamento Griglia e Matrice di Interazione
+Controlla il volume principale complessivo (da 0% a 100%) per tutte le uscite audio in Race Coordinator AI. La regolazione di questo dispositivo di scorrimento ridimensiona contemporaneamente tutti gli effetti sonori, i segnali acustici del conto alla rovescia, gli avvisatori acustici e gli annunci vocali.
 
-Il menu a discesa **Ordinamento Griglia** nella scheda Griglia controlla l'ordine delle righe. Il suo comportamento dipende direttamente dall'impostazione dell'**Origine dati** (**Dati Manche** o **Dati Generali**):
+### Timeout coda urgente
 
-| Opzione Ordinamento | In Griglia Dati Manche (`gridType: heat`) | In Griglia Dati Generali (`gridType: overall`) |
-| :--- | :--- | :--- |
-| **Corsia Pista** | Ordinamento statico per corsia fisica (Corsia 1, Corsia 2, ...). Ciascuna riga è legata a una specifica corsia e al suo pilota assegnato. | I piloti attivi in pista appaiono per primi in ordine di corsia (Corsia 1, Corsia 2, ...), seguiti da tutti i partecipanti inattivi ordinati per posizione nella classifica generale. |
-| **Posizione Manche** | Riordinamento dinamico in tempo reale in base alla posizione nella manche attiva (1°, 2°, 3° nella manche). Le righe si scambiano in tempo reale ai passaggi sul traguardo e durante i sorpassi. | I piloti attivi appaiono in cima ordinati per posizione nella manche (1°, 2°, ...), seguiti da tutti i partecipanti inattivi ordinati per classifica generale. |
-| **Classifica Generale** | Ordina **esclusivamente i piloti della manche attiva** in base alla loro posizione nella classifica generale del torneo. (Ad esempio, se nella manche corrono il 2°, 5°, 8° e 14° della generale, le 4 righe li ordinano #2, #5, #8, #14). Non mostra piloti estranei né genera righe vuote. | Ordina l'**intero schieramento dei partecipanti** in base alla classifica generale dell'evento (1° generale, 2° generale, 3° generale, ...). L'intera tabella si riordina in tempo reale con l'aggiornamento di punti e giri. |
-| **Testa di Serie** | Ordina i piloti della manche attiva in base al loro numero di qualificazione/seeding iniziale (numero più basso per primo). | Ordina tutti i partecipanti dell'evento in base alla loro testa di serie iniziale (1, 2, 3, ...) sull'intero schieramento. |
-- **Orientamento**: Supporta layout **Verticale** (intestazione sopra il valore) e **Orizzontale** (intestazione e valore affiancati).
-- **Stile e Personalizzazione della Barra del Titolo**:
-  - La barra del titolo segue per impostazione predefinita lo stesso stile dell'intestazione della colonna nella vista corsia (sfondo scuro semitrasparente `rgba(68, 68, 68, 0.7)`, testo bianco in grassetto, angoli superiori arrotondati e bordo divisore).
-  - **Mostra Intestazione**: Attiva o disattiva la barra del titolo. Se disattivata, la barra del titolo viene rimossa completamente dalla scheda, massimizzando lo spazio per i valori principali e gli inserti.
-  - **Etichetta Personalizzata**: Sostituisce il nome predefinito del dato con un titolo personalizzato.
-  - **Tipografia e Allineamento**: Configura famiglia di caratteri, dimensione del testo e allineamento (Sinistra, Centro, Destra).
-  - **Colore del Testo e di Sfondo**: Personalizza il colore di sfondo e del testo dell'intestazione tramite selettori colore dedicati, con pulsante per ripristinare i valori predefiniti in un clic.
-- **Ereditarietà Colori e Personalizzazioni**: Le schede ereditano in modo predefinito i colori di sfondo e testo della corsia assegnata (`Usa Colori Corsia`), oppure possono essere personalizzate con colori di sfondo, testo e bordi dedicati.
-- **Duplica su Corsie / Posizioni**:
-  - Invece di creare e allineare manualmente le schede per ciascuna corsia, configura una singola scheda per corsia o posizione e fai clic su **Duplica su Corsie / Posizioni...** nel pannello di configurazione.
-  - Seleziona la direzione (**Orizzontale** affiancato o **Verticale** incolonnato), il numero totale di corsie/posizioni di destinazione (predefinito al numero massimo di corsie su tutte le piste nel database), la modalità di spaziatura (**Adatta allo Schermo** o **Mantieni Spaziatura**) e l'eventuale sostituzione dei widget esistenti.
-  - **Modalità di Duplicazione in Tempo Reale**: All'avvio della duplicazione, l'editor entra in una modalità modello interattiva con guide visive di corsia e allineamento magnetico. In questa modalità posizioni, ridimensioni e modifichi i widget direttamente sulla Corsia 1 (Master), e le modifiche vengono riflesse immediatamente in tempo reale su tutte le restanti corsie. I widget duplicati sulle corsie 2..N sono anteprime in sola lettura; facendo clic su qualsiasi widget speculare, la selezione si sposta automaticamente sul master della Corsia 1.
-  - **Area Intelligente e Ridimensionamento**: Lo spazio di duplicazione si estende automaticamente in tutte e quattro le direzioni per riempire lo spazio disponibile sulla tela fino a toccare il bordo di qualsiasi widget esterno alla griglia. È possibile regolare l'area complessiva utilizzando le 8 maniglie perimetrali di ridimensionamento sulla sovrapposizione.
-  - Fai clic su **Fine** per convertire la griglia in widget indipendenti.
-  - **Modifica Modello e Scollega**: Selezionando successivamente qualsiasi widget della griglia, la Configurazione widget visualizza una scheda per **Modifica Modello Griglia** (per rientrare in qualsiasi momento nella modalità in tempo reale) o **Scollega dalla Griglia** (per rimuovere definitivamente il collegamento).
+Imposta per quanto tempo gli avvisi urgenti ad alta priorità (come *Bandiera Gialla*, *Manche Terminata* o *Falsa Partenza*) rimarranno nella coda audio se è già in corso un altro messaggio urgente:
 
-### Sincronizzazione Griglia: Rifletti colonne vs. Rifletti righe
+- **3 Secondi**: Timeout breve; scarta rapidamente gli avvisi in coda per garantire che le notifiche vocali rimangano sincronizzate con l'azione in pista.
+- **5 Secondi** (Predefinito): Durata bilanciata che garantisce l'ascolto degli avvisi urgenti senza accumulare ritardi sugli eventi dal vivo.
+- **10 Secondi**: Timeout esteso; consente il completamento di annunci più lunghi prima di ignorare le notifiche urgenti successive.
 
-Una griglia in Race Coordinator AI è una matrice bidimensionale strutturata in postazioni concorrenti e metriche di dati:
+Gli avvisi scaduti che superano il limite di tempo vengono scartati automaticamente.
 
-- **Orientamento Verticale (Predefinito)**:
-  - **Righe (Postazioni Concorrenti)**: Rappresentano ciascuna corsia fisica della pista (**Corsia 1, Corsia 2, ...**) o posizione di gara (**Posizione 1, Posizione 2, ...**).
-  - **Colonne (Campi Dati)**: Rappresentano le singole metriche di dati all'interno di ciascuna postazione (ad esempio *Nome Pilota, Giri Manche, Ultimo Giro, Giro Migliore, Distacco, Immagine Auto*).
-  - **Rifletti colonne**: Controlla la sincronizzazione dello stile grafico tra tutte le colonne di dati.
-  - **Rifletti righe**: Gestisce la duplicazione e la geometria riga per riga a partire dalla **Riga Master (Corsia 1 / Posizione 1)** verso tutte le altre righe (**Corsie 2..N**).
-- **Orientamento Orizzontale**:
-  - **Colonne (Postazioni Concorrenti)**: Rappresentano ciascuna corsia fisica della pista (**Corsia 1, Corsia 2, ...**) o posizione di gara (**Posizione 1, Posizione 2, ...**). Ciascuna corsia in una vista manche è una colonna.
-  - **Righe (Campi Dati)**: Rappresentano le metriche di dati impilate verticalmente all'interno di ciascuna corsia.
-  - **Rifletti colonne**: Gestisce la replicazione da colonna a colonna, la geometria e lo stile a partire dalla **Colonna Master (Corsia 1 / Posizione 1)** verso tutte le altre colonne (**Corsie 2..N**). Se deselezionato, le colonne (corsie) diventano indipendenti e compare il pulsante **Rifletti su tutte le colonne**.
-  - **Rifletti righe**: Controlla la sincronizzazione dello stile grafico tra tutte le righe di dati (metriche).
+### Spaziatura annunci vocali
 
-L'Ispettore widget offre due controlli fondamentali nella sezione **Struttura e layout della griglia**: **Rifletti colonne** e **Rifletti righe**.
+Configura l'intervallo minimo di silenzio tra annunci vocali consecutivi per evitare sovrapposizioni o tagli dell'audio:
 
-#### Rifletti colonne
+- **Nessuno (0 ms)**: Gli annunci consecutivi vengono riprodotti immediatamente uno dopo l'altro.
+- **Breve (500 ms)** (Predefinito): Breve pausa di mezzo secondo tra gli annunci per un ritmo naturale.
+- **Normale (1000 ms)**: Pausa di 1 secondo tra gli annunci per una separazione più chiara.
+- **Rilassato (1500 ms)**: Pausa di 1,5 secondi tra gli annunci per un ritmo di commento calmo.
 
-**Rifletti colonne** sincronizza le colonne nell'intera griglia:
-- Con **Orientamento Verticale**, le colonne rappresentano diversi campi/metriche di dati. Rifletti colonne armonizza lo stile grafico tra queste colonne di metriche.
-- Con **Orientamento Orizzontale**, le colonne rappresentano singole corsie o posizioni della pista. Rifletti colonne gestisce la replicazione da colonna a colonna, il dimensionamento e lo stile a partire dalla **Colonna Master (Corsia 1 / Posizione 1)** verso tutte le altre corsie.
+### Voce di sintesi vocale (TTS)
 
-- **Selezionato (Predefinito)**:
-  - Le colonne condividono stili collegati (con orientamento verticale) o la completa replicazione del modello master (con orientamento orizzontale).
-  - Qualsiasi modifica apportata sul master si propaga immediatamente a tutte le colonne.
-  - **Proprietà Sincronizzate**:
-    - **Stile Intestazione**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, allineamento testo e dimensioni intestazione.
-    - **Stile Cella Dati**: Famiglia di caratteri, dimensione testo, colore testo, colore di sfondo, commutazione dei colori corsia (`useLaneColors`) e allineamento valori.
-    - **Stile Bordo**: Visibilità del bordo, colore bordo, spessore bordo e raggio angoli.
-    - **Formato Tempo**: Cifre decimali, formato di visualizzazione e soglie di precisione sub-secondo.
-    - **Evidenziazione Telemetria**: Evidenziazione al passaggio del giro.
-- **Deselezionato**:
-  - Scollega la sincronizzazione delle colonne.
-  - Con orientamento verticale, ciascuna colonna di dati può avere dimensioni testo, colori e bordi indipendenti, e compaiono pulsanti per applicare manualmente gli stili a tutte le colonne.
-  - Con orientamento orizzontale, ciascuna colonna corsia diventa indipendente, i widget mostrano lo stato **Indipendente** (ad es. `Corsia 2 (Indipendente)`), e compare il pulsante **Rifletti su tutte le colonne**.
-- **Comportamento alla Nuova Selezione**:
-  - Riattiva la sincronizzazione delle colonne. Con orientamento orizzontale, riselezionare la casella o fare clic su **Rifletti su tutte le colonne** sincronizza immediatamente tutte le colonne con la corsia master.
+Seleziona la voce sintetizzata utilizzata per tempi sul giro, posizioni, annunci del leader e avvisi sul livello di carburante:
 
-#### Rifletti righe
+- **Predefinita del sistema**: Utilizza la voce sintetizzata predefinita del sistema operativo o del browser.
+- **Voci installate**: Elenca tutte le voci rilevate sul sistema operativo o nel browser, con nome visualizzato e codice lingua (ad es. `it-IT`, `en-US`).
 
-**Rifletti righe** sincronizza le righe nell'intera griglia:
-- Con **Orientamento Verticale**, le righe rappresentano singole corsie o posizioni della pista. Rifletti righe gestisce la replicazione e la geometria riga per riga a partire dalla **Riga Master (Corsia 1 / Posizione 1)** verso tutte le altre righe (**Corsie 2..N**).
-- Con **Orientamento Orizzontale**, le righe rappresentano diversi campi o metriche impilati in ciascuna corsia. Rifletti righe gestisce la sincronizzazione dello stile grafico tra le righe di metriche.
+### Velocità di pronuncia
 
-- **Selezionato (Predefinito)**:
-  - Le righe seguono rigorosamente il modello master (con orientamento verticale) o condividono stili sincronizzati (con orientamento orizzontale).
-  - Qualsiasi spostamento, ridimensionamento o modifica applicata alla cella master si replica istantaneamente in tempo reale su tutte le altre corsie o posizioni.
-  - Con orientamento verticale, i widget non master mostrano lo stato **Speculare** (ad es. `Corsia 2 (Speculare)`).
-- **Deselezionato**:
-  - Scollega le righe.
-  - Con orientamento verticale, le righe non master mostrano lo stato **Indipendente** (ad es. `Corsia 2 (Indipendente)`), le corsie possono essere personalizzate singolarmente e compare il pulsante **Rifletti su tutte le righe**.
-  - Con orientamento orizzontale, ciascuna riga di metrica può avere stili indipendenti senza alterare le altre righe.
-- **Comportamento alla Nuova Selezione**:
-  - Riattiva la replicazione e la sincronizzazione delle righe. Con orientamento verticale, fare clic su **Rifletti su tutte le righe** o riselezionare la casella allinea immediatamente tutte le righe alla riga master.
+Controlla la velocità di riproduzione degli annunci TTS tramite un cursore che varia da **0,1x** (molto lento) a **2,0x** (doppia velocità) con incrementi di 0,05. La velocità predefinita è **1,0x**.
 
-#### Righe aggiuntive
+### Tonalità della voce (Pitch)
 
-Quando una griglia presenta righe non occupate (ad esempio quando partecipano a una gara o manche meno piloti rispetto alle righe/corsie configurate), l'impostazione **Righe aggiuntive** nell'Ispettore griglia ne determina il comportamento:
+Controlla l'intonazione/frequenza della voce TTS tramite un cursore che varia da **0,0x** (tono grave) a **2,0x** (tono acuto) con incrementi di 0,05. L'intonazione predefinita è **1,0x**.
 
-- **Rimuovi**: Rimuove automaticamente le righe e colonne vuote eccedenti, adattando la griglia all'effettivo numero di piloti in gara. (Predefinito per le griglie **Classifica Generale** e **Testa di Serie**).
-- **Mostra vuote**: Mantiene visibili le righe aggiuntive mostrando `--` per tutti i valori e riquadri, preservando intestazioni e bordi delle schede. (Predefinito per le griglie **Manche** e **Corsia**).
-- **Mostra in bianco**: Mantiene visibili le righe aggiuntive mostrando solo i bordi e lo sfondo delle schede, senza valori né intestazioni.
+### Volume della voce
 
-#### Schema Riassuntivo
+Cursore del volume indipendente (da 0% a 100%) dedicato esclusivamente agli annunci vocali TTS. Consente di regolare il livello dei commenti vocali rispetto agli effetti sonori di gara.
 
-| Controllo | Orientamento | Ambito | Cosa Sincronizza | Comportamento quando Deselezionato | Comportamento alla Riselezione |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Rifletti colonne** | Verticale | Colonne (Metriche Dati) | Stile visivo: caratteri, dimensioni, colori, bordi, intestazioni, formati | Le colonne diventano indipendenti; gli stili attuali vengono mantenuti; compaiono pulsanti «Applica a tutte» | Riattiva la sincronizzazione automatica per modifiche future |
-| **Rifletti colonne** | Orizzontale | Colonne (Corsie / Concorrenti) | Geometria, replicazione e stili dalla Corsia 1 Master a tutte le colonne corsia | Le colonne corsia diventano indipendenti; stato `Indipendente` visualizzato; compare il pulsante `Rifletti su tutte le colonne` | Ripristina la replicazione master; riallinea tutte le colonne al Master |
-| **Rifletti righe** | Verticale | Righe (Corsie / Concorrenti) | Geometria, replicazione e impostazioni dalla Corsia 1 Master a tutte le righe corsia | Le righe corsia diventano indipendenti; stato `Indipendente` visualizzato; compare il pulsante `Rifletti su tutte le righe` | Ripristina la replicazione master; riallinea tutte le righe al Master |
-| **Rifletti righe** | Orizzontale | Righe (Metriche Dati) | Stile visivo: caratteri, dimensioni, colori, bordi tra righe di metriche | Le righe di metriche diventano indipendenti; gli stili attuali vengono mantenuti | Riattiva la sincronizzazione automatica per modifiche future |
+### Prova voce
 
-
+Fai clic sul pulsante **Prova voce** per ascoltare una frase di esempio pronunciata con le impostazioni correnti di voce, velocità, tono e volume.

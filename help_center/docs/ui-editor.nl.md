@@ -1,258 +1,133 @@
-# UI-Editor
+# Interface aanpassen
 
-## Overzicht
-
-Met de UI-Editor kunt u aangepaste racedag-layouts ontwerpen, de kolommen van het klassement configureren, geluidseffecten en afbeeldingen aanpassen en modulaire [Aangepaste Widgets](custom-widgets.md) laden.
-
-## Aangepaste widgets en widget-map
-
-Aangepaste widgets kunnen worden toegevoegd aan uw aangepaste UI-lay-outs:
-- **Map voor aangepaste widgets**: Stel uw lokale widgetmap in via het gedeelte **Aangepaste gebruikersinterface** onderaan de editor.
-- **Voorbeeldwidgets bijwerken**: Klik op **Voorbeeldwidgets bijwerken** om kant-en-klare voorbeeldwidgets te genereren of bij te werken in een map `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Widget-bibliotheekgroepen**: De widget-bibliotheek organiseert widgets in groepen (**Race Coordinator AI**, **Aangepaste hoofdmap** en eigen mappen zoals **sample**) met geneste subgroepen (zoals **Acties** en **Heatgegevens** met gecategoriseerde submappen) en een direct zoekfilter.
-- **Dynamische configuratie**: Wanneer een aangepaste widget op het canvas wordt geselecteerd, verschijnen de aangepaste eigenschappen (kleuren, drempelwaarden, schakelaars, tekstvelden) dynamisch in de Widget-configuratie.
-
-Raadpleeg de [Gids voor aangepaste widgets](custom-widgets.md) voor alle ontwikkelingsdetails.
-
-## Layout- en kolomconfiguratie
-
-- Sleep widgets van het palet naar het canvas.
-- Pas grootte, positie en uitlijning van widgets aan op uw schermresolutie. Alle widgets blijven begrensd binnen het canvas.
-- **Widget-configuratie bediening**:
-  - **Positie & grootte**: Positioneer en dimensioneer de geselecteerde widget nauwkeurig met de numerieke velden voor **X**, **Y**, **Breedte** en **Hoogte**.
-  - **Widget verwijderen**: Klik op het prullenbak-icoon in de koptekst van de configuratie.
-- **Sneltoetsen**:
-  - <kbd>Delete</kbd> of <kbd>Backspace</kbd>: Verwijdert de geselecteerde widget uit de layout.
-  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 1px (of 10px met <kbd>Shift</kbd>).
-  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Vorige actie ongedaan maken.
-  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>: Opnieuw uitvoeren.
-- Configureer kolomvolgorde, zichtbaarheid, ankers en breedtevoorkeuren.
-
-## Timer-Widget Configuratie
-
-De **Timer**-widget toont de verstreken of resterende heat-/racetijd in verschillende instelbare stijlen:
-
-- **Weergaveformaat**:
-  - **Dynamisch (1:23 / 45s)**: Compacte weergave die voorloopnullen weglaat en minuten verbergt onder één minuut.
-  - **Minuten & seconden (01:23 / 00:45)**: Vaste twee cijfers voor minuten en seconden, waardoor verspringing van tekstlengte en plotselinge vergroting van het lettertype bij automatisch schalen worden voorkomen.
-  - **Minuten & seconden (1:23 / 0:45)**: Behoudt minuten onder één minuut (`0:45`), en gebruikt één cijfer voor minuten vanaf één minuut (`1:23`).
-  - **Volledige klok (00:01:23 / 00:00:45)**: Vaste achtcijferige digitale klok (`HH:MM:SS`), ideaal voor langeafstandsraces.
-  - **Totale seconden (83s / 45s)**: Toont de totale resterende of verstreken seconden zonder onderverdeling in minuten of uren.
-- **Subseconden**:
-  - **Onder drempelwaarde**: Toont decimalen (1 tot 3 cijfers) zodra de tijd onder de ingestelde drempelwaarde zakt (bijv. laatste 10 seconden).
-  - **Altijd**: Toont continu decimalen gedurende de hele heat.
-  - **Nooit**: Beperkt de timer uitsluitend tot hele seconden.
-- **Live Voorbeeld**: Het configuratiepaneel bevat een direct voorbeeld waarin te zien is hoe de geselecteerde opmaak eruitziet op verschillende meetpunten (`> 1 hr`, `> 1 min`, `< 1 min` en `< 10s`).
+Op de pagina **Interface aanpassen** kunt u systeembrede interface-instellingen, maplocaties voor aangepaste UI-bestanden en modulaire widgets, Excel-exportsjablonen na de race, schermovergangsanimaties en parameters voor het hoofdvolume en tekst-naar-spraak (TTS) configureren.
 
 > [!NOTE]
-> Precies dezelfde tijdnotatie-opties (weergaveformaat-voorinstellingen, subseconde-modi, drempelwaarde en decimalenschuifregelaar met live voorbeeld) worden ook ondersteund voor **Totale Tijd**-widgets (Heat Totale Tijd en Race/Algemene Totale Tijd) en voor **Totale Tijd**-kolommen in de Baanweergave. Klik in de kolommenlijst van de Baanweergave op het pictogram voor tijdopties (<span class="material-icons">more_time</span>) naast een Totale Tijd-kolom om de tijdnotatie aan te passen.
+> Om visueel aangepaste racedagschermen en ranglijsten te ontwerpen, bezoekt u de [Layout-editor](layout-editor.nl.md). Om afbeeldingssets voor vlaggen, startlichten en brandstofmeters of racegeluidseffecten te configureren, bezoekt u de [Thema-editor](theme-editor.nl.md).
 
-## Aftel-widgetconfiguratie
+---
 
-De **Aftel-widget** toont de visuele startlichten en regelt de startgeluiden tijdens de startprocedure:
+## Overzicht {: #overview }
 
-- **Maximaal aantal lampen**: Bepaalt het maximale aantal getoonde startlampen (standaard 5, bereik 1 tot 10). Wanneer de startduur dit aantal overschrijdt (bijvoorbeeld een start van 6 seconden met maximaal 5 lampen), blijven alle lampen tijdens het beginverschil (1 seconde) gedimd/uit voordat de lampen achtereenvolgens oplichten.
-- **Infade-animatie**: Bepaalt of de startlichten-overlay en achtergrondvervaging vloeiend infaden bij het begin van de aftelling. Indien uitgeschakeld verschijnen de lichten en achtergrond direct.
-- **Oriëntatie**: Schakel tussen **Horizontale** en **Verticale** opstelling van de lichten.
-- **Gloed- en vervagingseffecten**: Pas de lichtkrans rondom de lampen, de schaalvergroting van rode/groene lichten en de sterkte of het bereik van de achtergrondvervaging aan.
+De pagina Interface aanpassen biedt centrale controle over algemeen interfacegedrag en audio-instellingen op applicatieniveau:
 
-## Baankolomwidgets & Dupliceren
+- **Globaal bereik**: Wijzigingen op deze pagina zijn van toepassing op de hele applicatie en alle racesessies.
+- **Continu automatisch opslaan**: Aanpassingen aan volume, stemhoogte, wachttijden, mapselecties en overgangen worden direct van kracht en automatisch opgeslagen.
+- **Uitklapbare instellingensecties**: Instellingen zijn onderverdeeld in overzichtelijke, inklapbare secties voor **Instellingen voor interface-aanpassing** en **Audio-instellingen**.
+- **Ondersteuning voor Ongedaan maken / Opnieuw**: Wijzigingen die tijdens uw huidige sessie zijn aangebracht, kunnen snel ongedaan worden gemaakt of opnieuw worden toegepast via de werkbalkknoppen.
 
-De widget **Baankolom** maakt het mogelijk om individuele gegevenskolommen uit het baanoverzicht (zoals coureur-info, laatste rondetijd, beste ronde / persoonlijk record, brandstof %, rondehistorie, sectorsnelheden, positie enz.) overal op het canvas te plaatsen als zelfstandige modulaire kaarten.
+---
 
-- **Doelcoureur & Losse Kaarten**:
-  - Losse kaarten buiten een raster kiezen welke coureur wordt weergegeven: op **Baan** (Baan 1 t/m Baan 8), op **Heat-positie** (1e, 2e, etc.), op positie in het **Algemeen Klassement** of op **Coureur Seed**.
+## Werkbalkacties {: #toolbar-actions }
 
-### Inset-widgets & uitlijning
+De bovenste werkbalk biedt essentiële navigatie- en sessieacties:
 
-Elke baankolomkaart ondersteunt tot 8 secundaire **inset-slots** langs de rand van de primaire meetwaarde (Linksboven, Middenboven, Rechtsboven, Middenlinks, Middenrechts, Linksonder, Middenonder, Rechtsonder):
+- **Terug**: Keert terug naar het vorige scherm of navigatiemenu.
+- **Ongedaan maken / Opnieuw**: Maakt recente wijzigingen in de huidige bewerkingssessie ongedaan of past ze opnieuw toe.
+- **Help (?)**: Start de interactieve rondleiding die elk gedeelte en expanderpaneel op de pagina markeert.
 
-- **Gegevenskoppeling**: Insets kunnen secundaire meetwaarden weergeven (bijv. beste ronde, rondenaantal, brandstof %, verreden heats, coureurnaam), afbeeldingen/avatars of ingesloten aangepaste widgets.
-- **Horizontale & verticale uitlijning**:
-  - Op het Inset-tabblad van de inspector biedt elke geplaatste inset opties voor **Horizontale uitlijning** (**Links**, **Midden**, **Rechts**) en **Verticale uitlijning** (**Boven**, **Midden**, **Onder**).
-  - Insets gebruiken standaard hun natuurlijke randpositie (bijv. `Linksboven` gebruikt standaard Links/Boven, `Rechtsonder` gebruikt Rechts/Onder), waardoor volledige visuele compatibiliteit met bestaande lay-outs behouden blijft terwijl nauwkeurige afstemming binnen elk slot mogelijk is.
-- **Aangepaste stijlen**: Insets kunnen kolomlettertypen en -kleuren overnemen of aangepaste typografie, tekstkleuren, decimalen en opmaakdrempels configureren.
+---
 
-### Raster Gegevensbronnen: Heat-gegevens vs. Algemene Racegegevens
+## Instellingen voor interface-aanpassing {: #customize-ui-settings }
 
-Elk gegevensraster in de UI-editor beschikt op het tabblad Raster over de instelling **Gegevensbron**, die bepaalt welke coureurs de rijen vullen:
+De sectie **Instellingen voor interface-aanpassing** configureert lokale bestandssysteemmappen, aangepaste Excel-exportsjablonen en schermovergangsanimaties:
 
-- **Heat-gegevens (`heat`)**:
-  - **Coureurbereik**: Exclusief gekoppeld aan de coureurs die actief deelnemen aan de huidige heat op de baan (`heatDrivers`).
-  - **Weergavegedrag**: Alleen coureurs die momenteel op de baan rijden in de actieve heat worden getoond. Coureurs die rusten of in andere heats zijn ingedeeld, worden weggelaten.
-  - **Paginering & Scrollen**: Het aantal rijen is strikt begrensd door de coureurs van de actieve heat en de fysieke banen. Het raster scrollt nooit voorbij actieve deelnemers naar lege rijen.
-- **Algemene Racegegevens (`overall`)**:
-  - **Coureurbereik**: Gekoppeld aan **alle geregistreerde deelnemers** van het gehele toernooi of evenement (`participants`).
-  - **Weergavegedrag**: Iedere geregistreerde deelnemer kan in het raster worden getoond, ongeacht of hij/zij actief op de baan rijdt of rust in de pits.
-  - **Paginering & Scrollen**: Het aantal rijen weerspiegelt het gehele toernooiveld (bijv. 16, 24 of 32 coureurs over meerdere heats). Als het raster minder zichtbare rijen heeft dan het totale aantal deelnemers, ondersteunt het automatisch scrollen over meerdere pagina's om het volledige klassement te doorlopen.
-  - **Coureurs Buiten de Baan**: Voor coureurs die momenteel niet op de baan rijden, worden cumulatieve deelnemerstatistieken automatisch aangeleverd.
+### Map voor aangepaste interface
 
-### Widgets: Heat-gegevenswidgets vs. Algemene Gegevenswidgets
+Bepaalt een lokale map die wordt gebruikt om ingebouwde applicatiesjablonen te overschrijven en indien nodig clientlogboeken op te slaan:
 
-De Toolbox verdeelt gegevenskolommen en -kaarten in de groepen **Heat-gegevens** en **Algemene Gegevens**. De keuze van het widget bepaalt welke statistieken voor elke rij worden berekend en getoond:
+- **Mappad**: Toont de actieve mapnaam en het absolute bestandspad. Indien niet ingesteld, gebruikt de applicatie standaard interne locaties.
+- **Map selecteren**: Opent een systeemeigen dialoogvenster om een lokale map te zoeken en te selecteren.
+- **Pad invoeren**: Opent een modaal venster om handmatig een absoluut bestandssysteempad in te voeren of te plakken.
+- **Standaardinstellingen herstellen**: Wist het aangepaste mappad en herstelt de standaardwaarden.
 
-- **Heat-gegevenswidgets** (bijv. *Rondeteller, Laatste Rondetijd, Beste Heat-rondetijd, Sectortijd, Reactietijd, Heat-positie / Stand, Heat-verschillen, Brandstof / Telemetrie, Ghost Pacing*):
-  - Berekenen prestatiemetingen uitsluitend voor de **actieve heat**.
-  - **In een Heat-gegevensraster**: Elke rij toont live realtime-telemetrie en rondetijden van de voertuigen die op de baan rijden.
-  - **In een Algemeen Gegevensraster**: Coureurs op de baan tonen hun live heat-telemetrie; coureurs die rusten of inactief zijn tonen streepjes (`--`) of nullen voor heat-specifieke waarden, aangezien zij geen gegevens produceren in de lopende heat.
-- **Algemene Gegevenswidgets** (bijv. *Algemene Stand / Positie, Totaal Aantal Ronden, Fysieke Ronden, Totale Tijd, Baanrecord, Algemeen Gemiddelde, Algemene Mediaan, Algemene Consistentie, Algemene Tijdsverschillen, Winkans / Voorspellingen, Heats Gereden / Heats Resterend*):
-  - Berekenen cumulatieve prestatiemetingen over **alle voltooide heats** in het toernooi.
-  - **In een Algemeen Gegevensraster**: Elke coureurrij (actief op de baan of rustend tussen heats) toont zijn volledige toernooidata, totaal gereden ronden, snelste toernooironde en positie in het algemeen klassement.
-  - **In een Heat-gegevensraster**: De actieve heat-coureurs tonen hun algemene toernooistand en evenementstatistieken zij aan zij met hun actieve heat-ronden (bijv. het toernooiklassement volgen tijdens de actieve race).
+> [!WARNING]
+> Het instellen van een aangepaste UI-map overschrijft standaardsjablonen van de applicatie en is uitsluitend bedoeld voor gevorderde gebruikers die aangepaste interfaces ontwikkelen of logboeken analyseren.
 
-#### Heats Gereden & Resterend Widget
+### Map voor aangepaste widgets
 
-Het widget **Heats Gereden** (`heatsRaced`) toont de voortgang van de deelname aan heats voor elke deelnemer:
+Configureert de hoofdmap waarin Race Coordinator AI zoekt naar modulaire [aangepaste widgets](custom-widgets.nl.md):
 
-- **Heats Gereden (Standaardmodus)**: Toont het aantal heats dat de coureur reeds heeft voltooid of momenteel rijdt in het toernooi.
-- **Modus Heats Resterend**: Wanneer de instelling **Heat-weergavemodus** wordt omgeschakeld van *Gereden heats* naar *Resterende heats*, toont de kaart hoeveel geplande heats de coureur nog moet rijden. Als er geen aangepast kolomkoplabel is ingesteld, verandert de kop automatisch van `HEATS GEREDEN` naar `HEATS RESTEREND`.
-- Deze configuratie is tevens beschikbaar voor insets op elke kolomkaart.
+- **Mappad**: Toont de geselecteerde mapnaam en het pad voor aangepaste widgets.
+- **Map selecteren**: Opent een mapkiezer om een lokale map met widgetpakketten te kiezen.
+- **Pad invoeren**: Voer handmatig een absoluut mappad in.
+- **Starter-widgets exporteren**: Kopieert kant-en-klare voorbeeld-widgetpakketten naar een submap `sample/` binnen uw geselecteerde widgetmap (inclusief `sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner` en `sample-detailed-leaderboard`). Deze knop wordt actief zodra een geldige widgetmap is geselecteerd.
+- **Standaardinstellingen herstellen**: Wist het mappad voor aangepaste widgets.
 
-#### Verschil-Widgets (Gaps & Intervallen)
+Voor volledige technische specificaties over het maken van aangepaste widgets, zie de [Gids voor aangepaste widgets](custom-widgets.nl.md).
 
-Race Coordinator AI biedt **2 configureerbare verschil-widgets** voor Heat-gegevens en Algemene Gegevens:
+### Aangepast exportsjabloon
 
-1. **Heat-verschil (`gap`)**: Berekent intervallen in realtime uitsluitend tussen auto's die actief racen in de huidige heat.
-2. **Algemeen verschil (`overallGap`)**: Berekent cumulatieve intervallen over alle deelnemers aan het evenement.
+Beheert het aangepaste Microsoft Excel-sjabloon (`.xlsx`) dat wordt gebruikt bij het exporteren van raceresultaten en -statistieken:
 
-Elke verschil-widget kan in de Kolom-inspector worden aangepast met twee kernopties:
-- **Doel**:
-  - **Leider**: Verschil ten opzichte van de huidige raceleider (P1).
-  - **Voorgaande positie**: Verschil ten opzichte van de directe voorligger in de stand (bijv. P3 t.o.v. P2).
-- **Berekeningsmodus**:
-  - **Altijd tijd**: Continue pace-projectie van het tijdsverschil in seconden (`+X.XXX`).
-  - **Tijd en ronden achterstand**: Formule 1-weergave met tijdsverschil in dezelfde ronde of rondenachterstand (`+1 Ronde`, `+N Ronden`) bij een dubbeling.
-  - **Altijd ronden**: Exact rondenverschil berekend bij finishdoorkomst, inclusief de partiële rondevoortgang van de vergeleken coureur.
+- **Sjabloonstatus**: Toont de bestandsnaam van het momenteel actieve Excel-werksjabloon of geeft aan wanneer het standaardsjabloon van het systeem actief is.
+- **Sjabloon selecteren**: Uploadt een aangepast `.xlsx`-werkmapbestand vanaf uw computer om in te sluiten als exportsjabloon.
+- **Sjabloon downloaden**: Downloadt het momenteel actieve sjabloonbestand naar uw computer om te bekijken of te bewerken in Microsoft Excel.
+- **Testexport**: Genereert en downloadt een voorbeeld-`.xlsx`-exportbestand gevuld met gesimuleerde racegegevens om sjabloonopmaak, formules en grafieken te testen.
+- **Sjabloonvariabelen**: Opent een interactief referentievenster met alle ondersteunde vervangingstags (zoals `{{RACE_NAME}}`, `{{HEAT_NUMBER}}`, `{{DRIVER_NAME}}`, `{{LAP_TIME}}`, enz.) die u in Excel-cellen kunt plaatsen om dynamisch racegegevens in te voegen.
+- **Standaardinstellingen herstellen**: Keert terug naar het ingebouwde standaard Excel-exportsjabloon.
 
-> [!NOTE]
-> Meerdere verschil-widgets met verschillende configuraties (bijvoorbeeld een Leider-verschilkolom en een Voorligger-verschilkolom) kunnen gelijktijdig op hetzelfde raster of layout worden geplaatst.
+> [!TIP]
+> Als u uw Excel-sjabloonbestand extern bewerkt in Microsoft Excel of een ander spreadsheetprogramma, upload het dan opnieuw via **Sjabloon selecteren** zodat de bijgewerkte werkmap wordt opgeslagen in Race Coordinator AI. Voor details over vervangingstokens, zie de [Gids voor aangepaste XLS-export](custom-xls-export.nl.md).
 
-Voor gedetailleerde wiskundige formules en tijdmetingsspecificaties, zie de [Gids voor Verschilberekeningen](gap-calculations.md).
+### Pagina-overgangen
 
-#### Laatste Ronden Widget (`lastLaps`)
+Bepaalt de visuele animatiestijl die wordt gebruikt bij het navigeren tussen schermen en weergaven in de applicatie:
 
-De widget **Laatste Ronden** (`lastLaps`) toont de recent gereden rondetijden van de coureur in de actieve heat:
+- **Schuiven (Slide)** (Standaard): Vloeiende horizontale schuifovergang tussen pagina's.
+- **Vervagen (Fade)**: Vloeiende overvloeiing van dekking tussen weergaven.
+- **Zoomen (Zoom)**: Moderne zoomschaalovergang.
+- **Omdraaien (Flip)**: 3D-kaartomdraaieffect.
+- **Geen (None)**: Onmiddellijke paginawisseling zonder animatie (aanbevolen voor minder krachtige apparaten of kiosken).
 
-- **Weer te geven laatste ronden**: Bepaalt hoeveel recente ronden in de widget worden getoond (schuifregelaar 1–20, numeriek invoerveld 1–50). De standaardwaarde is `5`.
-- **Rondescheiding & kaders**: Configureert hoe individuele ronden worden gescheiden. Opties omvatten kaderstijl (doorgetrokken, gestreept, gestippeld, dubbel), kaderkleur, kaderbreedte (1–10px), randmarge (-20px tot 40px+ om te bepalen hoe ver de rand naar binnen of buiten valt en naadloos aansluit op aangrenzende kolomranden), hoekradius (0–32px) en scheidingsmodus (scheidingslijn tussen de ronden of een kader om elke ronde).
-- **Beste ronde markeren**: Markeert of een ronde in de lijst de snelste rondetijd van de coureur is. Opties omvatten tekstkleur, achtergrond-badgekleur, lettertypedikte (normaal, vet, extra vet/900), onderstrepen, cursief en een speciaal accentkader voor de beste ronde.
-- **Dynamische schaling en pasvorm**: De kaart schaalt lettergroottes en regelafstanden automatisch om het geconfigureerde aantal ronden netjes in de kolomgeometrie te passen.
-- **Grid-synchronisatie**: In banengrids synchroniseert het configureren of toepassen van tijdopmaken het aantal weergegeven ronden en de vormgeving over alle deelnemende banen.
+---
 
-#### Gemiddelde Score Widget (`averageScore`)
+## Audio-instellingen {: #audio-settings }
 
-De widget **Gemiddelde Score** (`averageScore`) toont de gemiddelde heatscore over alle heats die de coureur heeft voltooid:
+De sectie **Audio-instellingen** beheert het algehele hoofdvolumeniveau, het gedrag van de audiowachtrij en tekst-naar-spraak (TTS):
 
-- **Alleen Heat-gegevens**: Behoort strikt tot de gereedschapskistgroep **Heat-gegevens** (`analysis`). In een algemene racegegevenscontext of voor een rustende coureur zonder actieve heat worden streepjes (`--`) weergegeven.
-- **Aanpassing aan scoremethode**: Berekent het gemiddelde automatisch op basis van de geconfigureerde heat-scoremethode:
-  - **Rondeaantal-telling**: Berekent het gemiddelde aantal ronden over voltooide heats (met geconfigureerde rondedecimalen, standaard 2).
-  - **Snelste-ronde-telling**: Berekent het gemiddelde van de snelste rondetijden over voltooide heats met geldige tijd (met tijddecimalen, standaard 3).
-  - **Totale-tijd-telling**: Berekent het gemiddelde van de totale heattijden over voltooide heats (met timerweergave of tijddecimalen).
-- **Gedeeltelijke heats weergeven**:
-  - Uitgeschakeld (standaard): alleen volledig voltooide heats tellen mee.
-  - Ingeschakeld: de actieve heat in oefensessie of wedstrijd wordt meegewogen op basis van de voortgang:
-    - **Ronderace**: Bij een heat van 10 ronden waarin de koploper in ronde 4 zit, telt de heat voor 0,4 mee in de noemer en wordt de actieve score aan de teller toegevoegd.
-    - **Tijdrace**: De voortgang wordt bepaald door de verstreken heattijd ten opzichte van de doeltijd.
-    - **Niet-geconfigureerde eindwaarde**: Kan de voortgang niet worden bepaald (`finishValue <= 0`), dan telt de gedeeltelijke heat niet mee.
-- **Decimale precisie**: Volledig instelbaar in de Kolominspecteur (0–3 decimalen) voor hoofdkaarten en insets.
+### Hoofdvolume
 
-### Rastersortering & Interactiematrix
+Bepaalt het algehele hoofdvolume (0% tot 100%) voor alle audioweergave in Race Coordinator AI. Het aanpassen van deze schuifregelaar schaalt alle geluidseffecten, aftelsignalen, waarschuwingssignalen en gesproken aankondigingen gelijktijdig.
 
-De keuzelijst **Raster Sortering** op het tabblad Raster bepaalt de rijenvolgorde. De werking hangt direct af van de gekozen **Gegevensbron** (**Heat-gegevens** of **Algemene Gegevens**):
+### Time-out urgente wachtrij
 
-| Sorteeroptie | In een Heat-gegevensraster (`gridType: heat`) | In een Algemeen Gegevensraster (`gridType: overall`) |
-| :--- | :--- | :--- |
-| **Baan** | Statische volgorde op fysieke baan (Baan 1, Baan 2, ...). Elke rij is gekoppeld aan een specifieke baan en de actieve coureur daarop. | Actieve coureurs op de baan verschijnen eerst op baannummer (Baan 1, Baan 2, ...), gevolgd door alle rustende deelnemers gesorteerd op positie in het algemeen klassement. |
-| **Heat-positie** | Dynamische live hersortering op positie in de actieve heat (1e, 2e, 3e in de heat). Rijen wisselen direct van positie bij doorkomsten of inhaalacties. | Actieve coureurs verschijnen bovenaan gesorteerd op heat-positie (1e, 2e, ...), gevolgd door alle inactieve deelnemers gesorteerd op algemeen klassement. |
-| **Algemeen Klassement** | Sorteert **uitsluitend de coureurs van de actieve heat** op basis van hun algemene toernooiklassement. (Rijden bijv. de nummers 2, 5, 8 en 14 van het klassement in de heat, dan sorteren de 4 rijen hen als #2, #5, #8, #14). Toont nooit deelnemers van buiten de heat en veroorzaakt geen lege rijen. | Sorteert het **volledige deelnemersveld** op basis van het algemeen raceklassement (1e algemeen, 2e algemeen, 3e algemeen, ...). Het gehele veld sorteert live opnieuw wanneer punten en ronden worden bijgewerkt. |
-| **Coureur Seed** | Sorteert de actieve heat-coureurs op hun oorspronkelijke kwalificatie-/plaatsingsnummer (laagste seed eerst). | Sorteert alle toernooideelnemers op hun initiële plaatsingspositie (Seed 1, Seed 2, Seed 3, ...) over het gehele veld. |
-- **Layout-oriëntatie**: Ondersteunt **Verticaal** (kop boven de waarde) en **Horizontaal** (kop en waarde naast elkaar).
-- **Vormgeving & Aanpassing van de Titelbalk**:
-  - De titelbalk is standaard vormgegeven volgens de kolomkop in de baanweergave (half-transparante donkere achtergrond `rgba(68, 68, 68, 0.7)`, vette witte tekst, afgeronde bovenhoeken en een scheidingsrand).
-  - **Kolomkop Weergeven**: Schakelt de titelbalk in of uit. Indien uitgeschakeld wordt de titelbalk volledig verwijderd van de kaart, waardoor maximale ruimte vrijkomt voor de hoofdwaarden en inzetcellen.
-  - **Aangepaste Kolomkop**: Overschrijf de standaardnaam van het datapunt met een eigen titellabel.
-  - **Typografie & Uitlijning**: Pas het lettertype, de lettergrootte en de tekstuitlijning (Links, Gecentreerd, Rechts) van de titelbalk naar wens aan.
-  - **Tekst- & Achtergrondkleur**: Pas de achtergrondkleur en tekstkleur van de titelbalk eenvoudig aan via kleurkiezers, met éénknops-herstel naar de standaardwaarden.
-- **Kleur-overname & Aanpassingen**: Kaarten nemen standaard de toegewezen achtergrond- en tekstkleur van de betreffende baan over (`Baankleuren Gebruiken`), of kunnen worden voorzien van aangepaste kleuren en randen.
-- **Dupliceren over Banen / Posities**:
-  - In plaats van kaarten handmatig voor elke baan te maken en uit te lijnen, configureert u één baan of positie en klikt u in het configuratiepaneel op **Dupliceren over Banen / Posities...**.
-  - Kies de richting (**Horizontaal** naast elkaar of **Verticaal** boven elkaar), het totale aantal doelbanen/posities (standaard het maximale aantal banen over alle circuits in de database), de afstandsmodus (**Automatisch Passend Maken** of **Afstand Behouden**) en eventueel het overschrijven van bestaande widgets.
-  - **Realtime Duplicatiemodus**: Bij het dupliceren schakelt de editor over naar een interactieve blauwdrukmodus met visuele baanrasterlijnen en magnetisch uitlijnen. In deze modus plaatst, schaalt en bewerkt u widgets direct in Baan 1 (Master); wijzigingen worden onmiddellijk in realtime gespiegeld naar alle overige banen. Gespiegelde widgets in banen 2..N zijn alleen-lezen live previews; klikken op een gespiegeld widget verplaatst de focus automatisch naar de master van Baan 1.
-  - **Slim Rasterbereik & Formaat Wijzigen**: Het duplicatiegebied breidt zich automatisch in alle vier de richtingen uit om de beschikbare canvasruimte te vullen totdat het tegen de grenzen van bestaande widgets buiten het raster botst. U kunt de totale grootte van het raster aanpassen via de 8 handgrepen op de omtrek van het raster.
-  - Klik op **Voltooid** om het raster vast te leggen als onafhankelijke widgets.
-  - **Sjabloon Opnieuw Bewerken & Loskoppelen**: Als u later een widget van het raster selecteert, toont de Widget-configuratie een kaart waarmee u op **Rastersjabloon Bewerken** kunt klikken (om op elk moment weer naar realtime duplicatiemodus terug te keren) of **Loskoppelen van Raster** (om de koppeling permanent te verbreken).
+Bepaalt hoelang urgente meldingen met hoge prioriteit (zoals *Gele vlag*, *Heat afgelopen* of *Valse start*) in de audiowachtrij wachten als er al een ander dringend bericht wordt uitgesproken:
 
-### Rastersynchronisatie: Kolommen spiegelen vs. Rijen spiegelen
+- **3 seconden**: Korte time-out; verwijdert wachtende meldingen snel zodat gesproken meldingen nauw synchroon blijven met de actie op de baan.
+- **5 seconden** (Standaard): Gebalanceerde duur die ervoor zorgt dat urgente meldingen worden gehoord zonder achter te lopen op live-gebeurtenissen.
+- **10 seconden**: Ruime time-out; laat langere aankondigingen uitspreken voordat volgende urgente meldingen worden overgeslagen.
 
-Een raster in Race Coordinator AI is een tweedimensionale matrix georganiseerd in deelnemersposities en gegevensstatistieken:
+Verlopen meldingen die de tijdslimiet overschrijden, worden automatisch genegeerd.
 
-- **Verticale Richting (Standaard)**:
-  - **Rijen (Deelnemersposities)**: Vertegenwoordigen elke fysieke circuitbaan (**Baan 1, Baan 2, ...**) of racepositie (**Positie 1, Positie 2, ...**).
-  - **Kolommen (Gegevensvelden)**: Vertegenwoordigen afzonderlijke gegevensstatistieken binnen een positie (bijv. *Coureurnaam, Heat-rondenaantal, Laatste Rondetijd, Beste Ronde, Verschil, Autobewijzing*).
-  - **Kolommen spiegelen**: Regelt de synchronisatie van de visuele stijl over alle verschillende gegevenskolommen.
-  - **Rijen spiegelen**: Beheert de duplicatie en geometrische synchronisatie van rij naar rij, uitgaande van de **Hoofdrij (Baan 1 / Positie 1 Master)** naar alle overige rijen (**Banen 2..N**).
-- **Horizontale Richting**:
-  - **Kolommen (Deelnemersposities)**: Vertegenwoordigen elke fysieke circuitbaan (**Baan 1, Baan 2, ...**) of racepositie (**Positie 1, Positie 2, ...**). Elke baan in een heat-weergave is een kolom.
-  - **Rijen (Gegevensvelden)**: Vertegenwoordigen verticaal onder elkaar gestapelde gegevensstatistieken binnen elke baan.
-  - **Kolommen spiegelen**: Beheert de duplicatie van kolom naar kolom, geometrie en stijl, uitgaande van de **Hoofdkolom (Baan 1 / Positie 1 Master)** naar alle overige kolommen (**Banen 2..N**). Bij uitschakeling worden kolommen (banen) onafhankelijk en verschijnt de knop **Opnieuw spiegelen naar alle kolommen**.
-  - **Rijen spiegelen**: Regelt de synchronisatie van de visuele stijl over alle gegevensrijen (statistieken).
+### Tussenruimte voor oproepen
 
-De Raster-inspector biedt twee essentiële synchronisatieknoppen in de sectie **Rasterstructuur & Layout**: **Kolommen spiegelen** en **Rijen spiegelen**.
+Configureert de minimale stiltepauze tussen opeenvolgende gesproken aankondigingen om overlap of afkapping te voorkomen:
 
-#### Kolommen spiegelen
+- **Geen (0 ms)**: Opeenvolgende aankondigingen worden direct achter elkaar afgespeeld.
+- **Kort (500 ms)** (Standaard): Korte pauze van een halve seconde tussen aankondigingen voor een natuurlijk tempo.
+- **Normaal (1000 ms)**: 1 seconde pauze tussen aankondigingen voor een duidelijkere scheiding.
+- **Ontspannen (1500 ms)**: 1,5 seconde pauze tussen aankondigingen voor een rustig commentaartempo.
 
-**Kolommen spiegelen** synchroniseert kolommen over het hele raster:
-- Bij **Verticale Richting** vertegenwoordigen kolommen verschillende gegevensvelden/statistieken. Kolommen spiegelen harmoniseert de visuele stijl over deze gegevenskolommen.
-- Bij **Horizontale Richting** vertegenwoordigen kolommen individuele circuitbanen of raceposities. Kolommen spiegelen regelt de duplicatie, dimensionering en stijl vanaf de **Hoofdkolom (Baan 1 / Positie 1)** naar alle overige circuitbanen.
+### Tekst-naar-spraak (TTS) stem
 
-- **Ingeschakeld (Standaard)**:
-  - Kolommen delen gekoppelde stijlen (in verticale richting) of volledige replicatie van het mastersjabloon (in horizontale richting).
-  - Elke aanpassing aan de master wordt direct doorgevoerd naar alle kolommen.
-  - **Gesynchroniseerde Eigenschappen**:
-    - **Kopstijl**: Lettertype, lettergrootte, tekstkleur, achtergrondkleur, tekstuitlijning en kopafmetingen.
-    - **Gegevenscelstijl**: Lettertype, lettergrootte, tekstkleur, achtergrondkleur, wisselen van baankleuren (`useLaneColors`) en waarde-uitlijning.
-    - **Randstijl**: Randweergave, randkleur, randbreedte en hoekafronding.
-    - **Tijdnotatie**: Aantal decimalen, weergaveformaat en subseconde-precisiedrempels.
-    - **Telemetrie-accent**: Rijmarkering bij doorkomst/ronde.
-- **Uitgeschakeld**:
-  - Ontkoppelt de kolomsynchronisatie.
-  - Bij verticale richting kan elke gegevenskolom eigen lettergroottes, kleuren en randen krijgen, en verschijnen er knoppen om stijlen handmatig naar alle kolommen door te voeren.
-  - Bij horizontale richting wordt elke baankolom onafhankelijk, tonen widgets de status **Onafhankelijk** (bijv. `Baan 2 (Onafhankelijk)`), en verschijnt de knop **Opnieuw spiegelen naar alle kolommen**.
-- **Gedrag bij Opnieuw Inschakelen**:
-  - Activeert de kolomsynchronisatie weer. Bij horizontale richting synchroniseert het opnieuw aanvinken van het selectievakje of het klikken op **Opnieuw spiegelen naar alle kolommen** direct alle kolommen opnieuw met de master-baan.
+Selecteert welke synthetische stem wordt gebruikt voor gesproken rondetijden, posities, leidersaankondigingen en brandstofmeldingen:
 
-#### Rijen spiegelen
+- **Systeemstandaard**: Gebruikt de standaard spraaksynthesestem van uw besturingssysteem of browser.
+- **Geïnstalleerde stemmen**: Geeft een overzicht van alle op uw systeem of browser gedetecteerde stemmen met hun naam en taalcode (bijv. `nl-NL`, `en-US`).
 
-**Rijen spiegelen** synchroniseert rijen over het hele raster:
-- Bij **Verticale Richting** vertegenwoordigen rijen individuele circuitbanen of posities. Rijen spiegelen regelt de duplicatie en geometrische synchronisatie van rij naar rij vanaf de **Hoofdrij (Baan 1 / Positie 1)** naar alle overige rijen (**Banen 2..N**).
-- Bij **Horizontale Richting** vertegenwoordigen rijen de verschillende gegevensvelden of statistieken binnen elke baan. Rijen spiegelen regelt de visuele stijlsynchronisatie tussen de statistiekrijen.
+### Spraaksnelheid
 
-- **Ingeschakeld (Standaard)**:
-  - Rijen volgen strikt het mastersjabloon (in verticale richting) of delen gesynchroniseerde stijlen (in horizontale richting).
-  - Elke verschuiving, formaataanpassing of instellingswijziging in de mastercel wordt direct in realtime gerepliceerd naar alle overige banen of posities.
-  - Bij verticale richting tonen niet-master widgets de status **Gespiegeld** (bijv. `Baan 2 (Gespiegeld)`).
-- **Uitgeschakeld**:
-  - Ontkoppelt rijen.
-  - Bij verticale richting tonen niet-master rijen de status **Onafhankelijk** (bijv. `Baan 2 (Onafhankelijk)`), kunnen banen individueel worden aangepast en verschijnt de knop **Opnieuw spiegelen naar alle rijen**.
-  - Bij horizontale richting kan elke gegevensrij eigen stijlen krijgen zonder andere rijen te beïnvloeden.
-- **Gedrag bij Opnieuw Inschakelen**:
-  - Activeert de rijduplicatie en -synchronisatie weer. Bij verticale richting lijnt het klikken op **Opnieuw spiegelen naar alle rijen** of opnieuw aanvinken van het vakje direct alle rijen uit met de master.
+Bepaalt de afspeelsnelheid van gesproken TTS-aankondigingen via een schuifregelaar van **0,1x** (zeer langzaam) tot **2,0x** (dubbele snelheid) in stappen van 0,05. De standaardsnelheid is **1,0x**.
 
-#### Extra rijen
+### Toonhoogte (Pitch)
 
-Wanneer een raster onbezette rijen bevat (bijvoorbeeld wanneer er minder coureurs deelnemen aan een race of heat dan er rijen/banen zijn geconfigureerd), bepaalt de instelling **Extra rijen** in de Raster-inspector het gedrag:
+Bepaalt de vocale toonhoogte/frequentie van TTS-aankondigingen via een schuifregelaar van **0,0x** (lage toon) tot **2,0x** (hoge toon) in stappen van 0,05. De standaardtoonhoogte is **1,0x**.
 
-- **Verwijderen**: Verwijdert automatisch overtollige onbezette rijen en kolommen, zodat het raster exact aansluit op het werkelijke aantal deelnemers. (Standaard voor rasters met **Algemeen Klassement** en **Coureur Seed**).
-- **Leeg weergeven**: Behoudt de extra rijen en toont `--` voor alle waarden en insets, met behoud van kaartstructuren en kolomkoppen. (Standaard voor rasters met **Heat** en **Baan**).
-- **Blanco weergeven**: Behoudt de extra rijen en toont alleen de randen en achtergrond van de kaarten, zonder waarden of koppen.
+### Stemvolume
 
-#### Vergelijkingstabel
+Onafhankelijke schuifregelaar (0% tot 100%) specifiek voor TTS-spraakaankondigingen. Hiermee kunt u het volume van gesproken commentaar afstemmen ten opzichte van achtergrondgeluidseffecten.
 
-| Bediening | Richting | Bereik | Wat wordt gesynchroniseerd | Gedrag bij Uitschakelen | Gedrag bij Opnieuw Inschakelen |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Kolommen spiegelen** | Verticaal | Kolommen (Gegevensstatistieken) | Visuele stijl: lettertypen, groottes, kleuren, randen, koppen, formaten | Kolommen worden onafhankelijk; bestaande stijlen blijven behouden; knoppen «Toepassen op alle kolommen» verschijnen | Activeert automatische synchronisatie voor toekomstige bewerkingen |
-| **Kolommen spiegelen** | Horizontaal | Kolommen (Banen / Deelnemers) | Geometrie, replicatie en stijlen van Baan 1 Master naar alle baankolommen | Baankolommen worden onafhankelijk; status `Onafhankelijk` verschijnt; knop `Opnieuw spiegelen naar alle kolommen` verschijnt | Herstelt master-replicatie; lijnt alle kolommen direct uit met de Master |
-| **Rijen spiegelen** | Verticaal | Rijen (Banen / Deelnemers) | Geometrie, replicatie en instellingen van Baan 1 Master naar alle baanrijen | Baanrijen worden onafhankelijk; status `Onafhankelijk` verschijnt; knop `Opnieuw spiegelen naar alle rijen` verschijnt | Herstelt master-replicatie; lijnt alle rijen direct uit met de Master |
-| **Rijen spiegelen** | Horizontaal | Rijen (Gegevensstatistieken) | Visuele stijl: lettertypen, groottes, kleuren, randen tussen statistiekrijen | Statistiekrijen worden onafhankelijk; bestaande stijlen blijven behouden | Activeert automatische synchronisatie voor toekomstige bewerkingen |
+### Stem testen
 
-
+Klik op de knop **Stem testen** om een voorbeeldzin te horen die wordt uitgesproken met uw huidige instellingen voor stem, snelheid, toonhoogte en volume.

@@ -1095,4 +1095,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   getHelpSteps(): GuideStep[] {
     return getUiEditorHelpSteps(buildUiEditorHelpContext(this));
   }
+
+  startHelp(): void {
+    this.helpService.startGuide(this.getHelpSteps());
+  }
 }

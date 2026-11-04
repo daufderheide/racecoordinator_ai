@@ -1,202 +1,120 @@
-import { CustomUI } from "@app/models/custom-ui";
-import { Theme } from "@app/models/theme";
-import { TranslationService } from "@app/services/translation.service";
+import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 
+import enJson from "../../../assets/i18n/en.json";
 import {
-  getAudioHelpSteps,
-  getAudioSettingsHelpSteps,
-  getCustomUiConfigHelpSteps,
-  getGeneralAndCustomUisHelpSteps,
-  getRacedayLayoutHelpSteps,
-  getThemesHelpSteps,
+  buildUiEditorHelpContext,
   getUiEditorHelpSteps,
   handleUiEditorHelpStep,
   UiEditorHelpContext,
+  UiEditorHelpHelper,
 } from "./ui-editor-help.helper";
 
 describe("ui-editor-help.helper", () => {
   let ctx: UiEditorHelpContext;
-  let translationServiceSpy: jasmine.SpyObj<TranslationService>;
-  let defaultUi: CustomUI;
-  let defaultTheme: Theme;
+  let mockTranslationService: any;
   let sectionsExpanded: Record<string, boolean>;
+  let onSectionExpandedSpy: jasmine.Spy;
 
   beforeEach(() => {
-    translationServiceSpy = jasmine.createSpyObj<TranslationService>(
-      "TranslationService",
-      ["translate"],
-    );
-    translationServiceSpy.translate.and.callFake((key: string) => key);
-
-    defaultUi = {
-      entity_id: "default_ui_layout_rc_ai",
-      name: "Default UI",
-      is_default: true,
+    mockTranslationService = {
+      translate: (key: string) => `translated_${key}`,
     };
-
-    defaultTheme = {
-      entity_id: "default_classic_rc_ai",
-      name: "Classic",
-      is_default: true,
-      slots: {},
-      audio_slots: {},
-    };
-
     sectionsExpanded = {};
+    onSectionExpandedSpy = jasmine.createSpy("onSectionExpanded");
 
     ctx = {
-      translationService: translationServiceSpy,
+      translationService: mockTranslationService,
       sectionsExpanded,
-      getActiveCustomUi: () => defaultUi,
-      getDefaultCustomUi: () => defaultUi,
-      getActiveThemeId: () => defaultTheme.entity_id,
-      getDefaultTheme: () => defaultTheme,
-      selectFirstWidget: jasmine.createSpy("selectFirstWidget"),
+      onSectionExpanded: onSectionExpandedSpy,
     };
   });
 
-  it("should return general and custom UI steps", () => {
-    const steps = getGeneralAndCustomUisHelpSteps(ctx);
-    expect(steps.length).toBeGreaterThan(2);
-    expect(steps[0].title).toBe("UE_TITLE");
+  it("should return all 4 expected help steps in order with targets and selectors", () => {
+    const steps = UiEditorHelpHelper.getHelpSteps(ctx);
+    expect(steps.length).toBe(4);
 
-    steps[1].onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-  });
+    // Step 0: Welcome / Overview
+    expect(steps[0].title).toBe("translated_UE_HELP_WELCOME_TITLE");
+    expect(steps[0].content).toBe("translated_UE_HELP_WELCOME_CONTENT");
+    expect(steps[0].position).toBe("center");
+    expect(steps[0].targetId).toBeUndefined();
 
-  it("should return raceday layout steps and handle onEnter callbacks", () => {
-    const steps = getRacedayLayoutHelpSteps(ctx);
-    expect(steps.length).toBeGreaterThan(4);
+    // Step 1: Toolbar
+    expect(steps[1].targetId).toBe("toolbar-container");
+    expect(steps[1].selector).toBe(".toolbar-container");
+    expect(steps[1].highlightTargetId).toBe("toolbar-container");
+    expect(steps[1].highlightSelector).toBe(".toolbar-container");
+    expect(steps[1].title).toBe("translated_TOOLBAR_HELP_TITLE");
+    expect(steps[1].position).toBe("bottom");
 
-    const sortStep = steps.find((s) => s.selector === "#help-raceday-sort");
-    sortStep?.onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-    expect(sectionsExpanded["ui_default_ui_layout_rc_ai"]).toBeTrue();
-
-    const zoomStep = steps.find((s) => s.selector === "#help-raceday-zoom");
-    expect(zoomStep).toBeDefined();
-    zoomStep?.onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-
-    const aspectStep = steps.find(
-      (s) => s.selector === "#help-raceday-aspect-ratio",
-    );
-    expect(aspectStep).toBeDefined();
-    aspectStep?.onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-
-    const scaleModeStep = steps.find(
-      (s) => s.selector === "#help-raceday-scale-mode",
-    );
-    expect(scaleModeStep).toBeDefined();
-    scaleModeStep?.onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-
-    const resetStep = steps.find((s) => s.selector === "#help-raceday-reset");
-    expect(resetStep).toBeDefined();
-    resetStep?.onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-
-    const clearStep = steps.find((s) => s.selector === "#help-raceday-clear");
-    expect(clearStep).toBeDefined();
-    clearStep?.onEnter?.();
-    expect(sectionsExpanded["customUIs"]).toBeTrue();
-
-    const inspectorStep = steps.find(
-      (s) => s.selector === "#help-widget-inspector",
-    );
-    expect(inspectorStep).toBeDefined();
-    inspectorStep?.onEnter?.();
-    expect(ctx.selectFirstWidget).toHaveBeenCalledWith(defaultUi);
-  });
-
-  it("should return themes steps and expand themes section", () => {
-    const steps = getThemesHelpSteps(ctx);
-    expect(steps.length).toBe(2);
-
-    const themeStep = steps.find((s) => s.selector === "#help-themes");
-    expect(themeStep).toBeDefined();
-    themeStep?.onEnter?.();
-    expect(sectionsExpanded["themes"]).toBeTrue();
-
-    const btnStep = steps.find((s) => s.selector === "#btn-open-theme-editor");
-    expect(btnStep).toBeDefined();
-    expect(btnStep?.title).toBe("UE_BTN_OPEN_THEME_EDITOR");
-    btnStep?.onEnter?.();
-    expect(sectionsExpanded["themes"]).toBeTrue();
-  });
-
-  it("should return custom UI config steps", () => {
-    const steps = getCustomUiConfigHelpSteps(ctx);
-    expect(steps.length).toBe(5);
-
-    const widgetDirStep = steps.find(
-      (s) => s.selector === "#help-custom-widget-dir",
-    );
-    expect(widgetDirStep).toBeDefined();
-    widgetDirStep?.onEnter?.();
+    // Step 2: Customize UI Settings Expander
+    expect(steps[2].targetId).toBe("ui-config-section");
+    expect(steps[2].selector).toBe("#ui-config-section");
+    expect(steps[2].title).toBe("translated_UE_HELP_CONFIG_SECTION_TITLE");
+    expect(steps[2].position).toBe("bottom");
+    steps[2].onEnter?.();
     expect(sectionsExpanded["config"]).toBeTrue();
-  });
+    expect(onSectionExpandedSpy).toHaveBeenCalledTimes(1);
 
-  it("should return audio settings help steps including tts options", () => {
-    const steps = getAudioSettingsHelpSteps(ctx);
-    expect(steps.length).toBe(9);
-
-    const audioSettingsStep = steps.find(
-      (s) => s.selector === "#help-audio-settings",
-    );
-    expect(audioSettingsStep).toBeDefined();
-    audioSettingsStep?.onEnter?.();
+    // Step 3: Audio Settings Expander
+    expect(steps[3].targetId).toBe("audio-settings-section");
+    expect(steps[3].selector).toBe("#audio-settings-section");
+    expect(steps[3].title).toBe("translated_UE_HELP_AUDIO_SECTION_TITLE");
+    expect(steps[3].position).toBe("bottom");
+    steps[3].onEnter?.();
     expect(sectionsExpanded["audioSettings"]).toBeTrue();
-
-    const masterVolumeStep = steps.find(
-      (s) => s.selector === "#help-audio-master-volume",
-    );
-    expect(masterVolumeStep).toBeDefined();
-    expect(masterVolumeStep?.title).toBe("UE_LABEL_MASTER_VOLUME");
-
-    const urgentTimeoutStep = steps.find(
-      (s) => s.selector === "#help-audio-urgent-timeout",
-    );
-    expect(urgentTimeoutStep).toBeDefined();
-    expect(urgentTimeoutStep?.title).toBe("UE_LABEL_URGENT_QUEUE_TIMEOUT");
-
-    const calloutSpacingStep = steps.find(
-      (s) => s.selector === "#help-audio-callout-spacing",
-    );
-    expect(calloutSpacingStep).toBeDefined();
-    expect(calloutSpacingStep?.title).toBe("UE_LABEL_CALLOUT_SPACING");
-
-    const ttsVoiceStep = steps.find((s) => s.selector === "#help-tts-voice");
-    expect(ttsVoiceStep).toBeDefined();
-    expect(ttsVoiceStep?.title).toBe("UE_LABEL_TTS_VOICE");
-
-    const ttsRateStep = steps.find((s) => s.selector === "#help-tts-rate");
-    expect(ttsRateStep).toBeDefined();
-    expect(ttsRateStep?.title).toBe("UE_LABEL_TTS_RATE");
-
-    const ttsPitchStep = steps.find((s) => s.selector === "#help-tts-pitch");
-    expect(ttsPitchStep).toBeDefined();
-    expect(ttsPitchStep?.title).toBe("UE_LABEL_TTS_PITCH");
-
-    const ttsVolumeStep = steps.find((s) => s.selector === "#help-tts-volume");
-    expect(ttsVolumeStep).toBeDefined();
-    expect(ttsVolumeStep?.title).toBe("UE_LABEL_TTS_VOLUME");
-
-    const ttsTestStep = steps.find((s) => s.selector === "#help-tts-preview");
-    expect(ttsTestStep).toBeDefined();
-    expect(ttsTestStep?.title).toBe("UE_LABEL_TTS_PREVIEW");
+    expect(onSectionExpandedSpy).toHaveBeenCalledTimes(2);
   });
 
-  it("should return theme audio help steps (empty now that themes has its own editor)", () => {
-    const steps = getAudioHelpSteps(ctx);
-    expect(steps.length).toBe(0);
+  it("should support getUiEditorHelpSteps helper function", () => {
+    const steps = getUiEditorHelpSteps(ctx);
+    expect(steps.length).toBe(4);
+    expect(steps[0].title).toBe("translated_UE_HELP_WELCOME_TITLE");
+    expect(steps[1].targetId).toBe("toolbar-container");
+    expect(steps[2].targetId).toBe("ui-config-section");
+    expect(steps[3].targetId).toBe("audio-settings-section");
   });
 
-  it("should return all combined steps in correct order", () => {
-    const allSteps = getUiEditorHelpSteps(ctx);
-    expect(allSteps.length).toBeGreaterThan(10);
-    expect(allSteps[0].title).toBe("UE_TITLE");
+  it("should build UiEditorHelpContext from component instance", () => {
+    const fakeComp = {
+      translationService: mockTranslationService,
+      sectionsExpanded: { config: false },
+      saveExpanderState: jasmine.createSpy("saveExpanderState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+    const built = buildUiEditorHelpContext(fakeComp);
+    expect(built.translationService).toBe(mockTranslationService);
+    expect(built.sectionsExpanded).toBe(fakeComp.sectionsExpanded);
+    built.onSectionExpanded?.();
+    expect(fakeComp.saveExpanderState).toHaveBeenCalled();
+    expect(fakeComp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should have valid help center links in all steps containing help links", () => {
+    const realTranslationService = {
+      translate: (key: string) =>
+        (enJson as Record<string, string>)[key] || key,
+    };
+    const realCtx: UiEditorHelpContext = {
+      translationService: realTranslationService as any,
+      sectionsExpanded: {},
+    };
+    const steps = UiEditorHelpHelper.getHelpSteps(realCtx);
+
+    for (let i = 0; i < steps.length; i++) {
+      const step = steps[i];
+      if (step.content.includes("help-link")) {
+        GuideStepTestHelper.verifyHelpLinksInContent(
+          step.content,
+          `UI Editor Step ${i + 1} (${step.title})`,
+        );
+      }
+    }
+
+    expect(steps[0].content).toContain("help-article-ui-editor");
+    expect(steps[1].content).toContain("help-article-toolbar");
+    expect(steps[2].content).toContain("help-article-ui-editor");
+    expect(steps[3].content).toContain("help-article-ui-editor");
   });
 
   describe("handleUiEditorHelpStep", () => {
@@ -211,45 +129,27 @@ describe("ui-editor-help.helper", () => {
     });
 
     it("should expand sections based on selector prefixes", () => {
-      const step1 = {
-        selector: "#help-audio-urgent-timeout",
-        title: "",
-        content: "",
-      };
-      expect(handleUiEditorHelpStep(step1, sectionsExpanded)).toBeTrue();
-      expect(sectionsExpanded["audioSettings"]).toBeTrue();
-
-      // already expanded
-      expect(handleUiEditorHelpStep(step1, sectionsExpanded)).toBeFalse();
-
-      const stepTts = {
-        selector: "#help-tts-voice",
-        title: "",
-        content: "",
-      };
-      // audioSettings already true
-      expect(handleUiEditorHelpStep(stepTts, sectionsExpanded)).toBeFalse();
-
       const stepConfig = {
-        selector: "#help-custom-ui-dir",
+        selector: "#ui-config-section",
         title: "",
         content: "",
       };
       expect(handleUiEditorHelpStep(stepConfig, sectionsExpanded)).toBeTrue();
       expect(sectionsExpanded["config"]).toBeTrue();
 
-      const step3 = { selector: "#help-themes-list", title: "", content: "" };
-      expect(handleUiEditorHelpStep(step3, sectionsExpanded)).toBeTrue();
-      expect(sectionsExpanded["themes"]).toBeTrue();
+      // already expanded
+      expect(handleUiEditorHelpStep(stepConfig, sectionsExpanded)).toBeFalse();
 
-      delete sectionsExpanded["themes"];
-      const stepBtn = {
-        selector: "#btn-open-theme-editor",
+      const stepAudio = {
+        selector: "#audio-settings-section",
         title: "",
         content: "",
       };
-      expect(handleUiEditorHelpStep(stepBtn, sectionsExpanded)).toBeTrue();
-      expect(sectionsExpanded["themes"]).toBeTrue();
+      expect(handleUiEditorHelpStep(stepAudio, sectionsExpanded)).toBeTrue();
+      expect(sectionsExpanded["audioSettings"]).toBeTrue();
+
+      // already expanded
+      expect(handleUiEditorHelpStep(stepAudio, sectionsExpanded)).toBeFalse();
     });
   });
 });

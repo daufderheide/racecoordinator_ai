@@ -1,258 +1,133 @@
-# Éditeur d'Interface
+# Personnaliser l'interface
 
-## Présentation
-
-L'Éditeur d'Interface vous permet de concevoir des mises en page de jour de course personnalisées, de configurer les colonnes du classement des pilotes, de personnaliser les effets sonores et les images des thèmes et de charger des [Widgets personnalisés](custom-widgets.md) modulaires.
-
-## Widgets personnalisés et dossier de widgets
-
-Des widgets personnalisés peuvent être ajoutés à vos dispositions d'interface personnalisées :
-- **Dossier de widgets personnalisés** : Définissez votre dossier local de widgets dans la section **Interface personnalisée** au bas de l'éditeur.
-- **Mettre à jour les widgets d'exemple** : Cliquez sur **Mettre à jour les widgets d'exemple** pour générer ou mettre à jour des widgets d'exemple prêts à l'emploi dans un dossier `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Groupes de la bibliothèque de widgets** : La bibliothèque de widgets organise les widgets en groupes (**Race Coordinator AI**, **Racine personnalisée** et dossiers personnalisés tels que **sample**) avec des sous-groupes imbriqués (comme **Actions** et **Données de manche** avec des sous-dossiers catégorisés) et un filtre de recherche instantané.
-- **Configuration dynamique** : Lorsqu'un widget personnalisé est sélectionné sur le canevas, ses propriétés personnalisées (couleurs, seuils, bascules, champs de texte) apparaissent dynamiquement dans la Configuration de widgets.
-
-Pour tous les détails sur le développement de widgets, consultez le [Guide des widgets personnalisés](custom-widgets.md).
-
-## Configuration de la mise en page et des colonnes
-
-- Glissez-déposez des widgets depuis la palette sur le canevas.
-- Redimensionnez, repositionnez et alignez les widgets selon votre résolution. Tous les widgets restent délimités à l'intérieur du canevas.
-- **Contrôles de la Configuration de Widgets** :
-  - **Position & Taille** : Positionnez et dimensionnez avec précision le widget sélectionné à l'aide des entrées numériques **X**, **Y**, **Largeur** et **Hauteur**.
-  - **Supprimer le widget** : Cliquez sur l'icône de corbeille dans l'en-tête de configuration.
-- **Raccourcis clavier** :
-  - <kbd>Suppr</kbd> ou <kbd>Retour arrière</kbd> : Supprime le widget sélectionné de la mise en page.
-  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> : Déplace le widget sélectionné de 1px (ou 10px en maintenant <kbd>Maj</kbd>).
-  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> : Annuler l'action précédente.
-  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> : Rétablir.
-- Configurez l'ordre des colonnes, la visibilité, les ancres et les préférences de largeur.
-
-## Configuration du Widget Minuteur
-
-Le widget **Minuteur** affiche le temps écoulé ou restant de la manche/course avec des styles de présentation configurables :
-
-- **Format d'affichage** :
-  - **Dynamique (1:23 / 45s)** : Affichage compact qui omet les zéros non significatifs et supprime l'unité des minutes en dessous d'une minute.
-  - **Minutes & secondes (01:23 / 00:45)** : Deux chiffres constants pour les minutes et les secondes, évitant les sauts de longueur et les redimensionnements brutaux de police en mode d'échelle automatique.
-  - **Minutes & secondes (1:23 / 0:45)** : Conserve les minutes affichées en dessous d'une minute (`0:45`), avec un seul chiffre pour les minutes au-dessus d'une minute (`1:23`).
-  - **Horloge complète (00:01:23 / 00:00:45)** : Horloge numérique fixe de huit caractères (`HH:MM:SS`), idéale pour les courses d'endurance.
-  - **Secondes totales (83s / 45s)** : Affiche les secondes totales restantes ou écoulées sans subdivision en minutes ou en heures.
-- **Sous-secondes** :
-  - **Sous le seuil** : Affiche les fractions de seconde (1 à 3 décimales) dès que le temps passe sous le seuil configuré (par exemple, 10 dernières secondes).
-  - **Toujours** : Affiche les fractions de seconde en continu pendant toute la manche.
-  - **Jamais** : Limite le minuteur uniquement aux secondes entières.
-- **Aperçu en direct** : Le panneau de configuration comprend un aperçu en direct immédiat montrant la mise en forme aux différents points de passage de la course (`> 1 hr`, `> 1 min`, `< 1 min` et `< 10s`).
+La page **Personnaliser l'interface** vous permet de configurer les paramètres système de l'interface, les répertoires des fichiers d'interface et des widgets modulaires personnalisés, les modèles d'exportation de course vers Excel, les animations de transition d'écran ainsi que les réglages du volume général et de la synthèse vocale (TTS).
 
 > [!NOTE]
-> Ces mêmes options de formatage horaire (préréglages de format d'affichage, modes de sous-secondes, seuil et curseur de décimales avec aperçu en direct) sont également prises en charge pour les widgets de **Temps Total** (Temps Total de Manche et Temps Total de Course/Général) ainsi que pour les colonnes de **Temps Total** dans la Vue des Voies. Dans la liste des colonnes de la Vue des Voies, cliquez sur l'icône des options de temps (<span class="material-icons">more_time</span>) à côté de toute colonne de Temps Total pour personnaliser son format.
+> Pour concevoir visuellement des écrans de jour de course et des tableaux des scores personnalisés, accédez à l'[Éditeur de disposition](layout-editor.fr.md). Pour configurer des ensembles d'images de drapeaux, de feux de départ et de jauges de carburant ou des effets sonores de course, accédez à l'[Éditeur de thème](theme-editor.fr.md).
 
-## Configuration du widget de compte à rebours
+---
 
-Le widget **Compte à rebours** affiche les feux visuels de départ et déclenche les sons correspondants pendant la procédure de départ :
+## Vue d'ensemble {: #overview }
 
-- **Nombre maximal de feux** : Définit le nombre maximal de feux à afficher (5 par défaut, plage de 1 à 10). Lorsque la durée du départ dépasse cette valeur (par exemple, un départ de 6 secondes avec 5 feux au maximum), tous les feux restent éteints/atténués pendant la différence initiale (1 seconde) avant de s'illuminer consécutivement.
-- **Animation de fondu d'apparition** : Détermine si l'incrustation des feux et le flou d'arrière-plan apparaissent avec une transition progressive. Si désactivée, les feux et le fond s'affichent instantanément.
-- **Orientation** : Basculez entre une disposition **Horizontale** et **Verticale**.
-- **Effets de lueur et de flou** : Personnalisez le halo lumineux des lampes, l'agrandissement lors de l'activation des feux rouges/verts, ainsi que l'intensité et la zone du flou d'arrière-plan.
+La page de personnalisation de l'interface offre un contrôle centralisé sur les comportements globaux de l'interface et les options audio au niveau de l'application :
 
-## Widgets de Colonne de Voie et Duplication
+- **Portée globale** : Les modifications apportées sur cette page s'appliquent à l'ensemble de l'application et à toutes les sessions de course.
+- **Enregistrement automatique continu** : Les réglages de volume, de hauteur vocale, de délais de file d'attente, de répertoires et de transitions prennent effet immédiatement et sont enregistrés automatiquement.
+- **Sections extensibles dédiées** : Les réglages sont organisés en sections déroulantes distinctes pour les **Paramètres de personnalisation de l'interface** et les **Paramètres audio**.
+- **Prise en charge d'Annuler / Rétablir** : Les modifications effectuées pendant votre session peuvent être rapidement annulées ou rétablies via la barre d'outils.
 
-Le widget **Colonne de Voie** permet de positionner des colonnes individuelles de données provenant de la vue de voie (telles que les informations du pilote, le temps du dernier tour, le meilleur tour / record personnel, le niveau de carburant %, l'historique des tours, les vitesses de secteur, la position, etc.) n'importe où sur le canevas sous la forme de cartes modulaires indépendantes.
+---
 
-- **Pilote Cible et Cartes Individuelles** :
-  - Les cartes placées hors grille sélectionnent le pilote à afficher : par **Voie de Piste** (Voie 1 à Voie 8), par **Position de Série** (1ère, 2e, etc.), par rang au **Classement Général** ou par **Tête de Série**.
+## Actions de la barre d'outils {: #toolbar-actions }
 
-### Widgets d'encart (Insets) et alignement
+La barre d'outils supérieure fournit les actions essentielles de navigation et de gestion de session :
 
-Chaque carte de colonne de voie prend en charge jusqu'à 8 **emplacements d'encart (Insets)** disposés autour du périmètre de la métrique principale (En haut à gauche, En haut au centre, En haut à droite, Au centre à gauche, Au centre à droite, En bas à gauche, En bas au centre, En bas à droite) :
+- **Retour** : Revient à l'écran ou au menu de navigation précédent.
+- **Annuler / Rétablir** : Annule ou rétablit les modifications récentes apportées lors de la session actuelle.
+- **Aide (?)** : Lance la visite guidée interactive mettant en évidence chaque section et panneau de la page.
 
-- **Liaison de données** : Les encarts peuvent afficher des métriques secondaires (ex. meilleur tour, nombre de tours, carburant %, manches courues, nom du pilote), des images/avatars ou des widgets personnalisés intégrés.
-- **Alignement horizontal et vertical** :
-  - Dans l'onglet Inset de l'inspecteur, chaque encart placé propose des menus déroulants d'**Alignement horizontal** (**Gauche**, **Centre**, **Droite**) et d'**Alignement vertical** (**Haut**, **Centre**, **Bas**).
-  - Les encarts utilisent par défaut leur position périmétrique naturelle (ex. `En haut à gauche` par défaut sur Gauche/Haut, `En bas à droite` par défaut sur Droite/Bas), assurant une compatibilité visuelle totale avec les dispositions existantes tout en permettant un ajustement précis au sein de chaque emplacement.
-- **Personnalisation visuelle** : Les encarts peuvent hériter des polices et des couleurs de la colonne ou définir une typographie, des couleurs de texte, des décimales et des seuils de format personnalisés.
+---
 
-### Sources de Données de Grille : Données de Série vs. Données Générales de Course
+## Paramètres de personnalisation de l'interface {: #customize-ui-settings }
 
-Chaque grille de données dans l'Éditeur d'Interface dispose d'un paramètre **Source de données** dans l'onglet Grille, qui définit quels pilotes alimentent les lignes :
+La section **Paramètres de personnalisation de l'interface** configure les dossiers locaux, les modèles d'exportation vers Excel et les animations de transition d'écran :
 
-- **Données de Série (`heat`)** :
-  - **Portée des Pilotes** : Lié exclusivement aux participants en compétition dans la série en cours sur la piste (`heatDrivers`).
-  - **Comportement d'Affichage** : Seuls les pilotes actuellement en piste dans la série active sont affichés. Les pilotes au repos ou programmés dans d'autres séries sont exclus.
-  - **Pagination & Défilement** : Le nombre de lignes est strictement restreint aux pilotes de la série active et aux voies physiques. La grille ne défile jamais au-delà des participants actifs vers des lignes vides.
-- **Données Générales de Course (`overall`)** :
-  - **Portée des Pilotes** : Lié à **tous les participants inscrits** sur l'ensemble de l'épreuve ou du tournoi (`participants`).
-  - **Comportement d'Affichage** : Tout pilote inscrit peut être affiché dans la grille, qu'il soit en piste dans la série active ou en pause aux stands.
-  - **Pagination & Défilement** : Le décompte des lignes reflète l'ensemble des engagés du tournoi (ex. 16, 24 ou 32 pilotes répartis sur plusieurs séries). Si la grille comporte moins de lignes visibles que de participants au total, elle prend en charge le défilement automatique multipage pour faire défiler tout le classement général.
-  - **Pilotes Hors Piste** : Pour les pilotes qui ne sont pas en piste, les statistiques cumulées de l'épreuve sont renseignées automatiquement.
+### Dossier d'interface personnalisée
 
-### Widgets : Widgets de Données de Série vs. Widgets de Données Générales
+Définit un dossier local utilisé pour remplacer les modèles intégrés de l'application et stocker les journaux client si nécessaire :
 
-La Boîte à outils organise les colonnes et cartes de données en groupes **Données de Série** et **Données Générales**. Le choix du widget détermine quelles statistiques sont calculées et présentées pour chaque ligne :
+- **Chemin du dossier** : Affiche le nom du dossier actif et son chemin d'accès absolu. S'il n'est pas défini, l'application utilise les emplacements internes par défaut.
+- **Sélectionner un dossier** : Ouvre une boîte de dialogue pour parcourir et sélectionner un répertoire local.
+- **Saisir un chemin** : Ouvre une fenêtre modale pour taper ou coller manuellement un chemin d'accès absolu au système de fichiers.
+- **Rétablir par défaut** : Efface le chemin personnalisé et rétablit les valeurs par défaut.
 
-- **Widgets de Données de Série** (ex. *Compteur de Tours, Temps du Dernier Tour, Meilleur Tour de Série, Temps de Secteur, Temps de Réaction, Position / Rang de Série, Écarts de Série, Carburant / Télémétrie, Rythme Fantôme*) :
-  - Extraient des métriques calculées strictement pour la **série active**.
-  - **Dans une Grille de Données de Série** : Chaque ligne affiche la télémétrie en temps réel et les temps au tour des véhicules actuellement en course.
-  - **Dans une Grille de Données Générales** : Les pilotes en piste affichent leur télémétrie en direct ; les pilotes au repos ou inactifs affichent des tirets (`--`) ou des zéros pour les métriques de série, car ils n'ont pas de données de série en cours.
-- **Widgets de Données Générales de Course** (ex. *Rang Général, Tours Totaux, Tours Physiques Totaux, Temps Total Général, Meilleur Tour de Course, Moyenne Générale, Médiane Générale, Régularité Générale, Écarts Généraux, Probabilité de Victoire / Prédictions, Manches Disputées / Manches Restantes*) :
-  - Extraient les performances cumulées sur **toutes les séries terminées** du tournoi.
-  - **Dans une Grille de Données Générales** : Chaque ligne de pilote (qu'il soit en piste ou aux stands entre deux séries) affiche l'intégralité de ses statistiques globales, ses tours cumulés, son record de l'épreuve et son rang général.
-  - **Dans une Grille de Données de Série** : Les pilotes actifs affichent leur rang général et leurs statistiques globales aux côtés de leurs tours de série en direct (ex. observer la position générale tout en suivant la course en cours).
+> [!WARNING]
+> La définition d'un dossier d'interface personnalisé remplace les modèles principaux de l'application et est réservée aux utilisateurs expérimentés développant des interfaces personnalisées ou analysant les journaux.
 
-#### Widget Manches Disputées & Restantes
+### Dossier de widgets personnalisés
 
-Le widget **Manches Disputées** (`heatsRaced`) présente l'état d'avancement des manches pour chaque concurrent :
+Configure le répertoire racine dans lequel Race Coordinator AI recherche les [widgets personnalisés](custom-widgets.fr.md) modulaires :
 
-- **Manches Disputées (Mode par Défaut)** : Affiche le nombre de manches que le pilote a déjà disputées ou dispute actuellement dans l'épreuve.
-- **Mode Manches Restantes** : Lorsque le paramètre **Mode d'affichage des manches** passe de *Manches disputées* à *Manches restantes*, la carte indique le nombre de manches programmées qu'il lui reste à courir. Sans étiquette d'en-tête personnalisée, l'intitulé passe automatiquement de `MANCHES DISPUTÉES` à `MANCHES RESTANTES`.
-- Ce réglage est également disponible pour les encarts (insets) associés aux cartes de colonnes.
+- **Chemin du dossier** : Affiche le nom et le chemin du dossier de widgets personnalisés.
+- **Sélectionner un dossier** : Ouvre un sélecteur de dossier pour choisir un répertoire local contenant des packages de widgets.
+- **Saisir un chemin** : Saisissez manuellement un chemin de dossier absolu.
+- **Exporter les widgets de démarrage** : Copie des packages de widgets d'exemple prêts à l'emploi dans un sous-dossier `sample/` du répertoire sélectionné (incluant `sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner` et `sample-detailed-leaderboard`). Ce bouton s'active dès qu'un dossier valide est sélectionné.
+- **Rétablir par défaut** : Efface le chemin du dossier des widgets personnalisés.
 
-#### Widgets d'Écarts (Gaps et Intervalles)
+Pour obtenir toutes les spécifications techniques de création de widgets personnalisés, consultez le [Guide des widgets personnalisés](custom-widgets.fr.md).
 
-Race Coordinator AI propose **2 widgets d'écart configurables** pour les Données de Manche et les Données Générales :
+### Modèle d'exportation personnalisé
 
-1. **Écart de Manche (`gap`)** : Évalue les intervalles en temps réel strictement entre les voitures en piste dans la manche active.
-2. **Écart Général (`overallGap`)** : Évalue les intervalles cumulés entre tous les participants de l'événement.
+Gère le modèle Microsoft Excel personnalisé (`.xlsx`) utilisé lors de l'exportation des résultats et statistiques de course :
 
-Chaque widget d'écart peut être personnalisé dans l'Inspecteur de Colonne via deux options essentielles :
-- **Cible** :
-  - **Leader** : Intervalle par rapport au meneur actuel de la course (P1).
-  - **Position précédente** : Intervalle par rapport au concurrent immédiatement devant au classement (ex. P3 vs P2).
-- **Mode de calcul** :
-  - **Toujours temps** : Projection continue du rythme chronométrique en secondes (`+X.XXX`).
-  - **Temps et tours de retard** : Style Formule 1 affichant le temps dans le même tour ou le retard en tours (`+1 Tour`, `+N Tours`) en cas de dépassement.
-  - **Toujours tours** : Écart exact en tours calculé lors du franchissement de la ligne, intégrant la progression partielle du pilote comparé.
+- **État du modèle** : Affiche le nom du fichier du classeur Excel actuellement actif ou indique si le modèle par défaut du système est utilisé.
+- **Sélectionner un modèle** : Téléverse un classeur `.xlsx` personnalisé depuis votre ordinateur pour l'intégrer en tant que modèle d'exportation.
+- **Télécharger le modèle** : Télécharge le fichier de modèle actif sur votre ordinateur pour l'afficher ou le modifier dans Microsoft Excel.
+- **Exportation de test** : Génère et télécharge un fichier d'exportation `.xlsx` d'exemple contenant des résultats fictifs pour vérifier la mise en page, les formules et les graphiques.
+- **Variables du modèle** : Ouvre une fenêtre modale répertoriant toutes les balises de remplacement prises en charge (telles que `{{RACE_NAME}}`, `{{HEAT_NUMBER}}`, `{{DRIVER_NAME}}`, `{{LAP_TIME}}`, etc.) à insérer dans les cellules Excel pour injecter automatiquement les données de course.
+- **Rétablir par défaut** : Rétablit le modèle d'exportation Excel standard intégré.
 
-> [!NOTE]
-> Plusieurs widgets d'écart avec des configurations différentes (par exemple une colonne Écart Leader et une colonne Écart Position) peuvent être placés simultanément sur la même grille ou mise en page.
+> [!TIP]
+> Si vous modifiez votre fichier modèle dans Microsoft Excel ou un autre tableur, téléversez-le à nouveau via **Sélectionner un modèle** pour enregistrer le classeur mis à jour dans Race Coordinator AI. Pour plus de détails, consultez le [Guide d'exportation XLS personnalisée](custom-xls-export.fr.md).
 
-Pour consulter les formules mathématiques complètes et les spécifications de chronométrage, reportez-vous au [Guide des Calculs d'Écarts](gap-calculations.md).
+### Transitions de page
 
-#### Widget Derniers Tours (`lastLaps`)
+Définit le style d'animation visuelle appliqué lors du passage d'un écran à un autre dans l'application :
 
-Le widget **Derniers Tours** (`lastLaps`) affiche les temps des tours récents réalisés par le pilote dans la manche active :
+- **Glissement (Slide)** (Par défaut) : Transition de glissement horizontal fluide entre les pages.
+- **Fondu (Fade)** : Fondu d'opacité fluide entre les vues.
+- **Zoom** : Transition moderne avec effet d'agrandissement.
+- **Retournement (Flip)** : Effet de retournement 3D style carte.
+- **Aucune (None)** : Changement de page instantané sans animation (recommandé pour les appareils moins puissants ou les bornes interactives).
 
-- **Derniers tours à afficher** : Configure le nombre de tours récents à afficher dans le widget (curseur 1–20, saisie numérique 1–50). La valeur par défaut est `5`.
-- **Séparation des tours et bordures** : Configure la séparation entre les différents tours. Les options incluent le style de bordure (continu, tireté, pointillé, double), la couleur de bordure, l'épaisseur (1–10px), la marge de bordure (-20px à 40px+ pour ajuster le retrait ou le débordement de la bordure et l'aligner parfaitement avec les bordures des colonnes adjacentes), le rayon des coins (0–32px) et le mode de séparation (ligne de séparation entre les tours ou encadrement complet de chaque tour).
-- **Mise en valeur du meilleur tour** : Met en valeur le meilleur tour personnel du pilote dans la liste. Les options incluent la couleur du texte, la couleur d'arrière-plan du badge, la graisse de police (normal, gras, très gras/900), le soulignement, l'italique et une bordure dédiée au meilleur tour.
-- **Ajustement et mise à l'échelle dynamiques** : La carte ajuste automatiquement la taille de police et les interlignes pour intégrer parfaitement le nombre de tours configuré dans la géométrie de la colonne.
-- **Synchronisation de grille** : Dans les grilles de voies, la configuration ou l'application des formats de temps synchronise le nombre de derniers tours affichés ainsi que leur style sur toutes les voies concurrentes.
+---
 
-#### Widget Score Moyen (`averageScore`)
+## Paramètres audio {: #audio-settings }
 
-Le widget **Score Moyen** (`averageScore`) affiche le score moyen de manche sur toutes les manches terminées par le pilote :
+La section **Paramètres audio** gère le niveau du volume principal, les comportements de file d'attente et la synthèse vocale (TTS) :
 
-- **Données de Manche Uniquement** : Appartient strictement au groupe d'outils **Données de Manche** (`analysis`). Dans un contexte de données générales ou pour un pilote au repos sans manche active, des tirets (`--`) sont affichés.
-- **Adaptation au mode de score** : Calcule automatiquement la moyenne selon le mode de classement configuré :
-  - **Score au nombre de tours** : Moyenne des tours sur les manches terminées (avec les décimales de tour configurées, par défaut 2).
-  - **Score au meilleur tour** : Moyenne des meilleurs tours sur les manches terminées avec un tour valide (avec les décimales de temps, par défaut 3).
-  - **Score au temps total** : Moyenne des temps totaux sur les manches terminées (avec options de chronomètre ou décimales de temps).
-- **Afficher les manches partielles** :
-  - Décoché (par défaut), seules les manches complètement terminées sont comptabilisées.
-  - Coché, intègre la manche en cours en pondérant sa contribution selon sa progression :
-    - **Course au nombre de tours** : Dans une manche de 10 tours avec le leader au 4e tour, la manche compte pour 0,4 au dénominateur et le score actif du pilote s'ajoute au numérateur.
-    - **Course au temps** : La progression dépend du temps écoulé par rapport à la durée cible.
-    - **Valeur cible non configurée** : Si la progression ne peut être déterminée (`finishValue <= 0`), la manche partielle n'est pas comptée.
-- **Précision décimale** : Réglable dans l'inspecteur de colonnes (0–3 décimales) pour les cartes principales et les incrustations.
+### Volume principal
 
-### Tri de Grille & Matrice d'Interaction
+Contrôle le volume sonore global (0 % à 100 %) de toutes les sorties audio dans Race Coordinator AI. Ce curseur ajuste proportionnellement tous les effets sonores, signaux de compte à rebours, avertisseurs sonores et annonces vocales en même temps.
 
-Le menu déroulant **Tri de la Grille** dans l'onglet Grille détermine l'ordre des lignes. Son comportement dépend directement du réglage de la **Source de données** (**Données de Série** ou **Données Générales**) :
+### Délai d'expiration de la file d'attente urgente
 
-| Option de Tri | Dans une Grille de Série (`gridType: heat`) | Dans une Grille Générale (`gridType: overall`) |
-| :--- | :--- | :--- |
-| **Voie de Piste** | Ordre statique par voie physique (Voie 1, Voie 2, ...). Chaque ligne est attachée à une voie spécifique et à son pilote en piste. | Les pilotes actifs en piste apparaissent en premier par numéro de voie (Voie 1, Voie 2, ...), suivis de tous les participants inactifs classés selon leur rang général. |
-| **Position de Série** | Réordonnancement dynamique en temps réel selon la position dans la série en cours (1ère, 2e, 3e de la série). Les lignes permutent en direct lors des passages sur la ligne ou des dépassements. | Les pilotes actifs apparaissent en haut classés selon leur position dans la série (1er, 2e, ...), suivis de tous les participants inactifs triés selon le classement général. |
-| **Classement Général** | Trie **uniquement les pilotes de la série active** selon leur classement général dans l'épreuve. (Par exemple, si les 2e, 5e, 8e et 14e au général courent ensemble, les 4 lignes les classent #2, #5, #8, #14). Aucun pilote extérieur n'apparaît et aucune ligne vide n'est générée. | Trie **l'ensemble des participants du tournoi** selon le classement général de l'épreuve (1er général, 2e général, 3e général, ...). L'ensemble du tableau se réorganise en direct lors des mises à jour de points et de tours. |
-| **Tête de Série** | Trie les pilotes de la série active selon leur numéro initial de qualification/classement (plus petit numéro en premier). | Trie tous les participants de l'épreuve par leur numéro initial de tête de série (1, 2, 3, ...) sur l'ensemble du plateau. |
-- **Orientation** : Prend en charge les dispositions **Verticale** (en-tête au-dessus de la valeur) et **Horizontale** (en-tête et valeur côte à côte).
-- **Style et Personnalisation de la Barre de Titre** :
-  - La barre de titre reprend par défaut l'apparence exacte de l'en-tête de colonne de la vue de voie (arrière-plan sombre semi-transparent `rgba(68, 68, 68, 0.7)`, texte blanc en gras, coins supérieurs arrondis et bordure de séparation).
-  - **Afficher l'En-tête** : Active ou désactive la barre de titre. Lorsqu'elle est désactivée, elle est totalement retirée de la carte afin de maximiser l'espace dédié aux valeurs principales et aux incrustations.
-  - **En-tête Personnalisé** : Remplace le nom du champ de données par défaut par un titre sur mesure.
-  - **Typographie et Alignement** : Personnalisez la police, la taille du texte et son alignement (Gauche, Centré, Droite).
-  - **Couleur du Texte et d'Arrière-plan** : Modifiez la couleur de fond et la couleur du texte de l'en-tête avec des sélecteurs dédiés et un bouton de réinitialisation instantanée.
-- **Héritage des Couleurs et Personnalisation** : Par défaut, les cartes héritent des couleurs de fond et de texte de la voie attribuée (`Utiliser les Couleurs de Voie`), ou peuvent être personnalisées avec des couleurs d'arrière-plan, de texte et de bordure spécifiques.
-- **Dupliquer sur les Voies / Positions** :
-  - Au lieu de créer et d'aligner manuellement les cartes pour chaque voie, configurez un ensemble pour une seule voie ou position et cliquez sur **Dupliquer sur les Voies / Positions...** dans le panneau de configuration.
-  - Choisissez la direction (**Horizontale** côte à côte ou **Verticale** superposée), le nombre total de voies/positions cibles (par défaut le nombre maximal de voies de tous les circuits de la base de données), le mode d'espacement (**Ajuster au Canevas** ou **Conserver l'Espacement**) et le remplacement facultatif des widgets existants.
-  - **Mode de Réplication en Temps Réel** : Lors de la duplication, l'éditeur bascule dans un mode de modèle interactif avec repères visuels de voie et alignement magnétique. Dans ce mode, vous placez, redimensionnez et personnalisez les widgets directement sur la Voie 1 (Maître), et les modifications sont immédiatement répercutées en temps réel sur l'ensemble des voies. Les widgets clonés sur les voies 2..N sont des aperçus en direct non modifiables ; cliquer sur un widget cloné renvoie la sélection sur le maître de la Voie 1.
-  - **Zone Intelligente et Redimensionnement** : L'espace de réplication s'agrandit automatiquement dans les quatre directions pour occuper l'espace disponible sur le canevas jusqu'à rencontrer les limites d'un widget extérieur à la grille. Vous pouvez ajuster la zone globale à l'aide des 8 poignées de redimensionnement périmétriques de la superposition.
-  - Cliquez sur **Terminé** pour figer la grille en widgets indépendants.
-  - **Modifier le Modèle et Détacher** : En sélectionnant ultérieurement un widget de la grille, la Configuration de widgets propose un panneau permettant de cliquer sur **Modifier le Modèle de Grille** (pour réactiver à tout moment le mode de réplication en temps réel) ou **Détacher de la Grille** (pour rompre définitivement le lien).
+Définit le temps pendant lequel les alertes urgentes de haute priorité (telles que *Drapeau jaune*, *Manche terminée* ou *Faux départ*) attendent dans la file d'attente audio si un autre message urgent est déjà en cours de lecture :
 
-### Synchronisation de Grille : Refléter les colonnes vs. Refléter les lignes
+- **3 secondes** : Délai court ; supprime rapidement les alertes en attente pour garantir que les notifications restent synchronisées avec la course.
+- **5 secondes** (Par défaut) : Durée équilibrée assurant la bonne réception des messages urgents sans retard important par rapport aux événements en direct.
+- **10 secondes** : Délai prolongé ; laisse les annonces plus longues se terminer avant d'ignorer les notifications urgentes suivantes.
 
-Une grille dans Race Coordinator AI est une matrice à deux dimensions articulée autour d'emplacements de concurrents et de métriques de données :
+Les alertes expirées dépassant ce délai sont automatiquement supprimées.
 
-- **Orientation Verticale (Par défaut)** :
-  - **Lignes (Emplacements des Concurrents)** : Représentent chaque voie physique du circuit (**Voie 1, Voie 2, ...**) ou chaque position de course (**Position 1, Position 2, ...**).
-  - **Colonnes (Champs de Données)** : Représentent chaque métrique de données affichée dans un emplacement (par exemple, *Nom du Pilote, Nombre de Tours, Dernier Tour, Meilleur Tour, Écart, Image du Véhicule*).
-  - **Refléter les colonnes** : Régit la synchronisation du style visuel sur toutes les colonnes de données.
-  - **Refléter les lignes** : Pilote la réplication de ligne à ligne et la géométrie depuis la **Ligne Maître (Voie 1 / Position 1)** vers l'ensemble des autres lignes (**Voies 2..N**).
-- **Orientation Horizontale** :
-  - **Colonnes (Emplacements des Concurrents)** : Représentent chaque voie physique du circuit (**Voie 1, Voie 2, ...**) ou chaque position de course (**Position 1, Position 2, ...**). Chaque voie dans une vue de manche est une colonne.
-  - **Lignes (Champs de Données)** : Représentent les métriques de données empilées verticalement au sein de chaque voie.
-  - **Refléter les colonnes** : Pilote la réplication de colonne à colonne, la géométrie et le style depuis la **Colonne Maître (Voie 1 / Position 1)** vers l'ensemble des autres colonnes (**Voies 2..N**). Lorsque décoché, les colonnes (voies) deviennent indépendantes et le bouton **Refléter à nouveau sur toutes les colonnes** apparaît.
-  - **Refléter les lignes** : Régit la synchronisation du style visuel sur l'ensemble des lignes de données (métriques).
+### Espacement des annonces vocales
 
-L'Inspecteur de grille met à disposition deux commandes clés dans la section **Structure et disposition de la grille** : **Refléter les colonnes** et **Refléter les lignes**.
+Configure l'intervalle de silence minimal entre les annonces vocales successives pour éviter les chevauchements ou les coupures :
 
-#### Refléter les colonnes
+- **Aucun (0 ms)** : Les annonces successives s'enchaînent immédiatement.
+- **Court (500 ms)** (Par défaut) : Courte pause d'une demi-seconde entre les annonces pour un rythme naturel.
+- **Normal (1000 ms)** : Pause d'une seconde entre les annonces pour une séparation plus nette.
+- **Détendu (1500 ms)** : Pause de 1,5 seconde entre les annonces pour un rythme de commentaire posé.
 
-**Refléter les colonnes** synchronise les colonnes sur l'ensemble de la grille :
-- En **Orientation Verticale**, les colonnes représentent différents champs/métriques de données. Refléter les colonnes harmonise le style visuel entre ces colonnes métriques.
-- En **Orientation Horizontale**, les colonnes représentent les voies ou positions individuelles du circuit. Refléter les colonnes régit la réplication, le dimensionnement et le style depuis la **Colonne Maître (Voie 1 / Position 1)** vers l'ensemble des voies concurrentes.
+### Voix de synthèse vocale (TTS)
 
-- **Coché (Par défaut)** :
-  - Les colonnes partagent des styles liés (en orientation verticale) ou une réplication complète du modèle maître (en orientation horizontale).
-  - Toute modification apportée au maître se propage instantanément à toutes les colonnes.
-  - **Propriétés Synchronisées** :
-    - **Style d'En-tête** : Police, taille du texte, couleur du texte, couleur de fond, alignement du texte et dimensions de l'en-tête.
-    - **Style de Cellule de Données** : Police, taille du texte, couleur du texte, couleur d'arrière-plan, bascule des couleurs de voie (`useLaneColors`) et alignement des valeurs.
-    - **Style de Bordure** : Affichage de la bordure, couleur, épaisseur et rayon des coins.
-    - **Format de Temps** : Nombre de décimales, format d'affichage et seuils de précision sub-seconde.
-    - **Mise en Valeur Télémétrique** : Surbrillance lors du passage de tour.
-- **Décoché** :
-  - Dissocie la synchronisation des colonnes.
-  - En orientation verticale, chaque colonne de données peut avoir ses propres polices, couleurs et bordures, et des boutons permettent d'appliquer manuellement les styles à toutes les colonnes.
-  - En orientation horizontale, chaque colonne de voie devient indépendante, les widgets affichent le badge **Indépendant** (par exemple, `Voie 2 (Indépendant)`), et le bouton **Refléter à nouveau sur toutes les colonnes** apparaît.
-- **Comportement lors du Recochage** :
-  - Réactive la synchronisation des colonnes. En orientation horizontale, recocher la case ou cliquer sur **Refléter à nouveau sur toutes les colonnes** synchronise immédiatement toutes les colonnes avec la voie maître.
+Sélectionne la voix synthétisée utilisée pour les temps au tour, les positions, les annonces de leader et les alertes de carburant :
 
-#### Refléter les lignes
+- **Par défaut du système** : Utilise la voix de synthèse vocale par défaut du système d'exploitation ou du navigateur.
+- **Voix installées** : Liste toutes les voix détectées sur votre système ou navigateur avec leur nom et leur identifiant de langue (par exemple, `fr-FR`, `en-US`).
 
-**Refléter les lignes** synchronise les lignes sur l'ensemble de la grille :
-- En **Orientation Verticale**, les lignes représentent les voies ou positions individuelles du circuit. Refléter les lignes régit la réplication et la géométrie de ligne à ligne depuis la **Ligne Maître (Voie 1 / Position 1)** vers toutes les autres lignes (**Voies 2..N**).
-- En **Orientation Horizontale**, les lignes représentent les différents champs ou métriques empilés dans chaque voie. Refléter les lignes régit la synchronisation du style visuel entre les lignes métriques.
+### Vitesse d'élocution
 
-- **Coché (Par défaut)** :
-  - Les lignes suivent strictement le modèle maître (en orientation verticale) ou partagent des styles synchronisés (en orientation horizontale).
-  - Tout déplacement, redimensionnement ou modification apportée à la cellule maître se répercute instantanément en direct sur l'ensemble des autres voies ou positions.
-  - En orientation verticale, les widgets non-maîtres affichent le badge **Cloné** (par exemple, `Voie 2 (Cloné)`).
-- **Décoché** :
-  - Désolidarise les lignes.
-  - En orientation verticale, les lignes non-maîtres affichent le badge **Indépendant** (par exemple, `Voie 2 (Indépendant)`), les voies peuvent être personnalisées individuellement, et le bouton **Refléter à nouveau sur toutes les lignes** apparaît.
-  - En orientation horizontale, chaque ligne métrique peut avoir ses propres styles sans affecter les autres lignes.
-- **Comportement lors du Recochage** :
-  - Réactive la réplication et la synchronisation des lignes. En orientation verticale, cliquer sur **Refléter à nouveau sur toutes les lignes** ou recocher la case réaligne instantanément toutes les lignes sur la ligne maître.
+Règle la vitesse de lecture des annonces TTS à l'aide d'un curseur allant de **0,1x** (très lent) à **2,0x** (vitesse double) par paliers de 0,05. La vitesse par défaut est **1,0x**.
 
-#### Lignes supplémentaires
+### Hauteur de voix (Pitch)
 
-Lorsqu'une grille présente des lignes inoccupées (par exemple lorsqu'il y a moins de pilotes participant à une course ou série que de lignes/voies configurées), le réglage **Lignes supplémentaires** dans l'inspecteur de grille contrôle leur traitement :
+Règle la hauteur/fréquence vocale des annonces TTS via un curseur allant de **0,0x** (grave) à **2,0x** (aigu) par paliers de 0,05. La hauteur par défaut est **1,0x**.
 
-- **Supprimer**: Supprime automatiquement les lignes et colonnes non occupées, ajustant la grille au nombre réel de pilotes participants. (Par défaut pour les grilles **Classement Général** et **Tête de Série**).
-- **Afficher vide**: Conserve les lignes supplémentaires visibles en affichant `--` pour toutes les valeurs et incrustations, tout en préservant les en-têtes et structures de cartes. (Par défaut pour les grilles **Série** et **Voie**).
-- **Afficher blanc**: Conserve les lignes supplémentaires visibles en affichant uniquement les bordures et l'arrière-plan des cartes, sans valeur ni en-tête.
+### Volume de la voix
 
-#### Tableau Récapitulatif
+Curseur de volume indépendant (0 % à 100 %) dédié aux annonces de synthèse vocale. Il permet d'équilibrer le niveau des commentaires parlés par rapport aux effets sonores et aux avertisseurs de compte à rebours.
 
-| Contrôle | Orientation | Portée | Éléments Synchronisés | Comportement lorsque Décoché | Comportement lors du Recochage |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Refléter les colonnes** | Verticale | Colonnes (Métriques de Données) | Style visuel : polices, tailles, couleurs, bordures, en-têtes, formats horaires | Les colonnes deviennent indépendantes ; les styles actuels sont conservés ; boutons « Appliquer à toutes » affichés | Réactive la synchronisation automatique pour les futures éditions |
-| **Refléter les colonnes** | Horizontale | Colonnes (Voies / Concurrents) | Géométrie, réplication et styles depuis la Voie 1 Maître vers toutes les colonnes de voies | Les colonnes de voies deviennent indépendantes ; badge `Indépendant` affiché ; bouton `Refléter à nouveau sur toutes les colonnes` affiché | Rétablit la réplication maître ; réaligne toutes les colonnes sur le Maître |
-| **Refléter les lignes** | Verticale | Lignes (Voies / Concurrents) | Géométrie, réplication et réglages depuis la Voie 1 Maître vers toutes les lignes de voies | Les lignes de voies deviennent indépendantes ; badge `Indépendant` affiché ; bouton `Refléter à nouveau sur toutes les lignes` affiché | Rétablit la réplication maître ; réaligne toutes les lignes sur le Maître |
-| **Refléter les lignes** | Horizontale | Lignes (Métriques de Données) | Style visuel : polices, tailles, couleurs, bordures entre lignes de métriques | Les lignes de métriques deviennent indépendantes ; les styles actuels sont conservés | Réactive la synchronisation automatique pour les futures éditions |
+### Tester la voix
 
-
+Cliquez sur **Tester la voix** pour entendre un exemple de phrase vocale prononcé avec vos réglages actuels de voix, de vitesse, de tonalité et de volume.
