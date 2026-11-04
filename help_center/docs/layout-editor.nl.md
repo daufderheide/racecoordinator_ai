@@ -28,6 +28,9 @@ De bovenste werkbalk biedt gestandaardiseerde beheeracties:
 
 - **Lay-out Kiezer**: Vervolgkeuzemenu om elke systeem- of aangepaste lay-out te selecteren, natuurlijk gesorteerd met vertaalde standaardnamen (*Standaard Racedag UI*, *Standaard Training UI*, *Standaard Rijderspost UI*).
 - **Bewerken / Gereed**: Schakelt tussen alleen-lezen en bewerkingsmodus.
+- **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit.
+- **Widget-configuratie (<span class="material-icons">tune</span>)**: Schakelt de weergave van het zijpaneel Widget-configuratie in of uit.
+- **Startlichten Voorvertoning (<span class="material-icons">visibility</span>)**: Schakelt een live voorvertoning van de startlichtenvolgorde op het canvas in of uit zonder een race te starten.
 - **Lay-out Toevoegen (<span class="material-icons">add</span>)**: Opent een sjabloonselectievenster waarmee u een nieuwe lay-out kunt maken op basis van een standaard Race Coordinator AI-lay-out (*RC AI*, *Training*, *Brandstof*, *Rijderspost*) of met een volledig lege lay-out kunt beginnen.
 - **Lay-out Kopiëren (<span class="material-icons">content_copy</span>)**: Dupliceert de momenteel geselecteerde lay-out onder een unieke naam (bijv. *Lay-out Naam (Kopie)*).
 - **Lay-out Verwijderen (<span class="material-icons">delete</span>)**: Verwijdert de huidige aangepaste lay-out na bevestiging. Standaardsysteemlay-outs zijn beveiligd en kunnen niet worden verwijderd.
@@ -52,10 +55,8 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 - Klik op **Zoom Resetten** om 100% zoom te herstellen.
 - Zoominstellingen worden per lay-out lokaal in de browser opgeslagen.
 
-### Startlichten Voorvertoning
-- Klik op **Startlichten Voorvertoning** (<span class="material-icons">timer</span>) om een live voorvertoning van de startlichtenvolgorde op het canvas te bekijken zonder een race te starten.
-
 ### Widgetbibliotheek & configuratieknoppen {: #widget-panels }
+Gelegen op de hoofdwerkbalk links van het startlichten-voorvertoningspictogram:
 - **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit. Een klik herstelt de gereedschapskist ook als deze geminimaliseerd is of buiten het zichtbare scherm is verplaatst.
 - **Widget-configuratie (<span class="material-icons">tune</span>)**: Schakelt de weergave van het zijpaneel Widget-configuratie in of uit. Wanneer het verborgen is, kan het canvas zich over de volledige breedte van de pagina uitstrekken als de beeldverhouding van de lay-out dit toelaat (net als in de alleen-lezen-modus).
 - **Positie resetten (<span class="material-icons">restart_alt</span>)**: Geplaatst in de koptekst van de zwevende gereedschapskist om deze direct terug te zetten naar de standaardpositie linksboven `(0, 0)`.

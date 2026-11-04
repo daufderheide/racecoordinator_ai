@@ -28,6 +28,9 @@ La barre d'outils supérieure fournit des actions de gestion standardisées :
 
 - **Sélecteur de Disposition** : Menu déroulant pour sélectionner n'importe quelle disposition système ou personnalisée, triée naturellement avec les noms par défaut traduits (*IU Jour de Course par Défaut*, *IU Entraînement par Défaut*, *IU Poste de Pilotage par Défaut*).
 - **Modifier / Terminer** : Bascule entre le mode lecture seule et le mode édition.
+- **Bibliothèque de Widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante.
+- **Configuration de Widgets (<span class="material-icons">tune</span>)** : Bascule la visibilité du panneau latéral de configuration.
+- **Aperçu du Compte à Rebours (<span class="material-icons">visibility</span>)** : Prévisualise la séquence de feux de départ sur le canevas sans démarrer une vraie course.
 - **Ajouter une Disposition (<span class="material-icons">add</span>)** : Ouvre une boîte de dialogue de sélection de modèle vous permettant de créer une nouvelle disposition à partir de n'importe quelle disposition par défaut de Race Coordinator AI (*RC AI*, *Entraînement*, *Carburant*, *Poste de Pilotage*) ou de démarrer avec une disposition entièrement vide.
 - **Copier la Disposition (<span class="material-icons">content_copy</span>)** : Duplique la disposition actuellement sélectionnée sous un nom unique (par exemple, *Nom de Disposition (Copie)*).
 - **Supprimer la Disposition (<span class="material-icons">delete</span>)** : Supprime la disposition personnalisée actuelle après confirmation. Les dispositions système par défaut sont protégées et ne peuvent pas être supprimées.
@@ -52,10 +55,8 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 - Cliquez sur **Réinitialiser le Zoom** pour revenir à 100%.
 - Les paramètres de zoom sont conservés dans le stockage local du navigateur par disposition.
 
-### Aperçu du Compte à Rebours de Départ
-- Cliquez sur **Aperçu des Feux** (<span class="material-icons">timer</span>) pour prévisualiser la séquence de feux de départ sur le canevas sans démarrer une vraie course.
-
 ### Bibliothèque de widgets & contrôles de configuration {: #widget-panels }
+Situés sur la barre d'outils principale à gauche de l'icône d'aperçu du compte à rebours :
 - **Bibliothèque de widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante. Un clic la restaure également si elle est réduite ou hors de l'écran visible.
 - **Configuration de widgets (<span class="material-icons">tune</span>)** : Bascule la visibilité du panneau latéral de configuration des widgets. Lorsqu'il est masqué, le canevas peut s'étendre sur toute la largeur de la page si les proportions de la disposition le permettent (comme en mode lecture seule).
 - **Réinitialiser la position (<span class="material-icons">restart_alt</span>)** : Situé dans l'en-tête de la boîte à outils flottante pour la replacer instantanément à l'origine `(0, 0)` en haut à gauche.

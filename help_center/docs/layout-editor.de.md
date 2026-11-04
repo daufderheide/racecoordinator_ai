@@ -28,6 +28,9 @@ Die obere Symbolleiste bietet standardisierte Verwaltungsaktionen:
 
 - **Layout-Auswahl**: Dropdown-Menü zur Auswahl eines beliebigen System- oder benutzerdefinierten Layouts, natürlich sortiert mit lokalisierten Standardnamen (*Standard Renntag-UI*, *Standard Trainings-UI*, *Standard Fahrerstand-UI*).
 - **Bearbeiten / Fertig**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um.
+- **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um.
+- **Widget-Konfiguration (<span class="material-icons">tune</span>)**: Schaltet die Sichtbarkeit des Widget-Konfigurationspanels um.
+- **Startampel-Vorschau (<span class="material-icons">visibility</span>)**: Schaltet eine Live-Vorschau der Startampel-Sequenz auf dem Canvas um, ohne ein echtes Rennen zu starten.
 - **Layout hinzufügen (<span class="material-icons">add</span>)**: Öffnet einen Vorlagenauswahldialog, mit dem Sie ein neues Layout aus einem beliebigen Standard-Race-Coordinator-AI-Layout (*RC AI*, *Training*, *Kraftstoff*, *Fahrerstand*) oder mit einem vollständig leeren Layout erstellen können.
 - **Layout kopieren (<span class="material-icons">content_copy</span>)**: Dupliziert das aktuell ausgewählte Layout unter einem eindeutigen Namen (z. B. *Layout-Name (Kopie)*).
 - **Layout löschen (<span class="material-icons">delete</span>)**: Löscht das aktuelle benutzerdefinierte Layout nach Bestätigung. Standard-Systemlayouts sind geschützt und können nicht gelöscht werden.
@@ -52,10 +55,8 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 - Klicken Sie auf **Zoom zurücksetzen**, um 100% Zoom wiederherzustellen.
 - Zoom-Einstellungen werden im lokalen Browserspeicher pro Layout gespeichert.
 
-### Start-Countdown-Vorschau
-- Klicken Sie auf **Startampel-Vorschau** (<span class="material-icons">timer</span>), um eine Live-Vorschau der Startampel-Sequenz auf dem Canvas zu testen, ohne ein echtes Rennen zu starten.
-
 ### Widget-Bibliothek & Konfigurationssteuerung {: #widget-panels }
+In der Haupt-Symbolleiste links neben dem Countdown-Vorschausymbol angeordnet:
 - **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.
 - **Widget-Konfiguration (<span class="material-icons">tune</span>)**: Schaltet die Sichtbarkeit des Widget-Konfigurationspanels um. Wenn es ausgeblendet ist, kann sich die Arbeitsfläche über die gesamte Seitenbreite erstrecken, sofern es das Seitenverhältnis des Layouts erlaubt (wie im schreibgeschützten Modus).
 - **Position zurücksetzen (<span class="material-icons">restart_alt</span>)**: Setzt den Werkzeugkasten über die Schaltfläche in der Kopfzeile sofort an die Standardursprungsposition `(0, 0)` oben links zurück.

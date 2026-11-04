@@ -28,6 +28,9 @@ A barra de ferramentas superior oferece ações de gerenciamento padronizadas:
 
 - **Seletor de Layout**: Menu suspenso para selecionar qualquer layout do sistema ou personalizado, ordenado naturalmente com nomes padrão traduzidos (*IU Padrão Dia de Corrida*, *IU Padrão Treino*, *IU Padrão Posto do Piloto*).
 - **Editar / Concluir Edição**: Alterna entre o Modo Somente Leitura e o Modo de Edição.
+- **Biblioteca de Widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante.
+- **Configuração de Widgets (<span class="material-icons">tune</span>)**: Alterna a visibilidade do painel lateral Configuração de Widgets.
+- **Pré-visualização da Contagem Regressiva (<span class="material-icons">visibility</span>)**: Alterna uma prévia ao vivo das luzes de largada na tela sem iniciar uma corrida real.
 - **Adicionar Layout (<span class="material-icons">add</span>)**: Abre uma caixa de diálogo de seleção de modelo que permite criar um novo layout a partir de qualquer layout padrão do Race Coordinator AI (*RC AI*, *Treino*, *Combustível*, *Posto do Piloto*) ou começar com um layout totalmente vazio.
 - **Copiar Layout (<span class="material-icons">content_copy</span>)**: Duplica o layout atualmente selecionado com um nome exclusivo (por exemplo, *Nome do Layout (Cópia)*).
 - **Excluir Layout (<span class="material-icons">delete</span>)**: Exclui o layout personalizado atual após confirmação. Layouts padrão do sistema são protegidos e não podem ser excluídos.
@@ -52,10 +55,8 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 - Clique em **Redefinir Zoom** para restaurar para 100%.
 - As configurações de zoom são salvas localmente no navegador para cada layout.
 
-### Pré-visualização da Contagem Regressiva de Largada
-- Clique em **Pré-visualizar Luzes** (<span class="material-icons">timer</span>) para alternar uma prévia ao vivo da sequência de luzes de largada na tela sem iniciar uma corrida real.
-
 ### Biblioteca de widgets e controles de configuração {: #widget-panels }
+Localizados na barra de ferramentas principal à esquerda do ícone de pré-visualização da contagem regressiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante. Um clique também a restaura se estiver minimizada ou fora da tela visível.
 - **Configuração de Widgets (<span class="material-icons">tune</span>)**: Alterna a visibilidade do painel lateral Configuração de Widgets. Quando oculto, a tela pode se estender por toda a largura da página se a proporção da tela permitir (assim como no modo somente leitura).
 - **Redefinir posição (<span class="material-icons">restart_alt</span>)**: Localizado no cabeçalho da caixa de ferramentas para retorná-la instantaneamente à origem padrão `(0, 0)` no canto superior esquerdo.

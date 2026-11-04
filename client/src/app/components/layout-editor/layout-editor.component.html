@@ -44,6 +44,32 @@
       class="layout-title-actions"
       (click)="$event.stopPropagation()"
     >
+      <div id="layout-panel-toggles" class="layout-panel-toggles">
+        <button
+          id="toggle-widget-library-btn"
+          type="button"
+          class="layout-title-btn"
+          [class.active]="isEditMode && isWidgetLibraryVisible"
+          [disabled]="!isEditMode"
+          (click)="toggleWidgetLibrary()"
+          [title]="'UE_LABEL_LAYOUT_EDITOR' | translate"
+          [attr.aria-label]="'UE_LABEL_LAYOUT_EDITOR' | translate"
+        >
+          <span class="material-icons">widgets</span>
+        </button>
+        <button
+          id="toggle-widget-config-btn"
+          type="button"
+          class="layout-title-btn"
+          [class.active]="isEditMode && isWidgetConfigVisible"
+          [disabled]="!isEditMode"
+          (click)="toggleWidgetConfig()"
+          [title]="'UE_INSPECTOR_TITLE' | translate"
+          [attr.aria-label]="'UE_INSPECTOR_TITLE' | translate"
+        >
+          <span class="material-icons">tune</span>
+        </button>
+      </div>
       <button
         id="help-raceday-countdown-preview"
         type="button"
@@ -51,6 +77,12 @@
         [class.active]="isCountdownPreviewActive()"
         (click)="toggleCountdownPreview()"
         [title]="
+          (isCountdownPreviewActive()
+            ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+            : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+          ) | translate
+        "
+        [attr.aria-label]="
           (isCountdownPreviewActive()
             ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
             : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
@@ -199,40 +231,6 @@
                   </app-custom-option>
                 }
               </app-custom-select>
-            </div>
-          </div>
-
-          <div id="layout-panel-toggles" class="layout-panel-toggles">
-            <!-- Widget Library Toggle Button -->
-            <div id="help-raceday-widget-library" class="layout-control-group">
-              <button
-                id="toggle-widget-library-btn"
-                type="button"
-                class="layout-widget-library-btn"
-                [class.active]="isEditMode && isWidgetLibraryVisible"
-                [disabled]="!isEditMode"
-                (click)="toggleWidgetLibrary()"
-                [title]="'UE_LABEL_LAYOUT_EDITOR' | translate"
-              >
-                <span class="material-icons">widgets</span>
-                <span>{{ "UE_LABEL_LAYOUT_EDITOR" | translate }}</span>
-              </button>
-            </div>
-
-            <!-- Widget Configuration Toggle Button -->
-            <div id="help-raceday-widget-config" class="layout-control-group">
-              <button
-                id="toggle-widget-config-btn"
-                type="button"
-                class="layout-widget-config-btn"
-                [class.active]="isEditMode && isWidgetConfigVisible"
-                [disabled]="!isEditMode"
-                (click)="toggleWidgetConfig()"
-                [title]="'UE_INSPECTOR_TITLE' | translate"
-              >
-                <span class="material-icons">tune</span>
-                <span>{{ "UE_INSPECTOR_TITLE" | translate }}</span>
-              </button>
             </div>
           </div>
         </div>

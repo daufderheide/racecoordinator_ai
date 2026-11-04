@@ -28,6 +28,9 @@ The top toolbar provides standardized management actions:
 
 - **Layout Selector**: Dropdown to select any system or user-defined layout, sorted naturally with localized default names (*Default Raceday UI*, *Default Practice UI*, *Default Driver Station UI*).
 - **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode.
+- **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox.
+- **Widget Configuration (<span class="material-icons">tune</span>)**: Toggles visibility of the Widget Configuration sidebar panel.
+- **Countdown Preview (<span class="material-icons">visibility</span>)**: Toggles a live countdown light sequence preview on the canvas without starting an actual race.
 - **Add Layout (<span class="material-icons">add</span>)**: Opens a template selection dialog allowing you to create a new layout from any default Race Coordinator AI layout (*RC AI*, *Practice*, *Fuel*, *Driver Station*) or start from a completely empty layout.
 - **Copy Layout (<span class="material-icons">content_copy</span>)**: Duplicates the currently selected layout under a unique name (e.g. *Layout Name (Copy)*).
 - **Delete Layout (<span class="material-icons">delete</span>)**: Deletes the current custom layout after confirmation. System default layouts are protected and cannot be deleted.
@@ -52,10 +55,8 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 - Click **Reset Zoom** to restore 100% zoom.
 - Zoom settings are remembered in local browser storage per layout.
 
-### Start Countdown Preview
-- Click **Preview Lights** (<span class="material-icons">timer</span>) to toggle a live countdown light sequence preview on the canvas without starting an actual race.
-
 ### Widget Library & Configuration Controls {: #widget-panels }
+Located on the main toolbar to the left of the countdown preview icon:
 - **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox. Clicking also unminimizes the toolbox and ensures it is clamped within the visible screen area if previously moved off-screen.
 - **Widget Configuration (<span class="material-icons">tune</span>)**: Toggles visibility of the Widget Configuration sidebar panel. When hidden, the canvas can extend across the full width of the page if it makes sense for the layout's aspect ratio (just like in read-only mode).
 - **Reset Position (<span class="material-icons">restart_alt</span>)**: Located in the floating toolbox header to instantly return the toolbox to its default top-left origin `(0, 0)`.

@@ -28,6 +28,9 @@ La barra de herramientas superior proporciona acciones de gestión estandarizada
 
 - **Selector de Diseño**: Menú desplegable para seleccionar cualquier diseño del sistema o personalizado, ordenado naturalmente con nombres predeterminados localizados (*IU Predeterminada Día de Carrera*, *IU Predeterminada Práctica*, *IU Predeterminada Puesto de Piloto*).
 - **Editar / Terminar Edición**: Alterna entre el Modo de Solo Lectura y el Modo de Edición.
+- **Biblioteca de Widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad de la caja de herramientas flotante de widgets.
+- **Configuración de Widgets (<span class="material-icons">tune</span>)**: Alterna la visibilidad del panel lateral de Configuración de Widgets.
+- **Vista Previa de Cuenta Regresiva (<span class="material-icons">visibility</span>)**: Alterna una vista previa en vivo de las luces de salida en el lienzo sin iniciar una carrera real.
 - **Añadir Diseño (<span class="material-icons">add</span>)**: Abre un cuadro de diálogo de selección de plantilla que le permite crear un nuevo diseño a partir de cualquier diseño predeterminado de Race Coordinator AI (*RC AI*, *Práctica*, *Combustible*, *Puesto de Piloto*) o comenzar desde un diseño completamente vacío.
 - **Copiar Diseño (<span class="material-icons">content_copy</span>)**: Duplica el diseño seleccionado actualmente con un nombre único (por ejemplo, *Nombre del Diseño (Copia)*).
 - **Eliminar Diseño (<span class="material-icons">delete</span>)**: Elimina el diseño personalizado actual tras confirmación. Los diseños predeterminados del sistema están protegidos y no se pueden eliminar.
@@ -52,10 +55,8 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 - Haga clic en **Restablecer Zoom** para restaurar el zoom al 100%.
 - La configuración de zoom se almacena en el navegador por cada diseño.
 
-### Vista Previa de la Cuenta Regresiva de Salida
-- Haga clic en **Vista Previa de Luces** (<span class="material-icons">timer</span>) para alternar una vista previa de la secuencia de luces de salida en el lienzo sin iniciar una carrera real.
-
 ### Biblioteca de widgets y controles de configuración {: #widget-panels }
+Ubicados en la barra de herramientas principal a la izquierda del icono de vista previa de cuenta regresiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
 - **Configuración de Widgets (<span class="material-icons">tune</span>)**: Alterna la visibilidad del panel lateral de Configuración de Widgets. Cuando está oculto, el lienzo puede extenderse a lo largo de toda la página si la relación de aspecto del diseño lo permite (igual que en modo de solo lectura).
 - **Restablecer posición (<span class="material-icons">restart_alt</span>)**: Ubicado en el encabezado del cuadro flotante para devolverlo instantáneamente a su origen predeterminado `(0, 0)` arriba a la izquierda.

@@ -1329,6 +1329,56 @@ describe("LayoutEditorComponent", () => {
       expect(component.toggleWidgetLibrary).toHaveBeenCalled();
     });
 
+    it("should place widget library and config buttons in the main toolbar title-actions to the left of the countdown preview button", () => {
+      fixture.detectChanges();
+      const titleActions = fixture.nativeElement.querySelector(
+        ".layout-title-actions",
+      );
+      expect(titleActions).toBeTruthy();
+
+      const libraryBtn = titleActions.querySelector(
+        "#toggle-widget-library-btn",
+      );
+      const configBtn = titleActions.querySelector("#toggle-widget-config-btn");
+      const eyeBtn = titleActions.querySelector(
+        "#help-raceday-countdown-preview",
+      );
+
+      expect(libraryBtn).toBeTruthy();
+      expect(configBtn).toBeTruthy();
+      expect(eyeBtn).toBeTruthy();
+
+      expect(
+        libraryBtn.querySelector(".material-icons")?.textContent?.trim(),
+      ).toBe("widgets");
+      expect(
+        configBtn.querySelector(".material-icons")?.textContent?.trim(),
+      ).toBe("tune");
+
+      // Verify that library and config buttons precede the countdown preview eye button in DOM order
+      expect(
+        libraryBtn.compareDocumentPosition(configBtn) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        configBtn.compareDocumentPosition(eyeBtn) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      // Verify controls toolbar does not contain the panel toggle buttons
+      const controlsBar = fixture.nativeElement.querySelector(
+        "#layout-controls-toolbar",
+      );
+      if (controlsBar) {
+        expect(
+          controlsBar.querySelector("#toggle-widget-library-btn"),
+        ).toBeNull();
+        expect(
+          controlsBar.querySelector("#toggle-widget-config-btn"),
+        ).toBeNull();
+      }
+    });
+
     it("should render inspector panel and geometry inputs with autocomplete off in edit mode", () => {
       component.onToggleEditMode();
       component.onSelectLayoutById("default_ui_layout_rc_ai");
