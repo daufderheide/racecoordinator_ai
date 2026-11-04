@@ -153,7 +153,7 @@ describe("RacedayAverageScoreUtils", () => {
   });
 
   describe("calculateAverageScore - Lap Count Scoring", () => {
-    it("should return null for empty driver or overall data source", () => {
+    it("should return null for empty driver or driver without ID", () => {
       expect(
         RacedayAverageScoreUtils.calculateAverageScore(null as any),
       ).toBeNull();
@@ -163,15 +163,40 @@ describe("RacedayAverageScoreUtils", () => {
         } as any),
       ).toBeNull();
       expect(
-        RacedayAverageScoreUtils.calculateAverageScore(driver1Hd, {
-          gridType: "overall",
-        }),
+        RacedayAverageScoreUtils.calculateAverageScore({} as any),
       ).toBeNull();
-      expect(
-        RacedayAverageScoreUtils.calculateAverageScore(driver1Hd, {
-          bindingMode: "overallPosition",
-        }),
-      ).toBeNull();
+    });
+
+    it("should calculate average score identically when grid data source is overall data", () => {
+      const heats = [
+        {
+          heatNumber: 1,
+          isCompleted: true,
+          heatDrivers: [{ driver: { entity_id: "driver-1" }, lapCount: 15 }],
+        },
+        {
+          heatNumber: 2,
+          isCompleted: true,
+          heatDrivers: [{ driver: { entity_id: "driver-1" }, lapCount: 25 }],
+        },
+      ];
+      ctx.getHeats = () => heats;
+
+      const scoreOverall = RacedayAverageScoreUtils.calculateAverageScore(
+        driver1Hd,
+        { gridType: "overall" },
+        undefined,
+        ctx,
+      );
+      expect(scoreOverall).toBe(20.0);
+
+      const scoreBinding = RacedayAverageScoreUtils.calculateAverageScore(
+        driver1Hd,
+        { bindingMode: "overallPosition" },
+        undefined,
+        ctx,
+      );
+      expect(scoreBinding).toBe(20.0);
     });
 
     it("should return null when driver has 0 completed heats", () => {

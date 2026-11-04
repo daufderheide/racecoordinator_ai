@@ -1,5 +1,4 @@
 import { ColumnDefinition } from "@app/components/raceday/column_definition";
-import { isOverallDataSource } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column-driver.helper";
 import { FinishMethod, HeatRanking } from "@app/models/heat_scoring";
 import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
@@ -304,10 +303,14 @@ function calculatePartialHeatScore(
       currentHeat.heatDrivers ||
       []),
   ];
+  const isDriverInHeat = activeDrivers.some((d) => isSameDriver(hd, d));
+  if (activeDrivers.length > 0 && !isDriverInHeat) {
+    return { score: 0, weight: 0 };
+  }
   if (
+    activeDrivers.length === 0 &&
     hd &&
-    !RacedayFormatUtils.isEmptyDriver(hd) &&
-    !activeDrivers.some((d) => isSameDriver(hd, d))
+    !RacedayFormatUtils.isEmptyDriver(hd)
   ) {
     activeDrivers.push(hd);
   }
@@ -466,6 +469,7 @@ function processCompletedHeats(
   isRaceOver: boolean,
   areAllDriversFinished: boolean,
   ctx?: FormatContext,
+  parent?: any,
 ): {
   totalScore: number;
   denominator: number;
@@ -495,7 +499,15 @@ function processCompletedHeats(
 
     const dhd =
       heat.heatDrivers?.find((d: any) => isSameDriver(hd, d)) ||
-      (isCurHeat ? hd : undefined);
+      (isCurHeat
+        ? (
+            ctx?.getSortedHeatDrivers?.() ||
+            parent?.sortedHeatDrivers ||
+            parent?.heatDrivers ||
+            []
+          )?.find((d: any) => isSameDriver(hd, d)) ||
+          (!heat.heatDrivers || heat.heatDrivers.length === 0 ? hd : undefined)
+        : undefined);
     if (!dhd || RacedayFormatUtils.isEmptyDriver(dhd)) continue;
 
     const { score, count } = accumulateHeatScore(
@@ -522,11 +534,6 @@ export class RacedayAverageScoreUtils {
       return null;
     }
 
-    const bindingMode = settings?.bindingMode;
-    if (isOverallDataSource(settings, parent, bindingMode)) {
-      return null;
-    }
-
     const driverId = getDriverEntityId(hd);
     if (!driverId) {
       return null;
@@ -545,6 +552,7 @@ export class RacedayAverageScoreUtils {
       scoreCtx.isRaceOver,
       scoreCtx.areAllDriversFinished,
       ctx,
+      parent,
     );
 
     let totalScore = completed.totalScore;

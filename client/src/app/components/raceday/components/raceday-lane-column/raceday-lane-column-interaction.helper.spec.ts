@@ -2055,16 +2055,51 @@ describe("raceday-lane-column-interaction.helper", () => {
       expect(calledLaps).toBeLessThanOrEqual(4);
     });
 
-    it("should return -- for averageScore when in an overall data source", () => {
+    it("should format averageScore when in an overall data source", () => {
       const hd = {
         driver: { entity_id: "d1" },
         actualDriver: { entity_id: "d1" },
       } as any;
+      const parent = {
+        formatValue: jasmine.createSpy("formatValue").and.returnValue("18.50"),
+        race: {
+          heat_scoring: { heatRanking: 1 },
+          heats: [
+            {
+              heatNumber: 1,
+              isCompleted: true,
+              heatDrivers: [{ driver: { entity_id: "d1" }, lapCount: 18.5 }],
+            },
+          ],
+        },
+      };
       const res = resolveLaneColumnFormattedValue(
         hd,
         "averageScore",
-        {},
+        parent,
         { gridType: "overall" } as any,
+        "overallPosition",
+      );
+      expect(res).toBe("18.50");
+      expect(parent.formatValue).toHaveBeenCalled();
+    });
+
+    it("should return -- for averageScore when in an overall data source if no heats completed", () => {
+      const hd = {
+        driver: { entity_id: "d1" },
+        actualDriver: { entity_id: "d1" },
+      } as any;
+      const parent = {
+        race: {
+          heat_scoring: { heatRanking: 1 },
+          heats: [],
+        },
+      };
+      const res = resolveLaneColumnFormattedValue(
+        hd,
+        "averageScore",
+        parent,
+        { gridType: "overall", lapDecimalPlaces: 2 } as any,
         "overallPosition",
       );
       expect(res).toBe("--");

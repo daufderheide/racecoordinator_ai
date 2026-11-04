@@ -899,13 +899,6 @@ export function resolveLaneColumnFormattedValue(
     return "--";
   }
 
-  if (
-    (columnKey === "averageScore" || columnKey.startsWith("averageScore")) &&
-    isOverallOrSeedDataSource(settings, parent, bindingMode)
-  ) {
-    return "--";
-  }
-
   if (parent?.formatValue) {
     return parent.formatValue(
       columnKey,
