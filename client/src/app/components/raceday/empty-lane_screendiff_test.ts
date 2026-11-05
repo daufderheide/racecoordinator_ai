@@ -164,13 +164,19 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    // Wait for the first driver row to be rendered
+    // Wait for the driver rows and leaderboard to be rendered
     await page
       .locator(".raceday-lane-column-card, .table-row")
-      .nth(0)
+      .nth(1)
       .waitFor({ state: "visible" });
+    await page.locator("app-raceday-leaderboard").waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
     await expect(page).toHaveScreenshot("raceday-empty-lanes.png", {
-      maxDiffPixelRatio: 0.1,
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 5000,
       animations: "disabled",
     });
   });
@@ -192,6 +198,9 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
 
     const container = page.locator(".dashboard-wrapper");
     const _harness = new DefaultRacedayHarnessE2e(container);
+
+    // Wait for the main content area to ensure page is loaded
+    await page.locator(".scalable-content").waitFor({ state: "visible" });
 
     const raceData = {
       race: {
@@ -267,13 +276,19 @@ test.describe("Raceday Visuals for Empty Lanes", () => {
 
     await TestSetupHelper.mockRaceData(page, raceData);
 
-    // Wait for the second driver row (the empty one) to be rendered
+    // Wait for the second driver row (the empty one) and leaderboard to be rendered
     await page
       .locator(".raceday-lane-column-card, .table-row")
       .nth(1)
       .waitFor({ state: "visible" });
+    await page.locator("app-raceday-leaderboard").waitFor({ state: "visible" });
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
     await expect(page).toHaveScreenshot("raceday-empty-lanes-blank-name.png", {
-      maxDiffPixelRatio: 0.1,
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 5000,
       animations: "disabled",
     });
   });
