@@ -66,6 +66,7 @@ L'accordéon Paramètres généraux contrôle la présentation, les filtres de t
 - **Annonces vocales** : Annonces audio pour changements de meneur, tours rapides, arrêts aux stands et arrivées.
 - **Temps au tour minimum (s)** : Temps au tour minimum pour éliminer les déclenchements parasites du capteur.
 - **Temps de glisse (s)** : Fenêtre de détection pour gérer les voitures en dérapage sur la ligne d'arrivée.
+- **Exclure les tours avec dérive des records** : Lorsqu'activé, les tours effectués avec dérive sont exclus des records de course, de manche et de pilote.
 - **Règles de drapeau jaune** : Pauses automatiques ou manuelles sous drapeau jaune avec coupure d'alimentation.
 - **Options d'interface personnalisée** : Classements spécialisés et widgets de télémétrie.
 

@@ -66,6 +66,7 @@ El expansor de Ajustes generales controla la presentación, los filtros de tiemp
 - **Locuciones de voz**: Habilite avisos de voz automáticos para cambios de líder, vueltas rápidas, paradas en boxes y finales.
 - **Tiempo mínimo de vuelta (s)**: Tiempo mínimo permitido para filtrar fallos eléctricos o falsos sensores.
 - **Tiempo de deslizamiento (s)**: Ventana de detección para gestionar coches derrapando sobre la línea de meta.
+- **Excluir vueltas con derrape de los récords**: Cuando está activado, las vueltas completadas con derrape se excluyen de los récords de carrera, manga y piloto.
 - **Reglas de bandera amarilla**: Pausas automáticas o manuales de bandera amarilla con corte de energía en pista.
 - **Opciones de interfaz personalizada**: Tablas de clasificación y widgets de telemetría especializados.
 

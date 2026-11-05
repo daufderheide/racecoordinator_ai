@@ -66,6 +66,7 @@ O acordeão de Configurações gerais controla a apresentação, filtros de temp
 - **Alertas de voz**: Avisos sonoros automatizados para mudanças de liderança, voltas mais rápidas, pit stops e chegadas.
 - **Tempo mínimo de volta (s)**: Tempo mínimo permitido para filtrar falhas elétricas ou acionamentos falsos de sensores.
 - **Tempo de derrapagem (s)**: Janela de detecção para gerenciar carros derrapando sobre a linha de chegada.
+- **Excluir voltas com drift dos recordes**: Quando ativado, as voltas concluídas com drift são excluídas dos recordes de corrida, bateria e piloto.
 - **Regras de bandeira amarela**: Pausas automáticas ou manuais sob bandeira amarela com corte de energia na pista.
 - **Opções de interface personalizada**: Tabelas de classificação e widgets de telemetria dedicados.
 

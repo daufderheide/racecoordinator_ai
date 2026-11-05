@@ -66,6 +66,7 @@ La sezione Impostazioni generali gestisce presentazione, filtri di cronometraggi
 - **Annunci vocali**: Avvisi vocali automatici per cambi al vertice, giri veloci, pit stop e arrivi.
 - **Tempo minimo sul giro (s)**: Tempo minimo consentito per filtrare disturbi elettrici o letture errate.
 - **Tempo di scivolamento (s)**: Finestra di rilevamento per gestire le auto in derapata sul traguardo.
+- **Escludi giri con derapata dai record**: Quando abilitato, i giri completati con derapata sono esclusi dai record di gara, manche e pilota.
 - **Regole bandiera gialla**: Sospensioni automatiche o manuali con interruzione della corrente in pista.
 - **Opzioni interfaccia personalizzata**: Classifiche e widget di telemetria dedicati.
 

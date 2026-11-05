@@ -66,6 +66,7 @@ Het uitklapgedeelte Algemene instellingen regelt de presentatie, tijdfilters en 
 - **Spraakmeldingen**: Automatische gesproken meldingen voor positiewisselingen, snelste rondes, pitstops en finishes.
 - **Minimale rondetijd (s)**: Minimale toegestane rondetijd om sensorstoringen of valse triggers weg te filteren.
 - **Drifttijd (s)**: Detectievenster voor driftende of glijdende auto's over de finishlijn.
+- **Rondes met drift uitsluiten van records**: Indien ingeschakeld, worden rondes met drift uitgesloten van race-, heat- en coureurrecords.
 - **Gele-vlagregels**: Automatische of handmatige onderbrekingen met stroomonderbreking op de baan.
 - **Aangepaste UI-opties**: Selecteer gespecialiseerde ranglijsten en telemetrie-widgets.
 

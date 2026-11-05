@@ -41,6 +41,13 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
+import deJson from "../../../assets/i18n/de.json";
+import enJson from "../../../assets/i18n/en.json";
+import esJson from "../../../assets/i18n/es.json";
+import frJson from "../../../assets/i18n/fr.json";
+import itJson from "../../../assets/i18n/it.json";
+import nlJson from "../../../assets/i18n/nl.json";
+import ptJson from "../../../assets/i18n/pt.json";
 import { NavigationService } from "../../services/navigation.service";
 import {
   interpolateFuelCurveClient,
@@ -3521,6 +3528,11 @@ describe("RaceEditorComponent", () => {
         expect(practiceCb.disabled).toBeFalse();
         expect(driftCb).toBeTruthy();
         expect(driftCb.disabled).toBeFalse();
+        const driftLabel = fixture.nativeElement.querySelector(
+          "#adjust-drift-laps-input .checkbox-label",
+        );
+        expect(driftLabel).toBeTruthy();
+        expect(driftLabel.textContent.trim()).toBe("RE_ADJUST_DRIFT_LAPS");
         expect(reverseCb).toBeTruthy();
         expect(reverseCb.disabled).toBeFalse();
       }));
@@ -3546,6 +3558,49 @@ describe("RaceEditorComponent", () => {
         expect(component.isLoading).toBeFalse();
         expect(component.loadRace).not.toHaveBeenCalled();
       }));
+    });
+
+    describe("adjust drift laps localization", () => {
+      const i18nFiles = [
+        { lang: "en", json: enJson },
+        { lang: "de", json: deJson },
+        { lang: "es", json: esJson },
+        { lang: "fr", json: frJson },
+        { lang: "it", json: itJson },
+        { lang: "nl", json: nlJson },
+        { lang: "pt", json: ptJson },
+      ];
+
+      it("should define RE_ADJUST_DRIFT_LAPS as 'Exclude Laps With Drift from Records' in English", () => {
+        expect((enJson as Record<string, string>)["RE_ADJUST_DRIFT_LAPS"]).toBe(
+          "Exclude Laps With Drift from Records",
+        );
+        expect(
+          (enJson as Record<string, string>)["RE_HELP_ADJUST_DRIFT_LAPS_TITLE"],
+        ).toBe("Exclude Laps With Drift from Records");
+      });
+
+      it("should define non-empty RE_ADJUST_DRIFT_LAPS and RE_HELP_ADJUST_DRIFT_LAPS_TITLE across all 7 supported languages", () => {
+        i18nFiles.forEach(({ lang, json }) => {
+          const langData = json as Record<string, string>;
+          expect(langData["RE_ADJUST_DRIFT_LAPS"])
+            .withContext(`Missing RE_ADJUST_DRIFT_LAPS in ${lang}.json`)
+            .toBeDefined();
+          expect(langData["RE_ADJUST_DRIFT_LAPS"].trim().length)
+            .withContext(`Empty RE_ADJUST_DRIFT_LAPS in ${lang}.json`)
+            .toBeGreaterThan(0);
+          expect(langData["RE_HELP_ADJUST_DRIFT_LAPS_TITLE"])
+            .withContext(
+              `Missing RE_HELP_ADJUST_DRIFT_LAPS_TITLE in ${lang}.json`,
+            )
+            .toBeDefined();
+          expect(langData["RE_HELP_ADJUST_DRIFT_LAPS_TITLE"].trim().length)
+            .withContext(
+              `Empty RE_HELP_ADJUST_DRIFT_LAPS_TITLE in ${lang}.json`,
+            )
+            .toBeGreaterThan(0);
+        });
+      });
     });
   });
 });

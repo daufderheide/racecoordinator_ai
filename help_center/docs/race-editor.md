@@ -64,6 +64,7 @@ The General Settings expander controls presentation, timing filters, and race ma
 - **Audio Callouts**: Enable automated voice announcements for lead changes, fast laps, pit stops, and race finishes.
 - **Minimum Lap Time (s)**: Minimum allowable lap time to filter out electrical glitches or false sensor triggers.
 - **Drift Time (s)**: Sensor trigger window to handle car drift or sliding over the finish line.
+- **Exclude Laps With Drift from Records**: When enabled, laps completed with drifting are excluded from race, heat, and driver records.
 - **Yellow Flag Rules**: Automatic or manual yellow flag pauses and track power cutoff.
 - **Custom UI Options**: Select specialized leaderboards and custom telemetry widgets.
 

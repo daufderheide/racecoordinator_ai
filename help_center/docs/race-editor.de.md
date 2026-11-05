@@ -66,6 +66,7 @@ Der Bereich Allgemeine Einstellungen steuert Präsentation, Zeitfilter und das R
 - **Audio-Ansagen**: Automatische Sprachansagen für Führungswechsel, schnellste Runden, Boxenstopps und Rennabschlüsse.
 - **Minimale Rundenzeit (s)**: Kürzeste zulässige Rundenzeit zur Filterung von Sensorstörungen oder Fehlmessungen.
 - **Driftzeit (s)**: Sensor-Erfassungsfenster zur Bewältigung von schleudernden Fahrzeugen auf der Ziellinie.
+- **Runden mit Drift von Rekorden ausschließen**: Wenn aktiviert, werden Runden mit Drift nicht für Renn-, Lauf- oder Fahrerrekorde gewertet.
 - **Gelbe-Flagge-Regeln**: Automatische oder manuelle Rennpausen bei Gelbphase mit Bahnstromabschaltung.
 - **Benutzerdefinierte UI-Optionen**: Auswahl spezialisierter Bestenlisten und Telemetrie-Widgets.
 
