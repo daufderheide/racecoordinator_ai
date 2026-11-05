@@ -417,6 +417,14 @@ describe("raceday-lane-column.utils", () => {
       const hd: any = { autoCalculatedLaps: 2, isFinished: false };
       expect(formatAdjustedLapValue(10, hd, "lapCount")).toBe("8");
     });
+
+    it("should not adjust overall lap values when autoCalculatedLaps > 0", () => {
+      const hd: any = { autoCalculatedLaps: 2, isFinished: false };
+      expect(formatAdjustedLapValue(10, hd, "totalLaps")).toBe("10");
+      expect(formatAdjustedLapValue(10, hd, "overallLapCount")).toBe("10");
+      expect(formatAdjustedLapValue(10, hd, "raceTotalLaps")).toBe("10");
+      expect(formatAdjustedLapValue(10, hd, "overallTotalLaps")).toBe("10");
+    });
   });
 
   describe("isParentRaceOver", () => {

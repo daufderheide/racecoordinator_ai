@@ -770,7 +770,7 @@ describe("RacedayLaneColumnComponent", () => {
       objectId: "driver-test",
       laneIndex: 0,
       lapCount: 10.35,
-      totalLaps: 10.35,
+      totalLaps: 10,
       autoCalculatedLaps: 0.35,
       adjustedLapCount: 10.35,
       isFinished: false,
@@ -788,6 +788,15 @@ describe("RacedayLaneColumnComponent", () => {
     fixture.detectChanges();
     expect(component.formattedValue).toBe("10");
 
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({ columnKey: "totalLaps", targetIndex: 0 }),
+    );
+    fixture.detectChanges();
+    expect(component.formattedValue).toBe("10");
+
+    // Also verify fallback when totalLaps is not directly present on testDriver
+    delete testDriver.totalLaps;
     fixture.componentRef.setInput(
       "widget",
       createWidget({ columnKey: "totalLaps", targetIndex: 0 }),

@@ -2955,17 +2955,17 @@ describe("RacedayFormatUtils", () => {
       ).toBe("10.50");
     });
 
-    it("should exclude current heat on-pause auto-segments in race lap widgets when PAUSED", () => {
+    it("should display clean scored laps without subtracting pause auto-segments in race lap widgets when PAUSED", () => {
       ctx.raceState = RaceState.PAUSED;
       hd.autoCalculatedLaps = 0.35;
-      const participant = { totalTime: 120.5 } as any;
+      const participant = { totalTime: 120.5, totalLaps: 50.0 } as any;
       (hd as any).participant = participant;
 
-      // Raw value from server overall standings includes current heat pause segments (e.g. 50.35)
+      // Server participant.totalLaps is clean scored laps (50.00); should not subtract autoCalculatedLaps
       expect(
         RacedayFormatUtils.formatValue(
           "overallLapCount",
-          50.35,
+          50.0,
           hd,
           undefined,
           ctx,
@@ -2973,13 +2973,13 @@ describe("RacedayFormatUtils", () => {
       ).toBe("50.00");
 
       expect(
-        RacedayFormatUtils.formatValue("totalLaps", 50.35, hd, undefined, ctx),
+        RacedayFormatUtils.formatValue("totalLaps", 50.0, hd, undefined, ctx),
       ).toBe("50.00");
 
       expect(
         RacedayFormatUtils.formatValue(
           "raceTotalLaps",
-          50.35,
+          50.0,
           hd,
           undefined,
           ctx,
@@ -2989,12 +2989,36 @@ describe("RacedayFormatUtils", () => {
       expect(
         RacedayFormatUtils.formatValue(
           "overallTotalLaps",
-          50.35,
+          50.0,
           hd,
           undefined,
           ctx,
         ),
       ).toBe("50.00");
+    });
+
+    it("should strip auto-segments on fallback to hd.lapCount in extractOverallPropertyValue when PAUSED", () => {
+      const fallbackHd: any = {
+        lapCount: 10.35,
+        autoCalculatedLaps: 0.35,
+        isFinished: false,
+      };
+
+      const extractedLaps = (
+        RacedayFormatUtils as any
+      ).extractOverallPropertyValue(undefined, fallbackHd, "overallLapCount");
+      expect(extractedLaps).toBe(10.0);
+
+      const extractedTotalLaps = (
+        RacedayFormatUtils as any
+      ).extractOverallPropertyValue(undefined, fallbackHd, "totalLaps");
+      expect(extractedTotalLaps).toBe(10.0);
+
+      fallbackHd.isFinished = true;
+      const finishedLaps = (
+        RacedayFormatUtils as any
+      ).extractOverallPropertyValue(undefined, fallbackHd, "overallLapCount");
+      expect(finishedLaps).toBe(10.35);
     });
 
     it("should include auto-segments in race lap widgets when heat is HEAT_OVER or RACE_OVER", () => {

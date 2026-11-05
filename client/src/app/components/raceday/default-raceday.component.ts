@@ -830,6 +830,7 @@ export class DefaultRacedayComponent
   }
 
   protected totalHeats: number = 0;
+  isStartingRace = false;
   isMenuOpen = false;
   isFileMenuOpen = false;
   isManageMenuOpen = false;

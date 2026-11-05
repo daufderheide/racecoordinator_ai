@@ -1762,6 +1762,38 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should not show error modal when startRace fails because race is already active or racing", () => {
+      spyOn<any>(component, "showInterfaceError");
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.startRace.and.returnValue(
+        of({
+          success: false,
+          message: "Cannot start race: Race is already in Racing state.",
+        }),
+      );
+      component.onMenuSelect("START_RESUME");
+      expect((component as any).showInterfaceError).not.toHaveBeenCalled();
+    });
+
+    it("should prevent duplicate startRace calls while previous request is in-flight", () => {
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      const subject = new Subject<any>();
+      mockDataService.startRace.and.returnValue(subject.asObservable());
+
+      component.onMenuSelect("START_RESUME");
+      expect(mockDataService.startRace).toHaveBeenCalledTimes(1);
+      expect(component.isStartResumeDisabled).toBeTrue();
+
+      // Second click while in-flight
+      component.onMenuSelect("START_RESUME");
+      expect(mockDataService.startRace).toHaveBeenCalledTimes(1);
+
+      // Complete request
+      subject.next({ success: true });
+      subject.complete();
+      expect(component.isStartingRace).toBeFalse();
+    });
+
     it("should show permission denied modal when startRace returns 401 or 403", () => {
       spyOn<any>(component, "showInterfaceError");
       mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
@@ -8893,11 +8925,11 @@ describe("DefaultRacedayComponent", () => {
         autoCalculatedLaps: 0.35,
         userLaps: 0,
         penaltyLaps: 0,
-        participant: { totalTime: 120.0, totalLaps: 25.35 },
+        participant: { totalTime: 120.0, totalLaps: 25.0 },
       };
 
       expect(component.formatValue("lapCount", 10.35, hd)).toBe("10.00");
-      expect(component.formatValue("overallLapCount", 25.35, hd)).toBe("25.00");
+      expect(component.formatValue("overallLapCount", 25.0, hd)).toBe("25.00");
     });
 
     it("should include auto-segments in lapCount and overallLapCount when HEAT_OVER or RACE_OVER", () => {

@@ -49,96 +49,110 @@ public class OverallStandings {
       List<Heat> heats,
       HeatRotationType rotationType,
       String completedDriverParticipantId) {
-    Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber = new HashMap<>();
-    Map<String, Integer> driverToGroup = new HashMap<>();
-    Map<Integer, Boolean> heatStartedByNumber = new HashMap<>();
+    if (drivers == null) {
+      return;
+    }
+    synchronized (drivers) {
+      Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber = new HashMap<>();
+      Map<String, Integer> driverToGroup = new HashMap<>();
+      Map<Integer, Boolean> heatStartedByNumber = new HashMap<>();
 
-    // 1. Strings heats to drivers and index by heat number and group
-    for (Heat heat : heats) {
-      int heatNum = heat.getHeatNumber();
-      int heatGroup = heat.getGroup();
-      if (heat.isStarted()) {
-        heatStartedByNumber.put(heatNum, true);
-      }
-      for (DriverHeatData dhd : heat.getDrivers()) {
-        if (dhd.getDriver() != null) {
-          String stableId = dhd.getDriver().getStableId();
-          driverHeatsByNumber
-              .computeIfAbsent(stableId, k -> new LinkedHashMap<>())
-              .computeIfAbsent(heatNum, k -> new ArrayList<>())
-              .add(dhd);
-          driverToGroup.put(stableId, heatGroup);
+      // 1. Strings heats to drivers and index by heat number and group
+      if (heats != null) {
+        for (Heat heat : heats) {
+          int heatNum = heat.getHeatNumber();
+          int heatGroup = heat.getGroup();
+          if (heat.isStarted()) {
+            heatStartedByNumber.put(heatNum, true);
+          }
+          if (heat.getDrivers() != null) {
+            for (DriverHeatData dhd : new ArrayList<>(heat.getDrivers())) {
+              if (dhd != null && dhd.getDriver() != null) {
+                String stableId = dhd.getDriver().getStableId();
+                driverHeatsByNumber
+                    .computeIfAbsent(stableId, k -> new LinkedHashMap<>())
+                    .computeIfAbsent(heatNum, k -> new ArrayList<>())
+                    .add(dhd);
+                driverToGroup.put(stableId, heatGroup);
+              }
+            }
+          }
         }
       }
-    }
 
-    // 2. Aggregate stats for each driver
-    for (RaceParticipant driver : drivers) {
-      Map<Integer, List<DriverHeatData>> heatsByNumber =
-          driverHeatsByNumber.getOrDefault(driver.getStableId(), Collections.emptyMap());
-      calculateDriverStats(driver, heatsByNumber, rotationType, heatStartedByNumber);
-    }
-
-    // 3. Rank drivers
-    if (!practice) {
-      if (groupOptions != null && groupOptions.isEnabled() && groupOptions.getMinAdvancing() > 0) {
-        rankWithMinAdvancing(drivers, driverToGroup);
-      } else {
-        drivers.sort(getComparator());
-      }
-    }
-
-    // 4. Assign ranks
-    int currentRank = 1;
-    for (int i = 0; i < drivers.size(); i++) {
-      RaceParticipant driver = drivers.get(i);
-      boolean isEmpty = driver.getDriver() != null && driver.getDriver().isEmpty();
-      driver.setRank(isEmpty || practice ? 99 : currentRank++);
-
-      double rankValue = 0;
-      if (HeatStandings.isFastestLapScoring(heatScoring, overallScoring)) {
-        rankValue = driver.getBestLapTime();
-      } else if (overallScoring != null && overallScoring.getRankingMethod() != null) {
-        switch (overallScoring.getRankingMethod()) {
-          case LAP_COUNT:
-            rankValue = driver.getTotalLaps();
-            break;
-          case FASTEST_LAP:
-            rankValue = driver.getBestLapTime();
-            break;
-          case TOTAL_TIME:
-            rankValue = driver.getTotalTime();
-            break;
-          case AVERAGE_LAP:
-            rankValue = driver.getAverageLapTime();
-            break;
-          default:
-            rankValue = 0;
+      // 2. Aggregate stats for each driver
+      for (RaceParticipant driver : new ArrayList<>(drivers)) {
+        if (driver != null) {
+          Map<Integer, List<DriverHeatData>> heatsByNumber =
+              driverHeatsByNumber.getOrDefault(driver.getStableId(), Collections.emptyMap());
+          calculateDriverStats(driver, heatsByNumber, rotationType, heatStartedByNumber);
         }
-      } else {
-        rankValue = driver.getTotalLaps();
       }
-      driver.setRankValue(rankValue);
-    }
 
-    // 5. Calculate gaps
-    if (!practice) {
-      HeatScoring.FinishMethod finishMethod =
-          heatScoring != null ? heatScoring.getFinishMethod() : HeatScoring.FinishMethod.Lap;
-      RankingMethod rankingMethod =
-          HeatStandings.resolveOverallRankingMethod(heatScoring, overallScoring);
-      GapCalculator.calculateGaps(drivers, finishMethod, rankingMethod);
-      if (completedDriverParticipantId != null) {
-        RaceParticipant completed =
-            drivers.stream()
-                .filter(
-                    d ->
-                        completedDriverParticipantId.equals(d.getParticipantId())
-                            || completedDriverParticipantId.equals(d.getStableId()))
-                .findFirst()
-                .orElse(null);
-        if (completed != null) {
-          GapCalculator.calculateLapGapsForDriver(completed, drivers, rankingMethod);
+      // 3. Rank drivers
+      if (!practice) {
+        if (groupOptions != null
+            && groupOptions.isEnabled()
+            && groupOptions.getMinAdvancing() > 0) {
+          rankWithMinAdvancing(drivers, driverToGroup);
+        } else {
+          drivers.sort(getComparator());
+        }
+      }
+
+      // 4. Assign ranks
+      int currentRank = 1;
+      for (int i = 0; i < drivers.size(); i++) {
+        RaceParticipant driver = drivers.get(i);
+        boolean isEmpty = driver.getDriver() != null && driver.getDriver().isEmpty();
+        driver.setRank(isEmpty || practice ? 99 : currentRank++);
+
+        double rankValue = 0;
+        if (HeatStandings.isFastestLapScoring(heatScoring, overallScoring)) {
+          rankValue = driver.getBestLapTime();
+        } else if (overallScoring != null && overallScoring.getRankingMethod() != null) {
+          switch (overallScoring.getRankingMethod()) {
+            case LAP_COUNT:
+              rankValue = driver.getTotalLaps();
+              break;
+            case FASTEST_LAP:
+              rankValue = driver.getBestLapTime();
+              break;
+            case TOTAL_TIME:
+              rankValue = driver.getTotalTime();
+              break;
+            case AVERAGE_LAP:
+              rankValue = driver.getAverageLapTime();
+              break;
+            default:
+              rankValue = 0;
+          }
+        } else {
+          rankValue = driver.getTotalLaps();
+        }
+        driver.setRankValue(rankValue);
+      }
+
+      // 5. Calculate gaps
+      if (!practice) {
+        HeatScoring.FinishMethod finishMethod =
+            heatScoring != null ? heatScoring.getFinishMethod() : HeatScoring.FinishMethod.Lap;
+        RankingMethod rankingMethod =
+            HeatStandings.resolveOverallRankingMethod(heatScoring, overallScoring);
+        GapCalculator.calculateGaps(drivers, finishMethod, rankingMethod);
+        if (completedDriverParticipantId != null) {
+          RaceParticipant completed =
+              drivers.stream()
+                  .filter(
+                      d ->
+                          d != null
+                              && (completedDriverParticipantId.equals(d.getParticipantId())
+                                  || completedDriverParticipantId.equals(d.getStableId())))
+                  .findFirst()
+                  .orElse(null);
+          if (completed != null) {
+            GapCalculator.calculateLapGapsForDriver(completed, drivers, rankingMethod);
+          }
         }
       }
     }
@@ -227,7 +241,7 @@ public class OverallStandings {
     Map<Integer, List<RaceParticipant>> groupedDrivers = new HashMap<>();
     List<RaceParticipant> emptyDrivers = new ArrayList<>();
 
-    for (RaceParticipant driver : drivers) {
+    for (RaceParticipant driver : new ArrayList<>(drivers)) {
       if (driver.getDriver() != null && driver.getDriver().isEmpty()) {
         emptyDrivers.add(driver);
       } else {

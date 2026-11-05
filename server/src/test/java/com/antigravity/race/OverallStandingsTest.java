@@ -1048,4 +1048,54 @@ public class OverallStandingsTest {
     assertEquals(5.0, p2.getRankValue(), 0.001); // rankValue is average lap
     assertEquals(6.0, p1.getRankValue(), 0.001);
   }
+
+  @Test
+  public void testConcurrentRecalculateThreadSafety() throws Exception {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.TOTAL_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    RaceParticipant p3 = createDriver("D3", "id3");
+    List<RaceParticipant> drivers = new ArrayList<>(java.util.Arrays.asList(p1, p2, p3));
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 8, 110.0));
+
+    int numThreads = 8;
+    int iterationsPerThread = 50;
+    java.util.concurrent.ExecutorService executor =
+        java.util.concurrent.Executors.newFixedThreadPool(numThreads);
+    java.util.concurrent.atomic.AtomicReference<Throwable> error =
+        new java.util.concurrent.atomic.AtomicReference<>();
+    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(numThreads);
+
+    for (int t = 0; t < numThreads; t++) {
+      executor.submit(
+          () -> {
+            try {
+              for (int i = 0; i < iterationsPerThread; i++) {
+                os.recalculate(drivers, heats);
+              }
+            } catch (Throwable th) {
+              error.compareAndSet(null, th);
+            } finally {
+              latch.countDown();
+            }
+          });
+    }
+
+    latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+    executor.shutdown();
+    org.junit.Assert.assertNull(
+        "Concurrent recalculate should not throw ConcurrentModificationException: " + error.get(),
+        error.get());
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+  }
 }

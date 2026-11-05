@@ -182,6 +182,9 @@ export class RacedayRaceStatusHelper {
   }
 
   static isStartResumeDisabled(host: any): boolean {
+    if (host.isStartingRace) {
+      return true;
+    }
     if (host.authService.currentRole === Role.VIEWER) {
       return true;
     }

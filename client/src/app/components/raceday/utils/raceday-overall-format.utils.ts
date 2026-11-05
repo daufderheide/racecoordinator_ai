@@ -106,10 +106,26 @@ export class RacedayOverallFormatUtils {
       case "overallLapCount":
       case "totalLaps":
       case "raceTotalLaps":
-      case "overallTotalLaps":
-        return (
-          p?.totalLaps ?? hd?.totalLaps ?? hd?.overallLapCount ?? hd?.lapCount
-        );
+      case "overallTotalLaps": {
+        const val =
+          p?.totalLaps ??
+          hd?.participant?.totalLaps ??
+          hd?.totalLaps ??
+          hd?.overallLapCount;
+        if (val !== undefined && val !== null) {
+          return val;
+        }
+        if (hd?.lapCount !== undefined && hd?.lapCount !== null) {
+          const autoLaps = hd?.autoCalculatedLaps || 0;
+          if (autoLaps > 0 && !hd?.isFinished) {
+            return (
+              Math.round((hd.lapCount - autoLaps + Number.EPSILON) * 1e6) / 1e6
+            );
+          }
+          return hd.lapCount;
+        }
+        return undefined;
+      }
       case "overallPhysicalLapCount":
         return (
           p?.physicalLapCount ??
@@ -459,13 +475,7 @@ export class RacedayOverallFormatUtils {
       ) {
         return lapPlaceholder;
       }
-      let lapVal = Number(value);
-      const isOver = RacedayFormatUtils.isHeatOrRaceOver(ctx, hd);
-      if (!isOver && (hd?.autoCalculatedLaps || 0) > 0) {
-        lapVal =
-          Math.round((lapVal - hd.autoCalculatedLaps + Number.EPSILON) * 1e6) /
-          1e6;
-      }
+      const lapVal = Number(value);
       return Number(lapVal).toFixed(lapDecimals);
     }
 

@@ -198,12 +198,7 @@ export function formatAdjustedLapValue(
 ): string {
   if (raw == null) return "--";
   if (
-    (key === "lapCount" ||
-      key === "heatTotalLaps" ||
-      key === "overallLapCount" ||
-      key === "totalLaps" ||
-      key === "raceTotalLaps" ||
-      key === "overallTotalLaps") &&
+    (key === "lapCount" || key === "heatTotalLaps") &&
     (hd.autoCalculatedLaps || 0) > 0 &&
     !hd.isFinished
   ) {

@@ -500,15 +500,17 @@ public class Race implements ProtocolListener {
     }
     String id = updatedDriver.getEntityId();
     if (drivers != null) {
-      for (RaceParticipant rp : drivers) {
-        if (rp.getDriver() != null && id.equals(rp.getDriver().getEntityId())) {
-          rp.setDriver(updatedDriver);
-        }
-        if (rp.getTeamDrivers() != null) {
-          for (int i = 0; i < rp.getTeamDrivers().size(); i++) {
-            Driver td = rp.getTeamDrivers().get(i);
-            if (td != null && id.equals(td.getEntityId())) {
-              rp.getTeamDrivers().set(i, updatedDriver);
+      synchronized (this.drivers) {
+        for (RaceParticipant rp : drivers) {
+          if (rp.getDriver() != null && id.equals(rp.getDriver().getEntityId())) {
+            rp.setDriver(updatedDriver);
+          }
+          if (rp.getTeamDrivers() != null) {
+            for (int i = 0; i < rp.getTeamDrivers().size(); i++) {
+              Driver td = rp.getTeamDrivers().get(i);
+              if (td != null && id.equals(td.getEntityId())) {
+                rp.getTeamDrivers().set(i, updatedDriver);
+              }
             }
           }
         }
@@ -1090,7 +1092,7 @@ public class Race implements ProtocolListener {
     updatePowerForFlag(flag);
   }
 
-  public boolean startRace() {
+  public synchronized boolean startRace() {
     if (this.stopped) {
       return false;
     }
@@ -1119,7 +1121,7 @@ public class Race implements ProtocolListener {
     }
   }
 
-  public void pauseRace() {
+  public synchronized void pauseRace() {
     if (this.stopped) {
       return;
     }
@@ -1129,7 +1131,7 @@ public class Race implements ProtocolListener {
     state.pause(this);
   }
 
-  public void restartHeat() {
+  public synchronized void restartHeat() {
     if (this.stopped) {
       return;
     }
@@ -1137,7 +1139,7 @@ public class Race implements ProtocolListener {
     ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
-  public void skipHeat() {
+  public synchronized void skipHeat() {
     if (this.stopped) {
       return;
     }
@@ -1145,7 +1147,7 @@ public class Race implements ProtocolListener {
     ClientSubscriptionManager.getInstance().autoSaveAsync(this);
   }
 
-  public void skipRace() {
+  public synchronized void skipRace() {
     if (this.stopped) {
       return;
     }
@@ -1165,7 +1167,7 @@ public class Race implements ProtocolListener {
     changeState(new RaceOver());
   }
 
-  public void deferHeat() {
+  public synchronized void deferHeat() {
     if (this.stopped) {
       return;
     }
@@ -1432,27 +1434,31 @@ public class Race implements ProtocolListener {
     }
   }
 
-  public void recalculateOverallStandings() {
+  public synchronized void recalculateOverallStandings() {
     recalculateOverallStandings(null);
   }
 
-  public void recalculateOverallStandings(String completedDriverParticipantId) {
+  public synchronized void recalculateOverallStandings(String completedDriverParticipantId) {
     if (overallStandings != null) {
-      overallStandings.recalculate(
-          this.drivers,
-          this.heats,
-          this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null,
-          completedDriverParticipantId);
+      synchronized (this.drivers) {
+        overallStandings.recalculate(
+            this.drivers,
+            this.heats,
+            this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null,
+            completedDriverParticipantId);
+      }
     }
   }
 
-  public RaceData.Builder populateOverallStandings(RaceData.Builder dataBuilder) {
+  public synchronized RaceData.Builder populateOverallStandings(RaceData.Builder dataBuilder) {
     recalculateOverallStandings();
     recordsManager.recalculateScoreRecords();
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
-    for (RaceParticipant driver : this.drivers) {
-      if (driver.getDriver() != Driver.EMPTY_DRIVER) {
-        participants.add(RaceParticipantConverter.toProto(driver, new HashSet<>()));
+    synchronized (this.drivers) {
+      for (RaceParticipant driver : this.drivers) {
+        if (driver.getDriver() != Driver.EMPTY_DRIVER) {
+          participants.add(RaceParticipantConverter.toProto(driver, new HashSet<>()));
+        }
       }
     }
     dataBuilder
@@ -1482,14 +1488,16 @@ public class Race implements ProtocolListener {
       List<com.antigravity.proto.RaceParticipant> groupParticipants = // fqn-collision
           new ArrayList<>();
       int groupRank = 1;
-      for (RaceParticipant driver : this.drivers) {
-        if (driver.getDriver() != Driver.EMPTY_DRIVER) {
-          Integer g = driverToGroup.get(driver.getStableId());
-          if (g != null && g == currentGroup) {
-            com.antigravity.proto.RaceParticipant.Builder builder = // fqn-collision
-                RaceParticipantConverter.toProto(driver, new HashSet<>()).toBuilder();
-            builder.setRank(groupRank++);
-            groupParticipants.add(builder.build());
+      synchronized (this.drivers) {
+        for (RaceParticipant driver : this.drivers) {
+          if (driver.getDriver() != Driver.EMPTY_DRIVER) {
+            Integer g = driverToGroup.get(driver.getStableId());
+            if (g != null && g == currentGroup) {
+              com.antigravity.proto.RaceParticipant.Builder builder = // fqn-collision
+                  RaceParticipantConverter.toProto(driver, new HashSet<>()).toBuilder();
+              builder.setRank(groupRank++);
+              groupParticipants.add(builder.build());
+            }
           }
         }
       }
@@ -1680,11 +1688,11 @@ public class Race implements ProtocolListener {
         && !(state instanceof RaceOver);
   }
 
-  public void moveToNextHeat() {
+  public synchronized void moveToNextHeat() {
     state.nextHeat(this);
   }
 
-  public void changeLane(int from, int to) {
+  public synchronized void changeLane(int from, int to) {
     if (!state.canChangeLane(this)) {
       return;
     }

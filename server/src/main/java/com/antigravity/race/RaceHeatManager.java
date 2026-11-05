@@ -236,12 +236,14 @@ public class RaceHeatManager {
         newDrivers.add(p);
       }
     }
-    this.race.getDrivers().clear();
-    this.race.getDrivers().addAll(newDrivers);
+    synchronized (this.race.getDrivers()) {
+      this.race.getDrivers().clear();
+      this.race.getDrivers().addAll(newDrivers);
 
-    int numLanes = this.race.getTrack().getLanes().size();
-    while (this.race.getDrivers().size() < numLanes) {
-      this.race.getDrivers().add(new RaceParticipant(Driver.EMPTY_DRIVER));
+      int numLanes = this.race.getTrack().getLanes().size();
+      while (this.race.getDrivers().size() < numLanes) {
+        this.race.getDrivers().add(new RaceParticipant(Driver.EMPTY_DRIVER));
+      }
     }
   }
 

@@ -1,3 +1,4 @@
+import { finalize } from "rxjs";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { RaceState } from "@app/proto/antigravity";
@@ -192,50 +193,66 @@ export class RacedayActionsMenuHelper {
   }
 
   static handleStartResumeAction(host: any): void {
-    host.dataService?.startRace().subscribe(
-      (response: any) => {
-        if (response && response.success) {
-          host.logger?.debug("Race start command sent successfully");
-        } else {
-          host.logger?.error(
-            "Failed to send race start command:",
-            response?.message,
-          );
-          const msg = response?.message || "";
-          if (msg.toLowerCase().includes("interface")) {
+    if (host.isStartingRace) {
+      return;
+    }
+    host.isStartingRace = true;
+    host.cdr?.markForCheck();
+    host.dataService
+      ?.startRace()
+      .pipe(
+        finalize(() => {
+          host.isStartingRace = false;
+          host.cdr?.markForCheck();
+        }),
+      )
+      .subscribe(
+        (response: any) => {
+          if (response && response.success) {
+            host.logger?.debug("Race start command sent successfully");
+          } else {
+            const msg = response?.message || "";
+            host.logger?.error("Failed to send race start command:", msg);
+            if (msg.toLowerCase().includes("interface")) {
+              host.showInterfaceError(
+                "ACK_MODAL_TITLE_DISCONNECTED",
+                "ACK_MODAL_MSG_DISCONNECTED",
+              );
+            } else if (
+              msg.includes("Race is already in") ||
+              msg.includes("already active") ||
+              msg.includes("already starting")
+            ) {
+              host.logger?.debug("Race already active or starting:", msg);
+            } else {
+              host.showInterfaceError(
+                "ACK_MODAL_TITLE_START_FAILED",
+                msg || "ACK_MODAL_MSG_RACE_INACTIVE",
+              );
+            }
+          }
+        },
+        (error: any) => {
+          host.logger?.error("Error starting race:", error);
+          if (error?.status === 401 || error?.status === 403) {
             host.showInterfaceError(
-              "ACK_MODAL_TITLE_DISCONNECTED",
-              "ACK_MODAL_MSG_DISCONNECTED",
+              "ACK_MODAL_TITLE_PERMISSION_DENIED",
+              "ACK_MODAL_MSG_PERMISSION_DENIED",
+            );
+          } else if (error?.status === 404) {
+            host.raceHasEnded = true;
+            host.showInterfaceError(
+              "ACK_MODAL_TITLE_RACE_INACTIVE",
+              "ACK_MODAL_MSG_RACE_INACTIVE",
             );
           } else {
             host.showInterfaceError(
               "ACK_MODAL_TITLE_START_FAILED",
-              msg || "ACK_MODAL_MSG_RACE_INACTIVE",
+              error?.error || error?.message || "ACK_MODAL_MSG_DISCONNECTED",
             );
           }
-        }
-      },
-      (error: any) => {
-        host.logger?.error("Error starting race:", error);
-        if (error?.status === 401 || error?.status === 403) {
-          host.showInterfaceError(
-            "ACK_MODAL_TITLE_PERMISSION_DENIED",
-            "ACK_MODAL_MSG_PERMISSION_DENIED",
-          );
-        } else if (error?.status === 404) {
-          host.raceHasEnded = true;
-          host.showInterfaceError(
-            "ACK_MODAL_TITLE_RACE_INACTIVE",
-            "ACK_MODAL_MSG_RACE_INACTIVE",
-          );
-        } else {
-          host.showInterfaceError(
-            "ACK_MODAL_TITLE_START_FAILED",
-            error?.error || error?.message || "ACK_MODAL_MSG_DISCONNECTED",
-          );
-        }
-      },
-    );
+        },
+      );
   }
 
   static handleNextHeatAction(host: any): void {
