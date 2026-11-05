@@ -193,7 +193,11 @@ describe("LaneViewMigrationHelper", () => {
         expect(hw.customSettings?.["showHeader"]).toBeTrue();
         expect(hw.customSettings?.["headerPlacement"]).toBe("top");
         expect(hw.customSettings?.["useLaneColors"]).toBeFalse();
-        expect(hw.y).toBe(200); // bounds.y
+        expect(hw.customSettings?.["showBorder"]).toBeTrue();
+        expect(hw.customSettings?.["borderColor"]).toBe("");
+        expect(hw.customSettings?.["borderWidth"]).toBe(1);
+        expect(hw.customSettings?.["borderRadius"]).toBe(0);
+        expect(hw.y).toBe(210); // bounds.y (200 + 10px legacy lane-view top margin)
       }
 
       // Check data widgets have showHeader false
@@ -204,6 +208,10 @@ describe("LaneViewMigrationHelper", () => {
       for (const dw of dataWidgets) {
         expect(dw.customSettings?.["showHeader"]).toBeFalse();
         expect(dw.customSettings?.["headerPlacement"]).toBe("top");
+        expect(dw.customSettings?.["showBorder"]).toBeTrue();
+        expect(dw.customSettings?.["borderColor"]).toBe("");
+        expect(dw.customSettings?.["borderWidth"]).toBe(1);
+        expect(dw.customSettings?.["borderRadius"]).toBe(0);
       }
 
       // Check master widgets (gridLane === 0)
@@ -229,6 +237,10 @@ describe("LaneViewMigrationHelper", () => {
       expect(driverMaster?.customSettings?.["highlightLapStyle"]).toBe(
         "scale-pulse",
       );
+      expect(driverMaster?.customSettings?.["showBorder"]).toBeTrue();
+      expect(driverMaster?.customSettings?.["borderColor"]).toBe("");
+      expect(driverMaster?.customSettings?.["borderWidth"]).toBe(1);
+      expect(driverMaster?.customSettings?.["borderRadius"]).toBe(0);
       expect(driverMaster?.zIndex).toBe(150);
 
       const avgLapMaster = masters.find(
@@ -291,6 +303,7 @@ describe("LaneViewMigrationHelper", () => {
         expect(hw.customSettings?.["headerPlacement"]).toBe("left");
         expect(hw.customSettings?.["showHeader"]).toBeTrue();
         expect(hw.customSettings?.["useLaneColors"]).toBeFalse();
+        expect(hw.customSettings?.["showBorder"]).toBeTrue();
       }
 
       const masters = gridWidgets.filter(
@@ -306,6 +319,7 @@ describe("LaneViewMigrationHelper", () => {
       );
       expect(masters[0].customSettings?.["headerPlacement"]).toBe("left");
       expect(masters[0].customSettings?.["showHeader"]).toBeFalse();
+      expect(masters[0].customSettings?.["showBorder"]).toBeTrue();
       for (const m of masters) {
         expect(m.x).toBe(200);
         expect(m.width).toBe(200);
@@ -322,6 +336,161 @@ describe("LaneViewMigrationHelper", () => {
         expect(w.x).toBe(400);
         expect(w.width).toBe(200);
         expect(w.customSettings?.["showHeader"]).toBeFalse();
+      }
+    });
+
+    it("should preserve custom border settings when migrating lane-view to data grid", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view-custom-borders",
+            widgetType: "lane-view",
+            x: 0,
+            y: 300,
+            width: 1000,
+            height: 400,
+            zIndex: 100,
+            customSettings: {
+              isVertical: false,
+              showBorder: false,
+              borderColor: "#ff0000",
+              borderWidth: 3,
+              borderRadius: 6,
+            },
+          },
+        ],
+      };
+
+      const options: LaneViewMigrationOptions = {
+        layout,
+        columns: ["laneNumber", "lastLapTime"],
+        totalLanes: 2,
+      };
+
+      const result =
+        LaneViewMigrationHelper.convertLegacyLaneViewLayout(options);
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      expect(gridWidgets.length).toBe(6); // 2 cols * 2 lanes = 4 data + 2 top headers
+
+      for (const w of gridWidgets) {
+        expect(w.customSettings?.["showBorder"]).toBeFalse();
+        expect(w.customSettings?.["borderColor"]).toBe("#ff0000");
+        expect(w.customSettings?.["borderWidth"]).toBe(3);
+        expect(w.customSettings?.["borderRadius"]).toBe(6);
+      }
+    });
+
+    it("should default borders to showBorder=true with 1px border and 0 radius when migrating lane-view", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view-default-borders",
+            widgetType: "lane-view",
+            x: 0,
+            y: 300,
+            width: 1000,
+            height: 400,
+            zIndex: 100,
+            customSettings: {
+              isVertical: false,
+            },
+          },
+        ],
+      };
+
+      const options: LaneViewMigrationOptions = {
+        layout,
+        columns: ["laneNumber", "lastLapTime"],
+        totalLanes: 2,
+      };
+
+      const result =
+        LaneViewMigrationHelper.convertLegacyLaneViewLayout(options);
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      expect(gridWidgets.length).toBe(6);
+
+      for (const w of gridWidgets) {
+        expect(w.customSettings?.["showBorder"]).toBeTrue();
+        expect(w.customSettings?.["borderColor"]).toBe("");
+        expect(w.customSettings?.["borderWidth"]).toBe(1);
+        expect(w.customSettings?.["borderRadius"]).toBe(0);
+      }
+    });
+
+    it("should adjust grid y position and height by 10px to account for legacy lane-view margin-top and prevent overlapping widgets above", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-top-image",
+            widgetType: "image",
+            x: 0,
+            y: 40,
+            width: 300,
+            height: 230,
+            zIndex: 220,
+          },
+          {
+            id: "widget-lane-view-below-image",
+            widgetType: "lane-view",
+            x: 0,
+            y: 270,
+            width: 1200,
+            height: 750,
+            zIndex: 190,
+            customSettings: {
+              isVertical: false,
+            },
+          },
+        ],
+      };
+
+      const options: LaneViewMigrationOptions = {
+        layout,
+        columns: ["laneNumber", "lastLapTime"],
+        totalLanes: 2,
+      };
+
+      const result =
+        LaneViewMigrationHelper.convertLegacyLaneViewLayout(options);
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      const headers = gridWidgets.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      expect(headers.length).toBe(2);
+      // Legacy lane-view had margin: 10px 0 0 0, so header rendered at y=280 (not y=270).
+      // Migrated grid must start at y=280 to preserve the 10px gap below the image (y=40+230=270).
+      for (const h of headers) {
+        expect(h.y).toBe(280);
+      }
+
+      // Total height of grid should be 740 (750 - 10px margin), bottom remains 280 + 740 = 1020 (270 + 750)
+      const lane0Widgets = gridWidgets.filter(
+        (w) =>
+          !w.customSettings?.["isHeaderWidget"] &&
+          w.customSettings?.["gridLane"] === 0,
+      );
+      const lane1Widgets = gridWidgets.filter(
+        (w) =>
+          !w.customSettings?.["isHeaderWidget"] &&
+          w.customSettings?.["gridLane"] === 1,
+      );
+      for (const w of lane0Widgets) {
+        expect(w.y).toBeGreaterThanOrEqual(280);
+      }
+      for (const w of lane1Widgets) {
+        expect(w.y + w.height).toBeLessThanOrEqual(1020);
       }
     });
 
@@ -450,30 +619,30 @@ describe("LaneViewMigrationHelper", () => {
         expect(lw.customSettings?.["headerPlacement"]).toBe("left");
       }
 
-      // Assert row heights: laneNumber row must NOT be clamped to 10% (93px), but should be 55px
+      // Assert row heights: laneNumber row must NOT be clamped to 10% (92px), but should be 54px
       const laneNumberHeader = headerWidgets.find(
         (hw) => hw.customSettings?.["columnKey"] === "laneNumber",
       );
-      expect(laneNumberHeader?.height).toBe(55);
+      expect(laneNumberHeader?.height).toBe(54);
 
       const laneNumberData = laneWidgets.filter(
         (lw) => lw.customSettings?.["columnKey"] === "laneNumber",
       );
       expect(laneNumberData.length).toBe(4);
       for (const lw of laneNumberData) {
-        expect(lw.height).toBe(55);
+        expect(lw.height).toBe(54);
       }
 
       const lastLapTimeHeader = headerWidgets.find(
         (hw) => hw.customSettings?.["columnKey"] === "lastLapTime",
       );
-      expect(lastLapTimeHeader?.y).toBe(149 + 55);
-      expect(lastLapTimeHeader?.height).toBe(110);
+      expect(lastLapTimeHeader?.y).toBe(159 + 54);
+      expect(lastLapTimeHeader?.height).toBe(108);
 
       const lastLapsHeader = headerWidgets.find(
         (hw) => hw.customSettings?.["columnKey"] === "lastLaps",
       );
-      expect(lastLapsHeader?.height).toBe(548);
+      expect(lastLapsHeader?.height).toBe(542);
     });
 
     it("should honor preserveLegacyHeatView flag and allow manual upgrade", () => {
@@ -624,6 +793,261 @@ describe("LaneViewMigrationHelper", () => {
       const timer = result.layout.widgets.find((w) => w.id === "widget-timer");
       expect(timer?.y).toBe(38);
       expect(timer?.height).toBe(111);
+    });
+
+    it("should preserve custom font sizes and scaleMode '' as fixed scaling during migration", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view",
+            widgetType: "lane-view",
+            x: 0,
+            y: 200,
+            width: 1440,
+            height: 750,
+            zIndex: 190,
+            scaleMode: "",
+            customSettings: {
+              isVertical: false,
+              columnFontFamily: "Burbank Big",
+              columnFontSize: 40,
+              dataFontFamily: "Burbank Big",
+              dataFontSize: 78,
+              insetFontFamily: "Burbank Big",
+              insetFontSize: 24,
+            },
+          },
+        ],
+      };
+
+      const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        totalLanes: 4,
+      });
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      expect(gridWidgets.length).toBeGreaterThan(0);
+
+      const headerWidgets = gridWidgets.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      expect(headerWidgets.length).toBeGreaterThan(0);
+      for (const hw of headerWidgets) {
+        expect(hw.scaleMode).toBe("");
+        expect(hw.customSettings?.["headerFontSize"]).toBe(40);
+        expect(hw.customSettings?.["headerFontFamily"]).toBe("Burbank Big");
+      }
+
+      const dataWidgets = gridWidgets.filter(
+        (w) => !w.customSettings?.["isHeaderWidget"],
+      );
+      expect(dataWidgets.length).toBeGreaterThan(0);
+      for (const dw of dataWidgets) {
+        expect(dw.scaleMode).toBe("");
+        expect(dw.customSettings?.["valueFontSize"]).toBe(78);
+        expect(dw.customSettings?.["minFontSize"]).toBe(78);
+        expect(dw.customSettings?.["maxFontSize"]).toBe(78);
+        expect(dw.customSettings?.["valueFontFamily"]).toBe("Burbank Big");
+        expect(dw.customSettings?.["headerFontSize"]).toBe(40);
+        expect(dw.customSettings?.["headerFontFamily"]).toBe("Burbank Big");
+      }
+    });
+
+    it("should preserve scaleMode 'fixed' with equal min and max font size", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view",
+            widgetType: "lane-view",
+            x: 0,
+            y: 200,
+            width: 1200,
+            height: 600,
+            zIndex: 100,
+            scaleMode: "fixed",
+            customSettings: {
+              dataFontSize: 64,
+              columnFontSize: 32,
+            },
+          },
+        ],
+      };
+
+      const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        totalLanes: 4,
+      });
+
+      expect(result.migrated).toBeTrue();
+      const dataWidgets = result.layout.widgets.filter(
+        (w) =>
+          w.widgetType === "lane-column" &&
+          !w.customSettings?.["isHeaderWidget"],
+      );
+      for (const dw of dataWidgets) {
+        expect(dw.scaleMode).toBe("fixed");
+        expect(dw.customSettings?.["valueFontSize"]).toBe(64);
+        expect(dw.customSettings?.["minFontSize"]).toBe(64);
+        expect(dw.customSettings?.["maxFontSize"]).toBe(64);
+        expect(dw.customSettings?.["headerFontSize"]).toBe(32);
+      }
+    });
+
+    it("should preserve scaleMode 'auto' and set maxFontSize to max of 120 or dataFontSize", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view",
+            widgetType: "lane-view",
+            x: 0,
+            y: 200,
+            width: 1200,
+            height: 600,
+            zIndex: 100,
+            scaleMode: "auto",
+            customSettings: {
+              dataFontSize: 85,
+              columnFontSize: 40,
+            },
+          },
+        ],
+      };
+
+      const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        totalLanes: 4,
+      });
+
+      expect(result.migrated).toBeTrue();
+      const dataWidgets = result.layout.widgets.filter(
+        (w) =>
+          w.widgetType === "lane-column" &&
+          !w.customSettings?.["isHeaderWidget"],
+      );
+      for (const dw of dataWidgets) {
+        expect(dw.scaleMode).toBe("auto");
+        expect(dw.customSettings?.["minFontSize"]).toBe(0);
+        expect(dw.customSettings?.["maxFontSize"]).toBe(120);
+        expect(dw.customSettings?.["valueFontSize"]).toBe(85);
+      }
+    });
+
+    it("should allow maxFontSize to exceed 120 when legacy dataFontSize is larger", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view",
+            widgetType: "lane-view",
+            x: 0,
+            y: 200,
+            width: 1200,
+            height: 600,
+            zIndex: 100,
+            scaleMode: "auto",
+            customSettings: {
+              dataFontSize: 140,
+            },
+          },
+        ],
+      };
+
+      const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        totalLanes: 4,
+      });
+
+      expect(result.migrated).toBeTrue();
+      const dataWidgets = result.layout.widgets.filter(
+        (w) =>
+          w.widgetType === "lane-column" &&
+          !w.customSettings?.["isHeaderWidget"],
+      );
+      for (const dw of dataWidgets) {
+        expect(dw.scaleMode).toBe("auto");
+        expect(dw.customSettings?.["minFontSize"]).toBe(0);
+        expect(dw.customSettings?.["maxFontSize"]).toBe(140);
+        expect(dw.customSettings?.["valueFontSize"]).toBe(140);
+      }
+    });
+
+    it("should preserve explicit minFontSize and maxFontSize from customSettings", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view",
+            widgetType: "lane-view",
+            x: 0,
+            y: 200,
+            width: 1200,
+            height: 600,
+            zIndex: 100,
+            scaleMode: "auto",
+            customSettings: {
+              dataFontSize: 50,
+              minFontSize: 16,
+              maxFontSize: 48,
+            },
+          },
+        ],
+      };
+
+      const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        totalLanes: 4,
+      });
+
+      expect(result.migrated).toBeTrue();
+      const dataWidgets = result.layout.widgets.filter(
+        (w) =>
+          w.widgetType === "lane-column" &&
+          !w.customSettings?.["isHeaderWidget"],
+      );
+      for (const dw of dataWidgets) {
+        expect(dw.customSettings?.["minFontSize"]).toBe(16);
+        expect(dw.customSettings?.["maxFontSize"]).toBe(48);
+      }
+    });
+
+    it("should preserve scaleMode and font sizes for vertical layouts", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "widget-lane-view",
+            widgetType: "lane-view",
+            x: 0,
+            y: 200,
+            width: 1200,
+            height: 600,
+            zIndex: 100,
+            scaleMode: "",
+            customSettings: {
+              isVertical: true,
+              dataFontSize: 72,
+              columnFontSize: 36,
+            },
+          },
+        ],
+      };
+
+      const result = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
+        layout,
+        totalLanes: 4,
+      });
+
+      expect(result.migrated).toBeTrue();
+      const gridWidgets = result.layout.widgets.filter(
+        (w) => w.widgetType === "lane-column",
+      );
+      for (const w of gridWidgets) {
+        expect(w.scaleMode).toBe("");
+        expect(w.customSettings?.["valueFontSize"]).toBe(72);
+        expect(w.customSettings?.["minFontSize"]).toBe(72);
+        expect(w.customSettings?.["maxFontSize"]).toBe(72);
+        expect(w.customSettings?.["headerFontSize"]).toBe(36);
+      }
     });
   });
 

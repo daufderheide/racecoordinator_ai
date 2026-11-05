@@ -1,18 +1,15 @@
-import { AnchorPoint } from "@app/components/raceday/column_definition";
 import {
   AbsoluteWidgetNode,
   HighlightLapStyle,
   LayoutConfig,
   Settings,
 } from "@app/models/settings";
-import { deepCopy } from "@app/utils/clone.utils";
 
 import {
   LaneGridBounds,
-  LaneGridReplicationHelper,
   LaneGridSession,
 } from "./lane-grid-replication.helper";
-import { RacedayLayoutUtils } from "./raceday-layout.utils";
+import { LaneViewGridBuilderHelper } from "./lane-view-grid-builder.helper";
 
 export interface LaneViewMigrationOptions {
   layout: LayoutConfig;
@@ -30,7 +27,7 @@ export interface LaneViewMigrationResult {
   migrated: boolean;
 }
 
-interface LaneGridMigrationBuildParams {
+export interface LaneGridMigrationBuildParams {
   baseWidgetId: string;
   session: LaneGridSession;
   bounds: LaneGridBounds;
@@ -41,6 +38,9 @@ interface LaneGridMigrationBuildParams {
   columnLabels: Record<string, string>;
   columnDecimals: Record<string, number>;
   baseZIndex: number;
+  scaleMode: "auto" | "fixed" | "";
+  minFontSize: number;
+  maxFontSize: number;
   highlightRowOnLap: boolean;
   highlightLapStyle: HighlightLapStyle;
   headerFontFamily: string;
@@ -56,6 +56,10 @@ interface LaneGridMigrationBuildParams {
   insetTextColor: string;
   insetTimeDecimalPlaces: number;
   insetLapDecimalPlaces: number;
+  showBorder: boolean;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
 }
 
 export const GAP_MIGRATION_MAP: Record<
@@ -431,20 +435,66 @@ export class LaneViewMigrationHelper {
     const isVertical = Boolean(laneView.customSettings?.["isVertical"]);
     const params = this.createMigrationBuildParams(laneView, options);
     return isVertical
-      ? this.buildVerticalGridWidgets(params)
-      : this.buildHorizontalGridWidgets(params);
+      ? LaneViewGridBuilderHelper.buildVerticalGridWidgets(params)
+      : LaneViewGridBuilderHelper.buildHorizontalGridWidgets(params);
+  }
+
+  private static resolveMigrationBounds(
+    laneView: AbsoluteWidgetNode,
+  ): LaneGridBounds {
+    // The legacy lane-view component applies CSS `margin: 10px 0 0 0` and `height: calc(100% - 10px)`
+    // on .bottom-section. When converting to modern grid widgets (which do not have top margin),
+    // shift bounds.y down by 10 and reduce bounds.height by 10 so the migrated grid aligns with
+    // the pre-migration visual position and does not render under widgets directly above it.
+    const LEGACY_LANE_VIEW_TOP_MARGIN = 10;
+    return {
+      x: laneView.x,
+      y: laneView.y + LEGACY_LANE_VIEW_TOP_MARGIN,
+      width: laneView.width,
+      height: Math.max(20, laneView.height - LEGACY_LANE_VIEW_TOP_MARGIN),
+    };
+  }
+
+  private static resolveMigrationFontScaling(
+    laneView: AbsoluteWidgetNode,
+    s: Record<string, any>,
+    valueFontSize: number,
+  ): {
+    scaleMode: "auto" | "fixed" | "";
+    minFontSize: number;
+    maxFontSize: number;
+  } {
+    const rawScaleMode =
+      laneView.scaleMode !== undefined
+        ? laneView.scaleMode
+        : (s["scaleMode"] ?? "auto");
+    const scaleMode: "auto" | "fixed" | "" =
+      rawScaleMode === "" || rawScaleMode === "fixed" ? rawScaleMode : "auto";
+
+    let minFontSize: number;
+    let maxFontSize: number;
+    if (s["minFontSize"] != null && s["maxFontSize"] != null) {
+      minFontSize = Math.max(0, Number(s["minFontSize"]));
+      maxFontSize = Math.max(minFontSize, Number(s["maxFontSize"]));
+    } else if (scaleMode !== "auto") {
+      minFontSize = Number(s["minFontSize"] ?? valueFontSize);
+      maxFontSize = Number(s["maxFontSize"] ?? valueFontSize);
+    } else {
+      minFontSize = Math.max(0, Number(s["minFontSize"] ?? 0));
+      maxFontSize = Math.max(
+        minFontSize,
+        Number(s["maxFontSize"] ?? Math.max(120, valueFontSize)),
+      );
+    }
+
+    return { scaleMode, minFontSize, maxFontSize };
   }
 
   private static createMigrationBuildParams(
     laneView: AbsoluteWidgetNode,
     options: LaneViewMigrationOptions,
   ): LaneGridMigrationBuildParams {
-    const bounds: LaneGridBounds = {
-      x: laneView.x,
-      y: laneView.y,
-      width: laneView.width,
-      height: laneView.height,
-    };
+    const bounds = this.resolveMigrationBounds(laneView);
     const s = laneView.customSettings || {};
     const isVertical = Boolean(s["isVertical"]);
     const customColumnWidths = (s["columnWidths"] || {}) as Record<
@@ -482,6 +532,13 @@ export class LaneViewMigrationHelper {
       headerWidth,
     });
 
+    const valueFontSize = Number(s["dataFontSize"] || 54);
+    const fontScaling = this.resolveMigrationFontScaling(
+      laneView,
+      s,
+      valueFontSize,
+    );
+
     return {
       baseWidgetId,
       session,
@@ -493,6 +550,9 @@ export class LaneViewMigrationHelper {
       columnLabels: (s["columnLabels"] || {}) as Record<string, string>,
       columnDecimals: (s["columnDecimals"] || {}) as Record<string, number>,
       baseZIndex: laneView.zIndex ?? 100,
+      scaleMode: fontScaling.scaleMode,
+      minFontSize: fontScaling.minFontSize,
+      maxFontSize: fontScaling.maxFontSize,
       highlightRowOnLap:
         s["highlightLapStyle"] !== undefined
           ? s["highlightLapStyle"] !== "none"
@@ -504,7 +564,7 @@ export class LaneViewMigrationHelper {
       headerFontSize,
       headerTextColor: s["columnTextColor"] || laneView.textColor || "",
       valueFontFamily: s["dataFontFamily"] || laneView.fontFamily || "",
-      valueFontSize: Number(s["dataFontSize"] || 54),
+      valueFontSize,
       valueTextColor: s["dataTextColor"] || laneView.textColor || "",
       timeDecimalPlaces: Number(s["timeDecimalPlaces"] ?? 3),
       lapDecimalPlaces: Number(s["lapDecimalPlaces"] ?? 2),
@@ -513,6 +573,10 @@ export class LaneViewMigrationHelper {
       insetTextColor: s["insetTextColor"] || "",
       insetTimeDecimalPlaces: Number(s["insetTimeDecimalPlaces"] ?? 3),
       insetLapDecimalPlaces: Number(s["insetLapDecimalPlaces"] ?? 2),
+      showBorder: s["showBorder"] !== false,
+      borderColor: typeof s["borderColor"] === "string" ? s["borderColor"] : "",
+      borderWidth: Number(s["borderWidth"] ?? 1),
+      borderRadius: Number(s["borderRadius"] ?? 0),
     };
   }
 
@@ -566,447 +630,5 @@ export class LaneViewMigrationHelper {
       gridLabelBorderWidth: 1,
       gridLabelBorderRadius: 4,
     };
-  }
-
-  private static buildHorizontalGridWidgets(
-    params: LaneGridMigrationBuildParams,
-  ): AbsoluteWidgetNode[] {
-    const { bounds, selectedColumns, session } = params;
-    const rowHeight = Math.max(
-      20,
-      Math.round(bounds.height / params.totalLanes),
-    );
-
-    const finalWidths = this.computeHorizontalColumnWidths(
-      selectedColumns,
-      bounds.width,
-      params.customColumnWidths,
-      params.options,
-    );
-
-    const masterWidgets: AbsoluteWidgetNode[] = [];
-    let currentX = bounds.x;
-
-    for (let i = 0; i < selectedColumns.length; i++) {
-      const colKey = selectedColumns[i];
-      const colW = finalWidths[colKey] || 150;
-      masterWidgets.push(
-        this.buildHorizontalMasterWidget(
-          params,
-          colKey,
-          i,
-          currentX,
-          colW,
-          rowHeight,
-        ),
-      );
-      currentX += colW;
-    }
-
-    for (const master of masterWidgets) {
-      LaneGridReplicationHelper.updateWidgetCellRatios(master, session);
-    }
-    const replicated = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
-      session,
-      masterWidgets,
-    );
-    return LaneGridReplicationHelper.bakeGrid(replicated, session);
-  }
-
-  private static buildHorizontalMasterWidget(
-    params: LaneGridMigrationBuildParams,
-    colKey: string,
-    index: number,
-    x: number,
-    width: number,
-    height: number,
-  ): AbsoluteWidgetNode {
-    const colLayout = (params.options.columnLayouts || {})[colKey] || {
-      [AnchorPoint.CenterCenter]: colKey,
-    };
-
-    const insets: Record<string, string> = {};
-    for (const [anchor, prop] of Object.entries(colLayout)) {
-      if (
-        anchor !== AnchorPoint.CenterCenter &&
-        anchor !== "center-center" &&
-        prop
-      ) {
-        insets[anchor] = prop;
-      }
-    }
-
-    return {
-      id: `${params.baseWidgetId}-${index + 1}`,
-      widgetType: "lane-column",
-      x,
-      y: params.bounds.y,
-      width,
-      height,
-      zIndex: params.baseZIndex,
-      scaleMode: "auto",
-      customSettings: {
-        columnKey: colKey,
-        gridId: params.session.gridId,
-        gridLane: 0,
-        targetIndex: 0,
-        gridTotalLanes: params.totalLanes,
-        gridDirection: params.session.direction,
-        gridType: "heat",
-        bindingMode: params.session.bindingMode,
-        sortByStandings: params.session.bindingMode === "position",
-        showHeader: false,
-        headerPlacement: "top",
-        headerHeight: params.session.headerHeight,
-        layoutOrientation: params.session.layoutOrientation,
-        linkColumns: true,
-        sortByBindingMode: true,
-        highlightRowOnLap: params.highlightRowOnLap,
-        highlightLapStyle: params.highlightLapStyle,
-        customLabel: params.columnLabels[colKey] || "",
-        headerFontFamily: params.headerFontFamily,
-        headerFontSize: params.headerFontSize,
-        headerTextColor: params.headerTextColor,
-        headerAlignment: "center",
-        valueFontFamily: params.valueFontFamily,
-        valueFontSize: params.valueFontSize,
-        minFontSize: 0,
-        maxFontSize: 60,
-        valueTextColor: params.valueTextColor,
-        valueAlignment: "center",
-        timeDecimalPlaces:
-          params.columnDecimals[colKey] ?? params.timeDecimalPlaces,
-        lapDecimalPlaces: params.lapDecimalPlaces,
-        useLaneColors: true,
-        ...(Object.keys(insets).length > 0 ? { insets } : {}),
-        insetFontFamily: params.insetFontFamily,
-        insetFontSize: params.insetFontSize,
-        insetTextColor: params.insetTextColor,
-        insetTimeDecimalPlaces: params.insetTimeDecimalPlaces,
-        insetLapDecimalPlaces: params.insetLapDecimalPlaces,
-        backgroundColor: "",
-        textColor: "",
-        showBorder: false,
-        borderColor: "",
-        borderWidth: 1,
-        borderRadius: 0,
-      },
-    };
-  }
-
-  private static computeHorizontalColumnWidths(
-    selectedColumns: string[],
-    totalWidth: number,
-    customColumnWidths: Record<string, number>,
-    options: LaneViewMigrationOptions,
-  ): Record<string, number> {
-    const configuredWidths: Record<string, number> = {};
-    const zeroWidthKeys = new Set<string>();
-    let totalFixed = 0;
-
-    for (const colKey of selectedColumns) {
-      const layout = (options.columnLayouts || {})[colKey] || {
-        [AnchorPoint.CenterCenter]: colKey,
-      };
-      let w: number | undefined;
-
-      if (customColumnWidths[colKey] != null) {
-        w = Number(customColumnWidths[colKey]);
-      } else if (options.columnWidths?.[colKey] != null) {
-        w = Number(options.columnWidths[colKey]);
-      } else {
-        w = RacedayLayoutUtils.getDefaultColumnWidth(colKey, layout, {
-          isPractice: options.isPractice,
-          isVertical: false,
-        });
-      }
-
-      configuredWidths[colKey] = w;
-      if (w === 0) {
-        zeroWidthKeys.add(colKey);
-      } else {
-        totalFixed += w;
-      }
-    }
-
-    const totalRemaining = Math.max(0, totalWidth - totalFixed);
-    const zeroCount = zeroWidthKeys.size;
-    const sharedWidth =
-      zeroCount > 0 ? Math.max(80, Math.floor(totalRemaining / zeroCount)) : 0;
-
-    const finalWidths: Record<string, number> = {};
-    for (const colKey of selectedColumns) {
-      finalWidths[colKey] = zeroWidthKeys.has(colKey)
-        ? sharedWidth
-        : configuredWidths[colKey] || 150;
-    }
-
-    const sumWidths = selectedColumns.reduce(
-      (sum, k) => sum + finalWidths[k],
-      0,
-    );
-    if (sumWidths > 0 && Math.abs(sumWidths - totalWidth) > 2) {
-      const ratio = totalWidth / sumWidths;
-      let accWidth = 0;
-      for (let i = 0; i < selectedColumns.length; i++) {
-        const k = selectedColumns[i];
-        if (i === selectedColumns.length - 1) {
-          finalWidths[k] = Math.max(50, totalWidth - accWidth);
-        } else {
-          finalWidths[k] = Math.max(50, Math.round(finalWidths[k] * ratio));
-          accWidth += finalWidths[k];
-        }
-      }
-    }
-
-    return finalWidths;
-  }
-
-  private static buildVerticalGridWidgets(
-    params: LaneGridMigrationBuildParams,
-  ): AbsoluteWidgetNode[] {
-    const { bounds, selectedColumns, session } = params;
-    const headerWidth = Math.min(
-      260,
-      Math.max(
-        120,
-        Number(
-          params.customColumnWidths["_header"] ??
-            params.options.columnWidths?.["_header"] ??
-            200,
-        ),
-      ),
-    );
-    session.headerPlacement = "left";
-    session.headerWidth = headerWidth;
-
-    const availWidth = Math.max(0, bounds.width - headerWidth);
-    const colWidth = Math.max(50, Math.floor(availWidth / params.totalLanes));
-    const rowHeights = this.computeVerticalRowHeights(
-      selectedColumns,
-      bounds.height,
-    );
-
-    const masterWidgets: AbsoluteWidgetNode[] = [];
-    const headerWidgets: AbsoluteWidgetNode[] = [];
-    let currentY = bounds.y;
-
-    for (let i = 0; i < selectedColumns.length; i++) {
-      const colKey = selectedColumns[i];
-      const rowH = rowHeights[colKey];
-      const { master, header } = this.buildVerticalMasterAndHeaderNodes(
-        params,
-        colKey,
-        i,
-        currentY,
-        colWidth,
-        headerWidth,
-        rowH,
-      );
-
-      masterWidgets.push(master);
-      headerWidgets.push(header);
-      currentY += rowH;
-    }
-
-    for (const master of masterWidgets) {
-      LaneGridReplicationHelper.updateWidgetCellRatios(master, session);
-    }
-    const replicated = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
-      session,
-      [...masterWidgets, ...headerWidgets],
-    );
-    return LaneGridReplicationHelper.bakeGrid(replicated, session);
-  }
-
-  private static computeVerticalRowHeights(
-    selectedColumns: string[],
-    totalHeight: number,
-  ): Record<string, number> {
-    const weights: Record<string, number> = {};
-    let totalWeight = 0;
-    for (const colKey of selectedColumns) {
-      let weight = 1;
-      if (colKey === "lastLaps") {
-        weight = 10;
-      } else if (
-        colKey === "lapCount" ||
-        colKey === "physicalLapCount" ||
-        colKey.toLowerCase().includes("laptime") ||
-        colKey.toLowerCase().includes("time")
-      ) {
-        weight = 2;
-      }
-      weights[colKey] = weight;
-      totalWeight += weight;
-    }
-
-    const rowHeights: Record<string, number> = {};
-    let accHeight = 0;
-    for (let i = 0; i < selectedColumns.length; i++) {
-      const colKey = selectedColumns[i];
-      if (i === selectedColumns.length - 1) {
-        rowHeights[colKey] = Math.max(20, totalHeight - accHeight);
-      } else {
-        const h = Math.max(
-          20,
-          Math.round((totalHeight * weights[colKey]) / totalWeight),
-        );
-        rowHeights[colKey] = h;
-        accHeight += h;
-      }
-    }
-    return rowHeights;
-  }
-
-  private static buildVerticalMasterAndHeaderNodes(
-    params: LaneGridMigrationBuildParams,
-    colKey: string,
-    index: number,
-    y: number,
-    colWidth: number,
-    headerWidth: number,
-    rowH: number,
-  ): { master: AbsoluteWidgetNode; header: AbsoluteWidgetNode } {
-    const master = this.buildVerticalMasterNode(
-      params,
-      colKey,
-      index,
-      y,
-      colWidth,
-      headerWidth,
-      rowH,
-    );
-    const header = this.buildVerticalHeaderNode(
-      master,
-      params.bounds.x,
-      y,
-      headerWidth,
-      rowH,
-      params.baseZIndex + 1,
-      params.session.gridId,
-    );
-    return { master, header };
-  }
-
-  private static buildVerticalMasterNode(
-    params: LaneGridMigrationBuildParams,
-    colKey: string,
-    index: number,
-    y: number,
-    colWidth: number,
-    headerWidth: number,
-    rowH: number,
-  ): AbsoluteWidgetNode {
-    const colLayout = (params.options.columnLayouts || {})[colKey] || {
-      [AnchorPoint.CenterCenter]: colKey,
-    };
-
-    const insets: Record<string, string> = {};
-    for (const [anchor, prop] of Object.entries(colLayout)) {
-      if (
-        anchor !== AnchorPoint.CenterCenter &&
-        anchor !== "center-center" &&
-        prop
-      ) {
-        insets[anchor] = prop;
-      }
-    }
-
-    return {
-      id: `${params.baseWidgetId}-${index + 1}`,
-      widgetType: "lane-column",
-      x: params.bounds.x + headerWidth,
-      y,
-      width: colWidth,
-      height: rowH,
-      zIndex: params.baseZIndex,
-      scaleMode: "auto",
-      customSettings: {
-        columnKey: colKey,
-        gridId: params.session.gridId,
-        gridLane: 0,
-        targetIndex: 0,
-        gridTotalLanes: params.totalLanes,
-        gridDirection: params.session.direction,
-        gridType: "heat",
-        bindingMode: params.session.bindingMode,
-        sortByStandings: params.session.bindingMode === "position",
-        showHeader: false,
-        headerPlacement: "left",
-        headerHeight: params.session.headerHeight,
-        headerWidth,
-        layoutOrientation: params.session.layoutOrientation,
-        linkColumns: true,
-        sortByBindingMode: true,
-        highlightRowOnLap: params.highlightRowOnLap,
-        highlightLapStyle: params.highlightLapStyle,
-        customLabel: params.columnLabels[colKey] || "",
-        headerFontFamily: params.headerFontFamily,
-        headerFontSize: params.headerFontSize,
-        headerTextColor: params.headerTextColor,
-        headerAlignment: "center",
-        valueFontFamily: params.valueFontFamily,
-        valueFontSize: params.valueFontSize,
-        minFontSize: 0,
-        maxFontSize: 60,
-        valueTextColor: params.valueTextColor,
-        valueAlignment: "center",
-        timeDecimalPlaces:
-          params.columnDecimals[colKey] ?? params.timeDecimalPlaces,
-        lapDecimalPlaces: params.lapDecimalPlaces,
-        useLaneColors: true,
-        ...(Object.keys(insets).length > 0 ? { insets } : {}),
-        insetFontFamily: params.insetFontFamily,
-        insetFontSize: params.insetFontSize,
-        insetTextColor: params.insetTextColor,
-        insetTimeDecimalPlaces: params.insetTimeDecimalPlaces,
-        insetLapDecimalPlaces: params.insetLapDecimalPlaces,
-        backgroundColor: "",
-        textColor: "",
-        showBorder: true,
-        borderColor: "rgba(255, 255, 255, 0.4)",
-        borderWidth: 1,
-        borderRadius: 0,
-      },
-    };
-  }
-
-  private static buildVerticalHeaderNode(
-    masterNode: AbsoluteWidgetNode,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    zIndex: number,
-    gridId: string,
-  ): AbsoluteWidgetNode {
-    const headerNode: AbsoluteWidgetNode = {
-      id: `${masterNode.id}_grid_header`,
-      widgetType: "lane-column",
-      x,
-      y,
-      width,
-      height,
-      zIndex,
-      scaleMode: "auto",
-      customSettings: {
-        ...deepCopy(masterNode.customSettings),
-        isHeaderWidget: true,
-        showHeader: true,
-        headerPlacement: "left",
-        headerWidth: width,
-        gridMasterId: masterNode.id,
-        gridId,
-        useLaneColors: false,
-        showBorder: true,
-        borderColor: "rgba(255, 255, 255, 0.4)",
-        borderWidth: 1,
-        borderRadius: 0,
-      },
-    };
-    delete headerNode.customSettings?.["targetIndex"];
-    delete headerNode.customSettings?.["gridLane"];
-    return headerNode;
   }
 }
