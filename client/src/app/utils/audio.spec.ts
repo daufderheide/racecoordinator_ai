@@ -1121,6 +1121,27 @@ describe("playSound Utility", () => {
       expect(mockPlayer.playSfx).not.toHaveBeenCalled();
     });
 
+    it("should prefer queueCallout over playCallout if audioPlayer supports queueCallout", () => {
+      const mockQueuePlayer = {
+        playCallout: jasmine.createSpy("playCallout").and.returnValue(true),
+        queueCallout: jasmine.createSpy("queueCallout").and.returnValue(true),
+        playSfx: jasmine.createSpy("playSfx"),
+      };
+      const ttsDriver = {
+        ...driver,
+        lapAudio: { type: "tts", text: "Lap recorded" },
+      };
+      dispatchLapAudio(mockQueuePlayer, ttsDriver, 0, false, false, false);
+
+      expect(mockQueuePlayer.queueCallout).toHaveBeenCalledWith(
+        ttsDriver.lapAudio,
+        "low",
+        undefined,
+      );
+      expect(mockQueuePlayer.playCallout).not.toHaveBeenCalled();
+      expect(mockQueuePlayer.playSfx).not.toHaveBeenCalled();
+    });
+
     it("should forward AudioAssociation to playCallout on milestone audio", () => {
       const association = {
         widgetType: "lane-view" as const,

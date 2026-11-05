@@ -7270,20 +7270,26 @@ describe("DefaultRacedayComponent", () => {
       expect(stopVoiceSpy).toHaveBeenCalled();
     });
 
-    it("should reset audio service when entering NOT_STARTED, HEAT_OVER, or RACE_OVER", () => {
+    it("should reset audio service when entering NOT_STARTED, but not on HEAT_OVER or RACE_OVER to preserve final lap callouts", () => {
       const resetSpy = spyOn((component as any).audioService, "reset");
+      const trackingSpy = spyOn(component as any, "resetRaceAudioTracking");
       component["raceState"] = RaceState.RACING;
       component["handleRaceStateChange"](RaceState.HEAT_OVER);
-      expect(resetSpy).toHaveBeenCalled();
+      expect(resetSpy).not.toHaveBeenCalled();
+      expect(trackingSpy).toHaveBeenCalled();
 
       resetSpy.calls.reset();
+      trackingSpy.calls.reset();
       component["handleRaceStateChange"](RaceState.NOT_STARTED);
       expect(resetSpy).toHaveBeenCalled();
+      expect(trackingSpy).toHaveBeenCalled();
 
       resetSpy.calls.reset();
+      trackingSpy.calls.reset();
       component["raceState"] = RaceState.RACING;
       component["handleRaceStateChange"](RaceState.RACE_OVER);
-      expect(resetSpy).toHaveBeenCalled();
+      expect(resetSpy).not.toHaveBeenCalled();
+      expect(trackingSpy).toHaveBeenCalled();
     });
 
     it("should not play themed sound when config is none, missing, or improperly configured (no fallback)", () => {
@@ -13032,7 +13038,7 @@ describe("DefaultRacedayComponent", () => {
 
     it("should attach lane-view association to lap audio", () => {
       const audioService = (component as any).audioService as AudioService;
-      spyOn(audioService, "playCallout");
+      spyOn(audioService, "queueCallout");
 
       const driver = {
         entity_id: "driver-123",
@@ -13056,7 +13062,7 @@ describe("DefaultRacedayComponent", () => {
 
       (component as any).handleLapAudio(lap, driver, false, {});
 
-      expect(audioService.playCallout).toHaveBeenCalledWith(
+      expect(audioService.queueCallout).toHaveBeenCalledWith(
         driver.lapAudio,
         "low",
         jasmine.any(Object),
@@ -13293,9 +13299,9 @@ describe("DefaultRacedayComponent", () => {
 
     it("should play theme driver audio override TTS instead of driver default sound on normal lap", () => {
       const audioService = (component as any).audioService as AudioService;
-      const playCalloutSpy = spyOn(
+      const queueCalloutSpy = spyOn(
         audioService,
-        "playCallout",
+        "queueCallout",
       ).and.callThrough();
       const playSfxSpy = spyOn(audioService, "playSfx").and.callThrough();
 
@@ -13321,7 +13327,7 @@ describe("DefaultRacedayComponent", () => {
         bestLapTime: 4.0,
       });
 
-      expect(playCalloutSpy).toHaveBeenCalledWith(
+      expect(queueCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
           text: "{driver.name} lap override",
@@ -13490,9 +13496,9 @@ describe("DefaultRacedayComponent", () => {
 
     it("should fall back to theme lapAudio override on best lap when theme overrides bestLapAudio to none", () => {
       const audioService = (component as any).audioService as AudioService;
-      const playCalloutSpy = spyOn(
+      const queueCalloutSpy = spyOn(
         audioService,
-        "playCallout",
+        "queueCallout",
       ).and.callThrough();
 
       const themeWithNoneBestLap: any = {
@@ -13519,7 +13525,7 @@ describe("DefaultRacedayComponent", () => {
         bestLapTime: 4.5,
       });
 
-      expect(playCalloutSpy).toHaveBeenCalledWith(
+      expect(queueCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
           text: "{driver.name} lap override",

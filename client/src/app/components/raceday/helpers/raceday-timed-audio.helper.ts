@@ -158,6 +158,10 @@ export class RacedayTimedAudioHelper {
       );
     }
 
+    const defaultAssoc =
+      association ??
+      RacedayTimedAudioHelper.resolveThemedAssociation(slotKey, context);
+
     const priority: AudioPriority =
       slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
       slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
@@ -168,10 +172,6 @@ export class RacedayTimedAudioHelper {
             slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT
           ? "high"
           : "normal";
-
-    const defaultAssoc =
-      association ??
-      RacedayTimedAudioHelper.resolveThemedAssociation(slotKey, context);
 
     host.logger?.info(
       `[AUDIO-THEME] Dispatching themed sound '${slotKey}' with priority '${priority}'`,

@@ -194,9 +194,9 @@ export class RacedayRaceLifecycleHelper {
       ) {
         if (state === RaceState.NOT_STARTED) {
           host.hasRacedInCurrentHeat = false;
+          host.audioService.reset();
         }
         host.resetRaceAudioTracking();
-        host.audioService.reset();
       }
     }
 

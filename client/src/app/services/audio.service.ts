@@ -290,6 +290,14 @@ export class AudioService implements OnDestroy {
     }
 
     if (this.activeVoice) {
+      if (config.type === "preset" && this.activeUtterance) {
+        this.logger.info(
+          `[AUDIO] Urgent preset playing concurrently with active TTS voice: ${desc}`,
+        );
+        this.playPresetVoice(resolvedUrl || config.url!, priority);
+        return true;
+      }
+
       if (this.activeVoice.priority !== "urgent") {
         // Preempt lower-priority sound immediately
         this.logger.info(
@@ -378,19 +386,99 @@ export class AudioService implements OnDestroy {
       return true;
     }
 
-    // Channel BUSY or cooling down: enqueue into calloutQueue
-    this.logger.info(
-      `[AUDIO] Enqueueing callout into calloutQueue: ${desc} (priority: ${priority}, queueSize: ${this.calloutQueue.length + 1})`,
-    );
-    this.calloutQueue.push({
+    // Channel BUSY: urgent callout breaks through cooldown or preempts/queues
+    if (priority === "urgent") {
+      return this.handleUrgentCalloutWhenBusy(
+        config,
+        priority,
+        desc,
+        context,
+        resolvedUrl,
+        association,
+      );
+    }
+
+    // Preempt active lower-priority voice if incoming priority is higher
+    if (
+      this.activeVoice &&
+      AUDIO_PRIORITY_WEIGHT[priority] >
+        AUDIO_PRIORITY_WEIGHT[this.activeVoice.priority]
+    ) {
+      this.logger.info(
+        `[AUDIO] Preempting active '${this.activeVoice.priority}' voice with higher priority '${priority}': ${desc}`,
+      );
+      this.activeVoice.stop();
+      this.activeVoice = null;
+      this.executeVoiceCallout(config, priority, context, resolvedUrl);
+      return true;
+    }
+
+    // Channel BUSY or cooling down: deduplicate/replace older queued callout for same lane or driver
+    this.enqueueOrUpdateCallout(
       config,
       priority,
+      desc,
       context,
       resolvedUrl,
-      enqueuedAt: Date.now(),
       association,
-    });
+    );
     return true;
+  }
+
+  private enqueueOrUpdateCallout(
+    config: AudioConfig,
+    priority: AudioPriority,
+    desc: string,
+    context?: any,
+    resolvedUrl?: string,
+    association?: AudioAssociation,
+  ): void {
+    const existingIndex = this.calloutQueue.findIndex((item) => {
+      if (
+        association?.laneIndex !== undefined &&
+        item.association?.laneIndex !== undefined
+      ) {
+        return item.association.laneIndex === association.laneIndex;
+      }
+      if (association?.driverId && item.association?.driverId) {
+        return item.association.driverId === association.driverId;
+      }
+      return false;
+    });
+
+    if (existingIndex !== -1) {
+      this.logger.info(
+        `[AUDIO] Replacing older queued callout for lane/driver with newer callout: ${desc}`,
+      );
+      this.calloutQueue[existingIndex] = {
+        config,
+        priority,
+        context,
+        resolvedUrl,
+        enqueuedAt: Date.now(),
+        association,
+      };
+    } else {
+      this.logger.info(
+        `[AUDIO] Enqueueing callout into calloutQueue: ${desc} (priority: ${priority}, queueSize: ${this.calloutQueue.length + 1})`,
+      );
+      this.calloutQueue.push({
+        config,
+        priority,
+        context,
+        resolvedUrl,
+        enqueuedAt: Date.now(),
+        association,
+      });
+    }
+
+    // Maintain priority order: highest priority first, preserving arrival order for equal priorities
+    this.calloutQueue.sort((a, b) => {
+      const pDiff =
+        AUDIO_PRIORITY_WEIGHT[b.priority] - AUDIO_PRIORITY_WEIGHT[a.priority];
+      if (pDiff !== 0) return pDiff;
+      return a.enqueuedAt - b.enqueuedAt;
+    });
   }
 
   /** Stops any currently playing verbal callout and clears cooldown. */
@@ -731,8 +819,8 @@ export class AudioService implements OnDestroy {
 
     const wordCount = interpolatedText.trim().split(/\s+/).length;
     const dynamicTimeout = Math.max(
-      3000,
-      Math.min(10000, wordCount * 500 + 2000),
+      1500,
+      Math.min(10000, wordCount * 500 + 1500),
     );
 
     this.safetyTimeout = setTimeout(() => {

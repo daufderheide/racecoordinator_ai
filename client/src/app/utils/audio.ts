@@ -305,6 +305,13 @@ export interface AudioPlayer {
     resolvedUrl?: string,
     association?: AudioAssociation,
   ): boolean;
+  queueCallout?(
+    config: AudioConfig | undefined,
+    priority: AudioPriority,
+    context?: any,
+    resolvedUrl?: string,
+    association?: AudioAssociation,
+  ): boolean;
   playSfx(
     url: string | undefined,
     association?: AudioAssociation,
@@ -394,8 +401,11 @@ export function dispatchLapAudio(
   if (!played && (!specialAudio || specialAudio.config !== fallbackAudio)) {
     if (isAudioConfigured(fallbackAudio)) {
       if (fallbackAudio.type === "tts") {
+        const calloutFn = audioPlayer.queueCallout
+          ? audioPlayer.queueCallout.bind(audioPlayer)
+          : audioPlayer.playCallout.bind(audioPlayer);
         if (association) {
-          audioPlayer.playCallout(
+          calloutFn(
             fallbackAudio,
             isBestLap ? "normal" : "low",
             ttsContext,
@@ -403,11 +413,7 @@ export function dispatchLapAudio(
             association,
           );
         } else {
-          audioPlayer.playCallout(
-            fallbackAudio,
-            isBestLap ? "normal" : "low",
-            ttsContext,
-          );
+          calloutFn(fallbackAudio, isBestLap ? "normal" : "low", ttsContext);
         }
       } else {
         if (association) {

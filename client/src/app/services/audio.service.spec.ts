@@ -1093,6 +1093,98 @@ describe("AudioService", () => {
       expect(service.getCalloutQueue().length).toBe(0);
     });
 
+    it("should replace older queued callout for the same laneIndex with newer callout", () => {
+      const activeCallout: AudioConfig = { type: "preset", url: "active.wav" };
+      service.playCallout(activeCallout, "normal");
+
+      const lap2Callout: AudioConfig = { type: "tts", text: "3.45" };
+      const lap3Callout: AudioConfig = { type: "tts", text: "3.21" };
+
+      service.queueCallout(lap2Callout, "low", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 1,
+      });
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.text).toBe("3.45");
+
+      service.queueCallout(lap3Callout, "low", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 1,
+      });
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.text).toBe("3.21");
+    });
+
+    it("should replace older queued callout for the same driverId with newer callout", () => {
+      const activeCallout: AudioConfig = { type: "preset", url: "active.wav" };
+      service.playCallout(activeCallout, "normal");
+
+      const lap2Callout: AudioConfig = { type: "tts", text: "3.45" };
+      const lap3Callout: AudioConfig = { type: "tts", text: "3.21" };
+
+      service.queueCallout(lap2Callout, "low", undefined, undefined, {
+        widgetType: "lane-view",
+        driverId: "driver-123",
+      });
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.text).toBe("3.45");
+
+      service.queueCallout(lap3Callout, "low", undefined, undefined, {
+        widgetType: "lane-view",
+        driverId: "driver-123",
+      });
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.text).toBe("3.21");
+    });
+
+    it("should sort queued callouts with higher priority first", () => {
+      const activeCallout: AudioConfig = { type: "preset", url: "active.wav" };
+      service.playCallout(activeCallout, "urgent");
+
+      const lowCallout: AudioConfig = { type: "tts", text: "3.45" };
+      const highCallout: AudioConfig = { type: "tts", text: "New Race Leader" };
+
+      service.queueCallout(lowCallout, "low", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 0,
+      });
+      service.queueCallout(highCallout, "high", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 1,
+      });
+
+      const queue = service.getCalloutQueue();
+      expect(queue.length).toBe(2);
+      expect(queue[0].config.text).toBe("New Race Leader");
+      expect(queue[0].priority).toBe("high");
+      expect(queue[1].config.text).toBe("3.45");
+      expect(queue[1].priority).toBe("low");
+    });
+
+    it("should preempt lower-priority active voice if higher priority callout is queued", () => {
+      const lowCallout: AudioConfig = { type: "preset", url: "low.wav" };
+      service.playCallout(lowCallout, "low");
+      expect(service.getActiveVoice()?.priority).toBe("low");
+
+      const highCallout: AudioConfig = { type: "preset", url: "high.wav" };
+      service.queueCallout(highCallout, "high");
+
+      expect(service.getActiveVoice()?.priority).toBe("high");
+    });
+
+    it("should break through cadence cooldown if urgent callout is queued", fakeAsync(() => {
+      const callout1: AudioConfig = { type: "preset", url: "callout1.wav" };
+      service.playCallout(callout1, "normal");
+      mockAudioInstance.onended();
+      expect(service.isCoolingDown()).toBeTrue();
+
+      const urgentCallout: AudioConfig = { type: "preset", url: "urgent.wav" };
+      service.queueCallout(urgentCallout, "urgent");
+
+      expect(service.isCoolingDown()).toBeFalse();
+      expect(service.getActiveVoice()?.priority).toBe("urgent");
+    }));
+
     it("should log debug instead of error when voice preset playback is aborted or paused", fakeAsync(() => {
       const abortError = new Error(
         "The play() request was interrupted by a call to pause().",

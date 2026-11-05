@@ -324,13 +324,23 @@ export class RacedayLapAudioHelper {
       isAudioConfigured(fallbackAudio)
     ) {
       if (fallbackAudio.type === "tts") {
-        host.audioService?.playCallout(
-          fallbackAudio,
-          isBestLap ? "normal" : "low",
-          ttsContext,
-          undefined,
-          association,
-        );
+        if (host.audioService?.queueCallout) {
+          host.audioService.queueCallout(
+            fallbackAudio,
+            isBestLap ? "normal" : "low",
+            ttsContext,
+            undefined,
+            association,
+          );
+        } else {
+          host.audioService?.playCallout(
+            fallbackAudio,
+            isBestLap ? "normal" : "low",
+            ttsContext,
+            undefined,
+            association,
+          );
+        }
       } else {
         host.audioService?.playSfx(fallbackAudio.url, association);
       }
