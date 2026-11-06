@@ -873,4 +873,24 @@ public class DatabaseInitializerTest {
     assertEquals(1, remaining.size());
     assertEquals(Theme.DEFAULT_THEME_ID, remaining.get(0).getEntityId());
   }
+
+  @Test
+  public void testBackfillDatabase_VersionGating() {
+    assertNull(context.getSystemInfo("backfill_version"));
+
+    initializer.backfillDatabase(context);
+
+    assertEquals(
+        DatabaseInitializer.CURRENT_BACKFILL_VERSION, context.getSystemInfo("backfill_version"));
+
+    // Second call should fast-exit due to version match
+    initializer.backfillDatabase(context);
+    assertEquals(
+        DatabaseInitializer.CURRENT_BACKFILL_VERSION, context.getSystemInfo("backfill_version"));
+  }
+
+  @Test
+  public void testBackfillDatabase_NullContextSafe() {
+    initializer.backfillDatabase(null);
+  }
 }

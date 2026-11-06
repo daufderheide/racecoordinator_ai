@@ -269,8 +269,7 @@ public class ClientSubscriptionManager {
     }
     if (this.currentRace != null) {
       if (race == null) {
-        this.currentRace.setMainPower(true);
-        this.currentRace.setLanePower(true, -1);
+        this.currentRace.restoreTrackPower();
       }
       this.currentRace.stop();
     }

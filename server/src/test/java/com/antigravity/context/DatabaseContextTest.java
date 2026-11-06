@@ -2,6 +2,7 @@ package com.antigravity.context;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.models.Event;
@@ -366,5 +367,21 @@ public class DatabaseContextTest {
         databaseContext.isDefaultArtifactDeleted("theme", "practice_theme_rc_ai"));
     org.junit.Assert.assertFalse(
         databaseContext.isDefaultArtifactDeleted("custom_ui", "practice_ui_layout_rc_ai"));
+  }
+
+  @Test
+  public void testSystemInfoGetAndSet() {
+    assertNull(databaseContext.getSystemInfo(null));
+    assertNull(databaseContext.getSystemInfo(""));
+    assertNull(databaseContext.getSystemInfo("non_existent_key"));
+
+    databaseContext.setSystemInfo(null, "value");
+    databaseContext.setSystemInfo("", "value");
+
+    databaseContext.setSystemInfo("test_version", "1.1.0");
+    assertEquals("1.1.0", databaseContext.getSystemInfo("test_version"));
+
+    databaseContext.setSystemInfo("test_version", "1.2.0");
+    assertEquals("1.2.0", databaseContext.getSystemInfo("test_version"));
   }
 }

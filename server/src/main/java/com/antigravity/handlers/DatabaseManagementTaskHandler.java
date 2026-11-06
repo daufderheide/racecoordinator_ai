@@ -2,6 +2,7 @@ package com.antigravity.handlers;
 
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.service.DatabaseService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
@@ -61,6 +62,7 @@ public class DatabaseManagementTaskHandler {
         return;
       }
       databaseContext.switchDatabase(name);
+      DatabaseService.getInstance().backfillDatabase(databaseContext);
       ctx.json(databaseContext.getDatabaseStats(name));
     } catch (Exception e) {
       logger.error("Error switching database", e);

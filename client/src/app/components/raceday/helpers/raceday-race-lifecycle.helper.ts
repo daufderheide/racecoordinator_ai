@@ -81,7 +81,6 @@ export class RacedayRaceLifecycleHelper {
   public static handleStartingState(host: any, previousState: RaceState): void {
     host.audioService.stopVoice();
     host.showCountdownOverlay = true;
-    host.lastPlayedCountdownSecond = -1;
     host.lastCountdownSoundTime = -1;
 
     if (previousState === RaceState.PAUSED) {
@@ -94,6 +93,17 @@ export class RacedayRaceLifecycleHelper {
     const duration = host.isRestarting
       ? (r?.restart_time ?? r?.start_time)
       : r?.start_time;
+
+    if (
+      host.autoStartRemaining != null &&
+      host.autoStartRemaining > 0 &&
+      duration != null &&
+      host.autoStartRemaining < duration - 0.5
+    ) {
+      host.lastPlayedCountdownSecond = Math.ceil(host.autoStartRemaining);
+    } else {
+      host.lastPlayedCountdownSecond = -1;
+    }
 
     if (duration != null) {
       host.countdownTotalLamps = Math.min(

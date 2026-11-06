@@ -56,7 +56,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,8 +96,8 @@ public class Race implements ProtocolListener {
   private boolean autoAdvanceFired = false;
   private double autoStartRemaining = 0;
   private double autoAdvanceRemaining = 0;
-  private boolean mainPower = false;
-  private boolean[] lanePower;
+  private Boolean mainPower = null;
+  private Boolean[] lanePower;
   private volatile boolean stopped = false;
   private String historyRecordId;
 
@@ -151,8 +150,7 @@ public class Race implements ProtocolListener {
     initializeHeats(builder);
 
     this.accumulatedRaceTime = builder.accumulatedRaceTime;
-    this.lanePower = new boolean[this.track.getLanes().size()];
-    Arrays.fill(this.lanePower, true);
+    this.lanePower = new Boolean[this.track.getLanes().size()];
     this.hasRacedInCurrentHeat = builder.hasRacedInCurrentHeat;
     this.autoStartFired = builder.autoStartFired;
     this.autoAdvanceFired = builder.autoAdvanceFired;
@@ -753,21 +751,35 @@ public class Race implements ProtocolListener {
   }
 
   public boolean isMainPower() {
-    return mainPower;
+    return mainPower != null && mainPower.booleanValue();
   }
 
   public boolean isLanePower(int lane) {
-    if (lanePower != null && lane >= 0 && lane < lanePower.length) return lanePower[lane];
+    if (lanePower != null && lane >= 0 && lane < lanePower.length && lanePower[lane] != null) {
+      return lanePower[lane].booleanValue();
+    }
     return false;
   }
 
   public void setMainPower(boolean on) {
-    logger.info("Race.setMainPower called: on={}", on);
-    this.mainPower = on;
-    if (hardwareManager.getProtocols() != null) {
-      hardwareManager.getProtocols().setMainPower(on);
+    boolean mainPowerChanged = (this.mainPower == null || this.mainPower.booleanValue() != on);
+    if (mainPowerChanged) {
+      logger.info("Race.setMainPower called: on={}", on);
+      this.mainPower = on;
+      if (hardwareManager.getProtocols() != null) {
+        hardwareManager.getProtocols().setMainPower(on);
+      }
     }
     syncLanePowerWithState(on);
+  }
+
+  public void restoreTrackPower() {
+    logger.info("Race.restoreTrackPower called");
+    this.mainPower = true;
+    if (hardwareManager.getProtocols() != null) {
+      hardwareManager.getProtocols().setMainPower(true);
+    }
+    setLanePower(true, -1);
   }
 
   public void forceUserMainPower(boolean on) {
@@ -1192,17 +1204,33 @@ public class Race implements ProtocolListener {
   }
 
   public void setLanePower(boolean on, int lane) {
-    logger.info("Race.setLanePower called: on={}, lane={}", on, lane);
     if (lane < 0) {
+      boolean anyChanged = false;
       for (int i = 0; i < track.getLanes().size(); i++) {
-        if (lanePower != null && i < lanePower.length) lanePower[i] = on;
-        if (hardwareManager.getProtocols() != null)
-          hardwareManager.getProtocols().setLanePower(on, i);
+        if (lanePower != null && i < lanePower.length) {
+          if (lanePower[i] == null || lanePower[i].booleanValue() != on) {
+            lanePower[i] = on;
+            anyChanged = true;
+            if (hardwareManager.getProtocols() != null) {
+              hardwareManager.getProtocols().setLanePower(on, i);
+            }
+          }
+        }
+      }
+      if (anyChanged) {
+        logger.info("Race.setLanePower called: on={}, lane={}", on, lane);
       }
     } else {
-      if (lanePower != null && lane < lanePower.length) lanePower[lane] = on;
-      if (hardwareManager.getProtocols() != null)
+      if (lanePower != null && lane < lanePower.length) {
+        if (lanePower[lane] != null && lanePower[lane].booleanValue() == on) {
+          return;
+        }
+        lanePower[lane] = on;
+      }
+      logger.info("Race.setLanePower called: on={}, lane={}", on, lane);
+      if (hardwareManager.getProtocols() != null) {
         hardwareManager.getProtocols().setLanePower(on, lane);
+      }
     }
   }
 

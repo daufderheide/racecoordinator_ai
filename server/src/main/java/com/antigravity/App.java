@@ -14,7 +14,6 @@ import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.race.ClientSubscriptionManager;
-import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
 import com.antigravity.service.UpdateService;
@@ -159,8 +158,7 @@ public class App {
       ServerConfigService configService = new ServerConfigService();
       DatabaseContext databaseContext = initializeDatabaseContext(appDataDir, configService);
       processPendingMigrations(appDataDir, databaseContext);
-      runStartupDatabaseBackfills(
-          databaseContext, appDataDir, databaseContext.getCurrentDatabaseName());
+      runStartupDatabaseBackfill(databaseContext);
 
       String staticFilePath = resolveStaticFilePath();
       logger.info("Serving static files from: {}", staticFilePath);
@@ -430,21 +428,8 @@ public class App {
     }
   }
 
-  private static void runStartupDatabaseBackfills(
-      DatabaseContext databaseContext, String appDataDir, String activeDb) {
-    logger.info("Starting database backfill loop...");
-    for (String dbName : databaseContext.listDatabases()) {
-      logger.info("Backfilling default assets, races, and custom UIs for database: {}", dbName);
-      databaseContext.switchDatabase(dbName);
-      new AssetService(
-              databaseContext, appDataDir + File.separator + dbName + File.separator + "assets")
-          .backfillDefaults();
-      DatabaseService.getInstance().backfillRaces(databaseContext);
-      DatabaseService.getInstance().backfillCustomUIs(databaseContext);
-      DatabaseService.getInstance().backfillDrivers(databaseContext);
-      DatabaseService.getInstance().backfillThemes(databaseContext);
-    }
-    databaseContext.switchDatabase(activeDb);
+  private static void runStartupDatabaseBackfill(DatabaseContext databaseContext) {
+    DatabaseService.getInstance().backfillDatabase(databaseContext);
   }
 
   static void applyNoCacheHeaders(Context ctx) {

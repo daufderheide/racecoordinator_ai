@@ -148,8 +148,7 @@ public class ClientSubscriptionManagerTest {
 
     manager.setRace(null); // Clear race
 
-    verify(mockRace).setMainPower(true);
-    verify(mockRace).setLanePower(true, -1);
+    verify(mockRace).restoreTrackPower();
     verify(mockRace).stop();
   }
 

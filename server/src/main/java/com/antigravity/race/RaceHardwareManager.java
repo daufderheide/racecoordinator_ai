@@ -113,7 +113,6 @@ public class RaceHardwareManager {
 
     // 5. Power state
     updatePowerForFlag(currentFlag);
-    forceMainPowerSync();
   }
 
   private boolean calculateBasePowerForFlag(RaceFlag flag) {
@@ -200,7 +199,6 @@ public class RaceHardwareManager {
     race.setMainPower(powerOn);
 
     if (protocols == null) return;
-    protocols.setMainPower(powerOn);
 
     if (!coldLanes.isEmpty() && hasPerLaneRelays() && powerOn) {
       logger.info("updatePowerForFlag: disabling power for cold lanes: {}", coldLanes);

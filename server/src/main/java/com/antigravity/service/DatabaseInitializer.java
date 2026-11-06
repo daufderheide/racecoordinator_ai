@@ -39,6 +39,30 @@ import org.slf4j.LoggerFactory;
 
 public class DatabaseInitializer {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseInitializer.class);
+  public static final String CURRENT_BACKFILL_VERSION = "1.1.0";
+
+  public void backfillDatabase(DatabaseContext context) {
+    if (context == null || context.getConnection() == null) {
+      return;
+    }
+    String currentVersion = context.getSystemInfo("backfill_version");
+    if (CURRENT_BACKFILL_VERSION.equals(currentVersion)) {
+      logger.debug(
+          "Database {} is already backfilled for version {}",
+          context.getCurrentDatabaseName(),
+          currentVersion);
+      return;
+    }
+    String dbName = context.getCurrentDatabaseName();
+    logger.info("Backfilling default assets, races, and custom UIs for database: {}", dbName);
+    String assetPath = Paths.get(context.getDataRoot(), dbName, "assets").toString();
+    new AssetService(context, assetPath).backfillDefaults();
+    backfillRaces(context);
+    backfillCustomUIs(context);
+    backfillDrivers(context);
+    backfillThemes(context);
+    context.setSystemInfo("backfill_version", CURRENT_BACKFILL_VERSION);
+  }
 
   public void resetToFactory(DatabaseContext context) {
     logger.info("Resetting database to factory settings...");
@@ -263,7 +287,7 @@ public class DatabaseInitializer {
       builder.withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""));
       needsUpdate = true;
     }
-    if (missingInRawJson || isAudioConfigMissing(driver.getDriftLapAudio())) {
+    if (preservedThemeDriftAudio != null && isAudioConfigMissing(driver.getDriftLapAudio())) {
       builder.withDriftLapAudio(preservedThemeDriftAudio);
       needsUpdate = true;
     }

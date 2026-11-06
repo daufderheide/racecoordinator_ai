@@ -2850,11 +2850,27 @@ public class RaceTest {
       race.setMainPower(true);
       verify(mockProtocols, times(1)).setMainPower(true);
 
+      // Redundant call should be de-duplicated
       race.setMainPower(true);
-      verify(mockProtocols, times(2)).setMainPower(true);
+      verify(mockProtocols, times(1)).setMainPower(true);
 
       race.setMainPower(false);
       verify(mockProtocols, times(1)).setMainPower(false);
+
+      // Redundant call should be de-duplicated
+      race.setMainPower(false);
+      verify(mockProtocols, times(1)).setMainPower(false);
+    }
+
+    @Test
+    public void testRestoreTrackPower() {
+      race.setMainPower(false);
+      race.setLanePower(false, -1);
+
+      race.restoreTrackPower();
+      assertTrue(race.isMainPower());
+      assertTrue(race.isLanePower(0));
+      assertTrue(race.isLanePower(1));
     }
 
     @Test

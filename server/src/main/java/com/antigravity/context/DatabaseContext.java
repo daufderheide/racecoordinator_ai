@@ -1,6 +1,7 @@
 package com.antigravity.context;
 
 import com.antigravity.service.AssetService;
+import com.antigravity.service.DatabaseInitializer;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
 import com.antigravity.util.DatabaseRepairUtils;
@@ -295,6 +296,41 @@ public class DatabaseContext {
     }
   }
 
+  public synchronized String getSystemInfo(String key) {
+    if (key == null || key.trim().isEmpty()) {
+      return null;
+    }
+    ensureTable("system_info");
+    String sql = "SELECT json_data FROM system_info WHERE entity_id = ?";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, key.trim());
+      try (ResultSet rs = pstmt.executeQuery()) {
+        if (rs.next()) {
+          return rs.getString("json_data");
+        }
+      }
+    } catch (SQLException e) {
+      logger.error("Error getting system_info for key {}", key, e);
+    }
+    return null;
+  }
+
+  public synchronized void setSystemInfo(String key, String value) {
+    if (key == null || key.trim().isEmpty()) {
+      return;
+    }
+    ensureTable("system_info");
+    String sql =
+        "INSERT OR REPLACE INTO system_info (entity_id, sequence_id, json_data) VALUES (?, NULL, ?)";
+    try (PreparedStatement pstmt = getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, key.trim());
+      pstmt.setString(2, value);
+      pstmt.executeUpdate();
+    } catch (SQLException e) {
+      logger.error("Error setting system_info for key {}", key, e);
+    }
+  }
+
   public synchronized List<String> listDatabases() {
     return listDatabases(this.dataRoot);
   }
@@ -412,6 +448,7 @@ public class DatabaseContext {
         DatabaseService.getInstance().backfillDrivers(this);
         DatabaseService.getInstance().backfillCustomUIs(this);
         DatabaseService.getInstance().backfillThemes(this);
+        setSystemInfo("backfill_version", DatabaseInitializer.CURRENT_BACKFILL_VERSION);
         return;
       }
     } catch (Exception e) {
@@ -421,6 +458,7 @@ public class DatabaseContext {
     switchDatabase(dbName);
     new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).resetAssets();
     DatabaseService.getInstance().resetToFactory(this);
+    setSystemInfo("backfill_version", DatabaseInitializer.CURRENT_BACKFILL_VERSION);
   }
 
   public synchronized DatabaseStats getDatabaseStats(String dbName) {

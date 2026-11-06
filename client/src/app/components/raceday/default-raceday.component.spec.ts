@@ -6258,6 +6258,18 @@ describe("DefaultRacedayComponent", () => {
       );
     }));
 
+    it("should latch lastPlayedCountdownSecond to current remaining second when subscribing mid-countdown", fakeAsync(() => {
+      const race = { ...MOCK_RACES[0], start_time: 5.0 } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+      component["autoStartRemaining"] = 2.1;
+
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      expect(component["lastPlayedCountdownSecond"]).toBe(3);
+    }));
+
     it("should not play audio for seconds higher than countdownTotalLamps", fakeAsync(() => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",

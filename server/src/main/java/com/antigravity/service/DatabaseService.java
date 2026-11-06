@@ -73,6 +73,10 @@ public class DatabaseService {
     databaseInitializer.resetToFactory(context);
   }
 
+  public void backfillDatabase(DatabaseContext context) {
+    databaseInitializer.backfillDatabase(context);
+  }
+
   public void backfillRaces(DatabaseContext context) {
     databaseInitializer.backfillRaces(context);
   }
