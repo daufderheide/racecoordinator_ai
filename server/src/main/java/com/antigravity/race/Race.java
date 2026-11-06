@@ -1471,7 +1471,7 @@ public class Race implements ProtocolListener {
       synchronized (this.drivers) {
         overallStandings.recalculate(
             this.drivers,
-            this.heats,
+            this.heats != null ? new ArrayList<>(this.heats) : null,
             this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null,
             completedDriverParticipantId);
       }

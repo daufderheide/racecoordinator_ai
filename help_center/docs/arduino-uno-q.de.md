@@ -55,10 +55,10 @@ Der **Arduino UNO Q** kombiniert einen 64-Bit-Linux-Einplatinencomputer (SBC) mi
      ```
 
 ### Schritt 2: Voraussetzungen installieren
-Installieren Sie die Java-Laufzeitumgebung (`default-jre-headless`), Audio-Dienstprogramme (`espeak-ng`, `alsa-utils`), `chromium` und die Fensterverwaltung (`wmctrl`):
+Installieren Sie die Java-Laufzeitumgebung (`default-jre-headless`), Audio-Dienstprogramme (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` und die Fensterverwaltung (`wmctrl`):
 ```bash
 sudo apt-get update
-sudo apt-get install -y default-jre-headless espeak-ng alsa-utils git curl unzip chromium wmctrl
+sudo apt-get install -y default-jre-headless espeak-ng speech-dispatcher speech-dispatcher-espeak-ng alsa-utils git curl unzip chromium wmctrl
 ```
 *(Hinweis: Unter Debian heißt das Browserpaket `chromium` anstelle von `chromium-browser`, und `default-jre-headless` stellt die standardmäßige OpenJDK-Laufzeitumgebung bereit. Das Dienstprogramm `wmctrl` wird vom Kiosk-Dienst verwendet, um sicherzustellen, dass Race Coordinator AI den Fensterfokus gegenüber Desktop-Autostart-Apps wie Arduino App Lab behält).*
 

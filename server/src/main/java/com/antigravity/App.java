@@ -152,6 +152,11 @@ public class App {
       initLogReplayIfEnabled();
 
       boolean headless = isHeadless(args);
+      if (isAutoShutdownDisabled(args)) {
+        logger.info(
+            "Daemon/service mode detected: Disabling client auto-shutdown and startup watchdog.");
+        ClientSubscriptionManager.getInstance().setAutoShutdownEnabled(false);
+      }
       registerShutdownHook();
       ClientSubscriptionManager.setPreShutdownHook(App::removeTrayIcon);
 
@@ -162,7 +167,7 @@ public class App {
 
       String staticFilePath = resolveStaticFilePath();
       logger.info("Serving static files from: {}", staticFilePath);
-      startJavalinServer(staticFilePath, headless);
+      app = createJavalin(staticFilePath);
 
       configureJavalinMiddleware(app, staticFilePath);
 
@@ -173,6 +178,8 @@ public class App {
 
       registerUpdateRoutes(app, configService, updateService);
       registerServerRoutes(app);
+
+      startJavalinServer(headless);
 
       if (!headless) {
         openBrowser("http://localhost:" + serverPort);
@@ -845,10 +852,10 @@ public class App {
     return "web";
   }
 
-  private static void startJavalinServer(String staticFilePath, boolean headless) {
+  private static void startJavalinServer(boolean headless) {
     logger.info("Starting Javalin on port {}...", serverPort);
     try {
-      app = createJavalin(staticFilePath).start(serverPort);
+      app.start(serverPort);
       logger.info("Javalin started successfully on port {}.", serverPort);
     } catch (Exception e) {
       if (AppInstanceCoordinator.isRaceCoordinatorRunning(serverPort)) {
@@ -857,7 +864,7 @@ public class App {
             headless,
             () -> {
               try {
-                app = createJavalin(staticFilePath).start(serverPort);
+                app.start(serverPort);
                 logger.info("Javalin restarted successfully on port {}.", serverPort);
               } catch (Exception retryEx) {
                 handlePortConflict(serverPort, headless, retryEx);
@@ -878,10 +885,38 @@ public class App {
     }
   }
 
-  private static boolean isHeadless(String[] args) {
-    for (String arg : args) {
-      if ("--headless".equals(arg)) {
-        return true;
+  static boolean isHeadless(String[] args) {
+    if (Boolean.getBoolean("java.awt.headless") || java.awt.GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+    if (args != null) {
+      for (String arg : args) {
+        if ("--headless".equalsIgnoreCase(arg) || "--daemon".equalsIgnoreCase(arg)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static boolean isAutoShutdownDisabled(String[] args) {
+    if ("false".equalsIgnoreCase(System.getProperty("server.autoShutdown"))
+        || "false".equalsIgnoreCase(System.getProperty("server.auto-shutdown"))
+        || "true".equalsIgnoreCase(System.getProperty("server.daemon"))
+        || "true".equalsIgnoreCase(System.getProperty("server.service"))) {
+      return true;
+    }
+    String envVal = System.getenv("SERVER_AUTO_SHUTDOWN");
+    if ("false".equalsIgnoreCase(envVal)) {
+      return true;
+    }
+    if (args != null) {
+      for (String arg : args) {
+        if ("--daemon".equalsIgnoreCase(arg)
+            || "--service".equalsIgnoreCase(arg)
+            || "--no-auto-shutdown".equalsIgnoreCase(arg)) {
+          return true;
+        }
       }
     }
     return false;

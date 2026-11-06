@@ -60,6 +60,7 @@ public class ClientSubscriptionManagerTest {
     manager.setProtocol(null);
     manager.setCleanupGracePeriodSeconds(0);
     manager.setAutoShutdownDelaySeconds(5);
+    manager.setAutoShutdownEnabled(true);
     manager.cancelStartupWatchdog();
     ClientSubscriptionManager.setPreShutdownHook(null);
 
@@ -1201,5 +1202,77 @@ public class ClientSubscriptionManagerTest {
 
     Thread.sleep(1200);
     assertFalse("Startup watchdog should be cancelled when client connects", shutdownCalled.get());
+  }
+
+  @Test
+  public void testAutoShutdownDisabledPreventsStartupWatchdog() throws Exception {
+    manager.setAutoShutdownEnabled(false);
+    assertFalse("Auto-shutdown should be disabled", manager.isAutoShutdownEnabled());
+
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+    manager.setStartupWatchdogSeconds(1);
+
+    Field clientField = ClientSubscriptionManager.class.getDeclaredField("hasEverHadClient");
+    clientField.setAccessible(true);
+    clientField.set(manager, false);
+
+    manager.scheduleStartupWatchdog();
+    Thread.sleep(1200);
+
+    assertFalse(
+        "Startup watchdog should not trigger shutdown when auto-shutdown is disabled",
+        shutdownCalled.get());
+  }
+
+  @Test
+  public void testAutoShutdownDisabledPreventsShutdownOnSessionRemoval() throws Exception {
+    manager.setAutoShutdownEnabled(false);
+    assertFalse("Auto-shutdown should be disabled", manager.isAutoShutdownEnabled());
+
+    java.util.concurrent.atomic.AtomicBoolean shutdownCalled =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    manager.setAutoShutdownAction(() -> shutdownCalled.set(true));
+    manager.setAutoShutdownDelaySeconds(1);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    when(mockSession.isOpen()).thenReturn(true);
+    when(mockSession.getRemote())
+        .thenReturn(mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class));
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addSession(mockContext);
+    manager.removeSession(mockContext);
+
+    Thread.sleep(1200);
+    assertFalse(
+        "Auto-shutdown should not trigger on session removal when disabled", shutdownCalled.get());
+  }
+
+  @Test
+  public void testSetAutoShutdownEnabledFalseCancelsExistingFutures() throws Exception {
+    manager.setAutoShutdownEnabled(true);
+    manager.setStartupWatchdogSeconds(60);
+
+    Field clientField = ClientSubscriptionManager.class.getDeclaredField("hasEverHadClient");
+    clientField.setAccessible(true);
+    clientField.set(manager, false);
+
+    manager.scheduleStartupWatchdog();
+
+    Field watchdogFutureField =
+        ClientSubscriptionManager.class.getDeclaredField("startupWatchdogFuture");
+    watchdogFutureField.setAccessible(true);
+    assertNotNull("Startup watchdog future should be scheduled", watchdogFutureField.get(manager));
+
+    manager.setAutoShutdownEnabled(false);
+    assertNull(
+        "Startup watchdog future should be cancelled and null after disabling auto-shutdown",
+        watchdogFutureField.get(manager));
   }
 }

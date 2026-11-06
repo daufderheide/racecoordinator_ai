@@ -98,6 +98,23 @@ public class ClientSubscriptionManager {
       };
   private volatile boolean lastDirectorExplicitlyUnsubscribed = false;
 
+  private boolean autoShutdownEnabled = true;
+
+  public synchronized void setAutoShutdownEnabled(boolean enabled) {
+    this.autoShutdownEnabled = enabled;
+    if (!enabled) {
+      cancelStartupWatchdog();
+      if (autoShutdownFuture != null) {
+        autoShutdownFuture.cancel(false);
+        autoShutdownFuture = null;
+      }
+    }
+  }
+
+  public synchronized boolean isAutoShutdownEnabled() {
+    return autoShutdownEnabled;
+  }
+
   void setAutoShutdownAction(Runnable action) {
     this.autoShutdownAction = action;
   }
@@ -119,6 +136,9 @@ public class ClientSubscriptionManager {
 
   synchronized void scheduleStartupWatchdog() {
     cancelStartupWatchdog();
+    if (!autoShutdownEnabled) {
+      return;
+    }
     if (startupWatchdogSeconds > 0) {
       startupWatchdogFuture =
           scheduler.schedule(
@@ -452,6 +472,9 @@ public class ClientSubscriptionManager {
   }
 
   private synchronized void checkAutoShutdown() {
+    if (!autoShutdownEnabled) {
+      return;
+    }
     if (sessions.isEmpty() && hasEverHadClient) {
       if (currentRace != null) {
         return;

@@ -140,6 +140,10 @@ chmod +x "$TARGET_DIR/scripts/"*.sh "$TARGET_DIR/"*.sh 2>/dev/null || true
 rm -rf /tmp/rc_update_extract
 rm -rf "$TARGET_DIR/RaceCoordinator_Linux_ARM64"
 
+# Stop services early so frontend detects update progress immediately
+echo "Stopping services for firmware compilation and update installation..."
+(sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai || systemctl stop racecoordinatorai-kiosk racecoordinatorai) 2>/dev/null || true
+
 # Flash MCU sketch if arduino-cli is installed
 if command -v arduino-cli >/dev/null 2>&1; then
   echo "Checking microcontroller core and compiling firmware..."
@@ -175,8 +179,8 @@ if command -v arduino-cli >/dev/null 2>&1; then
   fi
 fi
 
-echo "Restarting service..."
-(sleep 1 && (sudo systemctl restart racecoordinatorai || systemctl restart racecoordinatorai) && (sudo systemctl restart racecoordinatorai-kiosk || systemctl restart racecoordinatorai-kiosk || true)) >/dev/null 2>&1 &
+echo "Starting updated services..."
+(sleep 1 && (sudo systemctl start racecoordinatorai || systemctl start racecoordinatorai) && (sudo systemctl start racecoordinatorai-kiosk || systemctl start racecoordinatorai-kiosk || true)) >/dev/null 2>&1 &
 EOF
 chmod +x "$DIST_DIR/scripts/update_app.sh"
 
@@ -190,7 +194,7 @@ After=network.target
 Type=simple
 User=arduino
 WorkingDirectory=/opt/racecoordinatorai
-ExecStart=/usr/bin/java -Djava.awt.headless=true -Dserver.port=7070 -jar /opt/racecoordinatorai/RaceCoordinator.jar
+ExecStart=/usr/bin/java -Djava.awt.headless=true -Dserver.port=7070 -jar /opt/racecoordinatorai/RaceCoordinator.jar --headless --daemon
 Restart=always
 RestartSec=5
 
@@ -241,7 +245,7 @@ echo " Target Directory: $INSTALL_DIR"
 echo "=========================================================="
 
 # 1. System prerequisites check and auto-installation
-REQUIRED_PKGS=(default-jre-headless chromium wmctrl espeak-ng alsa-utils git curl unzip)
+REQUIRED_PKGS=(default-jre-headless chromium wmctrl espeak-ng speech-dispatcher speech-dispatcher-espeak-ng alsa-utils git curl unzip)
 MISSING_PKGS=()
 for pkg in "${REQUIRED_PKGS[@]}"; do
   if ! dpkg -s "$pkg" >/dev/null 2>&1; then

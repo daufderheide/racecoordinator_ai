@@ -253,4 +253,74 @@ public class AppTest {
       tempDir.delete();
     }
   }
+
+  @Test
+  public void testIsHeadless_WithArgs() {
+    assertTrue(App.isHeadless(new String[] {"--headless"}));
+    assertTrue(App.isHeadless(new String[] {"--daemon"}));
+    assertTrue(App.isHeadless(new String[] {"--port", "7070", "--headless"}));
+  }
+
+  @Test
+  public void testIsHeadless_WithNonHeadlessArgs() {
+    boolean envHeadless = GraphicsEnvironment.isHeadless();
+    if (!envHeadless) {
+      assertFalse(App.isHeadless(new String[] {"--port", "7070"}));
+      assertFalse(App.isHeadless(new String[0]));
+      assertFalse(App.isHeadless(null));
+    }
+  }
+
+  @Test
+  public void testIsHeadless_WithSystemProperty() {
+    String originalProp = System.getProperty("java.awt.headless");
+    try {
+      System.setProperty("java.awt.headless", "true");
+      assertTrue(App.isHeadless(new String[0]));
+    } finally {
+      if (originalProp != null) {
+        System.setProperty("java.awt.headless", originalProp);
+      } else {
+        System.clearProperty("java.awt.headless");
+      }
+    }
+  }
+
+  @Test
+  public void testIsAutoShutdownDisabled_WithArgs() {
+    assertTrue(App.isAutoShutdownDisabled(new String[] {"--daemon"}));
+    assertTrue(App.isAutoShutdownDisabled(new String[] {"--service"}));
+    assertTrue(App.isAutoShutdownDisabled(new String[] {"--no-auto-shutdown"}));
+    assertTrue(App.isAutoShutdownDisabled(new String[] {"--headless", "--daemon"}));
+
+    // --headless alone does NOT disable auto-shutdown (critical for desktop)
+    assertFalse(App.isAutoShutdownDisabled(new String[] {"--headless"}));
+    assertFalse(App.isAutoShutdownDisabled(new String[] {"--port", "7070"}));
+    assertFalse(App.isAutoShutdownDisabled(new String[0]));
+    assertFalse(App.isAutoShutdownDisabled(null));
+  }
+
+  @Test
+  public void testIsAutoShutdownDisabled_WithSystemProperties() {
+    try {
+      System.setProperty("server.autoShutdown", "false");
+      assertTrue(App.isAutoShutdownDisabled(new String[0]));
+    } finally {
+      System.clearProperty("server.autoShutdown");
+    }
+
+    try {
+      System.setProperty("server.auto-shutdown", "false");
+      assertTrue(App.isAutoShutdownDisabled(new String[0]));
+    } finally {
+      System.clearProperty("server.auto-shutdown");
+    }
+
+    try {
+      System.setProperty("server.daemon", "true");
+      assertTrue(App.isAutoShutdownDisabled(new String[0]));
+    } finally {
+      System.clearProperty("server.daemon");
+    }
+  }
 }

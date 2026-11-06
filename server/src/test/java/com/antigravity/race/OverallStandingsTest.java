@@ -1098,4 +1098,73 @@ public class OverallStandingsTest {
     assertEquals(1, p1.getRank());
     assertEquals(2, p2.getRank());
   }
+
+  @Test
+  public void testRecalculateWithConcurrentHeatsModification() throws Exception {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.TOTAL_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    List<RaceParticipant> drivers = new ArrayList<>(java.util.Arrays.asList(p1, p2));
+
+    List<Heat> heats = new ArrayList<>();
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 8, 110.0));
+
+    java.util.concurrent.atomic.AtomicBoolean running =
+        new java.util.concurrent.atomic.AtomicBoolean(true);
+    java.util.concurrent.atomic.AtomicReference<Throwable> error =
+        new java.util.concurrent.atomic.AtomicReference<>();
+
+    Thread modifierThread =
+        new Thread(
+            () -> {
+              int count = 2;
+              while (running.get()) {
+                Heat extraHeat = createHeat(count++, p1, 5, 50.0, p2, 4, 55.0);
+                synchronized (heats) {
+                  heats.add(extraHeat);
+                }
+                try {
+                  Thread.sleep(1);
+                } catch (InterruptedException ignored) {
+                }
+                synchronized (heats) {
+                  if (heats.size() > 5) {
+                    heats.remove(heats.size() - 1);
+                  }
+                }
+              }
+            });
+
+    Thread readerThread =
+        new Thread(
+            () -> {
+              try {
+                for (int i = 0; i < 50; i++) {
+                  os.recalculate(drivers, heats);
+                  Thread.sleep(1);
+                }
+              } catch (Throwable th) {
+                error.compareAndSet(null, th);
+              }
+            });
+
+    modifierThread.start();
+    readerThread.start();
+
+    readerThread.join(5000);
+    running.set(false);
+    modifierThread.join(2000);
+
+    org.junit.Assert.assertNull(
+        "Recalculate during concurrent heat modifications should not throw exception: "
+            + error.get(),
+        error.get());
+  }
 }
