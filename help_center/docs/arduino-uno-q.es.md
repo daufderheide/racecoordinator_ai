@@ -83,8 +83,24 @@ El instalador automatizado gestiona la verificación de requisitos previos, la c
 tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
 cd RaceCoordinator_Linux_ARM64
 sudo ./install.sh
+# O para ver salida detallada:
+# sudo ./install.sh -v
 ```
 *(Nota: Cualquier advertencia del tipo `tar: Ignoring unknown extended header...` son etiquetas de metadatos de macOS inofensivas y se pueden ignorar con seguridad).*
+
+> [!NOTE] Descarga y duración del núcleo Zephyr (~5 a 10+ minutos)
+> Durante la instalación inicial, `arduino-cli` descarga y descomprime el **núcleo de placa Zephyr (`arduino:zephyr`)** para la MCU STM32U5 Cortex-M33 integrada. Este paquete contiene el sistema operativo en tiempo real Zephyr completo, la cadena de herramientas de compilador cruzado ARM y bibliotecas de hardware (~500 MB+ de descarga y decenas de miles de archivos).
+>
+> - **Tiempo estimado**: **5 a 10+ minutos** dependiendo de la velocidad de su conexión a internet y de escritura en la memoria eMMC. **¡Momento ideal para tomar un café!**
+> - **Progreso en consola**: El progreso de descarga y descompresión se muestra directamente en la terminal. Si desea ver detalles adicionales del compilador y desempaquetado, ejecute `sudo ./install.sh -v`.
+> - **Verificación del progreso desde una segunda consola / SSH**: Si alguna vez le preocupa que la instalación se haya detenido, abra una segunda sesión SSH (o pestaña de terminal en el Uno Q) y ejecute:
+>   ```bash
+>   top -p $(pgrep arduino-cli)
+>   ```
+>   Podrá comprobar que `arduino-cli` utiliza activamente CPU y E/S mientras descarga y extrae los paquetes. También puede ver los archivos descargándose en:
+>   ```bash
+>   ls -lh ~/.arduino15/staging/cores/ 2>/dev/null || ls -lh ~/.arduino15/packages/arduino/
+>   ```
 
 #### Opción B: Instalación manual paso a paso (Alternativa)
 Si prefiere un control manual o necesita personalizar su configuración:
@@ -176,7 +192,7 @@ arduino-cli compile --fqbn arduino:zephyr:unoq .
 # (Ingrese la contraseña 'arduino' cuando se le solicite, o use --upload-field password=arduino)
 arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
 ```
-*(Nota: Como se verifica mediante `arduino-cli board list`, el microcontrolador Uno Q ejecuta Zephyr OS sobre el puente de red interno `172.17.0.1` con FQBN `arduino:zephyr:unoq`. La biblioteca `Arduino_RouterBridge` es necesaria para la comunicación en serie a través del puente SoC. Las tiras de luces LED FastLED no son compatibles actualmente en la arquitectura STM32U5 / Zephyr Cortex-M33 debido a definiciones de registros de CMSIS 6 en upstream, pero todas las funciones principales de la pista—sensores de vuelta, tiempos de sector, botones de llamada y relés de pista—están completamente operativas).*
+*(Nota: Como se verifica mediante `arduino-cli board list`, el microcontrolador Uno Q ejecuta Zephyr OS sobre el puente de red interno `172.17.0.1` con FQBN `arduino:zephyr:unoq`. La biblioteca `Arduino_RouterBridge` es necesaria para la comunicación en serie a través del puente SoC. Tenga en cuenta que ejecutar `arduino-cli core install arduino:zephyr` descarga más de 500 MB y tarda de 5 a 10+ minutos en descomprimirse en el almacenamiento eMMC (tómese un café mientras finaliza; puede verificar el progreso con `top -p $(pgrep arduino-cli)` en una segunda terminal). Las tiras de luces LED FastLED no son compatibles actualmente en la arquitectura STM32U5 / Zephyr Cortex-M33 debido a definiciones de registros de CMSIS 6 en upstream, pero todas las funciones principales de la pista—sensores de vuelta, tiempos de sector, botones de llamada y relés de pista—están completamente operativas).*
 
 ### Paso 5: Iniciar servicios e iniciar la pantalla quiosco
 Inicie el daemon backend y habilite el quiosco de TV a pantalla completa:

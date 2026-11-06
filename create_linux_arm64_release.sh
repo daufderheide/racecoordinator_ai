@@ -144,9 +144,16 @@ rm -rf "$TARGET_DIR/RaceCoordinator_Linux_ARM64"
 if command -v arduino-cli >/dev/null 2>&1; then
   echo "Checking microcontroller core and compiling firmware..."
   if ! arduino-cli core list 2>/dev/null | grep -q "arduino:zephyr"; then
-    echo "Installing Zephyr board core..."
-    arduino-cli core update-index >/dev/null 2>&1 || true
-    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || true
+    echo ""
+    echo "=========================================================================="
+    echo " Installing Zephyr board core (arduino:zephyr)..."
+    echo " - This downloads ~500MB+ and installs the RTOS & ARM compiler toolchain."
+    echo " - Estimated Time: 5 to 10+ minutes depending on network & eMMC flash speed."
+    echo " - Time to grab a coffee! Live progress is displayed below."
+    echo "=========================================================================="
+    echo ""
+    arduino-cli core update-index || true
+    arduino-cli core install arduino:zephyr || true
   fi
 
   BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
@@ -220,6 +227,13 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
+VERBOSE_FLAG=""
+for arg in "$@"; do
+  if [ "$arg" == "-v" ] || [ "$arg" == "--verbose" ]; then
+    VERBOSE_FLAG="-v"
+  fi
+done
+
 INSTALL_DIR="/opt/racecoordinatorai"
 echo "=========================================================="
 echo " Starting Race Coordinator AI Automated Installer"
@@ -286,15 +300,22 @@ systemctl enable racecoordinatorai-kiosk.service
 if command -v arduino-cli >/dev/null 2>&1; then
   echo "Checking microcontroller core, libraries, and firmware..."
   if ! arduino-cli core list 2>/dev/null | grep -q "arduino:zephyr"; then
-    echo "Installing Zephyr board core..."
-    arduino-cli core update-index >/dev/null 2>&1 || true
-    arduino-cli core install arduino:zephyr >/dev/null 2>&1 || true
+    echo ""
+    echo "=========================================================================="
+    echo " Installing Zephyr board core (arduino:zephyr)..."
+    echo " - Downloads ~500MB+ and installs the RTOS & ARM cross-compiler toolchain."
+    echo " - Estimated Time: 5 to 10+ minutes depending on network & eMMC storage."
+    echo " - Time to grab a coffee! Live progress is displayed below."
+    echo "=========================================================================="
+    echo ""
+    arduino-cli core update-index $VERBOSE_FLAG || true
+    arduino-cli core install $VERBOSE_FLAG arduino:zephyr || true
   fi
 
   echo "Installing required Arduino libraries (Arduino_RouterBridge, FastLED)..."
-  arduino-cli lib update-index >/dev/null 2>&1 || true
-  arduino-cli lib install Arduino_RouterBridge >/dev/null 2>&1 || true
-  arduino-cli lib install FastLED >/dev/null 2>&1 || true
+  arduino-cli lib update-index $VERBOSE_FLAG || true
+  arduino-cli lib install $VERBOSE_FLAG Arduino_RouterBridge || true
+  arduino-cli lib install $VERBOSE_FLAG FastLED || true
 
   BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
   PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
@@ -307,8 +328,10 @@ if command -v arduino-cli >/dev/null 2>&1; then
   fi
 
   if [ -d "$INSTALL_DIR/arduino/racecoordinatorai_sketch" ]; then
+    echo ""
     echo "Compiling and uploading sketch to $FQBN on $PORT..."
-    if ! arduino-cli compile --fqbn "$FQBN" "$INSTALL_DIR/arduino/racecoordinatorai_sketch"; then
+    echo "Note: Initial Zephyr compilation builds the RTOS kernel and takes ~1-2 minutes..."
+    if ! arduino-cli compile $VERBOSE_FLAG --fqbn "$FQBN" "$INSTALL_DIR/arduino/racecoordinatorai_sketch"; then
       echo "Notice: Sketch compilation encountered a warning/error. Continuing installation..."
     elif ! (arduino-cli upload -p "$PORT" --fqbn "$FQBN" --upload-field password=arduino "$INSTALL_DIR/arduino/racecoordinatorai_sketch" 2>/dev/null || \
             arduino-cli upload -p "$PORT" --fqbn "$FQBN" "$INSTALL_DIR/arduino/racecoordinatorai_sketch"); then
