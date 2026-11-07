@@ -54,8 +54,10 @@ import {
   cloneLayout,
   createFallbackDefaultLayouts,
   getLastEditedLayoutId,
+  getLastEditedWidgetForLayout,
   getLayoutUnsavedReasons,
   isCustomUiDefault,
+  isGridElement,
   isLayoutNameUnique,
   LAYOUT_AVAILABLE_COLUMNS,
   LayoutTemplateOption,
@@ -159,7 +161,9 @@ export class LayoutEditorComponent
   private subscriptions: Subscription[] = [];
   private queryParamSub?: Subscription;
 
-  public navigationService = inject(NavigationService, { optional: true });
+  public override navigationService = inject(NavigationService, {
+    optional: true,
+  });
   public raceConnectionService = inject(RaceConnectionService, {
     optional: true,
   });
@@ -443,8 +447,28 @@ export class LayoutEditorComponent
     this.originalLayout = cloneLayout(layout);
     this.defaultUiNames[id] = layout.name;
     const parsed = parseLayoutConfig(this.editingLayout);
-    this.selectedWidgetId =
-      findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
+    const savedState = getLastEditedWidgetForLayout(id, this.navigationService);
+    const savedWidget = savedState?.widgetId
+      ? parsed?.widgets?.find((w: any) => w.id === savedState.widgetId)
+      : null;
+
+    if (savedWidget) {
+      this.selectedWidgetId = savedWidget.id;
+      if (isGridElement(savedWidget) && savedState?.tab) {
+        this.selectedWidgetTab = savedState.tab;
+      } else if (isGridElement(savedWidget)) {
+        this.selectedWidgetTab = "widget";
+      } else {
+        this.selectedWidgetTab = null;
+      }
+    } else {
+      this.selectedWidgetId =
+        findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
+      const defaultWidget = parsed?.widgets?.find(
+        (w: any) => w.id === this.selectedWidgetId,
+      );
+      this.selectedWidgetTab = isGridElement(defaultWidget) ? "widget" : null;
+    }
     this.activeGridSession = null;
     this.selectedAnchor = null;
     this.undoManager.initialize(this.editingLayout);
@@ -560,10 +584,35 @@ export class LayoutEditorComponent
       this.isEditMode = true;
       this.isWidgetLibraryVisible = true;
       this.isWidgetConfigVisible = true;
-      if (!this.selectedWidgetId && this.editingLayout) {
+      if (this.editingLayout) {
         const parsed = parseLayoutConfig(this.editingLayout);
-        this.selectedWidgetId =
-          findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
+        const savedState = getLastEditedWidgetForLayout(
+          this.editingLayout.entity_id,
+          this.navigationService,
+        );
+        const savedWidget = savedState?.widgetId
+          ? parsed?.widgets?.find((w: any) => w.id === savedState.widgetId)
+          : null;
+
+        if (savedWidget) {
+          this.selectedWidgetId = savedWidget.id;
+          if (isGridElement(savedWidget) && savedState?.tab) {
+            this.selectedWidgetTab = savedState.tab;
+          } else if (isGridElement(savedWidget)) {
+            this.selectedWidgetTab = "widget";
+          } else {
+            this.selectedWidgetTab = null;
+          }
+        } else if (!this.selectedWidgetId) {
+          this.selectedWidgetId =
+            findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
+          const defaultWidget = parsed?.widgets?.find(
+            (w: any) => w.id === this.selectedWidgetId,
+          );
+          this.selectedWidgetTab = isGridElement(defaultWidget)
+            ? "widget"
+            : null;
+        }
       }
       this.racedayComp?.ensureToolboxVisible?.();
       this.cdr.markForCheck();
@@ -611,8 +660,31 @@ export class LayoutEditorComponent
       this.editingLayout
     ) {
       const parsed = parseLayoutConfig(this.editingLayout);
-      this.selectedWidgetId =
-        findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
+      const savedState = getLastEditedWidgetForLayout(
+        this.editingLayout.entity_id,
+        this.navigationService,
+      );
+      const savedWidget = savedState?.widgetId
+        ? parsed?.widgets?.find((w: any) => w.id === savedState.widgetId)
+        : null;
+
+      if (savedWidget) {
+        this.selectedWidgetId = savedWidget.id;
+        if (isGridElement(savedWidget) && savedState?.tab) {
+          this.selectedWidgetTab = savedState.tab;
+        } else if (isGridElement(savedWidget)) {
+          this.selectedWidgetTab = "widget";
+        } else {
+          this.selectedWidgetTab = null;
+        }
+      } else {
+        this.selectedWidgetId =
+          findDefaultWidgetId(parsed) || parsed?.widgets?.[0]?.id || null;
+        const defaultWidget = parsed?.widgets?.find(
+          (w: any) => w.id === this.selectedWidgetId,
+        );
+        this.selectedWidgetTab = isGridElement(defaultWidget) ? "widget" : null;
+      }
     }
     this.cdr.markForCheck();
   }

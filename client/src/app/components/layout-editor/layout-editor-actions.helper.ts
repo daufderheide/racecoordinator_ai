@@ -60,6 +60,7 @@ import {
   buildDuplicateLayoutTemplate,
   buildNewLayoutTemplate,
   clearLastEditedLayoutId,
+  clearLastEditedWidgetForLayout,
   resolveTemplateSource,
 } from "./layout-editor.helper";
 
@@ -726,6 +727,7 @@ export async function handleDeleteCurrentLayout(comp: any): Promise<void> {
   const idToDelete = comp.editingLayout.entity_id;
   comp.showDeleteConfirm = false;
   comp.isSaving = true;
+  clearLastEditedWidgetForLayout(idToDelete, comp.navigationService);
   try {
     await firstValueFrom(comp.dataService.deleteCustomUI(idToDelete));
     comp.customUiService?.initialize();

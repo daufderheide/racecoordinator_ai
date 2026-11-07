@@ -519,6 +519,8 @@
                 [totalLanes]="totalTrackLanes"
                 [selectedAnchor]="selectedAnchor"
                 [selectionToken]="selectionToken"
+                [activeTab]="selectedWidgetTab"
+                (tabChange)="onWidgetTabChange($event)"
                 (anchorChange)="onSelectedAnchorChange($event)"
                 (change)="onWidgetInspectorChange($event)"
                 (requestReplicate)="openReplicateLaneModal()"

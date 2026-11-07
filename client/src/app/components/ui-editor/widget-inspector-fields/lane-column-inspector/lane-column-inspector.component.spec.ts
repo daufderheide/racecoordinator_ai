@@ -1976,6 +1976,37 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.activeScope()).toBe("widget");
     });
 
+    it("should switch activeScope to activeTab when column is selected with null anchor via selectionToken", () => {
+      fixture.componentRef.setInput("activeTab", "grid");
+      fixture.componentRef.setInput("selectedAnchor", null);
+      fixture.componentRef.setInput("selectionToken", 3);
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("grid");
+
+      fixture.componentRef.setInput("activeTab", "column");
+      fixture.componentRef.setInput("selectionToken", 4);
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("column");
+    });
+
+    it("should emit tabChange when setScope is called", () => {
+      const tabSpy = spyOn(component.tabChange, "emit");
+      component.setScope("grid");
+      expect(tabSpy).toHaveBeenCalledWith("grid");
+
+      component.setScope("column");
+      expect(tabSpy).toHaveBeenCalledWith("column");
+    });
+
+    it("should emit tabChange when selectInsetAnchor and backToColumn are called", () => {
+      const tabSpy = spyOn(component.tabChange, "emit");
+      component.selectInsetAnchor("top-left");
+      expect(tabSpy).toHaveBeenCalledWith("inset");
+
+      component.backToColumn();
+      expect(tabSpy).toHaveBeenCalledWith("column");
+    });
+
     it("should return placedInsetAnchors with configured keys", () => {
       expect(component.placedInsetAnchors).toEqual(["top-left", "top-right"]);
     });

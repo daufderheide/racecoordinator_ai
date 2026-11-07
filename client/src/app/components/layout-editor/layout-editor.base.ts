@@ -6,8 +6,15 @@ import { exportMigrationDiagnostics as exportDiagnosticsHelper } from "@app/comp
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, LayoutScaleMode } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 
+import {
+  clearLastEditedWidgetForLayout,
+  isGridElement,
+  LayoutLastEditedWidgetState,
+  setLastEditedWidgetForLayout,
+} from "./layout-editor.helper";
 import {
   canUpgradeLegacyHeatView,
   clearLayout,
@@ -80,6 +87,8 @@ export abstract class LayoutEditorBase {
   abstract currentSelectedWidget: any | null;
   abstract selectedAnchor: string | null;
   selectionToken: number = 0;
+  selectedWidgetTab: string | null = null;
+  navigationService?: NavigationService | null;
   abstract activeGridSession: LaneGridSession | null;
   abstract layoutZoom: Map<string, number>;
   abstract countdownPreviewState: { [id: string]: boolean };
@@ -245,6 +254,15 @@ export abstract class LayoutEditorBase {
     if (this.editingLayout) {
       onWidgetDropdownSelect(widgetId, this.editingLayout, this);
     }
+    const widget = this.currentSelectedWidget;
+    if (isGridElement(widget)) {
+      if (!this.selectedWidgetTab) {
+        this.selectedWidgetTab = "widget";
+      }
+    } else {
+      this.selectedWidgetTab = null;
+    }
+    this.saveLastEditedWidgetState();
     this.cdr.markForCheck();
   }
 
@@ -255,24 +273,72 @@ export abstract class LayoutEditorBase {
     if (this.editingLayout) {
       onWidgetSelected(id, this);
     }
+    const selectedWidget = this.currentSelectedWidget;
+    if (isGridElement(selectedWidget)) {
+      if (!this.selectedWidgetTab) {
+        this.selectedWidgetTab = "widget";
+      }
+    } else {
+      this.selectedWidgetTab = null;
+    }
+    this.saveLastEditedWidgetState();
     this.cdr.markForCheck();
+  }
+
+  onWidgetTabChange(tab: string): void {
+    this.selectedWidgetTab = tab;
+    this.saveLastEditedWidgetState();
+    this.cdr.markForCheck();
+  }
+
+  saveLastEditedWidgetState(): void {
+    const layoutId = this.editingLayout?.entity_id;
+    if (!layoutId || !this.selectedWidgetId) return;
+    const widget = this.currentSelectedWidget;
+    const isGrid = isGridElement(widget);
+    const state: LayoutLastEditedWidgetState = {
+      widgetId: this.selectedWidgetId,
+      ...(isGrid && this.selectedWidgetTab
+        ? { tab: this.selectedWidgetTab }
+        : {}),
+    };
+    setLastEditedWidgetForLayout(layoutId, state, this.navigationService);
   }
 
   removeSelectedWidget(): void {
     if (this.editingLayout) {
       removeSelectedWidget(this.editingLayout, this);
+      if (this.selectedWidgetId) {
+        const widget = this.currentSelectedWidget;
+        if (isGridElement(widget)) {
+          if (!this.selectedWidgetTab) {
+            this.selectedWidgetTab = "widget";
+          }
+        } else {
+          this.selectedWidgetTab = null;
+        }
+        this.saveLastEditedWidgetState();
+      } else {
+        this.selectedWidgetTab = null;
+        clearLastEditedWidgetForLayout(
+          this.editingLayout.entity_id,
+          this.navigationService,
+        );
+      }
     }
   }
 
   onWidgetXChange(x: any): void {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetXChange(x, this.currentSelectedWidget, this.editingLayout, this);
+      this.saveLastEditedWidgetState();
     }
   }
 
   onWidgetYChange(y: any): void {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetYChange(y, this.currentSelectedWidget, this.editingLayout, this);
+      this.saveLastEditedWidgetState();
     }
   }
 
@@ -284,6 +350,7 @@ export abstract class LayoutEditorBase {
         this.editingLayout,
         this,
       );
+      this.saveLastEditedWidgetState();
     }
   }
 
@@ -295,6 +362,7 @@ export abstract class LayoutEditorBase {
         this.editingLayout,
         this,
       );
+      this.saveLastEditedWidgetState();
     }
   }
 
@@ -306,6 +374,7 @@ export abstract class LayoutEditorBase {
         this.editingLayout,
         this,
       );
+      this.saveLastEditedWidgetState();
     }
   }
 
@@ -313,12 +382,14 @@ export abstract class LayoutEditorBase {
     const targetUi = ui || this.editingLayout;
     if (targetUi) {
       onWidgetInspectorChange(widget, targetUi, this);
+      this.saveLastEditedWidgetState();
     }
   }
 
   nudgeSelectedWidget(dx: number, dy: number): void {
     if (!this.isEditMode || !this.editingLayout) return;
     nudgeSelectedWidget(dx, dy, this.editingLayout, this);
+    this.saveLastEditedWidgetState();
   }
 
   isWidgetWidthAutoCalculated(widget: any): boolean {
@@ -376,6 +447,23 @@ export abstract class LayoutEditorBase {
   onDeleteGrid(event: any): void {
     if (this.editingLayout) {
       handleGridDelete(this, event, this.editingLayout);
+      if (this.selectedWidgetId) {
+        const widget = this.currentSelectedWidget;
+        if (isGridElement(widget)) {
+          if (!this.selectedWidgetTab) {
+            this.selectedWidgetTab = "widget";
+          }
+        } else {
+          this.selectedWidgetTab = null;
+        }
+        this.saveLastEditedWidgetState();
+      } else {
+        this.selectedWidgetTab = null;
+        clearLastEditedWidgetForLayout(
+          this.editingLayout.entity_id,
+          this.navigationService,
+        );
+      }
     }
   }
 

@@ -9,14 +9,12 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
-import { GAP_MIGRATION_MAP } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { CustomWidgetInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/custom-widget-inspector/custom-widget-inspector.component";
-import { LaneViewColumnGroupHelper } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -57,9 +55,11 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   totalLanes = input<number>(4);
   selectedAnchor = input<string | null>(null);
   selectionToken = input<number>(0);
+  activeTab = input<string | null>(null);
   anchorChange = output<string | null>();
 
   change = output<void>();
+  tabChange = output<string>();
   requestReplicate = output<void>();
   replicate =
     output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
@@ -77,6 +77,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   activeInspectorAnchor = signal<string | null>(null);
   private previousWidgetId: string | null = null;
   private previousSelectionToken = -1;
+  private previousActiveTab: string | null = null;
 
   constructor() {
     super();
@@ -91,20 +92,41 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
         this.previousWidgetId !== currentWidgetId;
       this.previousWidgetId = currentWidgetId;
 
+      const currentTab = this.activeTab() ?? null;
+      const tabChanged =
+        this.previousActiveTab !== null &&
+        this.previousActiveTab !== currentTab;
+      this.previousActiveTab = currentTab;
+
       const anchor = this.selectedAnchor();
       if (anchor && anchor !== "center-center") {
         this.activeInspectorAnchor.set(anchor);
         this.activeScope.set("inset");
-      } else if (tokenChanged || widgetChanged) {
+      } else if (tokenChanged || widgetChanged || tabChanged) {
         this.activeInspectorAnchor.set(null);
-        this.activeScope.set("widget");
+        this.activeScope.set(this.getValidScope(currentTab));
       } else if (anchor === null || anchor === "center-center") {
         this.activeInspectorAnchor.set(null);
         if (this.activeScope() === "inset") {
-          this.activeScope.set("widget");
+          this.activeScope.set(this.getValidScope(currentTab));
         }
       }
     });
+  }
+
+  getValidScope(
+    tab: string | null | undefined,
+  ): "widget" | "grid" | "column" | "inset" {
+    if (tab === "grid" || tab === "column" || tab === "widget") {
+      return tab;
+    }
+    if (
+      tab === "inset" &&
+      (this.hasAnyInsets || Boolean(this.selectedAnchor()))
+    ) {
+      return "inset";
+    }
+    return "widget";
   }
 
   get isCustomWidget(): boolean {
@@ -192,6 +214,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
       this.anchorChange.emit(null);
     }
     this.activeScope.set(scope);
+    this.tabChange.emit(scope);
   }
 
   get selectedMapAnchor(): string {
@@ -234,6 +257,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     this.activeInspectorAnchor.set(anchor);
     this.anchorChange.emit(anchor);
     this.activeScope.set("inset");
+    this.tabChange.emit("inset");
   }
 
   configureInset(anchor: string): void {
@@ -333,6 +357,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     this.activeInspectorAnchor.set(null);
     this.anchorChange.emit(null);
     this.activeScope.set("column");
+    this.tabChange.emit("column");
   }
 
   removeInset(anchor: string): void {
@@ -792,97 +817,6 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     return LaneColumnInsetHelper.normalizeSettings(this.settings());
   }
 
-  get isTotalTimeColumn(): boolean {
-    return RacedayLayoutUtils.isTotalTimeColumnKey(
-      this.currentSettings["columnKey"] || "",
-    );
-  }
-
-  get isLastLapsColumn(): boolean {
-    return (this.currentSettings["columnKey"] || "") === "lastLaps";
-  }
-
-  get lastLapsCount(): number {
-    const val = this.currentSettings["lastLapsCount"];
-    return val !== undefined &&
-      val !== null &&
-      !isNaN(Number(val)) &&
-      Number(val) > 0
-      ? Math.max(1, Math.round(Number(val)))
-      : 5;
-  }
-
-  set lastLapsCount(value: any) {
-    const num = Math.round(Number(value));
-    this.currentSettings["lastLapsCount"] = num > 0 ? num : 5;
-    this.onFieldChange();
-  }
-
-  get isGapColumn(): boolean {
-    const key = this.currentSettings["columnKey"] || "";
-    return (
-      key === "gap" || key === "overallGap" || Boolean(GAP_MIGRATION_MAP[key])
-    );
-  }
-
-  get gapTarget(): "leader" | "position" {
-    if (this.currentSettings["gapTarget"]) {
-      return this.currentSettings["gapTarget"] as "leader" | "position";
-    }
-    const key = this.currentSettings["columnKey"];
-    if (key && GAP_MIGRATION_MAP[key]) {
-      return GAP_MIGRATION_MAP[key].gapTarget;
-    }
-    return "leader";
-  }
-
-  set gapTarget(value: "leader" | "position") {
-    this.currentSettings["gapTarget"] = value;
-    this.onFieldChange();
-  }
-
-  get gapMode(): "always_time" | "laps_and_time" | "always_laps" {
-    if (this.currentSettings["gapMode"]) {
-      return this.currentSettings["gapMode"] as
-        | "always_time"
-        | "laps_and_time"
-        | "always_laps";
-    }
-    const key = this.currentSettings["columnKey"];
-    if (key && GAP_MIGRATION_MAP[key]) {
-      return GAP_MIGRATION_MAP[key].gapMode;
-    }
-    return "always_time";
-  }
-
-  set gapMode(value: "always_time" | "laps_and_time" | "always_laps") {
-    this.currentSettings["gapMode"] = value;
-    this.onFieldChange();
-  }
-
-  get isTimeColumn(): boolean {
-    if (this.isGapColumn) {
-      return this.gapMode !== "always_laps";
-    }
-    return RacedayLayoutUtils.isTimeColumnKey(
-      this.currentSettings["columnKey"] || "",
-    );
-  }
-
-  get isLapColumn(): boolean {
-    if (this.isGapColumn) {
-      return this.gapMode === "always_laps";
-    }
-    return RacedayLayoutUtils.isLapColumnKey(
-      this.currentSettings["columnKey"] || "",
-    );
-  }
-
-  get isHeatsCountColumn(): boolean {
-    const key = this.currentSettings["columnKey"] || "";
-    return key === "heatsRaced" || key === "heatsRemaining";
-  }
-
   get isAverageScoreColumn(): boolean {
     const key = this.currentSettings["columnKey"] || "";
     return (
@@ -891,83 +825,6 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
       this.widget()?.widgetType === "average-score" ||
       this.widget()?.widgetType === "averageScore"
     );
-  }
-
-  get showPartialHeats(): boolean {
-    return Boolean(this.currentSettings["showPartialHeats"]);
-  }
-
-  set showPartialHeats(value: boolean) {
-    this.currentSettings["showPartialHeats"] = value;
-    this.onFieldChange();
-  }
-
-  get averageScoreDecimalPlaces(): number {
-    if (this.currentSettings["decimalPlaces"] !== undefined) {
-      return Number(this.currentSettings["decimalPlaces"]);
-    }
-    if (this.currentSettings["lapDecimalPlaces"] !== undefined) {
-      return Number(this.currentSettings["lapDecimalPlaces"]);
-    }
-    if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
-      return Number(this.currentSettings["timeDecimalPlaces"]);
-    }
-    return 2;
-  }
-
-  onAverageScoreDecimalsChange(val: number): void {
-    this.currentSettings["decimalPlaces"] = val;
-    this.currentSettings["lapDecimalPlaces"] = val;
-    this.currentSettings["timeDecimalPlaces"] = val;
-    this.onFieldChange();
-  }
-
-  get isImageColumn(): boolean {
-    return RacedayLayoutUtils.isImageProperty(
-      this.currentSettings["columnKey"] || "",
-    );
-  }
-
-  get isPacingColumn(): boolean {
-    const key = this.currentSettings["columnKey"] || "";
-    return RacedayLayoutUtils.isPacingProperty(key);
-  }
-
-  get isFuelGaugeColumn(): boolean {
-    const key = this.currentSettings["columnKey"] || "";
-    return LaneViewColumnGroupHelper.isFuelGaugeColumn(key);
-  }
-
-  get isTextColumn(): boolean {
-    return (
-      !this.isImageColumn && !this.isPacingColumn && !this.isFuelGaugeColumn
-    );
-  }
-
-  onMinFontSizeChange(val: number): void {
-    const num = Math.max(0, Number(val) || 0);
-    this.currentSettings["minFontSize"] = num;
-    if (
-      this.currentSettings["maxFontSize"] != null &&
-      this.currentSettings["maxFontSize"] < num
-    ) {
-      this.currentSettings["maxFontSize"] = num;
-    }
-    this.currentSettings["_syncAction"] = "value";
-    this.onFieldChange();
-  }
-
-  onMaxFontSizeChange(val: number): void {
-    const num = Math.max(0, Number(val) || 0);
-    this.currentSettings["maxFontSize"] = num;
-    if (
-      this.currentSettings["minFontSize"] != null &&
-      this.currentSettings["minFontSize"] > num
-    ) {
-      this.currentSettings["minFontSize"] = num;
-    }
-    this.currentSettings["_syncAction"] = "value";
-    this.onFieldChange();
   }
 
   get hasAnyInsets(): boolean {

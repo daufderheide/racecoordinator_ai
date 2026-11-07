@@ -31,6 +31,11 @@ import { TranslationService } from "@app/services/translation.service";
 import { GuideStepTestHelper } from "@app/testing/guide-step-test.helper";
 
 import { LayoutEditorComponent } from "./layout-editor.component";
+import {
+  clearAllLastEditedWidgets,
+  getLastEditedWidgetForLayout,
+  setLastEditedWidgetForLayout,
+} from "./layout-editor.helper";
 
 @Component({
   selector: "app-default-raceday",
@@ -278,6 +283,7 @@ describe("LayoutEditorComponent", () => {
 
   afterEach(() => {
     localStorage.removeItem("rc.last_edited_layout_id");
+    localStorage.removeItem("rc.last_edited_layout_widgets");
   });
 
   it("should initialize and load default layout", () => {
@@ -2120,6 +2126,144 @@ describe("LayoutEditorComponent", () => {
         expect(
           reUpgraded.widgets.some((w: any) => w.widgetType === "lane-column"),
         ).toBeTrue();
+      });
+    });
+
+    describe("Last edited widget and tab per layout", () => {
+      beforeEach(() => {
+        clearAllLastEditedWidgets();
+        mockNavigationService.getLastEditedId.and.returnValue(null);
+      });
+
+      it("should restore saved widget and tab when selecting a layout with a grid element", () => {
+        const practiceLayout = component.allLayouts.find(
+          (u) => u.entity_id === "practice_ui_layout_rc_ai",
+        )!;
+        const parsed = JSON.parse(practiceLayout.layoutJson!);
+        parsed.widgets[0].customSettings = { gridId: "grid-test-1" };
+        practiceLayout.layoutJson = JSON.stringify(parsed);
+
+        setLastEditedWidgetForLayout("practice_ui_layout_rc_ai", {
+          widgetId: "w2",
+          tab: "grid",
+        });
+
+        component.selectLayoutById("practice_ui_layout_rc_ai");
+        expect(component.selectedWidgetId).toBe("w2");
+        expect(component.selectedWidgetTab).toBe("grid");
+      });
+
+      it("should restore saved widget without tab when selecting a layout with a non-grid widget", () => {
+        setLastEditedWidgetForLayout("default_ui_layout_rc_ai", {
+          widgetId: "w1",
+        });
+
+        component.selectLayoutById("default_ui_layout_rc_ai");
+        expect(component.selectedWidgetId).toBe("w1");
+        expect(component.selectedWidgetTab).toBeNull();
+      });
+
+      it("should maintain independent last edited widgets across different layouts", () => {
+        const practiceLayout = component.allLayouts.find(
+          (u) => u.entity_id === "practice_ui_layout_rc_ai",
+        )!;
+        const parsed = JSON.parse(practiceLayout.layoutJson!);
+        parsed.widgets[0].customSettings = { gridId: "grid-test-1" };
+        practiceLayout.layoutJson = JSON.stringify(parsed);
+
+        setLastEditedWidgetForLayout("default_ui_layout_rc_ai", {
+          widgetId: "w1",
+        });
+        setLastEditedWidgetForLayout("practice_ui_layout_rc_ai", {
+          widgetId: "w2",
+          tab: "column",
+        });
+
+        component.selectLayoutById("default_ui_layout_rc_ai");
+        expect(component.selectedWidgetId).toBe("w1");
+        expect(component.selectedWidgetTab).toBeNull();
+
+        component.selectLayoutById("practice_ui_layout_rc_ai");
+        expect(component.selectedWidgetId).toBe("w2");
+        expect(component.selectedWidgetTab).toBe("column");
+
+        component.selectLayoutById("default_ui_layout_rc_ai");
+        expect(component.selectedWidgetId).toBe("w1");
+        expect(component.selectedWidgetTab).toBeNull();
+      });
+
+      it("should fallback to default widget if saved widget no longer exists in the layout", () => {
+        setLastEditedWidgetForLayout("default_ui_layout_rc_ai", {
+          widgetId: "non-existent-widget-id",
+          tab: "grid",
+        });
+
+        component.selectLayoutById("default_ui_layout_rc_ai");
+        expect(component.selectedWidgetId).toBe("w1");
+        expect(component.selectedWidgetTab).toBeNull();
+      });
+
+      it("should restore saved widget and tab when onToggleEditMode is called", () => {
+        const practiceLayout = component.allLayouts.find(
+          (u) => u.entity_id === "practice_ui_layout_rc_ai",
+        )!;
+        const parsed = JSON.parse(practiceLayout.layoutJson!);
+        parsed.widgets[0].customSettings = { gridId: "grid-test-1" };
+        practiceLayout.layoutJson = JSON.stringify(parsed);
+
+        component.selectLayoutById("practice_ui_layout_rc_ai");
+        component.isEditMode = false;
+        (component as any).selectedWidgetId = null;
+        (component as any).selectedWidgetTab = null;
+
+        setLastEditedWidgetForLayout("practice_ui_layout_rc_ai", {
+          widgetId: "w2",
+          tab: "grid",
+        });
+
+        component.onToggleEditMode();
+        expect(component.isEditMode).toBeTrue();
+        expect(component.selectedWidgetId as string | null).toBe("w2");
+        expect(component.selectedWidgetTab as string | null).toBe("grid");
+      });
+
+      it("should save widget and tab when onWidgetTabChange is called", () => {
+        const practiceLayout = component.allLayouts.find(
+          (u) => u.entity_id === "practice_ui_layout_rc_ai",
+        )!;
+        const parsed = JSON.parse(practiceLayout.layoutJson!);
+        parsed.widgets[0].customSettings = { gridId: "grid-test-1" };
+        practiceLayout.layoutJson = JSON.stringify(parsed);
+
+        component.selectLayoutById("practice_ui_layout_rc_ai");
+        component.isEditMode = true;
+        component.selectedWidgetId = "w2";
+
+        component.onWidgetTabChange("column");
+        expect(component.selectedWidgetTab).toBe("column");
+
+        const saved = getLastEditedWidgetForLayout("practice_ui_layout_rc_ai");
+        expect(saved).toEqual({ widgetId: "w2", tab: "column" });
+      });
+
+      it("should save last edited widget when widget property changes", () => {
+        component.selectLayoutById("default_ui_layout_rc_ai");
+        component.isEditMode = true;
+        component.selectedWidgetId = "w1";
+
+        component.onWidgetXChange(50);
+
+        const saved = getLastEditedWidgetForLayout("default_ui_layout_rc_ai");
+        expect(saved?.widgetId).toBe("w1");
+      });
+
+      it("should clear last edited widget when layout is deleted", async () => {
+        setLastEditedWidgetForLayout("custom_ui_1", { widgetId: "w3" });
+        component.selectLayoutById("custom_ui_1");
+
+        await component.onConfirmDeleteLayout();
+
+        expect(getLastEditedWidgetForLayout("custom_ui_1")).toBeNull();
       });
     });
   });
