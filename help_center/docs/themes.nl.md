@@ -120,7 +120,7 @@ Het thema kan elk van de 13 individuele audiogebeurtenissen voor coureurs oversc
 - **Pitstop inrijden (`pitInAudio`):** Geluid dat wordt afgespeeld wanneer een auto de pitstraat inrijdt of pitsensoren op digitale banen activeert.
 - **Brandstofwaarschuwing (`fuelAudio`):** Waarschuwingstoon of spraakmelding bij het bereiken van de reservebrandstof of bij lege tank.
 - **Valse start / Straf (`penaltyAudio`):** Zoemer of claxon wanneer een auto een valse start veroorzaakt of een rondeboete oploopt.
-- **Drift-ronde (`driftLapAudio`):** Stuntgeluidseffect dat wordt afgespeeld wanneer een auto de driftsensordrempel overschrijdt.
+- **Drift-ronde (`driftLapAudio`):** Urgent geluidseffect of gesproken melding wanneer een auto bij uitgeschakelde baanstroom binnen het drifttijd-venster over de finishlijn uitrolt.
 
 ### Overschrijvingsprioriteit & modi
 

@@ -63,7 +63,7 @@ Configure personalized sound effects and Text-to-Speech (TTS) announcements for 
 - **Pit In Audio**: Played when the driver enters pit lane and begins refueling.
 - **Fuel Level Sounds**: Verbal warnings or sound effects corresponding to driver fuel level thresholds (e.g. Warning, Low, Empty, Full).
 - **False Start / Penalty Audio**: Played when a false start or jump start infraction is assessed against this driver.
-- **Drift Lap Audio**: Played when a driver successfully triggers a drift sensor or drift condition.
+- **Drift Lap Audio**: Played when a car coasts across the finish sensor while track power is off within the drift time window.
 
 ## Importing Drivers
 

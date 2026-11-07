@@ -70,6 +70,121 @@ Der Bereich Allgemeine Einstellungen steuert Präsentation, Zeitfilter und das R
 - **Gelbe-Flagge-Regeln**: Automatische oder manuelle Rennpausen bei Gelbphase mit Bahnstromabschaltung.
 - **Benutzerdefinierte UI-Optionen**: Auswahl spezialisierter Bestenlisten und Telemetrie-Widgets.
 
+### Driften & Drift-Timing-Mechanik {: #drifting-and-drift-timing }
+
+Im Slotcar-Rennsport werden die Fahrzeuge durch elektrische Spannung angetrieben, die über in die Bahn eingelassene Stromleiter (Stromschienen oder Litzen) bereitgestellt wird. Wenn der Bahnstrom unterbrochen wird – etwa bei einer Gelbphase (Pause), am Ende eines Laufs (**Heat Over**) oder bei Rennende (**Race Over**) –, kommen die Fahrzeuge nicht schlagartig bei Geschwindigkeit null zum Stehen. Aufgrund von Trägheit, Masse, Motormagneten und Bahnreibung rollen fahrende Autos nach dem Abschalten des Stroms noch eine kurze Strecke aus.
+
+In Race Coordinator AI und im Slotcar-Sport wird dieses unmotorisierte Ausrollen als **„Driften“** bezeichnet.
+
+!!! note "Driften im Slotcar-Kontext"
+    Im Slotcar-Sport bezeichnet „Driften“ **nicht** das seitliche Ausbrechen des Hecks, Powersliden durch Kurven oder Show-Fahrfiguren. Es bezeichnet ausschließlich das vorwärtsgerichtete Ausrollen eines Fahrzeugs durch seinen Restschwung nach dem Abschalten des Bahnstroms.
+
+Nähert sich ein Fahrzeug der Start-/Ziellinie oder Lichtschranke genau in dem Moment, in dem der Strom abgeschaltet wird, kann sein Schwung es noch über den Sensor tragen, bevor es vollständig anhält. Race Coordinator AI bietet hochpräzise Hardware-Zeitnahme und Regeloptionen, um solche Situationen absolut fair und manipulationssicher zu handhaben.
+
+#### Der entscheidende Unterschied: „Drift-Runde“ vs. „Runde mit Drift-Beteiligung“
+
+In Race Coordinator AI gibt es eine grundlegende Unterscheidung zwischen einer **Drift-Runde** und einer **Runde mit Drift-Beteiligung**. Das Verständnis dieses Unterschieds ist für Rennleiter bei der Konfiguration der Zeitregeln und der Auswertung der Telemetrie unverzichtbar:
+
+##### 1. Eine „Drift-Runde“ (`isDrift = true`)
+Eine **Drift-Runde** ist eine Runde, die physisch registriert und gezählt wird, wenn ein Fahrzeug die Start-/Ziellinie oder den Sensor überquert, **WÄHREND der Bahnstrom ABGESCHALTET ist** (konkret während des Zustands `Paused` / Gelbe Flagge, `HeatOver` oder `RaceOver`), sofern dies innerhalb des konfigurierten **Driftzeit**-Fensters geschieht.
+
+- **Physisches Ereignis**: Das Fahrzeug überquert die Ziellinie im Ausrollen ohne Bahnstrom.
+- **Visuelle Kennzeichnung**: Die Bahnspalte auf dem Hauptbildschirm des Renntags sowie der Rundeninspektionsdialog zeigen ein auffälliges **`DRIFT`**-Symbol neben der Rundenzeit an.
+- **Audio-Ansage**: Löst den konfigurierten **Drift-Runden-Sound** (`driftLapAudio`) des Fahrers als Sprachansage mit dringender Priorität (`urgent`) aus (z. B. *"Drift lap for {driver.nickname}"*).
+- **Rundengutschrift**: Die Runde wird dem Rundenguthaben des Fahrers für den Lauf und die Gesamtwertung gutgeschrieben. Die erfasste Rundenzeit kombiniert die vor der Unterbrechung aufgelaufene Zeit mit dem Bruchteil des Ausrollens über den Sensor.
+- **Statistik**: Erhöht den Drift-Rundenzähler der Rennstatistik (`driftLapCount`). Automatisch berechnete Teilsegmente werden zurückgesetzt.
+
+##### 2. Eine „Runde mit Drift-Beteiligung“ (`driftInvolved = true`, aber `isDrift = false`)
+Eine **Runde mit Drift-Beteiligung** ist eine Runde, die unter **normalen GRÜNE-FLAGGE-Bedingungen unter Bahnstrom** beendet und registriert wurde, deren Gesamtdauer jedoch eine Unterbrechung oder Übertragszeit infolge einer Rennpause oder eines Laufwechsels enthält.
+
+- **Physisches Ereignis**: Das Fahrzeug überquert die Start-/Ziellinie mit **eingeschaltetem** Bahnstrom im regulären Renntempo. Im Verlauf dieser einzelnen Runde wurde der Bahnstrom jedoch zuvor unterbrochen und wieder zugeschaltet.
+- **Typische Szenarien**:
+    - **Pause bei Gelbphase & Wiederaufnahme während einer Runde**: Ein Fahrer hat 3,2 Sekunden einer 5,0-Sekunden-Runde absolviert, als Gelb ausgerufen wird. Der Strom schaltet ab und das Auto rollt auf der Gegengeraden aus (es überquert den Sensor *nicht*, daher ist es keine Drift-Runde). Der Hardware-Timer stoppt und die aufgelaufenen 3,2 Sekunden werden im Zwischenspeicher des Fahrers gesichert sowie intern als Drift-Zeit markiert (`markDriftTime()`). Bei Freigabe unter Grün starten die Hardware-Timer bei null; das Auto legt die restlichen 1,8 Sekunden unter Strom zurück und überquert die Ziellinie. Die Rundenzeit beträgt 5,0 Sekunden ($3{,}2\,\text{s} + 1{,}8\,\text{s}$). Da das Auto den Sensor unter Strom überquert hat, ist es **keine Drift-Runde** (kein `DRIFT`-Symbol, regulärer Rundensound), aber eine **Runde mit Drift-Beteiligung**, da ihre Dauer durch eine Bahnunterbrechung geteilt wurde.
+    - **Versetztes Fahren über mehrere Läufe (`Start at Current`)**: Bei Rennformaten mit fortlaufender Distanz (`start_at_current = true`), bei denen Fahrzeuge am Laufende an Ort und Stelle stehen bleiben und im nächsten Lauf von genau dieser Position weiterfahren, wird die unvollendete Teilrundenzeit des Vorlaufs übertragen. Beim Start des nächsten Laufs wird dieser Übertrag in die Vorlaufzeit geladen. Beendet der Fahrer seine erste Runde des neuen Laufs unter Strom, enthält diese Runde die Zeit aus dem Vorlauf: Es ist eine **Runde mit Drift-Beteiligung**.
+
+---
+
+#### Die beiden Rennkonfigurations-Optionen
+
+Race Coordinator AI bietet im Bereich **Allgemeine Einstellungen** zwei spezielle Optionen zur Steuerung von Driftzeit und Rekordwertung:
+
+```
++---------------------------------------------------------------------------------+
+| Minimale Rundenzeit (s): [ 2.0 ]    Driftzeit (s): [ 0.5 ]                      |
+|                                                                                 |
+| [ ] Trainingsmodus   [X] Runden mit Drift von Rekorden ausschließen             |
++---------------------------------------------------------------------------------+
+```
+
+##### Option 1: Driftzeit (`drift_time`)
+- **Einstellungstyp**: Dezimalzahl in Sekunden (z. B. `0.0`, `0.5`, `1.0`, `2.0`).
+- **Standardwert**: `0.5` Sekunden.
+- **Funktion**: Bestimmt das Zeitfenster unmittelbar nach einer Stromabschaltung (Gelbphase, Laufende, Rennende), in dem das Überfahren des Sensors als gültige Ausrollrunde gewertet wird.
+
+!!! warning "Bahnen ohne Relais zur Stromsteuerung"
+    Verfügt Ihre Bahn über keine Hardware-Relais zur Steuerung des Bahnstroms, bleibt die Bahn auch bei Pausen, Laufenden und Rennenden durchgehend bestromt. Auf solchen Bahnen **sollte die Driftzeit auf `0` (0.0s) gesetzt werden (keine Drift-Runden)**. Andernfalls könnten Fahrer, die während einer Pause mit gedrücktem Regler weiterfahren, fälschlicherweise Drift-Runden gutgeschrieben bekommen.
+
+Bei Stromunterbrechung erfasst das System den exakten Millisekunden-Zeitstempel. Wird während der Abschaltung ein Sensorimpuls empfangen, gilt:
+
+$$\Delta t = \text{Impulszeit} - \text{Stoppzeit}$$
+
+$$\begin{aligned}
+\text{Wenn } \Delta t \le \text{Driftzeit} &\implies \textbf{Als Drift-Runde gewertet } (\text{isDrift} = \text{true}) \\
+\text{Wenn } \Delta t > \text{Driftzeit} &\implies \textbf{Verworfen und ignoriert}
+\end{aligned}$$
+
+- **Warum eine Driftzeit-Begrenzung unverzichtbar ist**:
+    - **Fairness für ausrollende Autos**: Ein Fahrzeug, das sich im Moment der Stromabschaltung unmittelbar vor der Ziellinie befand, hat die Runde verdient, wenn sein Restschwung es Sekundenbruchteile später darüberträgt.
+    - **Schutz vor Fehlwertungen durch Streckenposten**: Ohne Begrenzung könnte ein Streckenposten, der ein verunfalltes Auto einsetzt, das Fahrzeug versehentlich über die Lichtschranke schieben und so unberechtigt Runden gutschreiben.
+- **Empfehlungen für die Praxis**:
+    - **Bahnen ohne Stromrelais**: Verfügt die Bahn über keine Relais zur Stromabschaltung, **sollte die Driftzeit auf `0` (0.0s) gesetzt werden** (keine Drift-Runden). Da der Strom bei Pausen nie abfällt, können Fahrzeuge weiterfahren; ein Driftzeitfenster größer null würde diese regulär motorisierten Runden irrtümlich als Drift-Runden werten.
+    - **Magnet-Fahrzeuge (HO, 1/32 mit Magnet)**: Durch die starke Magnetwirkung bremsen Fahrzeuge beim Stromabschalten extrem schnell ab. Empfohlen: `0.3` bis `0.8` Sekunden.
+    - **Fahrzeuge ohne Magnet / Schwerere Klassen (1/24, Holzbahnen)**: Geringe Bremswirkung und hohe Trägheit führen zu langen Ausrollwegen. Empfohlen: `1.0` bis `2.5` Sekunden.
+    - **Deaktiviert (`0.0s`)**: Schaltet die Erkennung von Drift-Runden vollständig ab. Jeder Impuls bei stromloser Bahn wird ignoriert.
+
+##### Option 2: Runden mit Drift von Rekorden ausschließen (`adjust_drift_laps`)
+- **Einstellungstyp**: Kontrollkästchen (`true` / `false`).
+- **Standardwert**: Deaktiviert (`false`).
+- **Funktion**: Legt fest, ob Runden, bei denen in irgendeiner Weise Drift im Spiel war, für persönliche, Lauf-, Renn- oder Bahnrekorde zählen dürfen.
+
+Beim Abschluss einer Runde prüft das System:
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **Wenn aktiviert (`true`)**:
+    - Jede Runde mit Drift-Beteiligung – sei es eine **Drift-Runde** (`isDrift = true`) ODER eine **Runde mit Drift-Beteiligung** (Pause oder Laufübertrag) – wird für die Rekordwertung gesperrt (`countTowardsRecords = false`).
+    - Die Runde wird ausgeschlossen von:
+        1. **Persönlicher Bestzeit des Fahrers (`bestLapTime`)**: Die persönliche Bestzeit bleibt unangetastet.
+        2. **Lauf-Bestzeit**: Zählt nicht als schnellste Runde des aktuellen Laufs.
+        3. **Renn-Bestzeit**: Zählt nicht als schnellste Runde des gesamten Rennens.
+        4. **Bahn- und Spurrekorden**: Wird nicht in ewige Rekordlisten aufgenommen.
+        5. **Rekord-Audioansagen**: Jubel- und Rekordansagen werden unterdrückt.
+    - **Wichtiger Grundsatz**: Die Runde **zählt zu 100 % für das Rundenkonto des Fahrers und die Platzierung in der Wertung**. Lediglich der Rekordstatus wird verwehrt.
+- **Wenn deaktiviert (`false`)**:
+    - Jede Runde, die den Mindestrundenzeit-Filter passiert, kann Rekorde aufstellen, selbst wenn sie durch eine Gelbphase getrennt war oder ohne Strom im Ausrollen erzielt wurde.
+- **Warum Rennserien diese Option aktivieren**:
+    - Unterbrochene Runden verändern die thermischen und fahrdynamischen Gegebenheiten (abkühlende Reifen und Motoren, Neustarts aus dem Stand).
+    - Auch das langsame Ausrollen über die Linie entspricht keinem regulären Renntempo.
+    - In Meisterschaften sollen Rundenrekorde ausschließlich unterbrechungsfreie, fliegende Runden bei vollem Tempo repräsentieren.
+
+---
+
+#### Übersichtstabelle
+
+| Merkmal / Verhalten | Reguläre Runde unter Grün | Drift-Runde (`isDrift = true`) | Runde mit Drift-Beteiligung (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Bahnstrom am Sensor** | **EIN** (Grüne Flagge) | **AUS** (Gelbphase, Laufende, Rennende) | **EIN** (Grüne Flagge) |
+| **Sensorauslösung** | Unter Strom im Renntempo | Im Ausrollen innerhalb der `drift_time` | Unter Strom nach Pause oder Laufübertrag |
+| **Daten-Flag `isDrift`** | `false` | `true` | `false` |
+| **Interner Status `driftInvolved`** | `false` | `true` | `true` |
+| **Anzeige am Renntag** | Keine Sonderanzeige | **`DRIFT`**-Badge in der Bahnspalte | Keine Sonderanzeige |
+| **Audio-Rückmeldung** | Regulärer Runden-/Bestzeitsound | **Drift-Runden-Sound** (`driftLapAudio`, dringend) | Regulärer Rundensound (kein Drift-Sound) |
+| **Zählt für Rundenzahl & Wertung** | **Ja** (volle Wertung) | **Ja** (volle Wertung) | **Ja** (volle Wertung) |
+| **Zählt für Rekorde (`adjust_drift_laps` = AUS)** | **Ja** | **Ja** (falls schneller) | **Ja** (falls schneller) |
+| **Zählt für Rekorde (`adjust_drift_laps` = EIN)** | **Ja** | **Ausgeschlossen / Nicht gewertet** | **Ausgeschlossen / Nicht gewertet** |
+
 ---
 
 ## Lauf-Optionen {: #heat-options }

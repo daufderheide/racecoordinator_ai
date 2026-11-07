@@ -164,7 +164,7 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Boxenstopp-Sound** | Wird abgespielt, wenn das Fahrzeug in die Boxengasse oder den Tankbereich einfährt. | `default_pit_in` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 | **Kraftstoffstand-Sounds** | Wird abgespielt, wenn der Tankfüllstand Warnung, kritisch oder leer erreicht. | `default_fuel_level` (Audioset) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 | **Fehlstart-Sound** | Wird abgespielt, wenn ein Frühstart oder Verstoß beim Start erkannt wird. | `default_penalty` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Drift-Runden-Sound** | Wird abgespielt, wenn der Fahrer eine Runde im Drift abschließt. | TTS (`Drift lap for {driver.nickname}`) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Drift-Runden-Sound** | Wird abgespielt, wenn ein Fahrzeug bei stromloser Bahn innerhalb des Driftzeit-Fensters über die Ziellinie ausrollt. | TTS (`Drift lap for {driver.nickname}`) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 
 ### Design-Audioereignisse (Konfiguration im Design-Editor / Themes)
 

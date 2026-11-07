@@ -63,7 +63,7 @@ Configure efectos de sonido o anuncios de voz (TTS) para este piloto:
 - **Entrada a Boxes**: Se reproduce cuando el piloto entra a boxes para repostar combustible.
 - **Nivel de Combustible**: Advertencias verbales o efectos correspondientes a los niveles de combustible (p. ej. Aviso, Bajo, Vacío, Lleno).
 - **Salida en Falso / Penalización**: Se reproduce cuando se detecta una salida en falso o penalización.
-- **Vuelta Drift**: Se reproduce cuando se registra una vuelta con derrape.
+- **Vuelta Drift**: Se reproduce cuando un coche cruza la meta por inercia sin corriente dentro del tiempo de deriva.
 
 ## Importar Pilotos
 

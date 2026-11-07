@@ -199,7 +199,7 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 | **Pit In Sound** | Played when the car enters the pit lane or refueling area. | `default_pit_in` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 | **Fuel Level Sounds** | Played when fuel drops into warning, critical, or empty thresholds. | `default_fuel_level` (Audio Set) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 | **False Start Sound** | Played when a false start or start-line infraction is detected. | `default_penalty` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Drift Lap Sound** | Played when the driver completes a lap while drifting. | TTS (`Drift lap for {driver.nickname}`) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Drift Lap Sound** | Played when a car coasts across the finish sensor while track power is off within the drift time window. | TTS (`Drift lap for {driver.nickname}`) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 
 ### Theme Audio Events (Configured in Theme Manager / Editor)
 

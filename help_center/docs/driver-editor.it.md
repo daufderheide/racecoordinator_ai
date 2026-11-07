@@ -63,7 +63,7 @@ Configura effetti sonori o annunci vocali (TTS) per questo pilota:
 - **Ingresso ai Box**: Riprodotto quando il pilota entra nella corsia box per fare rifornimento.
 - **Livelli Carburante**: Avvisi vocali o suoni corrispondenti alle soglie carburante (Avviso, Basso, Vuoto, Pieno).
 - **Partenza Anticipata / Penalità**: Riprodotto in caso di falsa partenza o penalità.
-- **Giro in Derapata**: Riprodotto quando viene registrato un giro con derapata.
+- **Giro in Derapata**: Riprodotto quando un'auto supera il traguardo per inerzia a corrente staccata entro il tempo di deriva.
 
 ## Importazione Piloti
 

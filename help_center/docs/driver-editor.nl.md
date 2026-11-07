@@ -63,7 +63,7 @@ Configureer aangepaste geluidseffecten of TTS-meldingen voor deze coureur:
 - **Pitstraat in**: Wordt afgespeeld wanneer de coureur de pitstraat binnenrijdt om bij te tanken.
 - **Brandstofniveau**: Gesproken waarschuwingen of geluiden voor brandstofniveaus (bv. Waarschuwing, Laag, Leeg, Vol).
 - **Valse start / Straf**: Wordt afgespeeld bij een valse start of straf.
-- **Driftronde**: Wordt afgespeeld wanneer een driftronde wordt geregistreerd.
+- **Driftronde**: Wordt afgespeeld wanneer een auto bij uitgeschakelde baanstroom binnen het drifttijd-venster over de finishlijn uitrolt.
 
 ## Coureurs importeren
 

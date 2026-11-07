@@ -1,5 +1,27 @@
 # Operación en el Día de Carrera
 
+## Inicio y Pausa de Carreras
+
+Durante el día de carrera, las operaciones en pista transitan por estados automatizados gestionados por el director de carrera mediante teclas de acceso rápido, la barra de herramientas o pulsadores de pista:
+
+### Inicio de Mangas
+- **Parrilla y Cuenta Regresiva**: Al iniciar una manga, Race Coordinator AI activa una cuenta atrás automatizada (configurada en las opciones de Auto Inicio o Retardo de Inicio del editor). Tonos acústicos y semáforos visuales preparan a los pilotos.
+- **Bandera Verde**: Al llegar a cero, se enciende la corriente en la pista y la carrera entra en estado `Racing`.
+- **Tiempo de Reacción**: Si "Iniciar detrás del sensor" está activado, el primer paso por el sensor registra el tiempo de reacción en la salida en vez de una vuelta completa.
+
+### Pausas y Banderas Amarillas
+- **Activación de Pausa**: Pulsando la barra espaciadora, haciendo clic en el icono de **Pausa** o accionando un pulsador externo de parada, se declara inmediatamente bandera amarilla (`Paused`).
+- **Corte Inmediato de Energía**: Los relés de corriente abren al instante para detener los coches.
+- **Captura de Tiempos Parciales**: En ese mismo milisegundo, la interfaz de hardware captura el tiempo parcial transcurrido de cada coche y lo guarda en su tiempo pendiente.
+- **Coches que Cruzan la Meta por Inercia (Vueltas de Deriva)**: Si un coche se aproximaba a la meta al cortarse la corriente, su impulso puede llevarlo a cruzar el sensor.
+    - Si el sensor se activa dentro del **Tiempo de deriva** configurado, el paso se valida como **Vuelta de Deriva** (`isDrift: true`). Aparece la insignia **`DRIFT`** en el carril, suena el aviso urgente de audio y se acredita la vuelta al piloto.
+    - Si se activa tras expirar el margen, se descarta para evitar registros accidentales de los comisarios.
+    - Para más detalles, consulte [Editor de Carreras: Mecánica de Deriva y Cronometraje de Drift](race-editor.es.md#drifting-and-drift-timing).
+
+### Reanudación de la Carrera
+- **Reinicio con Bandera Verde**: Al desactivar la pausa, recomienza la cuenta atrás. Con la bandera verde, la corriente vuelve y los cronómetros de hardware inician desde cero.
+- **Completar la Vuelta (Vueltas con Deriva Involucrada)**: Cuando un coche detenido en pista reanuda la marcha y cruza la meta bajo bandera verde, su tiempo de vuelta suma el parcial previo y el tiempo posterior. Es una **Vuelta con Deriva Involucrada**. Si "Excluir vueltas con derrape de los récords" está activo, la vuelta se suma a la manga pero no cuenta para récords.
+
 ## Ajustes de Vueltas y Tiempo
 
 Los directores de carrera pueden ajustar manualmente el recuento de vueltas y los tiempos de manga de los pilotos directamente desde la pantalla de carrera para resolver incidentes en pista, fallos de detección de sensores o penalizaciones:

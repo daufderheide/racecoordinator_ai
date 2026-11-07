@@ -120,7 +120,7 @@ El tema puede anular los 13 eventos de sonido de los pilotos:
 - **Entrada a Boxes (`pitInAudio`):** Sonido al entrar al carril de boxes en pistas digitales.
 - **Aviso de Combustible (`fuelAudio`):** Alerta sonora o por voz al entrar en reserva o quedarse sin combustible.
 - **Salida en Falso / Penalización (`penaltyAudio`):** Sirena o bocina al cometer una salida en falso o penalización.
-- **Vuelta Derrapada (`driftLapAudio`):** Efecto de sonido al superar los límites de sensores de derrape.
+- **Vuelta de Deriva (`driftLapAudio`):** Efecto de sonido o aviso de voz urgente reproducido cuando un coche cruza la meta por inercia sin corriente dentro del tiempo de deriva.
 
 ### Prioridad y Modos de Anulación
 

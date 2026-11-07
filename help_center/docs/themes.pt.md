@@ -120,7 +120,7 @@ O tema pode substituir qualquer um dos 13 eventos de áudio individuais do pilot
 - **Entrada nas Boxes (`pitInAudio`):** Som reproduzido quando um carro entra na via das boxes ou aciona sensores de entrada nas boxes em pistas digitais.
 - **Aviso de Combustível (`fuelAudio`):** Tom de advertência ou mensagem de voz ao atingir o nível de reserva ou esgotar o combustível.
 - **Falsa Partida / Penalidade (`penaltyAudio`):** Sinal sonoro ou buzina emitida quando um carro comete uma falsa partida ou incorre numa penalização de volta.
-- **Volta de Drift (`driftLapAudio`):** Efeito sonoro especial reproduzido quando um carro atinge os limiares do sensor de drift.
+- **Volta de Drift (`driftLapAudio`):** Efeito sonoro ou aviso de voz urgente reproduzido quando um carro cruza a linha de chegada por inércia sem energia dentro do tempo de deriva.
 
 ### Prioridade e Modos de Substituição
 

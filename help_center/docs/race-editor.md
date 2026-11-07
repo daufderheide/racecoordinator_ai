@@ -68,6 +68,121 @@ The General Settings expander controls presentation, timing filters, and race ma
 - **Yellow Flag Rules**: Automatic or manual yellow flag pauses and track power cutoff.
 - **Custom UI Options**: Select specialized leaderboards and custom telemetry widgets.
 
+### Drifting & Drift Timing Mechanics {: #drifting-and-drift-timing }
+
+In slot car racing, cars are propelled by electric voltage delivered through rails embedded in the track surface. When track power is interrupted—such as during a yellow flag pause, at the conclusion of a heat (**Heat Over**), or when the race ends (**Race Over**)—the cars do not stop instantly at zero velocity. Because of physical inertia, mass, motor magnets, and track friction, moving cars continue to roll forward or coast down the track after power has been cut.
+
+In Race Coordinator AI and slot car terminology, this unpowered coasting motion is referred to as **"drifting"**.
+
+!!! note "Drifting Defined"
+    In slot car racing, "drifting" does **not** refer to lateral sliding, power-sliding around corners, or driving stunts. It refers strictly to a car's forward coasting motion under residual momentum after track power has been shut off.
+
+When a car approaches the start/finish line or sensor gantry right as power drops, its forward momentum may carry it across the sensor before coming to a complete stop. Race Coordinator AI provides precision hardware timing and rule controls to manage these situations fairly.
+
+#### The Distinction: "Drift Lap" vs. "Lap With Drift in It"
+
+A critical distinction exists in Race Coordinator AI between a **Drift Lap** and a **Lap With Drift in It**. Understanding this difference is essential for race directors configuring timing rules and interpreting race telemetry:
+
+##### 1. A "Drift Lap" (`isDrift = true`)
+A **Drift Lap** is a lap that is physically registered and counted when a car crosses the start/finish line or detection sensor **while track power is turned OFF** (specifically during a `Paused` / yellow flag, `HeatOver`, or `RaceOver` state), within the configured **Drift Time** window.
+
+- **Physical Event**: The car crosses the line while coasting with zero track power.
+- **Visual Indicator**: The lane column on the main Raceday display and the lap inspection dialog display a prominent **`DRIFT`** badge next to the lap time.
+- **Audio Announcement**: Triggers the driver's configured **Drift Lap Sound** (`driftLapAudio`) as an urgent priority voice announcement (e.g., *"Drift lap for {driver.nickname}"*).
+- **Lap Crediting**: The lap is credited to the driver's total lap count for the heat and overall standings. The lap time recorded combines any partial time accumulated prior to the power cut with the fractional coasting duration across the sensor.
+- **Statistics**: Increments the race statistics drift lap counter (`driftLapCount`). Auto-calculated partial segments are cleared.
+
+##### 2. A "Lap With Drift in It" (`driftInvolved = true`, but `isDrift = false`)
+A **Lap With Drift in It** is a lap that was completed and registered under **normal GREEN FLAG powered racing**, but whose total elapsed lap duration contains an interrupted period or carried-over time resulting from a track pause or heat transition.
+
+- **Physical Event**: The car crosses the start/finish line with track power **ON** while racing under the green flag. However, during the course of that single lap, track power was cut and subsequently restored.
+- **Common Scenarios**:
+    - **Yellow Flag Pause & Resume During a Lap**: A driver completes 3.2 seconds of a 5.0-second lap when a yellow flag is called. Track power cuts, and the car coasts to a halt on the back straight (it does *not* cross the sensor, so this is not a drift lap). The hardware timer halts, and the 3.2-second partial time is safely banked into the driver's pending lap time with drift time marked (`markDriftTime()`). When racing resumes under the green flag, timers restart from zero. The car completes the remaining 1.8 seconds under power and crosses the finish line. The final recorded lap time is 5.0 seconds ($3.2\text{s} + 1.8\text{s}$). Because the car crossed the sensor under green flag power, it is **not a Drift Lap** (no `DRIFT` badge appears, and normal lap audio plays), but it is a **Lap With Drift in It** because its duration was split by a track stoppage.
+    - **Staggered Multi-Heat Racing (`Start at Current`)**: In continuous formats where drivers stop in place at the end of a heat and resume from their exact physical track position in their next heat (`start_at_current = true`), the unfinished partial lap time from the prior heat is saved as carry-over time. When the driver starts their next heat, that carry-over time is loaded into pending lap time and marked with `markDriftTime()`. When the driver completes their first lap of the new heat under green flag power, that lap incorporates the time from the previous heat. It is a **Lap With Drift in It**.
+
+---
+
+#### Race Configuration Options
+
+Race Coordinator AI provides two dedicated race configuration options in the **General Settings** expander to control drift timing and record eligibility:
+
+```
++---------------------------------------------------------------------------------+
+| Minimum Lap Time (s): [ 2.0 ]       Drift Time (s): [ 0.5 ]                     |
+|                                                                                 |
+| [ ] Practice Mode    [X] Exclude Laps With Drift from Records                   |
++---------------------------------------------------------------------------------+
+```
+
+##### Option 1: Drift Time (`drift_time`)
+- **Setting Type**: Decimal number in seconds (e.g., `0.0`, `0.5`, `1.0`, `2.0`).
+- **Default Value**: `0.5` seconds.
+- **Description**: Defines the allowable time window immediately following an immediate track power cutoff (yellow flag pause, heat finish, or race end) during which the timing system will accept a sensor crossing as a legitimate coasting lap.
+
+!!! warning "Tracks Without Power Control Relays"
+    If your track does not have relays installed to control track power, track power remains energized during pauses, heat finishes, and race completion. On these tracks, **Drift Time should be set to `0` (no drift laps)**. If left at a non-zero value, drivers continuing to drive under throttle while the heat is paused or finished could be erroneously credited with drift laps.
+
+When track power drops, the system marks the exact millisecond timestamp of the stoppage. When a sensor trigger is detected while the track is stopped:
+
+$$\Delta t = \text{Trigger Time} - \text{Stoppage Time}$$
+
+$$\begin{aligned}
+\text{If } \Delta t \le \text{Drift Time} &\implies \textbf{Accepted as a Drift Lap } (\text{isDrift} = \text{true}) \\
+\text{If } \Delta t > \text{Drift Time} &\implies \textbf{Rejected and Ignored}
+\end{aligned}$$
+
+- **Why a Drift Time Limit is Essential**:
+    - **Fairness for Coasting Cars**: A car that was inches from the finish line when a track call occurred deserves credit for the lap if its forward momentum carries it across moments later.
+    - **Preventing False Laps from Marshaling**: Without a finite cutoff, a turn marshal retrieving a de-slotted car might accidentally push a car over the dead strip or sensor seconds or minutes after the yellow flag was called, erroneously granting an unearned lap.
+- **Tuning Guidelines**:
+    - **Tracks Without Power Control Relays**: If your track setup lacks relays to cut track power, **Drift Time should be set to `0` (0.0s)** (no drift laps). Without relays to drop power, cars can continue driving under throttle; a non-zero drift window would erroneously count these powered laps as drift laps.
+    - **Magnet Cars (HO, 1/32 High Downforce)**: Heavy motor and traction magnets create strong magnetic braking against steel rails when power drops, stopping cars very quickly. Recommended: `0.3` to `0.8` seconds.
+    - **Non-Magnet / Heavier Cars (1/24 Commercial, Wood Tracks)**: Cars have high inertia and free-rolling drivetrains without magnetic braking, allowing them to coast significant distances. Recommended: `1.0` to `2.5` seconds.
+    - **Disabled (`0.0s`)**: Setting Drift Time to `0.0` disables drift lap acceptance completely. Any sensor trigger registered while power is off is discarded immediately.
+
+##### Option 2: Exclude Laps With Drift from Records (`adjust_drift_laps`)
+- **Setting Type**: Checkbox toggle (`true` / `false`).
+- **Default Value**: Disabled (`false`).
+- **Description**: Determines whether laps involving any form of drifting are permitted to count toward personal, heat, race, or track lap records.
+
+When a lap is completed, Race Coordinator AI evaluates whether drift was involved:
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **When Enabled (`true`)**:
+    - Any lap where drift was involved—whether it was a **Drift Lap** (`isDrift = true`) OR a **Lap With Drift in It** (where power was paused or carried over across heats)—is disqualified from setting records (`countTowardsRecords = false`).
+    - The lap is excluded from:
+        1. **Driver Personal Best Lap (`bestLapTime`)**: The driver's personal best lap time will not update.
+        2. **Heat Best Lap**: Will not be credited as the fastest lap in the current heat.
+        3. **Race Best Lap**: Will not be credited as the fastest lap in the race.
+        4. **Track & Lane Records**: Disqualified from establishing all-time track records or lane records.
+        5. **Record Audio Callouts**: Suppresses celebratory fast lap or record audio announcements.
+    - **Crucial Distinction**: The lap **still counts 100% toward the driver's lap total, heat standings, and race rankings**. Only record-book recognition is withheld.
+- **When Disabled (`false`)**:
+    - Any lap that satisfies the track's Minimum Lap Time filter is eligible for all record tiers, even if the lap spanned a pause, a heat rotation, or was completed while coasting across the line without power.
+- **Why Sanctioned Clubs Enable This Option**:
+    - Interrupted laps that span a pause or heat rotation introduce mechanical and timing anomalies. Motors and tires cool down during pauses, and restarting from a dead stop on the track can result in unnatural timing splits compared to a continuous, flying green-flag lap.
+    - Coasting across the line during a yellow flag also exhibits abnormal deceleration dynamics.
+    - In competitive leagues, lap records must reflect continuous, uninterrupted flying laps run at full race pace. Enabling this setting protects the integrity of the record book without penalizing drivers in race standings.
+
+---
+
+#### Comparison Summary Matrix
+
+| Attribute / Behavior | Normal Green Flag Lap | Drift Lap (`isDrift = true`) | Lap With Drift in It (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Track Power Status at Finish Sensor** | **ON** (Green Flag) | **OFF** (Yellow Flag, Heat Over, Race Over) | **ON** (Green Flag) |
+| **Sensor Crossing Trigger Condition** | Under electrical power | Coasting within `drift_time` window | Under electrical power after a pause or heat carry-over |
+| **`isDrift` Data Flag** | `false` | `true` | `false` |
+| **`driftInvolved` Internal State** | `false` | `true` | `true` |
+| **Raceday UI Badge** | None | **`DRIFT`** badge on lane column | None |
+| **Audio Notification** | Standard lap / best lap sound | **Drift Lap Sound** (`driftLapAudio`, urgent priority) | Standard lap sound (no drift callout) |
+| **Counts Toward Lap Total & Standings** | **Yes** (full credit) | **Yes** (full credit) | **Yes** (full credit) |
+| **Qualifies for Records (`adjust_drift_laps` = OFF)** | **Yes** | **Yes** (if faster than prior best) | **Yes** (if faster than prior best) |
+| **Qualifies for Records (`adjust_drift_laps` = ON)** | **Yes** | **Excluded / Disqualified** | **Excluded / Disqualified** |
+
 ---
 
 ## Heat Options {: #heat-options }

@@ -70,6 +70,121 @@ El expansor de Ajustes generales controla la presentación, los filtros de tiemp
 - **Reglas de bandera amarilla**: Pausas automáticas o manuales de bandera amarilla con corte de energía en pista.
 - **Opciones de interfaz personalizada**: Tablas de clasificación y widgets de telemetría especializados.
 
+### Mecánica de Deriva y Cronometraje de Drift {: #drifting-and-drift-timing }
+
+En el slot racing, los coches son impulsados por voltaje eléctrico suministrado a través de rieles metálicos en la pista. Cuando la alimentación eléctrica se interrumpe (como durante una pausa por bandera amarilla, al concluir una manga o al finalizar la carrera), los coches no se detienen de forma instantánea a velocidad cero. Debido a la inercia física, la masa, los imanes del motor y la fricción de la pista, los coches continúan rodando hacia adelante por inercia residual tras cortarse la corriente.
+
+En Race Coordinator AI y en la jerga de slot cars, este desplazamiento por inercia sin corriente se denomina **"deriva"** o **"drift"**.
+
+!!! note "Definición de Drift en Slot Cars"
+    En las carreras de slot cars, "drift" o "deriva" **no** se refiere a derrapar de lado, trompos o maniobras acrobáticas. Se refiere estrictamente al rodar por inercia hacia adelante de un coche impulsado por su movimiento residual tras haberse apagado la corriente de la pista.
+
+Cuando un coche se aproxima a la línea de meta o al sensor justo en el instante en que se corta la corriente, su inercia hacia adelante puede llevarlo a cruzar el sensor antes de detenerse por completo. Race Coordinator AI ofrece un control de cronometraje por hardware y opciones de carrera precisas para gestionar estas situaciones con total justicia deportiva.
+
+#### La Distinción Crucial: "Vuelta de Deriva" vs. "Vuelta con Deriva Involucrada"
+
+Existe una distinción fundamental en Race Coordinator AI entre una **Vuelta de Deriva** (`isDrift = true`) y una **Vuelta con Deriva Involucrada** (`driftInvolved = true`):
+
+##### 1. Una "Vuelta de Deriva" (`isDrift = true`)
+Una **Vuelta de Deriva** es una vuelta que se registra y contabiliza físicamente cuando un coche cruza la línea de meta o sensor **MIENTRAS la corriente de la pista está APAGADA** (específicamente durante los estados `Paused` / bandera amarilla, `HeatOver` o `RaceOver`), dentro de la ventana de **Tiempo de deriva** configurada.
+
+- **Evento Físico**: El coche cruza la línea por pura inercia sin corriente en la pista.
+- **Indicador Visual**: La columna del carril en la pantalla principal de carrera y el diálogo de inspección de vueltas muestran una destacada insignia **`DRIFT`** junto al tiempo de vuelta.
+- **Locución de Audio**: Activa el **Sonido de Vuelta de Deriva** (`driftLapAudio`) configurado para el piloto como anuncio urgente (`urgent`) de voz (ej., *"Drift lap for {driver.nickname}"*).
+- **Acreditación de Vuelta**: La vuelta se suma al total de vueltas del piloto para la manga y la clasificación general. El tiempo registrado combina el tiempo parcial previo al corte de corriente con la fracción de segundo rodando sobre el sensor.
+- **Estadísticas**: Incrementa el contador de vueltas de deriva en las estadísticas de la carrera (`driftLapCount`). Los segmentos parciales automáticos se restablecen.
+
+##### 2. Una "Vuelta con Deriva Involucrada" (`driftInvolved = true`, pero `isDrift = false`)
+Una **Vuelta con Deriva Involucrada** es una vuelta completada y registrada en **condiciones normales de BANDERA VERDE con corriente**, pero cuya duración total contiene un período de interrupción o tiempo arrastrado debido a una pausa en la pista o una rotación de mangas.
+
+- **Evento Físico**: El coche cruza la línea de meta con la corriente **ENCENDIDA** en plena competición. Sin embargo, durante el transcurso de esa vuelta, la corriente fue interrumpida y posteriormente restablecida.
+- **Escenarios Típicos**:
+    - **Pausa y Reanudación por Bandera Amarilla en Plena Vuelta**: Un piloto lleva 3,2 segundos de una vuelta de 5,0 segundos cuando se declara bandera amarilla. Se corta la corriente y el coche se detiene por inercia en la recta opuesta (no cruza el sensor, por lo que no es una vuelta de deriva). El temporizador por hardware se congela y esos 3,2 segundos se guardan en el tiempo pendiente del piloto, marcándose internamente tiempo de deriva (`markDriftTime()`). Al reanudarse la carrera bajo bandera verde, los temporizadores se inician desde cero. El coche recorre los 1,8 segundos restantes bajo corriente y cruza la meta. El tiempo registrado es de 5,0 segundos ($3{,}2\,\text{s} + 1{,}8\,\text{s}$). Como cruzó la meta bajo bandera verde, **no es una Vuelta de Deriva** (no hay insignia `DRIFT` y suena el audio normal), pero es una **Vuelta con Deriva Involucrada** porque su transcurso fue dividido por una pausa.
+    - **Salida en Posición Actual (`Start at Current`)**: En modalidades continuas donde los coches se detienen donde quedan al expirar el tiempo de la manga y reanudan en la siguiente manga desde esa misma posición física (`start_at_current = true`), el tiempo parcial incompleto de la manga anterior se traslada a la nueva manga. Cuando el piloto completa su primera vuelta bajo bandera verde, esa vuelta incorpora el tiempo de la manga previa. Es una **Vuelta con Deriva Involucrada**.
+
+---
+
+#### Las Dos Opciones de Configuración de Carrera
+
+En el expansor de **Ajustes generales**, Race Coordinator AI proporciona dos opciones específicas para controlar la deriva y la validez de los récords:
+
+```
++---------------------------------------------------------------------------------+
+| Tiempo mínimo de vuelta (s): [ 2.0 ]   Tiempo de deriva (s): [ 0.5 ]            |
+|                                                                                 |
+| [ ] Modo de práctica   [X] Excluir vueltas con derrape de los récords           |
++---------------------------------------------------------------------------------+
+```
+
+##### Opción 1: Tiempo de deriva (`drift_time`)
+- **Tipo de Ajuste**: Número decimal en segundos (ej., `0.0`, `0.5`, `1.0`, `2.0`).
+- **Valor Predeterminado**: `0.5` segundos.
+- **Descripción**: Define el margen de tiempo máximo inmediatamente posterior a un corte de corriente (bandera amarilla, fin de manga o fin de carrera) durante el cual el sistema aceptará el paso por el sensor como una vuelta válida por inercia.
+
+!!! warning "Pistas sin Relés de Control de Corriente"
+    Si su pista no tiene relés de hardware instalados para controlar la corriente, la pista permanece energizada durante pausas, finales de manga y fin de carrera. En estas pistas, **el Tiempo de deriva debe ajustarse a `0` (0.0s)** (sin vueltas de deriva). De lo contrario, los pilotos que continúen acelerando durante una pausa recibirían indebidamente vueltas de deriva mientras corren bajo corriente.
+
+Al cortarse la corriente, el sistema guarda la marca de tiempo exacta. Si se detecta un sensor con la pista parada:
+
+$$\Delta t = \text{Tiempo de Disparo} - \text{Tiempo de Parada}$$
+
+$$\begin{aligned}
+\text{Si } \Delta t \le \text{Tiempo de deriva} &\implies \textbf{Aceptada como Vuelta de Deriva } (\text{isDrift} = \text{true}) \\
+\text{Si } \Delta t > \text{Tiempo de deriva} &\implies \textbf{Rechazada e ignorada}
+\end{aligned}$$
+
+- **Por qué es Esencial un Límite de Tiempo de Deriva**:
+    - **Justicia Deportiva**: Un coche que estaba a centímetros de la línea de meta al llamarse la bandera merece la vuelta si su impulso lo hace cruzar instantes después.
+    - **Prevención de Vueltas Falsas por Comisarios**: Sin un límite estricto, un comisario que coloque un coche salido podría empujarlo accidentalmente sobre el sensor segundos o minutos más tarde, otorgándole una vuelta indebida.
+- **Recomendaciones de Ajuste**:
+    - **Pistas sin Relés de Corriente**: Si su pista carece de relés para cortar la corriente, **el Tiempo de deriva debe ajustarse a `0` (0.0s)** (sin vueltas de deriva). Como la corriente nunca se interrumpe, los pilotos pueden seguir acelerando; cualquier margen de deriva mayor que cero contaría erróneamente estas vueltas como deriva.
+    - **Coches con Imán (HO, 1/32 con imán)**: El frenado magnético contra los rieles de acero es muy fuerte y detiene los coches con rapidez. Recomendado: `0.3` a `0.8` segundos.
+    - **Coches sin Imán / Categorías Pesadas (1/24, Pistas de Madera)**: Ruedan libres con gran inercia y avanzan distancias considerables. Recomendado: `1.0` a `2.5` segundos.
+    - **Desactivado (`0.0s`)**: Desactiva totalmente las vueltas de deriva; cualquier detección con la pista parada se descarta.
+
+##### Opción 2: Excluir vueltas con derrape de los récords (`adjust_drift_laps`)
+- **Tipo de Ajuste**: Casilla de verificación (`true` / `false`).
+- **Valor Predeterminado**: Desactivado (`false`).
+- **Descripción**: Determina si las vueltas que hayan involucrado cualquier forma de deriva pueden optar a récords personales, de manga, de carrera o de pista.
+
+Al completarse una vuelta, el sistema evalúa:
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **Cuando está activado (`true`)**:
+    - Cualquier vuelta con deriva involucrada (sea una **Vuelta de Deriva** `isDrift = true` O una **Vuelta con Deriva Involucrada** por pausa o rotación) queda descalificada para récords (`countTowardsRecords = false`).
+    - Queda excluida de:
+        1. **Mejor Vuelta Personal del Piloto (`bestLapTime`)**: No actualizará su mejor registro personal.
+        2. **Mejor Vuelta de la Manga**: No se considerará la vuelta más rápida de la manga.
+        3. **Mejor Vuelta de la Carrera**: No se considerará la vuelta más rápida de la carrera.
+        4. **Récords de Pista y Carril**: No entrará en las tablas de récords históricos.
+        5. **Locuciones de Récord**: Se silencian las celebraciones de vueltas rápidas o récords.
+    - **Punto Crucial**: La vuelta **sigue contando al 100 % para el conteo de vueltas, la posición en la manga y la clasificación de la carrera**. Solo se le deniega el estatus de récord.
+- **Cuando está desactivado (`false`)**:
+    - Cualquier vuelta que cumpla con el filtro de tiempo mínimo puede registrar récords, incluso si transcurrió durante una pausa o se completó sin corriente rodando por inercia.
+- **Por qué las Competiciones Activan Esta Opción**:
+    - Las vueltas interrumpidas alteran las condiciones térmicas y mecánicas de motores y neumáticos. Arrancar desde parado tras una pausa no refleja el ritmo de una vuelta lanzada a fondo bajo bandera verde.
+    - Cruzar la meta en deriva tampoco refleja velocidad real de carrera.
+    - Esta opción garantiza que los récords históricos representen únicamente vueltas limpias, ininterrumpidas y a plena potencia.
+
+---
+
+#### Cuadro Comparativo de Resumen
+
+| Característica / Comportamiento | Vuelta Normal con Bandera Verde | Vuelta de Deriva (`isDrift = true`) | Vuelta con Deriva Involucrada (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Corriente en Pista al Cruzar la Meta** | **ENCENDIDA** (Bandera Verde) | **APAGADA** (Amarilla, Fin de Manga/Carrera) | **ENCENDIDA** (Bandera Verde) |
+| **Condición de Disparo del Sensor** | A plena potencia de competición | Por inercia dentro del `drift_time` | A potencia tras pausa o arrastre de manga |
+| **Indicador de Datos `isDrift`** | `false` | `true` | `false` |
+| **Estado Interno `driftInvolved`** | `false` | `true` | `true` |
+| **Insignia en Pantalla de Carrera** | Ninguna | Insignia **`DRIFT`** en columna de carril | Ninguna |
+| **Notificación de Audio** | Sonido estándar de vuelta/récord | **Sonido de Vuelta de Deriva** (`urgent`) | Sonido estándar (sin locución de deriva) |
+| **Cuenta para Vueltas y Clasificación** | **Sí** (crédito total) | **Sí** (crédito total) | **Sí** (crédito total) |
+| **Válida para Récords (`adjust_drift_laps` = Desactivado)** | **Sí** | **Sí** (si supera el mejor previo) | **Sí** (si supera el mejor previo) |
+| **Válida para Récords (`adjust_drift_laps` = Activado)** | **Sí** | **Excluida / Descalificada** | **Excluida / Descalificada** |
+
 ---
 
 ## Opciones de tanda {: #heat-options }

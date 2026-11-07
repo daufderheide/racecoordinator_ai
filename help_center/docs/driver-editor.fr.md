@@ -63,7 +63,7 @@ Configurez des effets sonores ou des annonces vocales personnalisés pour ce pil
 - **Entrée aux stands** : Joué lorsque le pilote entre dans la voie des stands pour ravitailler.
 - **Niveaux de carburant** : Alertes vocales ou sons correspondant aux seuils de carburant (Alerte, Bas, Vide, Plein).
 - **Faux départ / Pénalité** : Joué lorsqu'une pénalité ou un faux départ est détecté.
-- **Tour en drift** : Joué lorsqu'un tour en glisse est enregistré.
+- **Tour en drift** : Joué lorsqu'une voiture franchit la ligne en roue libre hors tension dans la fenêtre de temps de dérive.
 
 ## Importer des pilotes
 

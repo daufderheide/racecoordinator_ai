@@ -165,7 +165,7 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Suono Entrata ai Box** | Riprodotto quando l'auto entra nella corsia dei box o nell'area di rifornimento. | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 | **Suoni Livello Carburante** | Riprodotti quando il livello di carburante scende alle soglie di avviso, critico o riserva/vuoto. | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 | **Suono di Falsa Partenza** | Riprodotto quando viene rilevata una falsa partenza o infrazione al via. | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Suono giro in derapata** | Viene riprodotto quando il pilota completa un giro in derapata. | TTS (`Drift lap for {driver.nickname}`) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono giro in derapata** | Viene riprodotto quando un'auto supera il traguardo per inerzia a corrente staccata entro il tempo di deriva. | TTS (`Drift lap for {driver.nickname}`) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 
 ### Eventi Audio dei Temi (Configurati nell'Editor Temi)
 

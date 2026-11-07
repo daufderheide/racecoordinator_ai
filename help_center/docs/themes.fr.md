@@ -120,7 +120,7 @@ Le thème peut remplacer les 13 événements sonores individuels :
 - **Entrée aux Stands (`pitInAudio`) :** Son à l'entrée de la voie des stands sur circuit numérique.
 - **Alerte Carburant (`fuelAudio`) :** Signal sonore ou vocal en réserve ou à sec.
 - **Faux Départ / Pénalité (`penaltyAudio`) :** Buzzer lors d'un faux départ ou d'une pénalité.
-- **Tour en Dérapage (`driftLapAudio`) :** Effet sonore lors du franchissement de seuils de capteurs de dérive.
+- **Tour de Dérive (`driftLapAudio`) :** Effet sonore ou annonce vocale urgente joué lorsqu'une voiture franchit la ligne d'arrivée en roue libre hors tension dans la fenêtre de temps de dérive.
 
 ### Priorité et Modes de Remplacement
 

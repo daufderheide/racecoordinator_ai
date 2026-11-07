@@ -120,7 +120,7 @@ Das Theme kann alle 13 individuellen Fahrer-Audioereignisse überschreiben:
 - **Boxeneinfahrt (`pitInAudio`):** Signal bei Einfahrt in die Boxengasse oder Auslösung von Boxensensoren auf digitalen Bahnen.
 - **Treibstoffwarnung (`fuelAudio`):** Warnton oder Durchsage bei Erreichen des Reservebereichs oder Treibstoffmangel.
 - **Frühstart / Strafe (`penaltyAudio`):** Signalton oder Sirene bei Frühstart oder Strafen.
-- **Drift-Runde (`driftLapAudio`):** Stunt-Soundeffekt bei Überschreiten von Driftsensorschwellen.
+- **Drift-Runde (`driftLapAudio`):** Dringender Soundeffekt oder Sprachansage, wenn ein Fahrzeug bei stromloser Bahn innerhalb des Driftzeit-Fensters über die Ziellinie ausrollt.
 
 ### Überschreibungs-Prioritäten & Modi
 

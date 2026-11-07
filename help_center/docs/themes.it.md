@@ -120,7 +120,7 @@ Il tema può sostituire ciascuno dei 13 eventi audio individuali del pilota:
 - **Ingresso ai box (`pitInAudio`):** Suono riprodotto quando un'auto entra nella corsia dei box o attiva i sensori di ingresso ai box sulle piste digitali.
 - **Avviso carburante (`fuelAudio`):** Tono di avvertimento o annuncio vocale quando si raggiunge il livello di riserva o si esaurisce il carburante.
 - **Falsa partenza / Penalità (`penaltyAudio`):** Cicalino o avvisatore acustico riprodotto quando un'auto commette una falsa partenza o incorre in una penalità sul giro.
-- **Giro in derapata (`driftLapAudio`):** Effetto sonoro per manovre acrobatiche riprodotto quando un'auto supera le soglie del sensore di derapata.
+- **Giro in Derapata (`driftLapAudio`):** Effetto sonoro o annuncio vocale urgente riprodotto quando un'auto supera il traguardo per inerzia a corrente staccata entro il tempo di deriva.
 
 ### Priorità e modalità di sostituzione
 

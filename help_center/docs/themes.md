@@ -120,7 +120,7 @@ The theme can override any of the 13 individual driver audio events:
 - **Pit In (`pitInAudio`):** Sound played when a car enters the pit lane or triggers pit lane entry sensors on digital tracks.
 - **Fuel Warning (`fuelAudio`):** Warning tone or voice announcement when reaching reserve fuel or running out of fuel.
 - **False Start / Penalty (`penaltyAudio`):** Buzzer or horn played when a car commits a false start or incurs a lap penalty.
-- **Drift Lap (`driftLapAudio`):** Stunt sound effect played when a car triggers drift sensor thresholds.
+- **Drift Lap (`driftLapAudio`):** Urgent sound or voice callout played when a car coasts across the finish sensor while track power is off within the drift time window.
 
 ### Override Priority & Modes
 

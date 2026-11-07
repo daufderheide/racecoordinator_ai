@@ -70,6 +70,121 @@ Het uitklapgedeelte Algemene instellingen regelt de presentatie, tijdfilters en 
 - **Gele-vlagregels**: Automatische of handmatige onderbrekingen met stroomonderbreking op de baan.
 - **Aangepaste UI-opties**: Selecteer gespecialiseerde ranglijsten en telemetrie-widgets.
 
+### Driftmechanica & Timing van Uitrollen {: #drifting-and-drift-timing }
+
+Bij slotcar-racen worden de auto's aangedreven door elektrische spanning via geleidende strips of stroomrails in de baan. Wanneer de baanbaanvoeding wordt onderbroken – zoals bij een gele vlag (pauze), aan het einde van een heat (**Heat Over**) of bij het einde van de race (**Race Over**) –, komen de auto's niet ogenblikkelijk met nulsnelheid tot stilstand. Door traagheid, massa, motormagneten en baanwrijving blijven rijdende auto's na het uitschakelen van de stroom nog een stukje voorwaarts uitrollen.
+
+In Race Coordinator AI en in het slotrace-jargon wordt dit stroomloze uitrollen aangeduid als **"driften"**.
+
+!!! note "Driften Gedefinieerd"
+    Bij slotcar-racen betekent "driften" **niet** het zijdelings dwarsgooien van de achterkant, powersliden door bochten of stunten. Het verwijst uitsluitend naar het voorwaarts uitrollen van een auto door restbeweging nadat de stroom van de baan is uitgeschakeld.
+
+Wanneer een auto de start/finishlijn of sensorgantry nadert precies op het moment dat de stroom uitvalt, kan zijn vaart hem over de sensor dragen voordat hij volledig stilstaat. Race Coordinator AI biedt uiterst nauwkeurige hardwaretiming en speciale regelinstellingen om deze situaties volkomen eerlijk en betrouwbaar af te handelen.
+
+#### Het Cruciale Verschil: "Drift-ronde" vs. "Ronde met Drift Erin"
+
+Er bestaat een fundamenteel onderscheid in Race Coordinator AI tussen een **Drift-ronde** (`isDrift = true`) en een **Ronde met Drift Erin** (`driftInvolved = true`):
+
+##### 1. Een "Drift-ronde" (`isDrift = true`)
+Een **Drift-ronde** is een ronde die fysiek wordt geregistreerd en geteld wanneer een auto de start/finishlijn of sensor passeert **TERWIJL de baanstroom is UITGESCHAKELD** (concreet tijdens de statussen `Paused` / gele vlag, `HeatOver` of `RaceOver`), binnen het ingestelde **Drifttijd**-venster.
+
+- **Fysieke Gebeurtenis**: De auto passeert de lijn puur op eigen uitrolsnelheid zonder baanstroom.
+- **Visuele Indicator**: De baankolom op het hoofdscherm van de racedag en het ronde-inspectievenster tonen een duidelijke **`DRIFT`**-badge naast de rondetijd.
+- **Gesproken Melding**: Triggert het ingestelde **Drift-ronde geluid** (`driftLapAudio`) van de coureur met de hoogste urgente prioriteit (`urgent`) (bijv. *"Drift lap for {driver.nickname}"*).
+- **Rondetoekenning**: De ronde wordt toegekend aan het rondetotaal van de coureur voor de heat en het algemeen klassement. De geregistreerde rondetijd combineert de opgebouwde deeltijd van vóór de onderbreking met de fractie van de uitrol over de sensor.
+- **Statistieken**: Verhoogt de teller van drift-rondes in de racestatistieken (`driftLapCount`). Automatisch berekende deelsegmenten worden gereset.
+
+##### 2. Een "Ronde met Drift Erin" (`driftInvolved = true`, maar `isDrift = false`)
+Een **Ronde met Drift Erin** is een ronde die onder **normale GROENE-VLAG-omstandigheden met ingeschakelde stroom** is voltooid en geregistreerd, maar waarvan de totale verstreken tijd een onderbreking of overgedragen tijd bevat als gevolg van een pauze of heat-wissel.
+
+- **Fysieke Gebeurtenis**: De auto passeert de finishlijn met **ingeschakelde** stroom op volle racesnelheid. Tijdens het verloop van diezelfde ronde werd de stroom echter tussentijds onderbroken en later weer hersteld.
+- **Typische Scenario's**:
+    - **Pauze bij Gele Vlag & Hervatting Halverwege een Ronde**: Een coureur heeft 3,2 seconden van een ronde van 5,0 seconden gereden wanneer geel wordt gezwaaid. De stroom valt weg en de auto rolt uit op het achterste rechte stuk (hij passeert de sensor *niet*, dus het is geen drift-ronde). De hardware-timer stopt en de 3,2 seconden worden opgeslagen in de openstaande tijd van de coureur, met een interne markering voor drifttijd (`markDriftTime()`). Bij de herstart onder groen starten de timers weer vanaf nul. De auto rijdt de resterende 1,8 seconde onder stroom en passeert de finish. De rondetijd is 5,0 seconden ($3{,}2\,\text{s} + 1{,}8\,\text{s}$). Omdat de auto onder groen over de streep kwam, is dit **geen Drift-ronde** (geen `DRIFT`-badge, normaal rondetoongeluid), maar het is wel een **Ronde met Drift Erin** omdat de duur werd gesplitst door een onderbreking.
+    - **Doorlopend Rijden over Meerdere Heats (`Start at Current`)**: Bij continue heat-formats (`start_at_current = true`), waarbij auto's aan het einde van een heat blijven staan waar ze zijn en in de volgende heat vanaf die exacte positie verder rijden, wordt de onvoltooide deeltijd van de vorige heat meegenomen. Wanneer de coureur zijn eerste ronde van de nieuwe heat onder groen voltooit, bevat die ronde de tijd van de vorige heat: het is een **Ronde met Drift Erin**.
+
+---
+
+#### De Twee Race-instellingen
+
+In het uitklapgedeelte **Algemene instellingen** biedt Race Coordinator AI twee specifieke opties om het driften en de geldigheid voor records in te stellen:
+
+```
++---------------------------------------------------------------------------------+
+| Minimale rondetijd (s): [ 2.0 ]      Drifttijd (s): [ 0.5 ]                     |
+|                                                                                 |
+| [ ] Oefenmodus   [X] Rondes met drift uitsluiten van records                    |
++---------------------------------------------------------------------------------+
+```
+
+##### Optie 1: Drifttijd (`drift_time`)
+- **Type Instelling**: Decimaal getal in seconden (bijv. `0.0`, `0.5`, `1.0`, `2.0`).
+- **Standaardwaarde**: `0.5` seconden.
+- **Omschrijving**: Bepaalt het maximale tijdsvenster onmiddellijk na een stroomonderbreking (gele vlag, heat-einde, race-einde) waarin een sensorpassage wordt geaccepteerd als een geldige uitrolronde.
+
+!!! warning "Banen zonder Relais voor Stroombediening"
+    Indien uw baan niet beschikt over hardware-relais om de baanstroom te onderbreken, blijft de baan onder stroom tijdens pauzes, heat-eindes en race-eindes. Op dergelijke banen **moet de drifttijd worden ingesteld op `0` (geen drift-rondes)**. Wordt dit niet gedaan, dan zouden coureurs die tijdens een pauze blijven doorrijden met ingedrukte regelaar ten onrechte drift-rondes kunnen toegekend krijgen.
+
+Zodra de stroom uitvalt, legt het systeem het exacte milliseconde-tijdstempel vast. Wordt er tijdens baanstilstand een sensorpuls gedetecteerd, dan geldt:
+
+$$\Delta t = \text{Tijdstip van Detectie} - \text{Tijdstip van Stop}$$
+
+$$\begin{aligned}
+\text{Als } \Delta t \le \text{Drifttijd} &\implies \textbf{Geaccepteerd als Drift-ronde } (\text{isDrift} = \text{true}) \\
+\text{Als } \Delta t > \text{Drifttijd} &\implies \textbf{Geweigerd en genegeerd}
+\end{aligned}$$
+
+- **Waarom een Drifttijd-limiet Noodzakelijk Is**:
+    - **Eerlijkheid voor Uitrollende Auto's**: Een auto die zich centimeters voor de finish bevond toen de gele vlag viel, verdient de ronde als zijn vaart hem een fractie van een seconde later over de streep draagt.
+    - **Voorkomen van Valse Rondes door Baancommissarissen**: Zonder tijdslimiet zou een baancommissaris die een gecrashte auto terugzet, de auto per ongeluk seconden of minuten later over de sensor kunnen duwen en zo een onverdiende ronde toekennen.
+- **Insteladvies voor de Praktijk**:
+    - **Banen zonder Stroomrelais**: Indien uw baan geen relais heeft om de baanstroom uit te schakelen, **moet de Drifttijd op `0` (0.0s) worden ingesteld** (geen drift-rondes). Omdat de stroom nooit wegvalt, kunnen auto's onder stroom blijven rijden; een drifttijdvenster groter dan nul zou deze gemotoriseerde rondes onterecht als drift-rondes meetellen.
+    - **Magneetauto's (HO, 1/32 met magneet)**: De sterke magnetische remwerking tegen stalen rails stopt auto's zeer snel. Aanbevolen: `0.3` tot `0.8` seconden.
+    - **Zonder Magneet / Zwaardere Klassen (1/24, houten banen)**: Auto's hebben een grote traagheid en geen magneetrem, waardoor ze aanzienlijk verder uitrollen. Aanbevolen: `1.0` tot `2.5` seconden.
+    - **Uitgeschakeld (`0.0s`)**: Schakelt drift-rondes volledig uit; elke sensorpuls bij stroomloze baan wordt genegeerd.
+
+##### Optie 2: Rondes met drift uitsluiten van records (`adjust_drift_laps`)
+- **Type Instelling**: Selectievakje (`true` / `false`).
+- **Standaardwaarde**: Uitgeschakeld (`false`).
+- **Omschrijving**: Bepaalt of rondes waarbij op enigerlei wijze drift betrokken was, mogen meetellen voor persoonlijke, heat-, race- of baanrecords.
+
+Bij het voltooien van een ronde controleert de software:
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **Indien Ingeschakeld (`true`)**:
+    - Elke ronde met drift-betrokkenheid – of het nu een **Drift-ronde** is (`isDrift = true`) OF een **Ronde met Drift Erin** (pauze of heat-overdracht) – wordt gediskwalificeerd voor records (`countTowardsRecords = false`).
+    - De ronde wordt uitgesloten van:
+        1. **Persoonlijke Beste Rondetijd van Coureur (`bestLapTime`)**: De persoonlijke toptijd wordt niet bijgewerkt.
+        2. **Beste Rondetijd van de Heat**: Telt niet mee als snelste ronde van de huidige heat.
+        3. **Beste Rondetijd van de Race**: Telt niet mee als snelste ronde van de race.
+        4. **Baan- en Baanvakrecords**: Komt niet in de historische recordtabellen van de baan.
+        5. **Gesproken Recordmeldingen**: Feestelijke aankondigingen voor records worden onderdrukt.
+    - **Cruciaal Principe**: De ronde **telt voor de volle 100% mee voor het rondetotaal van de coureur, de positie in de heat en de eindstand**. Alleen de vermelding in het recordboek wordt geweigerd.
+- **Indien Uitgeschakeld (`false`)**:
+    - Elke ronde die voldoet aan het minimale rondetijdfilter kan records vestigen, zelfs als de ronde door een pauze werd onderbroken of stroomloos uitrollend werd voltooid.
+- **Waarom Officiële Competities Dit Inschakelen**:
+    - Onderbroken rondes beïnvloeden de temperatuur van banden en motoren; optrekken vanuit stilstand wijkt wezenlijk af van een vliegende ronde op vol vermogen onder groen.
+    - Ook uitrollen over de finish weerspiegelt geen echt racetempo.
+    - Deze optie waarborgt dat baanrecords uitsluitend worden gevestigd door pure, ononderbroken rondes op topsnelheid.
+
+---
+
+#### Samenvattende Vergelijkingstabel
+
+| Kenmerk / Gedrag | Reguliere Ronde onder Groen | Drift-ronde (`isDrift = true`) | Ronde met Drift Erin (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Baanstroom bij Finishsensor** | **AAN** (Groene Vlag) | **UIT** (Gele Vlag, Einde Heat/Race) | **AAN** (Groene Vlag) |
+| **Sensordetectie-omstandigheid** | Onder stroom op racesnelheid | Uitrollend binnen `drift_time` | Onder stroom na pauze of heat-overdracht |
+| **Data-vlag `isDrift`** | `false` | `true` | `false` |
+| **Interne Status `driftInvolved`** | `false` | `true` | `true` |
+| **Badge op Racedag-scherm** | Geen | **`DRIFT`**-badge in baankolom | Geen |
+| **Geluidsmelding** | Standaard ronde-/recordsound | **Drift-ronde geluid** (`urgent`) | Standaard geluid (geen drift-melding) |
+| **Telt voor Rondetotaal & Klassement** | **Ja** (volledig) | **Ja** (volledig) | **Ja** (volledig) |
+| **Geldig voor Records (`adjust_drift_laps` = UIT)** | **Ja** | **Ja** (indien sneller) | **Ja** (indien sneller) |
+| **Geldig voor Records (`adjust_drift_laps` = AAN)** | **Ja** | **Uitgesloten / Gediskwalificeerd** | **Uitgesloten / Gediskwalificeerd** |
+
 ---
 
 ## Heat-opties {: #heat-options }
