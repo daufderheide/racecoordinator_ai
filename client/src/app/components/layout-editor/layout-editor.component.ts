@@ -23,7 +23,10 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
-import { normalizeLoadedCustomUis } from "@app/components/ui-editor/ui-editor-data.helper";
+import {
+  handleUiEditorKeyboardShortcut,
+  normalizeLoadedCustomUis,
+} from "@app/components/ui-editor/ui-editor-data.helper";
 import { findDefaultWidgetId } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { WidgetInspectorFieldsComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-inspector-fields.component";
 import { DataService } from "@app/data.service";
@@ -273,6 +276,18 @@ export class LayoutEditorComponent
   @HostListener("window:resize")
   onResize(): void {
     this.cdr.markForCheck();
+  }
+
+  @HostListener("window:keydown", ["$event"])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if (!this.isEditMode) return;
+    handleUiEditorKeyboardShortcut(
+      event,
+      () => this.undoManager?.undo(),
+      () => this.undoManager?.redo(),
+      () => this.removeSelectedWidget(),
+      (dx, dy) => this.nudgeSelectedWidget(dx, dy),
+    );
   }
 
   private initUndoManager(): void {

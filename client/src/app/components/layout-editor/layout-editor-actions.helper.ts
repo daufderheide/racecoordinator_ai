@@ -40,6 +40,7 @@ import {
 import {
   applyWidgetDefaultSettings,
   computeWidgetDisplayName,
+  handleNudgeSelectedWidget,
   handleRemoveSelectedWidget,
   handleReplicateLanes,
   handleWidgetInspectorChange as helperHandleWidgetInspectorChange,
@@ -450,6 +451,15 @@ export function onWidgetInspectorChange(
   comp: any,
 ): void {
   helperHandleWidgetInspectorChange(comp, widget, ui);
+}
+
+export function nudgeSelectedWidget(
+  dx: number,
+  dy: number,
+  ui: CustomUI,
+  comp: any,
+): void {
+  handleNudgeSelectedWidget(comp, dx, dy, ui);
 }
 
 export function onReplicateLanes(

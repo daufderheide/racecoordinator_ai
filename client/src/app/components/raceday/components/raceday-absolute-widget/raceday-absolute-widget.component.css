@@ -15,6 +15,7 @@
 .widget-wrapper.edit-mode {
   outline: 1px dashed rgba(59, 130, 246, 0.4);
   background-color: rgba(59, 130, 246, 0.02);
+  cursor: move;
 }
 
 .widget-wrapper.edit-mode.grid-cell-unselected {

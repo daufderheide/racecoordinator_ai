@@ -44,6 +44,7 @@ import {
   isMigratedLayout,
   isWidgetHeightAutoCalculated,
   isWidgetWidthAutoCalculated,
+  nudgeSelectedWidget,
   onAnchorSelected,
   onImportLayout,
   onLayoutChanged,
@@ -168,12 +169,14 @@ export abstract class LayoutEditorBase {
     }
   }
 
-  getLayoutBaseWidth(): number {
-    return this.editingLayout ? getLayoutBaseWidth(this.editingLayout) : 1920;
+  getLayoutBaseWidth(ui?: CustomUI): number {
+    const target = ui || this.editingLayout;
+    return target ? getLayoutBaseWidth(target) : 1920;
   }
 
-  getLayoutBaseHeight(): number {
-    return this.editingLayout ? getLayoutBaseHeight(this.editingLayout) : 1080;
+  getLayoutBaseHeight(ui?: CustomUI): number {
+    const target = ui || this.editingLayout;
+    return target ? getLayoutBaseHeight(target) : 1080;
   }
 
   getPreviewContainerWidth(): number {
@@ -304,10 +307,16 @@ export abstract class LayoutEditorBase {
     }
   }
 
-  onWidgetInspectorChange(widget: any): void {
-    if (this.editingLayout) {
-      onWidgetInspectorChange(widget, this.editingLayout, this);
+  onWidgetInspectorChange(widget: any, ui?: CustomUI): void {
+    const targetUi = ui || this.editingLayout;
+    if (targetUi) {
+      onWidgetInspectorChange(widget, targetUi, this);
     }
+  }
+
+  nudgeSelectedWidget(dx: number, dy: number): void {
+    if (!this.isEditMode || !this.editingLayout) return;
+    nudgeSelectedWidget(dx, dy, this.editingLayout, this);
   }
 
   isWidgetWidthAutoCalculated(widget: any): boolean {

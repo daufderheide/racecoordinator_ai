@@ -582,10 +582,11 @@ export class RacedayAbsoluteWidgetComponent
   // Handle dragging manually to support snapping better than cdkDrag might out of the box
   onDragStart(event: PointerEvent) {
     if (!this.canModifyWidget) return;
-    // Don't drag if clicking a resize handle
-    if ((event.target as HTMLElement)?.classList?.contains("resize-handle"))
-      return;
-    if ((event.target as HTMLElement)?.tagName === "BUTTON") return;
+    const target = event.target as HTMLElement | null;
+    // Don't drag if clicking a resize handle, button, or input
+    if (target?.closest(".resize-handle")) return;
+    if (target?.closest("button")) return;
+    if (target?.closest("app-custom-select, select, input, textarea")) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -676,6 +677,26 @@ export class RacedayAbsoluteWidgetComponent
     if (this.parentComponent().removeWidget) {
       this.parentComponent().removeWidget(this.widget().id);
     }
+  }
+
+  onWidgetPointerDown(event: PointerEvent): void {
+    if (!this.isCustomizing() || this.isCountdownGhost) return;
+    const target = event.target as HTMLElement | null;
+    if (
+      target?.closest(
+        ".resize-handle, button, .widget-remove-btn, app-custom-select, select, input, textarea",
+      )
+    ) {
+      return;
+    }
+    if (
+      !this.canModifyWidget ||
+      target?.closest(".anchor-zone, .anchor-delete-btn, .lane-column-anchor")
+    ) {
+      this.bringToFront();
+      return;
+    }
+    this.onDragStart(event);
   }
 
   bringToFront() {

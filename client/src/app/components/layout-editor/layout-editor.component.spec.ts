@@ -1045,6 +1045,177 @@ describe("LayoutEditorComponent", () => {
       expect(mockLogger.error).not.toHaveBeenCalled();
     });
 
+    describe("Keyboard Shortcuts and Nudge", () => {
+      beforeEach(() => {
+        component.onSelectLayoutById("custom_ui_1");
+        component.isEditMode = true;
+        component["initUndoManager"]();
+      });
+
+      it("should ignore keyboard shortcuts when isEditMode is false", () => {
+        component.isEditMode = false;
+        component.selectedWidgetId = "w3";
+        const layout = component.getLayout(component.editingLayout);
+        const widget = layout?.widgets.find((w: any) => w.id === "w3");
+        const initialX = widget?.x;
+
+        const event = new KeyboardEvent("keydown", { key: "ArrowRight" });
+        component.handleKeyboardEvent(event);
+
+        const afterLayout = component.getLayout(component.editingLayout);
+        const afterWidget = afterLayout?.widgets.find(
+          (w: any) => w.id === "w3",
+        );
+        expect(afterWidget?.x).toBe(initialX);
+      });
+
+      it("should nudge selected widget with arrow keys by 1px", () => {
+        component.selectedWidgetId = "w3";
+        const layout = component.getLayout(component.editingLayout);
+        const widget = layout?.widgets.find((w: any) => w.id === "w3");
+        const initialX = widget!.x;
+        const initialY = widget!.y;
+
+        // ArrowRight
+        const rightEvent = new KeyboardEvent("keydown", { key: "ArrowRight" });
+        component.handleKeyboardEvent(rightEvent);
+        let current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.x).toBe(initialX + 1);
+
+        // ArrowDown
+        const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+        component.handleKeyboardEvent(downEvent);
+        current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.y).toBe(initialY + 1);
+
+        // ArrowLeft
+        const leftEvent = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+        component.handleKeyboardEvent(leftEvent);
+        current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.x).toBe(initialX);
+
+        // ArrowUp
+        const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+        component.handleKeyboardEvent(upEvent);
+        current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.y).toBe(initialY);
+      });
+
+      it("should nudge selected widget with Shift + arrow keys by 10px", () => {
+        component.selectedWidgetId = "w3";
+        const layout = component.getLayout(component.editingLayout);
+        const widget = layout?.widgets.find((w: any) => w.id === "w3");
+        const initialX = widget!.x;
+        const initialY = widget!.y;
+
+        const rightEvent = new KeyboardEvent("keydown", {
+          key: "ArrowRight",
+          shiftKey: true,
+        });
+        component.handleKeyboardEvent(rightEvent);
+        let current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.x).toBe(initialX + 10);
+
+        const downEvent = new KeyboardEvent("keydown", {
+          key: "ArrowDown",
+          shiftKey: true,
+        });
+        component.handleKeyboardEvent(downEvent);
+        current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.y).toBe(initialY + 10);
+      });
+
+      it("should clamp nudging within canvas boundaries", () => {
+        component.selectedWidgetId = "w3";
+        const layout = component.getLayout(component.editingLayout)!;
+        const widget = layout.widgets.find((w: any) => w.id === "w3")!;
+        widget.x = 0;
+        widget.y = 0;
+        component.editingLayout!.layoutJson = JSON.stringify(layout);
+
+        const leftEvent = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+        component.handleKeyboardEvent(leftEvent);
+        const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+        component.handleKeyboardEvent(upEvent);
+
+        const current = component
+          .getLayout(component.editingLayout)!
+          .widgets.find((w: any) => w.id === "w3");
+        expect(current!.x).toBe(0);
+        expect(current!.y).toBe(0);
+      });
+
+      it("should delete selected widget on Delete or Backspace key", () => {
+        spyOn(component, "removeSelectedWidget");
+        component.selectedWidgetId = "w3";
+
+        const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
+        component.handleKeyboardEvent(deleteEvent);
+        expect(component.removeSelectedWidget).toHaveBeenCalledTimes(1);
+
+        const backspaceEvent = new KeyboardEvent("keydown", {
+          key: "Backspace",
+        });
+        component.handleKeyboardEvent(backspaceEvent);
+        expect(component.removeSelectedWidget).toHaveBeenCalledTimes(2);
+      });
+
+      it("should not trigger delete or nudge when typing in an input field", () => {
+        spyOn(component, "removeSelectedWidget");
+        component.selectedWidgetId = "w3";
+
+        const input = document.createElement("input");
+        document.body.appendChild(input);
+        input.focus();
+
+        const deleteEvent = new KeyboardEvent("keydown", { key: "Delete" });
+        Object.defineProperty(deleteEvent, "target", { value: input });
+        component.handleKeyboardEvent(deleteEvent);
+
+        expect(component.removeSelectedWidget).not.toHaveBeenCalled();
+        document.body.removeChild(input);
+      });
+
+      it("should trigger undo on Ctrl+Z and redo on Ctrl+Y / Shift+Ctrl+Z", () => {
+        spyOn(component.undoManager, "undo");
+        spyOn(component.undoManager, "redo");
+
+        const undoEvent = new KeyboardEvent("keydown", {
+          key: "z",
+          ctrlKey: true,
+        });
+        component.handleKeyboardEvent(undoEvent);
+        expect(component.undoManager.undo).toHaveBeenCalledTimes(1);
+
+        const redoEvent = new KeyboardEvent("keydown", {
+          key: "y",
+          ctrlKey: true,
+        });
+        component.handleKeyboardEvent(redoEvent);
+        expect(component.undoManager.redo).toHaveBeenCalledTimes(1);
+
+        const redoShiftEvent = new KeyboardEvent("keydown", {
+          key: "z",
+          ctrlKey: true,
+          shiftKey: true,
+        });
+        component.handleKeyboardEvent(redoShiftEvent);
+        expect(component.undoManager.redo).toHaveBeenCalledTimes(2);
+      });
+    });
+
     describe("onImportLayout", () => {
       it("should successfully import a CustomUI format layout (e.g. four-rows-layout.json)", async () => {
         component.isEditMode = true;

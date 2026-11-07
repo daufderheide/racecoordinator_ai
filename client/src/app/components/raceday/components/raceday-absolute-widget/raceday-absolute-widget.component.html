@@ -52,7 +52,9 @@
   [style.background-color]="widget().backgroundColor || null"
   [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
   [style.--widget-scale-factor]="widget().textScaleFactor || 1"
-  (pointerdown)="isCustomizing() && !isCountdownGhost ? bringToFront() : null"
+  (pointerdown)="
+    isCustomizing() && !isCountdownGhost ? onWidgetPointerDown($event) : null
+  "
   window-id="absolute-widget"
 >
   <div class="widget-content">

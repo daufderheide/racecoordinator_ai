@@ -275,6 +275,82 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(fakeBtnEvent.preventDefault).not.toHaveBeenCalled();
   });
 
+  it("should handle onWidgetPointerDown to start dragging when clicking widget body in edit mode", () => {
+    spyOn(component, "onDragStart");
+    const bodyDiv = document.createElement("div");
+    bodyDiv.classList.add("branding-panel");
+    const pointerEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(pointerEvent, "target", { value: bodyDiv });
+
+    component.onWidgetPointerDown(pointerEvent);
+    expect(component.onDragStart).toHaveBeenCalledWith(pointerEvent);
+  });
+
+  it("should ignore onWidgetPointerDown if not customizing or isCountdownGhost", () => {
+    spyOn(component, "onDragStart");
+    spyOn(component, "bringToFront");
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+
+    const pointerEvent = new PointerEvent("pointerdown");
+    component.onWidgetPointerDown(pointerEvent);
+
+    expect(component.onDragStart).not.toHaveBeenCalled();
+    expect(component.bringToFront).not.toHaveBeenCalled();
+  });
+
+  it("should not start drag in onWidgetPointerDown if clicking resize handle, button, or input", () => {
+    spyOn(component, "onDragStart");
+    spyOn(component, "bringToFront");
+
+    const handle = document.createElement("div");
+    handle.className = "resize-handle se";
+    const handleEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(handleEvent, "target", { value: handle });
+    component.onWidgetPointerDown(handleEvent);
+    expect(component.onDragStart).not.toHaveBeenCalled();
+
+    const btn = document.createElement("button");
+    const btnEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(btnEvent, "target", { value: btn });
+    component.onWidgetPointerDown(btnEvent);
+    expect(component.onDragStart).not.toHaveBeenCalled();
+
+    const input = document.createElement("input");
+    const inputEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(inputEvent, "target", { value: input });
+    component.onWidgetPointerDown(inputEvent);
+    expect(component.onDragStart).not.toHaveBeenCalled();
+  });
+
+  it("should bringToFront but not drag in onWidgetPointerDown if clicking lane-column anchor zone", () => {
+    spyOn(component, "onDragStart");
+    spyOn(component, "bringToFront");
+
+    const anchor = document.createElement("div");
+    anchor.className = "anchor-zone top-left";
+    const anchorEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(anchorEvent, "target", { value: anchor });
+
+    component.onWidgetPointerDown(anchorEvent);
+    expect(component.bringToFront).toHaveBeenCalled();
+    expect(component.onDragStart).not.toHaveBeenCalled();
+  });
+
+  it("should bringToFront but not drag in onWidgetPointerDown if canModifyWidget is false", () => {
+    spyOn(component, "onDragStart");
+    spyOn(component, "bringToFront");
+    spyOnProperty(component, "canModifyWidget", "get").and.returnValue(false);
+
+    const bodyDiv = document.createElement("div");
+    const pointerEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(pointerEvent, "target", { value: bodyDiv });
+
+    component.onWidgetPointerDown(pointerEvent);
+    expect(component.bringToFront).toHaveBeenCalled();
+    expect(component.onDragStart).not.toHaveBeenCalled();
+  });
+
   it("should handle removeWidget directly", () => {
     const fakeEvent = new Event("click");
     spyOn(fakeEvent, "stopPropagation");
