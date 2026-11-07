@@ -259,19 +259,19 @@ export abstract class LayoutEditorBase {
     }
   }
 
-  onWidgetXChange(x: number): void {
+  onWidgetXChange(x: any): void {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetXChange(x, this.currentSelectedWidget, this.editingLayout, this);
     }
   }
 
-  onWidgetYChange(y: number): void {
+  onWidgetYChange(y: any): void {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetYChange(y, this.currentSelectedWidget, this.editingLayout, this);
     }
   }
 
-  onWidgetWidthChange(w: number): void {
+  onWidgetWidthChange(w: any): void {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetWidthChange(
         w,
@@ -282,7 +282,7 @@ export abstract class LayoutEditorBase {
     }
   }
 
-  onWidgetHeightChange(h: number): void {
+  onWidgetHeightChange(h: any): void {
     if (this.editingLayout && this.currentSelectedWidget) {
       onWidgetHeightChange(
         h,

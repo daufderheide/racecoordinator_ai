@@ -332,7 +332,7 @@ export function removeSelectedWidget(ui: CustomUI, comp: any): void {
 }
 
 export function onWidgetXChange(
-  newX: number,
+  newX: any,
   widget: any,
   ui: CustomUI,
   comp: any,
@@ -341,7 +341,7 @@ export function onWidgetXChange(
 }
 
 export function onWidgetYChange(
-  newY: number,
+  newY: any,
   widget: any,
   ui: CustomUI,
   comp: any,
@@ -350,7 +350,7 @@ export function onWidgetYChange(
 }
 
 export function onWidgetWidthChange(
-  newW: number,
+  newW: any,
   widget: any,
   ui: CustomUI,
   comp: any,
@@ -358,18 +358,39 @@ export function onWidgetWidthChange(
   const layout = parseLayoutConfig(ui);
   const target = (layout.widgets || []).find((w: any) => w.id === widget.id);
   if (target) {
-    const val = Math.max(50, Number(newW) || 50);
+    const rawVal =
+      newW && typeof newW === "object" && "target" in newW
+        ? newW.target.value
+        : newW;
+    const baseWidth = comp.getLayoutBaseWidth?.(ui) || layout.baseWidth || 1920;
+    const num = Number(rawVal);
+    const val =
+      rawVal === "" || rawVal === null || rawVal === undefined
+        ? target.width || 50
+        : Math.max(
+            50,
+            Math.min(
+              baseWidth,
+              isNaN(num) ? target.width || 50 : Math.round(num),
+            ),
+          );
+    if (newW && typeof newW === "object" && "target" in newW && newW.target) {
+      newW.target.value = String(val);
+    }
+    const hasChanged = target.width !== val;
     target.width = val;
     if (widget) widget.width = val;
-    saveLayoutConfig(ui, layout);
-    comp.syncRacedayPreview?.(layout);
-    comp.captureState?.();
+    if (hasChanged) {
+      saveLayoutConfig(ui, layout);
+      comp.syncRacedayPreview?.(layout);
+      comp.captureState?.();
+    }
     comp.cdr?.markForCheck();
   }
 }
 
 export function onWidgetHeightChange(
-  newH: number,
+  newH: any,
   widget: any,
   ui: CustomUI,
   comp: any,
@@ -377,12 +398,34 @@ export function onWidgetHeightChange(
   const layout = parseLayoutConfig(ui);
   const target = (layout.widgets || []).find((w: any) => w.id === widget.id);
   if (target) {
-    const val = Math.max(20, Number(newH) || 20);
+    const rawVal =
+      newH && typeof newH === "object" && "target" in newH
+        ? newH.target.value
+        : newH;
+    const baseHeight =
+      comp.getLayoutBaseHeight?.(ui) || layout.baseHeight || 1080;
+    const num = Number(rawVal);
+    const val =
+      rawVal === "" || rawVal === null || rawVal === undefined
+        ? target.height || 20
+        : Math.max(
+            20,
+            Math.min(
+              baseHeight,
+              isNaN(num) ? target.height || 20 : Math.round(num),
+            ),
+          );
+    if (newH && typeof newH === "object" && "target" in newH && newH.target) {
+      newH.target.value = String(val);
+    }
+    const hasChanged = target.height !== val;
     target.height = val;
     if (widget) widget.height = val;
-    saveLayoutConfig(ui, layout);
-    comp.syncRacedayPreview?.(layout);
-    comp.captureState?.();
+    if (hasChanged) {
+      saveLayoutConfig(ui, layout);
+      comp.syncRacedayPreview?.(layout);
+      comp.captureState?.();
+    }
     comp.cdr?.markForCheck();
   }
 }

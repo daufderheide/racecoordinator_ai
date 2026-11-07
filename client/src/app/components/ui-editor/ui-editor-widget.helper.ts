@@ -615,14 +615,27 @@ export function handleWidgetXChange(
 ): void {
   if (!widget || isWidgetWidthAutoCalculated(widget, comp.activeGridSession))
     return;
-  const baseWidth = comp.getLayoutBaseWidth(ui);
-  const num = Number(value);
-  const val = isNaN(num) ? 0 : num;
-  widget.x = Math.max(
-    0,
-    Math.min(baseWidth - (widget.width || 50), Math.round(val)),
-  );
-  comp.onWidgetInspectorChange(widget, ui);
+  const baseWidth = comp.getLayoutBaseWidth
+    ? comp.getLayoutBaseWidth(ui)
+    : 1920;
+  const rawVal =
+    value && typeof value === "object" && "target" in value
+      ? value.target.value
+      : value;
+  const num = Number(rawVal);
+  const max = Math.max(0, baseWidth - (widget.width || 50));
+  const val =
+    rawVal === "" || rawVal === null || rawVal === undefined
+      ? widget.x || 0
+      : Math.max(0, Math.min(max, isNaN(num) ? 0 : Math.round(num)));
+  if (value && typeof value === "object" && "target" in value && value.target) {
+    value.target.value = String(val);
+  }
+  const hasChanged = widget.x !== val;
+  widget.x = val;
+  if (hasChanged) {
+    comp.onWidgetInspectorChange(widget, ui);
+  }
 }
 
 export function handleWidgetYChange(
@@ -633,14 +646,27 @@ export function handleWidgetYChange(
 ): void {
   if (!widget || isWidgetHeightAutoCalculated(widget, comp.activeGridSession))
     return;
-  const baseHeight = comp.getLayoutBaseHeight(ui);
-  const num = Number(value);
-  const val = isNaN(num) ? 0 : num;
-  widget.y = Math.max(
-    0,
-    Math.min(baseHeight - (widget.height || 50), Math.round(val)),
-  );
-  comp.onWidgetInspectorChange(widget, ui);
+  const baseHeight = comp.getLayoutBaseHeight
+    ? comp.getLayoutBaseHeight(ui)
+    : 1080;
+  const rawVal =
+    value && typeof value === "object" && "target" in value
+      ? value.target.value
+      : value;
+  const num = Number(rawVal);
+  const max = Math.max(0, baseHeight - (widget.height || 50));
+  const val =
+    rawVal === "" || rawVal === null || rawVal === undefined
+      ? widget.y || 0
+      : Math.max(0, Math.min(max, isNaN(num) ? 0 : Math.round(num)));
+  if (value && typeof value === "object" && "target" in value && value.target) {
+    value.target.value = String(val);
+  }
+  const hasChanged = widget.y !== val;
+  widget.y = val;
+  if (hasChanged) {
+    comp.onWidgetInspectorChange(widget, ui);
+  }
 }
 
 export function handleWidgetWidthChange(
@@ -651,14 +677,29 @@ export function handleWidgetWidthChange(
 ): void {
   if (!widget || isWidgetWidthAutoCalculated(widget, comp.activeGridSession))
     return;
-  const baseWidth = comp.getLayoutBaseWidth(ui);
-  const num = Number(value);
-  const val = isNaN(num) ? 50 : num;
-  widget.width = Math.max(
-    50,
-    Math.min(baseWidth - (widget.x || 0), Math.round(val)),
-  );
-  comp.onWidgetInspectorChange(widget, ui);
+  const baseWidth = comp.getLayoutBaseWidth
+    ? comp.getLayoutBaseWidth(ui)
+    : 1920;
+  const rawVal =
+    value && typeof value === "object" && "target" in value
+      ? value.target.value
+      : value;
+  const num = Number(rawVal);
+  const val =
+    rawVal === "" || rawVal === null || rawVal === undefined
+      ? widget.width || 50
+      : isNaN(num)
+        ? 50
+        : Math.round(num);
+  const clamped = Math.max(50, Math.min(baseWidth - (widget.x || 0), val));
+  if (value && typeof value === "object" && "target" in value && value.target) {
+    value.target.value = String(clamped);
+  }
+  const hasChanged = widget.width !== clamped;
+  widget.width = clamped;
+  if (hasChanged) {
+    comp.onWidgetInspectorChange(widget, ui);
+  }
 }
 
 export function handleWidgetHeightChange(
@@ -669,14 +710,29 @@ export function handleWidgetHeightChange(
 ): void {
   if (!widget || isWidgetHeightAutoCalculated(widget, comp.activeGridSession))
     return;
-  const baseHeight = comp.getLayoutBaseHeight(ui);
-  const num = Number(value);
-  const val = isNaN(num) ? 50 : num;
-  widget.height = Math.max(
-    20,
-    Math.min(baseHeight - (widget.y || 0), Math.round(val)),
-  );
-  comp.onWidgetInspectorChange(widget, ui);
+  const baseHeight = comp.getLayoutBaseHeight
+    ? comp.getLayoutBaseHeight(ui)
+    : 1080;
+  const rawVal =
+    value && typeof value === "object" && "target" in value
+      ? value.target.value
+      : value;
+  const num = Number(rawVal);
+  const val =
+    rawVal === "" || rawVal === null || rawVal === undefined
+      ? widget.height || 20
+      : isNaN(num)
+        ? 50
+        : Math.round(num);
+  const clamped = Math.max(20, Math.min(baseHeight - (widget.y || 0), val));
+  if (value && typeof value === "object" && "target" in value && value.target) {
+    value.target.value = String(clamped);
+  }
+  const hasChanged = widget.height !== clamped;
+  widget.height = clamped;
+  if (hasChanged) {
+    comp.onWidgetInspectorChange(widget, ui);
+  }
 }
 
 export function handleLayoutChanged(

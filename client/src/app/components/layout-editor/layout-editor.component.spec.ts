@@ -804,6 +804,135 @@ describe("LayoutEditorComponent", () => {
       expect(component.currentSelectedWidget.height).toBe(180);
     });
 
+    it("should handle widget dimension changes with Event objects on commit and clamp properly", () => {
+      component.onSelectLayoutById("default_ui_layout_rc_ai");
+      component.onToggleEditMode();
+      component.onWidgetDropdownSelect("w1");
+
+      // Valid value 205 (such as typing 2 -> 20 -> 205 and blurring)
+      const wEvent = { target: { value: "205" } };
+      component.onWidgetWidthChange(wEvent as any);
+      expect(component.currentSelectedWidget.width).toBe(205);
+      expect(wEvent.target.value).toBe("205");
+
+      // Below min width (50), should clamp on commit and update input value
+      const wClampEvent = { target: { value: "20" } };
+      component.onWidgetWidthChange(wClampEvent as any);
+      expect(component.currentSelectedWidget.width).toBe(50);
+      expect(wClampEvent.target.value).toBe("50");
+
+      // Empty value on blur should restore current valid width
+      const wEmptyEvent = { target: { value: "" } };
+      component.onWidgetWidthChange(wEmptyEvent as any);
+      expect(component.currentSelectedWidget.width).toBe(50);
+      expect(wEmptyEvent.target.value).toBe("50");
+
+      // Valid height
+      const hEvent = { target: { value: "300" } };
+      component.onWidgetHeightChange(hEvent as any);
+      expect(component.currentSelectedWidget.height).toBe(300);
+      expect(hEvent.target.value).toBe("300");
+
+      // Below min height (20)
+      const hClampEvent = { target: { value: "15" } };
+      component.onWidgetHeightChange(hClampEvent as any);
+      expect(component.currentSelectedWidget.height).toBe(20);
+      expect(hClampEvent.target.value).toBe("20");
+
+      // Empty height on blur
+      const hEmptyEvent = { target: { value: "" } };
+      component.onWidgetHeightChange(hEmptyEvent as any);
+      expect(component.currentSelectedWidget.height).toBe(20);
+      expect(hEmptyEvent.target.value).toBe("20");
+
+      // X coordinate with Event
+      const xEvent = { target: { value: "120" } };
+      component.onWidgetXChange(xEvent as any);
+      expect(component.currentSelectedWidget.x).toBe(120);
+
+      // X below 0 clamp
+      const xClampEvent = { target: { value: "-50" } };
+      component.onWidgetXChange(xClampEvent as any);
+      expect(component.currentSelectedWidget.x).toBe(0);
+
+      // Y coordinate with Event
+      const yEvent = { target: { value: "85" } };
+      component.onWidgetYChange(yEvent as any);
+      expect(component.currentSelectedWidget.y).toBe(85);
+
+      // Y below 0 clamp
+      const yClampEvent = { target: { value: "-10" } };
+      component.onWidgetYChange(yClampEvent as any);
+      expect(component.currentSelectedWidget.y).toBe(0);
+    });
+
+    it("should update widget position and dimensions when change events are dispatched on inspector DOM inputs", () => {
+      component.onSelectLayoutById("default_ui_layout_rc_ai");
+      component.onToggleEditMode();
+      component.onWidgetDropdownSelect("w1");
+      fixture.detectChanges();
+
+      const wInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#inspector-pos-w");
+      const hInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#inspector-pos-h");
+      const xInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#inspector-pos-x");
+      const yInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#inspector-pos-y");
+
+      expect(wInput).toBeTruthy();
+      expect(hInput).toBeTruthy();
+      expect(xInput).toBeTruthy();
+      expect(yInput).toBeTruthy();
+
+      // Typing (input event) does NOT commit or change the widget width
+      const initialWidth = component.currentSelectedWidget.width;
+      wInput.value = "20";
+      wInput.dispatchEvent(new Event("input"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.width).toBe(initialWidth);
+      expect(wInput.value).toBe("20");
+
+      // Change event commits the new value 205
+      wInput.value = "205";
+      wInput.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.width).toBe(205);
+
+      // Committing value below min (20) clamps to 50 on change
+      wInput.value = "20";
+      wInput.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.width).toBe(50);
+      expect(wInput.value).toBe("50");
+
+      // Height change event
+      hInput.value = "250";
+      hInput.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.height).toBe(250);
+
+      // Height below min (20)
+      hInput.value = "10";
+      hInput.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.height).toBe(20);
+      expect(hInput.value).toBe("20");
+
+      // Pos X change event
+      xInput.value = "75";
+      xInput.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.x).toBe(75);
+
+      // Pos Y change event
+      yInput.value = "90";
+      yInput.dispatchEvent(new Event("change"));
+      fixture.detectChanges();
+      expect(component.currentSelectedWidget.y).toBe(90);
+    });
+
     it("should update widget scaleMode and populate default settings when switching to custom in inspector", () => {
       component.onSelectLayoutById("default_ui_layout_rc_ai");
       component.onToggleEditMode();

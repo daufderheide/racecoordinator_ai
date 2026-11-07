@@ -864,6 +864,38 @@ describe("ui-editor-widget.helper", () => {
 
     handleWidgetHeightChange(comp, 5, widget);
     expect(widget.height).toBe(20); // min 20
+
+    // Test with Event objects from (change) bindings
+    const wEvt = { target: { value: "205" } };
+    handleWidgetWidthChange(comp, wEvt, widget);
+    expect(widget.width).toBe(205);
+    expect(wEvt.target.value).toBe("205");
+
+    const wClampEvt = { target: { value: "20" } };
+    handleWidgetWidthChange(comp, wClampEvt, widget);
+    expect(widget.width).toBe(50);
+    expect(wClampEvt.target.value).toBe("50");
+
+    widget.y = 50;
+    const hEvt = { target: { value: "300" } };
+    handleWidgetHeightChange(comp, hEvt, widget);
+    expect(widget.height).toBe(300);
+    expect(hEvt.target.value).toBe("300");
+
+    const hClampEvt = { target: { value: "10" } };
+    handleWidgetHeightChange(comp, hClampEvt, widget);
+    expect(widget.height).toBe(20);
+    expect(hClampEvt.target.value).toBe("20");
+
+    const xEvt = { target: { value: "50" } };
+    handleWidgetXChange(comp, xEvt, widget);
+    expect(widget.x).toBe(50);
+    expect(xEvt.target.value).toBe("50");
+
+    const yEvt = { target: { value: "60" } };
+    handleWidgetYChange(comp, yEvt, widget);
+    expect(widget.y).toBe(60);
+    expect(yEvt.target.value).toBe("60");
   });
 
   it("should handle layout change and set default widget selection", () => {

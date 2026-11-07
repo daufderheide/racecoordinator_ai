@@ -440,7 +440,8 @@
                       isWidgetWidthAutoCalculated(currentSelectedWidget)
                     "
                     [ngModel]="currentSelectedWidget.x"
-                    (ngModelChange)="onWidgetXChange($event)"
+                    (change)="onWidgetXChange($event)"
+                    (keydown.enter)="$any($event.target).blur()"
                     min="0"
                     [max]="getLayoutBaseWidth() - currentSelectedWidget.width"
                     autocomplete="off"
@@ -458,7 +459,8 @@
                       isWidgetHeightAutoCalculated(currentSelectedWidget)
                     "
                     [ngModel]="currentSelectedWidget.y"
-                    (ngModelChange)="onWidgetYChange($event)"
+                    (change)="onWidgetYChange($event)"
+                    (keydown.enter)="$any($event.target).blur()"
                     min="0"
                     [max]="getLayoutBaseHeight() - currentSelectedWidget.height"
                     autocomplete="off"
@@ -478,7 +480,8 @@
                       isWidgetWidthAutoCalculated(currentSelectedWidget)
                     "
                     [ngModel]="currentSelectedWidget.width"
-                    (ngModelChange)="onWidgetWidthChange($event)"
+                    (change)="onWidgetWidthChange($event)"
+                    (keydown.enter)="$any($event.target).blur()"
                     min="50"
                     [max]="getLayoutBaseWidth()"
                     autocomplete="off"
@@ -496,7 +499,8 @@
                       isWidgetHeightAutoCalculated(currentSelectedWidget)
                     "
                     [ngModel]="currentSelectedWidget.height"
-                    (ngModelChange)="onWidgetHeightChange($event)"
+                    (change)="onWidgetHeightChange($event)"
+                    (keydown.enter)="$any($event.target).blur()"
                     min="20"
                     [max]="getLayoutBaseHeight()"
                     autocomplete="off"
