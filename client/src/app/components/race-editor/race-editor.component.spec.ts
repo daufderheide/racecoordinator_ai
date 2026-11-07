@@ -3027,6 +3027,7 @@ describe("RaceEditorComponent", () => {
       tabs.forEach((tab) => {
         expect(tab.label).toBeDefined();
         expect(tab.label.length).toBeGreaterThan(0);
+        expect(tab.active).toBeTrue();
       });
     });
 
@@ -3071,6 +3072,9 @@ describe("RaceEditorComponent", () => {
         top: 250 - 100 + 0 - 24,
         behavior: "smooth",
       });
+
+      component.scrollToAndExpandSection("group-section");
+      expect(component.sectionsExpanded.groups).toBeFalse();
     }));
 
     it("should fallback to scrollIntoView when container is not found", fakeAsync(() => {

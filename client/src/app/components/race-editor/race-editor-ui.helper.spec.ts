@@ -117,5 +117,26 @@ describe("RaceEditorUiHelper", () => {
         '"general":true',
       );
     });
+
+    it("should toggle section collapsed and save to localStorage when already expanded", () => {
+      defaultSections.general = true;
+      RaceEditorUiHelper.scrollToAndExpandSection(
+        "general-section",
+        defaultSections,
+      );
+      expect(defaultSections.general).toBeFalse();
+      expect(localStorage.getItem("race_editor_expanders")).toContain(
+        '"general":false',
+      );
+
+      RaceEditorUiHelper.scrollToAndExpandSection(
+        "general-section",
+        defaultSections,
+      );
+      expect(defaultSections.general).toBeTrue();
+      expect(localStorage.getItem("race_editor_expanders")).toContain(
+        '"general":true',
+      );
+    });
   });
 });
