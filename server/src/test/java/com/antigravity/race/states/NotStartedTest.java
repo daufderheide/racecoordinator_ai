@@ -257,4 +257,55 @@ public class NotStartedTest {
 
     assertEquals(RaceFlag.RED, dhd.getFlag());
   }
+
+  @Test
+  public void testWarmupEqualsAutoStartTime_WhenRemainingZero_NotWarmup() {
+    com.antigravity.models.Race raceEqualTimes =
+        new com.antigravity.models.Race.Builder()
+            .withAutoStartTime(70.0)
+            .withAutoStartWarmupTime(70.0)
+            .build();
+    when(race.getRaceModel()).thenReturn(raceEqualTimes);
+    when(race.getAutoStartRemaining()).thenReturn(0.0);
+    when(race.isAutoStartFired()).thenReturn(false);
+
+    assertFalse(notStarted.isWarmupActive(race));
+    assertEquals(RaceFlag.RED, notStarted.getFlagType(race));
+
+    notStarted.enter(race);
+    boolean lapProcessed = notStarted.onLap(0, 5.0, 0, false);
+    assertFalse(lapProcessed);
+    verify(executionManager, never())
+        .onLap(anyInt(), anyDouble(), anyInt(), anyBoolean(), anyBoolean(), anyBoolean());
+
+    notStarted.onSegment(0, 2.0, 0);
+    verify(executionManager, never()).onSegment(anyInt(), anyDouble(), anyInt());
+
+    notStarted.pause(race);
+    verify(race, never()).resetCurrentHeat();
+
+    notStarted.start(race);
+    verify(race, never()).resetCurrentHeat();
+  }
+
+  @Test
+  public void testWarmupActive_WhenAutoStartFired_ReturnsFalse() {
+    com.antigravity.models.Race raceEqualTimes =
+        new com.antigravity.models.Race.Builder()
+            .withAutoStartTime(70.0)
+            .withAutoStartWarmupTime(70.0)
+            .build();
+    when(race.getRaceModel()).thenReturn(raceEqualTimes);
+    when(race.getAutoStartRemaining()).thenReturn(50.0);
+    when(race.isAutoStartFired()).thenReturn(true);
+
+    assertFalse(notStarted.isWarmupActive(race));
+    assertEquals(RaceFlag.RED, notStarted.getFlagType(race));
+
+    notStarted.enter(race);
+    boolean lapProcessed = notStarted.onLap(0, 5.0, 0, false);
+    assertFalse(lapProcessed);
+    verify(executionManager, never())
+        .onLap(anyInt(), anyDouble(), anyInt(), anyBoolean(), anyBoolean(), anyBoolean());
+  }
 }

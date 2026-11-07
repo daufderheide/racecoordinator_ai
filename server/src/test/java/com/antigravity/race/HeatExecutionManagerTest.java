@@ -604,6 +604,60 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testSingleLapAutoSegments_CheckFinishFalse_DoesNotFinishOrShutPower() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race SingleLapAutoSegments CheckFinishFalse")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_sl_checkfinish_false")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.setLanePower(true, 0);
+    race.setLanePower(true, 1);
+
+    // Initial reaction time lap during warmup (checkFinish = false)
+    executionManager.onLap(0, 1.0, 1, true, false, false);
+    executionManager.onLap(1, 1.0, 1, true, false, false);
+
+    // Second lap during warmup (checkFinish = false). raceTime is 0.0f, but checkFinish is false!
+    boolean counted0 = executionManager.onLap(0, 5.0, 1, true, false, false);
+    assertTrue("Warmup lap should be processed", counted0);
+    assertFalse(
+        "Driver 0 must not be in finishedLanes", executionManager.getFinishedLanes().contains(0));
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    assertFalse("Driver 0 must not be finished", d0.isFinished());
+    assertTrue("Lane 0 power must remain ON", race.isLanePower(0));
+    assertFalse("Race must not transition to HeatOver", race.getState() instanceof HeatOver);
+
+    boolean counted1 = executionManager.onLap(1, 5.0, 1, true, false, false);
+    assertTrue("Warmup lap should be processed", counted1);
+    assertFalse(
+        "Driver 1 must not be in finishedLanes", executionManager.getFinishedLanes().contains(1));
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+    assertFalse("Driver 1 must not be finished", d1.isFinished());
+    assertTrue("Lane 1 power must remain ON", race.isLanePower(1));
+    assertFalse("Race must not transition to HeatOver", race.getState() instanceof HeatOver);
+  }
+
+  @Test
   public void testTimedRace_TrackCallDuringAutoSegmentsLap_RestartDoesNotResetRaceTime() {
     heatScoring =
         new HeatScoring(

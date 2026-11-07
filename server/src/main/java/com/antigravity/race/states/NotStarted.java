@@ -24,17 +24,32 @@ import org.slf4j.LoggerFactory;
 public class NotStarted implements IRaceState {
   private static final Logger logger = LoggerFactory.getLogger(NotStarted.class);
 
+  public boolean isWarmupActive(Race race) {
+    Race targetRace = race != null ? race : this.race;
+    if (targetRace == null || targetRace.getRaceModel() == null) {
+      return false;
+    }
+    if (targetRace.isAutoStartFired()) {
+      return false;
+    }
+    double remaining = targetRace.getAutoStartRemaining();
+    if (remaining <= 0) {
+      return false;
+    }
+    double autoStartTime = targetRace.getRaceModel().getAutoStartTime();
+    double autoStartWarmupTime = targetRace.getRaceModel().getAutoStartWarmupTime();
+    if (autoStartWarmupTime <= 0) {
+      return false;
+    }
+    double elapsed = autoStartTime - remaining;
+    return elapsed <= autoStartWarmupTime;
+  }
+
   @Override
   public RaceFlag getFlagType(Race race) {
     if (race == null) return RaceFlag.RED;
 
-    double autoStartTime = race.getRaceModel() != null ? race.getRaceModel().getAutoStartTime() : 0;
-    double autoStartWarmupTime =
-        race.getRaceModel() != null ? race.getRaceModel().getAutoStartWarmupTime() : 0;
-    double elapsed = autoStartTime - race.getAutoStartRemaining();
-    if (autoStartWarmupTime > 0
-        && elapsed <= autoStartWarmupTime
-        && race.getAutoStartRemaining() > 0) {
+    if (isWarmupActive(race)) {
       return race.getTheme() != null
           ? race.getTheme()
               .resolveFlag("flag.warmup", RaceFlag.GREEN_YELLOW, race.getDatabaseContext())
@@ -108,12 +123,10 @@ public class NotStarted implements IRaceState {
   @Override
   public void start(Race race) {
     logger.info("NotStarted.start() called. Starting new race.");
+    boolean wasWarmup = isWarmupActive(race);
     stopTimer();
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-    double elapsed = autoStartTime - race.getAutoStartRemaining();
 
-    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+    if (wasWarmup) {
       logger.info("NotStarted.start(): Warmup was active, resetting heat.");
       race.resetCurrentHeat();
     }
@@ -125,11 +138,8 @@ public class NotStarted implements IRaceState {
   public void pause(Race race) {
     logger.info("NotStarted.pause() called. Terminating auto-start.");
 
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-    double elapsed = autoStartTime - race.getAutoStartRemaining();
-
-    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+    boolean wasWarmup = isWarmupActive(race);
+    if (wasWarmup) {
       logger.info("NotStarted.pause(): Warmup was active, resetting heat.");
       race.resetCurrentHeat();
     }
@@ -213,11 +223,7 @@ public class NotStarted implements IRaceState {
       return false;
     }
 
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-    double elapsed = autoStartTime - race.getAutoStartRemaining();
-
-    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+    if (isWarmupActive(race)) {
       logger.debug("NotStarted: Warmup lap detected, delegating to executor.");
       return executionManager.onLap(
           lane,
@@ -236,11 +242,7 @@ public class NotStarted implements IRaceState {
       return;
     }
 
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-    double elapsed = autoStartTime - race.getAutoStartRemaining();
-
-    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+    if (isWarmupActive(race)) {
       logger.debug("NotStarted: Warmup segment detected, delegating to executor.");
       executionManager.onSegment(lane, segmentTime, interfaceId);
     }
@@ -333,6 +335,11 @@ public class NotStarted implements IRaceState {
                 broadcastTime(race);
                 stopTimer();
                 race.setAutoStartFired(true);
+                if (autoStartWarmupTime > 0 && !warmupEnded) {
+                  warmupEnded = true;
+                  logger.info("NotStarted: Warmup ended at race start. Resetting heat.");
+                  race.resetCurrentHeat();
+                }
                 race.startRace();
               } else {
                 race.setAutoStartRemaining(remaining);

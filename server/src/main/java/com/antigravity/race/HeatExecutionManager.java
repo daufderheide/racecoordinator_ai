@@ -378,7 +378,7 @@ public class HeatExecutionManager {
     driverData.setPendingLapTime(0.0);
 
     HeatScoring scoring = this.race.getRaceModel().getHeatScoring();
-    if (isSingleLapAutoSegmentsFinish(scoring)) {
+    if (checkFinish && isSingleLapAutoSegmentsFinish(scoring)) {
       handleSingleLapAutoSegments(driverData, finalLapTime, lane);
       return false;
     }
