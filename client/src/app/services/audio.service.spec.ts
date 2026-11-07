@@ -347,6 +347,7 @@ describe("AudioService", () => {
           /\[AUDIO\] Preempting active 'low' voice with higher priority 'high'/,
         ),
       );
+      expect(service.getCalloutQueue().length).toBe(0);
     });
 
     it("should automatically retry TTS callout once after 60ms if interrupted by asynchronous cancel", fakeAsync(() => {
@@ -1183,6 +1184,52 @@ describe("AudioService", () => {
 
       expect(service.isCoolingDown()).toBeFalse();
       expect(service.getActiveVoice()?.priority).toBe("urgent");
+    }));
+
+    it("should break through cadence cooldown if high priority callout arrives", fakeAsync(() => {
+      const callout1: AudioConfig = { type: "preset", url: "callout1.wav" };
+      service.playCallout(callout1, "normal");
+      mockAudioInstance.onended();
+      expect(service.isCoolingDown()).toBeTrue();
+
+      const halfwayCallout: AudioConfig = {
+        type: "preset",
+        url: "halfway.wav",
+      };
+      service.playCallout(halfwayCallout, "high");
+
+      expect(service.isCoolingDown()).toBeFalse();
+      expect(service.getActiveVoice()?.priority).toBe("high");
+    }));
+
+    it("should stop and not re-enqueue a lower-priority active callout when preempted by a higher-priority sound", fakeAsync(() => {
+      const lapCallout: AudioConfig = { type: "tts", text: "4.356" };
+      service.queueCallout(lapCallout, "low", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 1,
+      });
+      expect(service.getActiveVoice()?.priority).toBe("low");
+
+      // Timed halfway announcement arrives with high priority
+      const halfwayCallout: AudioConfig = {
+        type: "preset",
+        url: "halfway.wav",
+      };
+      service.playCallout(halfwayCallout, "high");
+
+      // Active voice is now halfway, and the preempted lower-priority callout is not re-enqueued
+      expect(service.getActiveVoice()?.priority).toBe("high");
+      expect(service.getCalloutQueue().length).toBe(0);
+
+      // Halfway announcement ends
+      mockAudioInstance.onended();
+      expect(service.isCoolingDown()).toBeTrue();
+
+      // Cadence cooldown expires (500ms)
+      tick(500);
+
+      // Channel is now idle; preempted callout was stopped and simply does not play
+      expect(service.getActiveVoice()).toBeNull();
     }));
 
     it("should log debug instead of error when voice preset playback is aborted or paused", fakeAsync(() => {

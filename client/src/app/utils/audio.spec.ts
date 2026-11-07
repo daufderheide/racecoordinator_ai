@@ -1,6 +1,8 @@
 import {
+  calculateTtsSafetyTimeout,
   createTTSContext,
   dispatchLapAudio,
+  estimateSpokenWordCount,
   getDefaultAudioName,
   getEffectiveDriver,
   getLapAudioConfig,
@@ -432,6 +434,53 @@ describe("playSound Utility", () => {
       expect(context.driver.driver.name).toBe(context.driver.name);
       expect(context.race?.name).toBeDefined();
       expect(context.track?.name).toBeDefined();
+    });
+
+    describe("estimateSpokenWordCount", () => {
+      it("should return 0 for empty or whitespace text", () => {
+        expect(estimateSpokenWordCount("")).toBe(0);
+        expect(estimateSpokenWordCount("   ")).toBe(0);
+      });
+
+      it("should count plain words correctly", () => {
+        expect(estimateSpokenWordCount("Halfway")).toBe(1);
+        expect(estimateSpokenWordCount("Ten seconds remaining")).toBe(3);
+      });
+
+      it("should expand decimal lap times to count all spoken digits and avoid premature cutoffs", () => {
+        // "4.356" is spoken as "4 point 3 5 6" = 5 words
+        expect(estimateSpokenWordCount("4.356")).toBe(5);
+        // "12.45" is spoken as "12 point 4 5" = 4 words
+        expect(estimateSpokenWordCount("12.45")).toBe(4);
+        // "Dave 4.356" -> "Dave 4 point 3 5 6" = 6 words
+        expect(estimateSpokenWordCount("Dave 4.356")).toBe(6);
+      });
+
+      it("should expand +/- signs to spoken words", () => {
+        // "+0.250" -> "plus 0 point 2 5 0" = 6 words
+        expect(estimateSpokenWordCount("+0.250")).toBe(6);
+        // "-1.5" -> "minus 1 point 5" = 4 words
+        expect(estimateSpokenWordCount("-1.5")).toBe(4);
+      });
+    });
+
+    describe("calculateTtsSafetyTimeout", () => {
+      it("should have a minimum failsafe floor of 4000ms", () => {
+        expect(calculateTtsSafetyTimeout("")).toBe(4000);
+        expect(calculateTtsSafetyTimeout("Halfway")).toBe(4000);
+      });
+
+      it("should provide ample time for decimal lap times so numbers are not cut off after 2nd decimal", () => {
+        // "4.356" has 5 words: 5 * 600 + 3000 = 6000ms
+        expect(calculateTtsSafetyTimeout("4.356")).toBe(6000);
+        // "Dave 4.356" has 6 words: 6 * 600 + 3000 = 6600ms
+        expect(calculateTtsSafetyTimeout("Dave 4.356")).toBe(6600);
+      });
+
+      it("should cap the safety timeout at 15000ms", () => {
+        const veryLongText = "word ".repeat(50);
+        expect(calculateTtsSafetyTimeout(veryLongText)).toBe(15000);
+      });
     });
   });
 

@@ -15,6 +15,7 @@ import { AudioConfig } from "@app/models/driver";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import {
+  calculateTtsSafetyTimeout,
   interpolate,
   releaseUtterance,
   resolveAudioUrl,
@@ -207,10 +208,7 @@ export class AudioService implements OnDestroy {
       return false;
     }
 
-    const desc =
-      config.type === "tts"
-        ? `TTS "${config.text}"`
-        : `preset "${resolvedUrl || config.url}"`;
+    const desc = this.describeConfig(config, resolvedUrl);
 
     this.releaseStaleTtsVoiceIfIdle();
 
@@ -223,7 +221,7 @@ export class AudioService implements OnDestroy {
       return true;
     }
 
-    // Channel BUSY
+    // Channel BUSY: urgent callout breaks through cooldown or preempts/queues
     if (priority === "urgent") {
       return this.handleUrgentCalloutWhenBusy(
         config,
@@ -235,8 +233,18 @@ export class AudioService implements OnDestroy {
       );
     }
 
+    // High priority callouts break through cadence cooldown if no voice is actively speaking
+    if (priority === "high" && !this.activeVoice && this.isSpacingCoolingDown) {
+      this.logger.info(
+        `[AUDIO] High priority callout breaking through cadence cooldown: ${desc}`,
+      );
+      this.clearSpacingTimer();
+      this.executeVoiceCallout(config, priority, context, resolvedUrl);
+      return true;
+    }
+
     // Incoming sound is NOT urgent
-    if (this.isSpacingCoolingDown) {
+    if (this.isSpacingCoolingDown && !this.activeVoice) {
       this.logger.debug("Dropping non-urgent callout during cadence pause");
       this.logger.info(
         `[AUDIO] Dropping callout during cadence pause (500ms spacing cooldown): ${desc} (priority: ${priority})`,
@@ -341,6 +349,12 @@ export class AudioService implements OnDestroy {
     return this.isSpacingCoolingDown;
   }
 
+  private describeConfig(config: AudioConfig, resolvedUrl?: string): string {
+    return config.type === "tts"
+      ? `TTS "${config.text}"`
+      : `preset "${resolvedUrl || config.url}"`;
+  }
+
   /**
    * Enqueues a callout to be played sequentially. If the channel is idle and not cooling down,
    * it plays immediately. If busy or cooling down, it is queued to play as soon as the active voice
@@ -370,10 +384,7 @@ export class AudioService implements OnDestroy {
       return false;
     }
 
-    const desc =
-      config.type === "tts"
-        ? `TTS "${config.text}"`
-        : `preset "${resolvedUrl || config.url}"`;
+    const desc = this.describeConfig(config, resolvedUrl);
 
     this.releaseStaleTtsVoiceIfIdle();
 
@@ -817,11 +828,7 @@ export class AudioService implements OnDestroy {
 
     this.activeVoice = { priority, stop };
 
-    const wordCount = interpolatedText.trim().split(/\s+/).length;
-    const dynamicTimeout = Math.max(
-      1500,
-      Math.min(10000, wordCount * 500 + 1500),
-    );
+    const dynamicTimeout = calculateTtsSafetyTimeout(interpolatedText);
 
     this.safetyTimeout = setTimeout(() => {
       cleanup();
@@ -922,11 +929,7 @@ export class AudioService implements OnDestroy {
       masterVolume,
     );
 
-    const wordCount = text.trim().split(/\s+/).length;
-    const dynamicTimeout = Math.max(
-      3000,
-      Math.min(10000, wordCount * 500 + 2000),
-    );
+    const dynamicTimeout = calculateTtsSafetyTimeout(text);
     this.safetyTimeout = setTimeout(() => {
       cleanup();
       this.cancelSpeechSynthesis();

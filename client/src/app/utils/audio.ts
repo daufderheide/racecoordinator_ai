@@ -758,6 +758,40 @@ export function setupTtsWatchdogs(
   };
 }
 
+/**
+ * Estimates the number of spoken words in a text string for TTS timing calculation.
+ * Accurately accounts for decimal numbers (e.g. "4.356" is spoken as "four point three five six" = 5 words),
+ * symbols (+/-), and multi-word phrases so that speech safety timeouts do not prematurely cut off speech.
+ */
+export function estimateSpokenWordCount(text: string): number {
+  if (!text || !text.trim()) {
+    return 0;
+  }
+  // Expand decimal numbers: e.g. "4.356" -> "4 point 3 5 6"
+  let expanded = text.replace(/(\d+)\.(\d+)/g, (_match, whole, fraction) => {
+    const fractionWords = fraction.split("").join(" ");
+    return `${whole} point ${fractionWords}`;
+  });
+  // Replace symbols like + or - with words
+  expanded = expanded.replace(/\+/g, " plus ").replace(/-/g, " minus ");
+  const words = expanded
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+  return words.length;
+}
+
+/**
+ * Calculates a generous failsafe safety timeout in milliseconds for TTS playback.
+ * The timeout ensures that TTS utterances have ample time to complete naturally without
+ * being cut off mid-speech (especially for decimal lap times), while still providing
+ * a watchdog to recover if the browser speech synthesis engine hangs.
+ */
+export function calculateTtsSafetyTimeout(text: string): number {
+  const wordCount = estimateSpokenWordCount(text);
+  return Math.max(4000, Math.min(15000, wordCount * 600 + 3000));
+}
+
 let globalAudioUnlocked = false;
 
 /**

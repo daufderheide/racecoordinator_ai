@@ -322,6 +322,17 @@ export class RacedayTimedAudioHelper {
   ): void {
     const remainingThresholds =
       RacedayTimedAudioHelper.getSecondsLeftThresholds(host, "remaining");
+    const halfwayThreshold = totalDuration / 2;
+    const halfwayConfig = host.themeService?.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+    );
+    const hasHalfwayAudio =
+      halfwayConfig &&
+      halfwayConfig.type !== "none" &&
+      (halfwayConfig.type === "tts"
+        ? !!halfwayConfig.text?.trim()
+        : !!halfwayConfig.url?.trim());
+
     for (const threshold of remainingThresholds) {
       if (
         previousTime > threshold &&
@@ -329,6 +340,11 @@ export class RacedayTimedAudioHelper {
         !host.playedSecondsLeft.has(threshold)
       ) {
         if (Math.abs(threshold - totalDuration) < 0.1) continue;
+
+        if (hasHalfwayAudio && Math.abs(threshold - halfwayThreshold) < 0.1) {
+          host.playedSecondsLeft.add(threshold);
+          continue;
+        }
 
         host.logger?.info(
           `[AUDIO-TIMED] Seconds left (remaining) threshold ${threshold}s triggered (currentTime: ${currentTime.toFixed(2)}s, prevTime: ${previousTime.toFixed(2)}s)`,
@@ -360,6 +376,17 @@ export class RacedayTimedAudioHelper {
       host,
       "elapsed",
     );
+    const halfwayThreshold = totalDuration / 2;
+    const halfwayConfig = host.themeService?.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+    );
+    const hasHalfwayAudio =
+      halfwayConfig &&
+      halfwayConfig.type !== "none" &&
+      (halfwayConfig.type === "tts"
+        ? !!halfwayConfig.text?.trim()
+        : !!halfwayConfig.url?.trim());
+
     for (const threshold of elapsedThresholds) {
       if (
         previousElapsed < threshold &&
@@ -367,6 +394,11 @@ export class RacedayTimedAudioHelper {
         !host.playedSecondsElapsed.has(threshold)
       ) {
         if (threshold <= 0 || Math.abs(threshold - totalDuration) < 0.1) {
+          continue;
+        }
+
+        if (hasHalfwayAudio && Math.abs(threshold - halfwayThreshold) < 0.1) {
+          host.playedSecondsElapsed.add(threshold);
           continue;
         }
 
