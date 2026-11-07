@@ -566,6 +566,9 @@ export class RacedayLaneColumnComponent
       this.isLapCountClickable,
       this.isTeamDriverSwapActive,
       this.teammateSelect(),
+      this.widget()?.id,
+      this.anchorSelected,
+      this.settings.insets,
     );
   }
 
@@ -586,6 +589,8 @@ export class RacedayLaneColumnComponent
       this.isUIEditorMode,
       this.isTeamDriverSwapActive,
       this.teammateSelect(),
+      this.widget()?.id,
+      this.anchorSelected,
     );
   }
 

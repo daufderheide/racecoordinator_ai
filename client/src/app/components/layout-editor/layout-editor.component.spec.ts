@@ -989,8 +989,10 @@ describe("LayoutEditorComponent", () => {
     });
 
     it("should handle grid and columns events", () => {
+      const prevToken = component.selectionToken;
       component.onAnchorSelected("Center");
       expect(component.selectedAnchor).toBe("Center");
+      expect(component.selectionToken).toBeGreaterThan(prevToken);
 
       component.onAnchorSelected({ widgetId: "w1", anchor: "Bottom" });
       expect(component.selectedAnchor).toBe("Bottom");

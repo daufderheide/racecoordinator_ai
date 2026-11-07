@@ -1671,6 +1671,90 @@ describe("raceday-lane-column-interaction.helper", () => {
   });
 
   describe("handleLaneColumnCardClick", () => {
+    it("should dispatch null anchor selection when isUIEditorMode is true and widgetId is provided", () => {
+      const parent = { selectAnchor: jasmine.createSpy("selectAnchor") };
+      const emitter = { emit: jasmine.createSpy("emit") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        parent,
+        mockHd,
+        "lapCount",
+        true,
+        true,
+        false,
+        null,
+        "widget-1",
+        emitter,
+      );
+      expect(parent.selectAnchor).toHaveBeenCalledWith("widget-1", null);
+      expect(emitter.emit).toHaveBeenCalledWith({
+        widgetId: "widget-1",
+        anchor: null,
+      });
+    });
+
+    it("should dispatch inset anchor when clicking on an inset cell that has a widget in UI editor mode", () => {
+      const parent = { selectAnchor: jasmine.createSpy("selectAnchor") };
+      const emitter = { emit: jasmine.createSpy("emit") };
+      const insetEl = document.createElement("div");
+      insetEl.className = "inset-cell tl";
+      insetEl.setAttribute("data-anchor", "top-left");
+      const event: any = {
+        target: insetEl,
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        parent,
+        mockHd,
+        "lapCount",
+        true,
+        false,
+        false,
+        null,
+        "widget-1",
+        emitter,
+        { "top-left": "lapCount" },
+      );
+      expect(parent.selectAnchor).toHaveBeenCalledWith("widget-1", "top-left");
+      expect(emitter.emit).toHaveBeenCalledWith({
+        widgetId: "widget-1",
+        anchor: "top-left",
+      });
+    });
+
+    it("should dispatch null anchor when clicking on an inset cell that has no widget in UI editor mode", () => {
+      const parent = { selectAnchor: jasmine.createSpy("selectAnchor") };
+      const emitter = { emit: jasmine.createSpy("emit") };
+      const insetEl = document.createElement("div");
+      insetEl.className = "drop-zone tl";
+      const event: any = {
+        target: insetEl,
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnCardClick(
+        event,
+        parent,
+        mockHd,
+        "lapCount",
+        true,
+        false,
+        false,
+        null,
+        "widget-1",
+        emitter,
+        {},
+      );
+      expect(parent.selectAnchor).toHaveBeenCalledWith("widget-1", null);
+      expect(emitter.emit).toHaveBeenCalledWith({
+        widgetId: "widget-1",
+        anchor: null,
+      });
+    });
+
     it("should do nothing if isUIEditorMode is true or parent/hd is missing", () => {
       const parent = { onCellClick: jasmine.createSpy("onCellClick") };
       const event: any = {
@@ -1775,7 +1859,59 @@ describe("raceday-lane-column-interaction.helper", () => {
   });
 
   describe("handleLaneColumnInsetClick", () => {
-    it("should do nothing if isUIEditorMode is true", () => {
+    it("should dispatch anchor selection if isUIEditorMode is true and inset has a widget", () => {
+      const parent = { selectAnchor: jasmine.createSpy("selectAnchor") };
+      const emitter = { emit: jasmine.createSpy("emit") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnInsetClick(
+        event,
+        "top-left",
+        { "top-left": "lapCount" },
+        parent,
+        mockHd,
+        true,
+        false,
+        null,
+        "widget-1",
+        emitter,
+      );
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(parent.selectAnchor).toHaveBeenCalledWith("widget-1", "top-left");
+      expect(emitter.emit).toHaveBeenCalledWith({
+        widgetId: "widget-1",
+        anchor: "top-left",
+      });
+    });
+
+    it("should dispatch null anchor selection if isUIEditorMode is true and inset has no widget", () => {
+      const parent = { selectAnchor: jasmine.createSpy("selectAnchor") };
+      const emitter = { emit: jasmine.createSpy("emit") };
+      const event: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      handleLaneColumnInsetClick(
+        event,
+        "top-left",
+        {},
+        parent,
+        mockHd,
+        true,
+        false,
+        null,
+        "widget-1",
+        emitter,
+      );
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(parent.selectAnchor).toHaveBeenCalledWith("widget-1", null);
+      expect(emitter.emit).toHaveBeenCalledWith({
+        widgetId: "widget-1",
+        anchor: null,
+      });
+    });
+
+    it("should not call parent.onCellClick if isUIEditorMode is true", () => {
       const parent = { onCellClick: jasmine.createSpy("onCellClick") };
       const event: any = {
         stopPropagation: jasmine.createSpy("stopPropagation"),

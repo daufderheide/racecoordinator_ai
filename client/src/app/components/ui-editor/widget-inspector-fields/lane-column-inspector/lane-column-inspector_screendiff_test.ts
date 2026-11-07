@@ -405,6 +405,10 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     const inspectorFields = page.locator("app-lane-column-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
+    // Switch to Grid scope tab
+    const gridScopeTab = inspectorPanel.locator(".scope-tab").nth(1);
+    await gridScopeTab.click();
+
     // Verify grid settings template is active
     await inspectorPanel
       .locator(".grid-indicator-card")
@@ -749,6 +753,10 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     const inspectorPanel = page.locator(".widget-inspector-panel");
     await inspectorPanel.waitFor({ state: "visible" });
 
+    // Switch to Grid scope tab
+    const gridScopeTab = inspectorPanel.locator(".scope-tab").nth(1);
+    await gridScopeTab.click();
+
     // Scroll inspector so lane column fields are in view
     await page.evaluate(() => {
       const fields = document.querySelector("app-lane-column-inspector");
@@ -824,6 +832,10 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
     const inspectorPanel = page.locator(".widget-inspector-panel");
     await inspectorPanel.waitFor({ state: "visible" });
 
+    // Switch to Grid scope tab
+    const gridScopeTab = inspectorPanel.locator(".scope-tab").nth(1);
+    await gridScopeTab.click();
+
     await inspectorPanel
       .locator(".grid-indicator-card")
       .waitFor({ state: "visible" });
@@ -887,6 +899,10 @@ test.describe("Lane Column and Grid Inspector Visuals", () => {
 
     const inspectorPanel = page.locator(".widget-inspector-panel");
     await inspectorPanel.waitFor({ state: "visible" });
+
+    // Switch to Grid scope tab
+    const gridScopeTab = inspectorPanel.locator(".scope-tab").nth(1);
+    await gridScopeTab.click();
 
     await inspectorPanel
       .locator(".grid-indicator-card")

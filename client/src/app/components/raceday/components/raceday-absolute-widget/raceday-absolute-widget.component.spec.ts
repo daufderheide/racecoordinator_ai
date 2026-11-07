@@ -333,7 +333,25 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     Object.defineProperty(anchorEvent, "target", { value: anchor });
 
     component.onWidgetPointerDown(anchorEvent);
-    expect(component.bringToFront).toHaveBeenCalled();
+    expect(component.bringToFront).not.toHaveBeenCalled();
+    expect(component.onDragStart).not.toHaveBeenCalled();
+
+    const dropZone = document.createElement("div");
+    dropZone.className = "drop-zone tl";
+    const dropEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(dropEvent, "target", { value: dropZone });
+
+    component.onWidgetPointerDown(dropEvent);
+    expect(component.bringToFront).not.toHaveBeenCalled();
+    expect(component.onDragStart).not.toHaveBeenCalled();
+
+    const insetCell = document.createElement("div");
+    insetCell.className = "inset-cell tl";
+    const insetEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(insetEvent, "target", { value: insetCell });
+
+    component.onWidgetPointerDown(insetEvent);
+    expect(component.bringToFront).not.toHaveBeenCalled();
     expect(component.onDragStart).not.toHaveBeenCalled();
   });
 

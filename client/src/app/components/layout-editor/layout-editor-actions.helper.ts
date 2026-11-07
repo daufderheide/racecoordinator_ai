@@ -319,6 +319,7 @@ export function onWidgetDropdownSelect(
   comp: any,
 ): void {
   comp.selectedWidgetId = widgetId || null;
+  comp.selectionToken = (comp.selectionToken || 0) + 1;
   comp.cdr?.markForCheck();
 }
 

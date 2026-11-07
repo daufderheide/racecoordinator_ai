@@ -277,6 +277,7 @@ describe("LaneColumnInspectorComponent", () => {
       gridLane: 0,
       gridTotalLanes: 4,
     });
+    component.setScope("grid");
     fixture.detectChanges();
 
     const card = fixture.debugElement.query(By.css(".grid-indicator-card"));
@@ -330,7 +331,7 @@ describe("LaneColumnInspectorComponent", () => {
     });
     fixture.detectChanges();
 
-    expect(component.activeScope()).toBe("grid");
+    expect(component.activeScope()).toBe("widget");
     expect(component.widgetBreadcrumbLabel).toBeTruthy();
     expect(component.gridBreadcrumbLabel).toBe("Grid (4 Lanes)");
     expect(component.columnBreadcrumbLabel).toBe("Driver");
@@ -436,6 +437,7 @@ describe("LaneColumnInspectorComponent", () => {
       targetIndex: 0,
       isHeaderWidget: false,
     });
+    component.setScope("grid");
     fixture.detectChanges();
     expect(component.isMasterCell).toBeTrue();
     const badge = fixture.debugElement.query(By.css(".grid-card-badge"));
@@ -1646,6 +1648,7 @@ describe("LaneColumnInspectorComponent", () => {
       mockSettings.gridId = "grid-1";
       mockSettings.linkColumns = true;
       mockSettings.gridLabelText = "My Custom Leaderboard";
+      component.setScope("grid");
       fixture.detectChanges();
 
       const titleEl = fixture.debugElement.query(By.css(".grid-card-title"));
@@ -1925,7 +1928,7 @@ describe("LaneColumnInspectorComponent", () => {
       fixture.detectChanges();
     });
 
-    it("should switch activeScope to inset when selectedAnchor is set and back to column when cleared", () => {
+    it("should switch activeScope to inset when selectedAnchor is set and back to widget when cleared", () => {
       component.setScope("column");
       expect(component.activeScope()).toBe("column");
 
@@ -1935,7 +1938,42 @@ describe("LaneColumnInspectorComponent", () => {
 
       fixture.componentRef.setInput("selectedAnchor", null);
       fixture.detectChanges();
-      expect(component.activeScope()).toBe("column");
+      expect(component.activeScope()).toBe("widget");
+    });
+
+    it("should switch activeScope to widget when column is selected with null anchor via selectionToken", () => {
+      component.setScope("grid");
+      expect(component.activeScope()).toBe("grid");
+
+      fixture.componentRef.setInput("selectedAnchor", null);
+      fixture.componentRef.setInput("selectionToken", 1);
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("widget");
+      expect(component.activeInspectorAnchor()).toBeNull();
+    });
+
+    it("should switch activeScope to inset when column is selected with inset anchor via selectionToken", () => {
+      component.setScope("grid");
+      expect(component.activeScope()).toBe("grid");
+
+      fixture.componentRef.setInput("selectedAnchor", "top-left");
+      fixture.componentRef.setInput("selectionToken", 2);
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("inset");
+      expect(component.activeInspectorAnchor()).toBe("top-left");
+    });
+
+    it("should switch activeScope to widget when switching to a different widget with null anchor", () => {
+      component.setScope("grid");
+      expect(component.activeScope()).toBe("grid");
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        id: "widget-lane-column-other",
+      });
+      fixture.componentRef.setInput("selectedAnchor", null);
+      fixture.detectChanges();
+      expect(component.activeScope()).toBe("widget");
     });
 
     it("should return placedInsetAnchors with configured keys", () => {

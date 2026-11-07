@@ -56,6 +56,7 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   disableFontSizes = input<boolean>(false);
   totalLanes = input<number>(4);
   selectedAnchor = input<string | null>(null);
+  selectionToken = input<number>(0);
   anchorChange = output<string | null>();
 
   change = output<void>();
@@ -72,33 +73,35 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   translationService = inject(TranslationService);
   customWidgetService = inject(CustomWidgetService, { optional: true });
   showReplicateModal = signal<boolean>(false);
-  activeScope = signal<"widget" | "grid" | "column" | "inset">("grid");
+  activeScope = signal<"widget" | "grid" | "column" | "inset">("widget");
   activeInspectorAnchor = signal<string | null>(null);
   private previousWidgetId: string | null = null;
+  private previousSelectionToken = -1;
 
   constructor() {
     super();
     effect(() => {
+      const currentToken = this.selectionToken();
+      const tokenChanged = currentToken !== this.previousSelectionToken;
+      this.previousSelectionToken = currentToken;
+
       const currentWidgetId = this.widget()?.id ?? null;
-      if (
+      const widgetChanged =
         this.previousWidgetId !== null &&
-        this.previousWidgetId !== currentWidgetId
-      ) {
-        this.activeInspectorAnchor.set(null);
-        if (this.activeScope() === "inset") {
-          this.activeScope.set("column");
-        }
-      }
+        this.previousWidgetId !== currentWidgetId;
       this.previousWidgetId = currentWidgetId;
 
       const anchor = this.selectedAnchor();
       if (anchor && anchor !== "center-center") {
         this.activeInspectorAnchor.set(anchor);
         this.activeScope.set("inset");
+      } else if (tokenChanged || widgetChanged) {
+        this.activeInspectorAnchor.set(null);
+        this.activeScope.set("widget");
       } else if (anchor === null || anchor === "center-center") {
         this.activeInspectorAnchor.set(null);
         if (this.activeScope() === "inset") {
-          this.activeScope.set("column");
+          this.activeScope.set("widget");
         }
       }
     });

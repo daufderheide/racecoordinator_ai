@@ -123,6 +123,7 @@
         <div class="anchor-drop-grid">
           <div
             class="drop-zone tl"
+            [attr.data-anchor]="'top-left'"
             [class.selected-inset]="isAnchorSelected('top-left')"
             [class.has-inset]="hasAnchorValue('top-left')"
             (click)="onAnchorClick('top-left', $event)"
@@ -144,6 +145,7 @@
           </div>
           <div
             class="drop-zone tc"
+            [attr.data-anchor]="'top-center'"
             [class.selected-inset]="isAnchorSelected('top-center')"
             [class.has-inset]="hasAnchorValue('top-center')"
             (click)="onAnchorClick('top-center', $event)"
@@ -165,6 +167,7 @@
           </div>
           <div
             class="drop-zone tr"
+            [attr.data-anchor]="'top-right'"
             [class.selected-inset]="isAnchorSelected('top-right')"
             [class.has-inset]="hasAnchorValue('top-right')"
             (click)="onAnchorClick('top-right', $event)"
@@ -186,6 +189,7 @@
           </div>
           <div
             class="drop-zone cl"
+            [attr.data-anchor]="'center-left'"
             [class.selected-inset]="isAnchorSelected('center-left')"
             [class.has-inset]="hasAnchorValue('center-left')"
             (click)="onAnchorClick('center-left', $event)"
@@ -215,6 +219,7 @@
           ></div>
           <div
             class="drop-zone cr"
+            [attr.data-anchor]="'center-right'"
             [class.selected-inset]="isAnchorSelected('center-right')"
             [class.has-inset]="hasAnchorValue('center-right')"
             (click)="onAnchorClick('center-right', $event)"
@@ -236,6 +241,7 @@
           </div>
           <div
             class="drop-zone bl"
+            [attr.data-anchor]="'bottom-left'"
             [class.selected-inset]="isAnchorSelected('bottom-left')"
             [class.has-inset]="hasAnchorValue('bottom-left')"
             (click)="onAnchorClick('bottom-left', $event)"
@@ -257,6 +263,7 @@
           </div>
           <div
             class="drop-zone bc"
+            [attr.data-anchor]="'bottom-center'"
             [class.selected-inset]="isAnchorSelected('bottom-center')"
             [class.has-inset]="hasAnchorValue('bottom-center')"
             (click)="onAnchorClick('bottom-center', $event)"
@@ -278,6 +285,7 @@
           </div>
           <div
             class="drop-zone br"
+            [attr.data-anchor]="'bottom-right'"
             [class.selected-inset]="isAnchorSelected('bottom-right')"
             [class.has-inset]="hasAnchorValue('bottom-right')"
             (click)="onAnchorClick('bottom-right', $event)"
@@ -311,6 +319,7 @@
           @if (hasInset("top-left")) {
             <div
               class="inset-cell tl"
+              [attr.data-anchor]="'top-left'"
               [class.has-image]="isImageProperty(getInsetKey('top-left')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-left')"
               [style.justify-content]="getInsetJustifyContent('top-left')"
@@ -391,6 +400,7 @@
           @if (hasInset("top-center")) {
             <div
               class="inset-cell tc"
+              [attr.data-anchor]="'top-center'"
               [class.has-image]="isImageProperty(getInsetKey('top-center')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-center')"
               [style.justify-content]="getInsetJustifyContent('top-center')"
@@ -473,6 +483,7 @@
           @if (hasInset("top-right")) {
             <div
               class="inset-cell tr"
+              [attr.data-anchor]="'top-right'"
               [class.has-image]="isImageProperty(getInsetKey('top-right')!)"
               [class.clickable-lap-cell]="isInsetLapCount('top-right')"
               [style.justify-content]="getInsetJustifyContent('top-right')"
@@ -560,6 +571,7 @@
         @if (hasInset("center-left")) {
           <div
             class="inset-cell cl"
+            [attr.data-anchor]="'center-left'"
             [class.has-image]="isImageProperty(getInsetKey('center-left')!)"
             [class.clickable-lap-cell]="isInsetLapCount('center-left')"
             [style.justify-content]="getInsetJustifyContent('center-left')"
@@ -887,6 +899,7 @@
         @if (hasInset("center-right")) {
           <div
             class="inset-cell cr"
+            [attr.data-anchor]="'center-right'"
             [class.has-image]="isImageProperty(getInsetKey('center-right')!)"
             [class.clickable-lap-cell]="isInsetLapCount('center-right')"
             [style.justify-content]="getInsetJustifyContent('center-right')"
@@ -979,6 +992,7 @@
           @if (hasInset("bottom-left")) {
             <div
               class="inset-cell bl"
+              [attr.data-anchor]="'bottom-left'"
               [class.has-image]="isImageProperty(getInsetKey('bottom-left')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
               [style.justify-content]="getInsetJustifyContent('bottom-left')"
@@ -1061,6 +1075,7 @@
           @if (hasInset("bottom-center")) {
             <div
               class="inset-cell bc"
+              [attr.data-anchor]="'bottom-center'"
               [class.has-image]="isImageProperty(getInsetKey('bottom-center')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
               [style.justify-content]="getInsetJustifyContent('bottom-center')"
@@ -1143,6 +1158,7 @@
           @if (hasInset("bottom-right")) {
             <div
               class="inset-cell br"
+              [attr.data-anchor]="'bottom-right'"
               [class.has-image]="isImageProperty(getInsetKey('bottom-right')!)"
               [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
               [style.justify-content]="getInsetJustifyContent('bottom-right')"

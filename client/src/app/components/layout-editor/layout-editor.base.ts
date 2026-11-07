@@ -79,6 +79,7 @@ export abstract class LayoutEditorBase {
   abstract selectedWidgetId: string | null;
   abstract currentSelectedWidget: any | null;
   abstract selectedAnchor: string | null;
+  selectionToken: number = 0;
   abstract activeGridSession: LaneGridSession | null;
   abstract layoutZoom: Map<string, number>;
   abstract countdownPreviewState: { [id: string]: boolean };
@@ -250,6 +251,7 @@ export abstract class LayoutEditorBase {
   onWidgetSelected(widget: any): void {
     const id = typeof widget === "string" ? widget : widget?.id || null;
     this.selectedWidgetId = id;
+    this.selectionToken++;
     if (this.editingLayout) {
       onWidgetSelected(id, this);
     }
@@ -347,6 +349,7 @@ export abstract class LayoutEditorBase {
   onAnchorSelected(
     event: { widgetId: string; anchor: string | null } | string,
   ): void {
+    this.selectionToken++;
     onAnchorSelected(event, this);
   }
 

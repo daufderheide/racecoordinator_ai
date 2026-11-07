@@ -2601,6 +2601,47 @@ describe("RacedayLaneColumnComponent", () => {
         anchor: "top-right",
       });
 
+      component.onAnchorClick("top-left", mockEvent);
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(widget.id, null);
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: null,
+      });
+
+      component.onInsetClick("top-right", mockEvent);
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(
+        widget.id,
+        "top-right",
+      );
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: "top-right",
+      });
+
+      component.onCardClick(mockEvent);
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(widget.id, null);
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: null,
+      });
+
+      const insetEl = document.createElement("div");
+      insetEl.className = "inset-cell tr";
+      insetEl.setAttribute("data-anchor", "top-right");
+      const insetCardEvent: any = {
+        target: insetEl,
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      component.onCardClick(insetCardEvent);
+      expect(mockParent.selectAnchor).toHaveBeenCalledWith(
+        widget.id,
+        "top-right",
+      );
+      expect(anchorSelectedSpy).toHaveBeenCalledWith({
+        widgetId: widget.id,
+        anchor: "top-right",
+      });
+
       component.onCenterZoneClick(mockEvent);
       expect(mockParent.selectAnchor).toHaveBeenCalledWith(widget.id, null);
       expect(anchorSelectedSpy).toHaveBeenCalledWith({
