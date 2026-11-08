@@ -60,6 +60,63 @@ Standaard schakelt de Linux-kernel inactieve USB-apparaten na 2 seconden uit:
 - **Instellingen voor Energiestand / Schermen**: Ga naar **Systeeminstellingen** -> **Schermen** -> **Geavanceerd...** (of **Energiestand**) en schakel **"Voorkom automatische sluimerstand wanneer het beeldscherm is uitgeschakeld"** in.
 - **Gebruik Actieve USB-hubs met Externe Voeding**: macOS kan passieve USB-hubs uitschakelen bij stroomschommelingen. Sluit timing-interfaces altijd aan via een actieve USB-hub met een eigen stopcontactadapter.
 
+### Microcontroller-resets en Onderspanning (Brownouts) {: #microcontroller-brownout-resets }
+
+- **Symptoom**: Tijdens een race of trainingssessie verschijnt een waarschuwingsbanner op het racedagscherm: *"Microcontroller-reset gedetecteerd: De interface-microcontroller is tijdens bedrijf onverwachts gereset."* Als u op **Details** klikt, verschijnt een dialoogvenster met de interfacenaam, het aantal resets en het tijdstip van de laatste reset. Als er tijdens dezelfde sessie meerdere resets plaatsvinden, geeft een waarschuwing aan dat er frequente resets optreden.
+- **Wat wordt gerapporteerd**: De timing-microcontroller (zoals een Arduino Uno, Nano, Mega of compatibele USB-microcontroller) heeft een onverwachte hardware-reset of onderspanning (brownout) ondergaan terwijl deze was verbonden met Race Coordinator AI. Dit betekent dat de processor op het bord een kortstondige spanningsdip of elektrische stoorpuls heeft ervaren die de interne resetlijn of het Brown-Out Detection (BOD)-circuit heeft geactiveerd.
+
+#### Wat er gebeurt in Race Coordinator AI (RMS)
+Wanneer een microcontroller tijdens de race onverwacht reset:
+1. **Bootloader en Handshake**: De microcontroller herstart en stuurt een identificatie-handshake en status-pings naar Race Coordinator AI.
+2. **Automatisch herstel van de status**: Race Coordinator AI detecteert dat het bord al verbonden en actief was. In plaats van de heat af te breken, herconfigureert het RMS de microcontroller onmiddellijk: ingangspinnen worden opnieuw toegewezen, polariteiten (actief-hoog/laag) ingesteld, ontspiegeltijden toegepast en relaisstatussen hersteld naar de huidige heatstatus (bijv. baanstroom AAN).
+3. **Beschermingsschild-venster (250 ms)**: Bij het opstarten van een Arduino kunnen digitale pinnen kortstondig zweven of standaard pull-up-statussen melden voordat ze stabiliseren. Race Coordinator AI activeert direct na een onverwachte reset een beschermend venster van 250 ms. Gedurende dit venster worden statische pin-uitzendingen genegeerd om valse rondetellingen, spooktijden of onbedoelde baanoproepen door inschakelruis te voorkomen.
+4. **Impact op het racen — Mogelijkheid van gemiste ronden**:
+    - Hoewel Race Coordinator AI de verbinding en baanstroom automatisch herstelt zonder de heat af te breken, is de microcontroller tijdens zijn fysieke herstart, bootloader-uitvoering en handshake-onderhandeling (meestal 200–500 milliseconden) **volledig blind voor sensorsignalen**.
+    - **Elke slotcar die tijdens dit resetvenster een optische sensor, dead strip of reed-schakelaar passeert, wordt NIET geregistreerd, wat resulteert in gemiste ronden.**
+    - Als er herhaaldelijk resets optreden, worden de rondetelling en heatstanden onnauwkeurig en kunnen coureurs korte stroomonderbrekingen opmerken.
+
+#### Veelvoorkomende Oorzaken
+*Opmerking: Hoewel de onderstaande oorzaken de overgrote meerderheid van de problemen op slotcarbäaninstallaties vertegenwoordigen, is elke fysieke baan uniek en kunnen er andere elektrische of mechanische factoren meespelen.*
+
+1. **Inductieve Relaispieken (Tegen-EMK)**:
+    - **De belangrijkste oorzaak van microcontroller-brownouts bij slotracing.**
+    - Baanstroomrelais bevatten elektromagnetische spoelen. Wanneer een relais uitschakelt (bij een baanstopt of einde heat), wekt het instortende magnetische veld in de spoel een enorme omgekeerde spanningspiek op (honderden volts tegen-EMK).
+    - Als de relaisprint geen geschikte vrijloopdiodebescherming heeft of aarde/voeding rechtstreeks deelt met de Arduino, dringt deze hoogspanningspiek de microcontroller binnen, wat leidt tot een BOD-reset of het vastlopen van de processor.
+2. **Bedrading van Baanstoptaknoppen en Lange Kabels als Antennes**:
+    - Baanstoptaknoppen rondom de baan vereisen vaak lange stukken onafgeschermde kabel (3 tot meer dan 15 meter).
+    - Deze lange kabels werken als antennes en vangen sterke elektromagnetische interferentie (EMI) op van motoren, sleepcontactvonken en railverbindingen.
+    - Het indrukken of loslaten van mechanische schakelaars zonder externe pull-up-weerstanden of RC-ontdenderfilters kan spanningspieken direct op de ingangspinnen induceren.
+3. **Spanningsdip op de 5V USB-Bus**:
+    - Microcontrollers hebben een stabiele voeding van 4,5 V tot 5,2 V nodig om betrouwbaar te kunnen functioneren.
+    - Als de Arduino is aangesloten op een passieve USB-hub, een USB-poort aan de voorzijde van de pc met een lange interne kabel of een zwaar belaste USB-controller, kan de spanning kortstondig onder de BOD-drempelwaarde zakken (doorgaans 2,7 V of 4,3 V), waardoor een onmiddellijke herstart wordt geforceerd.
+4. **Elektromagnetische Storing van Baanstroom (EMI)**:
+    - Slotcarmotoren trekken hoge stromen en vonken continu tussen de slepers en de baangeleiders.
+    - Als sensorkabels, knopdraden of de microcontroller parallel en dicht bij baanstroomkabels of regelbare voedingen lopen, kunnen inductieve koppelingen spanningspieken in de timing-elektronica veroorzaken.
+5. **Gedeelde 230V-Groepen en Gebrek aan Isolatie**:
+    - Het aansluiten van de tijdwaarnemingscomputer, baanvoeding, bandenslijpmachines of gereedschap op hetzelfde ongefilterde stopcontact kan netstoringen via de computervoeding naar de USB-bus overbrengen.
+6. **Elektrostatische Ontlading (ESD)**:
+    - In droge ruimtes bouwen rijdende auto's op kunststof banen statische elektriciteit op. Wanneer een baancommissaris of coureur een knop of metalen rail aanraakt, kan de statische ontlading het bord resetten.
+
+#### Mogelijke Oplossingen voor het Probleem
+
+- **Monteer Vrijloopdiodes over Alle Relaisspoelen**:
+    - Soldeer een standaard gelijkrichtdiode (zoals een **1N4001**, **1N4004** of **1N4007**) in sperrichting direct over de DC-aansluitingen van elke relaisspoel (kathode/streepzijde aan +DC, anode aan aarde/-DC). Dit absorbeert de tegen-EMK-energie veilig wanneer het relais afvalt.
+- **Gebruik Opto-geïsoleerde Relaisprinten met Aparte Voeding**:
+    - Veel 5V-relaismodules hebben een isolatiejumper met de aanduiding **JD-VCC / VCC / GND**.
+    - Verwijder de `JD-VCC`-jumper. Sluit de 5V- en stuursignalen van de Arduino aan op de besturingsconnector, maar voed de relaisspoelen onafhankelijk door een aparte 5V DC-adapter aan te sluiten op `JD-VCC` en relais-`GND`. Hierdoor wordt het inductieve relaiscircuit volledig galvanisch gescheiden van de Arduino-voedingsbus.
+- **Voeg Externe Pull-Up-Weerstanden en Condensatoren toe aan Knoppen**:
+    - Vertrouw bij lange kabels niet uitsluitend op de zwakke interne pull-ups van de Arduino (~20 kΩ–50 kΩ). Monteer **externe pull-up-weerstanden van 1 kΩ tot 4,7 kΩ** tussen elke ingangspin en +5V op het klemmenblok van de Arduino.
+    - Plaats daarnaast een kleine **keramische condensator van 0,1 µF (100 nF)** tussen elke knoppin en aarde om hoogfrequente storingen en contactdender te onderdrukken.
+- **Gebruik een Gevoede USB-Hub met Externe Voedingsadapter**:
+    - Sluit de microcontroller aan op een USB-hub met een eigen stopcontactadapter, in plaats van rechtstreeks op een pc- of laptop-USB-poort. Een gevoede hub garandeert stabiele 5V-stroomlevering, ongeacht de belasting van de computer.
+- **Scheid Signaalkabels Fysiek van Baanstroomkabels**:
+    - Leid sensorkabels (infrarood, fotocellen, reed) en knopbedrading op minimaal 15 tot 30 cm afstand van stroomrails en voedingskabels.
+    - Als signaaldraden en baanstroomdraden elkaar moeten kruisen, kruis ze dan onder een **haakse hoek van 90 graden** en laat ze nooit parallel lopen.
+- **Gebruik Afgeschermde Getwiste Kabels (Twisted-Pair)**:
+    - Gebruik voor lange afstanden afgeschermde netwerkkabels (Cat5e/Cat6 STP) of afgeschermde instrumentatiekabel. Sluit de afscherming alleen aan de Arduino-zijde aan op aarde.
+- **Aparte Stroomgroepen**:
+    - Sluit de baanvoeding en de timing-computer aan op afzonderlijke stopcontacten of gebruik een hoogwaardige overspanningsbeveiliging met netfilter.
+
 ## Weergaveproblemen
 
 

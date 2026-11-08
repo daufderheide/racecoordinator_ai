@@ -60,6 +60,63 @@ Por defecto, el kernel de Linux suspende dispositivos USB inactivos tras 2 segun
 - **Ajustes de Economizador / Pantalla**: Vaya a **Ajustes del Sistema** -> **Pantallas** -> **Avanzado...** (o **Economizador**) y active **"Impedir que el equipo entre en reposo automáticamente cuando se apague la pantalla"**.
 - **Usar Concentradores USB con Alimentación Propia**: macOS puede desenergizar puertos USB pasivos cuando detecta variaciones de consumo. Conecte siempre la interfaz a un concentrador USB con adaptador de corriente dedicado.
 
+### Reinicios y Caídas de Tensión del Microcontrolador {: #microcontroller-brownout-resets }
+
+- **Symptom**: Durante una carrera o sesión de práctica, aparece un banner de advertencia en la pantalla de carrera: *"Reinicio de microcontrolador detectado: El microcontrolador de la interfaz se reinició inesperadamente durante la operación."* Al hacer clic en **Detalles** se abre un cuadro de diálogo que muestra el nombre de la interfaz, el recuento de reinicios y la marca de tiempo del último reinicio. Si ocurren múltiples reinicios en la misma sesión, una nota de advertencia indica que se están produciendo reinicios frecuentes.
+- **Qué se informa**: La interfaz de cronometraje (como Arduino Uno, Nano, Mega o microcontrolador USB compatible) sufrió un reinicio de hardware inesperado o caída de tensión (brownout) mientras estaba conectada a Race Coordinator AI. Esto indica que el procesador del microcontrolador experimentó una caída momentánea de voltaje o un transitorio de ruido eléctrico que activó su línea de reinicio de hardware o su circuito de detección de bajo voltaje (BOD).
+
+#### Qué sucede en Race Coordinator AI (RMS)
+Cuando un microcontrolador se reinicia inesperadamente durante una carrera:
+1. **Secuencia de arranque y saludo**: El microcontrolador se reinicia y envía un mensaje de saludo de identificación y pings de estado a Race Coordinator AI.
+2. **Recuperación automática de estado**: Race Coordinator AI detecta que la placa ya estaba conectada y activa. En lugar de cancelar la carrera, el RMS reconfigura de inmediato el microcontrolador: reaplica la asignación de pines, polaridades (activo en alto/activo en bajo), tiempos de antirrebote y restaura el estado de los relés según el estado actual de la manga (por ejemplo, energía de pista ENCENDIDA).
+3. **Ventana de escudo de protección (250 ms)**: Al iniciarse un Arduino, las entradas digitales pueden flotar momentáneamente o reportar estados de pull-up por defecto antes de estabilizarse. Race Coordinator AI activa un escudo de protección de 250 ms inmediatamente después de un reinicio inesperado. Durante esta ventana, se filtran las transmisiones estáticas de pines para evitar lecturas falsas de vueltas, tiempos fantasmas o llamadas de pista accidentales causadas por ruido eléctrico de arranque.
+4. **Impacto en la carrera — Posibilidad de vueltas perdidas**:
+    - Aunque Race Coordinator AI restablece automáticamente la conexión y la energía de pista sin abortar la manga, el microcontrolador queda **completamente ciego a las señales de los sensores** durante su reinicio físico, secuencia de arranque y negociación (generalmente de 200 a 500 milisegundos).
+    - **Cualquier auto que cruce un sensor óptico, tramo muerto (dead strip) o interruptor reed durante esta ventana de reinicio NO será registrado, lo que provocará vueltas perdidas.**
+    - Si los reinicios se repiten con frecuencia, el conteo de vueltas y las posiciones de la manga se verán afectados, y los pilotos pueden notar breves caídas de energía.
+
+#### Causas Comunes
+*Nota: Si bien las causas descritas a continuación representan los problemas más frecuentes observados en pistas de slot, cada instalación física es única y pueden intervenir otros factores eléctricos o mecánicos.*
+
+1. **Retroceso Inductivo de Relés (Picos de Fuerza Contraelectromotriz - Back-EMF)**:
+    - **La causa #1 de caídas de tensión de microcontroladores en pistas de slot.**
+    - Los relés de control de energía de pista contienen bobinas electromagnéticas. Cuando un relé se desconecta (al detener la carrera o al finalizar la manga), el colapso del campo magnético de la bobina genera un pico masivo de voltaje inverso (cientos de voltios de contra-EMF).
+    - Si la placa de relés no cuenta con diodos de libre circulación adecuados, o comparte masa/alimentación directamente con el Arduino, este pico de alto voltaje ingresa al microcontrolador, activando su protección BOD o bloqueando la CPU.
+2. **Cableado de Botones de Parada y Cables Largos que Actúan como Antenas**:
+    - Los botones de parada distribuidos alrededor de la pista a menudo emplean tiradas largas de cable sin blindaje (de 3 a más de 15 metros).
+    - Estos cables largos actúan como antenas receptoras de interferencias electromagnéticas (EMI) provenientes de los motores de los autos, chispas en las trencillas y transiciones de carriles.
+    - Pulsar o soltar interruptores mecánicos sin resistencias pull-up externas ni filtros de rebote RC puede introducir picos transitorios directamente en los pines de entrada.
+3. **Caída de Voltaje en el Bus USB de 5V**:
+    - Los microcontroladores requieren entre 4.5V y 5.2V estables para funcionar con fiabilidad.
+    - Si el Arduino está conectado a un concentrador USB pasivo, a un puerto frontal del PC con cableado interno largo o a un bus USB con sobrecarga de periféricos, el voltaje puede descender momentáneamente por debajo del umbral BOD (típicamente 2.7V o 4.3V), forzando un reinicio instantáneo.
+4. **Interferencia Electromagnética (EMI) de la Alimentación de Pista**:
+    - Los motores de slot demandan alta corriente y producen chispas constantes entre las escobillas, las trencillas y los carriles de la pista.
+    - Si los cables de sensores, botones o el propio microcontrolador corren en paralelo y muy cerca del cableado de pista o fuentes de alimentación DC, los acoplamientos inductivos inducen picos de tensión en la electrónica de cronometraje.
+5. **Circuitos de Corriente Alterna Compartidos sin Filtrado**:
+    - Conectar el PC de cronometraje, la fuente DC de la pista, tornos de neumáticos o herramientas en la misma regleta sin filtros de sobretensión puede transferir transitorios a través de la fuente del PC hacia el bus USB.
+6. **Descarga Electrostática (ESD)**:
+    - En ambientes secos, el paso continuo de autos sobre pistas plásticas genera electricidad estática. Cuando un piloto o comisario toca un botón o elemento metálico, la descarga electrostática puede reiniciar la placa.
+
+#### Formas Potenciales de Resolver el Problema
+
+- **Instalar Diodos de Libre Circulación en Todas las Bobinas de Relés**:
+    - Suelde un diodo rectificador estándar (como **1N4001**, **1N4004** o **1N4007**) en polarización inversa directamente entre los terminales DC de cada bobina de relé (cátodo/extremo con banda conectado a +DC, ánodo conectado a masa/-DC). Esto disipa de forma segura la energía de contra-EMF cuando el relé se desconecta.
+- **Utilizar Placas de Relés Optoacopladas con Alimentación Independiente**:
+    - La mayoría de módulos de relé de 5V incorporan un puente de aislamiento identificado como **JD-VCC / VCC / GND**.
+    - Retire el puente `JD-VCC`. Conecte los 5V y las señales del Arduino a los pines de control, pero alimente las bobinas de los relés de forma independiente conectando un adaptador de 5V DC externo entre `JD-VCC` y `GND` de la placa de relés. Esto aísla por completo el circuito ruidoso de los relés del bus de alimentación del Arduino.
+- **Incorporar Resistencias Pull-Up Externas y Condensadores en los Botones**:
+    - No dependa únicamente de las resistencias pull-up internas débiles del Arduino (~20kΩ–50kΩ) en tiradas largas. Instale **resistencias pull-up externas de 1kΩ a 4.7kΩ** entre cada pin de entrada y +5V en el bloque de terminales del Arduino.
+    - Añada un pequeño **condensador cerámico de 0.1 µF (100nF)** entre cada pin de botón y masa para amortiguar ruidos de alta frecuencia y rebotes de contacto.
+- **Emplear un Concentrador USB con Alimentación Propia**:
+    - Conecte el microcontrolador a un concentrador USB con adaptador de corriente dedicado en lugar de conectarlo directamente a un puerto del PC o portátil. Esto garantiza un suministro firme de 5V independientemente de la carga de la computadora.
+- **Separar Físicamente los Cables de Señal de la Energía de Pista**:
+    - Mantenga los cables de sensores (infrarrojos, ópticos, reed) y de botones de parada separados al menos de 15 a 30 cm de los conductores de alimentación de la pista y de las fuentes de poder.
+    - Si los cables de señal deben cruzar cables de potencia, crúcelos siempre en **ángulo recto de 90 grados** y nunca en paralelo.
+- **Utilizar Cable de Par Trenzado Blindado**:
+    - Para tiradas largas, use cable de red blindado (Cat5e/Cat6 STP) o cable de instrumentación apantallado. Conecte la malla de blindaje a masa únicamente en el extremo del Arduino.
+- **Circuitos de Red Eléctrica Dedicados**:
+    - Conecte la fuente de poder de la pista y el ordenador en tomas de corriente independientes o utilice un protector de sobretensión con filtro de línea.
+
 ## Problemas de Visualización
 
 

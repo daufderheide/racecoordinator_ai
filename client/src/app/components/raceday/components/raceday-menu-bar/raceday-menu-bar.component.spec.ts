@@ -7,6 +7,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
@@ -21,6 +22,8 @@ describe("RacedayMenuBarComponent", () => {
   let mockDataService: any;
   let mockNavService: any;
   let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
+  let mockRaceConnectionService: any;
+  let hardwareAlertSubject: BehaviorSubject<any>;
   let canGoBackSubject: BehaviorSubject<boolean>;
   let roleSubject: BehaviorSubject<Role>;
 
@@ -29,6 +32,10 @@ describe("RacedayMenuBarComponent", () => {
     roleSubject = new BehaviorSubject<Role>(Role.DIRECTOR);
     canGoBackSubject = new BehaviorSubject<boolean>(false);
     mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
+    hardwareAlertSubject = new BehaviorSubject<any>(null);
+    mockRaceConnectionService = {
+      hardwareAlert$: hardwareAlertSubject.asObservable(),
+    };
 
     mockNavService = {
       canGoBack$: canGoBackSubject.asObservable(),
@@ -65,6 +72,7 @@ describe("RacedayMenuBarComponent", () => {
         { provide: DataService, useValue: mockDataService },
         { provide: NavigationService, useValue: mockNavService },
         { provide: HelpLinkService, useValue: mockHelpLinkService },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
       ],
     }).compileComponents();
 
@@ -932,6 +940,38 @@ describe("RacedayMenuBarComponent", () => {
       component.onMenuItemHover("windows");
       expect(component.isOptionsMenuOpen).toBeFalse();
       expect(component.isWindowsMenuOpen).toBeTrue();
+    });
+  });
+
+  describe("Hardware Alert Badge", () => {
+    it("should not render hardware alert badge when count is 0", () => {
+      fixture.detectChanges();
+      const badge = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-menu-hardware-alert-badge"]',
+      );
+      expect(badge).toBeFalsy();
+    });
+
+    it("should render hardware alert badge when count > 0 and emit hardwareAlertClick when clicked", () => {
+      hardwareAlertSubject.next({
+        occurrenceCount: 3,
+        titleKey: "ALERT_BROWNOUT_TITLE",
+      });
+      fixture = TestBed.createComponent(RacedayMenuBarComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+
+      const badge = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-menu-hardware-alert-badge"]',
+      );
+      expect(badge).toBeTruthy();
+
+      const countEl = badge.querySelector(".alert-badge-count");
+      expect(countEl?.textContent?.trim()).toBe("3");
+
+      spyOn(component.hardwareAlertClick, "emit");
+      badge.click();
+      expect(component.hardwareAlertClick.emit).toHaveBeenCalled();
     });
   });
 });

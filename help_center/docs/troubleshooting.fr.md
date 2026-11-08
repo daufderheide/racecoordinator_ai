@@ -60,6 +60,63 @@ Par défaut, le noyau Linux suspend les périphériques USB inactifs après 2 se
 - **Réglages Économiseur d'énergie / Écran** : Ouvrez les **Réglages Système** -> **Écrans** -> **Avancé...** (ou **Économiseur d'énergie**) et cochez **"Empêcher la suspension d'activité automatique lorsque l'écran est éteint"**.
 - **Utiliser des hubs USB alimentés** : macOS peut couper l'alimentation des ports USB passifs lorsque la consommation fluctue. Raccordez toujours l'interface à un hub USB muni de son propre adaptateur secteur dédié.
 
+### Réinitialisations et Baisses de Tension du Microcontrôleur {: #microcontroller-brownout-resets }
+
+- **Symptôme** : Pendant une course ou une séance d'essais, une bannière d'alerte apparaît sur l'écran du jour de course : *"Réinitialisation du microcontrôleur détectée : Le microcontrôleur de l'interface s'est réinitialisé de manière inattendue pendant le fonctionnement."* Un clic sur **Détails** ouvre une boîte de dialogue affichant le nom de l'interface, le nombre de réinitialisations et l'horodatage de la dernière réinitialisation. Si plusieurs réinitialisations surviennent au cours de la même session, une note signale que des réinitialisations fréquentes se produisent.
+- **Ce qui est signalé** : L'interface de chronométrage (telle qu'un Arduino Uno, Nano, Mega ou microcontrôleur USB compatible) a subi une réinitialisation matérielle inattendue ou une baisse de tension (brownout) alors qu'elle était connectée à Race Coordinator AI. Cela indique que le processeur embarqué a subi une baisse momentanée de tension ou un parasite électrique ayant déclenché sa ligne de réinitialisation matérielle ou son circuit de détection de sous-tension (BOD).
+
+#### Ce qui se passe dans Race Coordinator AI (RMS)
+Lorsqu'un microcontrôleur se réinitialise de manière inattendue pendant la course :
+1. **Séquence de démarrage et négociation** : Le microcontrôleur redémarre et transmet un message d'identification et des pings d'état à Race Coordinator AI.
+2. **Rétablissement automatique de l'état** : Race Coordinator AI détecte que la carte était déjà connectée et active. Au lieu d'annuler la course, le RMS reconfigure immédiatement le microcontrôleur : réaffectation des broches d'entrée, polarités (niveau haut/bas actif), durées d'antirebond et rétablissement de l'état des relais selon l'état actuel de la manche (par exemple, alimentation de piste ACTIVÉE).
+3. **Fenêtre de bouclier de protection (250 ms)** : Lors du démarrage d'un Arduino, les entrées numériques peuvent momentanément flotter ou renvoyer des états de rappel par défaut avant de se stabiliser. Race Coordinator AI active un bouclier de protection de 250 ms immédiatement après une réinitialisation inattendue. Durant cette fenêtre, les diffusions statiques d'état des broches sont filtrées pour éviter les faux comptages de tours, temps fantômes ou interruptions de piste accidentelles provoqués par les parasites de démarrage.
+4. **Impact sur la course — Risque de tours manqués** :
+    - Bien que Race Coordinator AI rétablisse automatiquement la connexion et l'alimentation de la piste sans interrompre la manche, le microcontrôleur est **physiquement aveugle aux signaux des capteurs** durant son redémarrage matériel, l'exécution du chargeur d'amorçage et la négociation (généralement de 200 à 500 millisecondes).
+    - **Toute voiture franchissant un capteur optique, un rail mort (dead strip) ou un capteur reed pendant cette fenêtre de réinitialisation NE SERA PAS enregistrée, entraînant des tours manqués.**
+    - Si les réinitialisations surviennent de façon répétée, le comptage des tours et les classements de la manche seront faussés, et les pilotes pourront constater de brèves coupures de courant.
+
+#### Causes Fréquentes
+*Remarque : Bien que les causes détaillées ci-dessous représentent la majorité des problèmes rencontrés sur les pistes de slot car, chaque installation physique est unique et d'autres facteurs électriques ou mécaniques peuvent entrer en jeu.*
+
+1. **Rupture Inductive des Relais (Pics de Force Contre-Électromotrice - Back-EMF)** :
+    - **La cause n°1 des baisses de tension de microcontrôleur en slot racing.**
+    - Les relais contrôlant l'alimentation de piste comportent des bobines électromagnétiques. Lorsqu'un relais se désactive (lors d'un arrêt de course ou en fin de manche), l'effondrement du champ magnétique dans la bobine génère une surtension inverse massive (plusieurs centaines de volts de force contre-électromotrice).
+    - Si la carte de relais ne possède pas de diodes de roue libre adéquates ou partage sa masse/alimentation avec l'Arduino, ce pic haute tension se propage directement au microcontrôleur, déclenchant son circuit de protection BOD ou plantant le processeur.
+2. **Câblage des Boutons d'Interruption & Longs Câbles Faisant Antenne** :
+    - Les boutons d'interruption disposés autour du circuit nécessitent souvent de longues longueurs de fil non blindé (de 3 à plus de 15 mètres).
+    - Ces longs fils agissent comme des antennes captant de fortes interférences électromagnétiques (EMI) issues des moteurs des voitures, des étincelles de tresses et des raccords de rails.
+    - Actionner ou relâcher un bouton-poussoir mécanique sans résistances de rappel externes ni filtrage RC antirebond peut induire des pointes de tension directement sur les broches d'entrée.
+3. **Chute de Tension sur le Bus USB 5V** :
+    - Les microcontrôleurs nécessitent une tension stable de 4,5 V à 5,2 V pour fonctionner de manière fiable.
+    - Si l'Arduino est branché sur un hub USB passif, un port USB avant de PC avec un long câble interne ou un port USB partagé fortement sollicité, la tension peut chuter brièvement sous le seuil de détection BOD (généralement 2,7 V ou 4,3 V), provoquant un redémarrage instantané.
+4. **Interférences Électromagnétiques (EMI) de la Puissance Piste** :
+    - Les moteurs de slot car consomment des courants élevés et créent des arcs électriques constants entre les balais, les tresses et les conducteurs de piste.
+    - Si les câbles de capteurs, les câbles de boutons ou le microcontrôleur cheminent parallèlement et très près du câblage de piste ou de l'alimentation DC, un couplage inductif induit des pointes de tension dans l'électronique de chronométrage.
+5. **Circuits Secteur Partagés & Défaut d'Isolement** :
+    - Brancher l'ordinateur de course, l'alimentation DC de la piste, les tours à pneus ou des outils sur la même multiprise sans filtre antiparasite peut transmettre des perturbations réseau à travers l'alimentation du PC jusqu'au bus USB.
+6. **Décharges Électrostatiques (ESD)** :
+    - En atmosphère sèche, le frottement continu des voitures sur la piste plastique accumule de l'électricité statique. Lorsqu'un ramasseur ou un pilote touche un bouton métallique ou un rail, la décharge statique peut réinitialiser la carte.
+
+#### Solutions Possibles pour Résoudre le Problème
+
+- **Installer des Diodes de Roue Libre sur Toutes les Bobines de Relais** :
+    - Soudez une diode de redressement standard (telle qu'une **1N4001**, **1N4004** ou **1N4007**) en polarisation inverse directement aux bornes DC de chaque bobine de relais (cathode/bague blanche sur le +DC, anode sur la masse/-DC). Cela dissipe en toute sécurité l'énergie de contre-fem lors de l'ouverture du relais.
+- **Utiliser des Modules Relais Optocouplés avec Alimentation Indépendante** :
+    - De nombreux modules relais 5V possèdent un cavalier d'isolement repéré **JD-VCC / VCC / GND**.
+    - Retirez le cavalier `JD-VCC`. Raccordez le 5V et les signaux de commande de l'Arduino, mais alimentez les bobines des relais indépendamment en branchant un adaptateur secteur 5V DC distinct entre `JD-VCC` et la masse `GND` de la carte relais. Cela sépare totalement le circuit inductif bruyant du bus d'alimentation de l'Arduino.
+- **Ajouter des Résistances de Rappel Externes et Condensateurs sur les Boutons** :
+    - Ne comptez pas uniquement sur les résistances de rappel internes faibles de l'Arduino (~20 kΩ–50 kΩ) sur de longs câbles. Installez des **résistances de rappel externes de 1 kΩ à 4,7 kΩ** entre chaque broche d'entrée et le +5V au niveau du bornier de l'Arduino.
+    - Ajoutez un petit **condensateur céramique de 0,1 µF (100 nF)** entre chaque broche de bouton et la masse pour filtrer les parasites haute fréquence et les rebonds de contact.
+- **Utiliser un Hub USB Dédié avec Alimentation Secteur** :
+    - Raccordez le microcontrôleur à un concentrateur USB alimenté par son propre adaptateur secteur 230V, plutôt que directement sur un port de PC ou d'ordinateur portable. Un hub alimenté garantit un courant 5V parfaitement stable indépendamment de la charge de l'ordinateur.
+- **Séparer Physiquement les Câbles de Signaux de la Puissance Piste** :
+    - Acheminez les câbles des capteurs (infrarouge, optique, reed) et des boutons à au moins 15 à 30 cm des conducteurs de piste et des câbles d'alimentation.
+    - Lorsque des câbles de signaux doivent croiser des conducteurs de puissance, faites-les se croiser à **angle droit (90 degrés)** et jamais en parallèle.
+- **Employer du Câble Paires Torsadées Blindé** :
+    - Pour les longues liaisons, utilisez du câble réseau blindé (Cat5e/Cat6 STP) ou du câble d'instrumentation blindé. Reliez le drain de blindage à la masse uniquement du côté de l'Arduino.
+- **Lignes Secteur Dédiées** :
+    - Branchez l'alimentation de la piste et l'ordinateur de chronométrage sur des prises murales distinctes ou utilisez un parafoudre avec filtre de ligne de qualité.
+
 ## Problèmes d'Affichage
 
 

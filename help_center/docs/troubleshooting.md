@@ -74,6 +74,63 @@ You can also prevent autosuspend for all USB devices by creating a udev rule:
 - **Energy Saver Settings**: Open **System Settings** -> **Displays** -> **Advanced...** (or **Energy Saver** on desktop Macs) and enable **"Prevent automatic sleeping when the display is off"**.
 - **Use Powered USB Hubs**: macOS can limit current or place unpowered USB bus ports into low-power states when peripheral draw fluctuates. Always connect timing hardware through a powered USB hub (with its own dedicated AC wall adapter) rather than passive multi-adapters.
 
+### Microcontroller Resets & Brownouts {: #microcontroller-brownout-resets }
+
+- **Symptom**: During a race or practice session, an alert banner appears on Raceday: *"Microcontroller Reset Detected: The interface microcontroller unexpectedly reset during operation."* Clicking **Details** opens an alert dialog displaying the interface name, reset count, and timestamp of the most recent reset. If multiple resets occur in the same session, an alert note flags that frequent resets are occurring.
+- **What Is Being Reported**: The microcontroller timing interface (such as an Arduino Uno, Nano, Mega, or compatible USB microcontroller) suffered an unexpected hardware reset or brownout while connected to Race Coordinator AI. This indicates that the onboard microcontroller processor experienced a momentary power dip or electrical noise transient that triggered its internal hardware reset line or Brown-Out Detection (BOD) circuit.
+
+#### What Happens in Race Coordinator AI (RMS)
+When a microcontroller resets unexpectedly during racing:
+1. **Bootloader & Handshake**: The microcontroller restarts and sends a startup identification handshake and status ping to Race Coordinator AI.
+2. **Automatic State Recovery**: Race Coordinator AI detects that the board was already connected and running. Instead of terminating the race, the RMS immediately reconfigures the microcontroller: re-applying input pin assignments, setting active-high/active-low polarity, applying debounce intervals, and restoring relay states to match the current heat status (e.g., track power ON).
+3. **Protection Shield Window (250 ms)**: When an Arduino boots up, digital input pins can momentarily float or report default pull-up states before stabilizing. Race Coordinator AI activates a 250ms protection shield window immediately following an unexpected reset. During this window, static pin broadcasts are filtered out to prevent false lap counts, phantom lap times, or accidental track calls from being triggered by startup electrical noise.
+4. **Impact on Racing — Possibility of Missed Laps**:
+    - While Race Coordinator AI automatically recovers the connection and restores track power without aborting the heat, the microcontroller is **physically blind to sensor inputs** during its hardware reboot, bootloader sequence, and handshake negotiation (typically 200–500 milliseconds).
+    - **Any slot car crossing a dead strip, optical sensor, or reed switch during this reset window will NOT be registered, resulting in missed laps.**
+    - If resets happen repeatedly, lap counting and heat standings will become inaccurate, and drivers may notice brief power interruptions.
+
+#### Common Causes
+*Note: While the causes listed below represent the most frequent issues found in slot car track installations, every physical track is unique and there may be other electrical, environmental, or mechanical factors involved.*
+
+1. **Relay Inductive Kickback (Back-EMF Spikes)**:
+    - **The #1 cause of microcontroller brownouts in slot car racing.**
+    - Relays contain electromagnetic coils that control track power. When a relay turns off (de-energizes) during a track call or heat end, the collapsing magnetic field in the coil generates a massive reverse voltage spike (hundreds of volts of back-EMF).
+    - If the relay board does not have proper flyback diode protection, or shares power/ground directly with the Arduino, this high-voltage spike travels directly into the microcontroller, tripping its Brown-Out Detection (BOD) circuit or crashing the CPU.
+2. **Track Call Button Wiring & Long Cable Antennas**:
+    - Track call buttons mounted around a track often use long runs of unshielded wire (10–50+ feet).
+    - These long wire runs act like antennas, picking up strong electromagnetic interference (EMI) from slot car motors, track rail arcing, and braid sparks.
+    - Pressing or releasing a mechanical pushbutton without external pull-up resistors or debounce filtering can induce voltage transients directly onto the microcontroller input pins.
+3. **USB 5V Bus Voltage Sag**:
+    - Microcontrollers need a stable 4.5V–5.2V power supply to run reliably.
+    - If the Arduino is connected to an unpowered USB hub, a front-panel PC USB port on a long internal cable, or a computer USB port sharing a heavily loaded 5V bus, the voltage can momentarily sag below the ATmega Brown-Out Detection threshold (typically 2.7V or 4.3V), forcing an immediate hardware reboot.
+4. **High-Current Track Power EMI**:
+    - Slot car motors draw high current and frequently generate electrical arcing between the motor brushes, guide braid, and track rails.
+    - If sensor wires, button cables, or the microcontroller itself run closely parallel to track power wiring or variable DC power supplies, inductive and capacitive coupling can induce voltage spikes into the timing electronics.
+5. **Shared AC Circuits & Inadequate Isolation**:
+    - Powering the computer, track DC power supply, tire truers, or workshop tools from the same AC power outlet or power strip without surge filtering can conduct electrical transients through the computer power supply to the USB bus.
+6. **Electrostatic Discharge (ESD)**:
+    - In dry climates or carpeted rooms, cars lapping plastic track generate significant static electricity. When a marshal or driver touches a track call button or metal rail, static discharge can jump into the wiring and reset the board.
+
+#### Potential Ways to Resolve the Problem
+
+- **Install Flyback Diodes Across All Relay Coils**:
+    - Solder a standard rectifier diode (such as a **1N4001**, **1N4004**, or **1N4007**) in reverse bias directly across each relay coil's DC terminals (cathode/banded end connected to +DC, anode connected to ground/-DC). This safely absorbs the back-EMF energy when the relay shuts off.
+- **Use Opto-Isolated Relay Boards with Independent Power**:
+    - Many 5V relay modules feature an optocoupler isolation jumper labeled **JD-VCC / VCC / GND**.
+    - Remove the `JD-VCC` jumper. Connect the Arduino's 5V and signal pins to the control header, but power the relay coils independently by connecting a separate 5V DC wall adapter to `JD-VCC` and relay `GND`. This completely isolates the relay coil current from the Arduino's 5V power bus.
+- **Add External Pull-Up Resistors & Capacitors to Call Buttons**:
+    - Rather than relying solely on the Arduino's internal weak pull-up resistors (~20kΩ–50kΩ), install a **1kΩ to 4.7kΩ external pull-up resistor** between each button input pin and +5V at the Arduino terminal block.
+    - Add a small **0.1 µF (100nF) ceramic capacitor** between each button pin and ground to filter out high-frequency EMI and mechanical switch contact bounce.
+- **Use a Dedicated Externally Powered USB Hub**:
+    - Connect the microcontroller to a powered USB hub that has its own AC wall adapter, rather than plugging directly into a PC or laptop USB port. A powered hub guarantees stable 5V current regardless of computer CPU or bus load.
+- **Physically Separate Signal Wires from Track Power**:
+    - Route sensor wires (infrared, photo, reed switches) and track call button wires at least 6 to 12 inches away from high-current track power rails and power supply cables.
+    - Where signal wires must cross track power wires, cross them at **90-degree right angles** rather than running them in parallel.
+- **Use Shielded Twisted-Pair Cabling**:
+    - For long cable runs between the track and the microcontroller, use shielded twisted-pair cables (such as Cat5e/Cat6 STP or shielded audio cable). Connect the cable shield drain wire to ground at the microcontroller end only.
+- **Dedicated AC Circuits**:
+    - Plug the track DC power supply and the timing computer into separate AC outlets or use a quality surge protector / line conditioner to prevent motor noise from feeding back through the AC mains.
+
 
 ## Sensor Problems
 

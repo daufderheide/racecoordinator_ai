@@ -43,7 +43,7 @@ import { Role } from "@app/models/role";
 import { LayoutConfig, Settings } from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { RaceState } from "@app/proto/antigravity";
+import { IInterfaceAlertEvent, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AudioService } from "@app/services/audio.service";
@@ -275,6 +275,11 @@ export class DefaultRacedayComponent
   activeMenu: string | null = null;
   ackModalMessageParams: Record<string, any> = {};
   viewerRaceEndedHandler!: ViewerRaceEndedHandler;
+
+  // Hardware Health Alert State
+  currentHardwareAlert: IInterfaceAlertEvent | null = null;
+  showHardwareAlertBanner = false;
+  showHardwareAlertModal = false;
 
   get showAckModal(): boolean {
     return this.viewerRaceEndedHandler?.showAckModal ?? false;
@@ -783,6 +788,40 @@ export class DefaultRacedayComponent
     this.showAckModal = true;
     this.cdr.markForCheck();
     this.cdr.detectChanges();
+  }
+
+  openHardwareAlertDetails(alert?: IInterfaceAlertEvent | null): void {
+    if (alert) {
+      this.currentHardwareAlert = alert;
+    }
+    this.showHardwareAlertModal = true;
+    this.cdr.markForCheck();
+  }
+
+  closeHardwareAlertDetails(): void {
+    this.showHardwareAlertModal = false;
+    this.cdr.markForCheck();
+  }
+
+  openHardwareAlertHelp(): void {
+    this.helpLinkService.openHelp(
+      "troubleshooting",
+      "microcontroller-brownout-resets",
+    );
+  }
+
+  dismissHardwareAlert(): void {
+    this.showHardwareAlertBanner = false;
+    this.cdr.markForCheck();
+  }
+
+  formatAlertTimestamp(timestampMs?: number | any): string {
+    if (!timestampMs) return "";
+    const ms =
+      typeof timestampMs === "number" ? timestampMs : Number(timestampMs);
+    if (isNaN(ms) || ms === 0) return "";
+    const d = new Date(ms);
+    return d.toLocaleTimeString();
   }
 
   canDeactivate(

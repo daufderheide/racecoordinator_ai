@@ -405,6 +405,17 @@
       </div>
     }
   </div>
+  @if (hardwareAlertCount() > 0) {
+    <button
+      class="menu-hardware-alert-btn"
+      (click)="onHardwareAlertClick()"
+      [title]="'ALERT_VIEW_DETAILS' | translate"
+      data-testid="raceday-menu-hardware-alert-badge"
+    >
+      <span class="material-icons">warning</span>
+      <span class="alert-badge-count">{{ hardwareAlertCount() }}</span>
+    </button>
+  }
   <div
     class="rc-ai-branding"
     (click)="onBrandingClick()"

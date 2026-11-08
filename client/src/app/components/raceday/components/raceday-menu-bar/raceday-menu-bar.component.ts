@@ -23,6 +23,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -72,6 +73,22 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
 
   startResumeShortcut = input<string>("");
   pauseShortcut = input<string>("");
+
+  hardwareAlertClick = output<void>();
+  private raceConnectionService = inject(RaceConnectionService, {
+    optional: true,
+  });
+  public hardwareAlert = toSignal(
+    this.raceConnectionService?.hardwareAlert$ || of(null),
+    { initialValue: null },
+  );
+  public hardwareAlertCount = computed(() => {
+    return this.hardwareAlert()?.occurrenceCount ?? 0;
+  });
+
+  onHardwareAlertClick(): void {
+    this.hardwareAlertClick.emit();
+  }
   nextHeatShortcut = input<string>("");
   restartHeatShortcut = input<string>("");
   skipHeatShortcut = input<string>("");

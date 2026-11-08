@@ -1,5 +1,7 @@
 package com.antigravity.protocols.arduino;
 
+import com.antigravity.proto.AlertSeverity;
+import com.antigravity.proto.AlertType;
 import com.antigravity.proto.InterfaceAnalogDataEvent;
 import com.antigravity.proto.InterfaceDigitalPinEvent;
 import com.antigravity.proto.InterfaceEvent;
@@ -40,6 +42,10 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private List<Integer> lastHeatStandings = null;
   private Integer lastSentState = null;
   private Integer lastSentValue = null;
+
+  private final Map<String, Integer> lastPinState = new HashMap<>();
+  private volatile long resetRecoveryUntilMs = 0;
+  private static final long RESET_RECOVERY_WINDOW_MS = 250;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
@@ -152,6 +158,8 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     supportsRgbLeds = false;
     lastSentState = null;
     lastSentValue = null;
+    lastPinState.clear();
+    resetRecoveryUntilMs = 0;
   }
 
   public void updateConfig(ArduinoConfig newConfig) {
@@ -169,6 +177,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     String oldPort = this.config.commPort;
     this.config = newConfig;
+    this.lastPinState.clear();
     buildPinLookup();
 
     if (commPortChanged) {
@@ -410,12 +419,19 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       }
     } else {
       logger.warn(
-          "Received VERSION ({}.{}.{}.{}) while already verified. Microcontroller may have"
-              + " rebooted. Re-initializing pins and hardware state.",
+          "[HARDWARE ALERT] Received VERSION ({}.{}.{}.{}) while already verified on {}. Microcontroller rebooted unexpectedly. Re-initializing pins.",
           major,
           minor,
           patch,
-          build);
+          build,
+          getInterfaceName());
+      resetRecoveryUntilMs = now() + RESET_RECOVERY_WINDOW_MS;
+      reportAlert(
+          AlertType.ALERT_TYPE_BROWNOUT_RESET,
+          AlertSeverity.ALERT_SEVERITY_WARNING,
+          "ALERT_BROWNOUT_TITLE",
+          "ALERT_BROWNOUT_MSG",
+          "Microcontroller rebooted unexpectedly. Re-initializing pins.");
       buildPinLookup();
       sendPinModeRead();
       sendPinModeWrite();
@@ -432,8 +448,15 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     boolean pcExpectedReset = hwReset != 0;
     if (arduinoReset && !pcExpectedReset && versionVerified) {
       logger.warn(
-          "Unexpected microcontroller reset flag received in heartbeat. Re-initializing pin"
-              + " modes.");
+          "[HARDWARE ALERT] Unexpected microcontroller reset flag received in heartbeat on {}. Re-initializing pin modes.",
+          getInterfaceName());
+      resetRecoveryUntilMs = now() + RESET_RECOVERY_WINDOW_MS;
+      reportAlert(
+          AlertType.ALERT_TYPE_BROWNOUT_RESET,
+          AlertSeverity.ALERT_SEVERITY_WARNING,
+          "ALERT_BROWNOUT_TITLE",
+          "ALERT_BROWNOUT_MSG",
+          "Microcontroller brownout detected. Relay coil back-EMF or 5V voltage drop suspected.");
       buildPinLookup();
       sendPinModeRead();
       sendPinModeWrite();
@@ -442,6 +465,15 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       sendTimeReset();
     }
     super.handleHeartbeat(timeInUse, isReset);
+  }
+
+  @Override
+  public String getInterfaceName() {
+    String port =
+        (config != null && config.commPort != null && !config.commPort.isEmpty())
+            ? config.commPort
+            : "COM";
+    return "Arduino (" + port + ")";
   }
 
   @Override
@@ -664,49 +696,16 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   private void onInput(boolean isDigital, int pin, int state) {
     String key = (isDigital ? "D" : "A") + pin;
+    Integer prevPinState = lastPinState.get(key);
+    lastPinState.put(key, state);
+
+    boolean inResetRecovery = now() < resetRecoveryUntilMs;
+    boolean isStaticDuplicate = (prevPinState != null && prevPinState.intValue() == state);
+
     PinConfig pinConfig = pinLookup.get(key);
 
     if (pinConfig != null) {
-      logger.info(
-          "Received Input - Behavior: {}, Lane: {}, Pin: {}, State: {}",
-          pinConfig.behavior,
-          pinConfig.laneIndex,
-          pin,
-          state);
-
-      int interfaceId =
-          (isDigital ? PinId.PIN_ID_DIGITAL_BASE_VALUE : PinId.PIN_ID_ANALOG_BASE_VALUE) + pin;
-
-      switch (pinConfig.behavior) {
-        case LAP_COUNTER:
-          handleLapCounter(pinConfig.laneIndex, state, interfaceId);
-          break;
-        case SEGMENT_COUNTER:
-          handleSegmentCounter(pinConfig.laneIndex, state, interfaceId);
-          break;
-        case CALL_BUTTON:
-          handleCallButton(pinConfig.laneIndex, state, interfaceId);
-          break;
-        case PIT_IN:
-          handlePitIn(pinConfig.laneIndex, state);
-          break;
-        case PIT_OUT:
-          handlePitOut(pinConfig.laneIndex, state);
-          break;
-        case PIT_IN_OUT:
-          handlePitInOut(pinConfig.laneIndex, state);
-          break;
-        case RESERVED:
-          break;
-        default:
-          logger.warn(
-              "Received Unknown Input - Behavior: {}, Lane: {}, Pin: {}, State: {}",
-              pinConfig.behavior,
-              pinConfig.laneIndex,
-              pin,
-              state);
-          break;
-      }
+      dispatchPinBehavior(pinConfig, pin, state, isDigital, inResetRecovery, isStaticDuplicate);
     } else {
       logger.info(
           "Received Input - Type: {}, Pin: {}, State: {}",
@@ -728,6 +727,93 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
               .build();
       listener.onInterfaceEvent(event);
     }
+  }
+
+  private void dispatchPinBehavior(
+      PinConfig pinConfig,
+      int pin,
+      int state,
+      boolean isDigital,
+      boolean inResetRecovery,
+      boolean isStaticDuplicate) {
+    logger.info(
+        "Received Input - Behavior: {}, Lane: {}, Pin: {}, State: {}",
+        pinConfig.behavior,
+        pinConfig.laneIndex,
+        pin,
+        state);
+
+    int interfaceId =
+        (isDigital ? PinId.PIN_ID_DIGITAL_BASE_VALUE : PinId.PIN_ID_ANALOG_BASE_VALUE) + pin;
+
+    switch (pinConfig.behavior) {
+      case LAP_COUNTER:
+        if (!shouldProcessTimingInput(
+            "lap", pinConfig.laneIndex, pin, state, inResetRecovery, isStaticDuplicate)) {
+          break;
+        }
+        handleLapCounter(pinConfig.laneIndex, state, interfaceId);
+        break;
+      case SEGMENT_COUNTER:
+        if (!shouldProcessTimingInput(
+            "segment", pinConfig.laneIndex, pin, state, inResetRecovery, isStaticDuplicate)) {
+          break;
+        }
+        handleSegmentCounter(pinConfig.laneIndex, state, interfaceId);
+        break;
+      case CALL_BUTTON:
+        handleCallButton(pinConfig.laneIndex, state, interfaceId);
+        break;
+      case PIT_IN:
+        handlePitIn(pinConfig.laneIndex, state);
+        break;
+      case PIT_OUT:
+        handlePitOut(pinConfig.laneIndex, state);
+        break;
+      case PIT_IN_OUT:
+        handlePitInOut(pinConfig.laneIndex, state);
+        break;
+      case RESERVED:
+        break;
+      default:
+        logger.warn(
+            "Received Unknown Input - Behavior: {}, Lane: {}, Pin: {}, State: {}",
+            pinConfig.behavior,
+            pinConfig.laneIndex,
+            pin,
+            state);
+        break;
+    }
+  }
+
+  private boolean shouldProcessTimingInput(
+      String type,
+      int laneIndex,
+      int pin,
+      int state,
+      boolean inResetRecovery,
+      boolean isStaticDuplicate) {
+    if (inResetRecovery) {
+      logger.info(
+          "Ignoring {} input on {} during reset recovery window: lane={}, pin={}, state={}",
+          type,
+          getInterfaceName(),
+          laneIndex,
+          pin,
+          state);
+      return false;
+    }
+    if (isStaticDuplicate) {
+      logger.debug(
+          "Ignoring static {} input (no edge transition) on {}: lane={}, pin={}, state={}",
+          type,
+          getInterfaceName(),
+          laneIndex,
+          pin,
+          state);
+      return false;
+    }
+    return true;
   }
 
   private void onAnalogData(int pin, int value) {
@@ -798,6 +884,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     lastHeatStandings = null;
     lastSentState = null;
     lastSentValue = null;
+    lastPinState.clear();
     syncPower();
     onAnalogLedsChanged();
     ledHelper.initializeHardwareState();

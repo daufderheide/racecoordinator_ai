@@ -831,6 +831,22 @@ export class RacedaySubscriptionsHelper {
       }),
     );
 
+    if (host.raceConnectionService?.hardwareAlert$) {
+      host.subscriptions.push(
+        host.raceConnectionService.hardwareAlert$.subscribe((alert: any) => {
+          if (
+            alert &&
+            !host.raceHasEnded &&
+            host.raceState !== RaceState.RACE_OVER
+          ) {
+            host.currentHardwareAlert = alert;
+            host.showHardwareAlertBanner = true;
+            host.cdr.markForCheck();
+          }
+        }),
+      );
+    }
+
     host.subscriptions.push(
       host.raceConnectionService.recordData$.subscribe((records: any) => {
         if (records) {

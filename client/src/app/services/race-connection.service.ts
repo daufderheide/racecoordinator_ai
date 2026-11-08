@@ -11,6 +11,7 @@ import { DataService } from "@app/data.service";
 import {
   ICarData,
   IGroupStandingsUpdate,
+  IInterfaceAlertEvent,
   IInterfaceEvent,
   ILap,
   InterfaceStatus,
@@ -212,6 +213,8 @@ export class RaceConnectionService implements OnDestroy {
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
     this.isRaceEnded = false;
+    this._hardwareAlertCount = 0;
+    this.hardwareAlertSubject.next(null);
     this.dataService.updateRaceSubscription(true);
   }
 
@@ -815,6 +818,24 @@ export class RaceConnectionService implements OnDestroy {
   }>();
   interfaceAlert$ = this.interfaceAlertSubject.asObservable();
 
+  private hardwareAlertSubject =
+    new BehaviorSubject<IInterfaceAlertEvent | null>(null);
+  hardwareAlert$ = this.hardwareAlertSubject.asObservable();
+  private _hardwareAlertCount = 0;
+
+  public get hardwareAlertCount(): number {
+    return this._hardwareAlertCount;
+  }
+
+  public getHardwareAlertCount(): number {
+    return this._hardwareAlertCount;
+  }
+
+  public clearHardwareAlert(): void {
+    this._hardwareAlertCount = 0;
+    this.hardwareAlertSubject.next(null);
+  }
+
   // ... inside starting connection ...
 
   private handleInterfaceEvent(event: IInterfaceEvent) {
@@ -823,6 +844,15 @@ export class RaceConnectionService implements OnDestroy {
       this.raceStateSubject.value === RaceState.RACE_OVER
     ) {
       return;
+    }
+    if (event.alert) {
+      this.logger.warn(
+        "RaceConnectionService: Hardware alert received:",
+        event.alert,
+      );
+      this._hardwareAlertCount =
+        event.alert.occurrenceCount ?? this._hardwareAlertCount + 1;
+      this.hardwareAlertSubject.next(event.alert);
     }
     if (event.status) {
       const status = event.status.status;

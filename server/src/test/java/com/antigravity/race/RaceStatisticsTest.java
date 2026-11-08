@@ -367,4 +367,19 @@ public class RaceStatisticsTest {
         records.getCurrent().getFastestLap().getValue(),
         0.001);
   }
+
+  @Test
+  public void testHardwareResetCount() {
+    RaceStatistics stats = new RaceStatistics();
+    assertEquals(0, stats.getHardwareResetCount());
+
+    stats.incrementHardwareResetCount();
+    assertEquals(1, stats.getHardwareResetCount());
+
+    stats.incrementHardwareResetCount();
+    assertEquals(2, stats.getHardwareResetCount());
+
+    stats.setHardwareResetCount(10);
+    assertEquals(10, stats.getHardwareResetCount());
+  }
 }

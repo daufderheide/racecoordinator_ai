@@ -15531,4 +15531,122 @@ describe("DefaultRacedayComponent", () => {
       expect(scalableContent).toBeTruthy();
     });
   });
+
+  describe("Hardware Alert Banner and Modal", () => {
+    const mockAlert: any = {
+      interfaceIndex: 0,
+      interfaceName: "Arduino (COM1)",
+      alertType: 1, // BROWNOUT_RESET
+      severity: 1, // WARNING
+      titleKey: "ALERT_BROWNOUT_TITLE",
+      messageKey: "ALERT_BROWNOUT_MSG",
+      details: "Microcontroller brownout detected",
+      occurrenceCount: 2,
+      timestampMs: 1730000000000,
+    };
+
+    it("should display the hardware alert banner when active", () => {
+      component.currentHardwareAlert = mockAlert;
+      component.showHardwareAlertBanner = true;
+      fixture.detectChanges();
+
+      const banner = fixture.nativeElement.querySelector(
+        ".hardware-alert-banner",
+      );
+      expect(banner).toBeTruthy();
+
+      const title = banner.querySelector(".alert-title");
+      expect(title).toBeTruthy();
+    });
+
+    it("should dismiss the hardware alert banner when dismiss button is clicked", () => {
+      component.currentHardwareAlert = mockAlert;
+      component.showHardwareAlertBanner = true;
+      fixture.detectChanges();
+
+      const dismissBtn = fixture.nativeElement.querySelector(
+        "[data-testid='hardware-alert-dismiss-btn']",
+      );
+      expect(dismissBtn).toBeTruthy();
+      dismissBtn.click();
+      fixture.detectChanges();
+
+      expect(component.showHardwareAlertBanner).toBeFalse();
+      const banner = fixture.nativeElement.querySelector(
+        ".hardware-alert-banner",
+      );
+      expect(banner).toBeFalsy();
+    });
+
+    it("should open and close the hardware alert modal dialog", () => {
+      component.currentHardwareAlert = mockAlert;
+      component.showHardwareAlertBanner = true;
+      fixture.detectChanges();
+
+      const detailsBtn = fixture.nativeElement.querySelector(
+        "[data-testid='hardware-alert-details-btn']",
+      );
+      expect(detailsBtn).toBeTruthy();
+      detailsBtn.click();
+      fixture.detectChanges();
+
+      expect(component.showHardwareAlertModal).toBeTrue();
+      const modal = fixture.nativeElement.querySelector(
+        "[data-testid='hardware-alert-modal']",
+      );
+      expect(modal).toBeTruthy();
+
+      const countVal = modal.querySelector(".count-value");
+      expect(countVal?.textContent?.trim()).toBe("2");
+
+      const ackBtn = modal.querySelector(".btn-acknowledge");
+      expect(ackBtn).toBeTruthy();
+      ackBtn.click();
+      fixture.detectChanges();
+
+      expect(component.showHardwareAlertModal).toBeFalse();
+      expect(
+        fixture.nativeElement.querySelector(
+          "[data-testid='hardware-alert-modal']",
+        ),
+      ).toBeFalsy();
+    });
+
+    it("should format timestamps correctly via formatAlertTimestamp", () => {
+      expect(component.formatAlertTimestamp(null)).toBe("");
+      expect(component.formatAlertTimestamp(undefined)).toBe("");
+      const formatted = component.formatAlertTimestamp(1730000000000);
+      expect(formatted).toBeTruthy();
+      expect(typeof formatted).toBe("string");
+    });
+
+    it("should display the frequency banner when occurrenceCount > 1", () => {
+      component.currentHardwareAlert = { ...mockAlert, occurrenceCount: 3 };
+      component.showHardwareAlertModal = true;
+      fixture.detectChanges();
+
+      const freqBanner = fixture.nativeElement.querySelector(
+        ".alert-frequency-banner",
+      );
+      expect(freqBanner).toBeTruthy();
+    });
+
+    it("should open help center troubleshooting guide when guide button is clicked", () => {
+      const helpLinkSpy = spyOn((component as any).helpLinkService, "openHelp");
+      component.currentHardwareAlert = mockAlert;
+      component.showHardwareAlertModal = true;
+      fixture.detectChanges();
+
+      const helpBtn = fixture.nativeElement.querySelector(
+        "[data-testid='hardware-alert-help-btn']",
+      );
+      expect(helpBtn).toBeTruthy();
+      helpBtn.click();
+
+      expect(helpLinkSpy).toHaveBeenCalledWith(
+        "troubleshooting",
+        "microcontroller-brownout-resets",
+      );
+    });
+  });
 });

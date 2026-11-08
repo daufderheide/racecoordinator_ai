@@ -1,5 +1,8 @@
 package com.antigravity.protocols;
 
+import com.antigravity.proto.AlertSeverity;
+import com.antigravity.proto.AlertType;
+import com.antigravity.proto.InterfaceAlertEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
@@ -66,6 +69,9 @@ public abstract class DefaultProtocol implements IProtocol {
 
   // Heat leader state
   protected Integer lastLeaderLane = null;
+
+  // Hardware health alerts
+  protected int hardwareAlertCount = 0;
 
   // Scheduling
   protected ScheduledExecutorService statusScheduler;
@@ -626,6 +632,45 @@ public abstract class DefaultProtocol implements IProtocol {
   @Override
   public int getInterfaceIndex() {
     return interfaceIndex >= 0 ? interfaceIndex : 0;
+  }
+
+  public String getInterfaceName() {
+    return "Interface " + getInterfaceIndex();
+  }
+
+  public int getHardwareAlertCount() {
+    return hardwareAlertCount;
+  }
+
+  protected void reportAlert(
+      AlertType alertType,
+      AlertSeverity severity,
+      String titleKey,
+      String messageKey,
+      String details) {
+    hardwareAlertCount++;
+    InterfaceAlertEvent alert =
+        InterfaceAlertEvent.newBuilder()
+            .setInterfaceIndex(getInterfaceIndex())
+            .setInterfaceName(getInterfaceName())
+            .setAlertType(alertType)
+            .setSeverity(severity)
+            .setTitleKey(titleKey != null ? titleKey : "")
+            .setMessageKey(messageKey != null ? messageKey : "")
+            .setDetails(details != null ? details : "")
+            .setOccurrenceCount(hardwareAlertCount)
+            .setTimestampMs(now())
+            .build();
+    logger.warn(
+        "[HARDWARE ALERT] {} (Index: {}) - Type: {}, Count: {}, Details: {}",
+        getInterfaceName(),
+        getInterfaceIndex(),
+        alertType,
+        hardwareAlertCount,
+        details);
+    if (listener != null) {
+      listener.onInterfaceEvent(InterfaceEvent.newBuilder().setAlert(alert).build());
+    }
   }
 
   @Override

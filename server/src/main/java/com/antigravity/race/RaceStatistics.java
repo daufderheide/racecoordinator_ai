@@ -13,6 +13,7 @@ public class RaceStatistics {
   private int restartCount;
   private int driftLapCount;
   private int minLapTimeRejectionCount;
+  private int hardwareResetCount;
 
   public RaceStatistics() {}
 
@@ -124,5 +125,19 @@ public class RaceStatistics {
 
   public void incrementMinLapTimeRejectionCount() {
     this.minLapTimeRejectionCount++;
+  }
+
+  @JsonProperty("hardwareResetCount")
+  public int getHardwareResetCount() {
+    return hardwareResetCount;
+  }
+
+  @JsonProperty("hardwareResetCount")
+  public void setHardwareResetCount(int hardwareResetCount) {
+    this.hardwareResetCount = hardwareResetCount;
+  }
+
+  public void incrementHardwareResetCount() {
+    this.hardwareResetCount++;
   }
 }

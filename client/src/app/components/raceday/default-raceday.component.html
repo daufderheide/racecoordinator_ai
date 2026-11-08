@@ -58,6 +58,151 @@
   >
   </app-raceday-modals>
 
+  @if (showHardwareAlertBanner && currentHardwareAlert) {
+    <div
+      class="hardware-alert-banner no-print"
+      data-testid="hardware-alert-banner"
+    >
+      <div class="alert-left">
+        <span class="material-icons alert-warning-icon">warning</span>
+        <div class="alert-text-group">
+          <span class="alert-title">{{
+            currentHardwareAlert.titleKey || "ALERT_BROWNOUT_TITLE" | translate
+          }}</span>
+          <span class="alert-summary">
+            {{ currentHardwareAlert.interfaceName }}:
+            {{ "ALERT_COUNT_LABEL" | translate }}:
+            {{ currentHardwareAlert.occurrenceCount }}
+            @if (currentHardwareAlert.timestampMs) {
+              ({{ "ALERT_LAST_SEEN_LBL" | translate }}:
+              {{ formatAlertTimestamp(currentHardwareAlert.timestampMs) }})
+            }
+          </span>
+        </div>
+      </div>
+      <div class="alert-actions">
+        <button
+          class="alert-action-btn details-btn"
+          (click)="openHardwareAlertDetails()"
+          data-testid="hardware-alert-details-btn"
+        >
+          {{ "ALERT_VIEW_DETAILS" | translate }}
+        </button>
+        <button
+          class="alert-action-btn close-btn"
+          (click)="dismissHardwareAlert()"
+          [title]="'COMMON_CLOSE' | translate"
+          data-testid="hardware-alert-dismiss-btn"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (showHardwareAlertModal && currentHardwareAlert) {
+    <div
+      class="hardware-alert-modal-backdrop no-print"
+      (click)="closeHardwareAlertDetails()"
+      data-testid="hardware-alert-modal"
+    >
+      <div class="hardware-alert-modal-card" (click)="$event.stopPropagation()">
+        <div class="hardware-alert-modal-header">
+          <div class="modal-title-with-icon">
+            <span class="material-icons warning-icon">warning</span>
+            <h3>
+              {{
+                currentHardwareAlert.titleKey || "ALERT_BROWNOUT_TITLE"
+                  | translate
+              }}
+            </h3>
+          </div>
+          <button
+            class="ghost-icon-btn close-btn"
+            (click)="closeHardwareAlertDetails()"
+          >
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+        <div class="hardware-alert-modal-body">
+          <div class="alert-stat-grid">
+            <div class="alert-stat-item">
+              <span class="stat-label">{{
+                "ALERT_INTERFACE_LBL" | translate
+              }}</span>
+              <span class="stat-value">{{
+                currentHardwareAlert.interfaceName
+              }}</span>
+            </div>
+            <div class="alert-stat-item">
+              <span class="stat-label">{{
+                "ALERT_COUNT_LBL" | translate
+              }}</span>
+              <span class="stat-value count-value">{{
+                currentHardwareAlert.occurrenceCount
+              }}</span>
+            </div>
+            <div class="alert-stat-item">
+              <span class="stat-label">{{
+                "ALERT_LAST_SEEN_LBL" | translate
+              }}</span>
+              <span class="stat-value">{{
+                formatAlertTimestamp(currentHardwareAlert.timestampMs)
+              }}</span>
+            </div>
+          </div>
+          @if ((currentHardwareAlert.occurrenceCount ?? 1) > 1) {
+            <div class="alert-frequency-banner">
+              <span class="material-icons">info</span>
+              <span>{{ "ALERT_FREQUENCY_NOTE" | translate }}</span>
+            </div>
+          }
+          <div class="alert-info-section">
+            <p class="alert-main-message">
+              {{
+                currentHardwareAlert.messageKey || "ALERT_BROWNOUT_MSG"
+                  | translate
+              }}
+            </p>
+            @if (currentHardwareAlert.details) {
+              <div class="alert-tech-details">
+                <span class="details-heading"
+                  >{{ "ALERT_TECHNICAL_DETAILS" | translate }}:</span
+                >
+                <span class="details-body">{{
+                  currentHardwareAlert.details
+                }}</span>
+              </div>
+            }
+          </div>
+          <div class="alert-help-card">
+            <div class="help-card-header">
+              <span class="material-icons help-card-icon">help_outline</span>
+              <div class="help-card-content">
+                <h4>{{ "ALERT_HELP_CENTER_TITLE" | translate }}</h4>
+                <p>{{ "ALERT_HELP_CENTER_DESC" | translate }}</p>
+              </div>
+            </div>
+            <button
+              class="btn-help-guide"
+              (click)="openHardwareAlertHelp()"
+              data-testid="hardware-alert-help-btn"
+            >
+              <span class="material-icons">menu_book</span>
+              <span>{{ "ALERT_HELP_CENTER_BTN" | translate }}</span>
+              <span class="material-icons external-icon">open_in_new</span>
+            </button>
+          </div>
+        </div>
+        <div class="hardware-alert-modal-footer">
+          <button class="btn-acknowledge" (click)="closeHardwareAlertDetails()">
+            {{ "GEN_OK" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   @if (isDriverView && !isRacingInCurrentHeat) {
     <!-- Full-screen on deck container for mobile -->
     <div class="on-deck-mobile-container">
