@@ -30,13 +30,33 @@ Der **Arduino UNO Q** kombiniert einen 64-Bit-Linux-Einplatinencomputer (SBC) mi
 
 ## Schritt-für-Schritt-Installation
 
-### Schritt 1: Board vorbereiten & Verbindung über SSH herstellen
-1. Installieren Sie **Arduino Linux OS** (Debian 12 arm64) auf dem Uno Q.
-2. Verbinden Sie das Board über WLAN oder Ethernet mit Ihrem lokalen Netzwerk:
-   * **WLAN-Einrichtung beim ersten Start**: Beim ersten Booten fordert der Einrichtungsassistent zur Konfiguration des drahtlosen Netzwerks auf.
-   * **Hinweis zur Ersteinrichtung**: Die WLAN-Verbindung wird möglicherweise nicht sofort aktiv, und manuelle Terminalbefehle wie `sudo nmcli dev wifi connect "Ihre_SSID" password "Ihr_Passwort"` können beim ersten Start ebenfalls fehlschlagen. Führen Sie in diesem Fall einfach `sudo reboot` aus. Nach dem Neustart initialisiert sich der WLAN-Adapter sauber und verbindet sich automatisch mit Ihrem konfigurierten WLAN-Netzwerk.
+### Schritt 1: Board vorbereiten & über Netzwerk verbinden
+
+1. **Board einschalten** *(Flashen ist normalerweise nicht erforderlich)*:
+   * Ihr Arduino Uno Q wird mit vorinstalliertem **Arduino Linux OS (Debian 12 arm64)** auf dem internen 32-GB-eMMC-Flash-Speicher geliefert. Schließen Sie das Board einfach an die Stromversorgung an, um das Betriebssystem zu starten.
+   * *(Hinweis: Das Flashen eines Betriebssystem-Images ist nur erforderlich, wenn Sie ein beschädigtes System wiederherstellen oder einen vollständigen Werksreset durchführen möchten).*
+
+2. **Netzwerkverbindung einrichten**:
+   > [!IMPORTANT]
+   > **Internetzugang nur während der Ersteinrichtung erforderlich**: Eine Netzwerkverbindung mit Internetzugang ist ausschließlich während dieser Ersteinrichtung erforderlich, um Pakete zu aktualisieren und Voraussetzungen herunterzuladen. Sobald die Einrichtung abgeschlossen ist, läuft Race Coordinator AI zu 100 % lokal und offline, ohne dass eine Internetverbindung erforderlich ist. Es bietet jedoch erhebliche dauerhafte Vorteile, das Board mit Ihrem lokalen Netzwerk verbunden zu lassen:
+   > - **Automatische Software-Updates**: Laden Sie neue Race Coordinator AI-Versionen und Firmware-Updates direkt über die Weboberfläche herunter und installieren Sie diese.
+   > - **Fernzugriff für Clients**: Rennleiter, Fahrer und Zuschauer können ihre Smartphones, Tablets oder Laptops über Ihr lokales Netzwerk direkt mit der Weboberfläche des Boards (`http://<hostname>:7070` oder `http://<IP_ADRESSE>:7070`) verbinden.
+
+   * **WLAN-Einrichtung über den Einrichtungsassistenten**: Beim ersten Booten fordert der Einrichtungsassistent zur Konfiguration des drahtlosen Netzwerks auf. Wählen Sie Ihr WLAN-Netzwerk aus und geben Sie das Passwort ein.
+   * **Alternative: WLAN über die Befehlszeile einrichten**: Wenn Sie das WLAN nicht über den Assistenten eingerichtet haben oder es manuell im Terminal konfigurieren möchten:
+     ```bash
+     # Verfügbare WLAN-Netzwerke auflisten:
+     nmcli dev wifi list
+
+     # Mit Ihrem WLAN-Netzwerk verbinden:
+     sudo nmcli dev wifi connect "Ihre_SSID" password "Ihr_Passwort"
+     ```
+   * **Alternative: Kabelgebundenes Ethernet**: Schließen Sie einfach ein Ethernet-Kabel an das Board an (oder verwenden Sie einen USB-C-Ethernet-Adapter). Der Netzwerkadapter konfiguriert sich automatisch per DHCP.
+   * **Hinweis zur Ersteinrichtung**: Die WLAN-Verbindung wird möglicherweise nicht sofort aktiv, und manuelle `nmcli`-Befehle können beim ersten Start gelegentlich temporäre Fehler anzeigen. Führen Sie in diesem Fall einfach `sudo reboot` aus. Nach dem Neustart initialisiert sich der WLAN-Adapter sauber und verbindet sich automatisch mit Ihrem konfigurierten WLAN-Netzwerk.
    * **Board- und Firmware-Updates durchführen**: Nach dem Neustart (oder wenn Sie vom System dazu aufgefordert werden) werden Sie möglicherweise gefragt, ob Sie verschiedene Pakete und Firmware-Komponenten auf dem Board aktualisieren möchten. Es wird dringend empfohlen, alle vorgeschlagenen Aktualisierungen zu akzeptieren und auszuführen, da die ab Werk installierte Firmware oft veraltet ist. Beachten Sie, dass diese anfängliche Aktualisierung einige Zeit in Anspruch nehmen kann (oft 5 bis 10+ Minuten, abhängig von der Netzwerkgeschwindigkeit); lassen Sie den Vorgang ungestört abschließen.
-3. SSH auf dem Board aktivieren & verbinden:
+
+3. **SSH auf dem Board aktivieren & verbinden (Empfohlen)**:
+   * Die Einrichtung des Boards ist über SSH von Ihrem Computer aus am einfachsten, da Sie Installationsbefehle direkt kopieren und einfügen können.
    * **SSH-Dienst aktivieren**: Standardmäßig wird der SSH-Server auf dem Board nicht ausgeführt. Aktivieren und starten Sie den SSH-Dienst über das lokale Terminal (mit an das Board angeschlossener Tastatur und Bildschirm):
      ```bash
      sudo systemctl enable --now ssh
@@ -47,12 +67,17 @@ Der **Arduino UNO Q** kombiniert einen 64-Bit-Linux-Einplatinencomputer (SBC) mi
      hostname -I
      ```
      *(Hinweis: `avahi-daemon` ist unter Arduino Linux OS nicht vorinstalliert, sodass `.local`-mDNS-Domänennamen wie `uno-q.local` standardmäßig nicht aufgelöst werden, es sei denn, Sie installieren das Paket mit `sudo apt-get install -y avahi-daemon`).*
-   * **Verbindung vom PC herstellen**: Öffnen Sie ein Terminal auf Ihrem Computer und stellen Sie eine Verbindung über den Hostnamen oder die IP-Adresse des Boards her:
-     ```bash
-     ssh arduino@<hostname>
-     # Oder direkt über die IP-Adresse:
-     ssh arduino@<IP_ADRESSE>
-     ```
+   * **Verbindung vom PC herstellen**:
+     * **macOS**: Öffnen Sie das integrierte Programm **Terminal** oder **iTerm2** ([iterm2.com](https://iterm2.com/)) und stellen Sie eine Verbindung über die Befehlszeile her:
+       ```bash
+       ssh arduino@<hostname>
+       # Oder direkt über die IP-Adresse:
+       ssh arduino@<IP_ADRESSE>
+       ```
+     * **Windows**: Sie können die integrierte PowerShell oder Eingabeaufforderung (mit `ssh arduino@<hostname>` oder `ssh arduino@<IP_ADRESSE>`) verwenden oder einen grafischen SSH-Client wie **PuTTY** (Download unter [putty.org](https://www.putty.org/)) nutzen. Bei Verwendung von PuTTY:
+       1. Geben Sie den Hostnamen oder die IP-Adresse des Boards in das Feld **Host Name (or IP address)** ein.
+       2. Stellen Sie sicher, dass Port `22` und als Verbindungstyp **SSH** ausgewählt ist.
+       3. Klicken Sie auf **Open**, bestätigen Sie beim ersten Verbinden den Host-Schlüssel und melden Sie sich als Benutzer `arduino` mit Ihrem Passwort an.
 
 ### Schritt 2: Voraussetzungen installieren
 Installieren Sie die Java-Laufzeitumgebung (`default-jre-headless`), Audio-Dienstprogramme (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` und die Fensterverwaltung (`wmctrl`):

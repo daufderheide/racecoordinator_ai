@@ -30,13 +30,33 @@ De **Arduino UNO Q** combineert een 64-bits Linux Single Board Computer (SBC) me
 
 ## Stapsgewijze installatie
 
-### Stap 1: Het bord voorbereiden en verbinden via SSH
-1. Installeer **Arduino Linux OS** (Debian 12 arm64) op de Uno Q.
-2. Verbind het bord met uw lokale netwerk via wifi of ethernet:
-   * **Wifi-configuratie bij de eerste keer opstarten**: Bij het eerste opstarten vraagt de installatiewizard om de configuratie van het draadloze netwerk.
-   * **Opmerking over de eerste verbinding**: De wifi-verbinding wordt mogelijk niet direct na het invoeren actief en handmatige terminalopdrachten zoals `sudo nmcli dev wifi connect "Uw_SSID" password "Uw_Wachtwoord"` kunnen bij het eerste opstarten eveneens mislukken. Voer in dat geval eenvoudig `sudo reboot` uit. Na het opnieuw opstarten initialiseert de draadloze netwerkadapter zich correct en maakt deze automatisch verbinding met uw geconfigureerde wifi-netwerk.
+### Stap 1: Het bord voorbereiden en verbinden via het netwerk
+
+1. **Het bord inschakelen** *(Flashen is meestal niet nodig)*:
+   * Uw Arduino Uno Q wordt geleverd met **Arduino Linux OS (Debian 12 arm64) vooraf geïnstalleerd** op het interne 32 GB eMMC-flashgeheugen. Sluit het bord eenvoudig aan op de voeding om het besturingssysteem op te starten.
+   * *(Opmerking: Het flashen van een besturingssysteemkopie is alleen nodig als u een beschadigd systeem herstelt of een volledige fabrieksreset uitvoert).*
+
+2. **Netwerkverbinding instellen**:
+   > [!IMPORTANT]
+   > **Internettoegang alleen vereist tijdens de initiële installatie**: Een netwerkverbinding met internettoegang is strikt noodzakelijk tijdens deze initiële installatie om pakketten bij te werken en vereisten te downloaden. Zodra de installatie is voltooid, werkt Race Coordinator AI 100% lokaal en offline, zonder dat een internetverbinding nodig is. Het biedt echter aanzienlijke doorlopende voordelen om het bord verbonden te houden met uw lokale netwerk:
+   > - **Automatische software-updates**: Download en installeer eenvoudig nieuwe versies van Race Coordinator AI en firmware-updates rechtstreeks vanuit de webinterface.
+   > - **Externe clienttoegang**: Wedstrijdleiders, coureurs en toeschouwers kunnen hun smartphones, tablets of laptops via uw lokale netwerk rechtstreeks verbinden met de webinterface van het bord (`http://<hostname>:7070` of `http://<IP_ADRES>:7070`).
+
+   * **Wifi-configuratie via de schermwizard**: Bij het eerste opstarten vraagt de installatiewizard om de configuratie van het draadloze netwerk. Selecteer uw wifi-netwerk en voer het wachtwoord in.
+   * **Alternatief: Wifi instellen via de opdrachtregel**: Als u de wifi niet via de wizard heeft ingesteld of handmatig in de terminal wilt configureren:
+     ```bash
+     # Beschikbare draadloze netwerken weergeven:
+     nmcli dev wifi list
+
+     # Verbinding maken met uw wifi-netwerk:
+     sudo nmcli dev wifi connect "Uw_SSID" password "Uw_Wachtwoord"
+     ```
+   * **Alternatief: Bekabeld ethernet**: Sluit eenvoudig een ethernetkabel aan op het bord (of een USB-C-ethernetadapter). De netwerkadapter configureert zich automatisch via DHCP.
+   * **Opmerking over de eerste verbinding**: De wifi-verbinding wordt mogelijk niet direct na het invoeren actief en handmatige `nmcli`-opdrachten kunnen bij het eerste opstarten tijdelijke fouten vertonen. Voer in dat geval eenvoudig `sudo reboot` uit. Na het opnieuw opstarten initialiseert de draadloze netwerkadapter zich correct en maakt deze automatisch verbinding met uw geconfigureerde wifi-netwerk.
    * **Board- en firmware-updates toepassen**: Na het opnieuw opstarten (of wanneer het systeem hierom vraagt), wordt u mogelijk gevraagd of u verschillende pakketten en firmwarecomponenten op het bord wilt bijwerken. Het wordt ten zeerste aanbevolen om alle voorgestelde updates te accepteren en uit te voeren, aangezien de fabrieksfirmware vaak verouderd is. Houd er rekening mee dat deze initiële update enige tijd kan duren (vaak 5 tot meer dan 10 minuten, afhankelijk van de netwerksnelheid); laat dit proces ononderbroken voltooien.
-3. SSH inschakelen op het bord & verbinden:
+
+3. **SSH inschakelen op het bord & verbinden (Aanbevolen)**:
+   * Het instellen van het bord is het gemakkelijkst via SSH vanaf uw computer, zodat u installatieopdrachten rechtstreeks kunt kopiëren en plakken.
    * **SSH-service inschakelen**: Standaard is de SSH-server niet actief op het bord. Schakel de SSH-service in en start deze vanaf de lokale terminal (met het toetsenbord en scherm aangesloten op het bord):
      ```bash
      sudo systemctl enable --now ssh
@@ -47,12 +67,17 @@ De **Arduino UNO Q** combineert een 64-bits Linux Single Board Computer (SBC) me
      hostname -I
      ```
      *(Opmerking: `avahi-daemon` is niet vooraf geïnstalleerd op Arduino Linux OS, dus `.local` mDNS-domeinnamen zoals `uno-q.local` werken standaard niet, tenzij u het pakket installeert via `sudo apt-get install -y avahi-daemon`).*
-   * **Verbinden vanaf uw pc**: Open een terminal op uw computer en maak verbinding via de hostnaam of het IP-adres van het bord:
-     ```bash
-     ssh arduino@<hostname>
-     # Of maak rechtstreeks verbinding via IP:
-     ssh arduino@<IP_ADRES>
-     ```
+   * **Verbinden vanaf uw pc**:
+     * **macOS**: Open het ingebouwde programma **Terminal** of **iTerm2** ([iterm2.com](https://iterm2.com/)) en maak verbinding via de opdrachtregel:
+       ```bash
+       ssh arduino@<hostname>
+       # Of maak rechtstreeks verbinding via IP:
+       ssh arduino@<IP_ADRES>
+       ```
+     * **Windows**: U kunt de ingebouwde PowerShell of Opdrachtprompt gebruiken (met `ssh arduino@<hostname>` of `ssh arduino@<IP_ADRES>`) of een grafische SSH-client zoals **PuTTY** (downloaden via [putty.org](https://www.putty.org/)) gebruiken. Bij gebruik van PuTTY:
+       1. Voer de hostnaam of het IP-adres van het bord in het veld **Host Name (or IP address)** in.
+       2. Zorg ervoor dat de poort is ingesteld op `22` en het verbindingstype op **SSH**.
+       3. Klik op **Open**, accepteer de waarschuwing voor de hostsleutel bij de eerste verbinding en meld u aan als gebruiker `arduino` met uw wachtwoord.
 
 ### Stap 2: Vereisten installeren
 Installeer de Java-runtime-omgeving (`default-jre-headless`), audio-hulpprogramma's (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` en vensterbeheer (`wmctrl`):

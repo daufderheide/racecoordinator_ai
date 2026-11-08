@@ -355,29 +355,32 @@
             }
           </div>
         }
-        <div class="menu-separator"></div>
-        <div
-          id="themes-menu-item"
-          class="menu-item has-submenu"
-          (click)="toggleThemesMenu(); $event.stopPropagation()"
-        >
-          <span>{{ "RD_MENU_THEMES" | translate }}</span>
-          <span class="submenu-arrow">▶</span>
-          @if (isThemesOpen) {
-            <div class="menu-dropdown submenu">
-              @for (theme of themes; track theme.entity_id) {
-                <div
-                  class="menu-item theme-option-item"
-                  (click)="
-                    onThemeMenuSelect(theme.entity_id); $event.stopPropagation()
-                  "
-                >
-                  {{ getThemeDisplayNameKey(theme) | translate }}
-                </div>
-              }
-            </div>
-          }
-        </div>
+        @if (displayedThemes.length > 0) {
+          <div class="menu-separator"></div>
+          <div
+            id="themes-menu-item"
+            class="menu-item has-submenu"
+            (click)="toggleThemesMenu(); $event.stopPropagation()"
+          >
+            <span>{{ "RD_MENU_THEMES" | translate }}</span>
+            <span class="submenu-arrow">▶</span>
+            @if (isThemesOpen) {
+              <div class="menu-dropdown submenu">
+                @for (theme of displayedThemes; track theme.entity_id) {
+                  <div
+                    class="menu-item theme-option-item"
+                    (click)="
+                      onThemeMenuSelect(theme.entity_id);
+                      $event.stopPropagation()
+                    "
+                  >
+                    {{ getThemeDisplayNameKey(theme) | translate }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
       </div>
     }
   </div>
@@ -402,6 +405,17 @@
       </div>
     }
   </div>
+  @if (hardwareAlertCount() > 0) {
+    <button
+      class="menu-hardware-alert-btn"
+      (click)="onHardwareAlertClick()"
+      [title]="'ALERT_VIEW_DETAILS' | translate"
+      data-testid="raceday-menu-hardware-alert-badge"
+    >
+      <span class="material-icons">warning</span>
+      <span class="alert-badge-count">{{ hardwareAlertCount() }}</span>
+    </button>
+  }
   <div
     class="rc-ai-branding"
     (click)="onBrandingClick()"

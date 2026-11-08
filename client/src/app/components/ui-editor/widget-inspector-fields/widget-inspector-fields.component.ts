@@ -51,6 +51,9 @@ export class WidgetInspectorFieldsComponent {
   isPracticeMode = input<boolean>(false);
   totalLanes = input<number>(4);
   selectedAnchor = input<string | null>(null);
+  selectionToken = input<number>(0);
+  activeTab = input<string | null>(null);
+  tabChange = output<string>();
   anchorChange = output<string | null>();
   change = output<AbsoluteWidgetNode>();
   replicate = output<any>();

@@ -690,9 +690,13 @@ export class RacedayAbsoluteWidgetComponent
       return;
     }
     if (
-      !this.canModifyWidget ||
-      target?.closest(".anchor-zone, .anchor-delete-btn, .lane-column-anchor")
+      target?.closest(
+        ".anchor-zone, .anchor-delete-btn, .delete-anchor-btn, .lane-column-anchor, .drop-zone, .inset-cell",
+      )
     ) {
+      return;
+    }
+    if (!this.canModifyWidget) {
       this.bringToFront();
       return;
     }

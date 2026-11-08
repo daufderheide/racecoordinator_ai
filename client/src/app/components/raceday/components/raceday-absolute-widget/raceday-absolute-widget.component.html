@@ -124,6 +124,9 @@
             (trackPowerLaneSelect)="
               parentComponent().onTrackPowerLaneSelect($event)
             "
+            (hardwareAlertClick)="
+              parentComponent().openHardwareAlertDetails?.()
+            "
           ></app-raceday-menu-bar>
         }
         @case ("race-name") {

@@ -423,6 +423,129 @@ export function getLayoutUnsavedReasons(
 }
 
 export const LAYOUT_LAST_EDITED_STORAGE_KEY = "rc.last_edited_layout_id";
+export const LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY =
+  "rc.last_edited_layout_widgets";
+
+export interface LayoutLastEditedWidgetState {
+  widgetId: string;
+  tab?: "widget" | "grid" | "column" | "inset" | string;
+}
+
+export function isGridElement(widget: any): boolean {
+  if (!widget) return false;
+  return Boolean(
+    widget.customSettings?.["gridId"] || widget.customSettings?.gridId,
+  );
+}
+
+export function getLastEditedWidgetForLayout(
+  layoutId: string,
+  navigationService?: NavigationService | null,
+): LayoutLastEditedWidgetState | null {
+  if (!layoutId) return null;
+  const navValue = navigationService?.getLastEditedId?.(
+    `layout_widget_${layoutId}`,
+  );
+  if (navValue) {
+    try {
+      const parsed = JSON.parse(navValue);
+      if (parsed && typeof parsed === "object" && parsed.widgetId) {
+        return parsed;
+      }
+    } catch (_e) {
+      if (typeof navValue === "string") {
+        return { widgetId: navValue };
+      }
+    }
+  }
+  if (typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY);
+      if (raw) {
+        const map = JSON.parse(raw);
+        if (map && typeof map === "object" && map[layoutId]) {
+          const item = map[layoutId];
+          if (typeof item === "string") {
+            return { widgetId: item };
+          }
+          if (item && typeof item === "object" && item.widgetId) {
+            return item;
+          }
+        }
+      }
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+  return null;
+}
+
+export function setLastEditedWidgetForLayout(
+  layoutId: string,
+  state: LayoutLastEditedWidgetState,
+  navigationService?: NavigationService | null,
+): void {
+  if (!layoutId || !state || !state.widgetId) return;
+  navigationService?.setLastEditedId?.(
+    `layout_widget_${layoutId}`,
+    JSON.stringify(state),
+  );
+  if (typeof localStorage !== "undefined") {
+    try {
+      let map: Record<string, LayoutLastEditedWidgetState> = {};
+      const raw = localStorage.getItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY);
+      if (raw) {
+        try {
+          map = JSON.parse(raw) || {};
+        } catch (_e) {
+          map = {};
+        }
+      }
+      map[layoutId] = state;
+      localStorage.setItem(
+        LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY,
+        JSON.stringify(map),
+      );
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+}
+
+export function clearLastEditedWidgetForLayout(
+  layoutId: string,
+  navigationService?: NavigationService | null,
+): void {
+  if (!layoutId) return;
+  navigationService?.clearLastEditedId?.(`layout_widget_${layoutId}`);
+  if (typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY);
+      if (raw) {
+        const map = JSON.parse(raw) || {};
+        delete map[layoutId];
+        localStorage.setItem(
+          LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY,
+          JSON.stringify(map),
+        );
+      }
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+}
+
+export function clearAllLastEditedWidgets(
+  _navigationService?: NavigationService | null,
+): void {
+  if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.removeItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY);
+    } catch (_e) {
+      // Ignore storage errors
+    }
+  }
+}
 
 export function getLastEditedLayoutId(
   navigationService?: NavigationService | null,

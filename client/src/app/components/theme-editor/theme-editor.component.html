@@ -119,6 +119,56 @@
               }
             </app-custom-select>
           </div>
+
+          <!-- Companion Window Themes Selection -->
+          <div id="theme-companion-themes" class="theme-control-group">
+            <div class="theme-control-header">
+              <label class="theme-control-label">{{
+                "THM_COMPANION_THEMES" | translate
+              }}</label>
+              @if (isEditMode) {
+                <button
+                  type="button"
+                  id="theme-select-all-companions-btn"
+                  class="theme-select-all-btn"
+                  (click)="toggleSelectAllCompanionThemes()"
+                  [title]="
+                    (areAllCompanionThemesSelected
+                      ? 'THM_DESELECT_ALL_TOOLTIP'
+                      : 'THM_SELECT_ALL_TOOLTIP'
+                    ) | translate
+                  "
+                >
+                  <span class="material-icons">
+                    {{
+                      areAllCompanionThemesSelected ? "deselect" : "select_all"
+                    }}
+                  </span>
+                  <span>{{
+                    (areAllCompanionThemesSelected
+                      ? "THM_DESELECT_ALL"
+                      : "THM_SELECT_ALL"
+                    ) | translate
+                  }}</span>
+                </button>
+              }
+            </div>
+            <app-custom-select
+              id="theme-companion-themes-select"
+              [multiple]="true"
+              [placeholder]="'THM_COMPANION_THEMES_PLACEHOLDER' | translate"
+              [multiCountText]="'THM_COMPANION_THEMES_COUNT' | translate"
+              [(ngModel)]="editingTheme.companion_theme_ids"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+            >
+              @for (t of displayThemes; track t.entity_id) {
+                <app-custom-option [value]="t.entity_id">
+                  {{ getThemeDisplayNameKey(t) | translate }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
         </div>
       </div>
 

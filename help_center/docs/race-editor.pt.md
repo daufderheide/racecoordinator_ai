@@ -70,6 +70,121 @@ O acordeão de Configurações gerais controla a apresentação, filtros de temp
 - **Regras de bandeira amarela**: Pausas automáticas ou manuais sob bandeira amarela com corte de energia na pista.
 - **Opções de interface personalizada**: Tabelas de classificação e widgets de telemetria dedicados.
 
+### Mecânica de Deriva e Cronometragem de Drift {: #drifting-and-drift-timing }
+
+No automobilismo de fenda (autorama / slot car racing), os carros são propulsionados pela voltagem elétrica fornecida através de calhas metálicas na pista. Quando a energia da pista é cortada – como durante uma pausa por bandeira amarela, no encerramento de uma bateria (**Heat Over**) ou ao final da corrida (**Race Over**) –, os carros não param instantaneamente com velocidade zero. Devido à inércia física, massa, atração magnética do motor e atrito, os carros continuam rolando para a frente por inércia residual após a interrupção da corrente.
+
+No Race Coordinator AI e no jargão do slot car, esse movimento por inércia sem tração elétrica é denominado **"drift"** ou **"deriva"**.
+
+!!! note "Definição de Drift no Slot Car"
+    No slot car racing, o termo "drift" ou "deriva" **não** se refere a derrapagens laterais de traseira, curvas de lado ou manobras acrobáticas. Refere-se estritamente ao rolamento por inércia para a frente do carro impulsionado pelo seu movimento residual após o desligamento da energia da pista.
+
+Quando um carro se aproxima da linha de chegada ou do sensor de cronometragem no exato instante em que a energia cai, o seu embalo pode fazê-lo cruzar o sensor antes de parar completamente. O Race Coordinator AI oferece cronometragem por hardware de alta precisão e configurações dedicadas para gerenciar essas situações com total justiça e rigor esportivo.
+
+#### A Distinção Fundamental: "Volta de Drift" vs. "Volta com Drift Envolvido"
+
+Existe uma distinção essencial no Race Coordinator AI entre uma **Volta de Drift** (`isDrift = true`) e uma **Volta com Drift Envolvido** (`driftInvolved = true`):
+
+##### 1. Uma "Volta de Drift" (`isDrift = true`)
+Uma **Volta de Drift** é uma volta fisicamente registrada e contabilizada quando um carro cruza a linha de chegada ou o sensor **ENQUANTO a energia da pista está DESLIGADA** (especificamente durante os estados `Paused` / bandeira amarela, `HeatOver` ou `RaceOver`), dentro da janela de **Tempo de deriva** configurada.
+
+- **Evento Físico**: O carro cruza a linha de chegada rolando por inércia sem energia na pista.
+- **Indicador Visual**: A coluna da calha na tela principal da corrida e o diálogo de inspeção de voltas exibem um badge destacado **`DRIFT`** ao lado do tempo da volta.
+- **Anúncio de Voz**: Dispara o **Som de volta de drift** (`driftLapAudio`) configurado para o piloto como anúncio de voz de prioridade urgente (`urgent`) (ex.: *"Drift lap for {driver.nickname}"*).
+- **Crédito da Volta**: A volta é creditada integralmente ao total de voltas do piloto para a bateria e classificação geral. O tempo de volta registrado combina o tempo parcial acumulado antes da interrupção com a fração de segundo rolando sobre o sensor.
+- **Estatísticas**: Incrementa o contador de voltas de drift nas estatísticas da corrida (`driftLapCount`). Segmentos parciais calculados automaticamente são zerados.
+
+##### 2. Uma "Volta com Drift Envolvido" (`driftInvolved = true`, mas `isDrift = false`)
+Uma **Volta com Drift Envolvido** é uma volta completada e registrada sob **condições normais de BANDEIRA VERDE com energia ligada**, mas cuja duração total decorrida contém um período de interrupção ou tempo herdado decorrente de uma pausa na pista ou transição de bateria.
+
+- **Evento Físico**: O carro cruza a linha de chegada com a energia **LIGADA** em ritmo de corrida sob bandeira verde. Contudo, no decorrer dessa mesma volta, a energia foi interrompida e posteriormente restabelecida.
+- **Cenários Típicos**:
+    - **Pausa e Retomada por Bandeira Amarela Durante a Volta**: Um piloto cumpre 3,2 segundos de uma volta de 5,0 segundos quando uma bandeira amarela é acionada. A energia cai e o carro para por inércia na reta oposta (não cruza o sensor, portanto não é uma volta de drift). O cronômetro de hardware congela e esses 3,2 segundos são armazenados no tempo pendente do piloto, com marcação interna de tempo de drift (`markDriftTime()`). Na retomada sob bandeira verde, os cronômetros reiniciam do zero. O carro percorre os 1,8 segundos restantes com tração e cruza a linha de chegada. O tempo total registrado é de 5,0 segundos ($3{,}2\,\text{s} + 1{,}8\,\text{s}$). Como a linha foi cruzada sob bandeira verde, **não é uma Volta de Drift** (não há badge `DRIFT` e toca o áudio habitual de volta), mas é uma **Volta com Drift Envolvido** porque sua duração foi dividida por uma paralisação.
+    - **Largada na Posição Atual (`Start at Current`)**: Em modalidades contínuas em que os carros param onde estão no término da bateria e recomeçam dessa mesma posição física na bateria seguinte (`start_at_current = true`), o tempo parcial incompleto da bateria anterior é transferido. Quando o piloto conclui a sua primeira volta na nova bateria sob bandeira verde, essa volta incorpora o tempo herdado da bateria anterior: trata-se de uma **Volta com Drift Envolvido**.
+
+---
+
+#### As Duas Opções de Configuração da Corrida
+
+No acordeão **Configurações gerais**, o Race Coordinator AI fornece duas opções dedicadas para controlar o drift e a validação de recordes:
+
+```
++---------------------------------------------------------------------------------+
+| Tempo mínimo de volta (s): [ 2.0 ]   Tempo de deriva (s): [ 0.5 ]               |
+|                                                                                 |
+| [ ] Modo de treino    [X] Excluir voltas com drift dos recordes                 |
++---------------------------------------------------------------------------------+
+```
+
+##### Opção 1: Tempo de deriva (`drift_time`)
+- **Tipo de Configuração**: Número decimal em segundos (ex.: `0.0`, `0.5`, `1.0`, `2.0`).
+- **Valor Padrão**: `0.5` segundos.
+- **Descrição**: Define a janela máxima de tempo imediatamente posterior a um corte de energia (bandeira amarela, fim de bateria ou fim de corrida) durante a qual a passagem pelo sensor será aceita como uma volta válida por inércia.
+
+!!! warning "Pistas sem Relés de Controlo de Corrente"
+    Se a sua pista não possuir relés de hardware para cortar a corrente, a pista permanece energizada durante pausas, finais de bateria e encerramento da corrida. Nestas pistas, **o Tempo de deriva deve ser definido como `0` (nenhuma volta de drift)**. Caso contrário, os pilotos que continuem acelerando durante uma pausa poderiam receber indevidamente voltas de drift sob tração.
+
+No momento do corte de energia, o sistema grava o registro exato em milissegundos. Se um sensor for acionado com a pista parada:
+
+$$\Delta t = \text{Momento do Disparo} - \text{Momento da Parada}$$
+
+$$\begin{aligned}
+\text{Se } \Delta t \le \text{Tempo de deriva} &\implies \textbf{Aceita como Volta de Drift } (\text{isDrift} = \text{true}) \\
+\text{Se } \Delta t > \text{Tempo de deriva} &\implies \textbf{Rejeitada e ignorada}
+\end{aligned}$$
+
+- **Por que um Limite de Tempo de Deriva é Essencial**:
+    - **Justiça com Carros em Embalo**: Um carro que estava a poucos centímetros da linha de chegada ao soar a bandeira merece a volta se o seu embalo o levar a cruzar o sensor instantes depois.
+    - **Prevenção de Voltas Falsas por Fiscais de Pista**: Sem um limite rígido, um fiscal recolocando um carro capotado na fenda poderia acidentalmente empurrá-lo sobre o sensor segundos ou minutos depois, concedendo uma volta indevida.
+- **Recomendações Práticas**:
+    - **Pistas sem Relés de Corrente**: Se a sua pista não possuir relés para cortar a corrente, **o Tempo de deriva deve ser definido como `0` (0.0s)** (nenhuma volta de drift). Como a energia nunca cai, os carros podem continuar andando sob tração; qualquer janela de deriva diferente de zero contaria erroneamente essas voltas tracionadas como voltas de drift.
+    - **Carros com Ímã (HO, 1/32 com ímã de tração)**: O forte efeito magnético contra os trilhos de aço freia os carros muito rápido. Recomendado: `0.3` a `0.8` segundos.
+    - **Carros sem Ímã / Categorias Pesadas (1/24, pistas de madeira)**: Elevada inércia e rolamento livre sem freio magnético permitem longos deslizamentos. Recomendado: `1.0` a `2.5` segundos.
+    - **Desativado (`0.0s`)**: Desativa totalmente as voltas de drift; qualquer passagem sem energia é descartada.
+
+##### Opção 2: Excluir voltas com drift dos recordes (`adjust_drift_laps`)
+- **Tipo de Configuração**: Caixa de seleção (`true` / `false`).
+- **Valor Padrão**: Desativado (`false`).
+- **Descrição**: Determina se voltas que envolveram qualquer modalidade de drift têm permissão para concorrer a recordes pessoais, de bateria, de corrida ou de pista.
+
+Ao término de uma volta, o sistema avalia:
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **Quando ativado (`true`)**:
+    - Qualquer volta com drift envolvido – seja uma **Volta de Drift** (`isDrift = true`) OU uma **Volta com Drift Envolvido** (por interrupção ou transição entre baterias) – é desqualificada para recordes (`countTowardsRecords = false`).
+    - A volta é excluída de:
+        1. **Melhor Volta Pessoal do Piloto (`bestLapTime`)**: A marca pessoal não é atualizada.
+        2. **Melhor Volta da Bateria**: Não é computada como a volta mais rápida da bateria atual.
+        3. **Melhor Volta da Corrida**: Não é computada como a volta mais rápida da corrida.
+        4. **Recordes de Pista e de Calha**: Fica de fora das tabelas históricas de recordes.
+        5. **Anúncios de Áudio de Recorde**: Locuções comemorativas de recorde e voltas rápidas são suprimidas.
+    - **Princípio Fundamental**: A volta **continua contando a 100% para a contagem de voltas do piloto, a posição na bateria e a classificação final da corrida**. Apenas o status de recorde é negado.
+- **Quando desativado (`false`)**:
+    - Qualquer volta que atenda ao filtro de tempo mínimo pode registrar recordes, mesmo que tenha atravessado uma bandeira amarela ou tenha sido completada por inércia sem energia.
+- **Por que Campeonatos Oficiais Ativam Esta Opção**:
+    - Voltas interrompidas alteram as temperaturas de motores e pneus; reacelerar a partir da inércia zero diverge de uma volta lançada a plena potência sob bandeira verde.
+    - Cruzar a linha por inércia também reflete uma dinâmica anômala de desaceleração.
+    - Esta opção garante que os recordes da pista representem unicamente voltas limpas, contínuas e em velocidade máxima de competição.
+
+---
+
+#### Tabela Comparativa de Resumo
+
+| Característica / Comportamento | Volta Normal sob Bandeira Verde | Volta de Drift (`isDrift = true`) | Volta com Drift Envolvido (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Energia na Pista ao Cruzar o Sensor** | **LIGADA** (Bandeira Verde) | **DESLIGADA** (Amarela, Fim Bateria/Corrida) | **LIGADA** (Bandeira Verde) |
+| **Condição de Disparo do Sensor** | Sob tração em ritmo de corrida | Por inércia dentro do `drift_time` | Sob tração após pausa ou transição de bateria |
+| **Flag de Dados `isDrift`** | `false` | `true` | `false` |
+| **Estado Interno `driftInvolved`** | `false` | `true` | `true` |
+| **Badge na Tela de Corrida** | Nenhum | Badge **`DRIFT`** na coluna da calha | Nenhum |
+| **Notificação Sonora** | Som normal de volta / recorde | **Som de volta de drift** (`urgent`) | Som normal (sem anúncio de drift) |
+| **Conta para Total de Voltas & Classificação** | **Sim** (crédito total) | **Sim** (crédito total) | **Sim** (crédito total) |
+| **Válida para Recordes (`adjust_drift_laps` = DESATIVADO)** | **Sim** | **Sim** (se mais rápida) | **Sim** (se mais rápida) |
+| **Válida para Recordes (`adjust_drift_laps` = ATIVADO)** | **Sim** | **Excluída / Desqualificada** | **Excluída / Desqualificada** |
+
 ---
 
 ## Opções de bateria {: #heat-options }

@@ -3,6 +3,7 @@ import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  addThemeToThemesWithAllSelected,
   areThemesEqual,
   buildDuplicateThemeTemplate,
   buildNewThemeTemplate,
@@ -117,6 +118,9 @@ describe("theme-editor.helper", () => {
       ).toBeFalse();
       expect(
         areThemesEqual(t1, { ...t1, driver_view_theme_id: "dv2" }),
+      ).toBeFalse();
+      expect(
+        areThemesEqual(t1, { ...t1, companion_theme_ids: ["ct1"] }),
       ).toBeFalse();
     });
 
@@ -325,13 +329,18 @@ describe("theme-editor.helper", () => {
       makeTheme({ entity_id: "t2", name: "New Theme", is_default: false }),
     ];
 
-    it("buildNewThemeTemplate should create unique non-default theme template", () => {
+    it("buildNewThemeTemplate should create unique non-default theme template with all themes including self", () => {
       const newTheme = buildNewThemeTemplate("New Theme", allThemes);
       expect(newTheme.entity_id).toContain("custom_theme_");
       expect(newTheme.is_default).toBeFalse();
       expect(newTheme.name).not.toBe("New Theme"); // Should be unique (e.g. "New Theme 1")
       expect(newTheme.slots).toEqual({});
       expect(newTheme.audio_slots).toEqual({});
+      expect(newTheme.companion_theme_ids).toEqual([
+        "t1",
+        "t2",
+        newTheme.entity_id,
+      ]);
     });
 
     it("buildDuplicateThemeTemplate should copy properties and slots with unique name", () => {
@@ -342,6 +351,7 @@ describe("theme-editor.helper", () => {
         uiId: "ui_default",
         driver_station_theme_id: "ds1",
         driver_view_theme_id: "dv1",
+        companion_theme_ids: ["ct1", "ct2"],
         slots: { "flag.racing": "flag1" },
         audio_slots: { yellowflag: { type: "preset" } },
         driver_audio_overrides: { d1: { type: "preset" } },
@@ -353,10 +363,44 @@ describe("theme-editor.helper", () => {
       expect(dup.uiId).toBe("ui_default");
       expect(dup.driver_station_theme_id).toBe("ds1");
       expect(dup.driver_view_theme_id).toBe("dv1");
+      expect(dup.companion_theme_ids).toEqual(["ct1", "ct2"]);
+      expect(dup.companion_theme_ids).not.toBe(source.companion_theme_ids);
       expect(dup.slots).toEqual({ "flag.racing": "flag1" });
       expect(dup.slots).not.toBe(source.slots);
       expect(dup.audio_slots).toEqual({ yellowflag: { type: "preset" } });
       expect(dup.audio_slots).not.toBe(source.audio_slots);
+    });
+
+    it("buildDuplicateThemeTemplate should include new theme id when source had all themes selected", () => {
+      const sourceAll: Theme = makeTheme({
+        entity_id: "t1",
+        name: "Classic",
+        companion_theme_ids: ["t1", "t2"],
+      });
+      const dup = buildDuplicateThemeTemplate(sourceAll, allThemes);
+      expect(dup.companion_theme_ids).toEqual(["t1", "t2", dup.entity_id]);
+    });
+
+    it("addThemeToThemesWithAllSelected should add new theme ID only to themes that had all selected", () => {
+      const t1 = makeTheme({
+        entity_id: "t1",
+        companion_theme_ids: ["t1", "t2", "t3", "t4"],
+      });
+      const t2 = makeTheme({ entity_id: "t2", companion_theme_ids: ["t1"] }); // subset, not all
+      const t3 = makeTheme({ entity_id: "t3", companion_theme_ids: [] }); // none, not all
+      const t4 = makeTheme({ entity_id: "t4", companion_theme_ids: undefined }); // unconfigured, defaults to all
+      const themes = [t1, t2, t3, t4];
+
+      addThemeToThemesWithAllSelected(themes, "t_new");
+
+      expect(t1.companion_theme_ids).toEqual(["t1", "t2", "t3", "t4", "t_new"]);
+      expect(t2.companion_theme_ids).toEqual(["t1"]);
+      expect(t3.companion_theme_ids).toEqual([]);
+      expect(t4.companion_theme_ids).toEqual(["t1", "t2", "t3", "t4", "t_new"]);
+
+      // Guard conditions: empty/null inputs
+      addThemeToThemesWithAllSelected([], "t_new");
+      addThemeToThemesWithAllSelected(themes, "");
     });
   });
 });

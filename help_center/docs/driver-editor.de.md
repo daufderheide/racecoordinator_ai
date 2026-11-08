@@ -63,7 +63,7 @@ Konfigurieren Sie individuelle Soundeffekte oder Text-to-Speech (TTS)-Ansagen f�
 - **Boxeneinfahrt**: Wird abgespielt, wenn der Fahrer in die Boxengasse einf채hrt und auftankt.
 - **Treibstoff-Warnungen**: Gesprochene Warnungen oder Sounds f체r Kraftstoffst채nde (z. B. Warnung, Niedrig, Leer, Voll).
 - **Fr체hstart / Strafe**: Wird abgespielt, wenn ein Fr체hstart oder eine Strafe festgestellt wird.
-- **Drift-Runde**: Wird abgespielt, wenn eine Drift-Runde registriert wird.
+- **Drift-Runde**: Wird abgespielt, wenn ein Fahrzeug bei stromloser Bahn innerhalb des Driftzeit-Fensters 체ber die Ziellinie ausrollt.
 
 ## Fahrer importieren
 

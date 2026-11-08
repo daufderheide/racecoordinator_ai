@@ -63,7 +63,7 @@ Configure efeitos sonoros ou anúncios de voz (TTS) para este piloto:
 - **Entrada nos Boxes**: Tocado quando o piloto entra nos boxes para reabastecer.
 - **Níveis de Combustível**: Alertas verbais ou sons correspondentes aos níveis de combustível (Alerta, Baixo, Vazio, Cheio).
 - **Queima de Largada / Penalidade**: Tocado em caso de queima de largada ou penalidade.
-- **Volta em Drift**: Tocado quando uma volta em drift é registrada.
+- **Volta em Drift**: Tocado quando um carro cruza a linha de chegada por inércia sem energia dentro do tempo de deriva.
 
 ## Importar Pilotos
 

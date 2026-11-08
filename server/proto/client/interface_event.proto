@@ -11,6 +11,31 @@ enum InterfaceStatus {
   NO_DATA = 2;
 }
 
+enum AlertSeverity {
+  ALERT_SEVERITY_INFO = 0;
+  ALERT_SEVERITY_WARNING = 1;
+  ALERT_SEVERITY_ERROR = 2;
+}
+
+enum AlertType {
+  ALERT_TYPE_GENERIC = 0;
+  ALERT_TYPE_BROWNOUT_RESET = 1;
+  ALERT_TYPE_COMMUNICATION_ERROR = 2;
+  ALERT_TYPE_SENSOR_MALFUNCTION = 3;
+}
+
+message InterfaceAlertEvent {
+  int32 interface_index = 1;
+  string interface_name = 2;
+  AlertType alert_type = 3;
+  AlertSeverity severity = 4;
+  string title_key = 5;
+  string message_key = 6;
+  string details = 7;
+  int32 occurrence_count = 8;
+  int64 timestamp_ms = 9;
+}
+
 message InterfaceEvent {
   oneof event {
     LapEvent lap = 1;
@@ -19,6 +44,7 @@ message InterfaceEvent {
     CallbuttonEvent callbutton = 4;
     InterfaceAnalogDataEvent analogData = 5;
     InterfaceDigitalPinEvent digitalPin = 6;
+    InterfaceAlertEvent alert = 7;
   }
 }
 

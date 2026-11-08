@@ -165,7 +165,7 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Pit In Geluid** | Wordt afgespeeld wanneer de auto de pitstraat of tankzone binnenrijdt. | `default_pit_in` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 | **Brandstofniveau Geluiden** | Wordt afgespeeld wanneer de brandstof daalt naar waarschuwings-, kritiek- of leegdrempels. | `default_fuel_level` (Audioset) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 | **Valse Start Geluid** | Wordt afgespeeld wanneer een valse start of overtreding bij de start wordt gedetecteerd. | `default_penalty` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Drift-ronde geluid** | Wordt afgespeeld wanneer de coureur een ronde voltooit tijdens het driften. | TTS (`Drift lap for {driver.nickname}`) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Drift-ronde geluid** | Wordt afgespeeld wanneer een auto bij uitgeschakelde baanstroom binnen het drifttijd-venster over de finishlijn uitrolt. | TTS (`Drift lap for {driver.nickname}`) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 
 ### Thema-audiogebeurtenissen (Geconfigureerd in de Thema Editor)
 

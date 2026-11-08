@@ -9,7 +9,25 @@
 
 ## Starting and Pausing
 
-*Content coming soon.*
+During race day, track operations transition through automated states managed by the race director controls, hotkeys, or hardware call buttons:
+
+### Starting Heats
+- **Staging & Countdown**: When a heat is started, Race Coordinator AI initiates an automated countdown (configured via the race editor's Auto Start or Start Delay options). Audio countdown tones and visual starting lights alert drivers.
+- **Green Flag**: Once the countdown reaches zero, track power turns on and the race enters the active `Racing` state.
+- **Reaction Time**: If "Start Behind Sensor" is enabled, each car's first sensor hit records their reaction time off the line rather than a lap count.
+
+### Pausing & Yellow Flags
+- **Triggering a Pause**: Pressing the Spacebar, clicking the **Pause** icon on the toolbar, or pressing an external track call button immediately throws a yellow flag and enters the `Paused` state.
+- **Immediate Power Cutoff**: Track power relays instantly de-energize to halt racing.
+- **Partial Lap Time Capture**: The exact millisecond the pause occurs, the hardware timing interface captures the elapsed partial lap time for every active car on the track and banks it into each driver's pending lap time.
+- **Coasting Across the Line (Drift Laps)**: If a car was approaching the start/finish line when power cut, its forward momentum may carry it across the sensor.
+    - If the sensor is triggered within the configured **Drift Time** window, the crossing is accepted as a **Drift Lap** (`isDrift: true`). A **`DRIFT`** badge appears on the lane column, urgent drift audio plays, and the lap is credited to the driver.
+    - If the sensor is triggered after the drift window expires, the trigger is discarded to prevent accidental laps from track marshals.
+    - For complete details on drifting mechanics, see [Race Editor: Drifting & Drift Timing Mechanics](race-editor.md#drifting-and-drift-timing).
+
+### Resuming Racing
+- **Green Flag Restart**: Releasing the pause restarts the countdown. When track power is restored, hardware timers reset to zero and the race resumes under the green flag.
+- **Lap Completion (Laps With Drift in Them)**: When a car that stopped on the track resumes and completes its lap under green flag power, its total lap time combines the partial time from before the pause with the time after resuming. This is a **Lap With Drift in It**. If "Exclude Laps With Drift from Records" is enabled, this interrupted lap is credited to standings but disqualified from setting lap records.
 
 ## Heat Controls
 

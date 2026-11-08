@@ -48,6 +48,11 @@ export function areThemesEqual(
   ) {
     return false;
   }
+  if (
+    !areObjectsEqual(a.companion_theme_ids || [], b.companion_theme_ids || [])
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -167,13 +172,21 @@ export function getThemeUnsavedReasons(
 
 export function buildNewThemeTemplate(name: string, allThemes: Theme[]): Theme {
   const uniqueName = generateUniqueThemeName(name || "New Theme", allThemes);
+  const newId = `custom_theme_${Date.now()}`;
+  const companionIds = (allThemes || [])
+    .map((t) => t.entity_id)
+    .filter((id): id is string => !!id);
+  if (!companionIds.includes(newId)) {
+    companionIds.push(newId);
+  }
   return {
-    entity_id: `custom_theme_${Date.now()}`,
+    entity_id: newId,
     name: uniqueName,
     is_default: false,
     slots: {},
     audio_slots: {},
     driver_audio_overrides: {},
+    companion_theme_ids: companionIds,
   };
 }
 
@@ -183,15 +196,52 @@ export function buildDuplicateThemeTemplate(
 ): Theme {
   const copyName = `${theme.name || "Theme"} (Copy)`;
   const uniqueName = generateUniqueThemeName(copyName, allThemes);
+  const newId = `custom_theme_${Date.now()}`;
+  const companionIds = deepCopy(theme.companion_theme_ids || []);
+  const allExistingIds = (allThemes || [])
+    .map((t) => t.entity_id)
+    .filter((id): id is string => !!id);
+  const hadAllSelected =
+    allExistingIds.length > 0 &&
+    allExistingIds.every((id) => companionIds.includes(id));
+  if (hadAllSelected && !companionIds.includes(newId)) {
+    companionIds.push(newId);
+  }
   return {
-    entity_id: `custom_theme_${Date.now()}`,
+    entity_id: newId,
     name: uniqueName,
     is_default: false,
     uiId: theme.uiId,
     driver_station_theme_id: theme.driver_station_theme_id,
     driver_view_theme_id: theme.driver_view_theme_id,
+    companion_theme_ids: companionIds,
     slots: deepCopy(theme.slots || {}),
     audio_slots: deepCopy(theme.audio_slots || {}),
     driver_audio_overrides: deepCopy(theme.driver_audio_overrides || {}),
   };
+}
+
+export function addThemeToThemesWithAllSelected(
+  allThemes: Theme[],
+  newThemeId: string,
+): void {
+  if (!newThemeId || !allThemes || allThemes.length === 0) return;
+  const existingIds = allThemes
+    .map((t) => t.entity_id)
+    .filter((id): id is string => !!id && id !== newThemeId);
+  if (existingIds.length === 0) return;
+
+  for (const t of allThemes) {
+    if (!t || t.entity_id === newThemeId) continue;
+    const companionIds = t.companion_theme_ids;
+    const hadAllSelected =
+      !companionIds || existingIds.every((id) => companionIds.includes(id));
+    if (hadAllSelected) {
+      const list = companionIds ? [...companionIds] : [...existingIds];
+      if (!list.includes(newThemeId)) {
+        list.push(newThemeId);
+      }
+      t.companion_theme_ids = list;
+    }
+  }
 }

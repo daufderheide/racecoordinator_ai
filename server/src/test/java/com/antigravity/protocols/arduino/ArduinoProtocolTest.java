@@ -9,6 +9,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import com.antigravity.mocks.MockScheduler;
+import com.antigravity.proto.AlertSeverity;
+import com.antigravity.proto.AlertType;
+import com.antigravity.proto.InterfaceAlertEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
@@ -2765,5 +2768,116 @@ public class ArduinoProtocolTest {
     assertTrue("Should re-send pinModeRead on reset heartbeat", hasPinModeRead);
     assertTrue("Should re-send pinModeWrite on reset heartbeat", hasPinModeWrite);
     assertTrue("Should re-send time reset on reset heartbeat", hasTimeReset);
+  }
+
+  @Test
+  public void testUnexpectedReset_EmitsHardwareAlertEvent() {
+    protocol.open();
+
+    // Handshake
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // Initial heartbeat (normal startup)
+    byte[] initialHeartbeat = {0x54, 0, 0, 1, 0, 1, 0x3B};
+    serialConnection.injectData(initialHeartbeat);
+    assertNull("No alert on initial normal handshake", listener.lastEvent);
+
+    // Unexpected reboot heartbeat arrives
+    byte[] resetHeartbeat = {0x54, 0, 0, 2, 0, 1, 0x3B};
+    serialConnection.injectData(resetHeartbeat);
+
+    assertNotNull("Should emit an InterfaceEvent on unexpected reset", listener.lastEvent);
+    assertTrue("Event should contain alert", listener.lastEvent.hasAlert());
+    InterfaceAlertEvent alert = listener.lastEvent.getAlert();
+    assertEquals(AlertType.ALERT_TYPE_BROWNOUT_RESET, alert.getAlertType());
+    assertEquals(AlertSeverity.ALERT_SEVERITY_WARNING, alert.getSeverity());
+    assertEquals("ALERT_BROWNOUT_TITLE", alert.getTitleKey());
+    assertEquals("ALERT_BROWNOUT_MSG", alert.getMessageKey());
+    assertEquals(1, alert.getOccurrenceCount());
+    assertTrue(alert.getInterfaceName().contains("Arduino"));
+
+    // Second unexpected reset: occurrence count increments
+    byte[] secondResetHeartbeat = {0x54, 0, 0, 3, 0, 1, 0x3B};
+    serialConnection.injectData(secondResetHeartbeat);
+    assertEquals(2, listener.lastEvent.getAlert().getOccurrenceCount());
+  }
+
+  @Test
+  public void testUnexpectedReset_SuppressesStaticStartupPinBroadcasts() {
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // Inject version
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // Initial heartbeat to set hwReset = 0
+    byte[] initialHeartbeat = {0x54, 0, 0, 1, 0, 1, 0x3B};
+    serialConnection.injectData(initialHeartbeat);
+
+    // Trigger unexpected heartbeat with isReset = 1 (MCU brownout/reset)
+    byte[] resetHeartbeat = {0x54, 0, 0, 2, 0, 1, 0x3B};
+    serialConnection.injectData(resetHeartbeat);
+
+    // Immediately inject input lap broadcast (simulating static startup report from Arduino during
+    // recovery window)
+    byte[] inputLap = {0x49, 0x44, 0x02, 0x00, 0x3B};
+    serialConnection.injectData(inputLap);
+
+    // Assert that the lap was suppressed during the 250ms recovery shield
+    assertEquals("Lap should be suppressed during reset recovery window", 0, listener.lapCount);
+
+    // Advance time past the 250ms window
+    protocol.advanceTime(300);
+
+    // Now send pin idle (1) followed by car crossing (0)
+    byte[] pinIdle = {0x49, 0x44, 0x02, 0x01, 0x3B};
+    serialConnection.injectData(pinIdle);
+    serialConnection.injectData(inputLap);
+
+    assertEquals("Legitimate car crossing after reset recovery should count", 1, listener.lapCount);
+  }
+
+  @Test
+  public void testRealCarCrossing_EdgeTransition_FiresLapNormally() {
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(2, PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + 0);
+
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    byte[] pinIdle = {0x49, 0x44, 0x02, 0x01, 0x3B};
+    byte[] pinActive = {0x49, 0x44, 0x02, 0x00, 0x3B};
+
+    // Idle
+    serialConnection.injectData(pinIdle);
+    assertEquals(0, listener.lapCount);
+
+    // Car enters sensor (1 -> 0)
+    serialConnection.injectData(pinActive);
+    assertEquals(1, listener.lapCount);
+
+    // Repeated static report while car is on sensor (0 -> 0)
+    serialConnection.injectData(pinActive);
+    assertEquals("Repeat static state should not fire second lap", 1, listener.lapCount);
+
+    // Car leaves sensor (0 -> 1)
+    serialConnection.injectData(pinIdle);
+    assertEquals(1, listener.lapCount);
+
+    // Next car enters sensor (1 -> 0)
+    serialConnection.injectData(pinActive);
+    assertEquals(2, listener.lapCount);
   }
 }

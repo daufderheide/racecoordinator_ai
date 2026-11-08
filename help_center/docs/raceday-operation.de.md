@@ -1,5 +1,27 @@
 # Renntag-Betrieb
 
+## Starten und Pausieren
+
+Am Renntag durchläuft das System automatisierte Zustände, die vom Rennleiter über Tastenkombinationen, Werkzeugleisten-Schaltflächen oder externe Chaos-Taster gesteuert werden:
+
+### Läufe Starten
+- **Aufstellung & Countdown**: Wird ein Lauf gestartet, leitet Race Coordinator AI einen automatischen Countdown ein (konfigurierbar über Autostart oder Startverzögerung im Renneditor). Akustische Töne und visuelle Startampeln bereiten die Fahrer vor.
+- **Grüne Flagge**: Erreicht der Countdown null, wird der Bahnstrom eingeschaltet und der Lauf wechselt in den Zustand `Racing`.
+- **Reaktionszeit**: Wenn „Hinter dem Sensor starten“ aktiviert ist, erfasst der erste Sensorimpuls jedes Fahrzeugs dessen Reaktionszeit beim Start anstelle einer vollen Runde.
+
+### Pausieren & Gelbe Flaggen
+- **Auslösen einer Pause**: Durch Drücken der Leertaste, Klick auf das **Pause**-Symbol in der Werkzeugleiste oder Betätigung eines externen Streckentasters wird sofort die Gelbe Flagge geschaltet (`Paused`).
+- **Sofortige Stromabschaltung**: Die Bahnstrom-Relais öffnen unverzüglich und stoppen die Stromzufuhr.
+- **Erfassung von Teilzeiten**: In derselben Millisekunde erfasst die Zeitnahme-Schnittstelle die bisherige Teilrundenzeit aller aktiven Fahrzeuge und speichert sie als offene Zeit ab.
+- **Ausrollen über die Ziellinie (Drift-Runden)**: Nähert sich ein Auto bei Stromabschaltung der Ziellinie, kann sein Schwung es noch über den Sensor tragen.
+    - Erfolgt die Auslösung innerhalb des konfigurierten **Driftzeit**-Fensters, wird der Durchgang als **Drift-Runde** (`isDrift: true`) gewertet. In der Bahnspalte erscheint das **`DRIFT`**-Badge, eine dringende Sprachansage ertönt und die Runde wird dem Fahrer gutgeschrieben.
+    - Erfolgt die Auslösung erst nach Ablauf der Driftzeit, wird der Impuls verworfen, um versehentliche Runden durch Streckenposten zu verhindern.
+    - Ausführliche Details zur Driftmechanik finden Sie unter [Renneditor: Driften & Drift-Timing-Mechanik](race-editor.de.md#drifting-and-drift-timing).
+
+### Rennen Wiederaufnehmen
+- **Neustart unter Grün**: Nach Beendigung der Pause startet der Countdown erneut. Bei Freigabe wird der Bahnstrom zugeschaltet und die Hardware-Timer beginnen bei null.
+- **Rundenabschluss (Runden mit Drift-Beteiligung)**: Fährt ein auf der Strecke gestopptes Auto nach der Freigabe weiter und überquert die Ziellinie, setzt sich seine Rundenzeit aus der Teilzeit vor der Pause und der Zeit nach der Freigabe zusammen. Dies ist eine **Runde mit Drift-Beteiligung**. Ist „Runden mit Drift von Rekorden ausschließen“ aktiv, zählt die Runde für den Lauf, wird jedoch nicht als Rekord gewertet.
+
 ## Runden- und Zeitanpassungen
 
 Rennleiter können Rundenanzahlen und Laufzeiten von Fahrern direkt am Renntag-Bildschirm manuell anpassen, um Bahnprobleme, verpasste Sensorauslösungen oder Strafen zu korrigieren:

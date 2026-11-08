@@ -30,13 +30,33 @@ L'**Arduino UNO Q** combina un Single Board Computer (SBC) Linux a 64 bit con un
 
 ## Installazione passo dopo passo
 
-### Passaggio 1: Preparare la scheda e connettersi tramite SSH
-1. Installa **Arduino Linux OS** (Debian 12 arm64) su Uno Q.
-2. Collega la scheda alla rete locale tramite Wi-Fi o Ethernet:
-   * **Configurazione Wi-Fi al primo avvio**: All'avvio iniziale, la procedura guidata di configurazione richiederà la configurazione della rete wireless.
-   * **Nota sulla prima connessione**: La connessione Wi-Fi potrebbe non avere effetto immediato e i comandi manuali da terminale come `sudo nmcli dev wifi connect "IlTuo_SSID" password "LaTua_Password"` potrebbero inizialmente fallire al primo avvio. Se ciò si verifica, esegui semplicemente `sudo reboot`. Dopo il riavvio, la scheda di rete wireless si inizializzerà correttamente e si connetterà automaticamente alla rete Wi-Fi configurata.
+### Passaggio 1: Preparare la scheda e connettersi tramite la rete
+
+1. **Accendere la scheda** *(Il flashing di solito non è necessario)*:
+   * Il tuo Arduino Uno Q viene fornito con **Arduino Linux OS (Debian 12 arm64) preinstallato** sulla memoria flash eMMC interna da 32 GB. È sufficiente collegare la scheda all'alimentazione per avviare il sistema operativo.
+   * *(Nota: Il flashing di un'immagine del sistema operativo è necessario solo se si sta ripristinando un sistema danneggiato o eseguendo un ripristino completo delle impostazioni di fabbrica).*
+
+2. **Configurazione della connessione di rete**:
+   > [!IMPORTANT]
+   > **Accesso a Internet necessario solo durante la configurazione iniziale**: Una connessione di rete con accesso a Internet è strettamente richiesta durante questa configurazione iniziale per aggiornare i pacchetti e scaricare i prerequisiti. Una volta completata la configurazione, Race Coordinator AI funziona al 100% in locale e offline, senza richiedere una connessione a Internet. Tuttavia, mantenere la scheda collegata alla rete locale offre notevoli vantaggi continui:
+   > - **Aggiornamenti software automatici**: Scarica e installa facilmente nuove versioni di Race Coordinator AI e aggiornamenti del firmware direttamente dall'interfaccia web.
+   > - **Accesso client remoto**: Direttori di gara, piloti e spettatori possono collegare smartphone, tablet o laptop direttamente all'interfaccia web della scheda (`http://<hostname>:7070` o `http://<INDIRIZZO_IP>:7070`) tramite la rete locale.
+
+   * **Configurazione Wi-Fi tramite procedura guidata sullo schermo**: Al primo avvio, la procedura guidata sullo schermo richiederà la configurazione della rete wireless. Seleziona la tua rete Wi-Fi e inserisci la password.
+   * **Alternativa: Configurare il Wi-Fi da riga di comando**: Se non hai configurato il Wi-Fi durante la procedura guidata o desideri configurarlo manualmente da terminale:
+     ```bash
+     # Elencare le reti wireless disponibili:
+     nmcli dev wifi list
+
+     # Connettersi alla rete Wi-Fi:
+     sudo nmcli dev wifi connect "IlTuo_SSID" password "LaTua_Password"
+     ```
+   * **Alternativa: Ethernet cablata**: È sufficiente collegare un cavo Ethernet alla scheda (o un adattatore Ethernet USB-C). La scheda di rete si configura automaticamente tramite DHCP.
+   * **Nota sulla prima connessione**: La connessione Wi-Fi potrebbe occasionalmente non avere effetto immediato, oppure i comandi manuali `nmcli` potrebbero mostrare errori temporanei al primo avvio. Se ciò si verifica, esegui semplicemente `sudo reboot`. Dopo il riavvio, la scheda wireless si inizializzerà correttamente e si connetterà automaticamente alla rete Wi-Fi configurata.
    * **Applicare gli aggiornamenti della scheda e del firmware**: Al riavvio (o quando richiesto dal sistema), potrebbe esserti chiesto se desideri aggiornare vari pacchetti e componenti firmware sulla scheda. Si consiglia vivamente di accettare ed eseguire tutti gli aggiornamenti suggeriti, poiché il firmware di fabbrica è spesso obsoleto. Tieni presente che questo aggiornamento iniziale può richiedere del tempo (spesso da 5 a più di 10 minuti a seconda della velocità della rete); lascia che si completi senza interruzioni.
-3. Abilitare SSH sulla scheda e connettersi:
+
+3. **Abilitare SSH sulla scheda e connettersi (Consigliato)**:
+   * La configurazione della scheda è più semplice tramite SSH dal tuo computer, poiché puoi copiare e incollare direttamente i comandi di installazione.
    * **Abilitare il servizio SSH**: Per impostazione predefinita, il server SSH non è attivo sulla scheda. Dal terminale locale (utilizzando la tastiera e il display collegati alla scheda), abilita e avvia il servizio SSH:
      ```bash
      sudo systemctl enable --now ssh
@@ -47,12 +67,17 @@ L'**Arduino UNO Q** combina un Single Board Computer (SBC) Linux a 64 bit con un
      hostname -I
      ```
      *(Nota: `avahi-daemon` non è preinstallato su Arduino Linux OS, quindi i nomi di dominio mDNS `.local` come `uno-q.local` non esistono per impostazione predefinita a meno che non si installi il pacchetto tramite `sudo apt-get install -y avahi-daemon`).*
-   * **Connettersi dal PC**: Apri un terminale sul tuo computer e connettiti utilizzando il nome host o l'indirizzo IP della scheda:
-     ```bash
-     ssh arduino@<hostname>
-     # Oppure connettiti direttamente tramite IP:
-     ssh arduino@<INDIRIZZO_IP>
-     ```
+   * **Connettersi dal PC**:
+     * **macOS**: Apri l'applicazione integrata **Terminale** o **iTerm2** ([iterm2.com](https://iterm2.com/)) e connettiti da riga di comando:
+       ```bash
+       ssh arduino@<hostname>
+       # Oppure connettiti direttamente tramite IP:
+       ssh arduino@<INDIRIZZO_IP>
+       ```
+     * **Windows**: Puoi utilizzare PowerShell o il Prompt dei comandi integrati (eseguendo `ssh arduino@<hostname>` o `ssh arduino@<INDIRIZZO_IP>`) oppure utilizzare un client SSH grafico come **PuTTY** (scaricabile da [putty.org](https://www.putty.org/)). Se utilizzi PuTTY:
+       1. Inserisci il nome host o l'indirizzo IP della scheda nel campo **Host Name (or IP address)**.
+       2. Assicurati che la porta sia impostata su `22` e il tipo di connessione su **SSH**.
+       3. Fai clic su **Open**, accetta l'avviso relativo alla chiave host alla prima connessione ed effettua il login come `arduino` con la tua password.
 
 ### Passaggio 2: Installare i prerequisiti
 Installa l'ambiente di runtime Java (`default-jre-headless`), le utilità audio (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` e il gestore delle finestre (`wmctrl`):

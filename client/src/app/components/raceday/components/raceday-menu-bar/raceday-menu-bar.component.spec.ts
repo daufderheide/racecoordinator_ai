@@ -7,6 +7,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
@@ -21,6 +22,8 @@ describe("RacedayMenuBarComponent", () => {
   let mockDataService: any;
   let mockNavService: any;
   let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
+  let mockRaceConnectionService: any;
+  let hardwareAlertSubject: BehaviorSubject<any>;
   let canGoBackSubject: BehaviorSubject<boolean>;
   let roleSubject: BehaviorSubject<Role>;
 
@@ -29,6 +32,10 @@ describe("RacedayMenuBarComponent", () => {
     roleSubject = new BehaviorSubject<Role>(Role.DIRECTOR);
     canGoBackSubject = new BehaviorSubject<boolean>(false);
     mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
+    hardwareAlertSubject = new BehaviorSubject<any>(null);
+    mockRaceConnectionService = {
+      hardwareAlert$: hardwareAlertSubject.asObservable(),
+    };
 
     mockNavService = {
       canGoBack$: canGoBackSubject.asObservable(),
@@ -65,6 +72,7 @@ describe("RacedayMenuBarComponent", () => {
         { provide: DataService, useValue: mockDataService },
         { provide: NavigationService, useValue: mockNavService },
         { provide: HelpLinkService, useValue: mockHelpLinkService },
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
       ],
     }).compileComponents();
 
@@ -379,6 +387,15 @@ describe("RacedayMenuBarComponent", () => {
       spyOn(component.themeMenuSelect, "emit");
       spyOn(component.windowsMenuSelect, "emit");
 
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: ["t_custom"],
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
+
       component.themes = [
         { entity_id: "t_custom", name: "Custom Theme" } as any,
       ];
@@ -407,6 +424,21 @@ describe("RacedayMenuBarComponent", () => {
         if (key === "UE_LABEL_DEFAULT_THEME") return "RC AI";
         return key;
       });
+
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: [
+            "t_zeta",
+            "default_classic_rc_ai",
+            "t_alpha",
+            "t_beta_10",
+            "t_beta_2",
+          ],
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
 
       component.themes = [
         { entity_id: "t_zeta", name: "Zeta Theme" } as any,
@@ -464,6 +496,120 @@ describe("RacedayMenuBarComponent", () => {
       );
       await component.loadThemes();
       expect(component.themes.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
+    });
+
+    it("should filter displayedThemes to companion_theme_ids when active theme defines them", () => {
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: ["t_leaderboard", "t_pit"],
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
+      component.themes = [
+        { entity_id: "t_main", name: "Main Theme" } as any,
+        { entity_id: "t_leaderboard", name: "Leaderboard" } as any,
+        { entity_id: "t_pit", name: "Pit Wall" } as any,
+        { entity_id: "t_other", name: "Other Theme" } as any,
+      ];
+
+      expect(component.displayedThemes.map((t) => t.entity_id)).toEqual([
+        "t_leaderboard",
+        "t_pit",
+      ]);
+
+      component.isWindowsMenuOpen = true;
+      component.isThemesOpen = true;
+      fixture.detectChanges();
+
+      const items = Array.from(
+        fixture.nativeElement.querySelectorAll(".theme-option-item"),
+      );
+      expect(items.length).toBe(2);
+      expect((items[0] as HTMLElement).innerText.trim()).toBe("Leaderboard");
+      expect((items[1] as HTMLElement).innerText.trim()).toBe("Pit Wall");
+    });
+
+    it("should return empty displayedThemes when active theme has no companion_theme_ids", () => {
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: [],
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
+      component.themes = [
+        { entity_id: "t_main", name: "Main Theme" } as any,
+        { entity_id: "t_other", name: "Other Theme" } as any,
+      ];
+
+      expect(component.displayedThemes.length).toBe(0);
+    });
+
+    it("should default displayedThemes to all themes when active theme has unconfigured companion_theme_ids (undefined or null)", () => {
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: undefined,
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
+      component.themes = [
+        { entity_id: "t_main", name: "Main Theme" } as any,
+        { entity_id: "t_other", name: "Other Theme" } as any,
+      ];
+
+      expect(component.displayedThemes).toEqual(component.themes);
+
+      // Also when null
+      (mockThemeSvc.getActiveTheme as jasmine.Spy).and.returnValue({
+        entity_id: "t_main",
+        name: "Main Theme",
+        companion_theme_ids: null,
+      } as any);
+      expect(component.displayedThemes).toEqual(component.themes);
+
+      // Also when active theme itself is null/undefined
+      (mockThemeSvc.getActiveTheme as jasmine.Spy).and.returnValue(null);
+      expect(component.displayedThemes).toEqual(component.themes);
+    });
+
+    it("should return empty displayedThemes if active theme defines companion_theme_ids but none match loaded themes", () => {
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: ["t_deleted"],
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
+      component.themes = [
+        { entity_id: "t_main", name: "Main Theme" } as any,
+        { entity_id: "t_other", name: "Other Theme" } as any,
+      ];
+
+      expect(component.displayedThemes.length).toBe(0);
+    });
+
+    it("should not render themes menu item when displayedThemes is empty", () => {
+      const mockThemeSvc = {
+        getActiveTheme: jasmine.createSpy("getActiveTheme").and.returnValue({
+          entity_id: "t_main",
+          name: "Main Theme",
+          companion_theme_ids: [],
+        } as any),
+      };
+      (component as any).themeService = mockThemeSvc;
+      component.themes = [{ entity_id: "t_main", name: "Main Theme" } as any];
+      component.isWindowsMenuOpen = true;
+      fixture.detectChanges();
+
+      const themesMenuItem =
+        fixture.nativeElement.querySelector("#themes-menu-item");
+      expect(themesMenuItem).toBeNull();
     });
   });
 
@@ -794,6 +940,38 @@ describe("RacedayMenuBarComponent", () => {
       component.onMenuItemHover("windows");
       expect(component.isOptionsMenuOpen).toBeFalse();
       expect(component.isWindowsMenuOpen).toBeTrue();
+    });
+  });
+
+  describe("Hardware Alert Badge", () => {
+    it("should not render hardware alert badge when count is 0", () => {
+      fixture.detectChanges();
+      const badge = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-menu-hardware-alert-badge"]',
+      );
+      expect(badge).toBeFalsy();
+    });
+
+    it("should render hardware alert badge when count > 0 and emit hardwareAlertClick when clicked", () => {
+      hardwareAlertSubject.next({
+        occurrenceCount: 3,
+        titleKey: "ALERT_BROWNOUT_TITLE",
+      });
+      fixture = TestBed.createComponent(RacedayMenuBarComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+
+      const badge = fixture.nativeElement.querySelector(
+        '[data-testid="raceday-menu-hardware-alert-badge"]',
+      );
+      expect(badge).toBeTruthy();
+
+      const countEl = badge.querySelector(".alert-badge-count");
+      expect(countEl?.textContent?.trim()).toBe("3");
+
+      spyOn(component.hardwareAlertClick, "emit");
+      badge.click();
+      expect(component.hardwareAlertClick.emit).toHaveBeenCalled();
     });
   });
 });

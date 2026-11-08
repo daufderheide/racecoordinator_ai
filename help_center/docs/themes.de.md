@@ -20,6 +20,7 @@ In der oberen Steuerungsleiste des Theme-Editors legen Sie die Kerneigenschaften
 - **Verknüpftes UI-Layout:** Wählt das im [Layout-Editor](layout-editor.de.md) erstellte Bildschirmlayout aus, das beim Start eines Rennens mit diesem Theme automatisch auf der Hauptanzeige geladen wird.
 - **Fahrerstand-Theme:** Bestimmt das Theme für dedizierte Einzelfahrspur-Fahrerstand-Displays oder wenn sich ein Fahrer per Mobilgerät oder Tablet verbindet.
 - **Fahreransicht-Theme:** Bestimmt das Theme für mehrspurige Fahreransicht-Zeitplananzeigen und Zuschauerbildschirme.
+- **Fenster-Themes (Begleit-Themes):** Konfiguriert Begleit-Themes für sekundäre Anzeigen. Standardmäßig sind alle verfügbaren Themes ausgewählt. Während eines Rennens zeigt die Renntag-Menüleiste ausschließlich die auf dem Haupt-Theme konfigurierten Themes an. Themes können einzeln ausgewählt oder im Theme-Editor per Ein-Klick-Aktion **Alle auswählen** gemeinsam gesteuert werden. Wenn ein neues Theme erstellt wird, wird es automatisch allen bestehenden Themes hinzugefügt, bei denen alle ausgewählt sind.
 
 ---
 
@@ -120,7 +121,7 @@ Das Theme kann alle 13 individuellen Fahrer-Audioereignisse überschreiben:
 - **Boxeneinfahrt (`pitInAudio`):** Signal bei Einfahrt in die Boxengasse oder Auslösung von Boxensensoren auf digitalen Bahnen.
 - **Treibstoffwarnung (`fuelAudio`):** Warnton oder Durchsage bei Erreichen des Reservebereichs oder Treibstoffmangel.
 - **Frühstart / Strafe (`penaltyAudio`):** Signalton oder Sirene bei Frühstart oder Strafen.
-- **Drift-Runde (`driftLapAudio`):** Stunt-Soundeffekt bei Überschreiten von Driftsensorschwellen.
+- **Drift-Runde (`driftLapAudio`):** Dringender Soundeffekt oder Sprachansage, wenn ein Fahrzeug bei stromloser Bahn innerhalb des Driftzeit-Fensters über die Ziellinie ausrollt.
 
 ### Überschreibungs-Prioritäten & Modi
 

@@ -70,6 +70,121 @@ L'accordéon Paramètres généraux contrôle la présentation, les filtres de t
 - **Règles de drapeau jaune** : Pauses automatiques ou manuelles sous drapeau jaune avec coupure d'alimentation.
 - **Options d'interface personnalisée** : Classements spécialisés et widgets de télémétrie.
 
+### Mécanique de Dérive et Chronométrage du Drift {: #drifting-and-drift-timing }
+
+En slot racing, les voitures sont propulsées par la tension électrique fournie par des rails conducteurs insérés dans la piste. Lorsque l'alimentation de la piste est coupée (lors d'une interruption sous drapeau jaune, à la fin d'une manche ou à la conclusion de la course), les voitures ne s'immobilisent pas instantanément à vitesse zéro. En raison de l'inertie mécanique, de la masse, des aimants du moteur et de la friction, les voitures continuent de rouler vers l'avant sur leur élan résiduel après la coupure de courant.
+
+Dans Race Coordinator AI et dans le jargon du slot racing, ce roulement en roue libre sans alimentation électrique est appelé **« dérive »** ou **« drift »**.
+
+!!! note "Définition de la Dérive en Slot Racing"
+    En slot racing, le terme « drift » ou « dérive » ne désigne **pas** un dérapage latéral, une glissade en virage ou des cascades. Il désigne exclusivement le roulement en roue libre vers l'avant d'une voiture sur son élan résiduel après coupure du courant de piste.
+
+Lorsqu'une voiture s'approche de la ligne de départ/arrivée ou du portique de détection juste au moment où le courant est coupé, son élan peut la faire franchir le capteur avant l'arrêt complet. Race Coordinator AI intègre un chronométrage matériel de haute précision et des règles de course dédiées pour gérer ces situations de façon rigoureusement équitable.
+
+#### La Distinction Fondamentale : « Tour de Dérive » vs « Tour avec Dérive »
+
+Une distinction essentielle existe dans Race Coordinator AI entre un **Tour de Dérive** (`isDrift = true`) et un **Tour avec Dérive** (`driftInvolved = true`) :
+
+##### 1. Un « Tour de Dérive » (`isDrift = true`)
+Un **Tour de Dérive** est un tour physiquement enregistré et comptabilisé lorsqu'une voiture franchit la ligne d'arrivée ou le capteur de détection **ALORS QUE l'alimentation de la piste est COUPÉE** (précisément pendant les états `Paused` / drapeau jaune, `HeatOver` ou `RaceOver`), dans la limite de la fenêtre de **Temps de dérive** configurée.
+
+- **Événement physique** : La voiture franchit la ligne en roue libre sans courant sur la piste.
+- **Indicateur visuel** : La colonne de voie sur l'écran principal de course et la boîte de dialogue d'inspection des tours affichent un badge distinctif **`DRIFT`** à côté du temps au tour.
+- **Annonce vocale** : Déclenche le **Son de tour de drift** (`driftLapAudio`) configuré pour le pilote sous forme d'annonce vocale de priorité urgente (`urgent`) (ex. *"Drift lap for {driver.nickname}"*).
+- **Attribution du tour** : Le tour est crédité au total de tours du pilote pour la manche et le classement général. Le temps au tour enregistré combine le temps partiel accumulé avant la coupure avec la fraction de seconde passée en roue libre jusqu'au capteur.
+- **Statistiques** : Incrémente le compteur de tours de dérive des statistiques de course (`driftLapCount`). Les segments partiels automatiques sont réinitialisés.
+
+##### 2. Un « Tour avec Dérive » (`driftInvolved = true`, mais `isDrift = false`)
+Un **Tour avec Dérive** est un tour franchi et enregistré dans des **conditions normales de DRAPEAU VERT sous alimentation électrique**, mais dont la durée totale comprend une interruption ou un temps reporté résultant d'une pause ou d'un changement de manche.
+
+- **Événement physique** : La voiture franchit la ligne d'arrivée avec le courant **ACTIVÉ** en pleine course sous drapeau vert. Cependant, au cours de ce même tour, l'alimentation a été interrompue puis rétablie.
+- **Scénarios classiques** :
+    - **Pause et reprise sous drapeau jaune en cours de tour** : Un pilote a parcouru 3,2 secondes d'un tour de 5,0 secondes lorsqu'un drapeau jaune est déployé. Le courant se coupe et la voiture s'immobilise en roue libre sur la ligne droite opposée (elle ne franchit pas le capteur, ce n'est donc pas un tour de dérive). Le chronomètre matériel s'arrête et ces 3,2 secondes sont stockées dans le temps en attente du pilote, avec un marquage interne de temps de dérive (`markDriftTime()`). À la reprise sous drapeau vert, les chronomètres redémarrent à zéro. La voiture parcourt les 1,8 seconde restantes sous tension et franchit la ligne d'arrivée. Le temps au tour final est de 5,0 secondes ($3{,}2\,\text{s} + 1{,}8\,\text{s}$). Comme la ligne a été franchie sous drapeau vert, ce n'est **pas un Tour de Dérive** (aucun badge `DRIFT` n'apparaît, le son habituel retentit), mais c'est un **Tour avec Dérive** car sa durée a été scindée par une neutralisation.
+    - **Départ à la position actuelle (`Start at Current`)** : Dans les formats continus où les voitures s'arrêtent là où elles se trouvent à la fin d'une manche et repartent de cet emplacement exact lors de leur manche suivante (`start_at_current = true`), le temps partiel non achevé de la manche précédente est reporté. Lorsque le pilote effectue son premier tour sous drapeau vert dans la nouvelle manche, ce tour incorpore le temps de la manche précédente : il s'agit d'un **Tour avec Dérive**.
+
+---
+
+#### Les Deux Options de Configuration de Course
+
+Dans l'accordéon **Paramètres généraux**, Race Coordinator AI propose deux paramètres dédiés au contrôle de la dérive et à l'éligibilité aux records :
+
+```
++---------------------------------------------------------------------------------+
+| Temps au tour minimum (s) : [ 2.0 ]   Temps de dérive (s) : [ 0.5 ]             |
+|                                                                                 |
+| [ ] Mode entraînement   [X] Exclure les tours avec dérive des records           |
++---------------------------------------------------------------------------------+
+```
+
+##### Option 1 : Temps de dérive (`drift_time`)
+- **Type de paramètre** : Valeur décimale en secondes (ex. `0.0`, `0.5`, `1.0`, `2.0`).
+- **Valeur par défaut** : `0.5` seconde.
+- **Description** : Définit la fenêtre temporelle maximale suivant immédiatement une coupure d'alimentation (drapeau jaune, fin de manche, fin de course) pendant laquelle le passage sur le capteur est accepté comme un tour valide en roue libre.
+
+!!! warning "Pistes sans Relais de Contrôle d'Alimentation"
+    Si votre piste n'est pas équipée de relais pour couper l'alimentation, la piste reste sous tension lors des pauses, des fins de manche et de l'arrivée. Sur ces pistes, **le Temps de dérive doit être réglé sur `0` (aucun tour de dérive)**. Sinon, les pilotes continuant à accélérer pendant une pause se verraient indûment attribuer des tours de dérive sous tension.
+
+À la coupure du courant, le système enregistre l'horodatage précis à la milliseconde près. Lorsqu'un passage est détecté piste arrêtée :
+
+$$\Delta t = \text{Heure de Détection} - \text{Heure d'Arrêt}$$
+
+$$\begin{aligned}
+\text{Si } \Delta t \le \text{Temps de dérive} &\implies \textbf{Accepté comme Tour de Dérive } (\text{isDrift} = \text{true}) \\
+\text{Si } \Delta t > \text{Temps de dérive} &\implies \textbf{Rejeté et ignoré}
+\end{aligned}$$
+
+- **Pourquoi une limite est indispensable** :
+    - **Équité sportive** : Une voiture qui se trouvait à quelques centimètres de la ligne au moment de la coupure mérite que son tour soit validé si son élan la propulse au-delà du capteur un court instant plus tard.
+    - **Prévention des faux tours causés par les ramasseurs** : Sans limite de temps, un commissaire de piste replaçant une voiture sortie pourrait la faire glisser involontairement sur le capteur plusieurs secondes ou minutes plus tard, lui accordant indûment un tour gratuit.
+- **Conseils de réglage** :
+    - **Pistes sans relais d'alimentation** : Si votre piste ne comporte pas de relais de coupure, **le Temps de dérive doit être réglé sur `0` (0.0s)** (aucun tour de dérive). L'alimentation ne chutant jamais, les pilotes peuvent continuer à rouler ; une fenêtre de dérive non nulle compterait à tort ces tours motorisés comme de la dérive.
+    - **Voitures avec aimant (HO, 1/32 aimantée)** : Le freinage magnétique puissant contre les rails métalliques immobilise très vite les voitures. Recommandé : `0.3` à `0.8` seconde.
+    - **Voitures sans aimant / Catégories lourdes (1/24, pistes bois)** : L'inertie élevée et l'absence de freinage magnétique permettent de longs roulements en roue libre. Recommandé : `1.0` à `2.5` secondes.
+    - **Désactivé (`0.0s`)** : Désactive totalement l'acceptation des tours de dérive. Tout passage détecté hors tension est immédiatement ignoré.
+
+##### Option 2 : Exclure les tours avec dérive des records (`adjust_drift_laps`)
+- **Type de paramètre** : Case à cocher (`true` / `false`).
+- **Valeur par défaut** : Désactivé (`false`).
+- **Description** : Détermine si les tours ayant impliqué une quelconque forme de dérive sont autorisés à figurer parmi les records personnels, de manche, de course ou de piste.
+
+Lorsqu'un tour est complété, le système évalue :
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **Lorsque l'option est activée (`true`)** :
+    - Tout tour ayant impliqué une dérive – qu'il s'agisse d'un **Tour de Dérive** (`isDrift = true`) OU d'un **Tour avec Dérive** (interruption par pause ou report inter-manches) – est disqualifié pour les records (`countTowardsRecords = false`).
+    - Le tour est exclu des éléments suivants :
+        1. **Meilleur tour personnel du pilote (`bestLapTime`)** : Le meilleur temps personnel n'est pas mis à jour.
+        2. **Meilleur tour de la manche** : Ne sera pas retenu comme tour le plus rapide de la manche.
+        3. **Meilleur tour de la course** : Ne sera pas retenu comme tour le plus rapide de la course.
+        4. **Records de piste et de voie** : N'intégrera pas les tableaux de records historiques.
+        5. **Annonces audio de record** : Les annonces vocales festives de meilleur tour sont masquées.
+    - **Principe fondamental** : Le tour **compte à 100 % pour le total de tours du pilote, sa position dans la manche et le classement général**. Seule l'attribution de records lui est refusée.
+- **Lorsque l'option est désactivée (`false`)** :
+    - Tout tour respectant le filtre de temps au tour minimum peut prétendre aux records, même s'il a été entrecoupé d'une pause ou complété en roue libre sans alimentation.
+- **Pourquoi les championnats activent cette option** :
+    - Les tours scindés par une pause altèrent la dynamique des pneumatiques et le refroidissement des moteurs ; repartir de l'arrêt complet ne reflète pas le rythme d'un tour lancé à pleine vitesse.
+    - Franchir la ligne en roue libre ne correspond pas non plus à une vitesse normale de compétition.
+    - Cette option garantit la pureté et la légitimité des records tout en restant parfaitement équitable au classement.
+
+---
+
+#### Tableau Comparatif de Synthèse
+
+| Critère / Comportement | Tour Régulier sous Drapeau Vert | Tour de Dérive (`isDrift = true`) | Tour avec Dérive (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Alimentation au Capteur d'Arrivée** | **ACTIVÉE** (Drapeau Vert) | **COUPÉE** (Drapeau Jaune, Fin Manche/Course) | **ACTIVÉE** (Drapeau Vert) |
+| **Condition de Déclenchement** | À pleine vitesse sous alimentation | En roue libre dans la fenêtre `drift_time` | Sous alimentation après pause ou report |
+| **Indicateur de Données `isDrift`** | `false` | `true` | `false` |
+| **État Interne `driftInvolved`** | `false` | `true` | `true` |
+| **Badge à l'Écran de Course** | Aucun | Badge **`DRIFT`** dans la colonne de voie | Aucun |
+| **Notification Audio** | Son régulier de tour / record | **Son de tour de drift** (`urgent`) | Son régulier (pas de son de dérive) |
+| **Comptabilisé au Total de Tours & Classement** | **Oui** (crédit total) | **Oui** (crédit total) | **Oui** (crédit total) |
+| **Éligible aux Records (`adjust_drift_laps` = DÉSACTIVÉ)** | **Oui** | **Oui** (si plus rapide) | **Oui** (si plus rapide) |
+| **Éligible aux Records (`adjust_drift_laps` = ACTIVÉ)** | **Oui** | **Exclu / Disqualifié** | **Exclu / Disqualifié** |
+
 ---
 
 ## Options de manche {: #heat-options }

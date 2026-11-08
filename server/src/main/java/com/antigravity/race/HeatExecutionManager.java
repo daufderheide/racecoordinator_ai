@@ -901,14 +901,18 @@ public class HeatExecutionManager {
     for (String objectId : standingsIds) {
       for (int i = 0; i < drivers.size(); i++) {
         DriverHeatData dhd = drivers.get(i);
-        if (dhd != null && dhd.getObjectId().equals(objectId)) {
-          laneIndices.add(i);
+        if (dhd != null && dhd.getObjectId().equals(objectId) && dhd.getLane() >= 0) {
+          laneIndices.add(dhd.getLane());
           break;
         }
       }
     }
 
     if (!laneIndices.isEmpty()) {
+      logger.info(
+          "Updated heat standings for protocols - Leader Lane: {}, Standings: {}",
+          laneIndices.get(0),
+          laneIndices);
       race.setHeatStandings(laneIndices);
     }
   }

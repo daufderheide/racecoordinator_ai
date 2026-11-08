@@ -19,6 +19,7 @@ import {
   handleLaneColumnAnchorDragLeave,
   handleLaneColumnAnchorDragOver,
   handleLaneColumnAnchorDrop,
+  resolveLaneColumnAnchorHasWidget,
   setLaneColumnInset,
 } from "./raceday-lane-column-interaction.helper";
 
@@ -116,10 +117,16 @@ export class LaneColumnAnchorHelper {
   onAnchorClick(anchor: string, event: MouseEvent): void {
     if (!this.isUIEditorMode) return;
     event.stopPropagation();
+    const hasWidget = resolveLaneColumnAnchorHasWidget(
+      this.getParent(),
+      this.getWidget()?.id,
+      this.getSettings().insets,
+      anchor,
+    );
     dispatchLaneColumnAnchorSelection(
       this.getParent(),
       this.getWidget()?.id,
-      anchor,
+      hasWidget ? anchor : null,
       this.anchorSelected,
     );
   }

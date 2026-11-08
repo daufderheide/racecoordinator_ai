@@ -15,10 +15,12 @@ import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.RaceConfigDump;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
+import com.antigravity.proto.AlertType;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.GroupStandingsUpdate;
+import com.antigravity.proto.InterfaceAlertEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
@@ -1652,6 +1654,17 @@ public class Race implements ProtocolListener {
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(e);
     if (e.hasStatus() && e.getStatus().getStatus() == InterfaceStatus.DISCONNECTED) {
       stopRaceOperationsOnHardwareDisconnect();
+    }
+    if (e.hasAlert()) {
+      handleInterfaceAlert(e.getAlert());
+    }
+  }
+
+  public void handleInterfaceAlert(InterfaceAlertEvent alert) {
+    if (alert != null && alert.getAlertType() == AlertType.ALERT_TYPE_BROWNOUT_RESET) {
+      if (statistics != null) {
+        statistics.incrementHardwareResetCount();
+      }
     }
   }
 

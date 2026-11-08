@@ -1,5 +1,27 @@
 # Operação no Dia de Corrida
 
+## Início e Pausa de Corridas
+
+No dia de corrida, as operações na pista passam por estados automatizados controlados pelo diretor de prova por meio de teclas de atalho, botões da barra de ferramentas ou botões de emergência na pista:
+
+### Início de Baterias
+- **Grid e Contagem Regressiva**: Ao iniciar uma bateria, o Race Coordinator AI ativa uma contagem regressiva automática (configurada no editor de corrida). Sinais sonoros e luzes de largada preparam os competidores.
+- **Bandeira Verde**: Ao atingir zero, a energia da pista é ativada e a bateria entra no estado `Racing`.
+- **Tempo de Reação**: Se "Largar atrás do sensor" estiver ativado, o primeiro acionamento do sensor registra o tempo de reação na largada em vez de uma volta completa.
+
+### Pausas e Bandeiras Amarelas
+- **Acionamento de uma Pausa**: Pressionando a barra de espaço, clicando no ícone de **Pausa** ou acionando um botão externo de pista, a bandeira amarela é imediatamente acionada (`Paused`).
+- **Corte Imediato de Energia**: Os relés desligam instantaneamente a alimentação para imobilizar os carros.
+- **Captura de Tempos Parciais**: No mesmo milissegundo, a interface de hardware congela o tempo parcial percorrido por cada carro ativo e o salva no tempo pendente.
+- **Cruzando a Chegada por Inércia (Voltas de Drift)**: Se um carro estava próximo da linha ao cortar a energia, seu embalo pode levá-lo a cruzar o sensor.
+    - Se o sensor for acionado dentro do **Tempo de deriva** configurado, a passagem é validada como **Volta de Drift** (`isDrift: true`). O badge **`DRIFT`** surge na coluna da calha, soa o aviso de voz urgente e a volta é creditada ao piloto.
+    - Se ocorrer após o término do prazo, o disparo é ignorado para evitar voltas indevidas causadas por fiscais de pista.
+    - Para detalhes completos, consulte [Editor de Corrida: Mecânica de Deriva e Cronometragem de Drift](race-editor.pt.md#drifting-and-drift-timing).
+
+### Retomada da Corrida
+- **Reinício sob Bandeira Verde**: Ao liberar a pausa, a contagem regressiva recomeça. Com a bandeira verde, a energia volta e os cronômetros reiniciam do zero.
+- **Conclusão da Volta (Voltas com Drift Envolvido)**: Quando um carro parado na pista retoma a corrida e cruza a linha de chegada sob tração, seu tempo total soma o parcial anterior à pausa com o tempo pós-retomada. Trata-se de uma **Volta com Drift Envolvido**. Se "Excluir voltas com drift dos recordes" estiver ativado, a volta conta para a bateria mas não concorre a recordes.
+
 ## Ajustes de Voltas e Tempo
 
 Os diretores de prova podem ajustar manualmente a contagem de voltas e os tempos de bateria dos pilotos diretamente na tela de corrida para resolver problemas de pista, falhas de sensores ou penalidades:

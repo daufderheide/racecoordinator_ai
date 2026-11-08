@@ -1,5 +1,27 @@
 # Operazioni il Giorno di Gara
 
+## Avvio e Sospensione della Gara
+
+Durante la giornata di gara, le operazioni in pista passano attraverso stati automatizzati controllati dal direttore di gara tramite tasti di scelta rapida, pulsanti della barra degli strumenti o pulsanti di emergenza esterni:
+
+### Avvio delle Manche
+- **Schieramento e Conto alla Rovescia**: Quando viene avviata una manche, Race Coordinator AI fa partire un conto alla rovescia automatico (configurabile nell'editor di gara). Toni acustici e semafori visivi preparano i concorrenti.
+- **Bandiera Verde**: Raggiunto lo zero, la corrente in pista si attiva e la gara entra nello stato `Racing`.
+- **Tempo di Reazione**: Se "Inizia dietro al sensore" è abilitato, il primo passaggio sul traguardo registra il tempo di reazione allo scatto invece di un giro completo.
+
+### Sospensioni e Bandiere Gialle
+- **Attivazione di una Pausa**: Premendo la barra spaziatrice, cliccando sull'icona di **Pausa** o azionando un pulsante esterno, viene immediatamente esposta la bandiera gialla (`Paused`).
+- **Distacco Immediato della Corrente**: I relè tolgono istantaneamente l'alimentazione per fermare i modelli.
+- **Rilevamento Tempi Parziali**: Nello stesso millisecondo, l'interfaccia hardware congela il tempo parziale percorso da ciascuna auto e lo memorizza nel tempo in sospeso.
+- **Passaggio del Traguardo per Inerzia (Giri in Deriva)**: Se un'auto era prossima al traguardo quando è saltata la corrente, la sua inerzia può portarla oltre il sensore.
+    - Se il sensore scatta entro la finestra di **Tempo di deriva** configurata, il passaggio è convalidato come **Giro in Deriva** (`isDrift: true`). Appare il contrassegno **`DRIFT`** sulla corsia, suona l'annuncio audio urgente e il giro viene accreditato al pilota.
+    - Se scatta a tempo scaduto, l'impulso viene cestinato per evitare giri involontari causati dai commissari di pista.
+    - Per tutti i dettagli, consultare [Editor di Gara: Meccanica di Deriva e Cronometraggio del Drift](race-editor.it.md#drifting-and-drift-timing).
+
+### Riavvio della Corsa
+- **Ripartenza con Bandiera Verde**: Togliendo la pausa riparte il conto alla rovescia. Con la bandiera verde, la corrente torna e i cronometri ripartono da zero.
+- **Chiusura del Giro (Giri con Deriva Coinvolta)**: Quando un'auto fermata sul circuito riprende la corsa e taglia il traguardo sotto alimentazione, il tempo finale somma il parziale pre-pausa e il tempo post-pausa. Questo è un **Giro con Deriva Coinvolta**. Se è attivo "Escludi giri con derapata dai record", il giro vale per la manche ma viene escluso dai record.
+
 ## Regolazioni dei Giri e del Tempo
 
 I direttori di gara possono regolare manualmente il conteggio dei giri e i tempi di manche dei piloti direttamente dalla schermata di gara per risolvere problemi sul tracciato, mancate letture dei sensori o penalità:

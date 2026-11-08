@@ -2,7 +2,9 @@ import { Locator, Page } from "@playwright/test";
 import { Settings } from "@app/models/settings";
 import {
   GetPhidgetDevicesResponse,
+  IInterfaceAlertEvent,
   InitializeInterfaceResponse,
+  InterfaceEvent,
   IRaceTime,
   ListAssetsResponse,
   RaceData,
@@ -2337,6 +2339,30 @@ export class TestSetupHelper {
           s.url.includes("race-data"),
         );
         raceSockets.forEach((s: any) => {
+          const event = new MessageEvent("message", { data: buffer });
+          s.dispatchEvent(event);
+          if (s.onmessage) s.onmessage(event);
+        });
+      }
+    }, dataArray);
+  }
+
+  static async sendInterfaceAlert(
+    page: Page,
+    alertEvent: IInterfaceAlertEvent,
+  ) {
+    const interfaceEvent = InterfaceEvent.create({ alert: alertEvent });
+    const buffer = InterfaceEvent.encode(interfaceEvent).finish();
+    const dataArray = Array.from(buffer);
+    await page.evaluate((bufferArray) => {
+      const buffer = new Uint8Array(bufferArray as number[]).buffer;
+      // @ts-ignore
+      if (window.allMockSockets) {
+        // @ts-ignore
+        const interfaceSockets = window.allMockSockets.filter((s: any) =>
+          s.url.includes("interface-data"),
+        );
+        interfaceSockets.forEach((s: any) => {
           const event = new MessageEvent("message", { data: buffer });
           s.dispatchEvent(event);
           if (s.onmessage) s.onmessage(event);

@@ -8,19 +8,25 @@ import {
   buildLayoutSelectItems,
   buildLayoutTemplateOptions,
   buildNewLayoutTemplate,
+  clearAllLastEditedWidgets,
   clearLastEditedLayoutId,
+  clearLastEditedWidgetForLayout,
   cloneLayout,
   createFallbackDefaultLayouts,
   getLastEditedLayoutId,
+  getLastEditedWidgetForLayout,
   getLayoutDisplayName,
   getLayoutUnsavedReasons,
   isCustomUiDefault,
+  isGridElement,
   isLayoutNameUnique,
   LAYOUT_AVAILABLE_COLUMNS,
   LAYOUT_LAST_EDITED_STORAGE_KEY,
+  LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY,
   resolveInitialLayout,
   resolveTemplateSource,
   setLastEditedLayoutId,
+  setLastEditedWidgetForLayout,
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
 import {
@@ -769,6 +775,164 @@ describe("layout-editor.helper", () => {
         isWidgetConfigVisible: true,
       };
       expect(getAvailableWidth(comp)).toBe(getAvailableWidth(compNoWidget));
+    });
+  });
+
+  describe("isGridElement", () => {
+    it("should return false for null or undefined widget", () => {
+      expect(isGridElement(null)).toBeFalse();
+      expect(isGridElement(undefined)).toBeFalse();
+    });
+
+    it("should return false when widget has no gridId", () => {
+      expect(isGridElement({ id: "timer", widgetType: "timer" })).toBeFalse();
+      expect(
+        isGridElement({ id: "w1", customSettings: { fontSize: 24 } }),
+      ).toBeFalse();
+    });
+
+    it("should return true when widget has gridId in customSettings", () => {
+      expect(
+        isGridElement({
+          id: "w-grid-col",
+          customSettings: { gridId: "grid-1" },
+        }),
+      ).toBeTrue();
+      expect(
+        isGridElement({
+          id: "w-grid-col-2",
+          customSettings: { ["gridId"]: "grid-2" },
+        }),
+      ).toBeTrue();
+    });
+  });
+
+  describe("getLastEditedWidgetForLayout & setLastEditedWidgetForLayout", () => {
+    let mockNav: jasmine.SpyObj<NavigationService>;
+
+    beforeEach(() => {
+      localStorage.removeItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY);
+      mockNav = jasmine.createSpyObj<NavigationService>("NavigationService", [
+        "getLastEditedId",
+        "setLastEditedId",
+        "clearLastEditedId",
+      ]);
+    });
+
+    afterEach(() => {
+      localStorage.removeItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY);
+    });
+
+    it("should return null if layoutId is empty", () => {
+      expect(getLastEditedWidgetForLayout("")).toBeNull();
+    });
+
+    it("should retrieve saved widget from navigationService if available", () => {
+      mockNav.getLastEditedId.and.returnValue(
+        JSON.stringify({ widgetId: "w1", tab: "grid" }),
+      );
+      const res = getLastEditedWidgetForLayout("layout1", mockNav);
+      expect(res).toEqual({ widgetId: "w1", tab: "grid" });
+      expect(mockNav.getLastEditedId).toHaveBeenCalledWith(
+        "layout_widget_layout1",
+      );
+    });
+
+    it("should handle navigationService returning string widgetId directly", () => {
+      mockNav.getLastEditedId.and.returnValue("simple-widget");
+      const res = getLastEditedWidgetForLayout("layout1", mockNav);
+      expect(res).toEqual({ widgetId: "simple-widget" });
+    });
+
+    it("should fallback to localStorage if navigationService returns null", () => {
+      mockNav.getLastEditedId.and.returnValue(null);
+      localStorage.setItem(
+        LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY,
+        JSON.stringify({
+          layout1: { widgetId: "w-stored", tab: "column" },
+        }),
+      );
+      const res = getLastEditedWidgetForLayout("layout1", mockNav);
+      expect(res).toEqual({ widgetId: "w-stored", tab: "column" });
+    });
+
+    it("should save and retrieve per layout in localStorage without navigationService", () => {
+      setLastEditedWidgetForLayout("layoutA", {
+        widgetId: "widgetA1",
+        tab: "grid",
+      });
+      setLastEditedWidgetForLayout("layoutB", {
+        widgetId: "widgetB2",
+      });
+
+      expect(getLastEditedWidgetForLayout("layoutA")).toEqual({
+        widgetId: "widgetA1",
+        tab: "grid",
+      });
+      expect(getLastEditedWidgetForLayout("layoutB")).toEqual({
+        widgetId: "widgetB2",
+      });
+      expect(getLastEditedWidgetForLayout("layoutC")).toBeNull();
+    });
+
+    it("should save to both navigationService and localStorage", () => {
+      setLastEditedWidgetForLayout(
+        "layout1",
+        { widgetId: "w1", tab: "inset" },
+        mockNav,
+      );
+      expect(mockNav.setLastEditedId).toHaveBeenCalledWith(
+        "layout_widget_layout1",
+        JSON.stringify({ widgetId: "w1", tab: "inset" }),
+      );
+      const stored = JSON.parse(
+        localStorage.getItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY) || "{}",
+      );
+      expect(stored.layout1).toEqual({ widgetId: "w1", tab: "inset" });
+    });
+
+    it("should clear layout widget from navigationService and localStorage", () => {
+      setLastEditedWidgetForLayout(
+        "layout1",
+        { widgetId: "w1", tab: "grid" },
+        mockNav,
+      );
+      setLastEditedWidgetForLayout("layout2", { widgetId: "w2" }, mockNav);
+
+      clearLastEditedWidgetForLayout("layout1", mockNav);
+      expect(mockNav.clearLastEditedId).toHaveBeenCalledWith(
+        "layout_widget_layout1",
+      );
+
+      mockNav.getLastEditedId.and.returnValue(null);
+      expect(getLastEditedWidgetForLayout("layout1", mockNav)).toBeNull();
+      expect(getLastEditedWidgetForLayout("layout2", mockNav)).toEqual({
+        widgetId: "w2",
+      });
+    });
+
+    it("should clear all last edited widgets via clearAllLastEditedWidgets", () => {
+      setLastEditedWidgetForLayout("layout1", { widgetId: "w1" });
+      setLastEditedWidgetForLayout("layout2", { widgetId: "w2" });
+
+      clearAllLastEditedWidgets();
+      expect(
+        localStorage.getItem(LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY),
+      ).toBeNull();
+    });
+
+    it("should gracefully handle corrupt JSON in localStorage", () => {
+      localStorage.setItem(
+        LAYOUT_LAST_EDITED_WIDGET_STORAGE_KEY,
+        "invalid-json{",
+      );
+      expect(getLastEditedWidgetForLayout("layout1")).toBeNull();
+
+      // Setting a new value should recover cleanly
+      setLastEditedWidgetForLayout("layout1", { widgetId: "w1" });
+      expect(getLastEditedWidgetForLayout("layout1")).toEqual({
+        widgetId: "w1",
+      });
     });
   });
 });

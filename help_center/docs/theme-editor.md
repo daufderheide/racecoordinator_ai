@@ -44,6 +44,7 @@ The top toolbar provides standardized theme management actions:
 - **Custom UI Layout**: Select the default screen layout paired with this theme.
 - **Driver Station Theme**: Select the theme used when opening or scanning into a single-lane driver station window or device.
 - **Driver View Theme**: Select the theme used when opening or scanning into the driver view schedule window or personal device display.
+- **Window Themes (Companion Themes)**: Select the specific secondary companion themes permitted to appear under **Windows > Themes** on the Raceday menu bar when this theme is active. By default, all themes are selected. Organizers can tailor this list to specific race displays or deselect all themes, and can quickly select or deselect all themes at once with the one-click **Select All** action. When a new theme is created, it is automatically added to all existing themes that have all themes selected.
 
 ### Flag Images
 

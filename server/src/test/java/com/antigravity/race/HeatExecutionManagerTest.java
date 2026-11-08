@@ -23,6 +23,7 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.RaceData;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.race.states.HeatOver;
@@ -2713,5 +2714,41 @@ public class HeatExecutionManagerTest {
     } finally {
       ClientSubscriptionManager.setInstance(origCsm);
     }
+  }
+
+  @Test
+  public void testUpdateProtocolStandings_MapsPhysicalLaneNotDriverIndex() {
+    ProtocolDelegate mockProtocols = mock(ProtocolDelegate.class);
+    race.getHardwareManager().setProtocols(mockProtocols);
+
+    // Swap drivers or set lane mapping so driver index != lane
+    // Driver at index 0 is on Lane 1
+    // Driver at index 1 is on Lane 0
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+    d0.setLane(1);
+    d1.setLane(0);
+
+    // Recreate heat standings with the updated driver heat data
+    race.getCurrentHeat().initializeStandings(race.getRaceModel().getHeatScoring(), null, false);
+
+    // Driver at index 0 (physical Lane 1) registers reaction time and Lap 1
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+
+    ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+    verify(mockProtocols, atLeastOnce()).setHeatStandings(captor.capture());
+
+    @SuppressWarnings("unchecked")
+    List<Integer> lastStandings = (List<Integer>) captor.getValue();
+    assertNotNull(lastStandings);
+    assertFalse(lastStandings.isEmpty());
+    // The leader is Driver 0 who is in physical Lane 1.
+    // The first element in rankings sent to protocol MUST be 1 (physical lane), not 0 (driver
+    // index)!
+    assertEquals(
+        "Leader lane in protocol standings must be physical lane 1",
+        Integer.valueOf(1),
+        lastStandings.get(0));
   }
 }

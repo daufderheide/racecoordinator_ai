@@ -862,6 +862,12 @@ public class AssetDefaultsInitializer {
       updated = true;
     }
 
+    List<String> companionIds = t.getCompanionThemeIds();
+    if (t.isDefault() && (companionIds == null || companionIds.isEmpty())) {
+      companionIds = new ArrayList<>(Theme.DEFAULT_FACTORY_THEME_IDS);
+      updated = true;
+    }
+
     if (updated) {
       Theme newTheme =
           new Theme(
@@ -873,6 +879,7 @@ public class AssetDefaultsInitializer {
               uiId,
               driverStationThemeId,
               driverViewThemeId,
+              companionIds,
               entityId,
               t.getId());
       themeRepo.save(newTheme);

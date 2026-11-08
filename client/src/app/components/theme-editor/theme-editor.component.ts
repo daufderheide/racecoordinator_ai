@@ -212,6 +212,9 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         equalizer: (a: Theme, b: Theme) => areThemesEqual(a, b),
         applier: (item: Theme) => {
           this.editingTheme = cloneTheme(item);
+          if (this.editingTheme && !this.editingTheme.companion_theme_ids) {
+            this.editingTheme.companion_theme_ids = [];
+          }
           this.cdr.markForCheck();
         },
       },
@@ -330,7 +333,17 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.selectedThemeId = id;
     setLastEditedThemeId(id, this.navigationService);
     this.editingTheme = cloneTheme(theme);
+    if (this.editingTheme && !this.editingTheme.companion_theme_ids) {
+      this.editingTheme.companion_theme_ids = this.displayThemes
+        .map((t) => t.entity_id)
+        .filter((id): id is string => !!id);
+    }
     this.originalTheme = cloneTheme(theme);
+    if (this.originalTheme && !this.originalTheme.companion_theme_ids) {
+      this.originalTheme.companion_theme_ids = [
+        ...(this.editingTheme?.companion_theme_ids || []),
+      ];
+    }
     this.defaultThemeNames[id] = theme.name;
     if (this.editingTheme) {
       this.undoManager.initialize(this.editingTheme);
@@ -360,6 +373,31 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.isEditMode = false;
       this.selectThemeById(id);
     }
+  }
+
+  get areAllCompanionThemesSelected(): boolean {
+    if (
+      !this.editingTheme?.companion_theme_ids ||
+      this.displayThemes.length === 0
+    ) {
+      return false;
+    }
+    const currentSet = new Set(this.editingTheme.companion_theme_ids);
+    return this.displayThemes.every(
+      (t) => t.entity_id && currentSet.has(t.entity_id),
+    );
+  }
+
+  toggleSelectAllCompanionThemes(): void {
+    if (!this.editingTheme || !this.isEditMode) return;
+    if (this.areAllCompanionThemesSelected) {
+      this.editingTheme.companion_theme_ids = [];
+    } else {
+      this.editingTheme.companion_theme_ids = this.displayThemes
+        .map((t) => t.entity_id)
+        .filter((id): id is string => !!id);
+    }
+    this.captureState();
   }
 
   onToggleEditMode(): void {

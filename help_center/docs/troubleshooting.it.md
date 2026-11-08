@@ -60,6 +60,63 @@ Per impostazione predefinita, il kernel Linux sospende i dispositivi USB inattiv
 - **Impostazioni Risparmio Energia / Schermi**: Aprire **Impostazioni di Sistema** -> **Schermi** -> **Avanzate...** (o **Risparmio Energia**) e abilitare **"Impedisci la sospensione automatica quando il display è spento"**.
 - **Utilizzare Hub USB con Alimentazione Dedicata**: macOS può disattivare le porte degli hub USB passivi in caso di fluttuazioni di corrente. Collegare sempre l'interfaccia a un hub USB alimentato da presa di corrente.
 
+### Riavvii e Cali di Tensione del Microcontrollore {: #microcontroller-brownout-resets }
+
+- **Sintomo**: Durante una gara o una sessione di prove libere, appare un banner di avviso sulla schermata del giorno di gara: *"Riavvio del microcontrollore rilevato: Il microcontrollore dell'interfaccia si è riavviato inaspettatamente durante il funzionamento."* Cliccando su **Dettagli** si apre una finestra di dialogo che mostra il nome dell'interfaccia, il conteggio dei riavvii e il timestamp dell'ultimo riavvio. Se si verificano più riavvii nella stessa sessione, una nota avverte che si stanno verificando riavvii frequenti.
+- **Cosa viene segnalato**: L'interfaccia di cronometraggio (come Arduino Uno, Nano, Mega o microcontrollore USB compatibile) ha subito un riavvio hardware imprevisto o un calo di tensione (brownout) mentre era collegata a Race Coordinator AI. Ciò indica che il processore integrato ha subito un calo momentaneo di tensione o un picco di disturbo elettrico che ha fatto scattare la linea di ripristino hardware o il circuito di rilevamento della sottotensione (BOD).
+
+#### Cosa accade in Race Coordinator AI (RMS)
+Quando un microcontrollore si riavvia inaspettatamente durante la gara:
+1. **Sequenza di bootloader e handshake**: Il microcontrollore si riavvia e invia una notifica di identificazione iniziale e ping di stato a Race Coordinator AI.
+2. **Ripristino automatico dello stato**: Race Coordinator AI rileva che la scheda era già connessa e attiva. Invece di interrompere la gara, l'RMS riconfigura immediatamente il microcontrollore: riapplica l'assegnazione dei pin di ingresso, le polarità (attivo alto/attivo basso), i tempi di antirimbalzo e ripristina lo stato dei relè in base allo stato attuale della manche (ad esempio, alimentazione corsie ATTIVA).
+3. **Finestra dello scudo di protezione (250 ms)**: All'avvio di un Arduino, gli ingressi digitali possono fluttuare momentaneamente o riportare stati di pull-up predefiniti prima di stabilizzarsi. Race Coordinator AI attiva uno scudo di protezione di 250 ms subito dopo un riavvio imprevisto. Durante questo intervallo, i messaggi statici dei pin vengono filtrati per prevenire falsi conteggi dei giri, tempi sul giro fantasma o chiamate pista accidentali causati dal rumore elettrico di avvio.
+4. **Impatto sulla gara — Possibilità di giri persi**:
+    - Sebbene Race Coordinator AI ripristini automaticamente la connessione e l'alimentazione della pista senza interrompere la manche, il microcontrollore è **completamente cieco agli ingressi dei sensori** durante il riavvio hardware, la sequenza di bootloader e la negoziazione (in genere tra 200 e 500 millisecondi).
+    - **Qualsiasi slot car che attraversi un sensore ottico, un tratto morto (dead strip) o un interruttore reed durante questa finestra di ripristino NON verrà registrata, causando giri persi.**
+    - Se i riavvii si ripetono frequentemente, il conteggio dei giri e le classifiche della manche risulteranno falsati e i piloti potrebbero notare brevi interruzioni di corrente.
+
+#### Cause Comuni
+*Nota: Sebbene le cause descritte di seguito rappresentino la maggior parte dei problemi riscontrati sulle piste slot car, ogni installazione è unica e potrebbero intervenire altri fattori elettrici o meccanici.*
+
+1. **Ritorno Induttivo dei Relè (Picchi di Forza Controelettromotrice - Back-EMF)**:
+    - **La causa principale dei cali di tensione del microcontrollore nello slot racing.**
+    - I relè di potenza della pista contengono bobine elettromagnetiche. Quando un relè si diseccita (durante un'interruzione di gara o a fine manche), il rapido collasso del campo magnetico nella bobina genera un picco di tensione inversa elevatissimo (centinaia di volt di contro-EMF).
+    - Se la scheda relè non dispone di diodi di ricircolo adeguati o condivide massa/alimentazione direttamente con Arduino, questo picco ad alta tensione penetra nel microcontrollore, attivando il circuito di protezione BOD o bloccando la CPU.
+2. **Cablaggio dei Pulsanti di Interruzione e Cavi Lunghi che Fungono da Antenne**:
+    - I pulsanti di chiamata distribuiti lungo la pista utilizzano spesso cavi lunghi non schermati (da 3 a oltre 15 metri).
+    - Questi cavi lunghi fungono da antenne che captano forti interferenze elettromagnetiche (EMI) dai motori dei modelli, scintille delle spazzole e giunzioni delle rotaie.
+    - Premere o rilasciare pulsanti meccanici senza resistenze di pull-up esterne o filtri RC antirimbalzo può indurre transitori di tensione direttamente sui pin di ingresso.
+3. **Calo di Tensione sul Bus USB a 5V**:
+    - I microcontrollori necessitano di un'alimentazione stabile compresa tra 4,5 V e 5,2 V per funzionare in modo affidabile.
+    - Se Arduino è collegato a un hub USB passivo, a una porta frontale del PC con cavo interno lungo o a una porta USB sovraccarica da altre periferiche, la tensione può scendere momentaneamente al di sotto della soglia BOD (in genere 2,7 V o 4,3 V), provocando un riavvio forzato immediato.
+4. **Interferenze Elettromagnetiche (EMI) dell'Alimentazione di Pista**:
+    - I motori delle slot car assorbono correnti elevate e producono archi elettrici continui tra spazzole e rotaie.
+    - Se i cavi dei sensori, dei pulsanti o lo stesso microcontrollore corrono parallelamente e molto vicini ai conduttori di potenza della pista o agli alimentatori DC, gli accoppiamenti induttivi inducono picchi di tensione nell'elettronica di cronometraggio.
+5. **Circuiti di Rete AC Condivisi & Mancanza di Isolamento**:
+    - Collegare il computer, l'alimentatore DC della pista, torni gomme o utensili alla stessa ciabatta senza filtri di rete può trasmettere disturbi attraverso l'alimentatore del PC fino al bus USB.
+6. **Scarica Elettrostatica (ESD)**:
+    - Negli ambienti asciutti, il passaggio continuo dei modelli sulla pista in plastica accumula elettricità statica. Quando un commissario o un pilota tocca un pulsante o una rotaia metallica, la scarica elettrostatica può riavviare la scheda.
+
+#### Possibili Soluzioni al Problema
+
+- **Installare Diodi di Ricircolo (Flyback) su Tutte le Bobine dei Relè**:
+    - Saldare un diodo raddrizzatore standard (come **1N4001**, **1N4004** o **1N4007**) in polarizzazione inversa direttamente sui morsetti DC di ciascuna bobina dei relè (catodo/striscia sul +DC, anodo sulla massa/-DC). Questo assorbe in modo sicuro l'energia di contro-EMF allo spegnimento del relè.
+- **Utilizzare Schede Relè Optoisolate con Alimentazione Indipendente**:
+    - Molti moduli relè a 5V dispongono di un ponticello di isolamento contrassegnato come **JD-VCC / VCC / GND**.
+    - Rimuovere il ponticello `JD-VCC`. Collegare i 5V e i pin di segnale di Arduino alla morsettiera di controllo, ma alimentare le bobine dei relè separatamente collegando un alimentatore a parete da 5V DC tra `JD-VCC` e `GND` della scheda relè. Questo separa completamente il circuito induttivo disturbato dal bus di alimentazione di Arduino.
+- **Aggiungere Resistenze di Pull-Up Esterne e Condensatori sui Pulsanti**:
+    - Non fare affidamento solo sulle deboli resistenze di pull-up interne di Arduino (~20 kΩ–50 kΩ) su cavi lunghi. Installare **resistenze di pull-up esterne da 1 kΩ a 4,7 kΩ** tra ciascun pin di ingresso e il +5V sulla morsettiera di Arduino.
+    - Aggiungere un piccolo **condensatore ceramico da 0,1 µF (100 nF)** tra ciascun pin del pulsante e la massa per filtrare i disturbi ad alta frequenza e i rimbalzi dei contatti.
+- **Utilizzare un Hub USB Dedicato con Alimentatore da Presa**:
+    - Collegare il microcontrollore a un hub USB dotato di proprio alimentatore di rete, anziché direttamente a una porta del PC o laptop. Un hub alimentato garantisce un'erogazione costante di corrente a 5V indipendentemente dal carico del computer.
+- **Separare Fisicamente i Cavi di Segnale dall'Alimentazione di Pista**:
+    - Posizionare i cavi dei sensori (infrarossi, fotocellule, reed) e dei pulsanti ad almeno 15-30 cm di distanza dalle rotaie di alimentazione della pista e dai cavi di alimentazione.
+    - Se i cavi di segnale devono incrociare cavi di potenza, farli incrociare ad **angolo retto (90 gradi)** e mai in parallelo.
+- **Utilizzare Cavi Schermati a Coppie Intrecciate (Twisted-Pair)**:
+    - Per tratte lunghe, utilizzare cavo di rete schermato (Cat5e/Cat6 STP) o cavo schermato per strumentazione. Collegare la schermatura a massa solo sul lato di Arduino.
+- **Linee di Alimentazione AC Dedicate**:
+    - Collegare l'alimentatore della pista e il computer a prese a muro separate o utilizzare una presa filtrata con protezione da sovratensioni.
+
 ## Problemi di Visualizzazione
 
 

@@ -227,6 +227,31 @@ describe("WidgetInspectorFieldsComponent", () => {
     );
   });
 
+  it("should forward tabChange when lane-column inspector emits tabChange", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col-tab",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        gridId: "grid-test-tab",
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.componentRef.setInput("activeTab", "grid");
+    fixture.detectChanges();
+
+    spyOn(component.tabChange, "emit");
+    const laneColComp =
+      fixture.debugElement.children[0].children[0].componentInstance;
+    laneColComp.tabChange.emit("column");
+    expect(component.tabChange.emit).toHaveBeenCalledWith("column");
+  });
+
   it("should render action-button-inspector when widget is action-forward or action-close", () => {
     fixture.componentRef.setInput("widget", {
       id: "w-forward",

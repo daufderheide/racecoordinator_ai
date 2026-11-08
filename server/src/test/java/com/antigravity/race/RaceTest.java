@@ -15,7 +15,10 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
+import com.antigravity.proto.AlertType;
 import com.antigravity.proto.HeatPositionUpdate;
+import com.antigravity.proto.InterfaceAlertEvent;
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
@@ -718,6 +721,29 @@ public class RaceTest {
     public void testFailedInitClosesProtocols() throws Exception {
       race.stop();
       verify(mockProtocols).close();
+    }
+
+    @Test
+    public void testInterfaceAlert_BrownoutReset_IncrementsStatistics() {
+      assertEquals(0, race.getStatistics().getHardwareResetCount());
+
+      InterfaceAlertEvent alert =
+          InterfaceAlertEvent.newBuilder()
+              .setAlertType(AlertType.ALERT_TYPE_BROWNOUT_RESET)
+              .setOccurrenceCount(1)
+              .build();
+
+      race.onInterfaceEvent(InterfaceEvent.newBuilder().setAlert(alert).build());
+      assertEquals(1, race.getStatistics().getHardwareResetCount());
+
+      race.onInterfaceEvent(InterfaceEvent.newBuilder().setAlert(alert).build());
+      assertEquals(2, race.getStatistics().getHardwareResetCount());
+
+      // Other alert types do not increment hardwareResetCount
+      InterfaceAlertEvent genericAlert =
+          InterfaceAlertEvent.newBuilder().setAlertType(AlertType.ALERT_TYPE_GENERIC).build();
+      race.onInterfaceEvent(InterfaceEvent.newBuilder().setAlert(genericAlert).build());
+      assertEquals(2, race.getStatistics().getHardwareResetCount());
     }
 
     @Test

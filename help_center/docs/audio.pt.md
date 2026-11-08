@@ -165,7 +165,7 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | **Som de Entrada nos Boxes** | Tocado quando o carro entra na faixa de boxes ou área de reabastecimento. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 | **Sons de Nível de Combustível** | Tocado quando o nível de combustível atinge os limites de aviso, crítico ou vazio. | `default_fuel_level` (Conjunto de Áudio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 | **Som de Queima de Largada** | Tocado quando uma queima de largada ou infração de partida é detectada. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Som de volta de drift** | Tocado quando o piloto completa uma volta derrapando. | TTS (`Drift lap for {driver.nickname}`) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de volta de drift** | Tocado quando um carro cruza a linha de chegada por inércia sem energia dentro do tempo de deriva. | TTS (`Drift lap for {driver.nickname}`) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 
 ### Eventos de Áudio de Temas (Configurados no Editor de Temas)
 

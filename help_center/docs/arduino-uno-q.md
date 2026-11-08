@@ -30,13 +30,33 @@ The **Arduino UNO Q** combines a 64-bit Linux Single Board Computer (SBC) with a
 
 ## Step-by-Step Installation
 
-### Step 1: Prepare the Board & Connect via SSH
-1. Flash **Arduino Linux OS** (Debian 12 arm64) onto the Uno Q.
-2. Connect the board to your local network via Wi-Fi or Ethernet:
-   * **First-Boot Wi-Fi Setup**: On initial boot, the setup wizard will prompt for wireless network setup.
-   * **First-Time Connection Note**: The Wi-Fi connection may not take effect immediately upon first entry, and manual terminal commands like `sudo nmcli dev wifi connect "Your_SSID" password "Your_Password"` might also fail on initial boot. If this occurs, simply run `sudo reboot`. Upon rebooting, the wireless adapter initializes cleanly and connects automatically to your configured Wi-Fi network.
+### Step 1: Prepare the Board & Connect via Network
+
+1. **Boot the Board** *(Flashing is usually not needed)*:
+   * Your Arduino Uno Q comes with **Arduino Linux OS (Debian 12 arm64) pre-installed** on its internal 32GB eMMC flash storage. Simply connect the board to power to boot into the operating system.
+   * *(Note: Flashing an OS image is only necessary if you are recovering a corrupted system or performing a complete factory reset).*
+
+2. **Network Connection Setup**:
+   > [!IMPORTANT]
+   > **Internet Access Only Needed During Initial Setup**: A network connection with internet access is strictly required during this initial setup to update packages and download prerequisites. Once setup is complete, Race Coordinator AI runs 100% locally and offline without requiring an internet connection. However, keeping the board connected to your local network provides significant ongoing benefits:
+   > - **Automatic Software Updates**: Easily download and install new Race Coordinator AI releases and firmware updates directly from the web UI.
+   > - **Remote Client Access**: Race directors, drivers, and spectators can connect their phones, tablets, or laptops directly to the board's web interface (`http://<hostname>:7070` or `http://<IP_ADDRESS>:7070`) over your local network.
+
+   * **Wi-Fi Setup via On-Screen Setup Wizard**: On initial boot, the on-screen setup wizard will prompt you to configure wireless networking. Select your Wi-Fi network and enter the password.
+   * **Alternative: Setting up Wi-Fi via Command Line**: If you did not configure Wi-Fi during the setup wizard or need to configure it manually in the terminal:
+     ```bash
+     # List available wireless networks:
+     nmcli dev wifi list
+
+     # Connect to your Wi-Fi network:
+     sudo nmcli dev wifi connect "Your_SSID" password "Your_Password"
+     ```
+   * **Alternative: Wired Ethernet**: Simply plug an Ethernet cable into the board (or a USB-C Ethernet adapter). The network adapter configures automatically via DHCP.
+   * **First-Time Connection Note**: The Wi-Fi connection may occasionally not take effect immediately upon first entry, or manual `nmcli` commands may show temporary errors on initial boot. If this occurs, simply run `sudo reboot`. Upon rebooting, the wireless adapter initializes cleanly and connects automatically to your configured Wi-Fi network.
    * **Apply Board & Firmware Updates**: Upon rebooting (or when prompted by the system), you may be asked if you want to update various packages and firmware components on the board. It is strongly recommended to accept and perform all suggested updates, as factory firmware and board components may be significantly outdated. Note that this initial update may take a while (often 5 to 10+ minutes depending on network speed and package sizes), so allow it to complete uninterrupted.
-3. Enable SSH on the Board & Connect:
+
+3. **Enable SSH on the Board & Connect (Recommended)**:
+   * Setting up the board is easiest via SSH from your computer so you can copy and paste installation commands directly.
    * **Enable SSH Service**: By default, the SSH server is not running on the board. From the local terminal (using your keyboard and display connected to the board), enable and start the SSH service:
      ```bash
      sudo systemctl enable --now ssh
@@ -47,12 +67,17 @@ The **Arduino UNO Q** combines a 64-bit Linux Single Board Computer (SBC) with a
      hostname -I
      ```
      *(Note: `avahi-daemon` is not pre-installed on Arduino Linux OS, so `.local` mDNS domain names like `uno-q.local` do not exist by default unless you install the package via `sudo apt-get install -y avahi-daemon`).*
-   * **Connect from your PC**: Open a terminal on your computer and connect using the board's hostname or IP address:
-     ```bash
-     ssh arduino@<hostname>
-     # Or connect directly via IP:
-     ssh arduino@<IP_ADDRESS>
-     ```
+   * **Connect from your PC**:
+     * **macOS**: Open the built-in **Terminal** app or **iTerm2** ([iterm2.com](https://iterm2.com/)) and connect via the command line:
+       ```bash
+       ssh arduino@<hostname>
+       # Or connect directly via IP:
+       ssh arduino@<IP_ADDRESS>
+       ```
+     * **Windows**: You can use the built-in PowerShell or Command Prompt (running `ssh arduino@<hostname>` or `ssh arduino@<IP_ADDRESS>`) or a graphical SSH client such as **PuTTY** (download from [putty.org](https://www.putty.org/)). If using PuTTY:
+       1. Enter the board's hostname or IP address in the **Host Name (or IP address)** field.
+       2. Ensure Port is set to `22` and Connection Type is **SSH**.
+       3. Click **Open**, accept the host key warning on first connection, and log in as `arduino` with your password.
 
 ### Step 2: Install Prerequisites
 Install the Java runtime (`default-jre-headless`), audio utilities (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium`, and window manager control (`wmctrl`):

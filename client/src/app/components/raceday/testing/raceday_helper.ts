@@ -151,6 +151,8 @@ export function createRacedayMocks(overrides: any = {}) {
     interfaceEventsSubject.asObservable();
   mockRaceConnectionService.interfaceAlert$ =
     interfaceAlertSubject.asObservable();
+  mockRaceConnectionService.hardwareAlert$ =
+    interfaceAlertSubject.asObservable();
   mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
   mockRaceConnectionService.laps$ = lapsSubject.asObservable();
   mockRaceConnectionService.carData$ = carDataSubject.asObservable();

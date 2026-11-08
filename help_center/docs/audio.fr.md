@@ -165,7 +165,7 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Son d'Entrée aux Stands** | Joué lorsque la voiture entre dans la voie des stands ou la zone de ravitaillement. | `default_pit_in` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 | **Sons de Niveau de Carburant** | Joué lorsque le carburant descend aux seuils d'avertissement, critique ou vide. | `default_fuel_level` (Ensemble Audio) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 | **Son de Faux Départ** | Joué lorsqu'un faux départ ou une infraction au départ est détecté. | `default_penalty` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Son de tour de drift** | Joué lorsque le pilote termine un tour en driftant. | TTS (`Drift lap for {driver.nickname}`) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son de tour de drift** | Joué lorsqu'une voiture franchit la ligne en roue libre hors tension dans la fenêtre de temps de dérive. | TTS (`Drift lap for {driver.nickname}`) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 
 ### Événements Audio de Thème (Configurés dans l'Éditeur de Thèmes)
 

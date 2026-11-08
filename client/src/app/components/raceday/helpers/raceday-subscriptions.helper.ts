@@ -757,6 +757,12 @@ export class RacedaySubscriptionsHelper {
   }
 
   public static subscribeToUIEvents(host: any): void {
+    this.subscribeToRouteEvents(host);
+    this.subscribeToInterfaceEvents(host);
+    this.subscribeToRaceDataEvents(host);
+  }
+
+  private static subscribeToRouteEvents(host: any): void {
     if (host.route?.params) {
       host.subscriptions.push(
         host.route.params.subscribe((params: any) => {
@@ -813,7 +819,9 @@ export class RacedaySubscriptionsHelper {
         }
       }),
     );
+  }
 
+  private static subscribeToInterfaceEvents(host: any): void {
     host.subscriptions.push(
       host.raceConnectionService.interfaceEvents$.subscribe((_event: any) => {
         host.isInterfaceConnected =
@@ -831,6 +839,24 @@ export class RacedaySubscriptionsHelper {
       }),
     );
 
+    if (host.raceConnectionService?.hardwareAlert$) {
+      host.subscriptions.push(
+        host.raceConnectionService.hardwareAlert$.subscribe((alert: any) => {
+          if (
+            alert &&
+            !host.raceHasEnded &&
+            host.raceState !== RaceState.RACE_OVER
+          ) {
+            host.currentHardwareAlert = alert;
+            host.showHardwareAlertBanner = true;
+            host.cdr.markForCheck();
+          }
+        }),
+      );
+    }
+  }
+
+  private static subscribeToRaceDataEvents(host: any): void {
     host.subscriptions.push(
       host.raceConnectionService.recordData$.subscribe((records: any) => {
         if (records) {

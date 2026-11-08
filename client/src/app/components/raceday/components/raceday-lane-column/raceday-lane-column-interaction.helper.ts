@@ -16,7 +16,6 @@ import {
   formatAdjustedLapValue,
   isLaneColumnImageProperty,
   isOverallOrSeedDataSource,
-  isParentRaceOver,
   resolveEffectiveHeaderFontSize,
 } from "./raceday-lane-column.utils";
 
@@ -408,195 +407,14 @@ export function notifyLaneColumnParentChange(
   }
 }
 
-export function resolveHeatEmptyLaneIndex(
-  parent: any,
-  targetIndex: number,
-  track?: any,
-): number {
-  const lanesCount = track?.lanes?.length ?? 0;
-  if (lanesCount <= 0 || targetIndex < 0 || targetIndex >= lanesCount) {
-    return -1;
-  }
-  const drivers: DriverHeatData[] =
-    parent?.sortedHeatDrivers ||
-    parent?.heatDrivers ||
-    parent?.heat?.heatDrivers ||
-    [];
-  const activeLanes = new Set<number>();
-  let activeCount = 0;
-  for (const d of drivers) {
-    if (!RacedayFormatUtils.isEmptyDriver(d)) {
-      activeCount++;
-      if (d.laneIndex != null && d.laneIndex >= 0) {
-        activeLanes.add(d.laneIndex);
-      }
-    }
-  }
-  const unoccupiedLanes: number[] = [];
-  for (let i = 0; i < lanesCount; i++) {
-    if (!activeLanes.has(i)) {
-      unoccupiedLanes.push(i);
-    }
-  }
-  if (targetIndex >= activeCount) {
-    const offset = targetIndex - activeCount;
-    if (offset < unoccupiedLanes.length) {
-      return unoccupiedLanes[offset];
-    }
-  }
-  return -1;
-}
-
-export function resolveLaneColumnBackgroundColor(
-  settings: LaneColumnWidgetSettings,
-  hd: DriverHeatData | undefined,
-  parent: any,
-  bindingMode: string,
-  targetIndex: number,
-): string {
-  if (settings.useLaneColors === false) {
-    return settings.backgroundColor || "#000000";
-  }
-  if (
-    isOverallOrSeedDataSource(settings, parent, bindingMode) &&
-    (!hd || RacedayFormatUtils.isEmptyDriver(hd) || isParentRaceOver(parent))
-  ) {
-    return settings.backgroundColor || "transparent";
-  }
-  const track =
-    parent?.track ||
-    parent?.race?.track ||
-    parent?.raceService?.getRace()?.track;
-  const trackLanesCount = track?.lanes?.length;
-  if (
-    trackLanesCount != null &&
-    targetIndex >= trackLanesCount &&
-    (!hd || RacedayFormatUtils.isEmptyDriver(hd))
-  ) {
-    return settings.backgroundColor || "transparent";
-  }
-  if (bindingMode === "hostLane" && parent?.activeLaneBackgroundColor) {
-    return parent.activeLaneBackgroundColor;
-  }
-  if (hd && parent?.getLaneColor) {
-    const bg = parent.getLaneColor(hd, "background_color");
-    if (bg) return bg;
-  }
-  let laneIdx = hd?.laneIndex ?? -1;
-  if (laneIdx < 0) {
-    if (bindingMode === "hostLane") {
-      laneIdx = parent?.activeLaneIndex ?? parent?.laneIndex ?? -1;
-    } else if (bindingMode === "lane") {
-      laneIdx = targetIndex;
-    } else if (
-      !isOverallOrSeedDataSource(settings, parent, bindingMode) &&
-      (!hd || RacedayFormatUtils.isEmptyDriver(hd))
-    ) {
-      laneIdx = resolveHeatEmptyLaneIndex(parent, targetIndex, track);
-    }
-  }
-  const trackLaneBg =
-    laneIdx >= 0 ? track?.lanes?.[laneIdx]?.background_color : undefined;
-  return trackLaneBg || settings.backgroundColor || "transparent";
-}
-
-export function resolveLaneColumnForegroundColor(
-  settings: LaneColumnWidgetSettings,
-  hd: DriverHeatData | undefined,
-  parent: any,
-  bindingMode: string,
-  targetIndex: number,
-): string {
-  if (settings.useLaneColors === false) {
-    return settings.textColor || "#ffffff";
-  }
-  if (
-    isOverallOrSeedDataSource(settings, parent, bindingMode) &&
-    (!hd || RacedayFormatUtils.isEmptyDriver(hd) || isParentRaceOver(parent))
-  ) {
-    return settings.textColor || "#ffffff";
-  }
-  const track =
-    parent?.track ||
-    parent?.race?.track ||
-    parent?.raceService?.getRace()?.track;
-  const trackLanesCount = track?.lanes?.length;
-  if (
-    trackLanesCount != null &&
-    targetIndex >= trackLanesCount &&
-    (!hd || RacedayFormatUtils.isEmptyDriver(hd))
-  ) {
-    return settings.textColor || "#ffffff";
-  }
-  if (bindingMode === "hostLane" && parent?.activeLaneForegroundColor) {
-    return parent.activeLaneForegroundColor;
-  }
-  if (hd && parent?.getLaneColor) {
-    const fg = parent.getLaneColor(hd, "foreground_color");
-    if (fg) return fg;
-  }
-  let laneIdx = hd?.laneIndex ?? -1;
-  if (laneIdx < 0) {
-    if (bindingMode === "hostLane") {
-      laneIdx = parent?.activeLaneIndex ?? parent?.laneIndex ?? -1;
-    } else if (bindingMode === "lane") {
-      laneIdx = targetIndex;
-    } else if (
-      !isOverallOrSeedDataSource(settings, parent, bindingMode) &&
-      (!hd || RacedayFormatUtils.isEmptyDriver(hd))
-    ) {
-      laneIdx = resolveHeatEmptyLaneIndex(parent, targetIndex, track);
-    }
-  }
-  const trackLaneFg =
-    laneIdx >= 0 ? track?.lanes?.[laneIdx]?.foreground_color : undefined;
-  return (
-    trackLaneFg ||
-    settings.textColor ||
-    (bindingMode === "hostLane"
-      ? parent?.activeLaneForegroundColor
-      : undefined) ||
-    "#ffffff"
-  );
-}
-
-export function resolveLaneColumnEffectiveHeaderTextColor(
-  settings: LaneColumnWidgetSettings,
-  isHeaderWidget: boolean,
-  getForegroundColor: () => string,
-): string {
-  if (settings.headerTextColor) {
-    return settings.headerTextColor;
-  }
-  if (isHeaderWidget) {
-    return "#ffffff";
-  }
-  const fg = getForegroundColor();
-  if (settings.useLaneColors !== false) {
-    return fg;
-  }
-  return settings.textColor || fg || "#ffffff";
-}
-
-export function resolveLaneColumnEffectiveValueTextColor(
-  settings: LaneColumnWidgetSettings,
-  foregroundColor: string,
-): string {
-  if (settings.useLaneColors !== false) {
-    return foregroundColor;
-  }
-  return settings.valueTextColor || settings.textColor || foregroundColor;
-}
-
-export function resolveLaneColumnEffectiveInsetTextColor(
-  settings: LaneColumnWidgetSettings,
-  foregroundColor: string,
-): string {
-  if (settings.useLaneColors !== false) {
-    return foregroundColor;
-  }
-  return settings.insetTextColor || settings.textColor || foregroundColor;
-}
+export {
+  resolveHeatEmptyLaneIndex,
+  resolveLaneColumnBackgroundColor,
+  resolveLaneColumnEffectiveHeaderTextColor,
+  resolveLaneColumnEffectiveInsetTextColor,
+  resolveLaneColumnEffectiveValueTextColor,
+  resolveLaneColumnForegroundColor,
+} from "./raceday-lane-column-color.helper";
 
 export function handleLaneColumnAnchorDragOver(
   event: DragEvent,
@@ -657,6 +475,62 @@ export function handleLaneColumnAnchorDrop(
   return droppedKey;
 }
 
+export function resolveLaneColumnTargetWidgetId(
+  parent: any,
+  widgetId: string | undefined,
+): string | undefined {
+  if (!widgetId) return undefined;
+  const layout = parent?.layout || parent?.editingLayout;
+  const widgets: any[] = layout?.widgets || [];
+  const widget = widgets.find((w: any) => w.id === widgetId);
+  const masterId = widget?.customSettings?.["gridMasterId"];
+  if (masterId) {
+    const isMirrored =
+      widget?.customSettings?.["mirrorRows"] !== false &&
+      parent?.gridSession?.()?.mirrorRows !== false;
+    if (isMirrored) {
+      const masterExists = widgets.some((w: any) => w.id === masterId);
+      if (masterExists) return masterId;
+    }
+  }
+  return widgetId;
+}
+
+export function resolveLaneColumnAnchorHasWidget(
+  parent: any,
+  widgetId: string | undefined,
+  insets: Record<string, string> | undefined,
+  anchor: string,
+): boolean {
+  if (insets?.[anchor]) return true;
+  if (!parent || !widgetId) return false;
+  const layout = parent?.layout || parent?.editingLayout;
+  const widgets: any[] = layout?.widgets || [];
+  const widget = widgets.find((w: any) => w.id === widgetId);
+  const masterId = widget?.customSettings?.["gridMasterId"];
+  if (masterId) {
+    const master = widgets.find((w: any) => w.id === masterId);
+    if (master?.customSettings?.insets?.[anchor]) return true;
+  }
+  return false;
+}
+
+export function extractAnchorFromElement(el: Element | null): string | null {
+  if (!el) return null;
+  const attr = el.getAttribute("data-anchor");
+  if (attr) return attr;
+  const cl = el.classList;
+  if (cl.contains("tl")) return "top-left";
+  if (cl.contains("tc")) return "top-center";
+  if (cl.contains("tr")) return "top-right";
+  if (cl.contains("cl")) return "center-left";
+  if (cl.contains("cr")) return "center-right";
+  if (cl.contains("bl")) return "bottom-left";
+  if (cl.contains("bc")) return "bottom-center";
+  if (cl.contains("br")) return "bottom-right";
+  return null;
+}
+
 export function dispatchLaneColumnAnchorSelection(
   parent: any,
   widgetId: string | undefined,
@@ -664,17 +538,19 @@ export function dispatchLaneColumnAnchorSelection(
   outputEmitter?: any,
 ): void {
   if (!widgetId) return;
+  const targetId =
+    resolveLaneColumnTargetWidgetId(parent, widgetId) || widgetId;
   if (parent?.selectAnchor) {
-    parent.selectAnchor(widgetId, anchor);
+    parent.selectAnchor(targetId, anchor);
   } else {
     if (parent?.widgetSelected?.emit) {
-      parent.widgetSelected.emit(widgetId);
+      parent.widgetSelected.emit(targetId);
     }
     if (parent?.anchorSelected?.emit) {
-      parent.anchorSelected.emit({ widgetId, anchor });
+      parent.anchorSelected.emit({ widgetId: targetId, anchor });
     }
   }
-  outputEmitter?.emit?.({ widgetId, anchor });
+  outputEmitter?.emit?.({ widgetId: targetId, anchor });
 }
 
 export class LaneColumnAvatarHelper {
@@ -812,8 +688,35 @@ export function handleLaneColumnCardClick(
   isLapCountClickable: boolean,
   isTeamDriverSwapActive: boolean,
   teammateSelect?: { toggleOpen: () => void } | null,
+  widgetId?: string,
+  anchorSelectedEmitter?: any,
+  insets?: Record<string, string>,
 ): void {
-  if (isUIEditorMode) return;
+  if (isUIEditorMode) {
+    if (widgetId) {
+      const target = event.target as HTMLElement | null;
+      let anchorToSelect: string | null = null;
+      const insetEl = target?.closest?.(
+        "[data-anchor], .inset-cell, .drop-zone",
+      );
+      if (insetEl && !target?.closest?.(".delete-anchor-btn")) {
+        const anchor = extractAnchorFromElement(insetEl);
+        if (
+          anchor &&
+          resolveLaneColumnAnchorHasWidget(parent, widgetId, insets, anchor)
+        ) {
+          anchorToSelect = anchor;
+        }
+      }
+      dispatchLaneColumnAnchorSelection(
+        parent,
+        widgetId,
+        anchorToSelect,
+        anchorSelectedEmitter,
+      );
+    }
+    return;
+  }
   if (!parent || !hd) return;
 
   if (isLapCountClickable && parent.onCellClick) {
@@ -845,8 +748,25 @@ export function handleLaneColumnInsetClick(
   isUIEditorMode: boolean,
   isTeamDriverSwapActive?: boolean,
   teammateSelect?: { toggleOpen: () => void } | null,
+  widgetId?: string,
+  anchorSelectedEmitter?: any,
 ): void {
-  if (isUIEditorMode) return;
+  if (isUIEditorMode) {
+    event.stopPropagation?.();
+    const hasWidget = resolveLaneColumnAnchorHasWidget(
+      parent,
+      widgetId,
+      insets,
+      anchor,
+    );
+    dispatchLaneColumnAnchorSelection(
+      parent,
+      widgetId,
+      hasWidget ? anchor : null,
+      anchorSelectedEmitter,
+    );
+    return;
+  }
   const key = insets?.[anchor];
   if (isLaneColumnInsetLapCount(key, false)) {
     event.stopPropagation();

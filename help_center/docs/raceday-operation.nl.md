@@ -1,5 +1,27 @@
 # Racedag-Bediening
 
+## Starten en Pauzeren
+
+Tijdens de racedag doorloopt het systeem geautomatiseerde fasen die worden beheerd door de wedstrijdleider via sneltoetsen, de werkbalk of externe baanknoppen:
+
+### Heats Starten
+- **Opstelling & Aftellen**: Zodra een heat wordt gestart, activeert Race Coordinator AI een automatisch aftelproces (instelbaar via automatische start in de race-editor). Geluidstonen en startlichten bereiden de coureurs voor.
+- **Groene Vlag**: Zodra de teller op nul staat, schakelt de baanstroom in en gaat de heat naar de status `Racing`.
+- **Reactietijd**: Indien "Start achter sensor" actief is, meet de eerste sensordoorkomst de reactietijd bij de start in plaats van een volledige ronde.
+
+### Pauzeren & Gele Vlaggen
+- **Een Pauze Activeren**: Door op de spatiebalk te drukken, op het **Pauze**-pictogram te klikken of een externe noodknop in te drukken, wordt direct de gele vlag getoond (`Paused`).
+- **Onmiddellijke Stroomonderbreking**: De relais openen ogenblikkelijk om alle auto's stil te zetten.
+- **Vastleggen van Deeltijden**: In exact dezelfde milliseconde registreert de hardware de reeds verstreken deeltijd van elke actieve auto en slaat deze op in de openstaande tijd.
+- **Uitrollen over de Finishlijn (Drift-rondes)**: Naderde een auto de finishlijn bij het wegvallen van de stroom, dan kan zijn vaart hem over de sensor dragen.
+    - Wordt de sensor binnen het ingestelde **Drifttijd**-venster geactiveerd, dan wordt de doorkomst toegekend als **Drift-ronde** (`isDrift: true`). Er verschijnt een **`DRIFT`**-badge in de baanbalk, er klinkt een urgente spraakmelding en de ronde wordt toegekend.
+    - Gebeurt dit na het verstrijken van de tijd, dan wordt de doorkomst genegeerd om te voorkomen dat baancommissarissen per ongeluk rondes toekennen.
+    - Zie voor meer details [Race-editor: Driftmechanica & Timing van Uitrollen](race-editor.nl.md#drifting-and-drift-timing).
+
+### De Race Hervatten
+- **Herstart onder Groen**: Na het opheffen van de pauze start het aftellen opnieuw. Bij groen gaat de stroom weer aan en starten de hardware-timers op nul.
+- **Ronde Voltooien (Rondes met Drift Erin)**: Wanneer een gestopte auto weer doorrijdt en onder stroom finisht, combineert zijn rondetijd het deel vóór de pauze met het deel na de herstart. Dit is een **Ronde met Drift Erin**. Als "Rondes met drift uitsluiten van records" is aangevinkt, telt de ronde mee voor de heat, maar kan deze geen records vestigen.
+
 ## Ronde- en Tijdaanpassingen
 
 Wedstrijdleiders kunnen handmatig het aantal ronden en de heattijden van coureurs aanpassen rechtstreeks vanaf het racedag-scherm om baanincidenten, gemiste sensordoorkomsten of straffen op te lossen:

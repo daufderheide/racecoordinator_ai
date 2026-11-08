@@ -4,6 +4,8 @@ import { RaceParticipantConverter } from "@app/converters/race_participant.conve
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import {
+  AlertSeverity,
+  AlertType,
   IInterfaceEvent,
   ILap,
   InterfaceStatus,
@@ -1153,6 +1155,52 @@ describe("RaceConnectionService", () => {
       expect(mockHeatDriver.participant.gapLeader).toBe(0.25);
       expect(mockHeatDriver.participant.gapPosition).toBe(0.25);
       expect(mockHeatDriver.participant.fuelLevel).toBe(80);
+    });
+
+    it("should emit hardware alerts and track hardwareAlertCount on interface alert event", () => {
+      service.connect();
+
+      let receivedAlert: any = null;
+      const sub = service.hardwareAlert$.subscribe((alert) => {
+        receivedAlert = alert;
+      });
+
+      expect(service.hardwareAlertCount).toBe(0);
+
+      const alertEvent: IInterfaceEvent = {
+        alert: {
+          interfaceIndex: 0,
+          interfaceName: "Arduino (COM1)",
+          alertType: AlertType.ALERT_TYPE_BROWNOUT_RESET,
+          severity: AlertSeverity.ALERT_SEVERITY_WARNING,
+          titleKey: "ALERT_BROWNOUT_TITLE",
+          messageKey: "ALERT_BROWNOUT_MSG",
+          details: "Microcontroller brownout detected",
+          occurrenceCount: 1,
+          timestampMs: 1234567890,
+        },
+      };
+
+      interfaceEventsSubject.next(alertEvent);
+
+      expect(receivedAlert).not.toBeNull();
+      expect(receivedAlert.titleKey).toBe("ALERT_BROWNOUT_TITLE");
+      expect(receivedAlert.occurrenceCount).toBe(1);
+      expect(service.hardwareAlertCount).toBe(1);
+
+      // Subsequent alert increments count
+      interfaceEventsSubject.next({
+        alert: {
+          ...alertEvent.alert,
+          occurrenceCount: 2,
+        },
+      });
+
+      expect(service.hardwareAlertCount).toBe(2);
+
+      service.clearHardwareAlert();
+      expect(service.hardwareAlertCount).toBe(0);
+      sub.unsubscribe();
     });
   });
 });

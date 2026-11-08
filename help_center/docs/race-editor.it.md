@@ -70,6 +70,121 @@ La sezione Impostazioni generali gestisce presentazione, filtri di cronometraggi
 - **Regole bandiera gialla**: Sospensioni automatiche o manuali con interruzione della corrente in pista.
 - **Opzioni interfaccia personalizzata**: Classifiche e widget di telemetria dedicati.
 
+### Meccanica di Deriva e Cronometraggio del Drift {: #drifting-and-drift-timing }
+
+Nelle gare di slot car, i modelli sono alimentati dalla tensione elettrica erogata tramite le bandelle o rotaie metalliche incorporate nella pista. Quando la corrente viene interrotta – come durante una neutralizzazione con bandiera gialla, alla fine di una manche (**Heat Over**) o al termine della gara (**Race Over**) –, le auto non si arrestano istantaneamente a velocità zero. A causa dell'inerzia fisica, della massa, dell'attrazione magnetica del motore e dell'attrito, le auto continuano a scivolare in avanti per inerzia residua anche dopo il distacco della corrente.
+
+In Race Coordinator AI e nel gergo dello slot racing, questo moto per inerzia a corrente spenta viene definito **"deriva"** o **"drift"**.
+
+!!! note "Definizione di Drift nelle Slot Car"
+    Nello slot racing, il termine "drift" o "deriva" **non** indica sbandate laterali in curva, testacoda o acrobazie. Indica rigorosamente l'avanzamento per inerzia in rettilineo di un'auto spinta dal moto residuo dopo lo spegnimento della corrente di pista.
+
+Quando un'auto si avvicina al traguardo o al ponte sensori proprio nel momento in cui salta la corrente, il suo slancio può farle attraversare il sensore prima che si fermi del tutto. Race Coordinator AI include algoritmi hardware ad altissima precisione e regole dedicate per gestire queste circostanze con totale equità sportiva.
+
+#### La Distinzione Fondamentale: "Giro in Deriva" vs "Giro con Deriva Coinvolta"
+
+In Race Coordinator AI esiste una distinzione netta tra un **Giro in Deriva** (`isDrift = true`) e un **Giro con Deriva Coinvolta** (`driftInvolved = true`):
+
+##### 1. Un "Giro in Deriva" (`isDrift = true`)
+Un **Giro in Deriva** è un giro registrato fisicamente e conteggiato quando un'auto attraversa la linea del traguardo o il sensore **MENTRE la corrente di pista è SPENTA** (nello specifico durante gli stati `Paused` / bandiera gialla, `HeatOver` o `RaceOver`), entro la finestra di **Tempo di deriva** configurata.
+
+- **Evento Fisico**: L'auto supera il traguardo per sola inerzia a corrente staccata.
+- **Indicatore Visivo**: La colonna della corsia sul tabellone principale e la finestra di ispezione dei giri mostrano un contrassegno ben visibile **`DRIFT`** accanto al tempo sul giro.
+- **Annuncio Vocale**: Riproduce il **Suono giro in derapata** (`driftLapAudio`) del pilota con priorità urgente (`urgent`) (es. *"Drift lap for {driver.nickname}"*).
+- **Accredito del Giro**: Il giro viene conteggiato nel totale dei giri del pilota per la manche e per la classifica generale. Il tempo sul giro memorizzato somma il tempo parziale maturato prima della pausa alla frazione di secondo di scivolamento sul sensore.
+- **Statistiche**: Incrementa il contatore dei giri in deriva nelle statistiche di gara (`driftLapCount`). I segmenti parziali automatici vengono azzerati.
+
+##### 2. Un "Giro con Deriva Coinvolta" (`driftInvolved = true`, ma `isDrift = false`)
+Un **Giro con Deriva Coinvolta** è un giro completato e registrato in **normali condizioni di BANDIERA VERDE con corrente attiva**, ma la cui durata totale include un intervallo di interruzione o tempo accumulato dovuto a una pausa o al passaggio tra manche.
+
+- **Evento Fisico**: L'auto taglia il traguardo a corrente **ATTIVA** in pieno regime di gara. Tuttavia, nel corso di quel singolo giro, la corrente è stata disattivata e poi riattivata.
+- **Scenari Tipici**:
+    - **Pausa e Riavvio con Bandiera Gialla a Metà Giro**: Un pilota ha completato 3,2 secondi di un giro da 5,0 secondi quando scatta una bandiera gialla. La corrente viene staccata e l'auto si arresta per inerzia sul rettilineo opposto (senza attraversare il sensore: non è un giro in deriva). Il timer hardware si congela e i 3,2 secondi vengono salvati nel tempo in sospeso del pilota, contrassegnando internamente il tempo di deriva (`markDriftTime()`). Al ritorno della bandiera verde, i timer ripartono da zero. L'auto percorre i restanti 1,8 secondi sotto alimentazione e taglia il traguardo. Il tempo registrato è di 5,0 secondi ($3{,}2\,\text{s} + 1{,}8\,\text{s}$). Poiché il traguardo è stato tagliato sotto bandiera verde, **non è un Giro in Deriva** (nessun badge `DRIFT` e audio standard), ma è un **Giro con Deriva Coinvolta** perché la sua durata è stata spezzata da uno stop.
+    - **Gara Continua su Più Manche (`Start at Current`)**: Nei formati a distanza progressiva (`start_at_current = true`), dove le auto si fermano dove si trovano al termine della manche e ripartono da quella posizione esatta nella manche successiva, il tempo parziale incompleto della manche precedente viene ereditato. Al completamento del primo giro della nuova manche sotto bandiera verde, quel giro incorpora il tempo della manche precedente: è un **Giro con Deriva Coinvolta**.
+
+---
+
+#### Le Due Opzioni di Configurazione della Gara
+
+Nella sezione **Impostazioni generali**, Race Coordinator AI fornisce due opzioni dedicate per regolare la deriva e l'ammissibilità ai record:
+
+```
++---------------------------------------------------------------------------------+
+| Tempo minimo sul giro (s): [ 2.0 ]   Tempo di deriva (s): [ 0.5 ]               |
+|                                                                                 |
+| [ ] Modalità prova    [X] Escludi giri con derapata dai record                  |
++---------------------------------------------------------------------------------+
+```
+
+##### Opzione 1: Tempo di deriva (`drift_time`)
+- **Tipo di Valore**: Numero decimale in secondi (es. `0.0`, `0.5`, `1.0`, `2.0`).
+- **Valore Predefinito**: `0.5` secondi.
+- **Descrizione**: Definisce la finestra temporale massima immediatamente successiva a un'interruzione di corrente (bandiera gialla, fine manche, fine gara) entro cui il passaggio sul sensore viene accettato come giro valido per inerzia.
+
+!!! warning "Piste senza Relè di Controllo Corrente"
+    Se la pista non dispone di relè hardware per interrompere la corrente, la pista rimane alimentata anche durante le pause, a fine manche e a fine gara. Su queste piste, **il Tempo di deriva deve essere impostato su `0` (nessun giro in deriva)**. Altrimenti, i piloti che continuano a premere il pulsante a corsa ferma riceverebbero ingiustamente giri in deriva sotto tensione.
+
+Al distacco della corrente, il sistema memorizza l'esatto timestamp in millisecondi. Se viene rilevato un impulso a pista ferma:
+
+$$\Delta t = \text{Orario di Rilevamento} - \text{Orario di Arresto}$$
+
+$$\begin{aligned}
+\text{Se } \Delta t \le \text{Tempo di deriva} &\implies \textbf{Accettato come Giro in Deriva } (\text{isDrift} = \text{true}) \\
+\text{Se } \Delta t > \text{Tempo di deriva} &\implies \textbf{Rifiutato e ignorato}
+\end{aligned}$$
+
+- **Perché è Indispensabile un Limite di Tempo**:
+    - **Equità verso le Auto in Corsa**: Un'auto che si trovava a pochi centimetri dal traguardo al momento dello stop merita il giro se la propria inerzia la porta a tagliare il sensore un istante dopo.
+    - **Protezione da Errori dei Commissari**: Senza un limite, un commissario che raccoglie un'auto uscita di pista potrebbe involontariamente farla scorrere sul sensore secondi o minuti dopo la chiamata, attribuendo un giro ingiustificato.
+- **Indicazioni di Regolazione**:
+    - **Piste senza relè di alimentazione**: Se la pista non include relè per staccare la corrente, **il Tempo di deriva deve essere impostato su `0` (0.0s)** (nessun giro in deriva). La corrente non venendo mai a mancare, i piloti possono continuare a guidare; un valore superiore a zero conterebbe erroneamente questi giri a motore acceso come giri in deriva.
+    - **Modelli con Magnete (HO, 1/32 con magnete)**: Il forte freno magnetico contro le bandelle metalliche ferma l'auto in pochissimo spazio. Consigliato: da `0.3` a `0.8` secondi.
+    - **Modelli senza Magnete / Categorie Pesanti (1/24, piste in legno)**: L'elevata inerzia e l'assenza di magneti determinano lunghe scivolate. Consigliato: da `1.0` a `2.5` secondi.
+    - **Disattivato (`0.0s`)**: Disattiva del tutto i giri in deriva; ogni impulso a corrente spenta viene cestinato.
+
+##### Opzione 2: Escludi giri con derapata dai record (`adjust_drift_laps`)
+- **Tipo di Valore**: Casella di spunta (`true` / `false`).
+- **Valore Predefinito**: Disattivato (`false`).
+- **Descrizione**: Stabilisce se i giri che hanno coinvolto una qualunque forma di deriva siano ammessi a concorrere per record personali, di manche, di gara o di pista.
+
+Al completamento di un giro, il motore di gara valuta:
+
+$$\text{driftInvolved} = \text{isDrift} \lor \text{hasDriftTime}$$
+
+$$\text{countTowardsRecords} = \neg(\text{adjust\_drift\_laps} \land \text{driftInvolved})$$
+
+- **Quando è attivato (`true`)**:
+    - Qualsiasi giro con deriva coinvolta – sia un **Giro in Deriva** (`isDrift = true`) O un **Giro con Deriva Coinvolta** (per interruzione o passaggio manche) – viene squalificato dai record (`countTowardsRecords = false`).
+    - Il giro viene escluso da:
+        1. **Miglior Giro Personale del Pilota (`bestLapTime`)**: Non aggiornerà il record personale.
+        2. **Miglior Giro della Manche**: Non figurerà come giro più veloce della manche.
+        3. **Miglior Giro della Gara**: Non figurerà come giro più veloce della gara.
+        4. **Record di Pista e di Corsia**: Non entrerà nell'albo d'oro storico della pista.
+        5. **Annunci Audio di Record**: Gli avvisi celebrativi per record e giri veloci vengono tacitati.
+    - **Nota Fondamentale**: Il giro **continua a contare al 100% per i giri percorsi dal pilota, la posizione nella manche e la classifica di gara**. Viene negato solo il riconoscimento statistico di record.
+- **Quando è disattivato (`false`)**:
+    - Qualsiasi giro che soddisfi il tempo minimo può stabilire record, anche se ha attraversato una pausa o è stato completato a motore spento scivolando per inerzia.
+- **Perché i Campionati Ufficiali Attivano Questa Opzione**:
+    - I giri interrotti alterano le temperature di motori e gomme; ripartire da fermi altera il ritmo rispetto a un giro lanciato a piena velocità sotto bandiera verde.
+    - Anche il passaggio a motore spento sul traguardo riflette una dinamica anomala.
+    - Questa impostazione garantisce che i record della pista rappresentino esclusivamente giri perfetti, continui e a pieno regime.
+
+---
+
+#### Tabella Comparativa di Riepilogo
+
+| Caratteristica / Comportamento | Giro Regolare con Bandiera Verde | Giro in Deriva (`isDrift = true`) | Giro con Deriva Coinvolta (`hasDriftTime = true`, `isDrift = false`) |
+| :--- | :--- | :--- | :--- |
+| **Corrente sulla Pista al Traguardo** | **ACCESA** (Bandiera Verde) | **SPENTA** (Gialla, Fine Manche/Gara) | **ACCESA** (Bandiera Verde) |
+| **Condizione di Rilevamento Sensore** | A piena potenza di gara | Per inerzia entro il `drift_time` | A potenza dopo una pausa o cambio manche |
+| **Flag nei Dati `isDrift`** | `false` | `true` | `false` |
+| **Stato Interno `driftInvolved`** | `false` | `true` | `true` |
+| **Contrassegno a Schermo** | Nessuno | Badge **`DRIFT`** nella colonna corsia | Nessuno |
+| **Notifica Sonora** | Suono giro / record standard | **Suono giro in derapata** (`urgent`) | Suono giro standard (nessun audio deriva) |
+| **Valido per Totale Giri e Classifica** | **Sì** (valore pieno) | **Sì** (valore pieno) | **Sì** (valore pieno) |
+| **Valido per Record (`adjust_drift_laps` = DISATTIVATO)** | **Sì** | **Sì** (se più rapido del record) | **Sì** (se più rapido del record) |
+| **Valido per Record (`adjust_drift_laps` = ATTIVATO)** | **Sì** | **Escluso / Squalificato** | **Escluso / Squalificato** |
+
 ---
 
 ## Opzioni manche {: #heat-options }

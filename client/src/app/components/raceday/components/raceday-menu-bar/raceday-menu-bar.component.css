@@ -139,3 +139,43 @@
   border: none;
   text-decoration: none;
 }
+
+.menu-hardware-alert-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin-left: 8px;
+  color: #f59e0b;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.menu-hardware-alert-btn:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.menu-hardware-alert-btn .material-icons {
+  font-size: 18px;
+  line-height: 1;
+  color: #f59e0b;
+}
+
+.menu-hardware-alert-btn .alert-badge-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #d97706;
+  border-radius: 10px;
+  padding: 1px 6px;
+  min-width: 14px;
+  text-align: center;
+  line-height: 1.2;
+}

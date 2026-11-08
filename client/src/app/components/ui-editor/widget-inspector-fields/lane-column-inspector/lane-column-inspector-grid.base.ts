@@ -1,5 +1,8 @@
 import { InputSignal, OutputEmitterRef, WritableSignal } from "@angular/core";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
+import { GAP_MIGRATION_MAP } from "@app/components/raceday/utils/lane-view-migration.helper";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
+import { LaneViewColumnGroupHelper } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { HighlightLapStyle } from "@app/models/settings";
 
 import { LaneColumnGridHelper } from "./lane-column-grid.helper";
@@ -543,5 +546,173 @@ export abstract class LaneColumnInspectorGridBase {
   ): void {
     this.showReplicateModal.set(false);
     this.replicate.emit(options);
+  }
+
+  get isTotalTimeColumn(): boolean {
+    return RacedayLayoutUtils.isTotalTimeColumnKey(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
+  get isLastLapsColumn(): boolean {
+    return (this.currentSettings["columnKey"] || "") === "lastLaps";
+  }
+
+  get lastLapsCount(): number {
+    const val = this.currentSettings["lastLapsCount"];
+    return val !== undefined &&
+      val !== null &&
+      !isNaN(Number(val)) &&
+      Number(val) > 0
+      ? Math.max(1, Math.round(Number(val)))
+      : 5;
+  }
+
+  set lastLapsCount(value: any) {
+    const num = Math.round(Number(value));
+    this.currentSettings["lastLapsCount"] = num > 0 ? num : 5;
+    this.onFieldChange();
+  }
+
+  get isGapColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return (
+      key === "gap" || key === "overallGap" || Boolean(GAP_MIGRATION_MAP[key])
+    );
+  }
+
+  get gapTarget(): "leader" | "position" {
+    if (this.currentSettings["gapTarget"]) {
+      return this.currentSettings["gapTarget"] as "leader" | "position";
+    }
+    const key = this.currentSettings["columnKey"];
+    if (key && GAP_MIGRATION_MAP[key]) {
+      return GAP_MIGRATION_MAP[key].gapTarget;
+    }
+    return "leader";
+  }
+
+  set gapTarget(value: "leader" | "position") {
+    this.currentSettings["gapTarget"] = value;
+    this.onFieldChange();
+  }
+
+  get gapMode(): "always_time" | "laps_and_time" | "always_laps" {
+    if (this.currentSettings["gapMode"]) {
+      return this.currentSettings["gapMode"] as
+        | "always_time"
+        | "laps_and_time"
+        | "always_laps";
+    }
+    const key = this.currentSettings["columnKey"];
+    if (key && GAP_MIGRATION_MAP[key]) {
+      return GAP_MIGRATION_MAP[key].gapMode;
+    }
+    return "always_time";
+  }
+
+  set gapMode(value: "always_time" | "laps_and_time" | "always_laps") {
+    this.currentSettings["gapMode"] = value;
+    this.onFieldChange();
+  }
+
+  get isTimeColumn(): boolean {
+    if (this.isGapColumn) {
+      return this.gapMode !== "always_laps";
+    }
+    return RacedayLayoutUtils.isTimeColumnKey(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
+  get isLapColumn(): boolean {
+    if (this.isGapColumn) {
+      return this.gapMode === "always_laps";
+    }
+    return RacedayLayoutUtils.isLapColumnKey(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
+  get isHeatsCountColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return key === "heatsRaced" || key === "heatsRemaining";
+  }
+
+  get showPartialHeats(): boolean {
+    return Boolean(this.currentSettings["showPartialHeats"]);
+  }
+
+  set showPartialHeats(value: boolean) {
+    this.currentSettings["showPartialHeats"] = value;
+    this.onFieldChange();
+  }
+
+  get averageScoreDecimalPlaces(): number {
+    if (this.currentSettings["decimalPlaces"] !== undefined) {
+      return Number(this.currentSettings["decimalPlaces"]);
+    }
+    if (this.currentSettings["lapDecimalPlaces"] !== undefined) {
+      return Number(this.currentSettings["lapDecimalPlaces"]);
+    }
+    if (this.currentSettings["timeDecimalPlaces"] !== undefined) {
+      return Number(this.currentSettings["timeDecimalPlaces"]);
+    }
+    return 2;
+  }
+
+  onAverageScoreDecimalsChange(val: number): void {
+    this.currentSettings["decimalPlaces"] = val;
+    this.currentSettings["lapDecimalPlaces"] = val;
+    this.currentSettings["timeDecimalPlaces"] = val;
+    this.onFieldChange();
+  }
+
+  get isImageColumn(): boolean {
+    return RacedayLayoutUtils.isImageProperty(
+      this.currentSettings["columnKey"] || "",
+    );
+  }
+
+  get isPacingColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return RacedayLayoutUtils.isPacingProperty(key);
+  }
+
+  get isFuelGaugeColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return LaneViewColumnGroupHelper.isFuelGaugeColumn(key);
+  }
+
+  get isTextColumn(): boolean {
+    return (
+      !this.isImageColumn && !this.isPacingColumn && !this.isFuelGaugeColumn
+    );
+  }
+
+  onMinFontSizeChange(val: number): void {
+    const num = Math.max(0, Number(val) || 0);
+    this.currentSettings["minFontSize"] = num;
+    if (
+      this.currentSettings["maxFontSize"] != null &&
+      this.currentSettings["maxFontSize"] < num
+    ) {
+      this.currentSettings["maxFontSize"] = num;
+    }
+    this.currentSettings["_syncAction"] = "value";
+    this.onFieldChange();
+  }
+
+  onMaxFontSizeChange(val: number): void {
+    const num = Math.max(0, Number(val) || 0);
+    this.currentSettings["maxFontSize"] = num;
+    if (
+      this.currentSettings["minFontSize"] != null &&
+      this.currentSettings["minFontSize"] > num
+    ) {
+      this.currentSettings["minFontSize"] = num;
+    }
+    this.currentSettings["_syncAction"] = "value";
+    this.onFieldChange();
   }
 }

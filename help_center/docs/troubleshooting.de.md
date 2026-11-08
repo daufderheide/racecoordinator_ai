@@ -60,6 +60,63 @@ Standardmäßig schaltet der Linux-Kernel inaktive USB-Geräte nach 2 Sekunden a
 - **Energieeinstellungen**: Öffnen Sie **Systemeinstellungen** -> **Displays** -> **Erweitert...** (oder **Energie sparen**) und aktivieren Sie **"Automatisches Aktivieren des Ruhezustands bei ausgeschaltetem Display verhindern"**.
 - **Aktive USB-Hubs mit Netzteil verwenden**: macOS kann passive USB-Hubs bei schwankender Last stromlos schalten. Schließen Sie Schnittstellen stets über einen aktiven USB-Hub mit eigener Stromversorgung an.
 
+### Mikrocontroller-Resets & Brownouts {: #microcontroller-brownout-resets }
+
+- **Symptom**: Während eines Rennens oder Trainings erscheint ein Warnbanner auf dem Renntag-Bildschirm: *"Mikrocontroller-Reset erkannt: Der Schnittstellen-Mikrocontroller wurde während des Betriebs unerwartet zurückgesetzt."* Ein Klick auf **Details** öffnet einen Dialog mit Schnittstellenname, Reset-Anzahl und dem Zeitstempel des letzten Resets. Treten in einer Sitzung mehrere Resets auf, weist ein Hinweistext auf häufige Resets hin.
+- **Was gemeldet wird**: Die Zeitnahme-Schnittstelle (z. B. Arduino Uno, Nano, Mega oder ein kompatibler USB-Mikrocontroller) hat einen unerwarteten Hardware-Reset oder Brownout erlitten. Dies bedeutet, dass der Prozessor des Mikrocontrollers einen vorübergehenden Spannungseinbruch oder eine elektrische Störspitze erfahren hat, wodurch die interne Hardware-Reset-Leitung oder die Brown-Out-Detection (BOD)-Schaltung ausgelöst wurde.
+
+#### Was in Race Coordinator AI (RMS) geschieht
+Wenn ein Mikrocontroller während des Rennbetriebs unerwartet zurückgesetzt wird:
+1. **Bootloader & Handshake**: Der Mikrocontroller startet neu und sendet einen Identifikations-Handshake sowie Status-Pings an Race Coordinator AI.
+2. **Automatische Zustandswiederherstellung**: Race Coordinator AI erkennt, dass das Board bereits verbunden und aktiv war. Anstatt das Rennen abzubrechen, konfiguriert das RMS den Mikrocontroller umgehend neu: Eingangs-Pins werden zugewiesen, Polaritäten (Active-High/Active-Low) gesetzt, Entprellzeiten angewendet und Relaiszustände entsprechend dem aktuellen Heat-Status (z. B. Bahnstrom AN) wiederhergestellt.
+3. **Schutzschild-Zeitfenster (250 ms)**: Beim Starten eines Arduinos können digitale Eingänge kurzzeitig schweben oder Standardzustände melden, bevor sie sich stabilisieren. Race Coordinator AI aktiviert unmittelbar nach einem unerwarteten Reset ein 250-ms-Schutzfenster. Während dieses Fensters werden statische Pin-Meldungen gefiltert, um Fehlrundenzählungen, Phantom-Rundenzeiten oder versehentliche Rennunterbrechungen durch Start-Störsignale zu verhindern.
+4. **Auswirkungen auf das Rennen — Mögliche verpasste Runden**:
+    - Obwohl Race Coordinator AI die Verbindung automatisch wiederherstellt und den Bahnstrom ohne Abbruch des Heats reaktiviert, ist der Mikrocontroller während des Hardware-Neustarts, Bootloader-Ablaufs und Handshakes (in der Regel 200–500 Millisekunden) **vollständig blind für Sensoreingaben**.
+    - **Jedes Slotcar, das während dieses Reset-Fensters eine Lichtschranke, Dead-Strip oder einen Reedschalter überquert, wird NICHT registriert, was zu verpassten Runden führt.**
+    - Treten Resets wiederholt auf, werden Rundenzählung und Rennergebnisse verfälscht, und die Fahrer können kurze Stromunterbrechungen bemerken.
+
+#### Häufige Ursachen
+*Hinweis: Die nachfolgend genannten Ursachen stellen die häufigsten Probleme bei Slotcar-Bahnen dar. Jede Bahninstallation ist jedoch individuell, und es können weitere elektrische oder mechanische Einflussfaktoren vorliegen.*
+
+1. **Induktive Relais-Rückschläge (Gegen-EMK-Spitzen)**:
+    - **Die häufigste Ursache für Mikrocontroller-Brownouts im Slotcar-Sport.**
+    - Bahnstrom-Relais enthalten elektromagnetische Spulen. Wenn ein Relais bei einer Rennunterbrechung oder am Heat-Ende abschaltet, erzeugt das zusammenbrechende Magnetfeld der Spule eine massive induktive Spannungsspitze (Gegen-EMK von mehreren hundert Volt).
+    - Verfügt das Relaismodul über keine ausreichende Freilaufdioden-Schutzschaltung oder teilt es sich Masse/Stromversorgung direkt mit dem Arduino, gelangt diese Hochspannungsspitze direkt in den Mikrocontroller und löst dessen Brown-Out-Detection (BOD) oder einen CPU-Absturz aus.
+2. **Verdrahtung von Bahnabschaltungstastern & lange Leitungsantennen**:
+    - Taster rund um die Bahn erfordern oft lange ungeschirmte Leitungen (3 bis 15+ Meter).
+    - Diese langen Leitungen wirken wie Antennen und fangen starke elektromagnetische Interferenzen (EMI) von Motoren, Schleiferfunken und Schienenübergängen ein.
+    - Das Betätigen oder Loslassen mechanischer Taster ohne externe Pull-up-Widerstände oder RC-Entprellung kann Spannungstransienten direkt auf die Eingangspins übertragen.
+3. **Spannungseinbrüche auf dem 5V-USB-Bus**:
+    - Mikrocontroller benötigen stabile 4,5 V bis 5,2 V für einen zuverlässigen Betrieb.
+    - Wird der Arduino an einem passiven USB-Hub, einem Front-USB-Port mit langem Innenkabel oder einem stark belasteten USB-Controller betrieben, kann die Spannung kurzzeitig unter die Abschaltschwelle (BOD) fallen (typischerweise 2,7 V oder 4,3 V) und einen sofortigen Reset erzwingen.
+4. **Elektromagnetische Störungen durch Bahnstrom (EMI)**:
+    - Slotcar-Motoren ziehen hohe Ströme und erzeugen Bürstenfeuer zwischen Schleifern und Leitern.
+    - Laufen Sensorkabel, Tasterleitungen oder der Mikrocontroller parallel zu Bahnstromkabeln oder regelbaren Netzteilen, können induktive und kapazitive Kopplungen Spannungsspitzen in die Zeitnahme-Elektronik einkoppeln.
+5. **Gemeinsame 230V-Stromkreise & mangelnde Entkopplung**:
+    - Werden Zeitnahme-PC, Bahnnetzteil, Reifenschleifmaschinen oder Werkzeuge an derselben Steckdosenleiste ohne Netzfilter betrieben, können Netztransienten über das PC-Netzteil auf den USB-Bus gelangen.
+6. **Elektrostatische Entladungen (ESD)**:
+    - In trockenen Räumen erzeugen fahrende Autos auf Kunststoffschienen statische Aufladung. Berührt ein Streckenposten oder Fahrer einen Metalltaster oder Schienenleiter, kann die statische Entladung das Board zurücksetzen.
+
+#### Mögliche Lösungsansätze
+
+- **Freilaufdioden an allen Relaisspulen installieren**:
+    - Löten Sie eine Standard-Gleichrichterdiode (z. B. **1N4001**, **1N4004** oder **1N4007**) in Sperrrichtung direkt über die DC-Anschlüsse jeder Relaisspule (Kathode/Ringseite an +DC, Anode an Masse/-DC). Dadurch wird die Gegen-EMK beim Abschalten des Relais sicher abgeleitet.
+- **Optokoppler-Relaisplatinen mit getrennter Stromversorgung verwenden**:
+    - Viele 5V-Relaismodule besitzen einen Jumper namens **JD-VCC / VCC / GND**.
+    - Entfernen Sie den `JD-VCC`-Jumper. Verbinden Sie 5V und Signalpins des Arduinos mit der Steuerleiste, speisen Sie die Relaisspulen jedoch unabhängig über ein separates 5V-Steckernetzteil an `JD-VCC` und Relais-`GND` ein. Dies trennt den Relaisstromkreis galvanisch vom Arduino-USB-Bus.
+- **Externe Pull-up-Widerstände & Entstörkondensatoren an Tastern nachrüsten**:
+    - Verlassen Sie sich bei langen Leitungen nicht ausschließlich auf die schwachen internen Pull-ups des Arduinos (~20 kΩ–50 kΩ). Installieren Sie stattdessen **1 kΩ bis 4,7 kΩ externe Pull-up-Widerstände** zwischen Eingangspin und +5V direkt an der Arduino-Klemme.
+    - Schalten Sie zusätzlich einen kleinen **0,1 µF (100 nF) Keramikkondensator** parallel zu den Tasteranschlüssen gegen Masse, um hochfrequente Einstreuungen und Kontaktschwingen abzufangen.
+- **Einen aktiven USB-Hub mit eigenem Netzteil verwenden**:
+    - Schließen Sie den Mikrocontroller an einen USB-Hub mit eigener 230V-Stromversorgung an, anstatt direkt an den PC oder Laptop. Ein aktiver Hub liefert stabile 5V unabhängig von der Rechnerauslastung.
+- **Signalkabel räumlich von Bahnstromleitungen trennen**:
+    - Führen Sie Sensorkabel (Infrarot, Licht, Reedschalter) und Tasterleitungen mindestens 15 bis 30 cm entfernt von stromführenden Bahnschienen und Netzteilkabeln.
+    - Müssen sich Signal- und Bahnstromleitungen kreuzen, führen Sie diese im **90-Grad-Winkel** zueinander und nicht parallel.
+- **Geschirmte verdrillte Leitungen (Twisted-Pair) verwenden**:
+    - Verwenden Sie für längere Strecken geschirmte Netzwerkkabel (Cat5e/Cat6 STP) oder geschirmte Steuerleitungen. Schließen Sie den Schirmdraht nur einseitig am Arduino an Masse an.
+- **Getrennte Stromkreise**:
+    - Schließen Sie Bahnnetzteil und Zeitnahme-Computer an getrennte Steckdosen an oder nutzen Sie eine Steckdosenleiste mit Überspannungs- und Netzfilter.
+
 ## Anzeigeprobleme
 
 

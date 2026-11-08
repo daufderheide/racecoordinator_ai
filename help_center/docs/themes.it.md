@@ -20,6 +20,7 @@ Situate nella barra dei controlli superiore dell'Editor temi, queste impostazion
 - **Layout interfaccia collegato:** Seleziona il layout di visualizzazione creato nell'[Editor layout](layout-editor.md) che viene caricato automaticamente sullo schermo di gara principale quando questo tema è selezionato per una gara.
 - **Tema postazione pilota:** Specifica il tema utilizzato quando si apre una schermata postazione pilota a corsia singola o quando un pilota si collega tramite un dispositivo mobile o tablet.
 - **Tema visualizzazione pilota:** Specifica il tema utilizzato per gli schermi del programma di gara a più corsie e i monitor per gli spettatori.
+- **Temi per Finestra (Temi complementari):** Configura i temi complementari per gli schermi secondari. Per impostazione predefinita, sono selezionati tutti i temi disponibili. Durante la gara, la barra dei menu mostra strettamente i temi configurati sul tema principale. I temi possono essere selezionati singolarmente o gestiti con l'azione **Seleziona tutto** nell'Editor temi. Quando viene creato un nuovo tema, viene aggiunto automaticamente a tutti i temi esistenti che hanno tutti selezionati.
 
 ---
 
@@ -120,7 +121,7 @@ Il tema può sostituire ciascuno dei 13 eventi audio individuali del pilota:
 - **Ingresso ai box (`pitInAudio`):** Suono riprodotto quando un'auto entra nella corsia dei box o attiva i sensori di ingresso ai box sulle piste digitali.
 - **Avviso carburante (`fuelAudio`):** Tono di avvertimento o annuncio vocale quando si raggiunge il livello di riserva o si esaurisce il carburante.
 - **Falsa partenza / Penalità (`penaltyAudio`):** Cicalino o avvisatore acustico riprodotto quando un'auto commette una falsa partenza o incorre in una penalità sul giro.
-- **Giro in derapata (`driftLapAudio`):** Effetto sonoro per manovre acrobatiche riprodotto quando un'auto supera le soglie del sensore di derapata.
+- **Giro in Derapata (`driftLapAudio`):** Effetto sonoro o annuncio vocale urgente riprodotto quando un'auto supera il traguardo per inerzia a corrente staccata entro il tempo di deriva.
 
 ### Priorità e modalità di sostituzione
 

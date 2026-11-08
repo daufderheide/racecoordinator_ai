@@ -875,5 +875,380 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
   overflow: hidden;
 }
 
+/* Hardware Health Alert Banner */
+.hardware-alert-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 480px;
+  max-width: 90vw;
+  padding: 8px 16px;
+  background: rgba(30, 20, 10, 0.95);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(245, 158, 11, 0.3);
+  backdrop-filter: blur(8px);
+  color: #fef3c7;
+  animation: slideDownAlert 0.3s ease-out;
+}
+
+@keyframes slideDownAlert {
+  from {
+    transform: translate(-50%, -20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.hardware-alert-banner .alert-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hardware-alert-banner .alert-warning-icon {
+  font-size: 24px;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.hardware-alert-banner .alert-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hardware-alert-banner .alert-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.hardware-alert-banner .alert-summary {
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.hardware-alert-banner .alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hardware-alert-banner .alert-action-btn.details-btn {
+  background: #f59e0b;
+  color: #1e1e24;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.hardware-alert-banner .alert-action-btn.details-btn:hover {
+  background: #fbbf24;
+}
+
+.hardware-alert-banner .alert-action-btn.close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.hardware-alert-banner .alert-action-btn.close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.hardware-alert-banner .alert-action-btn.close-btn .material-icons {
+  font-size: 18px;
+}
+
+/* Hardware Health Alert Modal */
+.hardware-alert-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hardware-alert-modal-card {
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: alertModalPop 0.2s ease-out;
+}
+
+@keyframes alertModalPop {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.hardware-alert-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid #334155;
+}
+
+.hardware-alert-modal-header .modal-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hardware-alert-modal-header .warning-icon {
+  color: #f59e0b;
+  font-size: 24px;
+}
+
+.hardware-alert-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.hardware-alert-modal-header .close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hardware-alert-modal-header .close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.hardware-alert-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.alert-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+}
+
+.alert-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alert-stat-item .stat-label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.alert-stat-item .stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.alert-stat-item .count-value {
+  color: #f59e0b;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.alert-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alert-main-message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.alert-tech-details {
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 3px solid #64748b;
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alert-tech-details .details-heading {
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.alert-frequency-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #fca5a5;
+  line-height: 1.4;
+}
+
+.alert-frequency-banner .material-icons {
+  font-size: 16px;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.alert-help-card {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alert-help-card .help-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.alert-help-card .help-card-icon {
+  font-size: 20px;
+  color: #38bdf8;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.alert-help-card .help-card-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.alert-help-card .help-card-content p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+.alert-help-card .btn-help-guide {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.alert-help-card .btn-help-guide:hover {
+  background: rgba(56, 189, 248, 0.28);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.alert-help-card .btn-help-guide .material-icons {
+  font-size: 16px;
+}
+
+.alert-help-card .btn-help-guide .external-icon {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.hardware-alert-modal-footer {
+  padding: 14px 20px;
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid #334155;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.hardware-alert-modal-footer .btn-acknowledge {
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.hardware-alert-modal-footer .btn-acknowledge:hover {
+  background: #2563eb;
+}
+
 
 

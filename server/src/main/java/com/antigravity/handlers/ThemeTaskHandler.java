@@ -10,14 +10,20 @@ import com.antigravity.race.Race;
 import com.antigravity.repository.SqliteRepository;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ThemeTaskHandler {
   private static final Logger logger = LoggerFactory.getLogger(ThemeTaskHandler.class);
+
+  public static final List<String> DEFAULT_FACTORY_THEME_IDS = Theme.DEFAULT_FACTORY_THEME_IDS;
 
   private final DatabaseContext databaseContext;
   private final SqliteRepository<Theme> themeRepository;
@@ -110,6 +116,12 @@ public class ThemeTaskHandler {
       updated = true;
     }
 
+    List<String> companionIds = t.getCompanionThemeIds();
+    if (t.isDefault() && (companionIds == null || companionIds.isEmpty())) {
+      companionIds = new ArrayList<>(DEFAULT_FACTORY_THEME_IDS);
+      updated = true;
+    }
+
     if (updated) {
       Theme newTheme =
           new Theme(
@@ -121,6 +133,7 @@ public class ThemeTaskHandler {
               uiId,
               t.getDriverStationThemeId(),
               t.getDriverViewThemeId(),
+              companionIds,
               entityId,
               t.getId());
       themeRepository.save(newTheme);
@@ -222,6 +235,7 @@ public class ThemeTaskHandler {
             uiId,
             Theme.DRIVER_STATION_THEME_ID,
             Theme.DRIVER_STATION_THEME_ID,
+            new ArrayList<>(DEFAULT_FACTORY_THEME_IDS),
             entityId,
             null);
     themeRepository.save(theme);
@@ -424,6 +438,14 @@ public class ThemeTaskHandler {
     Map<String, String> slots = createDefaultSlots();
     Map<String, AudioConfig> audioSlots = new HashMap<>();
     populateDefaultAudioSlots(audioSlots);
+    List<String> allIds =
+        themeRepository.findAll().stream()
+            .map(Theme::getEntityId)
+            .filter(id -> id != null && !id.trim().isEmpty())
+            .collect(Collectors.toList());
+    if (allIds.isEmpty()) {
+      allIds = new ArrayList<>(DEFAULT_FACTORY_THEME_IDS);
+    }
     return new Theme(
         "New Theme",
         false,
@@ -433,6 +455,7 @@ public class ThemeTaskHandler {
         CustomUI.DEFAULT_UI_ID,
         Theme.DRIVER_STATION_THEME_ID,
         Theme.DRIVER_STATION_THEME_ID,
+        allIds,
         "new",
         null);
   }
@@ -475,6 +498,13 @@ public class ThemeTaskHandler {
         }
       }
 
+      List<Theme> existingThemes = themeRepository.findAll();
+      List<String> existingThemeIds =
+          existingThemes.stream()
+              .map(Theme::getEntityId)
+              .filter(id -> id != null && !id.trim().isEmpty())
+              .collect(Collectors.toList());
+
       if (theme.getEntityId() == null
           || theme.getEntityId().isEmpty()
           || "new".equals(theme.getEntityId())) {
@@ -489,11 +519,39 @@ public class ThemeTaskHandler {
                 theme.getUiId(),
                 theme.getDriverStationThemeId(),
                 theme.getDriverViewThemeId(),
+                theme.getCompanionThemeIds(),
                 nextId,
                 null);
       }
 
+      String newThemeId = theme.getEntityId();
+      List<String> newCompanionIds = theme.getCompanionThemeIds();
+      boolean newHadAllSelected =
+          newCompanionIds == null
+              || (!existingThemeIds.isEmpty() && newCompanionIds.containsAll(existingThemeIds));
+      if (newHadAllSelected) {
+        Set<String> updatedNewCompanionIds =
+            new LinkedHashSet<>(newCompanionIds != null ? newCompanionIds : existingThemeIds);
+        if (newThemeId != null && !newThemeId.trim().isEmpty()) {
+          updatedNewCompanionIds.add(newThemeId);
+        }
+        theme =
+            new Theme(
+                theme.getName(),
+                theme.isDefault(),
+                theme.getSlots(),
+                theme.getAudioSlots(),
+                theme.getDriverAudioOverrides(),
+                theme.getUiId(),
+                theme.getDriverStationThemeId(),
+                theme.getDriverViewThemeId(),
+                new ArrayList<>(updatedNewCompanionIds),
+                newThemeId,
+                theme.getId());
+      }
+
       themeRepository.save(theme);
+      addThemeToAllThemesWithAllSelected(newThemeId, existingThemes, existingThemeIds);
       if (Theme.DEFAULT_THEME_ID.equals(theme.getEntityId())
           || Theme.isLegacyDefaultName(theme.getName())) {
         databaseContext.clearDefaultArtifactDeleted("theme", Theme.DEFAULT_THEME_ID);
@@ -566,6 +624,9 @@ public class ThemeTaskHandler {
               theme.getDriverViewThemeId() != null
                   ? theme.getDriverViewThemeId()
                   : current.getDriverViewThemeId(),
+              theme.getCompanionThemeIds() != null
+                  ? theme.getCompanionThemeIds()
+                  : current.getCompanionThemeIds(),
               id,
               null);
 
@@ -682,7 +743,26 @@ public class ThemeTaskHandler {
       }
       newName = testName;
 
+      List<String> existingThemeIds =
+          allThemes.stream()
+              .map(Theme::getEntityId)
+              .filter(tid -> tid != null && !tid.trim().isEmpty())
+              .collect(Collectors.toList());
+
       String nextId = getNextSequence("themes");
+      List<String> sourceCompanionIds = source.getCompanionThemeIds();
+      List<String> copyCompanionIds =
+          sourceCompanionIds != null ? new ArrayList<>(sourceCompanionIds) : null;
+      boolean sourceHadAllSelected =
+          copyCompanionIds == null
+              || (!existingThemeIds.isEmpty() && copyCompanionIds.containsAll(existingThemeIds));
+      if (sourceHadAllSelected) {
+        Set<String> updatedCopyCompanionIds =
+            new LinkedHashSet<>(copyCompanionIds != null ? copyCompanionIds : existingThemeIds);
+        updatedCopyCompanionIds.add(nextId);
+        copyCompanionIds = new ArrayList<>(updatedCopyCompanionIds);
+      }
+
       Theme copy =
           new Theme(
               newName,
@@ -693,15 +773,64 @@ public class ThemeTaskHandler {
               source.getUiId(),
               source.getDriverStationThemeId(),
               source.getDriverViewThemeId(),
+              copyCompanionIds,
               nextId,
               null);
       themeRepository.save(copy);
+      addThemeToAllThemesWithAllSelected(nextId, allThemes, existingThemeIds);
+
       setStatus(ctx, 201);
       setJson(ctx, copy);
     } catch (Exception e) {
       e.printStackTrace();
       setStatus(ctx, 500);
       setResult(ctx, "Error duplicating theme: " + e.getMessage());
+    }
+  }
+
+  private void addThemeToAllThemesWithAllSelected(
+      String newThemeId, List<Theme> existingThemes, List<String> existingThemeIds) {
+    if (newThemeId == null
+        || newThemeId.trim().isEmpty()
+        || existingThemes == null
+        || existingThemes.isEmpty()
+        || existingThemeIds == null
+        || existingThemeIds.isEmpty()) {
+      return;
+    }
+    for (Theme existing : existingThemes) {
+      if (existing == null || newThemeId.equals(existing.getEntityId())) {
+        continue;
+      }
+      List<String> companionIds = existing.getCompanionThemeIds();
+      boolean hasAllSelected = companionIds == null || companionIds.containsAll(existingThemeIds);
+      if (hasAllSelected) {
+        Set<String> updatedCompanionIds =
+            new LinkedHashSet<>(companionIds != null ? companionIds : existingThemeIds);
+        if (updatedCompanionIds.add(newThemeId)) {
+          Theme updatedTheme =
+              new Theme(
+                  existing.getName(),
+                  existing.isDefault(),
+                  existing.getSlots(),
+                  existing.getAudioSlots(),
+                  existing.getDriverAudioOverrides(),
+                  existing.getUiId(),
+                  existing.getDriverStationThemeId(),
+                  existing.getDriverViewThemeId(),
+                  new ArrayList<>(updatedCompanionIds),
+                  existing.getEntityId(),
+                  existing.getId());
+          themeRepository.save(updatedTheme);
+
+          Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+          if (activeRace != null
+              && activeRace.getTheme() != null
+              && existing.getEntityId().equals(activeRace.getTheme().getEntityId())) {
+            activeRace.setTheme(updatedTheme);
+          }
+        }
+      }
     }
   }
 

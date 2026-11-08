@@ -164,7 +164,7 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Sonido de Entrada a Boxes** | Se reproduce cuando el coche entra en el carril de boxes o zona de repostaje. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 | **Sonidos de Nivel de Combustible** | Se reproduce cuando el nivel de combustible baja al umbral de advertencia, crítico o vacío. | `default_fuel_level` (Conjunto de Audio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 | **Sonido de Salida en Falso** | Se reproduce cuando se detecta una salida en falso o infracción en la línea de salida. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Sonido de vuelta de derrape** | Se reproduce cuando el piloto completa una vuelta derrapando. | TTS (`Drift lap for {driver.nickname}`) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de vuelta de derrape** | Se reproduce cuando un coche cruza la meta por inercia sin corriente dentro del tiempo de deriva. | TTS (`Drift lap for {driver.nickname}`) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 
 ### Eventos de Audio de Tema (Configurados en el Gestor de Temas)
 
