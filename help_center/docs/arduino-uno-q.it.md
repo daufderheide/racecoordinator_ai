@@ -67,12 +67,17 @@ L'**Arduino UNO Q** combina un Single Board Computer (SBC) Linux a 64 bit con un
      hostname -I
      ```
      *(Nota: `avahi-daemon` non è preinstallato su Arduino Linux OS, quindi i nomi di dominio mDNS `.local` come `uno-q.local` non esistono per impostazione predefinita a meno che non si installi il pacchetto tramite `sudo apt-get install -y avahi-daemon`).*
-   * **Connettersi dal PC**: Apri un terminale sul tuo computer e connettiti utilizzando il nome host o l'indirizzo IP della scheda:
-     ```bash
-     ssh arduino@<hostname>
-     # Oppure connettiti direttamente tramite IP:
-     ssh arduino@<INDIRIZZO_IP>
-     ```
+   * **Connettersi dal PC**:
+     * **macOS**: Apri l'applicazione integrata **Terminale** o **iTerm2** ([iterm2.com](https://iterm2.com/)) e connettiti da riga di comando:
+       ```bash
+       ssh arduino@<hostname>
+       # Oppure connettiti direttamente tramite IP:
+       ssh arduino@<INDIRIZZO_IP>
+       ```
+     * **Windows**: Puoi utilizzare PowerShell o il Prompt dei comandi integrati (eseguendo `ssh arduino@<hostname>` o `ssh arduino@<INDIRIZZO_IP>`) oppure utilizzare un client SSH grafico come **PuTTY** (scaricabile da [putty.org](https://www.putty.org/)). Se utilizzi PuTTY:
+       1. Inserisci il nome host o l'indirizzo IP della scheda nel campo **Host Name (or IP address)**.
+       2. Assicurati che la porta sia impostata su `22` e il tipo di connessione su **SSH**.
+       3. Fai clic su **Open**, accetta l'avviso relativo alla chiave host alla prima connessione ed effettua il login come `arduino` con la tua password.
 
 ### Passaggio 2: Installare i prerequisiti
 Installa l'ambiente di runtime Java (`default-jre-headless`), le utilità audio (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` e il gestore delle finestre (`wmctrl`):

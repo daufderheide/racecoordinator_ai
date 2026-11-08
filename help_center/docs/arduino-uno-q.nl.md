@@ -67,12 +67,17 @@ De **Arduino UNO Q** combineert een 64-bits Linux Single Board Computer (SBC) me
      hostname -I
      ```
      *(Opmerking: `avahi-daemon` is niet vooraf geïnstalleerd op Arduino Linux OS, dus `.local` mDNS-domeinnamen zoals `uno-q.local` werken standaard niet, tenzij u het pakket installeert via `sudo apt-get install -y avahi-daemon`).*
-   * **Verbinden vanaf uw pc**: Open een terminal op uw computer en maak verbinding via de hostnaam of het IP-adres van het bord:
-     ```bash
-     ssh arduino@<hostname>
-     # Of maak rechtstreeks verbinding via IP:
-     ssh arduino@<IP_ADRES>
-     ```
+   * **Verbinden vanaf uw pc**:
+     * **macOS**: Open het ingebouwde programma **Terminal** of **iTerm2** ([iterm2.com](https://iterm2.com/)) en maak verbinding via de opdrachtregel:
+       ```bash
+       ssh arduino@<hostname>
+       # Of maak rechtstreeks verbinding via IP:
+       ssh arduino@<IP_ADRES>
+       ```
+     * **Windows**: U kunt de ingebouwde PowerShell of Opdrachtprompt gebruiken (met `ssh arduino@<hostname>` of `ssh arduino@<IP_ADRES>`) of een grafische SSH-client zoals **PuTTY** (downloaden via [putty.org](https://www.putty.org/)) gebruiken. Bij gebruik van PuTTY:
+       1. Voer de hostnaam of het IP-adres van het bord in het veld **Host Name (or IP address)** in.
+       2. Zorg ervoor dat de poort is ingesteld op `22` en het verbindingstype op **SSH**.
+       3. Klik op **Open**, accepteer de waarschuwing voor de hostsleutel bij de eerste verbinding en meld u aan als gebruiker `arduino` met uw wachtwoord.
 
 ### Stap 2: Vereisten installeren
 Installeer de Java-runtime-omgeving (`default-jre-headless`), audio-hulpprogramma's (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` en vensterbeheer (`wmctrl`):

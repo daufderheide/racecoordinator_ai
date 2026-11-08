@@ -67,12 +67,17 @@ L'**Arduino UNO Q** combine un nano-ordinateur Linux 64 bits (SBC) avec un micro
      hostname -I
      ```
      *(Remarque : `avahi-daemon` n'est pas préinstallé sur Arduino Linux OS, donc les noms de domaine mDNS `.local` comme `uno-q.local` n'existent pas par défaut à moins d'installer le paquet via `sudo apt-get install -y avahi-daemon`).*
-   * **Se connecter depuis votre PC** : Ouvrez un terminal sur votre ordinateur et connectez-vous en utilisant le nom d'hôte ou l'adresse IP de la carte :
-     ```bash
-     ssh arduino@<hostname>
-     # Ou connectez-vous directement via l'adresse IP :
-     ssh arduino@<ADRESSE_IP>
-     ```
+   * **Se connecter depuis votre PC** :
+     * **macOS** : Ouvrez l'application intégrée **Terminal** ou **iTerm2** ([iterm2.com](https://iterm2.com/)) et connectez-vous en ligne de commande :
+       ```bash
+       ssh arduino@<hostname>
+       # Ou connectez-vous directement via l'adresse IP :
+       ssh arduino@<ADRESSE_IP>
+       ```
+     * **Windows** : Vous pouvez utiliser PowerShell ou l'Invite de commandes intégrée (en exécutant `ssh arduino@<hostname>` ou `ssh arduino@<ADRESSE_IP>`) ou utiliser un client SSH graphique tel que **PuTTY** (téléchargeable sur [putty.org](https://www.putty.org/)). Si vous utilisez PuTTY :
+       1. Saisissez le nom d'hôte ou l'adresse IP de la carte dans le champ **Host Name (or IP address)**.
+       2. Vérifiez que le port est `22` et que le type de connexion est **SSH**.
+       3. Cliquez sur **Open**, acceptez l'avertissement de clé d'hôte lors de la première connexion et connectez-vous en tant qu'utilisateur `arduino` avec votre mot de passe.
 
 ### Étape 2 : Installer les prérequis
 Installez l'environnement d'exécution Java (`default-jre-headless`), les utilitaires audio (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium` et le gestionnaire de fenêtres (`wmctrl`) :

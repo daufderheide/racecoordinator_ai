@@ -67,12 +67,17 @@ The **Arduino UNO Q** combines a 64-bit Linux Single Board Computer (SBC) with a
      hostname -I
      ```
      *(Note: `avahi-daemon` is not pre-installed on Arduino Linux OS, so `.local` mDNS domain names like `uno-q.local` do not exist by default unless you install the package via `sudo apt-get install -y avahi-daemon`).*
-   * **Connect from your PC**: Open a terminal on your computer and connect using the board's hostname or IP address:
-     ```bash
-     ssh arduino@<hostname>
-     # Or connect directly via IP:
-     ssh arduino@<IP_ADDRESS>
-     ```
+   * **Connect from your PC**:
+     * **macOS**: Open the built-in **Terminal** app or **iTerm2** ([iterm2.com](https://iterm2.com/)) and connect via the command line:
+       ```bash
+       ssh arduino@<hostname>
+       # Or connect directly via IP:
+       ssh arduino@<IP_ADDRESS>
+       ```
+     * **Windows**: You can use the built-in PowerShell or Command Prompt (running `ssh arduino@<hostname>` or `ssh arduino@<IP_ADDRESS>`) or a graphical SSH client such as **PuTTY** (download from [putty.org](https://www.putty.org/)). If using PuTTY:
+       1. Enter the board's hostname or IP address in the **Host Name (or IP address)** field.
+       2. Ensure Port is set to `22` and Connection Type is **SSH**.
+       3. Click **Open**, accept the host key warning on first connection, and log in as `arduino` with your password.
 
 ### Step 2: Install Prerequisites
 Install the Java runtime (`default-jre-headless`), audio utilities (`espeak-ng`, `speech-dispatcher`, `speech-dispatcher-espeak-ng`, `alsa-utils`), `chromium`, and window manager control (`wmctrl`):
