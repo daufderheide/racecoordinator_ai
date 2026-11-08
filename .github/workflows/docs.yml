@@ -6,6 +6,7 @@ on:
       - "release/**"
     paths:
       - 'help_center/**'
+      - '!help_center/docs/changelog*.md'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 
