@@ -37,6 +37,19 @@ public class HeatScoringTest {
             FinishMethod.Lap, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
     assertEquals(TiebreakerMethod.FASTEST_LAP_TIME, fastest.toTiebreakerMethod());
 
+    HeatScoring firstToSet =
+        new HeatScoring(
+            FinishMethod.Lap, 10, HeatRanking.FASTEST_LAP, HeatRankingTiebreaker.FIRST_TO_SET_TIME);
+    assertEquals(TiebreakerMethod.FIRST_TO_SET_TIME, firstToSet.toTiebreakerMethod());
+
+    HeatScoring secondBest =
+        new HeatScoring(
+            FinishMethod.Lap,
+            10,
+            HeatRanking.FASTEST_LAP,
+            HeatRankingTiebreaker.SECOND_BEST_LAP_TIME);
+    assertEquals(TiebreakerMethod.SECOND_BEST_LAP_TIME, secondBest.toTiebreakerMethod());
+
     HeatScoring median =
         new HeatScoring(
             FinishMethod.Lap, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.MEDIAN_LAP_TIME);
@@ -48,7 +61,7 @@ public class HeatScoringTest {
     assertEquals(TiebreakerMethod.AVERAGE_LAP_TIME, avg.toTiebreakerMethod());
 
     HeatScoring nullTiebreaker = new HeatScoring(FinishMethod.Lap, 10, null, null);
-    assertEquals(TiebreakerMethod.AVERAGE_LAP_TIME, nullTiebreaker.toTiebreakerMethod());
+    assertEquals(TiebreakerMethod.FIRST_TO_SET_TIME, nullTiebreaker.toTiebreakerMethod());
   }
 
   @Test

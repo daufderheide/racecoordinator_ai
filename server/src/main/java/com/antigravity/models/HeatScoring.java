@@ -18,9 +18,11 @@ public class HeatScoring {
   }
 
   public enum HeatRankingTiebreaker {
-    FASTEST_LAP_TIME,
+    FIRST_TO_SET_TIME,
+    SECOND_BEST_LAP_TIME,
+    AVERAGE_LAP_TIME,
     MEDIAN_LAP_TIME,
-    AVERAGE_LAP_TIME
+    FASTEST_LAP_TIME
   }
 
   public enum AllowFinish {
@@ -121,17 +123,21 @@ public class HeatScoring {
 
   public TiebreakerMethod toTiebreakerMethod() {
     if (heatRankingTiebreaker == null) {
-      return TiebreakerMethod.AVERAGE_LAP_TIME;
+      return TiebreakerMethod.FIRST_TO_SET_TIME;
     }
     switch (heatRankingTiebreaker) {
-      case FASTEST_LAP_TIME:
-        return TiebreakerMethod.FASTEST_LAP_TIME;
-      case MEDIAN_LAP_TIME:
-        return TiebreakerMethod.MEDIAN_LAP_TIME;
+      case FIRST_TO_SET_TIME:
+        return TiebreakerMethod.FIRST_TO_SET_TIME;
+      case SECOND_BEST_LAP_TIME:
+        return TiebreakerMethod.SECOND_BEST_LAP_TIME;
       case AVERAGE_LAP_TIME:
         return TiebreakerMethod.AVERAGE_LAP_TIME;
+      case MEDIAN_LAP_TIME:
+        return TiebreakerMethod.MEDIAN_LAP_TIME;
+      case FASTEST_LAP_TIME:
+        return TiebreakerMethod.FASTEST_LAP_TIME;
       default:
-        return TiebreakerMethod.AVERAGE_LAP_TIME;
+        return TiebreakerMethod.FIRST_TO_SET_TIME;
     }
   }
 }

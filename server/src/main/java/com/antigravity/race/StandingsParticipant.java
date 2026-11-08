@@ -26,4 +26,14 @@ public interface StandingsParticipant {
 
   /** Gets the unique identifier for the participant (driver ID, team ID, or object ID). */
   String getParticipantId();
+
+  /** Gets sorted valid lap times (ascending) for tiebreaking. */
+  default java.util.List<Double> getSortedValidLapTimes() {
+    return java.util.Collections.emptyList();
+  }
+
+  /** Gets the total elapsed time when the best lap was completed (in seconds). */
+  default double getBestLapRecordedTime() {
+    return Double.MAX_VALUE;
+  }
 }

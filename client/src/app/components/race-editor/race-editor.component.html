@@ -519,29 +519,36 @@
                       >
                     </app-custom-select>
                   </div>
-                  <div class="config-section">
-                    <label>{{ "RE_HEAT_TIEBREAKER" | translate }}</label>
-                    <app-custom-select
-                      id="heat-tiebreaker-select"
-                      class="heat-tiebreaker-select"
-                      data-testid="heat-tiebreaker-select"
-                      [disabled]="!isEditMode"
-                      [(ngModel)]="
-                        editingRace.heat_scoring.heat_ranking_tiebreaker
-                      "
-                      (ngModelChange)="captureState()"
-                    >
-                      <app-custom-option value="FASTEST_LAP_TIME">
-                        Fastest Lap Time
-                      </app-custom-option>
-                      <app-custom-option value="MEDIAN_LAP_TIME">
-                        Median Lap Time
-                      </app-custom-option>
-                      <app-custom-option value="AVERAGE_LAP_TIME">
-                        Average Lap Time
-                      </app-custom-option>
-                    </app-custom-select>
-                  </div>
+                  @if (
+                    editingRace.heat_scoring.heat_ranking === "FASTEST_LAP"
+                  ) {
+                    <div class="config-section">
+                      <label>{{ "RE_HEAT_TIEBREAKER" | translate }}</label>
+                      <app-custom-select
+                        id="heat-tiebreaker-select"
+                        class="heat-tiebreaker-select"
+                        data-testid="heat-tiebreaker-select"
+                        [disabled]="!isEditMode"
+                        [(ngModel)]="
+                          editingRace.heat_scoring.heat_ranking_tiebreaker
+                        "
+                        (ngModelChange)="captureState()"
+                      >
+                        <app-custom-option value="FIRST_TO_SET_TIME">
+                          {{ "RE_TIEBREAKER_FIRST_TO_SET" | translate }}
+                        </app-custom-option>
+                        <app-custom-option value="SECOND_BEST_LAP_TIME">
+                          {{ "RE_TIEBREAKER_SECOND_BEST_LAP" | translate }}
+                        </app-custom-option>
+                        <app-custom-option value="AVERAGE_LAP_TIME">
+                          {{ "RE_TIEBREAKER_AVERAGE_LAP" | translate }}
+                        </app-custom-option>
+                        <app-custom-option value="MEDIAN_LAP_TIME">
+                          {{ "RE_TIEBREAKER_MEDIAN_LAP" | translate }}
+                        </app-custom-option>
+                      </app-custom-select>
+                    </div>
+                  }
                   <div class="config-row">
                     <div class="config-section">
                       <label>{{ "RE_FINISH_METHOD" | translate }}</label>

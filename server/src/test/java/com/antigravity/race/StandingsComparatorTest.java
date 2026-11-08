@@ -19,6 +19,8 @@ public class StandingsComparatorTest {
     private final double medianLap;
     private final boolean empty;
     private final int seed;
+    private final List<Double> sortedLaps;
+    private final double bestLapRecordedTime;
 
     public MockParticipant(
         String id,
@@ -29,6 +31,30 @@ public class StandingsComparatorTest {
         double medianLap,
         boolean empty,
         int seed) {
+      this(
+          id,
+          laps,
+          totalTime,
+          bestLap,
+          avgLap,
+          medianLap,
+          empty,
+          seed,
+          java.util.Collections.emptyList(),
+          Double.MAX_VALUE);
+    }
+
+    public MockParticipant(
+        String id,
+        double laps,
+        double totalTime,
+        double bestLap,
+        double avgLap,
+        double medianLap,
+        boolean empty,
+        int seed,
+        List<Double> sortedLaps,
+        double bestLapRecordedTime) {
       this.id = id;
       this.laps = laps;
       this.totalTime = totalTime;
@@ -37,6 +63,18 @@ public class StandingsComparatorTest {
       this.medianLap = medianLap;
       this.empty = empty;
       this.seed = seed;
+      this.sortedLaps = sortedLaps != null ? sortedLaps : java.util.Collections.emptyList();
+      this.bestLapRecordedTime = bestLapRecordedTime;
+    }
+
+    @Override
+    public List<Double> getSortedValidLapTimes() {
+      return sortedLaps;
+    }
+
+    @Override
+    public double getBestLapRecordedTime() {
+      return bestLapRecordedTime;
     }
 
     @Override
@@ -366,5 +404,97 @@ public class StandingsComparatorTest {
     Assert.assertTrue(
         "dhd2 should rank ahead of dhd1 on lap count once finished",
         comparator.compare(dhd2, dhd1) < 0);
+  }
+
+  @Test
+  public void testLapCountRankingSameLapsDifferentTotalTime() {
+    // p1 has faster best lap, but p2 completed the 10 laps in less elapsed time
+    MockParticipant p1 = new MockParticipant("p1", 10, 52.0, 3.5, 5.2, 5.2, false, 1);
+    MockParticipant p2 = new MockParticipant("p2", 10, 48.0, 4.2, 4.8, 4.8, false, 2);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.LAP_COUNT, TiebreakerMethod.FASTEST_LAP_TIME);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p1, p2));
+    list.sort(comparator);
+
+    Assert.assertEquals(
+        "p2 should lead because it reached 10 laps first", "p2", list.get(0).getParticipantId());
+    Assert.assertEquals("p1", list.get(1).getParticipantId());
+  }
+
+  @Test
+  public void testFastestLapTiebreaker_FirstToSetTime() {
+    MockParticipant p1 =
+        new MockParticipant(
+            "p1", 5, 30.0, 5.0, 6.0, 6.0, false, 1, Arrays.asList(5.0, 6.0, 6.0, 6.0, 7.0), 20.0);
+    MockParticipant p2 =
+        new MockParticipant(
+            "p2", 5, 35.0, 5.0, 7.0, 7.0, false, 2, Arrays.asList(5.0, 7.0, 7.0, 8.0, 8.0), 32.0);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.FASTEST_LAP, TiebreakerMethod.FIRST_TO_SET_TIME);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p2, p1));
+    list.sort(comparator);
+
+    Assert.assertEquals(
+        "p1 set the fast lap earlier (20s vs 32s)", "p1", list.get(0).getParticipantId());
+    Assert.assertEquals("p2", list.get(1).getParticipantId());
+  }
+
+  @Test
+  public void testFastestLapTiebreaker_SecondBestLap() {
+    MockParticipant p1 =
+        new MockParticipant(
+            "p1", 3, 20.0, 5.0, 6.0, 6.0, false, 1, Arrays.asList(5.0, 5.3, 5.5), 10.0);
+    MockParticipant p2 =
+        new MockParticipant(
+            "p2", 3, 20.0, 5.0, 6.0, 6.0, false, 2, Arrays.asList(5.0, 5.1, 5.6), 15.0);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.FASTEST_LAP, TiebreakerMethod.SECOND_BEST_LAP_TIME);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p1, p2));
+    list.sort(comparator);
+
+    Assert.assertEquals("p2 has better 2nd lap (5.1 vs 5.3)", "p2", list.get(0).getParticipantId());
+    Assert.assertEquals("p1", list.get(1).getParticipantId());
+  }
+
+  @Test
+  public void testFastestLapTiebreaker_NthBestLapDeepComparison() {
+    MockParticipant p1 =
+        new MockParticipant(
+            "p1", 3, 20.0, 5.0, 6.0, 6.0, false, 1, Arrays.asList(5.0, 5.1, 5.5), 10.0);
+    MockParticipant p2 =
+        new MockParticipant(
+            "p2", 3, 20.0, 5.0, 6.0, 6.0, false, 2, Arrays.asList(5.0, 5.1, 5.3), 15.0);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.FASTEST_LAP, TiebreakerMethod.SECOND_BEST_LAP_TIME);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p1, p2));
+    list.sort(comparator);
+
+    Assert.assertEquals("p2 has better 3rd lap (5.3 vs 5.5)", "p2", list.get(0).getParticipantId());
+    Assert.assertEquals("p1", list.get(1).getParticipantId());
+  }
+
+  @Test
+  public void testFastestLapTiebreaker_MoreLapsWinsWhenTied() {
+    MockParticipant p1 =
+        new MockParticipant("p1", 2, 15.0, 5.0, 6.0, 6.0, false, 1, Arrays.asList(5.0, 5.2), 10.0);
+    MockParticipant p2 =
+        new MockParticipant("p2", 1, 10.0, 5.0, 5.0, 5.0, false, 2, Arrays.asList(5.0), 10.0);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.FASTEST_LAP, TiebreakerMethod.SECOND_BEST_LAP_TIME);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p2, p1));
+    list.sort(comparator);
+
+    Assert.assertEquals("p1 has a 2nd lap while p2 does not", "p1", list.get(0).getParticipantId());
+    Assert.assertEquals("p2", list.get(1).getParticipantId());
   }
 }

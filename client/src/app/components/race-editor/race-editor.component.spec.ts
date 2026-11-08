@@ -1493,6 +1493,31 @@ describe("RaceEditorComponent", () => {
     expect(payload.heat_scoring.allowFinish).toBe("SingleLapAutoSegments");
   }));
 
+  it("should show heat tiebreaker dropdown only when heat_ranking is FASTEST_LAP", () => {
+    component.sectionsExpanded.scoring = true;
+    component.editingRace.heat_scoring = {
+      finish_method: "Lap",
+      finish_value: 10,
+      heat_ranking: "LAP_COUNT",
+      heat_ranking_tiebreaker: "FIRST_TO_SET_TIME",
+      allow_finish: "None",
+    };
+    fixture.detectChanges();
+
+    let tiebreakerSelect = fixture.nativeElement.querySelector(
+      "#heat-tiebreaker-select",
+    );
+    expect(tiebreakerSelect).toBeNull();
+
+    component.editingRace.heat_scoring.heat_ranking = "FASTEST_LAP";
+    fixture.detectChanges();
+
+    tiebreakerSelect = fixture.nativeElement.querySelector(
+      "#heat-tiebreaker-select",
+    );
+    expect(tiebreakerSelect).not.toBeNull();
+  });
+
   describe("Expander State Save/Load", () => {
     beforeEach(() => {
       localStorage.clear();

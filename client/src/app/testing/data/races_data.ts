@@ -28,7 +28,7 @@ export const MOCK_RACES = [
       finish_method: "Lap",
       finish_value: 10,
       heat_ranking: "LAP_COUNT",
-      heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+      heat_ranking_tiebreaker: "FIRST_TO_SET_TIME",
       allow_finish: "None",
     },
     overall_scoring: {
@@ -114,7 +114,7 @@ export const MOCK_RACES = [
       finish_method: "Timed",
       finish_value: 300,
       heat_ranking: "LAP_COUNT",
-      heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+      heat_ranking_tiebreaker: "FIRST_TO_SET_TIME",
       allow_finish: "None",
     },
     overall_scoring: {
@@ -153,7 +153,7 @@ export const MOCK_RACES = [
       finish_method: "Lap",
       finish_value: 5,
       heat_ranking: "LAP_COUNT",
-      heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+      heat_ranking_tiebreaker: "FIRST_TO_SET_TIME",
       allow_finish: "None",
     },
     overall_scoring: {

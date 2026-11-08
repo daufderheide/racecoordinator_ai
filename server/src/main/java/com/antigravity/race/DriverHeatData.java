@@ -351,6 +351,30 @@ public class DriverHeatData extends ServerToClientObject
     return valid;
   }
 
+  @Override
+  public List<Double> getSortedValidLapTimes() {
+    List<Double> valid = getValidLapTimes();
+    Collections.sort(valid);
+    return valid;
+  }
+
+  @Override
+  public double getBestLapRecordedTime() {
+    double best = getBestLapTime();
+    if (best <= 0.0 || laps == null || laps.isEmpty()) {
+      return Double.MAX_VALUE;
+    }
+    for (int i = 0; i < laps.size(); i++) {
+      LapData lap = laps.get(i);
+      if (lap != null
+          && lap.isCountTowardsRecords()
+          && Math.abs(lap.getLapTime() - best) < 0.000001) {
+        return getTimeAtLap(i + 1);
+      }
+    }
+    return Double.MAX_VALUE;
+  }
+
   public double getStandardDeviation() {
     List<Double> valid = getValidLapTimes();
     if (valid.size() <= 1) {
