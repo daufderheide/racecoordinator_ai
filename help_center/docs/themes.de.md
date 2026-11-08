@@ -20,6 +20,7 @@ In der oberen Steuerungsleiste des Theme-Editors legen Sie die Kerneigenschaften
 - **Verknüpftes UI-Layout:** Wählt das im [Layout-Editor](layout-editor.de.md) erstellte Bildschirmlayout aus, das beim Start eines Rennens mit diesem Theme automatisch auf der Hauptanzeige geladen wird.
 - **Fahrerstand-Theme:** Bestimmt das Theme für dedizierte Einzelfahrspur-Fahrerstand-Displays oder wenn sich ein Fahrer per Mobilgerät oder Tablet verbindet.
 - **Fahreransicht-Theme:** Bestimmt das Theme für mehrspurige Fahreransicht-Zeitplananzeigen und Zuschauerbildschirme.
+- **Fenster-Themes (Begleit-Themes):** Konfiguriert Begleit-Themes für sekundäre Anzeigen. Standardmäßig sind alle verfügbaren Themes ausgewählt. Während eines Rennens zeigt die Renntag-Menüleiste ausschließlich die auf dem Haupt-Theme konfigurierten Themes an. Themes können einzeln ausgewählt oder im Theme-Editor per Ein-Klick-Aktion **Alle auswählen** gemeinsam gesteuert werden. Wenn ein neues Theme erstellt wird, wird es automatisch allen bestehenden Themes hinzugefügt, bei denen alle ausgewählt sind.
 
 ---
 

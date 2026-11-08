@@ -20,6 +20,7 @@ Located in the top controls bar of the Theme Editor, these settings define the c
 - **Linked UI Layout:** Selects the display layout created in the [Layout Editor](layout-editor.md) that is automatically loaded onto the primary race display when this theme is selected for a race.
 - **Driver Station Theme:** Specifies the theme used when opening a dedicated single-lane driver station display or when a driver connects via a mobile device or tablet.
 - **Driver View Theme:** Specifies the theme used for multi-lane driver view schedule displays and spectator monitors.
+- **Window Themes (Companion Themes):** Configures companion themes for secondary displays. By default, all available themes are selected. When active during a race, the Raceday menu bar strictly displays only the curated themes configured on the primary theme, keeping secondary window options tailored to the active event. Themes can be selected or deselected individually or toggled all at once with **Select All** in the Theme Editor. When a new theme is created, it is automatically added to all existing themes that have all themes selected.
 
 ---
 

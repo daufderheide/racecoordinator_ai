@@ -20,6 +20,7 @@ Deze instellingen bevinden zich in de bovenste bedieningsbalk van de Thema-edito
 - **Gekoppelde UI-lay-out:** Selecteert de schermlay-out die is gemaakt in de [Lay-outeditor](layout-editor.md) en die automatisch wordt geladen op het primaire racescherm wanneer dit thema voor een race wordt geselecteerd.
 - **Bestuurdersstation-thema:** Bepaalt het thema dat wordt gebruikt bij het openen van een enkelbaans bestuurdersstationvenster of wanneer een coureur verbinding maakt via een mobiel apparaat of tablet.
 - **Bestuurdersweergave-thema:** Bepaalt het thema dat wordt gebruikt voor meerspoors schemaschermen en toeschouwersmonitoren.
+- **Vensterthema's (Begeleidende thema's):** Configureert begeleidende thema's voor secundaire beeldschermen. Standaard zijn alle beschikbare thema's geselecteerd. Tijdens een race toont de menubalk strikt de thema's die op het hoofdthema zijn geconfigureerd. Thema's kunnen afzonderlijk worden beheerd of in één klik worden in- of uitgeschakeld met **Alles selecteren** in de Thema-editor. Wanneer een nieuw thema wordt aangemaakt, wordt dit automatisch toegevoegd aan alle bestaande thema's waarvan alles is geselecteerd.
 
 ---
 

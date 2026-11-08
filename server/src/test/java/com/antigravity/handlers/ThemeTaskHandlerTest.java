@@ -20,9 +20,13 @@ import com.antigravity.models.Track;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -88,6 +92,8 @@ public class ThemeTaskHandlerTest {
     assertEquals("default_flag_green", factory.getSlots().get("flag.racing"));
     assertNotNull(factory.getAudioSlots());
     assertEquals("default_countdown", factory.getAudioSlots().get("audio.countdown").getUrl());
+    assertNotNull(factory.getCompanionThemeIds());
+    assertFalse(factory.getCompanionThemeIds().isEmpty());
   }
 
   @Test
@@ -619,5 +625,171 @@ public class ThemeTaskHandlerTest {
     assertEquals(3, duplicated.getDriverAudioOverrides().size());
     assertEquals(
         "theme_lap_sound.wav", duplicated.getDriverAudioOverrides().get("lapAudio").getUrl());
+  }
+
+  @Test
+  public void testCompanionThemeIdsLifecycleAndDuplication() {
+    Theme newTheme =
+        new Theme.Builder()
+            .withName("Suite Master Theme")
+            .withUiId("ui-master")
+            .withCompanionThemeIds(Arrays.asList("theme_leaderboard", "theme_pit_wall"))
+            .build();
+
+    org.mockito.Mockito.doReturn(newTheme).when(handler).getBody(any(), eq(Theme.class));
+    org.mockito.ArgumentCaptor<Object> createCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.createTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), createCaptor.capture());
+
+    Theme created = (Theme) createCaptor.getValue();
+    assertNotNull(created.getCompanionThemeIds());
+    assertEquals(2, created.getCompanionThemeIds().size());
+    assertTrue(created.getCompanionThemeIds().contains("theme_leaderboard"));
+    assertTrue(created.getCompanionThemeIds().contains("theme_pit_wall"));
+
+    // Builder.from test
+    Theme copiedViaBuilder = Theme.Builder.from(created).build();
+    assertEquals(created.getCompanionThemeIds(), copiedViaBuilder.getCompanionThemeIds());
+
+    // Update with new companion IDs
+    Theme updateRequest =
+        Theme.Builder.from(created)
+            .withCompanionThemeIds(Arrays.asList("theme_spectator_screen"))
+            .build();
+
+    org.mockito.Mockito.doReturn(created.getEntityId()).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(updateRequest).when(handler).getBody(any(), eq(Theme.class));
+
+    org.mockito.ArgumentCaptor<Object> updateCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.updateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), updateCaptor.capture());
+
+    Theme updated = (Theme) updateCaptor.getValue();
+    assertNotNull(updated.getCompanionThemeIds());
+    assertEquals(1, updated.getCompanionThemeIds().size());
+    assertEquals("theme_spectator_screen", updated.getCompanionThemeIds().get(0));
+
+    // Duplicate theme preserves companionThemeIds
+    org.mockito.Mockito.doReturn(created.getEntityId()).when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(new HashMap<>())
+        .when(handler)
+        .getBody(any(), eq(java.util.Map.class));
+    org.mockito.ArgumentCaptor<Object> dupCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.duplicateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), dupCaptor.capture());
+
+    Theme duplicated = (Theme) dupCaptor.getValue();
+    assertNotNull(duplicated.getCompanionThemeIds());
+    assertEquals(1, duplicated.getCompanionThemeIds().size());
+    assertEquals("theme_spectator_screen", duplicated.getCompanionThemeIds().get(0));
+  }
+
+  @Test
+  public void testNewThemeAutomaticallyAddedToAllThemesWithAllSelected() {
+    handler.ensureDefaultTheme();
+    com.antigravity.repository.SqliteRepository<Theme> repo =
+        new com.antigravity.repository.SqliteRepository<>(databaseContext, "themes", Theme.class);
+
+    List<Theme> initialThemes = repo.findAll();
+    List<String> initialIds =
+        initialThemes.stream().map(Theme::getEntityId).collect(Collectors.toList());
+
+    // Create a theme with ALL themes selected
+    Theme themeWithAll =
+        new Theme.Builder()
+            .withName("Theme With All Selected")
+            .withEntityId("t_with_all")
+            .withCompanionThemeIds(new ArrayList<>(initialIds))
+            .build();
+    repo.save(themeWithAll);
+
+    // Create a theme with only a SUBSET of themes selected
+    Theme themeWithSubset =
+        new Theme.Builder()
+            .withName("Theme With Subset")
+            .withEntityId("t_with_subset")
+            .withCompanionThemeIds(Arrays.asList("default_classic_rc_ai"))
+            .build();
+    repo.save(themeWithSubset);
+
+    // Create a theme with NONE selected
+    Theme themeWithNone =
+        new Theme.Builder()
+            .withName("Theme With None")
+            .withEntityId("t_with_none")
+            .withCompanionThemeIds(Collections.emptyList())
+            .build();
+    repo.save(themeWithNone);
+
+    // Now create a NEW theme via createTheme
+    List<String> currentIds =
+        repo.findAll().stream().map(Theme::getEntityId).collect(Collectors.toList());
+
+    // Ensure themeWithAll has all currently existing IDs before creating the new theme
+    themeWithAll =
+        Theme.Builder.from(themeWithAll).withCompanionThemeIds(new ArrayList<>(currentIds)).build();
+    repo.save(themeWithAll);
+
+    Theme newTheme =
+        new Theme.Builder()
+            .withName("Newly Created Theme")
+            .withCompanionThemeIds(new ArrayList<>(currentIds))
+            .build();
+
+    org.mockito.Mockito.doReturn(newTheme).when(handler).getBody(any(), eq(Theme.class));
+    org.mockito.ArgumentCaptor<Object> createCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.createTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), createCaptor.capture());
+
+    Theme created = (Theme) createCaptor.getValue();
+    assertNotNull(created);
+    String createdId = created.getEntityId();
+    assertNotNull(createdId);
+
+    // Verify new theme itself contains its own ID since it had all selected
+    assertTrue(created.getCompanionThemeIds().contains(createdId));
+
+    // Verify themeWithAll now contains createdId
+    Theme retrievedWithAll = repo.findByEntityId("t_with_all");
+    assertNotNull(retrievedWithAll);
+    assertTrue(retrievedWithAll.getCompanionThemeIds().contains(createdId));
+
+    // Verify themeWithSubset still only has its original subset
+    Theme retrievedWithSubset = repo.findByEntityId("t_with_subset");
+    assertNotNull(retrievedWithSubset);
+    assertEquals(1, retrievedWithSubset.getCompanionThemeIds().size());
+    assertFalse(retrievedWithSubset.getCompanionThemeIds().contains(createdId));
+
+    // Verify themeWithNone still has empty list
+    Theme retrievedWithNone = repo.findByEntityId("t_with_none");
+    assertNotNull(retrievedWithNone);
+    assertTrue(retrievedWithNone.getCompanionThemeIds().isEmpty());
+
+    // Test duplicateTheme also adds to themes with all selected
+    org.mockito.Mockito.doReturn("t_with_all").when(handler).getPathParam(any(), eq("id"));
+    org.mockito.Mockito.doReturn(new HashMap<>())
+        .when(handler)
+        .getBody(any(), eq(java.util.Map.class));
+    org.mockito.ArgumentCaptor<Object> dupCaptor =
+        org.mockito.ArgumentCaptor.forClass(Object.class);
+    handler.duplicateTheme(ctx);
+    verify(handler, org.mockito.Mockito.atLeastOnce()).setJson(any(), dupCaptor.capture());
+
+    Theme duplicated = (Theme) dupCaptor.getValue();
+    assertNotNull(duplicated);
+    String dupId = duplicated.getEntityId();
+    assertNotNull(dupId);
+
+    // Verify themes with all selected now contain dupId
+    retrievedWithAll = repo.findByEntityId("t_with_all");
+    assertTrue(retrievedWithAll.getCompanionThemeIds().contains(dupId));
+
+    // Verify themeWithSubset still does NOT contain dupId
+    retrievedWithSubset = repo.findByEntityId("t_with_subset");
+    assertFalse(retrievedWithSubset.getCompanionThemeIds().contains(dupId));
   }
 }

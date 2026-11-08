@@ -10,7 +10,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,6 +25,11 @@ public class Theme extends Model {
   public static final String PRACTICE_THEME_ID = "practice_theme_rc_ai";
   public static final String FUEL_THEME_ID = "default_fuel_theme_rc_ai";
   public static final String DRIVER_STATION_THEME_ID = "driver_station_theme_rc_ai";
+
+  public static final List<String> DEFAULT_FACTORY_THEME_IDS =
+      Collections.unmodifiableList(
+          Arrays.asList(
+              DEFAULT_THEME_ID, PRACTICE_THEME_ID, FUEL_THEME_ID, DRIVER_STATION_THEME_ID));
 
   public static final String DEFAULT_THEME_NAME = "RC AI";
   public static final String PRACTICE_THEME_NAME = "RC AI (Practice)";
@@ -88,6 +97,7 @@ public class Theme extends Model {
   private final String uiId;
   private final String driverStationThemeId;
   private final String driverViewThemeId;
+  private final List<String> companionThemeIds;
   private final Map<String, RaceFlag> resolvedFlagCache = new ConcurrentHashMap<>();
 
   @JsonCreator
@@ -103,6 +113,9 @@ public class Theme extends Model {
           String driverStationThemeId,
       @JsonProperty("driver_view_theme_id") @JsonAlias({"driverViewThemeId"})
           String driverViewThemeId,
+      @JsonProperty("companion_theme_ids")
+          @JsonAlias({"companionThemeIds", "window_theme_ids", "windowThemeIds"})
+          List<String> companionThemeIds,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -121,6 +134,58 @@ public class Theme extends Model {
         (driverViewThemeId != null && !driverViewThemeId.trim().isEmpty())
             ? driverViewThemeId
             : DRIVER_STATION_THEME_ID;
+    this.companionThemeIds =
+        companionThemeIds != null ? new ArrayList<>(companionThemeIds) : new ArrayList<>();
+  }
+
+  public Theme(
+      String name,
+      boolean isDefault,
+      Map<String, String> slots,
+      Map<String, AudioConfig> audioSlots,
+      Map<String, AudioConfig> driverAudioOverrides,
+      String uiId,
+      String driverStationThemeId,
+      String driverViewThemeId,
+      String entityId,
+      String id) {
+    this(
+        name,
+        isDefault,
+        slots,
+        audioSlots,
+        driverAudioOverrides,
+        uiId,
+        driverStationThemeId,
+        driverViewThemeId,
+        new ArrayList<>(),
+        entityId,
+        id);
+  }
+
+  public Theme(
+      String name,
+      boolean isDefault,
+      Map<String, String> slots,
+      Map<String, AudioConfig> audioSlots,
+      String uiId,
+      String driverStationThemeId,
+      String driverViewThemeId,
+      List<String> companionThemeIds,
+      String entityId,
+      String id) {
+    this(
+        name,
+        isDefault,
+        slots,
+        audioSlots,
+        new HashMap<>(),
+        uiId,
+        driverStationThemeId,
+        driverViewThemeId,
+        companionThemeIds,
+        entityId,
+        id);
   }
 
   public Theme(
@@ -142,6 +207,7 @@ public class Theme extends Model {
         uiId,
         driverStationThemeId,
         driverViewThemeId,
+        new ArrayList<>(),
         entityId,
         id);
   }
@@ -224,6 +290,12 @@ public class Theme extends Model {
     return driverAudioOverrides;
   }
 
+  @JsonProperty("companion_theme_ids")
+  @JsonAlias({"companionThemeIds", "window_theme_ids", "windowThemeIds"})
+  public List<String> getCompanionThemeIds() {
+    return companionThemeIds;
+  }
+
   public static class Builder {
     private String id;
     private String entityId;
@@ -235,6 +307,7 @@ public class Theme extends Model {
     private String uiId;
     private String driverStationThemeId = DRIVER_STATION_THEME_ID;
     private String driverViewThemeId = DRIVER_STATION_THEME_ID;
+    private List<String> companionThemeIds = new ArrayList<>();
 
     public static Builder from(Theme other) {
       Builder b = new Builder();
@@ -253,6 +326,10 @@ public class Theme extends Model {
         b.uiId = other.getUiId();
         b.driverStationThemeId = other.getDriverStationThemeId();
         b.driverViewThemeId = other.getDriverViewThemeId();
+        b.companionThemeIds =
+            other.getCompanionThemeIds() != null
+                ? new ArrayList<>(other.getCompanionThemeIds())
+                : new ArrayList<>();
       }
       return b;
     }
@@ -307,6 +384,12 @@ public class Theme extends Model {
       return this;
     }
 
+    public Builder withCompanionThemeIds(List<String> companionThemeIds) {
+      this.companionThemeIds =
+          companionThemeIds != null ? new ArrayList<>(companionThemeIds) : new ArrayList<>();
+      return this;
+    }
+
     public Theme build() {
       return new Theme(
           name,
@@ -317,6 +400,7 @@ public class Theme extends Model {
           uiId,
           driverStationThemeId,
           driverViewThemeId,
+          companionThemeIds,
           entityId,
           id);
     }

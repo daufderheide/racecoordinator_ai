@@ -20,6 +20,7 @@ Ubicados en la barra de controles superior del Editor de Temas, estos ajustes de
 - **Diseño de Interfaz Vinculado:** Selecciona el diseño de pantalla creado en el [Editor de Diseños](layout-editor.es.md) que se carga automáticamente en la pantalla principal al iniciar una carrera con este tema.
 - **Tema de Estación de Piloto:** Especifica el tema utilizado al abrir una pantalla de estación de piloto dedicada o cuando un piloto se conecta desde un móvil o tableta.
 - **Tema de Vista de Piloto:** Especifica el tema utilizado para pantallas de cronograma y dispositivos de espectadores.
+- **Temas de Ventana (Temas complementarios):** Configura los temas complementarios para pantallas secundarias. De forma predeterminada, todos los temas disponibles están seleccionados. Durante una carrera, la barra de menús muestra estrictamente los temas configurados para el tema principal. Los temas se pueden seleccionar individualmente o gestionar con la acción de un clic **Seleccionar todo** en el Editor de Temas. Cuando se crea un tema nuevo, se añade automáticamente a todos los temas existentes que tengan todos seleccionados.
 
 ---
 

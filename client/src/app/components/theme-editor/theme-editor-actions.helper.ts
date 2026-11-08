@@ -9,6 +9,7 @@ import { Theme } from "@app/models/theme";
 import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
 
 import {
+  addThemeToThemesWithAllSelected,
   buildDuplicateThemeTemplate,
   buildNewThemeTemplate,
   cloneTheme,
@@ -28,6 +29,7 @@ export async function handleStartNewTheme(comp: any): Promise<void> {
     );
     if (created) {
       comp.themeService?.initialize();
+      addThemeToThemesWithAllSelected(comp.allThemes, created.entity_id);
       comp.allThemes.push(created);
       comp.selectThemeById(created.entity_id);
       comp.isEditMode = true;
@@ -53,6 +55,7 @@ export async function handleDuplicateCurrentTheme(comp: any): Promise<void> {
     );
     if (created) {
       comp.themeService?.initialize();
+      addThemeToThemesWithAllSelected(comp.allThemes, created.entity_id);
       comp.allThemes.push(created);
       comp.selectThemeById(created.entity_id);
       comp.isEditMode = true;

@@ -953,6 +953,12 @@ public class DatabaseInitializer {
       }
     }
 
+    List<String> companionIds = theme.getCompanionThemeIds();
+    if (theme.isDefault() && (companionIds == null || companionIds.isEmpty())) {
+      companionIds = new ArrayList<>(Theme.DEFAULT_FACTORY_THEME_IDS);
+      updated = true;
+    }
+
     if (updated) {
       Theme updatedTheme =
           new Theme(
@@ -964,6 +970,7 @@ public class DatabaseInitializer {
               uiId,
               theme.getDriverStationThemeId(),
               theme.getDriverViewThemeId(),
+              companionIds,
               entityId,
               theme.getId());
       themeRepo.save(updatedTheme);

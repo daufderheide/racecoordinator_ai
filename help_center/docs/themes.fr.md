@@ -20,6 +20,7 @@ Situés dans la barre d'outils supérieure de l'Éditeur de Thèmes, ces réglag
 - **Disposition d'Interface Associée :** Sélectionne la disposition créée dans l'[Éditeur de Dispositions](layout-editor.fr.md) chargée automatiquement sur l'écran principal lors d'une course avec ce thème.
 - **Thème du Poste de Pilotage :** Spécifie le thème utilisé pour les écrans dédiés à une seule voie ou lorsqu'un pilote se connecte via mobile ou tablette.
 - **Thème de la Vue Pilote :** Spécifie le thème utilisé pour les écrans de calendrier et d'information destinés aux spectateurs.
+- **Thèmes de Fenêtre (Thèmes compagnons) :** Configure les thèmes compagnons pour les écrans secondaires. Par défaut, tous les thèmes disponibles sont sélectionnés. En course, la barre de menus affiche strictement les thèmes configurés pour le thème principal. Les thèmes peuvent être gérés un par un ou basculés en un clic avec **Tout sélectionner** dans l'Éditeur de Thèmes. Lorsqu'un nouveau thème est créé, il est automatiquement ajouté à tous les thèmes existants pour lesquels tous sont sélectionnés.
 
 ---
 

@@ -18,6 +18,7 @@ export interface Theme extends Model {
   uiId?: string;
   driver_station_theme_id?: string;
   driver_view_theme_id?: string;
+  companion_theme_ids?: string[];
 }
 
 /** All known theme slot keys for Phase 1 (images). */

@@ -118,6 +118,18 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
 
   themes: Theme[] = [];
 
+  get displayedThemes(): Theme[] {
+    const active = this.themeService?.getActiveTheme?.();
+    const companionIds = active?.companion_theme_ids;
+    if (companionIds === undefined || companionIds === null) {
+      return this.themes;
+    }
+    if (companionIds.length === 0) {
+      return [];
+    }
+    return this.themes.filter((t) => companionIds.includes(t.entity_id));
+  }
+
   get driverViewMenuOptions(): { id: string; value: string; label: string }[] {
     const options: { id: string; value: string; label: string }[] = [];
     for (const p of this.participants()) {
@@ -196,6 +208,13 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
               this.translationService,
             );
           }
+        }),
+      );
+    }
+    if (this.themeService?.activeTheme$) {
+      this.subscriptions.push(
+        this.themeService.activeTheme$.subscribe(() => {
+          // Trigger view update when active theme changes
         }),
       );
     }

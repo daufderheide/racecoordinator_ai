@@ -407,17 +407,137 @@ describe("ThemeEditorComponent", () => {
       }
       expect(component.isConfigValid()).toBeFalse();
     });
+
+    it("should update companion_theme_ids and mark dirty and save in payload", async () => {
+      expect(component.hasChanges()).toBeFalse();
+      component.isEditMode = true;
+      if (component.editingTheme) {
+        component.editingTheme.companion_theme_ids = ["custom_theme_1"];
+      }
+      component.captureState();
+      expect(component.hasChanges()).toBeTrue();
+      expect(component.isDirtyState()).toBeTrue();
+
+      await component.saveCurrentTheme();
+      expect(mockDataService.updateTheme).toHaveBeenCalledWith(
+        "default_classic_rc_ai",
+        jasmine.objectContaining({ companion_theme_ids: ["custom_theme_1"] }),
+      );
+      expect(component.originalTheme?.companion_theme_ids).toEqual([
+        "custom_theme_1",
+      ]);
+    });
+
+    it("should default companion_theme_ids to all themes when selecting a theme without companion_theme_ids", () => {
+      component.selectThemeById("custom_theme_1");
+      expect(component.editingTheme?.companion_theme_ids).toEqual([
+        "default_classic_rc_ai",
+        "custom_theme_1",
+      ]);
+      expect(component.areAllCompanionThemesSelected).toBeTrue();
+    });
+
+    it("should correctly report areAllCompanionThemesSelected", () => {
+      component.isEditMode = true;
+      if (component.editingTheme) {
+        component.editingTheme.companion_theme_ids = [
+          "default_classic_rc_ai",
+          "custom_theme_1",
+        ];
+      }
+      expect(component.areAllCompanionThemesSelected).toBeTrue();
+
+      if (component.editingTheme) {
+        component.editingTheme.companion_theme_ids = ["default_classic_rc_ai"];
+      }
+      expect(component.areAllCompanionThemesSelected).toBeFalse();
+
+      if (component.editingTheme) {
+        component.editingTheme.companion_theme_ids = [];
+      }
+      expect(component.areAllCompanionThemesSelected).toBeFalse();
+
+      component.editingTheme = null as any;
+      expect(component.areAllCompanionThemesSelected).toBeFalse();
+    });
+
+    it("should toggle select all and deselect all companion themes", () => {
+      component.isEditMode = true;
+      if (component.editingTheme) {
+        component.editingTheme.companion_theme_ids = ["default_classic_rc_ai"];
+      }
+      expect(component.areAllCompanionThemesSelected).toBeFalse();
+
+      // When not all are selected, toggle should select all
+      component.toggleSelectAllCompanionThemes();
+      expect(component.editingTheme?.companion_theme_ids).toEqual([
+        "default_classic_rc_ai",
+        "custom_theme_1",
+      ]);
+      expect(component.areAllCompanionThemesSelected).toBeTrue();
+
+      // When all are selected, toggle should deselect all
+      component.toggleSelectAllCompanionThemes();
+      expect(component.editingTheme?.companion_theme_ids).toEqual([]);
+      expect(component.areAllCompanionThemesSelected).toBeFalse();
+      expect(component.isDirtyState()).toBeTrue();
+
+      // When not in edit mode, toggle does nothing
+      component.isEditMode = false;
+      component.toggleSelectAllCompanionThemes();
+      expect(component.editingTheme?.companion_theme_ids).toEqual([]);
+    });
+
+    it("should render select-all button in DOM only when in edit mode and handle click", () => {
+      component.isEditMode = false;
+      fixture.detectChanges();
+
+      let btn = fixture.nativeElement.querySelector(
+        "#theme-select-all-companions-btn",
+      );
+      expect(btn).toBeNull();
+
+      component.isEditMode = true;
+      fixture.detectChanges();
+
+      btn = fixture.nativeElement.querySelector(
+        "#theme-select-all-companions-btn",
+      );
+      expect(btn).not.toBeNull();
+
+      spyOn(component, "toggleSelectAllCompanionThemes").and.callThrough();
+      btn.click();
+      expect(component.toggleSelectAllCompanionThemes).toHaveBeenCalled();
+    });
   });
 
   describe("CRUD Actions", () => {
-    it("onAddNewTheme should create a new theme and switch to edit mode", async () => {
+    it("onAddNewTheme should create a new theme, switch to edit mode, and add new ID to existing themes with all selected", async () => {
+      component.allThemes[0].companion_theme_ids = [
+        "default_classic_rc_ai",
+        "custom_theme_1",
+      ];
+      component.allThemes[1].companion_theme_ids = ["default_classic_rc_ai"]; // subset
+
       await component.onAddNewTheme();
       expect(mockDataService.createTheme).toHaveBeenCalled();
       expect(component.allThemes.length).toBe(3);
       expect(component.isEditMode).toBeTrue();
+
+      const createdId = component.allThemes[2].entity_id;
+      expect(component.allThemes[0].companion_theme_ids).toContain(createdId);
+      expect(component.allThemes[1].companion_theme_ids).not.toContain(
+        createdId,
+      );
     });
 
-    it("onCopyTheme should duplicate selected theme and switch to edit mode", async () => {
+    it("onCopyTheme should duplicate selected theme, switch to edit mode, and add new ID to themes with all selected", async () => {
+      component.allThemes[0].companion_theme_ids = [
+        "default_classic_rc_ai",
+        "custom_theme_1",
+      ];
+      component.allThemes[1].companion_theme_ids = ["default_classic_rc_ai"]; // subset
+
       await component.onCopyTheme();
       expect(mockDataService.createTheme).toHaveBeenCalledWith(
         jasmine.objectContaining({
@@ -427,6 +547,10 @@ describe("ThemeEditorComponent", () => {
       );
       expect(component.allThemes.length).toBe(3);
       expect(component.isEditMode).toBeTrue();
+
+      const copyId = component.allThemes[2].entity_id;
+      expect(component.allThemes[0].companion_theme_ids).toContain(copyId);
+      expect(component.allThemes[1].companion_theme_ids).not.toContain(copyId);
     });
 
     it("onDeleteTheme should block deleting default themes", () => {

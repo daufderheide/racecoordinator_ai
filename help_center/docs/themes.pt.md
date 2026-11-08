@@ -20,6 +20,7 @@ Localizadas na barra de controlos superior do Editor de Temas, estas configuraç
 - **Layout de Interface Vinculado:** Seleciona o layout de ecrã criado no [Editor de Layout](layout-editor.md) que é carregado automaticamente no ecrã principal da corrida quando este tema é selecionado.
 - **Tema da Estação do Piloto:** Especifica o tema usado ao abrir uma estação de piloto de pista única ou quando um piloto se conecta através de um dispositivo móvel ou tablet.
 - **Tema de Visualização do Piloto:** Especifica o tema usado para ecrãs de calendário de pistas múltiplas e monitores de espetadores.
+- **Temas de Janela (Temas complementares):** Configura temas complementares para ecrãs secundários. Por padrão, todos os temas disponíveis estão selecionados. Durante uma corrida, a barra de menus apresenta estritamente os temas configurados no tema principal. Os temas podem ser geridos individualmente ou ativados/desativados de uma só vez com **Selecionar tudo** no Editor de Temas. Quando um novo tema é criado, ele é adicionado automaticamente a todos os temas existentes que têm todos selecionados.
 
 ---
 
