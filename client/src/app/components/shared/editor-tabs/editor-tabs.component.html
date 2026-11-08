@@ -1,7 +1,11 @@
 @if (tabs().length > 0) {
   <div class="editor-tabs-container">
     @for (tab of tabs(); track tab.id) {
-      <button class="editor-tab" (click)="onTabClick(tab.id)">
+      <button
+        class="editor-tab"
+        [class.active]="tab.active"
+        (click)="onTabClick(tab.id)"
+      >
         {{ tab.label }}
       </button>
     }

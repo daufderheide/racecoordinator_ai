@@ -54,3 +54,16 @@
   color: #38bdf8;
   border-color: rgba(56, 189, 248, 0.5);
 }
+
+.editor-tab.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+.editor-tab.active:hover {
+  background: #0369a1;
+  color: #ffffff;
+  border-color: #38bdf8;
+}

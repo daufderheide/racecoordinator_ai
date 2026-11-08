@@ -395,7 +395,10 @@ export class RaceEditorComponent
   }
 
   get raceTabs(): EditorTab[] {
-    return RaceEditorUiHelper.getRaceTabs(this.translationService);
+    return RaceEditorUiHelper.getRaceTabs(
+      this.translationService,
+      this.sectionsExpanded,
+    );
   }
 
   scrollToAndExpandSection(tabId: string) {

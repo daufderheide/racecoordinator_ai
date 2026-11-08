@@ -4,6 +4,7 @@ import { Component, input, output } from "@angular/core";
 export interface EditorTab {
   id: string;
   label: string;
+  active?: boolean;
 }
 
 @Component({

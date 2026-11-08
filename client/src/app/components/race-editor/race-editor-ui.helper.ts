@@ -15,43 +15,55 @@ export interface RaceEditorSections {
 }
 
 export class RaceEditorUiHelper {
-  static getRaceTabs(translationService: TranslationService): EditorTab[] {
+  static getRaceTabs(
+    translationService: TranslationService,
+    sectionsExpanded?: RaceEditorSections,
+  ): EditorTab[] {
     return [
       {
         id: "general-section",
         label: translationService.translate("RE_GENERAL_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.general : false,
       },
       {
         id: "heats-section",
         label: translationService.translate("RE_HEATS_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.heats : false,
       },
       {
         id: "scoring-section",
         label: translationService.translate("RE_SCORING_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.scoring : false,
       },
       {
         id: "group-section",
         label: translationService.translate("RE_GROUPS_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.groups : false,
       },
       {
         id: "start-method-section",
         label: translationService.translate("RE_START_METHOD_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.start_method : false,
       },
       {
         id: "team-options-section",
         label: translationService.translate("RE_TEAM_OPTIONS_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.team : false,
       },
       {
         id: "analog-fuel-section",
         label: translationService.translate("RE_ANALOG_FUEL_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.fuel_analog : false,
       },
       {
         id: "digital-fuel-outer-section",
         label: translationService.translate("RE_DIGITAL_FUEL_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.fuel_digital : false,
       },
       {
         id: "season-points-section",
         label: translationService.translate("SS_TITLE"),
+        active: sectionsExpanded ? !!sectionsExpanded.season_points : false,
       },
     ];
   }
@@ -176,7 +188,7 @@ export class RaceEditorUiHelper {
 
     const sectionKey = sectionMap[tabId];
     if (sectionKey) {
-      sectionsExpanded[sectionKey] = true;
+      sectionsExpanded[sectionKey] = !sectionsExpanded[sectionKey];
       this.saveExpanderState(sectionsExpanded);
     }
 
