@@ -30,13 +30,33 @@ L'**Arduino UNO Q** combine un nano-ordinateur Linux 64 bits (SBC) avec un micro
 
 ## Installation étape par étape
 
-### Étape 1 : Préparer la carte et se connecter via SSH
-1. Installez **Arduino Linux OS** (Debian 12 arm64) sur l'Uno Q.
-2. Connectez la carte à votre réseau local via Wi-Fi ou Ethernet :
-   * **Configuration Wi-Fi au premier démarrage** : Lors du démarrage initial, l'assistant de configuration vous invite à configurer le réseau sans fil.
-   * **Remarque sur la première connexion** : La connexion Wi-Fi peut ne pas prendre effet immédiatement après la saisie, et les commandes de terminal manuelles telles que `sudo nmcli dev wifi connect "Votre_SSID" password "Votre_MotDePasse"` peuvent également échouer au premier démarrage. Si cela se produit, exécutez simplement `sudo reboot`. Après le redémarrage, la carte réseau sans fil s'initialise correctement et se connecte automatiquement à votre réseau Wi-Fi configuré.
+### Étape 1 : Préparer la carte et se connecter via le réseau
+
+1. **Démarrer la carte** *(Le flashage n'est généralement pas nécessaire)* :
+   * Votre Arduino Uno Q est livré avec **Arduino Linux OS (Debian 12 arm64) préinstallé** sur sa mémoire flash eMMC interne de 32 Go. Connectez simplement la carte à l'alimentation pour démarrer le système d'exploitation.
+   * *(Remarque : Flasher une image du système d'exploitation n'est nécessaire que si vous récupérez un système corrompu ou effectuez une réinitialisation d'usine complète).*
+
+2. **Configuration de la connexion réseau** :
+   > [!IMPORTANT]
+   > **Accès Internet requis uniquement lors de la configuration initiale** : Une connexion réseau avec accès Internet est strictement requise lors de cette configuration initiale pour mettre à jour les paquets et télécharger les prérequis. Une fois la configuration terminée, Race Coordinator AI fonctionne à 100 % localement et hors ligne, sans nécessiter de connexion Internet. Cependant, laisser la carte connectée à votre réseau local offre des avantages constants majeurs :
+   > - **Mises à jour logicielles automatiques** : Téléchargez et installez facilement les nouvelles versions de Race Coordinator AI et les mises à jour de micrologiciel directement depuis l'interface web.
+   > - **Accès client à distance** : Les directeurs de course, pilotes et spectateurs peuvent connecter leurs smartphones, tablettes ou ordinateurs portables directement à l'interface web de la carte (`http://<hostname>:7070` ou `http://<ADRESSE_IP>:7070`) via votre réseau local.
+
+   * **Configuration Wi-Fi via l'assistant à l'écran** : Lors du premier démarrage, l'assistant de configuration à l'écran vous invite à configurer le réseau sans fil. Sélectionnez votre réseau Wi-Fi et saisissez le mot de passe.
+   * **Alternative : Configurer le Wi-Fi en ligne de commande** : Si vous n'avez pas configuré le Wi-Fi via l'assistant ou si vous devez le configurer manuellement dans le terminal :
+     ```bash
+     # Lister les réseaux sans fil disponibles :
+     nmcli dev wifi list
+
+     # Se connecter à votre réseau Wi-Fi :
+     sudo nmcli dev wifi connect "Votre_SSID" password "Votre_MotDePasse"
+     ```
+   * **Alternative : Ethernet filaire** : Branchez simplement un câble Ethernet sur la carte (ou un adaptateur Ethernet USB-C). L'adaptateur réseau se configure automatiquement via DHCP.
+   * **Remarque sur la première connexion** : La connexion Wi-Fi peut ne pas prendre effet immédiatement après la première saisie, ou les commandes manuelles `nmcli` peuvent afficher des erreurs temporaires au premier démarrage. Si cela se produit, exécutez simplement `sudo reboot`. Après le redémarrage, la carte réseau sans fil s'initialise correctement et se connecte automatiquement à votre réseau Wi-Fi configuré.
    * **Appliquer les mises à jour de la carte et du micrologiciel** : Lors du redémarrage (ou lorsque le système vous y invite), il peut vous être demandé si vous souhaitez mettre à jour divers packages et composants du micrologiciel sur la carte. Il est fortement recommandé d'accepter et d'effectuer toutes les mises à jour suggérées, car le micrologiciel d'origine en usine est souvent obsolète. Notez que cette mise à jour initiale peut prendre un certain temps (souvent 5 à 10+ minutes selon la vitesse du réseau et la taille des paquets) ; laissez le processus se terminer sans interruption.
-3. Activer SSH sur la carte et se connecter :
+
+3. **Activer SSH sur la carte et se connecter (Recommandé)** :
+   * La configuration de la carte est plus simple via SSH depuis votre ordinateur, car vous pouvez copier et coller directement les commandes d'installation.
    * **Activer le service SSH** : Par défaut, le serveur SSH n'est pas actif sur la carte. Depuis le terminal local (à l'aide du clavier et de l'écran connectés à la carte), activez et démarrez le service SSH :
      ```bash
      sudo systemctl enable --now ssh

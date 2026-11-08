@@ -30,13 +30,33 @@ El **Arduino UNO Q** combina una computadora de placa única (SBC) Linux de 64 b
 
 ## Instalación paso a paso
 
-### Paso 1: Preparar la placa y conectarse mediante SSH
-1. Instale **Arduino Linux OS** (Debian 12 arm64) en el Uno Q.
-2. Conecte la placa a su red local mediante Wi-Fi o Ethernet:
-   * **Configuración de Wi-Fi en el primer inicio**: En el inicio inicial, el asistente de configuración le solicitará configurar la red inalámbrica.
-   * **Nota sobre la primera conexión**: Es posible que la conexión Wi-Fi no surta efecto de inmediato tras ingresarla por primera vez, y los comandos manuales de terminal como `sudo nmcli dev wifi connect "Su_SSID" password "Su_Contraseña"` también podrían fallar en el primer arranque. Si esto sucede, simplemente ejecute `sudo reboot`. Al reiniciar, el adaptador inalámbrico se inicializa correctamente y se conecta automáticamente a su red Wi-Fi configurada.
+### Paso 1: Preparar la placa y conectarse a través de la red
+
+1. **Encender la placa** *(Por lo general, no es necesario flashear)*:
+   * Su Arduino Uno Q viene con **Arduino Linux OS (Debian 12 arm64) preinstalado** en su memoria flash eMMC interna de 32 GB. Simplemente conecte la placa a la corriente para iniciar el sistema operativo.
+   * *(Nota: Flashear una imagen del sistema operativo solo es necesario si está recuperando un sistema dañado o realizando un restablecimiento completo de fábrica).*
+
+2. **Configuración de la conexión de red**:
+   > [!IMPORTANT]
+   > **Acceso a Internet solo necesario durante la configuración inicial**: Se requiere estrictamente una conexión de red con acceso a Internet durante esta configuración inicial para actualizar paquetes y descargar prerrequisitos. Una vez completada la configuración, Race Coordinator AI funciona 100% de forma local y sin conexión, sin requerir conexión a Internet. Sin embargo, mantener la placa conectada a su red local ofrece importantes beneficios continuos:
+   > - **Actualizaciones automáticas de software**: Descargue e instale nuevas versiones de Race Coordinator AI y actualizaciones de firmware directamente desde la interfaz web.
+   > - **Acceso remoto de clientes**: Los directores de carrera, pilotos y espectadores pueden conectar sus teléfonos, tabletas o computadoras portátiles directamente a la interfaz web de la placa (`http://<hostname>:7070` o `http://<DIRECCIÓN_IP>:7070`) a través de su red local.
+
+   * **Configuración de Wi-Fi mediante el asistente en pantalla**: En el primer arranque, el asistente de configuración en pantalla le solicitará configurar la red inalámbrica. Seleccione su red Wi-Fi e ingrese la contraseña.
+   * **Alternativa: Configurar Wi-Fi mediante la línea de comandos**: Si no configuró el Wi-Fi durante el asistente o necesita configurarlo manualmente en la terminal:
+     ```bash
+     # Listar redes inalámbricas disponibles:
+     nmcli dev wifi list
+
+     # Conectarse a su red Wi-Fi:
+     sudo nmcli dev wifi connect "Su_SSID" password "Su_Contraseña"
+     ```
+   * **Alternativa: Ethernet por cable**: Simplemente conecte un cable Ethernet a la placa (o un adaptador Ethernet USB-C). El adaptador de red se configura automáticamente mediante DHCP.
+   * **Nota sobre la primera conexión**: La conexión Wi-Fi puede no surtir efecto de inmediato tras ingresarla por primera vez, o los comandos manuales `nmcli` pueden mostrar errores temporales en el primer arranque. Si esto sucede, simplemente ejecute `sudo reboot`. Al reiniciar, el adaptador inalámbrico se inicializa correctamente y se conecta automáticamente a su red Wi-Fi configurada.
    * **Aplicar actualizaciones de la placa y del firmware**: Al reiniciar (o cuando el sistema lo solicite), es posible que se le pregunte si desea actualizar varios paquetes y componentes de firmware en la placa. Se recomienda encarecidamente aceptar y realizar todas las actualizaciones sugeridas, ya que el firmware de fábrica suele estar desactualizado. Tenga en cuenta que esta actualización inicial puede demorar bastante (a menudo entre 5 y 10 minutos o más, según la velocidad de la red y el tamaño de los paquetes), así que permita que se complete sin interrupciones.
-3. Habilitar SSH en la placa y conectarse:
+
+3. **Habilitar SSH en la placa y conectarse (Recomendado)**:
+   * Configurar la placa es más sencillo mediante SSH desde su computadora, ya que puede copiar y pegar los comandos de instalación directamente.
    * **Habilitar el servicio SSH**: De forma predeterminada, el servidor SSH no se está ejecutando en la placa. Desde la terminal local (usando el teclado y la pantalla conectados a la placa), habilite e inicie el servicio SSH:
      ```bash
      sudo systemctl enable --now ssh

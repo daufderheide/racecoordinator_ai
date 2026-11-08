@@ -30,18 +30,38 @@ O **Arduino UNO Q** combina um Computador de Placa Única (SBC) Linux de 64 bits
 
 ## Instalação Passo a Passo
 
-### Passo 1: Preparar a Placa e Conectar via SSH
-1. Instale o **Arduino Linux OS** (Debian 12 arm64) no Uno Q.
-2. Conecte a placa à sua rede local via Wi-Fi ou Ethernet:
-   * **Configuração de Wi-Fi na primeira inicialização**: Na inicialização inicial, o assistente de configuração solicitará a configuração da rede sem fio.
-   * **Nota sobre a primeira conexão**: A conexão Wi-Fi pode não entrar em vigor imediatamente após a primeira inserção, e comandos manuais de terminal como `sudo nmcli dev wifi connect "Seu_SSID" password "Sua_Senha"` também podem falhar na primeira inicialização. Se isso ocorrer, basta executar `sudo reboot`. Após reiniciar, o adaptador de rede sem fio se inicializa corretamente e se conecta automaticamente à sua rede Wi-Fi configurada.
-   * **Aplicar atualizações da placa e do firmware**: Ao reiniciar (ou quando solicitado pelo sistema), pode ser perguntado se você deseja atualizar vários pacotes e componentes de firmware na placa. É altamente recomendável aceitar e executar todas as atualizações sugeridas, pois o firmware de fábrica geralmente está desatualizado. Observe que essa atualização inicial pode levar algum tempo (geralmente de 5 a mais de 10 minutos, dependendo da velocidade da rede e do tamanho dos pacotes); permita que ela seja concluída sem interrupções.
-3. Habilitar SSH na placa e conectar:
-   * **Habilitar o serviço SSH**: Por padrão, o servidor SSH não está em execução na placa. A partir do terminal local (usando o teclado e a tela conectados à placa), habilite e inicie o serviço SSH:
+### Passo 1: Preparar a Placa e Conectar via Rede
+
+1. **Ligar a Placa** *(A regravação/flash geralmente não é necessária)*:
+   * O seu Arduino Uno Q vem com o **Arduino Linux OS (Debian 12 arm64) pré-instalado** no armazenamento flash eMMC interno de 32 GB. Basta conectar a placa à energia para iniciar o sistema operacional.
+   * *(Nota: Gravar uma imagem do sistema operacional só é necessário se você estiver recuperando um sistema corrompido ou realizando uma redefinição completa de fábrica).*
+
+2. **Configuração da Conexão de Rede**:
+   > [!IMPORTANT]
+   > **Acesso à Internet Necessário Apenas Durante a Configuração Inicial**: Uma conexão de rede com acesso à internet é estritamente necessária durante esta configuração inicial para atualizar pacotes e baixar pré-requisitos. Uma vez concluída a configuração, o Race Coordinator AI funciona 100% localmente e offline, sem exigir conexão com a internet. No entanto, manter a placa conectada à sua rede local oferece grandes benefícios contínuos:
+   > - **Atualizações Automáticas de Software**: Baixe e instale facilmente novas versões do Race Coordinator AI e atualizações de firmware diretamente pela interface web.
+   > - **Acesso de Clientes Remotos**: Diretores de prova, pilotos e espectadores podem conectar seus smartphones, tablets ou laptops diretamente à interface web da placa (`http://<hostname>:7070` ou `http://<ENDEREÇO_IP>:7070`) pela sua rede local.
+
+   * **Configuração de Wi-Fi pelo Assistente na Tela**: Na primeira inicialização, o assistente de configuração solicitará a configuração da rede sem fio. Selecione sua rede Wi-Fi e insira a senha.
+   * **Alternativa: Configurar o Wi-Fi via Linha de Comando**: Se você não configurou o Wi-Fi pelo assistente ou precisa configurá-lo manualmente no terminal:
+     ```bash
+     # Listar redes sem fio disponíveis:
+     nmcli dev wifi list
+
+     # Conectar-se à sua rede Wi-Fi:
+     sudo nmcli dev wifi connect "Seu_SSID" password "Sua_Senha"
+     ```
+   * **Alternativa: Ethernet Cabeada**: Basta conectar um cabo Ethernet à placa (ou um adaptador Ethernet USB-C). O adaptador de rede é configurado automaticamente via DHCP.
+   * **Nota sobre a Primeira Conexão**: A conexão Wi-Fi pode não entrar em vigor imediatamente após a primeira inserção, ou comandos manuais `nmcli` podem apresentar erros temporários na primeira inicialização. Se isso ocorrer, basta executar `sudo reboot`. Após reiniciar, o adaptador de rede sem fio inicializa-se corretamente e conecta-se automaticamente à sua rede Wi-Fi configurada.
+   * **Aplicar Atualizações da Placa e do Firmware**: Ao reiniciar (ou quando solicitado pelo sistema), pode ser perguntado se você deseja atualizar vários pacotes e componentes de firmware na placa. É altamente recomendável aceitar e executar todas as atualizações sugeridas, pois o firmware de fábrica geralmente está desatualizado. Observe que essa atualização inicial pode levar algum tempo (geralmente de 5 a mais de 10 minutos, dependendo da velocidade da rede e do tamanho dos pacotes); permita que ela seja concluída sem interrupções.
+
+3. **Habilitar SSH na Placa e Conectar (Recomendado)**:
+   * Configurar a placa é mais fácil via SSH a partir do seu computador, pois você pode copiar e colar os comandos de instalação diretamente.
+   * **Habilitar o Serviço SSH**: Por padrão, o servidor SSH não está em execução na placa. A partir do terminal local (usando o teclado e a tela conectados à placa), habilite e inicie o serviço SSH:
      ```bash
      sudo systemctl enable --now ssh
      ```
-   * **Descobrir o nome de host e o endereço IP**: Execute `hostname` e `hostname -I` na placa para descobrir o nome de host atribuído e o endereço IP local da sua placa (a configuração de fábrica geralmente atribui um nome exclusivo como `allianora` em vez de `uno-q`):
+   * **Descobrir o Nome de Host e o Endereço IP**: Execute `hostname` e `hostname -I` na placa para descobrir o nome de host atribuído e o endereço IP local da sua placa (a configuração de fábrica geralmente atribui um nome exclusivo como `allianora` em vez de `uno-q`):
      ```bash
      hostname
      hostname -I
