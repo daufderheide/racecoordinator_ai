@@ -740,6 +740,43 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
+  test("should display Scoring section with Step-Up configuration", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    // Collapse other sections to isolate Scoring
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+
+    // Expand Scoring
+    await ensureSectionState(page, "Scoring", true);
+
+    // Set Step-Up count to 2
+    const stepUpInput = page.locator("#step-up-input");
+    await stepUpInput.waitFor({ state: "visible", timeout: 10000 });
+    await stepUpInput.fill("2");
+    await TestSetupHelper.blurActiveElement(page);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator("#scoring-section")).toHaveScreenshot(
+      "race-editor-scoring-step-up-configured.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
   test("should display Groups section expanded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -773,6 +810,50 @@ test.describe("Race Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#group-section")).toHaveScreenshot(
       "race-editor-groups-expanded.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
+  test("should display Groups section with Rotate Group Heats enabled in step-up race", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    // Collapse sections to isolate Groups
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+
+    // Expand Groups
+    await ensureSectionState(page, "Groups", true);
+
+    // Enable groups
+    const groupEnabledLabel = page
+      .locator('#group-section label:has-text("Enable Groups")')
+      .first();
+    await groupEnabledLabel.scrollIntoViewIfNeeded();
+    await groupEnabledLabel.click();
+
+    // Enable Rotate Group Heats (Interleave)
+    const rotateLabel = page.locator("#groups-rotate-heats-input").first();
+    await rotateLabel.scrollIntoViewIfNeeded();
+    await rotateLabel.click();
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator("#group-section")).toHaveScreenshot(
+      "race-editor-groups-rotate-heats.png",
       { timeout: 15000, maxDiffPixelRatio: 0.05 },
     );
   });

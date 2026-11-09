@@ -382,6 +382,193 @@ test.describe("Asset Manager Visuals", () => {
     );
   });
 
+  test("should display custom rotation editor with step up pool, steps, and boundaries", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewCustomRotation();
+    await page
+      .locator("app-custom-rotation-editor .page-container")
+      .waitFor({ state: "visible" });
+
+    // Add rotation
+    await page
+      .locator("app-editor-title #add-item-btn")
+      .waitFor({ state: "visible" });
+    await page.locator("app-editor-title #add-item-btn").click();
+
+    // Wait for the rotation card
+    await page
+      .locator("app-custom-rotation-editor .rotation-expander-card")
+      .first()
+      .waitFor({ state: "visible" });
+
+    // Select Speedway track (4 lanes)
+    const trackSelect = page.locator(
+      "app-custom-rotation-editor app-custom-select",
+    );
+    await trackSelect.locator(".custom-select-trigger").click();
+    await trackSelect
+      .locator('.custom-select-option:has-text("Speedway")')
+      .click();
+
+    // Add Heat 2
+    await page
+      .locator("app-custom-rotation-editor .add-heat-card-btn")
+      .first()
+      .click();
+
+    // In Heat 1: toggle step boundary
+    const boundaryBtn = page
+      .locator("app-custom-rotation-editor .boundary-badge")
+      .first();
+    await boundaryBtn.click();
+
+    // Populate Heat 1 with drivers 1-4
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(0)
+      .dragTo(page.locator("#rot-0-heat-0-lane-0"));
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(1)
+      .dragTo(page.locator("#rot-0-heat-0-lane-1"));
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(2)
+      .dragTo(page.locator("#rot-0-heat-0-lane-2"));
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(3)
+      .dragTo(page.locator("#rot-0-heat-0-lane-3"));
+
+    // Populate Heat 2 with driver 5, 6 and Step-Up 1, Step-Up 2
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(4)
+      .dragTo(page.locator("#rot-0-heat-1-lane-0"));
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(5)
+      .dragTo(page.locator("#rot-0-heat-1-lane-1"));
+    await page
+      .locator("#step-up-pool .step-up-item")
+      .nth(0)
+      .dragTo(page.locator("#rot-0-heat-1-lane-2"));
+    await page
+      .locator("#step-up-pool .step-up-item")
+      .nth(1)
+      .dragTo(page.locator("#rot-0-heat-1-lane-3"));
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page).toHaveScreenshot(
+      "asset-manager-custom-rotation-step-up.png",
+      {
+        maxDiffPixelRatio: 0.1,
+        threshold: 0.2,
+      },
+    );
+  });
+
+  test("should display custom rotation editor with groups, step up pool, and step boundaries", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewCustomRotation();
+    await page
+      .locator("app-custom-rotation-editor .page-container")
+      .waitFor({ state: "visible" });
+
+    // Add rotation
+    await page
+      .locator("app-editor-title #add-item-btn")
+      .waitFor({ state: "visible" });
+    await page.locator("app-editor-title #add-item-btn").click();
+
+    // Wait for the rotation card
+    await page
+      .locator("app-custom-rotation-editor .rotation-expander-card")
+      .first()
+      .waitFor({ state: "visible" });
+
+    // Select Speedway track (4 lanes)
+    const trackSelect = page.locator(
+      "app-custom-rotation-editor app-custom-select",
+    );
+    await trackSelect.locator(".custom-select-trigger").click();
+    await trackSelect
+      .locator('.custom-select-option:has-text("Speedway")')
+      .click();
+
+    // Add Heat 2
+    await page
+      .locator("app-custom-rotation-editor .add-heat-card-btn")
+      .first()
+      .click();
+
+    // Add Heat 3
+    await page
+      .locator("app-custom-rotation-editor .add-heat-card-btn")
+      .first()
+      .click();
+
+    // In Heat 1: toggle step boundary
+    const boundaryBtns = page.locator(
+      "app-custom-rotation-editor .boundary-badge",
+    );
+    await boundaryBtns.nth(0).click();
+
+    // In Heat 2: set group to 2 and toggle step boundary
+    const groupInputs = page.locator("app-custom-rotation-editor .group-input");
+    await groupInputs.nth(1).fill("2");
+    await boundaryBtns.nth(1).click();
+
+    // In Heat 3: Group 1, step 2 (auto-derived) - drag Step-Up 1, Step-Up 2 into lanes
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(0)
+      .dragTo(page.locator("#rot-0-heat-2-lane-0"));
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(1)
+      .dragTo(page.locator("#rot-0-heat-2-lane-1"));
+    await page
+      .locator("#step-up-pool .step-up-item")
+      .nth(0)
+      .dragTo(page.locator("#rot-0-heat-2-lane-2"));
+    await page
+      .locator("#step-up-pool .step-up-item")
+      .nth(1)
+      .dragTo(page.locator("#rot-0-heat-2-lane-3"));
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page).toHaveScreenshot(
+      "asset-manager-custom-rotation-group-step-up.png",
+      {
+        maxDiffPixelRatio: 0.1,
+        threshold: 0.2,
+      },
+    );
+  });
+
   test("should zoom custom rotation editor heats list when zoomed in", async ({
     page,
   }) => {
