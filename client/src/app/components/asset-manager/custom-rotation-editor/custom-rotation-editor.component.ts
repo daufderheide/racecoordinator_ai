@@ -753,7 +753,24 @@ export class CustomRotationEditorComponent
     }
   }
 
+  private syncRotationDriverCounts() {
+    this.internalRotations.forEach((rot) => {
+      let maxDriverInHeats = 0;
+      rot.heats?.forEach((heat) => {
+        heat.driverIndices?.forEach((id) => {
+          if (id && id > maxDriverInHeats) {
+            maxDriverInHeats = id;
+          }
+        });
+      });
+      if (maxDriverInHeats > (rot.numDrivers || 0)) {
+        rot.numDrivers = maxDriverInHeats;
+      }
+    });
+  }
+
   save() {
+    this.syncRotationDriverCounts();
     this.validateAllRotationsLaneEquality();
     if (!this.isConfigValid()) {
       return;
@@ -807,6 +824,7 @@ export class CustomRotationEditorComponent
   }
 
   autoSave(triggeredBy: UndoEventType = "push") {
+    this.syncRotationDriverCounts();
     this.validateAllRotationsLaneEquality();
     if (!this.isConfigValid()) {
       return;

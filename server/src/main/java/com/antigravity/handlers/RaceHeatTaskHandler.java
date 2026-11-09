@@ -650,8 +650,17 @@ public class RaceHeatTaskHandler {
                 + rot.getNumDrivers()
                 + " drivers");
       }
+      Map<Integer, Integer> groupSteps = new HashMap<>();
       for (CustomHeat heat : rot.getHeats()) {
-        if (heat.getDriverIndices().size() != numLanes) {
+        int grp = heat.getGroup();
+        int step = heat.getStep() > 0 ? heat.getStep() : groupSteps.getOrDefault(grp, 1);
+        if (heat.isStepUpBoundary()) {
+          groupSteps.put(grp, step + 1);
+        } else {
+          groupSteps.put(grp, step);
+        }
+
+        if (numLanes > 0 && heat.getDriverIndices().size() != numLanes) {
           throw new IllegalArgumentException(
               "Heat must specify "
                   + numLanes
@@ -659,14 +668,14 @@ public class RaceHeatTaskHandler {
                   + numLanes
                   + " lane track");
         }
+        int minDriverIndex = numLanes > 0 ? -numLanes : -16;
+        int maxDriverIndex = Math.max(100, rot.getNumDrivers());
         for (Integer dIdx : heat.getDriverIndices()) {
-          if (dIdx < 0 || dIdx > rot.getNumDrivers()) {
-            throw new IllegalArgumentException(
-                "Invalid driver index "
-                    + dIdx
-                    + " for custom rotation with "
-                    + rot.getNumDrivers()
-                    + " drivers");
+          if (dIdx == null || dIdx < minDriverIndex || dIdx > maxDriverIndex) {
+            throw new IllegalArgumentException("Invalid driver index " + dIdx);
+          }
+          if (dIdx < 0 && step <= 1) {
+            throw new IllegalArgumentException("Step-up drivers are not allowed in step 1");
           }
         }
       }

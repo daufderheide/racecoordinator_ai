@@ -1789,6 +1789,32 @@ describe("CustomRotationEditorComponent", () => {
         expect(stepUpItem).toBeTruthy();
         expect(stepUpItem.textContent).toContain("RD_STEP_UP_N");
       });
+
+      it("should automatically expand rotation numDrivers to maximum driver index in heats on save", fakeAsync(() => {
+        mockDataService.saveCustomRotation = jasmine
+          .createSpy("saveCustomRotation")
+          .and.returnValue(of({}));
+        fixture.detectChanges();
+        component.internalAssetName = "Step-Up";
+        component.addRotation();
+        const rot = component.internalRotations[0];
+        rot.numDrivers = 4;
+        rot.heats![0].driverIndices = [10, 9, 8, 0];
+        mockDataService.saveCustomRotation.calls.reset();
+
+        component.save();
+        tick();
+
+        expect(rot.numDrivers).toBe(10);
+        expect(mockDataService.saveCustomRotation).toHaveBeenCalledWith(
+          "Step-Up",
+          jasmine.any(Number),
+          jasmine.arrayContaining([
+            jasmine.objectContaining({ numDrivers: 10 }),
+          ]),
+          undefined,
+        );
+      }));
     });
   });
 });
