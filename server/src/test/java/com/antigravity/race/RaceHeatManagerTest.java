@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.converters.RaceParticipantConverter;
+import com.antigravity.models.CustomHeat;
+import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
@@ -993,6 +995,11 @@ public class RaceHeatManagerTest {
   }
 
   private com.antigravity.race.Race createStepUpRace(int laneCount, int driverCount, int stepUp) {
+    return createStepUpRace(laneCount, driverCount, stepUp, HeatRotationType.RoundRobin);
+  }
+
+  private com.antigravity.race.Race createStepUpRace(
+      int laneCount, int driverCount, int stepUp, HeatRotationType rotationType) {
     List<Lane> lanes = new ArrayList<>();
     for (int i = 1; i <= laneCount; i++) {
       lanes.add(new Lane("Lane " + i, "color" + i, 100 + i));
@@ -1026,16 +1033,25 @@ public class RaceHeatManagerTest {
             .withTrackEntityId("track-step")
             .withHeatScoring(heatScoring)
             .withOverallScoring(overallScoring)
-            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatRotationType(rotationType)
             .withStepUp(stepUp)
             .build();
 
-    return new com.antigravity.race.Race.Builder()
-        .track(stepTrack)
-        .model(model)
-        .drivers(stepParticipants)
-        .isDemoMode(true)
-        .build();
+    com.antigravity.race.Race.Builder builder =
+        new com.antigravity.race.Race.Builder()
+            .track(stepTrack)
+            .model(model)
+            .drivers(stepParticipants)
+            .isDemoMode(true);
+
+    if (rotationType == HeatRotationType.Custom) {
+      CustomHeat ch1 = new CustomHeat(Arrays.asList(1, 2, 0, 0), 0, true, 1);
+      CustomHeat ch2 = new CustomHeat(Arrays.asList(-1, -2, 3, 0), 0, true, 2);
+      CustomRotation rot = new CustomRotation(driverCount, Arrays.asList(ch1, ch2));
+      builder.customRotations(Collections.singletonList(rot));
+    }
+
+    return builder.build();
   }
 
   @Test
@@ -1087,6 +1103,100 @@ public class RaceHeatManagerTest {
       for (RaceParticipant p : stepRace.getDrivers()) {
         reqBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
       }
+
+      ModifyHeatsResponse response = stepRace.getHeatManager().modifyHeats(reqBuilder.build());
+      assertFalse(response.getSuccess());
+      assertTrue(response.getErrorMessage().contains("RD_ERR_STEP_UP_IN_STEP_ONE"));
+    } finally {
+      stepRace.stop();
+    }
+  }
+
+  @Test
+  public void testValidateStepUp_CustomRotationAllowsVariableStepUpsPerStep() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 5, 2, HeatRotationType.Custom);
+    try {
+      ModifyHeatsRequest.Builder reqBuilder = ModifyHeatsRequest.newBuilder();
+      RaceParticipant p1 = stepRace.getDrivers().get(0);
+      RaceParticipant p2 = stepRace.getDrivers().get(1);
+      RaceParticipant p3 = stepRace.getDrivers().get(2);
+      RaceParticipant p4 = stepRace.getDrivers().get(3);
+      RaceParticipant stepUp1 = RaceParticipant.createStepUpParticipant(1);
+      RaceParticipant stepUp2 = RaceParticipant.createStepUpParticipant(2);
+
+      // Heat 1: Step 1 (boundary = true, 0 step-ups)
+      Heat h1 =
+          new Heat(
+              1,
+              Arrays.asList(new DriverHeatData(p1), new DriverHeatData(p2)),
+              stepRace.getRaceModel().getHeatScoring(),
+              false);
+      h1.setStep(1);
+      h1.setStepUpBoundary(true);
+
+      // Heat 2: Step 2 (boundary = true, 2 step-ups)
+      Heat h2 =
+          new Heat(
+              2,
+              Arrays.asList(
+                  new DriverHeatData(p3), new DriverHeatData(stepUp1), new DriverHeatData(stepUp2)),
+              stepRace.getRaceModel().getHeatScoring(),
+              false);
+      h2.setStep(2);
+      h2.setStepUpBoundary(true);
+
+      // Heat 3: Step 3 (boundary = true, 1 step-up, even though race step_up is 2)
+      Heat h3 =
+          new Heat(
+              3,
+              Arrays.asList(new DriverHeatData(p4), new DriverHeatData(stepUp1)),
+              stepRace.getRaceModel().getHeatScoring(),
+              false);
+      h3.setStep(3);
+      h3.setStepUpBoundary(true);
+
+      reqBuilder.addHeats(HeatConverter.toProto(h1, new HashSet<>()));
+      reqBuilder.addHeats(HeatConverter.toProto(h2, new HashSet<>()));
+      reqBuilder.addHeats(HeatConverter.toProto(h3, new HashSet<>()));
+
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+      reqBuilder.addParticipants(RaceParticipantConverter.toProto(stepUp1, new HashSet<>()));
+      reqBuilder.addParticipants(RaceParticipantConverter.toProto(stepUp2, new HashSet<>()));
+
+      ModifyHeatsResponse response = stepRace.getHeatManager().modifyHeats(reqBuilder.build());
+      assertTrue(
+          "Custom rotation should allow variable step-ups per step: " + response.getErrorMessage(),
+          response.getSuccess());
+    } finally {
+      stepRace.stop();
+    }
+  }
+
+  @Test
+  public void testValidateStepUp_CustomRotationRejectsStepUpInStepOne() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 5, 2, HeatRotationType.Custom);
+    try {
+      ModifyHeatsRequest.Builder reqBuilder = ModifyHeatsRequest.newBuilder();
+      RaceParticipant p1 = stepRace.getDrivers().get(0);
+      RaceParticipant stepUp1 = RaceParticipant.createStepUpParticipant(1);
+
+      // Heat 1: Step 1 with a step-up driver
+      Heat h1 =
+          new Heat(
+              1,
+              Arrays.asList(new DriverHeatData(p1), new DriverHeatData(stepUp1)),
+              stepRace.getRaceModel().getHeatScoring(),
+              false);
+      h1.setStep(1);
+      h1.setStepUpBoundary(true);
+
+      reqBuilder.addHeats(HeatConverter.toProto(h1, new HashSet<>()));
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+      reqBuilder.addParticipants(RaceParticipantConverter.toProto(stepUp1, new HashSet<>()));
 
       ModifyHeatsResponse response = stepRace.getHeatManager().modifyHeats(reqBuilder.build());
       assertFalse(response.getSuccess());

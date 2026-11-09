@@ -107,7 +107,7 @@
       </div>
 
       <!-- Step-Up Drivers -->
-      @if (race() && race().step_up > 0) {
+      @if (isStepUpEnabled) {
         <div class="driver-pool-section step-up-pool-section">
           <div class="section-header">
             <h3>{{ "RE_STEP_UP" | translate }}</h3>
@@ -471,7 +471,7 @@
                 >
                 <h4 class="heat-title-text">
                   {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
-                  @if (race() && race().step_up > 0) {
+                  @if (isStepUpEnabled) {
                     <span class="step-badge"
                       >-
                       {{
@@ -528,7 +528,7 @@
                   >{{ getOriginalHeatDisplay(heat) }}</span
                 >
               </span>
-              @if (race() && race().step_up > 0) {
+              @if (isStepUpEnabled) {
                 <button
                   type="button"
                   class="boundary-badge"

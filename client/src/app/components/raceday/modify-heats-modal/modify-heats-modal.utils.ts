@@ -338,9 +338,14 @@ export function convertHeatsToProto(
     for (let i = 0; i < laneCount; i++) {
       const dhd = h.heatDrivers.find((d) => d.laneIndex === i);
       if (dhd && !isPlaceholderParticipant(dhd.participant)) {
+        const isStepUp = isStepUpParticipant(dhd.participant);
         heatDrivers.push({
           objectId: dhd.objectId,
-          driver: { objectId: dhd.participant.objectId } as any,
+          driver: {
+            objectId: dhd.participant.objectId,
+            isStepUp,
+            stepUpIndex: dhd.participant.stepUpIndex || 0,
+          } as any,
         });
       } else {
         heatDrivers.push({
@@ -835,9 +840,17 @@ export function inferBoundariesFromDrivers(heats: Heat[]): void {
  * When groups are present, steps are tracked independently per group.
  * Every heat is guaranteed to have a valid step (>= 1).
  */
-export function assignStepNumbers(heats: Heat[], stepUp: number): void {
+export function assignStepNumbers(heats: Heat[], stepUp?: number): void {
   if (!heats || heats.length === 0) return;
-  if (!stepUp || stepUp <= 0) return;
+  const hasStepUp =
+    (stepUp != null && stepUp > 0) ||
+    heats.some(
+      (h) =>
+        h.isStepUpBoundary ||
+        (h.step && h.step > 1) ||
+        h.heatDrivers?.some((d) => isStepUpParticipant(d.participant)),
+    );
+  if (!hasStepUp) return;
 
   const groupSteps = new Map<number, number>();
   for (let i = 0; i < heats.length; i++) {

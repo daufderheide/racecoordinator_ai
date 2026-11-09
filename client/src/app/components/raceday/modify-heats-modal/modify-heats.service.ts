@@ -16,6 +16,7 @@ import {
   getParticipantName,
   isDriver,
   isPlaceholderParticipant,
+  isStepUpParticipant,
 } from "./modify-heats-modal.utils";
 
 export interface DropContext {
@@ -292,13 +293,24 @@ export class ModifyHeatsService {
     fromHIdx: number,
     heats: Heat[],
   ): { title: string; message: string } | null {
+    if (
+      isPlaceholderParticipant(participant) ||
+      isStepUpParticipant(participant)
+    ) {
+      return null;
+    }
     const targetGroup = heats[toHIdx].group;
     const findOtherGroupHeat = (p: RaceParticipant) =>
       heats.find(
         (h, idx) =>
           idx !== toHIdx &&
           idx !== fromHIdx &&
-          h.heatDrivers.some((d) => d.participant.objectId === p.objectId),
+          h.heatDrivers.some(
+            (d) =>
+              !isPlaceholderParticipant(d.participant) &&
+              !isStepUpParticipant(d.participant) &&
+              d.participant.objectId === p.objectId,
+          ),
       );
 
     const otherHeat = findOtherGroupHeat(participant);
@@ -316,7 +328,12 @@ export class ModifyHeatsService {
       };
     }
 
-    if (existingOccupant && fromHIdx !== -1) {
+    if (
+      existingOccupant &&
+      !isPlaceholderParticipant(existingOccupant) &&
+      !isStepUpParticipant(existingOccupant) &&
+      fromHIdx !== -1
+    ) {
       const fromTargetGroup = heats[fromHIdx].group;
       const otherHeatForOccupant = findOtherGroupHeat(existingOccupant);
       if (

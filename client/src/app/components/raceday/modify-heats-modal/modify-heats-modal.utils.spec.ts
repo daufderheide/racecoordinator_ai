@@ -764,6 +764,107 @@ describe("modify-heats-modal.utils", () => {
       );
       expect(error).toBeNull();
     });
+
+    it("should allow variable step-up driver counts across steps when rotation is Custom", () => {
+      const race = { heat_rotation_type: "Custom", step_up: 2 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const p2 = createParticipantFromDriver(
+        new Driver("d2", "Driver 2", "D2"),
+      );
+      const p3 = createParticipantFromDriver(
+        new Driver("d3", "Driver 3", "D3"),
+      );
+      const pStep1 = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up 1", "SU1"),
+      );
+      pStep1.isStepUp = true;
+      const pStep2 = createParticipantFromDriver(
+        new Driver("STEP_UP_1", "Step Up 2", "SU2"),
+      );
+      pStep2.isStepUp = true;
+
+      // Heat 1: Step 1 (no step ups)
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", p1, 0), new DriverHeatData("dhd2", p2, 1)],
+        [],
+        false,
+      );
+      h1.step = 1;
+      h1.isStepUpBoundary = true;
+
+      // Heat 2: Step 2 with 2 step-up drivers
+      const h2 = new Heat(
+        "h2",
+        2,
+        [
+          new DriverHeatData("dhd3", p3, 0),
+          new DriverHeatData("dhd4", pStep1, 1),
+          new DriverHeatData("dhd5", pStep2, 2),
+        ],
+        [],
+        false,
+      );
+      h2.step = 2;
+      h2.isStepUpBoundary = true;
+
+      // Heat 3: Step 3 with 1 step-up driver (even though race.step_up is 2)
+      const h3 = new Heat(
+        "h3",
+        3,
+        [
+          new DriverHeatData("dhd6", p3, 0),
+          new DriverHeatData("dhd7", pStep1, 1),
+        ],
+        [],
+        false,
+      );
+      h3.step = 3;
+      h3.isStepUpBoundary = true;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2, h3],
+        [h1, h2, h3],
+        [p1, p2, p3, pStep1, pStep2],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBeNull();
+    });
+
+    it("should still reject step-up drivers in Step 1 for Custom rotation races", () => {
+      const race = { heat_rotation_type: "Custom", step_up: 2 } as any;
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up 1", "SU1"),
+      );
+      pStep.isStepUp = true;
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", pStep, 0)],
+        [],
+        false,
+      );
+      h1.step = 1;
+
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [pStep],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBe("RD_ERR_STEP_UP_IN_STEP_ONE");
+    });
   });
 
   describe("inferBoundariesFromDrivers", () => {

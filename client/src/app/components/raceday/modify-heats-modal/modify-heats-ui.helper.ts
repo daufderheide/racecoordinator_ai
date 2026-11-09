@@ -8,10 +8,15 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   allocateHighlightColor,
+  calculateHeatCardHoverAction,
+  calculateHeatDropAction,
+  collectHeatCardBounds,
   createParticipantFromDriver,
   getHeatHighlightColors as extractHeatHighlightColors,
   getParticipantKey,
   getParticipantMeta,
+  HeatDropAction,
+  isStepUpParticipant,
 } from "./modify-heats-modal.utils";
 
 export class DriverHighlightManager {
@@ -131,4 +136,139 @@ export function getHeatDriverMeta(
     );
   }
   return getParticipantMeta(dhd.participant, translationService);
+}
+
+export function calculateStepUpPool(
+  localHeats: Heat[],
+  configuredStepUp: number,
+  trackLanes: number,
+  isStepUpEnabled: boolean,
+): RaceParticipant[] {
+  let count = configuredStepUp || 0;
+  if (isStepUpEnabled) {
+    count = Math.max(count, trackLanes - 1);
+    for (const h of localHeats) {
+      for (const dhd of h.heatDrivers || []) {
+        if (isStepUpParticipant(dhd.participant)) {
+          if (
+            dhd.participant.stepUpIndex &&
+            dhd.participant.stepUpIndex > count
+          ) {
+            count = dhd.participant.stepUpIndex;
+          }
+          const match =
+            dhd.participant.objectId?.match(/step_up_(\d+)/i) ||
+            dhd.participant.driver?.entity_id?.match(/step_up_(\d+)/i);
+          if (match) {
+            const idx = parseInt(match[1], 10) + 1;
+            if (idx > count) count = idx;
+          }
+        }
+      }
+    }
+  }
+  return createStepUpPool(count);
+}
+
+export function applyTeammateChange(
+  heats: Heat[],
+  heatIdx: number,
+  dhd: DriverHeatData,
+  selectedDriverId: string,
+  allDrivers: Driver[],
+): boolean {
+  const driver = allDrivers.find((d) => d.entity_id === selectedDriverId);
+  if (!driver) return false;
+  const newDhd = new DriverHeatData(
+    dhd.objectId,
+    dhd.participant,
+    dhd.laneIndex,
+    driver,
+  );
+  const heat = heats[heatIdx];
+  if (!heat) return false;
+  heat.heatDrivers = heat.heatDrivers.map((d) =>
+    d.laneIndex === dhd.laneIndex ? newDhd : d,
+  );
+  return true;
+}
+
+export function resolveHeatCardHover(
+  index: number,
+  event: MouseEvent,
+  lastStartedIdx: number,
+  heat: Heat,
+  isHeatStarted: (h: Heat) => boolean,
+): { action: HeatDropAction; hoveredHeatIdx: number } {
+  const cardEl = event.currentTarget as HTMLElement;
+  if (!cardEl) return { action: null, hoveredHeatIdx: -1 };
+  const action = calculateHeatCardHoverAction(
+    index,
+    cardEl.getBoundingClientRect(),
+    event.clientX,
+    lastStartedIdx,
+    heat,
+    isHeatStarted,
+  );
+  return {
+    action,
+    hoveredHeatIdx: action?.type === "swap" ? action.targetIndex : -1,
+  };
+}
+
+export function resolveHeatDropFromPoint(
+  pointerX: number,
+  pointerY: number,
+  heats: Heat[],
+  lastStartedIdx: number,
+  isHeatStarted: (h: Heat) => boolean,
+): { action: HeatDropAction; hoveredHeatIdx: number } {
+  const cards = collectHeatCardBounds(heats, isHeatStarted);
+  const action = calculateHeatDropAction(
+    pointerX,
+    pointerY,
+    cards,
+    lastStartedIdx,
+  );
+  return {
+    action,
+    hoveredHeatIdx: action?.type === "swap" ? action.targetIndex : -1,
+  };
+}
+
+export function handleUndoRedoKey(
+  event: KeyboardEvent,
+  undoManager: { undo: () => void; redo: () => void },
+): void {
+  if (!event.metaKey && !event.ctrlKey) return;
+  if (event.key === "z") {
+    event.preventDefault();
+    if (event.shiftKey) {
+      undoManager.redo();
+    } else {
+      undoManager.undo();
+    }
+  } else if (event.key === "y") {
+    event.preventDefault();
+    undoManager.redo();
+  }
+}
+
+export function handleHeatHoverAction(
+  index: number,
+  isDraggingHeat: boolean,
+  localHeats: Heat[],
+  lastStartedIdx: number,
+  isHeatStarted: (h: Heat) => boolean,
+): { action: HeatDropAction; hoveredHeatIdx: number } {
+  if (!isDraggingHeat || index === -1) {
+    return { action: null, hoveredHeatIdx: -1 };
+  }
+  if (index > lastStartedIdx && !isHeatStarted(localHeats[index])) {
+    return {
+      action: { type: "swap", targetIndex: index },
+      hoveredHeatIdx: index,
+    };
+  }
+  return { action: null, hoveredHeatIdx: -1 };
 }

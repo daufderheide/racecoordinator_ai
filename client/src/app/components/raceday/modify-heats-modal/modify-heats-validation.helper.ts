@@ -90,7 +90,7 @@ export function validateGroups(
   for (const h of localHeats) {
     for (const dhd of h.heatDrivers) {
       const p = dhd.participant;
-      if (isPlaceholderParticipant(p)) continue;
+      if (isPlaceholderParticipant(p) || isStepUpParticipant(p)) continue;
 
       if (
         participantGroups.has(p.objectId) &&
@@ -128,10 +128,20 @@ export function validateStepUpHeats(
   race: Race,
   translationService: TranslationService,
 ): string | null {
-  if (!race.step_up || race.step_up <= 0) {
+  const isCustom = race?.heat_rotation_type === "Custom";
+  const hasStepUp =
+    (race?.step_up && race.step_up > 0) ||
+    isCustom ||
+    localHeats.some(
+      (h) =>
+        h.isStepUpBoundary ||
+        (h.step && h.step > 1) ||
+        h.heatDrivers?.some((d) => isStepUpParticipant(d.participant)),
+    );
+  if (!hasStepUp) {
     return null;
   }
-  const stepUp = race.step_up;
+  const stepUp = race?.step_up || 0;
   const stepMap = new Map<number, Heat[]>();
   for (const h of localHeats) {
     const step = h.step || 1;
@@ -158,25 +168,27 @@ export function validateStepUpHeats(
       }
     }
   }
-  if (step1Drivers.size < 2) {
+  if (!isCustom && step1Drivers.size < 2) {
     return translationService.translate(
       "RD_ERR_STEP_UP_BOTTOM_STEP_MIN_DRIVERS",
     );
   }
 
-  for (let sIdx = 1; sIdx < sortedSteps.length; sIdx++) {
-    const stepNum = sortedSteps[sIdx];
-    const stepHeats = stepMap.get(stepNum) || [];
-    for (const h of stepHeats) {
-      const stepUpCount = h.heatDrivers.filter((dhd) =>
-        isStepUpParticipant(dhd.participant),
-      ).length;
-      if (stepUpCount !== stepUp) {
-        return translationService.translate("RD_ERR_STEP_UP_COUNT_MISMATCH", {
-          step: stepNum,
-          expected: stepUp,
-          found: stepUpCount,
-        });
+  if (!isCustom && stepUp > 0) {
+    for (let sIdx = 1; sIdx < sortedSteps.length; sIdx++) {
+      const stepNum = sortedSteps[sIdx];
+      const stepHeats = stepMap.get(stepNum) || [];
+      for (const h of stepHeats) {
+        const stepUpCount = h.heatDrivers.filter((dhd) =>
+          isStepUpParticipant(dhd.participant),
+        ).length;
+        if (stepUpCount !== stepUp) {
+          return translationService.translate("RD_ERR_STEP_UP_COUNT_MISMATCH", {
+            step: stepNum,
+            expected: stepUp,
+            found: stepUpCount,
+          });
+        }
       }
     }
   }
