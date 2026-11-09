@@ -520,4 +520,18 @@ describe("HeatConverter", () => {
     const hd = heat.heatDrivers[0]!;
     expect(hd.totalTime).toBe(12.34);
   });
+
+  it("should map step and isStepUpBoundary from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat_stepup",
+      heatNumber: 3,
+      step: 2,
+      isStepUpBoundary: true,
+      heatDrivers: [],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.step).toBe(2);
+    expect(heat.isStepUpBoundary).toBeTrue();
+  });
 });

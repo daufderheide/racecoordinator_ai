@@ -207,6 +207,22 @@ La sezione Opzioni manche definisce la gestione automatica dei tempi, i cicli e 
 - **Metodo di arrivo**: Stabilisce come viene determinata la fine di una manche (per **Numero di giri** o **Tempo** trascorso in secondi).
 - **Consenti arrivo**: Stabilisce come le auto completano i giri quando il leader taglia il traguardo o scade il tempo (es. fine immediata, consenti a tutti di finire, giro singolo o accredito segmenti automatici).
 - **Metodo di classifica generale**: Classifica generale della gara su tutte le manche completate con spareggi e manche scartate personalizzabili.
+- **Avanzamento a gradini (Step-Up)**: Configura la gara a scala progressiva. Il valore predefinito è `0` (disattivato). Con valori $S > 0$, le manche vengono suddivise in gradini progressivi dove i piloti dei gradini superiori attendono i qualificati promossi dai gradini inferiori.
+
+### Gare a Scala (Step-Up)
+
+Quando **Avanzamento a gradini (Step-Up)** è configurato con un valore intero positivo ($S > 0$), Race Coordinator AI riorganizza manche e classifiche secondo una scala progressiva:
+
+- **Gradini della scala**: I piloti vengono inseriti nei gradini in base alla loro testa di serie. I piloti con testa di serie inferiore gareggiano nel Gradino 1 (il gradino più basso).
+- **Distribuzione dei piloti**:
+  - Il gradino più basso contiene tra 2 e il numero di corsie della pista ($2 \le N_{bottom} \le L$) piloti.
+  - Ciascun gradino superiore successivo contiene $L - S$ piloti assegnati e $S$ posizioni di avanzamento riservate ai qualificati del gradino precedente.
+  - Il gradino superiore rappresenta la Finale, dove i migliori piloti attendono i qualificati promossi.
+- **Rotazioni complete per gradino**: Ogni gradino esegue l'intera rotazione di manche configurata per la gara (es. Round Robin o rotazione personalizzata).
+- **Promozione e azzeramento punteggio**: Al termine di un gradino (segnato dalla manche limite di gradino), i migliori $S$ piloti salgono al gradino successivo. Le statistiche generali dei piloti promossi vengono azzerate: solo le manche del gradino più alto raggiunto contano per la classifica generale finale.
+- **Classifica generale a livelli**: I piloti dei gradini inferiori non possono mai superare i piloti dei gradini superiori nella classifica generale finale, a prescindere da giri o tempi individuali. Il vincitore del gradino finale vince la gara.
+- **Gare a gruppi**: Nelle gare a gruppi con avanzamento attivo, ogni gruppo scala la propria scala in modo indipendente.
+- **Supporto in Modifica manche**: Nella schermata Modifica manche, i piloti promossi sono contraddistinti da appositi badge e le manche limite possono essere esaminate e modificate.
 
 ## Gruppi e fasi {: #groups-and-stages }
 

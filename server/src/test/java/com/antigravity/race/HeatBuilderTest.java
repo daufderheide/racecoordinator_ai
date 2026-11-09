@@ -1,7 +1,9 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -9,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
+import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
@@ -1216,5 +1219,154 @@ public class HeatBuilderTest {
       }
     }
     return count;
+  }
+
+  private List<RaceParticipant> createStepUpDrivers(int count) {
+    List<RaceParticipant> drivers = new ArrayList<>();
+    for (int i = 1; i <= count; i++) {
+      Driver d = new Driver("d" + i, "Driver " + i);
+      RaceParticipant p = new RaceParticipant(d);
+      p.setSeed(i);
+      drivers.add(p);
+    }
+    return drivers;
+  }
+
+  @Test
+  public void testStepUp_4Lanes_5Drivers_StepUp1() {
+    when(raceModel.getStepUp()).thenReturn(1);
+    List<RaceParticipant> drivers = createStepUpDrivers(5);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+    assertFalse(heats.isEmpty());
+
+    List<Heat> step1Heats = new ArrayList<>();
+    List<Heat> step2Heats = new ArrayList<>();
+    for (Heat h : heats) {
+      if (h.getStep() == 1) {
+        step1Heats.add(h);
+      } else if (h.getStep() == 2) {
+        step2Heats.add(h);
+      }
+    }
+
+    assertFalse(step1Heats.isEmpty());
+    assertFalse(step2Heats.isEmpty());
+
+    Heat lastStep1Heat = step1Heats.get(step1Heats.size() - 1);
+    assertTrue(lastStep1Heat.isStepUpBoundary());
+
+    for (Heat h : step1Heats) {
+      for (DriverHeatData dhd : h.getDrivers()) {
+        if (dhd.getDriver() != null && !dhd.getDriver().isEmptyParticipant()) {
+          assertFalse(dhd.getDriver().isStepUp());
+        }
+      }
+    }
+
+    for (Heat h : step2Heats) {
+      int stepUpCount = 0;
+      for (DriverHeatData dhd : h.getDrivers()) {
+        if (dhd.getDriver() != null && dhd.getDriver().isStepUp()) {
+          stepUpCount++;
+        }
+      }
+      assertEquals(1, stepUpCount);
+    }
+  }
+
+  @Test
+  public void testStepUp_4Lanes_7Drivers_StepUp1() {
+    when(raceModel.getStepUp()).thenReturn(1);
+    List<RaceParticipant> drivers = createStepUpDrivers(7);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+
+    for (Heat h : heats) {
+      assertTrue(h.getStep() == 1 || h.getStep() == 2);
+    }
+  }
+
+  @Test
+  public void testStepUp_4Lanes_8Drivers_StepUp1() {
+    when(raceModel.getStepUp()).thenReturn(1);
+    List<RaceParticipant> drivers = createStepUpDrivers(8);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+
+    int maxStep = 0;
+    int boundaryCount = 0;
+    for (Heat h : heats) {
+      if (h.getStep() > maxStep) {
+        maxStep = h.getStep();
+      }
+      if (h.isStepUpBoundary()) {
+        boundaryCount++;
+      }
+    }
+    assertEquals(3, maxStep);
+    assertEquals(2, boundaryCount);
+  }
+
+  @Test
+  public void testStepUp_4Lanes_6Drivers_StepUp2() {
+    when(raceModel.getStepUp()).thenReturn(2);
+    List<RaceParticipant> drivers = createStepUpDrivers(6);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+
+    for (Heat h : heats) {
+      if (h.getStep() == 2) {
+        int stepUpCount = 0;
+        for (DriverHeatData dhd : h.getDrivers()) {
+          if (dhd.getDriver() != null && dhd.getDriver().isStepUp()) {
+            stepUpCount++;
+          }
+        }
+        assertEquals(2, stepUpCount);
+      }
+    }
+  }
+
+  @Test
+  public void testStepUp_DriversEqualOrLessThanLanes_NoStepUp() {
+    when(raceModel.getStepUp()).thenReturn(1);
+    List<RaceParticipant> drivers = createStepUpDrivers(4);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+
+    for (Heat h : heats) {
+      assertEquals(0, h.getStep());
+      assertFalse(h.isStepUpBoundary());
+    }
+  }
+
+  @Test
+  public void testStepUp_GroupRace() {
+    when(raceModel.getStepUp()).thenReturn(1);
+    GroupOptions groupOptions = mock(GroupOptions.class);
+    when(groupOptions.isEnabled()).thenReturn(true);
+    when(groupOptions.getMaxGroups()).thenReturn(2);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+
+    List<RaceParticipant> drivers = createStepUpDrivers(10);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+
+    boolean foundGroup0 = false;
+    boolean foundGroup1 = false;
+    for (Heat h : heats) {
+      if (h.getGroup() == 0) foundGroup0 = true;
+      if (h.getGroup() == 1) foundGroup1 = true;
+      assertTrue(h.getStep() >= 1);
+    }
+    assertTrue(foundGroup0);
+    assertTrue(foundGroup1);
   }
 }

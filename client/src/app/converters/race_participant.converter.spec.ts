@@ -183,4 +183,28 @@ describe("RaceParticipantConverter", () => {
     expect(overallParticipant.rank).toBe(15);
     expect(overallParticipant.groupRank).toBe(5);
   });
+
+  it("should map isStepUp and stepUpIndex from proto and update cached participant", () => {
+    const proto1: IRaceParticipant = {
+      objectId: "p-step",
+      driver: { model: { entityId: "STEP_UP_1" }, name: "Step-Up 1" },
+      isStepUp: true,
+      stepUpIndex: 0,
+    };
+
+    const p1 = RaceParticipantConverter.fromProto(proto1);
+    expect(p1.isStepUp).toBeTrue();
+    expect(p1.stepUpIndex).toBe(0);
+
+    const proto2: IRaceParticipant = {
+      objectId: "p-step",
+      driver: { model: { entityId: "STEP_UP_1" }, name: "Step-Up 1" },
+      isStepUp: true,
+      stepUpIndex: 1,
+    };
+
+    const p2 = RaceParticipantConverter.fromProto(proto2);
+    expect(p2).toBe(p1);
+    expect(p1.stepUpIndex).toBe(1);
+  });
 });

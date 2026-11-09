@@ -463,6 +463,13 @@ export class RaceEditorComponent
     );
   }
 
+  get isStepUpInvalid(): boolean {
+    return RaceEditorValidationHelper.isStepUpInvalid(
+      this.editingRace,
+      this.tracks,
+    );
+  }
+
   get currentTrackHasPerLaneRelays(): boolean {
     return RaceEditorValidationHelper.currentTrackHasPerLaneRelays(
       this.editingRace,
@@ -510,7 +517,8 @@ export class RaceEditorComponent
         Boolean(
           this.editingRace?.name?.trim() &&
           !this.isNameDuplicate() &&
-          !this.isRotationInvalid,
+          !this.isRotationInvalid &&
+          !this.isStepUpInvalid,
         ),
       isSaving: () => this.isSaving,
       onAutoSave: () => this.updateRace(true),

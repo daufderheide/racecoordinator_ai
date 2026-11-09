@@ -73,7 +73,7 @@ export class HeatListComponent {
   }
 
   isLaneOccupied(lane: any): boolean {
-    return !!lane.driverNumber;
+    return (!!lane.driverNumber && lane.driverNumber > 0) || !!lane.isStepUp;
   }
 
   onLaneClick(laneIndex: number) {

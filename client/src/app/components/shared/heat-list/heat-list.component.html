@@ -20,6 +20,17 @@
                 {{ "RE_GROUPS_LABEL" | translate }} {{ heat.group + 1 }}
               }
             }
+            @if (heat.step != null && heat.step > 0) {
+              <span class="step-badge">
+                {{ " - " }}
+                {{ "RD_STEP_LADDER_STEP" | translate: { step: heat.step } }}
+              </span>
+            }
+            @if (heat.isStepUpBoundary) {
+              <span class="boundary-badge">
+                [{{ "RD_STEP_UP_BOUNDARY" | translate }}]
+              </span>
+            }
           </div>
           <div
             class="heat-lanes"
@@ -46,11 +57,20 @@
                   >
                   <span class="driver-number">
                     {{
-                      !lane.driverNumber
-                        ? ("RD_EMPTY_LANE" | translate)
-                        : ("RM_LABEL_DRIVER" | translate) +
-                          " " +
-                          lane.driverNumber
+                      lane.isStepUp
+                        ? ("RD_STEP_UP_N"
+                          | translate
+                            : {
+                                n:
+                                  lane.stepUpIndex != null
+                                    ? lane.stepUpIndex + 1
+                                    : 1,
+                              })
+                        : !lane.driverNumber || lane.driverNumber <= 0
+                          ? ("RD_EMPTY_LANE" | translate)
+                          : ("RM_LABEL_DRIVER" | translate) +
+                            " " +
+                            lane.driverNumber
                     }}
                   </span>
                 </div>

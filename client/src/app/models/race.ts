@@ -41,6 +41,7 @@ export class Race implements Model {
   readonly adjust_drift_laps: boolean;
   readonly theme_id?: string;
   readonly start_time_millis?: number;
+  readonly step_up: number;
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;
@@ -92,6 +93,7 @@ export class Race implements Model {
     season_scoring?: SeasonScoring,
     start_time_millis?: number,
     custom_rotation_asset_name?: string,
+    step_up: number = 0,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -134,6 +136,7 @@ export class Race implements Model {
     this.theme_id = theme_id;
     this.season_scoring = season_scoring;
     this.start_time_millis = start_time_millis;
+    this.step_up = step_up;
   }
 
   get objectId(): string {

@@ -205,6 +205,22 @@ The Scoring Rules expander defines how drivers are ranked in heats and across th
 - **Finish Method**: Set how the end of a heat is determined (by target **Lap Count** or elapsed **Time** in seconds).
 - **Allow Finish**: Choose how cars complete their laps when the leader finishes or time expires (e.g., immediate end, allow all to finish, single lap finish, or automatic segment credit).
 - **Overall Ranking Method**: Rank overall race standings across all completed heats with customizable tiebreakers and dropped heats.
+- **Step-Up**: Configures progressive ladder step-up racing. Defaults to `0` (disabled). When set to a positive integer $S > 0$, heats are organized into progressive ladder steps where drivers in higher steps await advancing qualifiers from lower steps.
+
+### Step-Up Ladder Racing
+
+When **Step-Up** is configured to a positive integer ($S > 0$), Race Coordinator AI reorganizes heats and standings into a progressive ladder:
+
+- **Ladder Steps**: Drivers are seeded into progressive steps based on qualifying or seeded ranking. The lowest-seeded drivers race in Step 1 (the bottom step).
+- **Driver Distribution**:
+  - The bottom step contains between 2 and the track lane count ($2 \le N_{bottom} \le L$) drivers.
+  - Each subsequent higher step contains $L - S$ seeded drivers and $S$ step-up slots reserved for advancing drivers from the prior step.
+  - The top step represents the Finals, where the highest-seeded drivers await the step-up qualifiers.
+- **Full Rotations Per Step**: Every step executes the race configuration's full heat rotation (e.g., Round Robin, Single Lane Heats, or Custom Rotations).
+- **Advancement & Score Reset**: When a step concludes (marked by the step boundary heat), the top $S$ drivers advance to the next step. Advancing drivers have their scored overall statistics reset—only heats completed in their highest step reached count toward overall standings.
+- **Tiered Overall Standings**: Drivers in lower steps cannot rank higher in the overall race standings than drivers in higher steps, regardless of their raw lap counts or times. The winner of the final step is crowned the winner of the race.
+- **Group Races**: In group races with step-up enabled, each group progresses through its own step-up ladder independently.
+- **Modify Heats Support**: On the Modify Heats screen, step-up drivers are identified with dedicated badges, and step boundary heats can be inspected and toggled.
 
 ### Lap and Time Adjustments (Impact on Rankings and Metrics)
 

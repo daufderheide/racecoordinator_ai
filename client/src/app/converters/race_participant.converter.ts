@@ -71,6 +71,8 @@ export class RaceParticipantConverter {
         proto.heatsRaced || 0,
         proto.heatsRemaining || 0,
         proto.totalHeats || 0,
+        proto.isStepUp || false,
+        proto.stepUpIndex || 0,
       );
     });
   }
@@ -118,6 +120,8 @@ export class RaceParticipantConverter {
       proto.heatsRaced || 0,
       proto.heatsRemaining || 0,
       proto.totalHeats || 0,
+      proto.isStepUp || false,
+      proto.stepUpIndex || 0,
     );
     const cached = this.cache.get(id);
     if (cached && proto.rank !== undefined && proto.rank !== null) {
@@ -200,6 +204,10 @@ export class RaceParticipantConverter {
       cached.heatsRemaining = proto.heatsRemaining;
     if (proto.totalHeats !== undefined && proto.totalHeats !== null)
       cached.totalHeats = proto.totalHeats;
+    if (proto.isStepUp !== undefined && proto.isStepUp !== null)
+      cached.isStepUp = proto.isStepUp;
+    if (proto.stepUpIndex !== undefined && proto.stepUpIndex !== null)
+      cached.stepUpIndex = proto.stepUpIndex;
 
     if (proto.team) {
       cached.team = TeamConverter.fromProto(proto.team);

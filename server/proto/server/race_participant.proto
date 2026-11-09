@@ -44,4 +44,6 @@ message RaceParticipant {
   int32 total_heats = 33;
   double gap_leader_laps = 34;
   double gap_position_laps = 35;
+  bool is_step_up = 36;
+  int32 step_up_index = 37;
 }

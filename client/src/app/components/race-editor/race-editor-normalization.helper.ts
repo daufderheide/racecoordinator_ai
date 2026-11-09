@@ -125,6 +125,7 @@ export class RaceEditorNormalizationHelper {
   static normalizeRace(race: any, themes: Theme[]): any {
     const normalized = {
       ...deepCopy(race),
+      step_up: Number(race.step_up ?? race.stepUp ?? 0),
       group_options: race.group_options || {
         enabled: false,
         max_groups: 2,
@@ -178,6 +179,7 @@ export class RaceEditorNormalizationHelper {
       name: "",
       track_entity_id: trackId,
       theme_id: themeId,
+      step_up: 0,
       heat_rotation_type: "RoundRobin",
       heat_scoring: this.normalizeHeatScoring(null),
       overall_scoring: {

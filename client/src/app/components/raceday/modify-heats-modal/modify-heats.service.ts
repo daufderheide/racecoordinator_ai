@@ -140,6 +140,15 @@ export class ModifyHeatsService {
         updatedHeats,
         updatedParticipants,
       );
+    } else if (toId === "step-up-pool") {
+      if (fromId.startsWith("heat-")) {
+        const parts = fromId.split("-");
+        const fromHIdx = parseInt(parts[1], 10);
+        const fromLIdx = parseInt(parts[3], 10);
+        this.removeDriverFromHeat(updatedHeats, fromHIdx, fromLIdx);
+        return { updatedHeats, updatedParticipants, actionTaken: true };
+      }
+      return { updatedHeats, updatedParticipants, actionTaken: false };
     }
 
     return { updatedHeats, updatedParticipants, actionTaken: false };

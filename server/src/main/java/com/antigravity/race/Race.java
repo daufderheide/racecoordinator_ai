@@ -163,7 +163,8 @@ public class Race implements ProtocolListener {
             model.getHeatScoring(),
             model.getOverallScoring(),
             model.getGroupOptions(),
-            model.isPractice());
+            model.isPractice(),
+            model.getStepUp());
     this.demoConfig = builder.demoConfig;
     boolean isFinishedRace =
         builder.skipHardwareInterface
@@ -1793,6 +1794,10 @@ public class Race implements ProtocolListener {
     if (state instanceof RaceOver)
       return com.antigravity.proto.RaceState.RACE_OVER; // fqn-collision
     return com.antigravity.proto.RaceState.UNKNOWN_STATE; // fqn-collision
+  }
+
+  public RaceHeatManager getHeatManager() {
+    return heatManager;
   }
 
   public synchronized ModifyHeatsResponse modifyHeats(ModifyHeatsRequest request) {

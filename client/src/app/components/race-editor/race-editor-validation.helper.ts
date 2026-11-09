@@ -98,10 +98,27 @@ export class RaceEditorValidationHelper {
     return track ? !!track.has_per_lane_relays : false;
   }
 
+  static isStepUpInvalid(editingRace: any, tracks: Track[]): boolean {
+    if (!editingRace) return false;
+    const stepUp = Number(editingRace.step_up || 0);
+    if (stepUp < 0) return true;
+    if (stepUp > 0 && editingRace.track_entity_id) {
+      const track = (tracks || []).find(
+        (t) => t.entity_id === editingRace.track_entity_id,
+      );
+      const numLanes = track?.lanes?.length || 0;
+      if (numLanes > 0 && stepUp >= numLanes) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   static isConfigValid(host: RaceValidationHost): boolean {
     return (
       !host.isNameInvalid &&
       !host.isRotationInvalid &&
+      !this.isStepUpInvalid(host.editingRace, host.tracks) &&
       !!host.editingRace?.track_entity_id &&
       !!host.editingRace?.heat_rotation_type
     );
@@ -136,6 +153,9 @@ export class RaceEditorValidationHelper {
       reasons.push("DISCARD_REASON_RACE_NO_ROTATION");
     } else if (host.isRotationInvalid) {
       reasons.push("DISCARD_REASON_RACE_ROTATION_INVALID");
+    }
+    if (this.isStepUpInvalid(host.editingRace, host.tracks)) {
+      reasons.push("DISCARD_REASON_RACE_STEP_UP_INVALID");
     }
 
     if (host.isSaving) {

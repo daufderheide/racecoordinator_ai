@@ -207,6 +207,22 @@ Der Bereich Lauf-Optionen konfiguriert automatisierte Zeitsteuerungen, Durchläu
 - **Zielmethode**: Legt fest, wie das Ende eines Laufs bestimmt wird (nach **Rundenzahl** oder verstrichener **Zeit** in Sekunden).
 - **Zielerlaubnis**: Bestimmt, wie Fahrzeuge ihre Runden beenden, wenn der Führende das Ziel erreicht oder die Zeit abläuft (z. B. sofortiges Ende, alle beenden lassen, Einzelrundenabschluss oder automatische Segmentgutschrift).
 - **Gesamtwertungsmethode**: Platzierung der Gesamtrangliste über alle Läufe mit anpassbaren Tiebreakern und Streichergebnissen.
+- **Aufstieg (Step-Up)**: Konfiguriert das progressive Stufenleiter-Rennen. Standardmäßig `0` (deaktiviert). Bei Werten $S > 0$ werden Läufe in progressive Stufen unterteilt, bei denen Fahrer in höheren Stufen auf aufsteigende Qualifikanten aus unteren Stufen warten.
+
+### Stufenleiter-Rennen (Step-Up)
+
+Wenn **Aufstieg (Step-Up)** auf einen positiven Wert ($S > 0$) eingestellt ist, organisiert Race Coordinator AI Läufe und Wertungen als progressive Leiter:
+
+- **Leiter-Stufen**: Fahrer werden anhand ihrer Setzposition in aufeinanderfolgende Stufen eingeteilt. Die am niedrigsten gesetzten Fahrer starten in Stufe 1 (der untersten Stufe).
+- **Fahrerverbreitung**:
+  - Die unterste Stufe enthält zwischen 2 und der Spuranzahl der Strecke ($2 \le N_{bottom} \le L$) Fahrer.
+  - Jede nachfolgende höhere Stufe enthält $L - S$ gesetzte Fahrer und $S$ Aufstiegsplätze für die Qualifikanten aus der vorherigen Stufe.
+  - Die oberste Stufe stellt das Finale dar, in dem die am höchsten gesetzten Fahrer auf die Aufsteiger warten.
+- **Vollständige Rotationen pro Stufe**: Jede Stufe durchläuft die vollständige Laufrotation der Rennkonfiguration (z. B. Round Robin oder benutzerdefinierte Rotation).
+- **Aufstieg & Punktezurücksetzung**: Nach Abschluss einer Stufe (gekennzeichnet durch den Stufengrenz-Lauf) steigen die besten $S$ Fahrer in die nächste Stufe auf. Bei aufsteigenden Fahrern wird die Gesamtwertung zurückgesetzt – nur Läufe in der höchsten erreichten Stufe zählen für die Gesamtwertung.
+- **Gestaffelte Gesamtwertung**: Fahrer aus niedrigeren Stufen können in der Gesamtwertung niemals vor Fahrern höherer Stufen platziert werden, unabhängig von ihren Runden oder Zeiten. Der Sieger der Finalstufe gewinnt das Rennen.
+- **Gruppenrennen**: Bei Gruppenrennen mit aktiviertem Aufstieg durchläuft jede Gruppe ihre eigene Leiter unabhängig.
+- **Unterstützung bei Läufe bearbeiten**: Auf der Seite „Läufe bearbeiten“ werden Aufstiegsfahrer mit Abzeichen markiert und Stufengrenzen können überprüft und umgeschaltet werden.
 
 ## Gruppen & Stufen {: #groups-and-stages }
 

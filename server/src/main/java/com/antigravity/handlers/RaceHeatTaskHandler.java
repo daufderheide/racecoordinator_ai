@@ -296,6 +296,80 @@ public class RaceHeatTaskHandler {
     String trackId = (String) body.get("trackId");
     String rotationType = (String) body.get("rotationType");
     logger.debug("previewHeats: body={}", body);
+
+    if (driverCount <= 0) {
+      ctx.status(400).result("driverCount must be greater than 0");
+      return;
+    }
+
+    if (trackId == null || trackId.isEmpty()) {
+      ctx.status(400).result("trackId is required");
+      return;
+    }
+
+    if (rotationType == null || rotationType.isEmpty()) {
+      ctx.status(400).result("rotationType is required");
+      return;
+    }
+
+    Track track = trackRepository.findByEntityId(trackId);
+    if (track == null) {
+      ctx.status(404).result("Track not found");
+      return;
+    }
+
+    String customRotationAssetId = (String) body.get("custom_rotation_asset_id");
+    if (customRotationAssetId == null) {
+      customRotationAssetId = (String) body.get("customRotationAssetId");
+    }
+
+    int numLanes = track.getLanes() != null ? track.getLanes().size() : 0;
+    List<CustomRotation> customRotations =
+        resolveCustomRotationsFromBody(body, customRotationAssetId, numLanes);
+
+    HeatRotationType rotationTypeEnum;
+    try {
+      rotationTypeEnum = HeatRotationType.valueOf(rotationType);
+      if (rotationTypeEnum == HeatRotationType.CustomRoundRobin) {
+        List<Integer> customSeq = (List<Integer>) body.get("customRotationSequence");
+        if (customSeq == null) {
+          customSeq = (List<Integer>) body.get("custom_rotation_sequence");
+        }
+        String error = validateCustomRoundRobinSequence(customSeq, track);
+        if (error != null) {
+          ctx.status(400).result(error);
+          return;
+        }
+      }
+    } catch (IllegalArgumentException e) {
+      ctx.status(400).result("Invalid rotation type: " + rotationType);
+      return;
+    }
+
+    Race tempRaceConfig = buildPreviewRaceConfig(body, trackId, rotationTypeEnum);
+    List<RaceParticipant> mockDrivers = buildMockDrivers(driverCount);
+
+    com.antigravity.race.Race tempRace = // fqn-collision
+        new com.antigravity.race.Race.Builder() // fqn-collision
+            .model(tempRaceConfig)
+            .customRotations(customRotations)
+            .drivers(mockDrivers)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    List<Map<String, Object>> heatList = formatHeatList(tempRace.getHeats(), track);
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("heats", heatList);
+    ctx.json(response);
+
+    tempRace.stop();
+  }
+
+  @SuppressWarnings("unchecked")
+  private Race buildPreviewRaceConfig(
+      Map<String, Object> body, String trackId, HeatRotationType rotationTypeEnum) {
     Number soloLaneIndexNum = (Number) body.get("soloLaneIndex");
     int soloLaneIndex = soloLaneIndexNum != null ? soloLaneIndexNum.intValue() : 0;
     List<Integer> customRotationSequence = (List<Integer>) body.get("customRotationSequence");
@@ -320,90 +394,37 @@ public class RaceHeatTaskHandler {
     }
     boolean reverseHeatsBool = reverseHeats != null ? reverseHeats : false;
 
-    if (driverCount <= 0) {
-      ctx.status(400).result("driverCount must be greater than 0");
-      return;
+    Number stepUpNum = (Number) body.get("stepUp");
+    if (stepUpNum == null) {
+      stepUpNum = (Number) body.get("step_up");
     }
-
-    if (trackId == null || trackId.isEmpty()) {
-      ctx.status(400).result("trackId is required");
-      return;
-    }
-
-    if (rotationType == null || rotationType.isEmpty()) {
-      ctx.status(400).result("rotationType is required");
-      return;
-    }
-
-    Track track = trackRepository.findByEntityId(trackId);
-    if (track == null) {
-      ctx.status(404).result("Track not found");
-      return;
-    }
-
-    int numLanes = track.getLanes() != null ? track.getLanes().size() : 0;
-    List<CustomRotation> customRotations =
-        resolveCustomRotationsFromBody(body, customRotationAssetId, numLanes);
-
-    HeatRotationType rotationTypeEnum;
-    try {
-      rotationTypeEnum = HeatRotationType.valueOf(rotationType);
-      if (rotationTypeEnum == HeatRotationType.CustomRoundRobin) {
-        String error = validateCustomRoundRobinSequence(customRotationSequence, track);
-        if (error != null) {
-          ctx.status(400).result(error);
-          return;
-        }
-      }
-    } catch (IllegalArgumentException e) {
-      ctx.status(400).result("Invalid rotation type: " + rotationType);
-      return;
-    }
+    int stepUp = stepUpNum != null ? stepUpNum.intValue() : 0;
 
     GroupOptions groupOptions = parseGroupOptionsFromBody(body);
 
-    Race tempRaceConfig =
-        new Race.Builder()
-            .withName("Preview")
-            .withTrackEntityId(trackId)
-            .withHeatRotationType(rotationTypeEnum)
-            .withHeatScoring(
-                new HeatScoring(
-                    HeatScoring.FinishMethod.Lap,
-                    10,
-                    HeatScoring.HeatRanking.LAP_COUNT,
-                    HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME))
-            .withOverallScoring(new OverallScoring())
-            .withAutoAdvanceTime(0.0)
-            .withAutoStartTime(0.0)
-            .withAutoAdvanceWarmupTime(0.0)
-            .withAutoStartWarmupTime(0.0)
-            .withSoloLaneIndex(soloLaneIndex)
-            .withCustomRotationSequence(customRotationSequence)
-            .withCustomRotationAssetId(customRotationAssetId)
-            .withHeatTimesThrough(heatTimesThrough)
-            .withReverseHeats(reverseHeatsBool)
-            .withGroupOptions(groupOptions)
-            .build();
-
-    List<RaceParticipant> mockDrivers = buildMockDrivers(driverCount);
-
-    com.antigravity.race.Race tempRace = // fqn-collision
-        new com.antigravity.race.Race.Builder() // fqn-collision
-            .model(tempRaceConfig)
-            .customRotations(customRotations)
-            .drivers(mockDrivers)
-            .track(track)
-            .isDemoMode(true)
-            .build();
-
-    List<Map<String, Object>> heatList = formatHeatList(tempRace.getHeats(), track);
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("heats", heatList);
-    ctx.json(response);
-
-    tempRace.stop();
+    return new Race.Builder()
+        .withName("Preview")
+        .withTrackEntityId(trackId)
+        .withHeatRotationType(rotationTypeEnum)
+        .withHeatScoring(
+            new HeatScoring(
+                HeatScoring.FinishMethod.Lap,
+                10,
+                HeatScoring.HeatRanking.LAP_COUNT,
+                HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME))
+        .withOverallScoring(new OverallScoring())
+        .withAutoAdvanceTime(0.0)
+        .withAutoStartTime(0.0)
+        .withAutoAdvanceWarmupTime(0.0)
+        .withAutoStartWarmupTime(0.0)
+        .withSoloLaneIndex(soloLaneIndex)
+        .withCustomRotationSequence(customRotationSequence)
+        .withCustomRotationAssetId(customRotationAssetId)
+        .withHeatTimesThrough(heatTimesThrough)
+        .withReverseHeats(reverseHeatsBool)
+        .withGroupOptions(groupOptions)
+        .withStepUp(stepUp)
+        .build();
   }
 
   private List<RaceParticipant> buildMockDrivers(int driverCount) {
@@ -421,6 +442,8 @@ public class RaceHeatTaskHandler {
       Map<String, Object> heatMap = new HashMap<>();
       heatMap.put("heatNumber", heat.getHeatNumber());
       heatMap.put("group", heat.getGroup());
+      heatMap.put("step", heat.getStep());
+      heatMap.put("isStepUpBoundary", heat.isStepUpBoundary());
 
       List<Map<String, Object>> lanes = new ArrayList<>();
       List<DriverHeatData> drivers = heat.getDrivers();
@@ -428,7 +451,18 @@ public class RaceHeatTaskHandler {
         DriverHeatData driverData = drivers.get(laneIdx);
         Map<String, Object> laneMap = new HashMap<>();
         laneMap.put("laneNumber", laneIdx + 1);
-        laneMap.put("driverNumber", driverData.getDriver().getSeed());
+        boolean isStepUp =
+            driverData.isStepUpLane()
+                || (driverData.getDriver() != null && driverData.getDriver().isStepUp());
+        laneMap.put("isStepUp", isStepUp);
+        if (isStepUp) {
+          laneMap.put("stepUpIndex", driverData.getStepUpLaneIndex());
+          laneMap.put("driverNumber", -1);
+        } else {
+          laneMap.put(
+              "driverNumber",
+              driverData.getDriver() != null ? driverData.getDriver().getSeed() : 0);
+        }
 
         if (laneIdx < track.getLanes().size()) {
           Lane lane = track.getLanes().get(laneIdx);

@@ -261,6 +261,7 @@ export class RaceEditorHeatHelper {
         host.editingRace.heat_times_through,
         host.editingRace.reverse_heats,
         host.editingRace.group_options,
+        host.editingRace.step_up || 0,
       )
       .subscribe({
         next: (response) => {

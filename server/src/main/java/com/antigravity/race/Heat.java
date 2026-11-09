@@ -15,8 +15,26 @@ public class Heat extends ServerToClientObject {
   @com.fasterxml.jackson.annotation.JsonIgnore private HeatStandings heatStandings;
   private boolean started = false;
   private int group = 0;
+  private int step = 0;
+  private boolean stepUpBoundary = false;
   private int masterTrackCalls = 0;
   private int trackCalls = 0;
+
+  public int getStep() {
+    return step;
+  }
+
+  public void setStep(int step) {
+    this.step = step;
+  }
+
+  public boolean isStepUpBoundary() {
+    return stepUpBoundary;
+  }
+
+  public void setStepUpBoundary(boolean stepUpBoundary) {
+    this.stepUpBoundary = stepUpBoundary;
+  }
 
   public int getMasterTrackCalls() {
     return masterTrackCalls;

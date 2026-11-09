@@ -14,6 +14,19 @@ public class DriverHeatData extends ServerToClientObject
 
   private RaceParticipant driver;
   private Driver actualDriver;
+  private int stepUpLaneIndex = 0;
+
+  public int getStepUpLaneIndex() {
+    return stepUpLaneIndex;
+  }
+
+  public void setStepUpLaneIndex(int stepUpLaneIndex) {
+    this.stepUpLaneIndex = stepUpLaneIndex;
+  }
+
+  public boolean isStepUpLane() {
+    return stepUpLaneIndex > 0;
+  }
 
   public static class LapData {
 

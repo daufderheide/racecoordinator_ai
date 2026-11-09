@@ -290,6 +290,8 @@ export class HeatConverter {
         !!proto.started,
       );
       h.group = proto.group || 0;
+      h.step = proto.step || 0;
+      h.isStepUpBoundary = !!proto.isStepUpBoundary;
       h.masterTrackCalls =
         proto.masterTrackCalls ?? (proto as any).master_track_calls ?? 0;
       h.trackCalls = proto.trackCalls ?? (proto as any).track_calls ?? 0;

@@ -690,6 +690,19 @@
                       max="10"
                     />
                   </div>
+                  <div class="config-section">
+                    <label>{{ "RE_STEP_UP" | translate }}</label>
+                    <input
+                      id="step-up-input"
+                      class="step-up-input"
+                      data-testid="step-up-input"
+                      type="number"
+                      [(ngModel)]="editingRace.step_up"
+                      (ngModelChange)="captureState()"
+                      min="0"
+                      [title]="'RE_TOOLTIP_STEP_UP' | translate"
+                    />
+                  </div>
                 </div>
               </div>
             </app-editor-section>

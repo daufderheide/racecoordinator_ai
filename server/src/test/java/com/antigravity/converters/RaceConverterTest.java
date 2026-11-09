@@ -718,6 +718,20 @@ public class RaceConverterTest {
     assertEquals(1.0, proto.getDigitalFuelOptions().getCustomCurve(2).getY(), 0.001);
   }
 
+  @Test
+  public void testToProto_StepUp() {
+    Race race =
+        new Race.Builder()
+            .withName("Step Up Race")
+            .withTrackEntityId("track-1")
+            .withStepUp(2)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(2, proto.getStepUp());
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }

@@ -2,6 +2,7 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
@@ -989,5 +990,163 @@ public class RaceHeatManagerTest {
                   null)));
     }
     return list;
+  }
+
+  private com.antigravity.race.Race createStepUpRace(int laneCount, int driverCount, int stepUp) {
+    List<Lane> lanes = new ArrayList<>();
+    for (int i = 1; i <= laneCount; i++) {
+      lanes.add(new Lane("Lane " + i, "color" + i, 100 + i));
+    }
+    Track stepTrack =
+        new Track.Builder().name("Step Track").lanes(lanes).entityId("track-step").id("10").build();
+
+    List<RaceParticipant> stepParticipants = new ArrayList<>();
+    for (int i = 1; i <= driverCount; i++) {
+      Driver driver = new Driver("Driver " + i, "D" + i, "driver" + i, null);
+      RaceParticipant p = new RaceParticipant(driver, "p" + i);
+      p.setSeed(i);
+      stepParticipants.add(p);
+    }
+
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap,
+            10,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(
+            0,
+            com.antigravity.models.OverallScoring.OverallRanking.LAP_COUNT,
+            com.antigravity.models.OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME);
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Step Up Race")
+            .withTrackEntityId("track-step")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(overallScoring)
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withStepUp(stepUp)
+            .build();
+
+    return new com.antigravity.race.Race.Builder()
+        .track(stepTrack)
+        .model(model)
+        .drivers(stepParticipants)
+        .isDemoMode(true)
+        .build();
+  }
+
+  @Test
+  public void testValidateStepUp_ValidConfiguration() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 5, 1);
+    try {
+      List<Heat> heats = stepRace.getHeats();
+      assertNotNull(heats);
+      assertFalse(heats.isEmpty());
+
+      ModifyHeatsRequest.Builder reqBuilder = ModifyHeatsRequest.newBuilder();
+      for (Heat h : heats) {
+        reqBuilder.addHeats(HeatConverter.toProto(h, new HashSet<>()));
+      }
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+
+      ModifyHeatsResponse response = stepRace.getHeatManager().modifyHeats(reqBuilder.build());
+      assertTrue(response.getSuccess());
+    } finally {
+      stepRace.stop();
+    }
+  }
+
+  @Test
+  public void testValidateStepUp_StepOneCannotContainStepUpDriver() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 5, 1);
+    try {
+      List<Heat> heats = stepRace.getHeats();
+      ModifyHeatsRequest.Builder reqBuilder = ModifyHeatsRequest.newBuilder();
+
+      RaceParticipant stepUpPart = RaceParticipant.createStepUpParticipant(0);
+
+      for (int i = 0; i < heats.size(); i++) {
+        Heat h = heats.get(i);
+        if (h.getStep() == 1 && i == 0) {
+          List<DriverHeatData> drivers = new ArrayList<>(h.getDrivers());
+          drivers.set(0, new DriverHeatData(stepUpPart));
+          Heat corrupted =
+              new Heat(h.getHeatNumber(), drivers, stepRace.getRaceModel().getHeatScoring(), false);
+          corrupted.setStep(1);
+          corrupted.setStepUpBoundary(h.isStepUpBoundary());
+          reqBuilder.addHeats(HeatConverter.toProto(corrupted, new HashSet<>()));
+        } else {
+          reqBuilder.addHeats(HeatConverter.toProto(h, new HashSet<>()));
+        }
+      }
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+
+      ModifyHeatsResponse response = stepRace.getHeatManager().modifyHeats(reqBuilder.build());
+      assertFalse(response.getSuccess());
+      assertTrue(response.getErrorMessage().contains("RD_ERR_STEP_UP_IN_STEP_ONE"));
+    } finally {
+      stepRace.stop();
+    }
+  }
+
+  @Test
+  public void testHandleStepUpAdvancement_AndRevert() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 5, 1);
+    try {
+      List<Heat> heats = stepRace.getHeats();
+
+      Heat step1BoundaryHeat = null;
+      for (Heat h : heats) {
+        if (h.getStep() == 1 && h.isStepUpBoundary()) {
+          step1BoundaryHeat = h;
+          break;
+        }
+      }
+      assertNotNull(step1BoundaryHeat);
+
+      RaceParticipant p4 = stepRace.getDrivers().get(3);
+      DriverHeatData dhd4 = step1BoundaryHeat.getDrivers().get(0);
+      DriverHeatData dhd5 = step1BoundaryHeat.getDrivers().get(1);
+      dhd4.addLap(10.0, false, true);
+      dhd4.addLap(10.0, false, true);
+      dhd5.addLap(10.0, false, true);
+
+      stepRace.getHeatManager().handleStepUpAdvancement(step1BoundaryHeat);
+
+      for (Heat h : heats) {
+        if (h.getStep() == 2) {
+          boolean foundDriver4 = false;
+          for (DriverHeatData dhd : h.getDrivers()) {
+            if (dhd.getDriver() != null && dhd.getDriver().getObjectId().equals(p4.getObjectId())) {
+              foundDriver4 = true;
+            }
+          }
+          assertTrue(foundDriver4);
+        }
+      }
+
+      stepRace.getHeatManager().revertStepUpAdvancement(step1BoundaryHeat);
+
+      for (Heat h : heats) {
+        if (h.getStep() == 2) {
+          boolean foundPlaceholder = false;
+          for (DriverHeatData dhd : h.getDrivers()) {
+            if (dhd.getDriver() != null && dhd.getDriver().isStepUp()) {
+              foundPlaceholder = true;
+            }
+          }
+          assertTrue(foundPlaceholder);
+        }
+      }
+    } finally {
+      stepRace.stop();
+    }
   }
 }

@@ -54,7 +54,6 @@ import { TeammateUtils } from "@app/utils/teammate.utils";
 
 import { ModifyHeatsService } from "./modify-heats.service";
 import {
-  allocateHighlightColor,
   areModifyHeatsStatesEqual,
   buildDropListConnections,
   calculateHeatCardHoverAction,
@@ -69,7 +68,6 @@ import {
   filterDriverPool,
   getContrastTextColor,
   getDatabaseItemTrackId,
-  getHeatHighlightColors as extractHeatHighlightColors,
   getLastStartedHeatIndex,
   getModifyHeatsValidationError,
   getOriginalHeatDisplay as getOriginalHeatDisplayHelper,
@@ -83,12 +81,19 @@ import {
   isHeatStarted as isHeatStartedHelper,
   isParticipantInStartedHeat,
   isPlaceholderParticipant,
+  isStepUpParticipant,
   isTeam,
   ModifyHeatsState,
   performLaneCheck,
   revertSaveFailure,
   validateGroupSequence,
 } from "./modify-heats-modal.utils";
+import {
+  createStepUpPool,
+  DriverHighlightManager,
+  getDropdownArrowBg as createDropdownArrowBg,
+  getHeatDriverMeta as extractHeatDriverMeta,
+} from "./modify-heats-ui.helper";
 
 @Component({
   standalone: true,
@@ -157,6 +162,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected localHeats: Heat[] = [];
   protected localParticipants: RaceParticipant[] = [];
   protected driverPool: RaceParticipant[] = [];
+  protected stepUpPool: RaceParticipant[] = [];
   protected databaseDrivers: Driver[] = [];
   protected databaseTeams: Team[] = [];
   protected databaseParticipants: (Driver | Team)[] = [];
@@ -188,7 +194,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected equalityReport: any[] | null = null;
   protected isHeatsEqual: boolean = false;
   protected isAvailableDriversCollapsed = false;
-  protected highlightedDrivers = new Map<string, string>();
+  private cdr = inject(ChangeDetectorRef);
+  private highlightManager = new DriverHighlightManager(this.cdr);
+  protected get highlightedDrivers(): Map<string, string> {
+    return this.highlightManager.highlightedDrivers;
+  }
 
   private translationService = inject(TranslationService);
   private router = inject(Router);
@@ -208,7 +218,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected heatDropListIds: string[] = ["driver-pool", "database-drivers"];
   protected connectedTo: string[] = ["driver-pool", "database-drivers"];
 
-  private cdr = inject(ChangeDetectorRef);
   private modifyHeatsService = inject(ModifyHeatsService);
 
   constructor(private dataService: DataService) {
@@ -409,68 +418,38 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected isDriverHighlighted(
     participant: RaceParticipant | null | undefined,
   ): boolean {
-    if (!participant) return false;
-    const key = getParticipantKey(participant);
-    return key !== "" && this.highlightedDrivers.has(key);
+    return this.highlightManager.isDriverHighlighted(participant);
   }
 
   protected getDriverHighlightColor(
     participant: RaceParticipant | null | undefined,
   ): string | null {
-    if (!participant) return null;
-    const key = getParticipantKey(participant);
-    return key !== "" ? (this.highlightedDrivers.get(key) ?? null) : null;
+    return this.highlightManager.getDriverHighlightColor(participant);
   }
 
   protected toggleDriverHighlight(
     participant: RaceParticipant | null | undefined,
     event?: MouseEvent,
-  ) {
-    if (event) {
-      event.stopPropagation();
-      if (event.button !== 0) return;
-    }
-    if (!participant) return;
-    const key = getParticipantKey(participant);
-    if (!key) return;
-
-    if (this.highlightedDrivers.has(key)) {
-      this.highlightedDrivers.delete(key);
-    } else {
-      const usedColors = new Set(
-        Array.from(this.highlightedDrivers.values()).map((c) =>
-          c.toLowerCase(),
-        ),
-      );
-      const color = allocateHighlightColor(usedColors);
-      this.highlightedDrivers.set(key, color);
-    }
-    this.cdr.markForCheck();
+  ): void {
+    this.highlightManager.toggleDriverHighlight(participant, event);
   }
 
   protected clearDriverHighlights(): void {
-    this.highlightedDrivers.clear();
-    this.cdr.markForCheck();
+    this.highlightManager.clearDriverHighlights();
   }
 
   protected getContrastTextColor = getContrastTextColor;
 
   protected hasHighlightedDrivers(): boolean {
-    return this.highlightedDrivers.size > 0;
+    return this.highlightManager.hasHighlightedDrivers();
   }
 
   protected isHeatHighlighted(heat: Heat): boolean {
-    if (this.highlightedDrivers.size === 0) return false;
-    return heat.heatDrivers.some((dhd) =>
-      this.isDriverHighlighted(dhd.participant),
-    );
+    return this.highlightManager.isHeatHighlighted(heat);
   }
 
   protected getHeatHighlightColors(heat: Heat): string[] {
-    if (this.highlightedDrivers.size === 0) return [];
-    return extractHeatHighlightColors(heat, (p) =>
-      this.getDriverHighlightColor(p),
-    );
+    return this.highlightManager.getHeatHighlightColors(heat);
   }
 
   protected getCustomGroupName(groupIdx: number): string {
@@ -491,6 +470,29 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   private updateDriverPool() {
     this.driverPool = filterDriverPool(this.localParticipants);
+    this.updateStepUpPool();
+  }
+
+  private updateStepUpPool() {
+    this.stepUpPool = createStepUpPool(this.race()?.step_up || 0);
+  }
+
+  protected onStepChange(heat: Heat, newStep: number) {
+    heat.step = Math.max(1, Number(newStep) || 1);
+    this.undoManager.captureState();
+    this.autoSave();
+  }
+
+  protected toggleStepUpBoundary(heat: Heat) {
+    heat.isStepUpBoundary = !heat.isStepUpBoundary;
+    this.undoManager.captureState();
+    this.autoSave();
+  }
+
+  protected isStepUpParticipant(
+    p: RaceParticipant | null | undefined,
+  ): boolean {
+    return isStepUpParticipant(p);
   }
 
   private updateDatabaseParticipants() {
@@ -550,9 +552,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getDropdownArrowBg(color: string): SafeStyle {
-    const encodedColor = encodeURIComponent(color);
-    const svg = `data:image/svg+xml;utf8,<svg fill="%23${encodedColor.replace(/^%23/, "")}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>`;
-    return this.sanitizer.bypassSecurityTrustStyle(`url('${svg}')`);
+    return createDropdownArrowBg(this.sanitizer, color);
   }
 
   protected onTeammateChange(
@@ -585,16 +585,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getHeatDriverMeta(dhd: DriverHeatData): string {
-    if (dhd.participant && dhd.participant.team) {
-      const actual = dhd.actualDriver;
-      if (actual && !actual.isEmpty()) {
-        return actual.nickname || actual.name;
-      }
-      return (
-        dhd.participant.driver?.nickname || dhd.participant.driver?.name || ""
-      );
-    }
-    return this.getParticipantMeta(dhd.participant);
+    return extractHeatDriverMeta(dhd, this.translationService);
   }
 
   protected getDriverStats(hd: DriverHeatData, driverId: string): string {
@@ -655,9 +646,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.localHeats = result.updatedHeats;
       this.localParticipants = result.updatedParticipants;
       const removedKey = getParticipantKey(participant);
-      if (removedKey && this.highlightedDrivers.has(removedKey)) {
-        this.highlightedDrivers.delete(removedKey);
-      }
+      this.highlightManager.removeDriver(removedKey);
       this.updateSeeds();
       this.updateDriverPool();
       this.updateDatabaseParticipants();

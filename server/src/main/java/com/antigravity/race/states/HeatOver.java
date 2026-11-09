@@ -66,6 +66,9 @@ public class HeatOver implements IRaceState {
       if (start > 0) {
         race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - start);
       }
+      if (race.getHeatManager() != null && race.getCurrentHeat().isStepUpBoundary()) {
+        race.getHeatManager().handleStepUpAdvancement(race.getCurrentHeat());
+      }
       race.broadcast(race.createSnapshot());
     }
 
@@ -151,6 +154,11 @@ public class HeatOver implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("HeatOver.restartHeat() called. Resetting current heat.");
+    if (race.getHeatManager() != null
+        && race.getCurrentHeat() != null
+        && race.getCurrentHeat().isStepUpBoundary()) {
+      race.getHeatManager().revertStepUpAdvancement(race.getCurrentHeat());
+    }
     race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);

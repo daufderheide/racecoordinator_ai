@@ -13,6 +13,8 @@ export class Heat {
   standings: string[];
   started: boolean = false;
   group: number = 0;
+  step?: number = 0;
+  isStepUpBoundary?: boolean = false;
   masterTrackCalls?: number = 0;
   trackCalls?: number = 0;
   originalHeatNumber?: number;

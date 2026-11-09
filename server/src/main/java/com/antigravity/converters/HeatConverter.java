@@ -24,6 +24,8 @@ public class HeatConverter {
                 heat.getStandings() != null ? heat.getStandings() : Collections.emptyList())
             .setStarted(heat.isStarted())
             .setGroup(heat.getGroup())
+            .setStep(heat.getStep())
+            .setIsStepUpBoundary(heat.isStepUpBoundary())
             .setMasterTrackCalls(heat.getMasterTrackCalls())
             .setTrackCalls(heat.getTrackCalls());
 

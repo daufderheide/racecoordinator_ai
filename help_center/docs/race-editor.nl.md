@@ -207,6 +207,22 @@ Het uitklapgedeelte Heat-opties regelt geautomatiseerde timing, herhalingscycli 
 - **Finishmethode**: Bepaalt hoe het einde van een heat wordt vastgesteld (op basis van **Rondenaantal** of verstreken **Tijd** in seconden).
 - **Finish toestaan**: Kies hoe auto's hun rondes voltooien wanneer de leider finisht of de tijd verstrijkt (bijv. direct einde, iedereen laten finishen, enkele ronde of automatische segmenten).
 - **Rangschikkingsmethode eindstand**: Rangschik de algemene race-eindstand over alle voltooide heats met aanpasbare tiebreakers en schrapresultaten.
+- **Promotie (Step-Up)**: Configureert een progressieve laddereace. Standaardwaarde is `0` (uitgeschakeld). Bij waarden $S > 0$ worden heats verdeeld in opeenvolgende treden, waarbij coureurs op hogere treden wachten op gepromoveerde coureurs van lagere treden.
+
+### Ladderraces (Step-Up)
+
+Wanneer **Promotie (Step-Up)** is ingesteld op een positief geheel getal ($S > 0$), herstructureert Race Coordinator AI heats en standen in een progressieve ladder:
+
+- **Laddertreden**: Coureurs worden op basis van plaatsing ingedeeld in opeenvolgende treden. Coureurs met de laagste plaatsing racen in Trede 1 (de onderste trede).
+- **Coureursverdeling**:
+  - De onderste trede bevat tussen 2 en het aantal banen van het circuit ($2 \le N_{bottom} \le L$) coureurs.
+  - Elke volgende hogere trede bevat $L - S$ geplaatste coureurs en $S$ promotieplaatsen gereserveerd voor de gepromoveerde coureurs van de vorige trede.
+  - De bovenste trede is de Finale, waar de hoogst geplaatste coureurs wachten op de gepromoveerde deelnemers.
+- **Volledige rotaties per trede**: Elke trede doorloopt de volledige heatrotatie volgens de raceconfiguratie (bijv. Round Robin of een aangepaste rotatie).
+- **Promotie en score-reset**: Zodra een trede is afgerond (gemarkeerd door de tredegrensheat), promoveren de beste $S$ coureurs naar de volgende trede. De algemene statistieken van gepromoveerde coureurs worden gereset: alleen heats in de hoogst bereikte trede tellen mee voor de eindstand.
+- **Gelaagde eindstand**: Coureurs op lagere treden kunnen in de eindstand nooit hoger eindigen dan coureurs op hogere treden, ongeacht hun rondes of tijden. De winnaar van de finaletrede wint de race.
+- **Groepsraces**: Bij groepsraces met promotie doorloopt elke groep zelfstandig zijn eigen ladder.
+- **Ondersteuning in Heats bewerken**: In het scherm Heats bewerken worden promotiecoureurs aangeduid met een speciale badge en kunnen tredegrenzen worden bekeken en aangepast.
 
 ## Groepen en fases {: #groups-and-stages }
 

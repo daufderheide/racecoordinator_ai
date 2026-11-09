@@ -157,6 +157,7 @@ export class RaceConverter {
         p.customRotationName ||
         p.custom_rotation_name ||
         undefined,
+      p.stepUp ?? p.step_up ?? (proto as any).stepUp ?? 0,
     );
   }
 

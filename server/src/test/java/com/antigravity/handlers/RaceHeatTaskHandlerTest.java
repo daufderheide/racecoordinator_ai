@@ -261,6 +261,64 @@ public class RaceHeatTaskHandlerTest {
   }
 
   @Test
+  public void testPreviewHeats_StepUp_ValidatesAndGenerates() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_stepup_prev").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_stepup_prev_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      com.antigravity.repository.SqliteRepository<com.antigravity.models.Track> trackRepo =
+          new com.antigravity.repository.SqliteRepository<>(
+              dbCtx, "tracks", com.antigravity.models.Track.class);
+      List<com.antigravity.models.Lane> fourLanes = new ArrayList<>();
+      for (int i = 1; i <= 4; i++) {
+        fourLanes.add(new com.antigravity.models.Lane("#FFFFFF", "#000000", i));
+      }
+      com.antigravity.models.Track track =
+          new com.antigravity.models.Track.Builder()
+              .name("4-Lane Track")
+              .entityId("t4")
+              .lanes(fourLanes)
+              .build();
+      trackRepo.insert(track);
+
+      Context ctxPreview = mock(Context.class);
+      Map<String, Object> prevBody = new HashMap<>();
+      prevBody.put("driverCount", 5);
+      prevBody.put("trackId", "t4");
+      prevBody.put("rotationType", "RoundRobin");
+      prevBody.put("stepUp", 1);
+      when(ctxPreview.bodyAsClass(Map.class)).thenReturn(prevBody);
+
+      org.mockito.ArgumentCaptor<Map> captor = org.mockito.ArgumentCaptor.forClass(Map.class);
+      realHandler.previewHeats(ctxPreview);
+      verify(ctxPreview).json(captor.capture());
+
+      Map response = captor.getValue();
+      assertNotNull(response);
+      List<Map<String, Object>> heats = (List<Map<String, Object>>) response.get("heats");
+      assertNotNull(heats);
+      org.junit.Assert.assertFalse(heats.isEmpty());
+
+      boolean hasStep1 = false;
+      boolean hasStep2 = false;
+      for (Map<String, Object> h : heats) {
+        Number step = (Number) h.get("step");
+        if (step != null && step.intValue() == 1) hasStep1 = true;
+        if (step != null && step.intValue() == 2) hasStep2 = true;
+      }
+      org.junit.Assert.assertTrue(hasStep1);
+      org.junit.Assert.assertTrue(hasStep2);
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
+
+  @Test
   public void testDeleteDefaultRace_TracksDeletionAndClearsOnCreate() throws Exception {
     String rootDir =
         tempFolder.newFolder("db_root_del_race").getAbsolutePath() + java.io.File.separator;
