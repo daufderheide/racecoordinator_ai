@@ -24,6 +24,13 @@ describe("RacedayGhostPacingComponent", () => {
           RD_GHOST_LEADER_BEST: "Leader Best",
           RD_GHOST_LEADER_AVG: "Leader Avg",
           RD_GHOST_LEADER_MEDIAN: "Leader Median",
+          RD_GHOST_OVERALL_RECORD: "Overall Record",
+          RD_GHOST_OVERALL_PERSONAL_BEST: "Overall PB",
+          RD_GHOST_OVERALL_PERSONAL_AVG: "Overall Avg",
+          RD_GHOST_OVERALL_PERSONAL_MEDIAN: "Overall Median",
+          RD_GHOST_OVERALL_LEADER_BEST: "Overall Leader Best",
+          RD_GHOST_OVERALL_LEADER_AVG: "Overall Leader Avg",
+          RD_GHOST_OVERALL_LEADER_MEDIAN: "Overall Leader Median",
           RD_GHOST_NO_BENCHMARK: "No ghost benchmark",
           RD_GHOST_TELEMETRY_POSITION: "Live Telemetry Position",
         };
@@ -210,7 +217,162 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getBenchmarkName()).toBe("Lane Record");
-    expect(await harness.getTargetTimeText()).toBe("--.---s");
+    expect(await harness.getTargetTimeText()).toBe("--");
+  });
+
+  it("should show -- for leader average before heat starts when leader has no avg lap time", async () => {
+    const mockHd = {
+      laneIndex: 0,
+      driver: { name: "Driver 1" },
+      bestLapTime: 3.456,
+      averageLapTime: 0,
+    } as unknown as DriverHeatData;
+    fixture.componentRef.setInput("driverHeatData", mockHd);
+    fixture.componentRef.setInput("benchmarkType", "HEAT_LEADER_AVG");
+    fixture.componentRef.setInput("stacked", true);
+    fixture.componentRef.setInput("personalBest", 3.456);
+    fixture.componentRef.setInput("laneRecord", 4.2);
+    fixture.componentRef.setInput("heatLeaderBest", 3.456);
+    fixture.componentRef.setInput("heatLeaderAvg", 0);
+    fixture.detectChanges();
+
+    expect(component.targetGhostLapTime()).toBe(0);
+    expect(component.formattedTargetGhostLapTime()).toBe("--");
+    expect(await harness.getBenchmarkName()).toBe("Leader Avg");
+    expect(await harness.getTargetTimeText()).toBe("--");
+    expect(await harness.getDeltaText()).toBe("--");
+  });
+
+  it("should show leader avg lap time when heatLeaderAvg is available", async () => {
+    const mockHd = {
+      laneIndex: 0,
+      driver: { name: "Driver 1" },
+      averageLapTime: 3.8,
+    } as unknown as DriverHeatData;
+    fixture.componentRef.setInput("driverHeatData", mockHd);
+    fixture.componentRef.setInput("benchmarkType", "HEAT_LEADER_AVG");
+    fixture.componentRef.setInput("stacked", true);
+    fixture.componentRef.setInput("heatLeaderAvg", 3.654);
+    fixture.detectChanges();
+
+    expect(component.targetGhostLapTime()).toBe(3.654);
+    expect(component.formattedTargetGhostLapTime()).toBe("3.654s");
+    expect(await harness.getTargetTimeText()).toBe("3.654s");
+  });
+
+  describe("overall pacing benchmarks", () => {
+    const mockHd = {
+      laneIndex: 0,
+      driver: { name: "Driver 1" },
+      bestLapTime: 4.5,
+      averageLapTime: 4.8,
+    } as unknown as DriverHeatData;
+
+    it("should resolve OVERALL_RECORD from overallRecord input", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_RECORD");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallRecord", 3.21);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(3.21);
+      expect(await harness.getBenchmarkName()).toBe("Overall Record");
+      expect(await harness.getTargetTimeText()).toBe("3.210s");
+    });
+
+    it("should resolve OVERALL_PERSONAL_BEST from overallPersonalBest input", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_PERSONAL_BEST");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallPersonalBest", 3.456);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(3.456);
+      expect(await harness.getBenchmarkName()).toBe("Overall PB");
+      expect(await harness.getTargetTimeText()).toBe("3.456s");
+    });
+
+    it("should resolve OVERALL_PERSONAL_AVG and show -- when 0", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_PERSONAL_AVG");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallPersonalAvg", 0);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(0);
+      expect(component.formattedTargetGhostLapTime()).toBe("--");
+      expect(await harness.getBenchmarkName()).toBe("Overall Avg");
+      expect(await harness.getTargetTimeText()).toBe("--");
+
+      // When available
+      fixture.componentRef.setInput("overallPersonalAvg", 3.65);
+      fixture.detectChanges();
+      expect(component.targetGhostLapTime()).toBe(3.65);
+      expect(await harness.getTargetTimeText()).toBe("3.650s");
+    });
+
+    it("should resolve OVERALL_PERSONAL_MEDIAN and show -- when 0", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_PERSONAL_MEDIAN");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallPersonalMedian", 0);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(0);
+      expect(await harness.getBenchmarkName()).toBe("Overall Median");
+      expect(await harness.getTargetTimeText()).toBe("--");
+
+      fixture.componentRef.setInput("overallPersonalMedian", 3.7);
+      fixture.detectChanges();
+      expect(component.targetGhostLapTime()).toBe(3.7);
+      expect(await harness.getTargetTimeText()).toBe("3.700s");
+    });
+
+    it("should resolve OVERALL_LEADER_BEST from overallLeaderBest", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_LEADER_BEST");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallLeaderBest", 3.333);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(3.333);
+      expect(await harness.getBenchmarkName()).toBe("Overall Leader Best");
+      expect(await harness.getTargetTimeText()).toBe("3.333s");
+    });
+
+    it("should resolve OVERALL_LEADER_AVG and show -- when 0", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_LEADER_AVG");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallLeaderAvg", 0);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(0);
+      expect(await harness.getBenchmarkName()).toBe("Overall Leader Avg");
+      expect(await harness.getTargetTimeText()).toBe("--");
+
+      fixture.componentRef.setInput("overallLeaderAvg", 3.55);
+      fixture.detectChanges();
+      expect(component.targetGhostLapTime()).toBe(3.55);
+      expect(await harness.getTargetTimeText()).toBe("3.550s");
+    });
+
+    it("should resolve OVERALL_LEADER_MEDIAN and show -- when 0", async () => {
+      fixture.componentRef.setInput("driverHeatData", mockHd);
+      fixture.componentRef.setInput("benchmarkType", "OVERALL_LEADER_MEDIAN");
+      fixture.componentRef.setInput("stacked", true);
+      fixture.componentRef.setInput("overallLeaderMedian", 0);
+      fixture.detectChanges();
+
+      expect(component.targetGhostLapTime()).toBe(0);
+      expect(await harness.getBenchmarkName()).toBe("Overall Leader Median");
+      expect(await harness.getTargetTimeText()).toBe("--");
+
+      fixture.componentRef.setInput("overallLeaderMedian", 3.58);
+      fixture.detectChanges();
+      expect(component.targetGhostLapTime()).toBe(3.58);
+      expect(await harness.getTargetTimeText()).toBe("3.580s");
+    });
   });
 
   describe("decimalPlaces formatting [0, 3]", () => {
@@ -282,8 +444,8 @@ describe("RacedayGhostPacingComponent", () => {
       // Placeholder with 0 decimals
       fixture.componentRef.setInput("laneRecord", 0);
       fixture.detectChanges();
-      expect(component.targetTimePlaceholder()).toBe("--s");
-      expect(await harness.getTargetTimeText()).toBe("--s");
+      expect(component.targetTimePlaceholder()).toBe("--");
+      expect(await harness.getTargetTimeText()).toBe("--");
     });
 
     it("should clamp decimalPlaces within [0, 3]", () => {

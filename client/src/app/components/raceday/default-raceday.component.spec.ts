@@ -10625,6 +10625,24 @@ describe("DefaultRacedayComponent", () => {
       expect(component["heatBestTime"]).toBe(2.012);
     });
 
+    it("should provide overall benchmark statistics for overall pacing widgets in editor mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.detectChanges();
+
+      component["setupMockDataForEditor"]();
+
+      expect(component.overallLeaderBestTime).toBeGreaterThan(0);
+      expect(component.overallLeaderAvgTime).toBeGreaterThan(0);
+      expect(component.overallLeaderMedianTime).toBeGreaterThan(0);
+
+      const heatDrivers = (component as any).heat?.heatDrivers || [];
+      expect(heatDrivers.length).toBeGreaterThan(0);
+      const firstHd = heatDrivers[0];
+      expect(component.getOverallPersonalBest(firstHd)).toBeGreaterThan(0);
+      expect(component.getOverallPersonalAvg(firstHd)).toBeGreaterThan(0);
+      expect(component.getOverallPersonalMedian(firstHd)).toBeGreaterThan(0);
+    });
+
     it("should populate laneQrCodeCache with mock QR codes", () => {
       fixture.componentRef.setInput("isUIEditorMode", true);
       fixture.detectChanges();
@@ -12373,8 +12391,67 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isPacingProperty("ghostPacingPB")).toBe(true);
       expect(component.isPacingProperty("ghostPacingPersonalAvg")).toBe(true);
       expect(component.isPacingProperty("ghostPacingLeaderBest")).toBe(true);
+      expect(component.isPacingProperty("overallGhostPacing")).toBe(true);
+      expect(component.isPacingProperty("overallGhostPacingPB")).toBe(true);
+      expect(component.isPacingProperty("overallGhostPacingPersonalAvg")).toBe(
+        true,
+      );
+      expect(
+        component.isPacingProperty("overallGhostPacingPersonalMedian"),
+      ).toBe(true);
+      expect(component.isPacingProperty("overallGhostPacingLeaderBest")).toBe(
+        true,
+      );
+      expect(component.isPacingProperty("overallGhostPacingLeaderAvg")).toBe(
+        true,
+      );
+      expect(component.isPacingProperty("overallGhostPacingLeaderMedian")).toBe(
+        true,
+      );
       expect(component.isPacingProperty("lapCount")).toBe(false);
       expect(component.isPacingProperty("")).toBe(false);
+    });
+
+    it("should resolve overall leader and overall personal stats correctly", () => {
+      const p1 = {
+        driver: { objectId: "d1", name: "Driver 1" },
+        rank: 2,
+        bestLapTime: 3.8,
+        averageLapTime: 4.1,
+        medianLapTime: 4.05,
+      } as any;
+      const p2 = {
+        driver: { objectId: "d2", name: "Driver 2" },
+        rank: 1,
+        bestLapTime: 3.2,
+        averageLapTime: 3.5,
+        medianLapTime: 3.48,
+      } as any;
+      (component as any).participants = [p1, p2];
+
+      const leader = component.getLeaderOverallParticipant();
+      expect(leader).toBe(p2);
+      expect(component.overallLeaderBestTime).toBe(3.2);
+      expect(component.overallLeaderAvgTime).toBe(3.5);
+      expect(component.overallLeaderMedianTime).toBe(3.48);
+      expect(component.overallBestLapTime).toBe(3.2);
+
+      const hd1 = {
+        objectId: "d1",
+        driver: { objectId: "d1" },
+      } as any;
+      expect(component.getOverallPersonalBest(hd1)).toBe(3.8);
+      expect(component.getOverallPersonalAvg(hd1)).toBe(4.1);
+      expect(component.getOverallPersonalMedian(hd1)).toBe(4.05);
+
+      const hdUnknown = {
+        objectId: "d3",
+        driver: { objectId: "d3" },
+      } as any;
+      expect(component.getOverallPersonalBest(hdUnknown)).toBe(0);
+      expect(component.getOverallPersonalAvg(hdUnknown)).toBe(0);
+      expect(component.getOverallPersonalMedian(hdUnknown)).toBe(0);
+      expect(component.getOverallPersonalBest(undefined)).toBe(0);
     });
   });
 
@@ -12590,7 +12667,7 @@ describe("DefaultRacedayComponent", () => {
         (s) => s.id === "overall-data",
       );
       expect(overallData).toBeDefined();
-      expect(overallData?.subgroups?.length).toBe(7);
+      expect(overallData?.subgroups?.length).toBe(8);
       const standings = rcAiGroup?.subgroups.find(
         (s) => s.id === "standings-heats",
       );

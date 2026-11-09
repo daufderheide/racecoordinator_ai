@@ -447,6 +447,208 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
     );
   });
 
+  test("should display lane grid with overall ghost pacing delta benchmarks", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: [
+        "laneNumber",
+        "driver.nickname",
+        "lapCount",
+        "overallGhostPacing",
+        "overallGhostPacingPB",
+        "overallGhostPacingLeaderBest",
+      ],
+      columnLayouts: {
+        laneNumber: { "center-center": "laneNumber" },
+        "driver.nickname": { "center-center": "driver.nickname" },
+        lapCount: { "center-center": "lapCount" },
+        overallGhostPacing: { "center-center": "overallGhostPacing" },
+        overallGhostPacingPB: { "center-center": "overallGhostPacingPB" },
+        overallGhostPacingLeaderBest: {
+          "center-center": "overallGhostPacingLeaderBest",
+        },
+      },
+      columnAnchors: {
+        laneNumber: "center-center",
+        "driver.nickname": "center-center",
+        lapCount: "center-center",
+        overallGhostPacing: "center-center",
+        overallGhostPacingPB: "center-center",
+        overallGhostPacingLeaderBest: "center-center",
+      },
+      columnWidths: {
+        laneNumber: 70,
+        "driver.nickname": 220,
+        lapCount: 100,
+        overallGhostPacing: 200,
+        overallGhostPacingPB: 200,
+        overallGhostPacingLeaderBest: 200,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    const raceData = {
+      recordData: {
+        overall: {
+          fastestLap: {
+            value: 4.8,
+            holderNickname: "Alice",
+            holderName: "Alice",
+          },
+          laneFastestLap: [
+            { value: 4.8, holderNickname: "Alice", holderName: "Alice" },
+            { value: 4.9, holderNickname: "Bob", holderName: "Bob" },
+          ],
+        },
+        current: {
+          fastestLap: {
+            value: 4.88,
+            holderNickname: "Alice",
+            holderName: "Alice",
+          },
+          heatFastestLap: {
+            value: 4.88,
+            holderNickname: "Alice",
+            holderName: "Alice",
+          },
+          laneFastestLap: [
+            { value: 4.88, holderNickname: "Alice", holderName: "Alice" },
+            { value: 5.15, holderNickname: "Bob", holderName: "Bob" },
+          ],
+        },
+      },
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Overall Ghost Pacing Grid Race",
+          track: {
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ef4444",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#8b5cf6",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            rank: 1,
+            bestLapTime: 4.88,
+            averageLapTime: 5.05,
+            medianLapTime: 5.02,
+            driver: { name: "Alice", nickname: "Rocket" },
+          },
+          {
+            objectId: "rp2",
+            rank: 2,
+            bestLapTime: 5.15,
+            averageLapTime: 5.32,
+            medianLapTime: 5.3,
+            driver: { name: "Bob", nickname: "Drifter" },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              currentLocation: 65,
+              laps: Array.from({ length: 20 }, (_, i) => ({
+                lapTime: i === 0 ? 4.88 : 5.05,
+              })),
+              lapCount: 20,
+              lastLapTime: 4.95,
+              bestLapTime: 4.88,
+              averageLapTime: 5.05,
+              medianLapTime: 5.02,
+              rankHeat: 1,
+              driver: {
+                objectId: "rp1",
+                driver: { name: "Alice", nickname: "Rocket" },
+              },
+              participant: {
+                objectId: "rp1",
+                rank: 1,
+                bestLapTime: 4.88,
+                averageLapTime: 5.05,
+                medianLapTime: 5.02,
+                driver: { name: "Alice", nickname: "Rocket" },
+              },
+            },
+            {
+              objectId: "hd2",
+              laneIndex: 1,
+              currentLocation: 40,
+              laps: Array.from({ length: 19 }, (_, i) => ({
+                lapTime: i === 0 ? 5.15 : 5.32,
+              })),
+              lapCount: 19,
+              lastLapTime: 5.21,
+              bestLapTime: 5.15,
+              averageLapTime: 5.32,
+              medianLapTime: 5.3,
+              rankHeat: 2,
+              driver: {
+                objectId: "rp2",
+                driver: { name: "Bob", nickname: "Drifter" },
+              },
+              participant: {
+                objectId: "rp2",
+                rank: 2,
+                bestLapTime: 5.15,
+                averageLapTime: 5.32,
+                medianLapTime: 5.3,
+                driver: { name: "Bob", nickname: "Drifter" },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
+    await laneView.waitFor({ state: "visible" });
+
+    await page.addStyleTag({
+      content:
+        "* { caret-color: transparent !important; } .blink { animation: none !important; }",
+    });
+
+    await expect(laneView).toHaveScreenshot(
+      "raceday-lane-grid-overall-ghost-pacing-widgets.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
+
   test("should display lane grid with driver avatars, national flags, and team identity", async ({
     page,
   }) => {

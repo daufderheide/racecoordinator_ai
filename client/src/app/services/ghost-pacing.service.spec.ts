@@ -105,7 +105,7 @@ describe("GhostPacingService", () => {
       ).toBe(4.2);
     });
 
-    it("should resolve PERSONAL_AVG and PERSONAL_MEDIAN preferences with fallbacks", () => {
+    it("should resolve PERSONAL_AVG and PERSONAL_MEDIAN preferences without fallback to best lap", () => {
       expect(
         service.resolveGhostBenchmarkTime(
           "PERSONAL_AVG",
@@ -144,10 +144,23 @@ describe("GhostPacingService", () => {
           0,
           0,
         ),
-      ).toBe(4.2);
+      ).toBe(0.0);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "PERSONAL_MEDIAN",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+        ),
+      ).toBe(0.0);
     });
 
-    it("should resolve HEAT_LEADER_AVG and HEAT_LEADER_MEDIAN preferences with fallbacks", () => {
+    it("should resolve HEAT_LEADER_AVG and HEAT_LEADER_MEDIAN preferences without fallback to best lap", () => {
       expect(
         service.resolveGhostBenchmarkTime(
           "HEAT_LEADER_AVG",
@@ -180,7 +193,342 @@ describe("GhostPacingService", () => {
           0,
           0,
         ),
+      ).toBe(0.0);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "HEAT_LEADER_MEDIAN",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+        ),
+      ).toBe(0.0);
+    });
+
+    it("should resolve overall benchmark preferences with fallbacks", () => {
+      // OVERALL_RECORD
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_RECORD",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.9,
+          0,
+          0,
+          3.8,
+        ),
+      ).toBe(3.8);
+      // OVERALL_RECORD fallback to laneRecord then overallLeaderBest
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_RECORD",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.9,
+        ),
+      ).toBe(4.5);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_RECORD",
+          0,
+          0,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.9,
+        ),
+      ).toBe(3.9);
+
+      // OVERALL_PERSONAL_BEST
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_PERSONAL_BEST",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4.1,
+        ),
+      ).toBe(4.1);
+      // OVERALL_PERSONAL_BEST fallback to personalBest
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_PERSONAL_BEST",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ),
+      ).toBe(4.2);
+
+      // OVERALL_PERSONAL_AVG & MEDIAN (no fallback to best lap)
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_PERSONAL_AVG",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4.1,
+          4.3,
+        ),
+      ).toBe(4.3);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_PERSONAL_AVG",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4.1,
+          0,
+        ),
+      ).toBe(0.0);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_PERSONAL_MEDIAN",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4.1,
+          0,
+          4.25,
+        ),
+      ).toBe(4.25);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_PERSONAL_MEDIAN",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          4.1,
+          0,
+          0,
+        ),
+      ).toBe(0.0);
+
+      // OVERALL_LEADER & OVERALL_LEADER_BEST
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.85,
+        ),
+      ).toBe(3.85);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_BEST",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.85,
+        ),
+      ).toBe(3.85);
+      // OVERALL_LEADER fallback to overallRecord then heatLeaderBest
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_BEST",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.75,
+        ),
+      ).toBe(3.75);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_BEST",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ),
       ).toBe(4.0);
+
+      // OVERALL_LEADER_AVG & MEDIAN (no fallback)
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_AVG",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.85,
+          3.95,
+        ),
+      ).toBe(3.95);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_AVG",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.85,
+          0,
+        ),
+      ).toBe(0.0);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_MEDIAN",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.85,
+          3.95,
+          3.92,
+        ),
+      ).toBe(3.92);
+      expect(
+        service.resolveGhostBenchmarkTime(
+          "OVERALL_LEADER_MEDIAN",
+          0,
+          4.5,
+          4.2,
+          4.0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3.85,
+          3.95,
+          0,
+        ),
+      ).toBe(0.0);
     });
 
     it("should resolve CUSTOM preference", () => {

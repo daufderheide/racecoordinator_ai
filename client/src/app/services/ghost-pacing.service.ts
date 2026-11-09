@@ -9,6 +9,14 @@ export type GhostBenchmarkType =
   | "HEAT_LEADER_BEST"
   | "HEAT_LEADER_AVG"
   | "HEAT_LEADER_MEDIAN"
+  | "OVERALL_RECORD"
+  | "OVERALL_PERSONAL_BEST"
+  | "OVERALL_PERSONAL_AVG"
+  | "OVERALL_PERSONAL_MEDIAN"
+  | "OVERALL_LEADER"
+  | "OVERALL_LEADER_BEST"
+  | "OVERALL_LEADER_AVG"
+  | "OVERALL_LEADER_MEDIAN"
   | "CUSTOM";
 
 export interface GhostGapResult {
@@ -95,8 +103,53 @@ export class GhostPacingService {
     personalAvg?: number,
     personalMedian?: number,
     customPace?: number,
+    overallPersonalBest?: number,
+    overallPersonalAvg?: number,
+    overallPersonalMedian?: number,
+    overallLeaderBest?: number,
+    overallLeaderAvg?: number,
+    overallLeaderMedian?: number,
+    overallRecord?: number,
   ): number {
     switch (benchmarkType) {
+      case "OVERALL_PERSONAL_BEST":
+        if (overallPersonalBest && overallPersonalBest > 0)
+          return overallPersonalBest;
+        if (personalBest && personalBest > 0) return personalBest;
+        if (overallRecord && overallRecord > 0) return overallRecord;
+        if (overallLeaderBest && overallLeaderBest > 0)
+          return overallLeaderBest;
+        break;
+      case "OVERALL_PERSONAL_AVG":
+        if (overallPersonalAvg && overallPersonalAvg > 0)
+          return overallPersonalAvg;
+        break;
+      case "OVERALL_PERSONAL_MEDIAN":
+        if (overallPersonalMedian && overallPersonalMedian > 0)
+          return overallPersonalMedian;
+        break;
+      case "OVERALL_LEADER":
+      case "OVERALL_LEADER_BEST":
+        if (overallLeaderBest && overallLeaderBest > 0)
+          return overallLeaderBest;
+        if (overallRecord && overallRecord > 0) return overallRecord;
+        if (heatLeaderBest && heatLeaderBest > 0) return heatLeaderBest;
+        break;
+      case "OVERALL_LEADER_AVG":
+        if (overallLeaderAvg && overallLeaderAvg > 0) return overallLeaderAvg;
+        break;
+      case "OVERALL_LEADER_MEDIAN":
+        if (overallLeaderMedian && overallLeaderMedian > 0)
+          return overallLeaderMedian;
+        break;
+      case "OVERALL_RECORD":
+        if (overallRecord && overallRecord > 0) return overallRecord;
+        if (laneRecord && laneRecord > 0) return laneRecord;
+        if (overallLeaderBest && overallLeaderBest > 0)
+          return overallLeaderBest;
+        if (overallPersonalBest && overallPersonalBest > 0)
+          return overallPersonalBest;
+        break;
       case "PERSONAL_BEST":
         if (personalBest && personalBest > 0) return personalBest;
         if (laneRecord && laneRecord > 0) return laneRecord;
@@ -104,15 +157,9 @@ export class GhostPacingService {
         break;
       case "PERSONAL_AVG":
         if (personalAvg && personalAvg > 0) return personalAvg;
-        if (personalMedian && personalMedian > 0) return personalMedian;
-        if (personalBest && personalBest > 0) return personalBest;
-        if (laneRecord && laneRecord > 0) return laneRecord;
         break;
       case "PERSONAL_MEDIAN":
         if (personalMedian && personalMedian > 0) return personalMedian;
-        if (personalAvg && personalAvg > 0) return personalAvg;
-        if (personalBest && personalBest > 0) return personalBest;
-        if (laneRecord && laneRecord > 0) return laneRecord;
         break;
       case "HEAT_LEADER":
       case "HEAT_LEADER_BEST":
@@ -121,15 +168,9 @@ export class GhostPacingService {
         break;
       case "HEAT_LEADER_AVG":
         if (heatLeaderAvg && heatLeaderAvg > 0) return heatLeaderAvg;
-        if (heatLeaderMedian && heatLeaderMedian > 0) return heatLeaderMedian;
-        if (heatLeaderBest && heatLeaderBest > 0) return heatLeaderBest;
-        if (laneRecord && laneRecord > 0) return laneRecord;
         break;
       case "HEAT_LEADER_MEDIAN":
         if (heatLeaderMedian && heatLeaderMedian > 0) return heatLeaderMedian;
-        if (heatLeaderAvg && heatLeaderAvg > 0) return heatLeaderAvg;
-        if (heatLeaderBest && heatLeaderBest > 0) return heatLeaderBest;
-        if (laneRecord && laneRecord > 0) return laneRecord;
         break;
       case "CUSTOM":
         if (customPace && customPace > 0) return customPace;

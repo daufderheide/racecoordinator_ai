@@ -303,6 +303,15 @@ export class LaneViewInspectorComponent implements OnInit {
       ghostPacingLeaderAvg: "RD_COL_GHOST_PACING_LEADER_AVG",
       ghostPacingLeaderMedian: "RD_COL_GHOST_PACING_LEADER_MEDIAN",
       ghostPacingLeaderBest: "RD_COL_GHOST_PACING_LEADER_BEST",
+      overallGhostPacing: "RD_COL_OVERALL_GHOST_PACING_RECORD",
+      overallGhostPacingPB: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_BEST",
+      overallGhostPacingPersonalAvg: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_AVG",
+      overallGhostPacingPersonalMedian:
+        "RD_COL_OVERALL_GHOST_PACING_PERSONAL_MEDIAN",
+      overallGhostPacingLeaderAvg: "RD_COL_OVERALL_GHOST_PACING_LEADER_AVG",
+      overallGhostPacingLeaderMedian:
+        "RD_COL_OVERALL_GHOST_PACING_LEADER_MEDIAN",
+      overallGhostPacingLeaderBest: "RD_COL_OVERALL_GHOST_PACING_LEADER_BEST",
     };
     if (pacingMap[key]) {
       return pacingMap[key];

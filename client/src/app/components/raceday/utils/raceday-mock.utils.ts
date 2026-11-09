@@ -353,6 +353,29 @@ function createMockHeatDrivers(
     hd.addSegmentTime(2, 0.7);
 
     // Inject custom column attributes that may be dynamically accessed
+    const bestLap = p.bestLapTime ?? p.best_lap_time;
+    const avgLap = p.averageLapTime ?? p.average_lap_time;
+    const medianLap = p.medianLapTime ?? p.median_lap_time;
+    const lastLap = p.lastLapTime ?? p.last_lap_time ?? bestLap;
+
+    (hd as any).overallBestLapTime = bestLap;
+    (hd as any).overallAverageLapTime = avgLap;
+    (hd as any).overallMedianLapTime = medianLap;
+    (hd as any).currentLapTime = lastLap;
+    (hd as any).lapProgress = 0.65;
+
+    if (hd.participant) {
+      (hd.participant as any).bestLapTime = bestLap;
+      (hd.participant as any).averageLapTime = avgLap;
+      (hd.participant as any).medianLapTime = medianLap;
+      (hd.participant as any).lastLapTime = lastLap;
+      (hd.participant as any).overallBestLapTime = bestLap;
+      (hd.participant as any).overallAverageLapTime = avgLap;
+      (hd.participant as any).overallMedianLapTime = medianLap;
+      (hd.participant as any).totalLaps = p.totalLaps ?? p.lap_count;
+      (hd.participant as any).totalTime = p.totalTime ?? p.total_time;
+    }
+
     (hd as any).rankHeat = p.rank;
     (hd as any).rankOverall = p.rank;
     (hd as any).overallRank = p.rank;
@@ -382,6 +405,19 @@ function createMockNextHeatDrivers(): DriverHeatData[] {
     (hd as any).rankOverall = p.rank;
     (hd as any).overallRank = p.rank;
 
+    const bestLap = (p as any).bestLapTime || (p as any).best_lap_time || 2.4;
+    const avgLap =
+      (p as any).averageLapTime || (p as any).average_lap_time || 2.7;
+    const medianLap =
+      (p as any).medianLapTime || (p as any).median_lap_time || 2.6;
+    const lastLap =
+      (p as any).lastLapTime || (p as any).last_lap_time || bestLap;
+    (hd as any).overallBestLapTime = bestLap;
+    (hd as any).overallAverageLapTime = avgLap;
+    (hd as any).overallMedianLapTime = medianLap;
+    (hd as any).currentLapTime = lastLap;
+    (hd as any).lapProgress = 0.5;
+
     if (hd.participant) {
       (hd.participant as any).fuelLevel = p.fuelLevel || 100;
       (hd.participant as any).seed = p.seed || index + 5;
@@ -389,6 +425,13 @@ function createMockNextHeatDrivers(): DriverHeatData[] {
       (hd.participant as any).winProbability = mockWinProb;
       (hd.participant as any).projectedRank = mockProjRank;
       (hd.participant as any).projectedLaps = mockProjLaps;
+      (hd.participant as any).bestLapTime = bestLap;
+      (hd.participant as any).averageLapTime = avgLap;
+      (hd.participant as any).medianLapTime = medianLap;
+      (hd.participant as any).lastLapTime = lastLap;
+      (hd.participant as any).overallBestLapTime = bestLap;
+      (hd.participant as any).overallAverageLapTime = avgLap;
+      (hd.participant as any).overallMedianLapTime = medianLap;
     }
     return hd;
   });
@@ -586,11 +629,20 @@ function createMockRaceParticipants(): RaceParticipant[] {
       ),
       lane: rank <= 16 ? rank : 0,
       total_time: totalTime,
+      totalTime: totalTime,
       lap_count: lapCount,
+      totalLaps: lapCount,
       last_lap_time: lastLap,
+      lastLapTime: lastLap,
       best_lap_time: bestLap,
+      bestLapTime: bestLap,
       average_lap_time: avgLap,
+      averageLapTime: avgLap,
       median_lap_time: medianLap,
+      medianLapTime: medianLap,
+      overallBestLapTime: bestLap,
+      overallAverageLapTime: avgLap,
+      overallMedianLapTime: medianLap,
       rank: rank,
       reaction_time: 0.05 + index * 0.01,
       gap_leader: index === 0 ? 0 : index * 1.5,
@@ -656,31 +708,45 @@ const MOCK_NEXT_HEAT_CHARACTERS = [
 ];
 
 function createMockNextHeatParticipants(): RaceParticipant[] {
-  return MOCK_NEXT_HEAT_CHARACTERS.map(
-    (char) =>
-      ({
-        id: char.id,
-        objectId: char.id,
-        driver: new Driver(
-          char.driverId,
-          char.name,
-          char.nickname,
-          `https://api.dicebear.com/7.x/pixel-art/svg?seed=${char.avatar}`,
-        ),
-        lane: char.lane,
-        total_time: 0,
-        lap_count: 0,
-        last_lap_time: 0,
-        best_lap_time: 0,
-        average_lap_time: 0,
-        median_lap_time: 0,
-        rank: char.rank,
-        reaction_time: 0,
-        gap_leader: 0,
-        gap_position: 0,
-        fuelLevel: 100,
-        seed: char.rank,
-        team: char.team,
-      }) as unknown as RaceParticipant,
-  );
+  return MOCK_NEXT_HEAT_CHARACTERS.map((char, index) => {
+    const bestLap = 2.4 + index * 0.1;
+    const lastLap = bestLap + 0.15;
+    const avgLap = bestLap + 0.35;
+    const medianLap = bestLap + 0.25;
+    const totalTime = 85 + index * 4;
+
+    return {
+      id: char.id,
+      objectId: char.id,
+      driver: new Driver(
+        char.driverId,
+        char.name,
+        char.nickname,
+        `https://api.dicebear.com/7.x/pixel-art/svg?seed=${char.avatar}`,
+      ),
+      lane: char.lane,
+      total_time: totalTime,
+      totalTime: totalTime,
+      lap_count: 8,
+      totalLaps: 8,
+      last_lap_time: lastLap,
+      lastLapTime: lastLap,
+      best_lap_time: bestLap,
+      bestLapTime: bestLap,
+      average_lap_time: avgLap,
+      averageLapTime: avgLap,
+      median_lap_time: medianLap,
+      medianLapTime: medianLap,
+      overallBestLapTime: bestLap,
+      overallAverageLapTime: avgLap,
+      overallMedianLapTime: medianLap,
+      rank: char.rank,
+      reaction_time: 0.15,
+      gap_leader: 0,
+      gap_position: 0,
+      fuelLevel: 100,
+      seed: char.rank,
+      team: char.team,
+    } as unknown as RaceParticipant;
+  });
 }

@@ -29,6 +29,13 @@ export class RacedayGhostPacingComponent {
   heatLeaderMedian = input<number>(0);
   personalAvg = input<number>(0);
   personalMedian = input<number>(0);
+  overallPersonalBest = input<number>(0);
+  overallPersonalAvg = input<number>(0);
+  overallPersonalMedian = input<number>(0);
+  overallLeaderBest = input<number>(0);
+  overallLeaderAvg = input<number>(0);
+  overallLeaderMedian = input<number>(0);
+  overallRecord = input<number>(0);
   benchmarkType = input<GhostBenchmarkType>("LANE_RECORD");
   compact = input<boolean>(false);
   stacked = input<boolean>(false);
@@ -43,8 +50,7 @@ export class RacedayGhostPacingComponent {
   });
 
   targetTimePlaceholder = computed(() => {
-    const d = this.effectiveDecimals();
-    return d > 0 ? `--.${"-".repeat(d)}s` : `--s`;
+    return "--";
   });
 
   formattedTargetGhostLapTime = computed(() => {
@@ -86,6 +92,47 @@ export class RacedayGhostPacingComponent {
           ? hd.bestLapTime
           : 0;
 
+    const opBest =
+      this.overallPersonalBest() > 0
+        ? this.overallPersonalBest()
+        : (hd.participant?.bestLapTime ?? 0) > 0
+          ? hd.participant.bestLapTime
+          : ((hd as any).overallBestLapTime ?? 0) > 0
+            ? (hd as any).overallBestLapTime
+            : pBest;
+
+    const opAvg =
+      this.overallPersonalAvg() > 0
+        ? this.overallPersonalAvg()
+        : (hd.participant?.averageLapTime ?? 0) > 0
+          ? hd.participant.averageLapTime
+          : ((hd as any).overallAverageLapTime ?? 0) > 0
+            ? (hd as any).overallAverageLapTime
+            : 0;
+
+    const opMed =
+      this.overallPersonalMedian() > 0
+        ? this.overallPersonalMedian()
+        : (hd.participant?.medianLapTime ?? 0) > 0
+          ? hd.participant.medianLapTime
+          : ((hd as any).overallMedianLapTime ?? 0) > 0
+            ? (hd as any).overallMedianLapTime
+            : 0;
+
+    const oLeaderBest =
+      this.overallLeaderBest() > 0
+        ? this.overallLeaderBest()
+        : this.heatLeaderBest();
+
+    const oLeaderAvg =
+      this.overallLeaderAvg() > 0 ? this.overallLeaderAvg() : 0;
+
+    const oLeaderMed =
+      this.overallLeaderMedian() > 0 ? this.overallLeaderMedian() : 0;
+
+    const oRecord =
+      this.overallRecord() > 0 ? this.overallRecord() : this.laneRecord();
+
     return this.ghostPacingService.resolveGhostBenchmarkTime(
       this.benchmarkType(),
       laneIndex,
@@ -96,6 +143,14 @@ export class RacedayGhostPacingComponent {
       this.heatLeaderMedian(),
       pAvg,
       pMed,
+      undefined,
+      opBest,
+      opAvg,
+      opMed,
+      oLeaderBest,
+      oLeaderAvg,
+      oLeaderMed,
+      oRecord,
     );
   });
 
@@ -114,7 +169,14 @@ export class RacedayGhostPacingComponent {
       };
     }
 
-    const currentLapTime = (hd as any).currentLapTime ?? hd.lastLapTime ?? 0;
+    const currentLapTime =
+      (hd as any).currentLapTime ??
+      (hd.lastLapTime > 0
+        ? hd.lastLapTime
+        : ((hd.participant as any)?.lastLapTime ??
+          (hd.participant as any)?.bestLapTime ??
+          (hd as any).bestLapTime ??
+          0));
     const customProgress = this.lapProgress();
     const progress =
       customProgress !== null
@@ -131,6 +193,21 @@ export class RacedayGhostPacingComponent {
 
   benchmarkLabelKey = computed(() => {
     switch (this.benchmarkType()) {
+      case "OVERALL_PERSONAL_BEST":
+        return "RD_GHOST_OVERALL_PERSONAL_BEST";
+      case "OVERALL_PERSONAL_AVG":
+        return "RD_GHOST_OVERALL_PERSONAL_AVG";
+      case "OVERALL_PERSONAL_MEDIAN":
+        return "RD_GHOST_OVERALL_PERSONAL_MEDIAN";
+      case "OVERALL_LEADER":
+      case "OVERALL_LEADER_BEST":
+        return "RD_GHOST_OVERALL_LEADER_BEST";
+      case "OVERALL_LEADER_AVG":
+        return "RD_GHOST_OVERALL_LEADER_AVG";
+      case "OVERALL_LEADER_MEDIAN":
+        return "RD_GHOST_OVERALL_LEADER_MEDIAN";
+      case "OVERALL_RECORD":
+        return "RD_GHOST_OVERALL_RECORD";
       case "PERSONAL_BEST":
         return "RD_GHOST_PERSONAL_BEST";
       case "PERSONAL_AVG":

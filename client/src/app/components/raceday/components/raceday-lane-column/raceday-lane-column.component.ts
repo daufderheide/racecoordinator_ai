@@ -55,6 +55,7 @@ import {
 import { LaneColumnAnchorHelper } from "./raceday-lane-column-anchor.helper";
 import {
   isLaneColumnExtraGridRow,
+  isOverallDataSource,
   isOverallOrSeedDataSource,
   LaneColumnDriverCache,
   resolveLaneColumnEmptyRowsMode,
@@ -1011,7 +1012,10 @@ export class RacedayLaneColumnComponent
   }
 
   getPacingBenchmarkType(): GhostBenchmarkType {
-    return resolvePacingBenchmarkType(this.columnKey);
+    const isOverall =
+      this.columnKey.startsWith("overallGhostPacing") ||
+      isOverallDataSource(this.settings, this.parent(), this.bindingMode);
+    return resolvePacingBenchmarkType(this.columnKey, isOverall);
   }
 
   isDriftLap(): boolean {

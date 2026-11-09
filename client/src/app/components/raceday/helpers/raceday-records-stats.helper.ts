@@ -2,9 +2,11 @@ import {
   createMockBestRaceLapEntries,
   createMockLaneRecordEntries,
 } from "@app/components/raceday/utils/raceday-mock.utils";
+import { Driver } from "@app/models/driver";
 import { IRecordEntry } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { RaceParticipant } from "@app/race/race_participant";
 
 export class RacedayRecordsStatsHelper {
   static handleRecordDataUpdate(host: any, records: any): void {
@@ -219,6 +221,178 @@ export class RacedayRecordsStatsHelper {
   static getPersonalBest(hd?: DriverHeatData): number {
     if (!hd) return 0;
     return hd.bestLapTime > 0 ? hd.bestLapTime : 0;
+  }
+
+  static getOverallPersonalBest(hd?: DriverHeatData, host?: any): number {
+    if (!hd) return 0;
+    if (hd.participant?.bestLapTime && hd.participant.bestLapTime > 0) {
+      return hd.participant.bestLapTime;
+    }
+    if ((hd as any).overallBestLapTime && (hd as any).overallBestLapTime > 0) {
+      return (hd as any).overallBestLapTime;
+    }
+    if (host?.participants) {
+      const driverId =
+        (hd as any).driver?.entity_id ||
+        (hd as any).driver?.objectId ||
+        (hd as any).driverId ||
+        (hd as any).objectId;
+      if (driverId) {
+        const p = host.participants.find(
+          (part: any) =>
+            part.driver?.entity_id === driverId ||
+            part.driver?.objectId === driverId ||
+            part.objectId === driverId ||
+            part.driverId === driverId,
+        );
+        if (p?.bestLapTime && p.bestLapTime > 0) return p.bestLapTime;
+      }
+    }
+    if (hd.bestLapTime > 0) return hd.bestLapTime;
+    const isEditor =
+      typeof host?.isUIEditorMode === "function"
+        ? host.isUIEditorMode()
+        : Boolean(host?.isUIEditorMode);
+    if (isEditor) {
+      const lane =
+        hd.laneIndex !== undefined && hd.laneIndex >= 0 ? hd.laneIndex : 0;
+      return 2.0 + lane * 0.1;
+    }
+    return 0;
+  }
+
+  static getOverallPersonalAvg(hd?: DriverHeatData, host?: any): number {
+    if (!hd) return 0;
+    if (hd.participant?.averageLapTime && hd.participant.averageLapTime > 0) {
+      return hd.participant.averageLapTime;
+    }
+    if (
+      (hd as any).overallAverageLapTime &&
+      (hd as any).overallAverageLapTime > 0
+    ) {
+      return (hd as any).overallAverageLapTime;
+    }
+    if (host?.participants) {
+      const driverId =
+        (hd as any).driver?.entity_id ||
+        (hd as any).driver?.objectId ||
+        (hd as any).driverId ||
+        (hd as any).objectId;
+      if (driverId) {
+        const p = host.participants.find(
+          (part: any) =>
+            part.driver?.entity_id === driverId ||
+            part.driver?.objectId === driverId ||
+            part.objectId === driverId ||
+            part.driverId === driverId,
+        );
+        if (p?.averageLapTime && p.averageLapTime > 0) return p.averageLapTime;
+      }
+    }
+    if (hd.averageLapTime > 0) return hd.averageLapTime;
+    const isEditor =
+      typeof host?.isUIEditorMode === "function"
+        ? host.isUIEditorMode()
+        : Boolean(host?.isUIEditorMode);
+    if (isEditor) {
+      const lane =
+        hd.laneIndex !== undefined && hd.laneIndex >= 0 ? hd.laneIndex : 0;
+      return 2.3 + lane * 0.1;
+    }
+    return 0;
+  }
+
+  static getOverallPersonalMedian(hd?: DriverHeatData, host?: any): number {
+    if (!hd) return 0;
+    if (hd.participant?.medianLapTime && hd.participant.medianLapTime > 0) {
+      return hd.participant.medianLapTime;
+    }
+    if (
+      (hd as any).overallMedianLapTime &&
+      (hd as any).overallMedianLapTime > 0
+    ) {
+      return (hd as any).overallMedianLapTime;
+    }
+    if (host?.participants) {
+      const driverId =
+        (hd as any).driver?.entity_id ||
+        (hd as any).driver?.objectId ||
+        (hd as any).driverId ||
+        (hd as any).objectId;
+      if (driverId) {
+        const p = host.participants.find(
+          (part: any) =>
+            part.driver?.entity_id === driverId ||
+            part.driver?.objectId === driverId ||
+            part.objectId === driverId ||
+            part.driverId === driverId,
+        );
+        if (p?.medianLapTime && p.medianLapTime > 0) return p.medianLapTime;
+      }
+    }
+    if (hd.medianLapTime > 0) return hd.medianLapTime;
+    const isEditor =
+      typeof host?.isUIEditorMode === "function"
+        ? host.isUIEditorMode()
+        : Boolean(host?.isUIEditorMode);
+    if (isEditor) {
+      const lane =
+        hd.laneIndex !== undefined && hd.laneIndex >= 0 ? hd.laneIndex : 0;
+      return 2.2 + lane * 0.1;
+    }
+    return 0;
+  }
+
+  static getLeaderOverallParticipant(host: any): RaceParticipant | undefined {
+    const participants: RaceParticipant[] = (host.participants || []).filter(
+      (p: any) => p && p.driver && !Driver.isEmpty(p.driver),
+    );
+    if (participants.length === 0) {
+      const heatDrivers = host.heat?.heatDrivers || host.heatDrivers;
+      if (heatDrivers) {
+        const heatParticipants = heatDrivers
+          .map((d: any) => d?.participant)
+          .filter((p: any) => p && p.driver && !Driver.isEmpty(p.driver));
+        const ranked = heatParticipants.find((p: any) => p.rank === 1);
+        if (ranked) return ranked;
+        if (heatParticipants.length > 0) return heatParticipants[0];
+      }
+      return undefined;
+    }
+
+    // 1. Participant with rank === 1
+    const rankedLeader = participants.find((p: any) => p.rank === 1);
+    if (rankedLeader) return rankedLeader;
+
+    // 2. Leaderboard entry with rank === 1
+    if (host.leaderboardEntries && host.leaderboardEntries.length > 0) {
+      const topEntry = host.leaderboardEntries.find((e: any) => e.rank === 1);
+      if (topEntry) {
+        const match = participants.find(
+          (p: any) =>
+            p.objectId === topEntry.entityId ||
+            p.driver?.entity_id === topEntry.entityId ||
+            p.driver?.name === topEntry.entityId ||
+            p.team?.entity_id === topEntry.entityId,
+        );
+        if (match) return match;
+      }
+    }
+
+    // 3. Fallback: sort by rank ascending (if positive), then totalLaps descending, totalTime ascending
+    const sorted = [...participants].sort((a: any, b: any) => {
+      const rankA = a.rank > 0 ? a.rank : 999;
+      const rankB = b.rank > 0 ? b.rank : 999;
+      if (rankA !== rankB) return rankA - rankB;
+      const lapsA = a.totalLaps ?? a.lapCount ?? 0;
+      const lapsB = b.totalLaps ?? b.lapCount ?? 0;
+      if (lapsA !== lapsB) return lapsB - lapsA;
+      const timeA = a.totalTime ?? 0;
+      const timeB = b.totalTime ?? 0;
+      return timeA - timeB;
+    });
+
+    return sorted[0];
   }
 
   static getLeaderHeatDriver(host: any): DriverHeatData | undefined {

@@ -14,7 +14,10 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RacedayGhostPacingComponent } from "@app/components/raceday/components/raceday-ghost-pacing/raceday-ghost-pacing.component";
-import { getSvgPreserveAspectRatio } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.utils";
+import {
+  getSvgPreserveAspectRatio,
+  resolvePacingBenchmarkType,
+} from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.utils";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
@@ -216,23 +219,15 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
   }
 
   getPacingBenchmarkType(property?: string): GhostBenchmarkType {
-    switch (property) {
-      case "ghostPacingPB":
-        return "PERSONAL_BEST";
-      case "ghostPacingPersonalAvg":
-        return "PERSONAL_AVG";
-      case "ghostPacingPersonalMedian":
-        return "PERSONAL_MEDIAN";
-      case "ghostPacingLeaderAvg":
-        return "HEAT_LEADER_AVG";
-      case "ghostPacingLeaderMedian":
-        return "HEAT_LEADER_MEDIAN";
-      case "ghostPacingLeaderBest":
-        return "HEAT_LEADER";
-      case "ghostPacing":
-      default:
-        return "LANE_RECORD";
-    }
+    const isOverall =
+      Boolean(property?.startsWith("overallGhostPacing")) ||
+      this.widget()?.customSettings?.["gridType"] === "overall" ||
+      Boolean(
+        this.parent()?.isGridOverall?.(
+          this.widget()?.customSettings?.["gridId"],
+        ),
+      );
+    return resolvePacingBenchmarkType(property || "", isOverall);
   }
 
   isPacingProperty(property?: string): boolean {
@@ -267,8 +262,16 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
     const isPacing =
       this.isPacingProperty(propKey) ||
       this.isPacingProperty(colKey) ||
-      Boolean(colKey && colKey.startsWith("ghostPacing")) ||
-      Boolean(propKey && propKey.startsWith("ghostPacing"));
+      Boolean(
+        colKey &&
+        (colKey.startsWith("ghostPacing") ||
+          colKey.startsWith("overallGhostPacing")),
+      ) ||
+      Boolean(
+        propKey &&
+        (propKey.startsWith("ghostPacing") ||
+          propKey.startsWith("overallGhostPacing")),
+      );
 
     if (customColDecimals) {
       if (
@@ -301,7 +304,8 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       if (isPacing) {
         for (const k of Object.keys(customColDecimals)) {
           if (
-            k.startsWith("ghostPacing") &&
+            (k.startsWith("ghostPacing") ||
+              k.startsWith("overallGhostPacing")) &&
             customColDecimals[k] !== undefined &&
             customColDecimals[k] !== null &&
             customColDecimals[k] !== ""

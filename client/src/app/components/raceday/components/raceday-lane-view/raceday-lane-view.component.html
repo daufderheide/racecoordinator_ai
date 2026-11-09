@@ -508,6 +508,40 @@
                               ? parent().getPersonalBest(hd)
                               : 0
                           "
+                          [personalAvg]="hd?.averageLapTime || 0"
+                          [personalMedian]="hd?.medianLapTime || 0"
+                          [overallPersonalBest]="
+                            parent()?.getOverallPersonalBest
+                              ? parent().getOverallPersonalBest(hd)
+                              : hd?.participant?.bestLapTime || 0
+                          "
+                          [overallPersonalAvg]="
+                            parent()?.getOverallPersonalAvg
+                              ? parent().getOverallPersonalAvg(hd)
+                              : hd?.participant?.averageLapTime || 0
+                          "
+                          [overallPersonalMedian]="
+                            parent()?.getOverallPersonalMedian
+                              ? parent().getOverallPersonalMedian(hd)
+                              : hd?.participant?.medianLapTime || 0
+                          "
+                          [overallLeaderBest]="
+                            parent()?.overallLeaderBestTime ||
+                            parent()?.bestRaceLapTime ||
+                            parent()?.raceRecordLapTime ||
+                            0
+                          "
+                          [overallLeaderAvg]="
+                            parent()?.overallLeaderAvgTime || 0
+                          "
+                          [overallLeaderMedian]="
+                            parent()?.overallLeaderMedianTime || 0
+                          "
+                          [overallRecord]="
+                            parent()?.raceRecordLapTime ||
+                            parent()?.bestRaceLapTime ||
+                            0
+                          "
                           [heatLeaderBest]="
                             parent()?.heatLeaderBestTime ||
                             parent()?.heatBestTime ||

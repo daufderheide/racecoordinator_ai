@@ -59,6 +59,7 @@ export class ToolboxGroupHelper {
     "overall-lap-times",
     "overall-analysis",
     "overall-gaps",
+    "overall-pacing",
     "predictions",
     "media-custom",
   ];
@@ -911,6 +912,7 @@ export class ToolboxGroupHelper {
     UE_COL_GROUP_OVERALL_ANALYSIS: "Overall Analysis & Consistency",
     UE_COL_GROUP_OVERALL_GAPS: "Overall Gaps & Intervals",
     UE_COL_GROUP_OVERALL_LAP_TIMES: "Overall Lap Times & Records",
+    UE_COL_GROUP_OVERALL_PACING: "Overall Pacing",
     UE_COL_GROUP_OVERALL_STANDINGS: "Overall Standings & Laps",
     UE_COL_GROUP_PACING: "Pacing",
     UE_COL_GROUP_PREDICTIONS: "Predictions",
