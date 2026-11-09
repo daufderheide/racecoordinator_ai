@@ -265,4 +265,33 @@ public class CommonTest {
     assertFalse(result);
     assertFalse(callbackRan[0]);
   }
+
+  @Test
+  public void testAdvanceToNextHeat_AdvancesStepUpOnBoundaryHeat() {
+    Race race = mock(Race.class);
+    Heat h1 = mock(Heat.class);
+    Heat h2 = mock(Heat.class);
+
+    when(h1.getObjectId()).thenReturn("h1-id");
+    when(h1.isStepUpBoundary()).thenReturn(true);
+    when(h2.getObjectId()).thenReturn("h2-id");
+    when(h2.getActiveDriverCount()).thenReturn(1);
+
+    List<Heat> heats = new ArrayList<>(Arrays.asList(h1, h2));
+    when(race.getHeats()).thenReturn(heats);
+    when(race.getCurrentHeat()).thenReturn(h1);
+
+    com.antigravity.race.RaceHeatManager rhm = mock(com.antigravity.race.RaceHeatManager.class);
+    when(race.getHeatManager()).thenReturn(rhm);
+
+    RaceParticipant p1 = mock(RaceParticipant.class);
+    when(p1.getObjectId()).thenReturn("p1-id");
+    when(race.getDrivers()).thenReturn(Collections.singletonList(p1));
+
+    Common.advanceToNextHeat(race);
+
+    verify(rhm).handleStepUpAdvancement(h1);
+    verify(race).setCurrentHeat(h2);
+    verify(race).changeState(org.mockito.ArgumentMatchers.any(NotStarted.class));
+  }
 }

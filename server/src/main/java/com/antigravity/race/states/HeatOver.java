@@ -66,9 +66,7 @@ public class HeatOver implements IRaceState {
       if (start > 0) {
         race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - start);
       }
-      if (race.getHeatManager() != null && race.getCurrentHeat().isStepUpBoundary()) {
-        race.getHeatManager().handleStepUpAdvancement(race.getCurrentHeat());
-      }
+      race.updateAndBroadcastOverallStandings();
       race.broadcast(race.createSnapshot());
     }
 

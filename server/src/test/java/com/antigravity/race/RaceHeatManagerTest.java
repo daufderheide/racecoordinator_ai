@@ -1112,8 +1112,17 @@ public class RaceHeatManagerTest {
       assertNotNull(step1BoundaryHeat);
 
       RaceParticipant p4 = stepRace.getDrivers().get(3);
-      DriverHeatData dhd4 = step1BoundaryHeat.getDrivers().get(0);
-      DriverHeatData dhd5 = step1BoundaryHeat.getDrivers().get(1);
+      DriverHeatData dhd4 = null;
+      DriverHeatData dhd5 = null;
+      for (DriverHeatData dhd : step1BoundaryHeat.getDrivers()) {
+        if (dhd.getDriver() != null && p4.getObjectId().equals(dhd.getDriver().getObjectId())) {
+          dhd4 = dhd;
+        } else if (dhd.getDriver() != null && !dhd.getDriver().isEmptyParticipant()) {
+          dhd5 = dhd;
+        }
+      }
+      assertNotNull(dhd4);
+      assertNotNull(dhd5);
       dhd4.addLap(10.0, false, true);
       dhd4.addLap(10.0, false, true);
       dhd5.addLap(10.0, false, true);
@@ -1145,6 +1154,58 @@ public class RaceHeatManagerTest {
           assertTrue(foundPlaceholder);
         }
       }
+    } finally {
+      stepRace.stop();
+    }
+  }
+
+  @Test
+  public void testStepUpAdvancement_NotResetInHeatOver_ResetWhenAdvanced() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 5, 1);
+    try {
+      List<Heat> heats = stepRace.getHeats();
+      Heat step1BoundaryHeat = null;
+      for (Heat h : heats) {
+        if (h.getStep() == 1 && h.isStepUpBoundary()) {
+          step1BoundaryHeat = h;
+          break;
+        }
+      }
+      assertNotNull(step1BoundaryHeat);
+
+      RaceParticipant p4 = stepRace.getDrivers().get(3);
+      RaceParticipant p5 = stepRace.getDrivers().get(4);
+      DriverHeatData dhd4 = null;
+      DriverHeatData dhd5 = null;
+      for (DriverHeatData dhd : step1BoundaryHeat.getDrivers()) {
+        if (dhd.getDriver() != null && p4.getObjectId().equals(dhd.getDriver().getObjectId())) {
+          dhd4 = dhd;
+        } else if (dhd.getDriver() != null
+            && p5.getObjectId().equals(dhd.getDriver().getObjectId())) {
+          dhd5 = dhd;
+        }
+      }
+      assertNotNull(dhd4);
+      assertNotNull(dhd5);
+      dhd4.addLap(10.0, false, true);
+      dhd4.addLap(10.0, false, true);
+      dhd5.addLap(10.0, false, true);
+
+      // Transition to HeatOver (simulating heat end)
+      stepRace.setCurrentHeat(step1BoundaryHeat);
+      stepRace.changeState(new com.antigravity.race.states.HeatOver());
+
+      // During HeatOver: Driver 4 must NOT be reset to 0; stats must reflect Step 1
+      assertEquals(2.0, p4.getTotalLaps(), 0.001);
+      assertEquals(1.0, p5.getTotalLaps(), 0.001);
+      assertTrue(p4.getRank() < p5.getRank());
+
+      // Advance heat
+      com.antigravity.race.states.Common.advanceToNextHeat(stepRace);
+
+      // Now Driver 4 has advanced to Step 2, and their score in Step 2 is reset to 0
+      assertEquals(0.0, p4.getTotalLaps(), 0.001);
+      assertTrue(stepRace.getCurrentHeat().getStep() == 2);
     } finally {
       stepRace.stop();
     }

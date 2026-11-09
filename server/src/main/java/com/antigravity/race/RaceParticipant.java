@@ -129,12 +129,12 @@ public class RaceParticipant extends ServerToClientObject
   public static RaceParticipant createStepUpParticipant(int index) {
     Driver d =
         new Driver.Builder()
-            .withName("Step Up " + index)
+            .withName("Step-Up " + (index + 1))
             .withEntityId(Driver.STEP_UP_DRIVER_ID_PREFIX + index)
             .build();
     RaceParticipant p = new RaceParticipant(d);
     p.setStepUpParticipant(true);
-    p.setStepUpIndex(index);
+    p.setStepUpIndex(index + 1);
     return p;
   }
 

@@ -678,6 +678,7 @@ public class RaceHeatManager {
             int advIdx = sIdx - 1;
             if (advIdx >= 0 && advIdx < advancing.size()) {
               RaceParticipant adv = advancing.get(advIdx);
+              dhd.setStepUpLaneIndex(sIdx);
               dhd.setDriver(adv);
               if (adv.isTeamParticipant()
                   && adv.getTeamDrivers() != null
@@ -707,8 +708,8 @@ public class RaceHeatManager {
       if (h.getGroup() == group && h.getStep() == nextStep && !h.isStarted()) {
         for (DriverHeatData dhd : h.getDrivers()) {
           if (dhd.isStepUpLane()) {
-            RaceParticipant placeholder =
-                RaceParticipant.createStepUpParticipant(dhd.getStepUpLaneIndex());
+            int placeholderIdx = Math.max(0, dhd.getStepUpLaneIndex() - 1);
+            RaceParticipant placeholder = RaceParticipant.createStepUpParticipant(placeholderIdx);
             dhd.setDriver(placeholder);
             dhd.setActualDriver(placeholder.getDriver());
           }

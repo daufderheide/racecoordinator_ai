@@ -541,7 +541,7 @@ public class HeatBuilder {
         for (int i = fromIdx; i < fromIdx + higherStepCapacity; i++) {
           stepParticipants.add(drivers.get(i));
         }
-        for (int s = 1; s <= stepUp; s++) {
+        for (int s = 0; s < stepUp; s++) {
           stepParticipants.add(RaceParticipant.createStepUpParticipant(s));
         }
       }

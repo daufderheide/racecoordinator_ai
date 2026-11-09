@@ -80,7 +80,7 @@ public class OverallStandings {
           driverMaxStep);
 
       boolean isStepUpRace =
-          this.stepUp > 0 || (heats != null && heats.stream().anyMatch(h -> h.getStep() > 0));
+          this.stepUp > 0 || heatStepByNumber.values().stream().anyMatch(s -> s > 0);
 
       // 2. Aggregate stats for each driver
       for (RaceParticipant driver : new ArrayList<>(drivers)) {
