@@ -964,7 +964,10 @@ public class Race implements ProtocolListener {
       for (com.antigravity.proto.CustomHeat protoHeat : protoRot.getHeatsList()) { // fqn-collision
         heats.add(
             new CustomHeat(
-                new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
+                new ArrayList<>(protoHeat.getDriverIndicesList()),
+                protoHeat.getGroup(),
+                protoHeat.getIsStepUpBoundary(),
+                protoHeat.getStep()));
       }
       result.add(new CustomRotation(protoRot.getNumDrivers(), heats));
     }

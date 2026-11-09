@@ -712,7 +712,10 @@ public class RaceHeatTaskHandler {
       for (com.antigravity.proto.CustomHeat protoHeat : protoRot.getHeatsList()) { // fqn-collision
         heats.add(
             new CustomHeat(
-                new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
+                new ArrayList<>(protoHeat.getDriverIndicesList()),
+                protoHeat.getGroup(),
+                protoHeat.getIsStepUpBoundary(),
+                protoHeat.getStep()));
       }
       list.add(new CustomRotation(protoRot.getNumDrivers(), heats));
     }
@@ -748,7 +751,14 @@ public class RaceHeatTaskHandler {
                   : new ArrayList<>();
           Object groupObj = heatMap.get("group");
           int group = groupObj != null ? ((Number) groupObj).intValue() : 0;
-          heats.add(new CustomHeat(driverIndices, group));
+          Object boundaryObj = heatMap.get("isStepUpBoundary");
+          if (boundaryObj == null) {
+            boundaryObj = heatMap.get("is_step_up_boundary");
+          }
+          boolean isStepUpBoundary = boundaryObj instanceof Boolean ? (Boolean) boundaryObj : false;
+          Object stepObj = heatMap.get("step");
+          int step = stepObj instanceof Number ? ((Number) stepObj).intValue() : 0;
+          heats.add(new CustomHeat(driverIndices, group, isStepUpBoundary, step));
         }
       }
       customRotations.add(new CustomRotation(numDrivers, heats));

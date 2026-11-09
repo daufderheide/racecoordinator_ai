@@ -18,7 +18,10 @@ export function getRotationSignature(
   numLanes: number,
 ): string {
   const heatsSig = (rotation.heats || [])
-    .map((h) => (h.driverIndices || []).join(","))
+    .map(
+      (h) =>
+        `${(h.driverIndices || []).join(",")}:${h.group || 0}:${h.isStepUpBoundary ? 1 : 0}:${h.step || 1}`,
+    )
     .join("|");
   return `${rotation.numDrivers || 0}:${numLanes}:${heatsSig}`;
 }
@@ -30,19 +33,37 @@ export function checkRotationLaneEqualityDirect(
 ): LaneEqualityResult {
   const numDrivers = rotation.numDrivers ?? 0;
   const driverIds: string[] = [];
+  const driverNames = new Map<string, string>();
   for (let d = 1; d <= numDrivers; d++) {
     driverIds.push(d.toString());
   }
+
+  const stepUpIndices = new Set<number>();
+  (rotation.heats || []).forEach((h) => {
+    (h.driverIndices || []).forEach((idx) => {
+      if (idx !== undefined && idx !== null && idx < 0) {
+        stepUpIndices.add(idx);
+      }
+    });
+  });
+  const sortedStepUps = Array.from(stepUpIndices).sort((a, b) => b - a);
+  for (const sIdx of sortedStepUps) {
+    const idStr = sIdx.toString();
+    driverIds.push(idStr);
+    const stepUpNum = -sIdx;
+    driverNames.set(idStr, `Step-Up ${stepUpNum}`);
+  }
+
   const heats = (rotation.heats || []).map((h) =>
     (h.driverIndices || []).map((idx) =>
-      idx && idx > 0 ? idx.toString() : null,
+      idx && idx !== 0 ? idx.toString() : null,
     ),
   );
   return checkLaneEquality(
     numLanes,
     driverIds,
     heats,
-    undefined,
+    driverNames,
     translationService,
   );
 }
@@ -94,6 +115,12 @@ export function areCustomRotationStatesEqual(
       if (heat.group !== otherHeat.group) {
         return false;
       }
+      if (!!heat.isStepUpBoundary !== !!otherHeat.isStepUpBoundary) {
+        return false;
+      }
+      if ((heat.step || 1) !== (otherHeat.step || 1)) {
+        return false;
+      }
       const lanes = heat.driverIndices || [];
       const otherLanes = otherHeat.driverIndices || [];
       if (lanes.length !== otherLanes.length) {
@@ -133,6 +160,8 @@ export function buildSingleRotationExportJson(
       rotation.heats?.map((h) => ({
         Drivers: h.driverIndices,
         Group: h.group !== undefined && h.group !== null ? h.group + 1 : 1,
+        IsStepUpBoundary: !!h.isStepUpBoundary,
+        Step: h.step || 1,
       })) || [],
   };
 
@@ -160,6 +189,8 @@ export function buildRotationsAssetExportJson(
         rotation.heats?.map((h) => ({
           Drivers: h.driverIndices,
           Group: h.group !== undefined && h.group !== null ? h.group + 1 : 1,
+          IsStepUpBoundary: !!h.isStepUpBoundary,
+          Step: h.step || 1,
         })) || [],
     })),
   };
@@ -218,6 +249,50 @@ export function driverHasGroupConflict(
   return conflicts.has(driverId);
 }
 
+export function assignCustomRotationStepNumbers(
+  rotation: ICustomRotation,
+): void {
+  const heats = rotation.heats || [];
+  const groupSteps = new Map<number, number>();
+
+  for (const h of heats) {
+    const group = h.group || 0;
+    const currentStep = groupSteps.get(group) || 1;
+    h.step = currentStep;
+    if (h.isStepUpBoundary) {
+      groupSteps.set(group, currentStep + 1);
+    }
+  }
+}
+
+export function rotationHasStepUps(rotation: ICustomRotation): boolean {
+  if (!rotation.heats) return false;
+  return rotation.heats.some(
+    (h) =>
+      !!h.isStepUpBoundary ||
+      (h.driverIndices || []).some(
+        (idx) => idx !== undefined && idx !== null && idx < 0,
+      ),
+  );
+}
+
+export function heatHasStepUpInStepOne(
+  rotation: ICustomRotation,
+  heatIdx: number,
+): boolean {
+  const heat = rotation.heats?.[heatIdx];
+  if (!heat || !heat.driverIndices) {
+    return false;
+  }
+  const step = heat.step || 1;
+  if (step === 1) {
+    return heat.driverIndices.some(
+      (idx) => idx !== undefined && idx !== null && idx < 0,
+    );
+  }
+  return false;
+}
+
 export function heatHasError(
   rotation: ICustomRotation,
   heatIdx: number,
@@ -228,10 +303,18 @@ export function heatHasError(
   }
 
   const assigned = heat.driverIndices.filter(
-    (idx) => idx !== undefined && idx !== null && idx > 0,
+    (idx) => idx !== undefined && idx !== null && idx !== 0,
   );
   const unique = new Set(assigned);
-  return assigned.length !== unique.size;
+  if (assigned.length !== unique.size) {
+    return true;
+  }
+
+  if (heatHasStepUpInStepOne(rotation, heatIdx)) {
+    return true;
+  }
+
+  return false;
 }
 
 export function hasValidationErrors(rotations: ICustomRotation[]): boolean {

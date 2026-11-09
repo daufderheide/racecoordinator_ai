@@ -157,6 +157,54 @@
           }
         </div>
       </div>
+
+      <!-- Step-Up Drivers List -->
+      <div class="driver-pool-section step-up-pool-section">
+        <div class="section-header">
+          <h3>{{ "RE_STEP_UP" | translate }}</h3>
+          <div class="drivers-count-input-container">
+            <span class="count-label">{{
+              "AM_LABEL_NUM_DRIVERS" | translate
+            }}</span>
+            <input
+              type="number"
+              class="drivers-count-input"
+              [(ngModel)]="numStepUpDrivers"
+              (change)="onNumStepUpDriversChange()"
+              min="1"
+              max="99"
+            />
+          </div>
+        </div>
+
+        <div
+          id="step-up-pool"
+          cdkDropList
+          [cdkDropListData]="stepUpDrivers"
+          [cdkDropListConnectedTo]="heatDropListIds"
+          class="driver-pool"
+          (cdkDropListDropped)="onDrop($event)"
+        >
+          @for (driver of stepUpDrivers; track driver.id) {
+            <div
+              class="driver-item step-up-item"
+              cdkDrag
+              [cdkDragData]="driver"
+            >
+              <span
+                class="material-icons step-up-icon"
+                style="color: #38bdf8; font-size: 24px; margin-right: 8px"
+                >arrow_upward</span
+              >
+              <div class="driver-details">
+                <div class="driver-name">
+                  {{ "RD_STEP_UP_N" | translate: { n: driver.stepUpIndex } }}
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
     </div>
 
     <!-- Right Panel: Rotations Expanders -->
@@ -278,6 +326,7 @@
                       cdkDrag
                       [cdkDragData]="heat"
                       cdkDragPreviewContainer="parent"
+                      [class.is-step-boundary]="heat.isStepUpBoundary"
                       [class.heat-error]="
                         heatHasError(rotation, hIdx) ||
                         heatHasGroupConflict(rotation, hIdx)
@@ -290,19 +339,25 @@
                             cdkDragHandle
                             >drag_indicator</span
                           >
-                          <h4>
-                            {{ "RD_HEAT" | translate }} {{ hIdx + 1 }} -
-                            {{ "RE_GROUPS_LABEL" | translate }}:
-                            <input
-                              type="number"
-                              class="group-input"
-                              [ngModel]="(heat.group || 0) + 1"
-                              (ngModelChange)="
-                                onHeatGroupChange(rotation, heat, $event)
-                              "
-                              min="1"
-                            />
+                          <h4 class="heat-title-text">
+                            {{ "RD_HEAT" | translate }} {{ hIdx + 1 }}
+                            @if (rotationHasStepUps(rotation)) {
+                              <span class="step-badge"
+                                >-
+                                {{
+                                  "RD_STEP_LADDER_STEP"
+                                    | translate: { step: heat.step || 1 }
+                                }}</span
+                              >
+                            }
                           </h4>
+                          @if (heatHasStepUpInStepOne(rotation, hIdx)) {
+                            <span
+                              class="warning-icon"
+                              [title]="'RD_ERR_STEP_UP_IN_STEP_ONE' | translate"
+                              ><span class="material-icons">warning</span></span
+                            >
+                          }
                         </div>
                         <div class="header-actions">
                           <button
@@ -316,6 +371,42 @@
                             <span class="material-icons">delete</span>
                           </button>
                         </div>
+                      </div>
+                      <div class="heat-subheader">
+                        <div class="heat-group-tag">
+                          <span class="group-label"
+                            >{{ "RE_GROUPS_LABEL" | translate }}:</span
+                          >
+                          <input
+                            type="number"
+                            class="group-input"
+                            [ngModel]="(heat.group || 0) + 1"
+                            (ngModelChange)="
+                              onHeatGroupChange(rotation, heat, $event)
+                            "
+                            min="1"
+                          />
+                          @if (heatHasGroupConflict(rotation, hIdx)) {
+                            <span
+                              class="warning-icon"
+                              title="Driver is assigned to multiple groups!"
+                              ><span class="material-icons">warning</span></span
+                            >
+                          }
+                        </div>
+                        <button
+                          type="button"
+                          class="boundary-badge"
+                          [class.is-boundary]="heat.isStepUpBoundary"
+                          (click)="
+                            toggleStepUpBoundary(rotation, heat);
+                            $event.stopPropagation()
+                          "
+                          [attr.aria-label]="'RD_STEP_UP_BOUNDARY' | translate"
+                          [title]="'RD_STEP_UP_BOUNDARY' | translate"
+                        >
+                          {{ "RD_STEP_UP_BOUNDARY" | translate }}
+                        </button>
                       </div>
 
                       <div class="heat-lanes">
@@ -345,127 +436,169 @@
                               style="flex: 1; min-height: 40px"
                             >
                               @if (heat.driverIndices?.[lIdx]; as driverId) {
-                                <div
-                                  class="driver-item populated"
-                                  cdkDrag
-                                  [cdkDragData]="{ id: driverId }"
-                                  [style.background-color]="
-                                    $any(lane).background_color ||
-                                    lane.backgroundColor
-                                  "
-                                  [style.color]="
-                                    $any(lane).foreground_color ||
-                                    lane.foregroundColor
-                                  "
-                                >
-                                  <!-- Small helmet icon -->
-                                  <svg
-                                    class="graphic-icon driver-icon"
-                                    viewBox="0 0 100 100"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    style="width: 24px; height: 24px"
+                                @if (driverId < 0) {
+                                  <div
+                                    class="driver-item populated step-up-item"
+                                    cdkDrag
+                                    [cdkDragData]="{ id: driverId }"
+                                    [style.background-color]="
+                                      $any(lane).background_color ||
+                                      lane.backgroundColor
+                                    "
+                                    [style.color]="
+                                      $any(lane).foreground_color ||
+                                      lane.foregroundColor
+                                    "
                                   >
-                                    <defs>
-                                      <linearGradient
-                                        [id]="
-                                          'driverGradSmall-' +
-                                          rotIdx +
-                                          '-' +
-                                          hIdx +
-                                          '-' +
-                                          lIdx
-                                        "
-                                        x1="0%"
-                                        y1="0%"
-                                        x2="100%"
-                                        y2="100%"
-                                      >
-                                        <stop
-                                          offset="0%"
-                                          stop-color="#38bdf8"
-                                        />
-                                        <stop
-                                          offset="100%"
-                                          stop-color="#0369a1"
-                                        />
-                                      </linearGradient>
-                                      <linearGradient
-                                        [id]="
-                                          'visorGradSmall-' +
-                                          rotIdx +
-                                          '-' +
-                                          hIdx +
-                                          '-' +
-                                          lIdx
-                                        "
-                                        x1="0%"
-                                        y1="0%"
-                                        x2="0%"
-                                        y2="100%"
-                                      >
-                                        <stop
-                                          offset="0%"
-                                          stop-color="#0f172a"
-                                        />
-                                        <stop
-                                          offset="100%"
-                                          stop-color="#1e293b"
-                                        />
-                                      </linearGradient>
-                                    </defs>
-                                    <path
-                                      d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
-                                      [attr.fill]="
-                                        'url(#driverGradSmall-' +
-                                        rotIdx +
-                                        '-' +
-                                        hIdx +
-                                        '-' +
-                                        lIdx +
-                                        ')'
+                                    <span
+                                      class="material-icons step-up-icon"
+                                      style="
+                                        font-size: 22px;
+                                        margin-right: 6px;
+                                        display: inline-flex;
+                                        align-items: center;
+                                        justify-content: center;
                                       "
-                                    />
-                                    <path
-                                      d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
-                                      [attr.fill]="
-                                        'url(#visorGradSmall-' +
-                                        rotIdx +
-                                        '-' +
-                                        hIdx +
-                                        '-' +
-                                        lIdx +
-                                        ')'
-                                      "
-                                      stroke="#38bdf8"
-                                      stroke-width="2"
-                                    />
-                                  </svg>
-                                  <div class="driver-details">
-                                    <div
-                                      class="driver-name"
-                                      [style.color]="
-                                        $any(lane).foreground_color ||
-                                        lane.foregroundColor
-                                      "
+                                      >arrow_upward</span
                                     >
-                                      Driver {{ driverId }}
-                                      @if (
-                                        driverHasGroupConflict(
-                                          rotation,
-                                          driverId
-                                        )
-                                      ) {
-                                        <span
-                                          class="warning-icon"
-                                          title="Driver is assigned to multiple groups!"
-                                          ><span class="material-icons"
-                                            >warning</span
-                                          ></span
-                                        >
-                                      }
+                                    <div class="driver-details">
+                                      <div
+                                        class="driver-name"
+                                        [style.color]="
+                                          $any(lane).foreground_color ||
+                                          lane.foregroundColor
+                                        "
+                                      >
+                                        {{
+                                          "RD_STEP_UP_N"
+                                            | translate: { n: -driverId }
+                                        }}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
+                                } @else {
+                                  <div
+                                    class="driver-item populated"
+                                    cdkDrag
+                                    [cdkDragData]="{ id: driverId }"
+                                    [style.background-color]="
+                                      $any(lane).background_color ||
+                                      lane.backgroundColor
+                                    "
+                                    [style.color]="
+                                      $any(lane).foreground_color ||
+                                      lane.foregroundColor
+                                    "
+                                  >
+                                    <!-- Small helmet icon -->
+                                    <svg
+                                      class="graphic-icon driver-icon"
+                                      viewBox="0 0 100 100"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      style="width: 24px; height: 24px"
+                                    >
+                                      <defs>
+                                        <linearGradient
+                                          [id]="
+                                            'driverGradSmall-' +
+                                            rotIdx +
+                                            '-' +
+                                            hIdx +
+                                            '-' +
+                                            lIdx
+                                          "
+                                          x1="0%"
+                                          y1="0%"
+                                          x2="100%"
+                                          y2="100%"
+                                        >
+                                          <stop
+                                            offset="0%"
+                                            stop-color="#38bdf8"
+                                          />
+                                          <stop
+                                            offset="100%"
+                                            stop-color="#0369a1"
+                                          />
+                                        </linearGradient>
+                                        <linearGradient
+                                          [id]="
+                                            'visorGradSmall-' +
+                                            rotIdx +
+                                            '-' +
+                                            hIdx +
+                                            '-' +
+                                            lIdx
+                                          "
+                                          x1="0%"
+                                          y1="0%"
+                                          x2="0%"
+                                          y2="100%"
+                                        >
+                                          <stop
+                                            offset="0%"
+                                            stop-color="#0f172a"
+                                          />
+                                          <stop
+                                            offset="100%"
+                                            stop-color="#1e293b"
+                                          />
+                                        </linearGradient>
+                                      </defs>
+                                      <path
+                                        d="M20,55 C20,30 35,15 50,15 C65,15 80,30 80,55 C80,68 72,75 65,75 L35,75 C28,75 20,68 20,55 Z"
+                                        [attr.fill]="
+                                          'url(#driverGradSmall-' +
+                                          rotIdx +
+                                          '-' +
+                                          hIdx +
+                                          '-' +
+                                          lIdx +
+                                          ')'
+                                        "
+                                      />
+                                      <path
+                                        d="M32,38 L68,38 C75,38 78,42 76,52 L73,58 C71,62 65,65 58,65 L42,65 C35,65 29,62 27,58 L24,52 C22,42 25,38 32,38 Z"
+                                        [attr.fill]="
+                                          'url(#visorGradSmall-' +
+                                          rotIdx +
+                                          '-' +
+                                          hIdx +
+                                          '-' +
+                                          lIdx +
+                                          ')'
+                                        "
+                                        stroke="#38bdf8"
+                                        stroke-width="2"
+                                      />
+                                    </svg>
+                                    <div class="driver-details">
+                                      <div
+                                        class="driver-name"
+                                        [style.color]="
+                                          $any(lane).foreground_color ||
+                                          lane.foregroundColor
+                                        "
+                                      >
+                                        Driver {{ driverId }}
+                                        @if (
+                                          driverHasGroupConflict(
+                                            rotation,
+                                            driverId
+                                          )
+                                        ) {
+                                          <span
+                                            class="warning-icon"
+                                            title="Driver is assigned to multiple groups!"
+                                            ><span class="material-icons"
+                                              >warning</span
+                                            ></span
+                                          >
+                                        }
+                                      </div>
+                                    </div>
+                                  </div>
+                                }
                               } @else {
                                 <div
                                   class="driver-item empty"

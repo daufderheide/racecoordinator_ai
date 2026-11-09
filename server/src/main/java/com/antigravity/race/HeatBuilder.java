@@ -22,7 +22,7 @@ public class HeatBuilder {
       Race race, List<RaceParticipant> drivers, List<CustomRotation> customRotations) {
     int numLanes = race.getTrack().getLanes().size();
     GroupOptions groupOptions = race.getRaceModel().getGroupOptions();
-    List<Heat> heatList = new ArrayList<>();
+    List<Heat> heatList;
     List<RaceParticipant> activeDrivers = filterActiveParticipants(drivers);
 
     boolean isCustom = race.getRaceModel().getHeatRotationType() == HeatRotationType.Custom;
@@ -32,44 +32,23 @@ public class HeatBuilder {
             && race.getRaceModel().getStepUp() < numLanes;
 
     if (groupOptions != null && groupOptions.isEnabled() && !isCustom) {
-      List<Integer> driverGroups =
-          getGroups(
-              activeDrivers,
-              numLanes,
-              groupOptions.getMaxGroups(),
-              groupOptions.isBalance(),
-              groupOptions.isAllowEmptyLanes(),
-              groupOptions.isForceMultipleOfMax());
-
-      int numGroups = 0;
-      for (int g : driverGroups) {
-        if (g >= numGroups) {
-          numGroups = g + 1;
-        }
-      }
-
-      for (int g = 0; g < numGroups; g++) {
-        List<RaceParticipant> groupDrivers = new ArrayList<>();
-        for (int i = 0; i < activeDrivers.size(); i++) {
-          if (driverGroups.get(i) == g) {
-            groupDrivers.add(activeDrivers.get(i));
-          }
-        }
-
-        if (groupDrivers.isEmpty()) {
-          continue;
-        }
-
-        List<Heat> groupHeats = buildHeatsForGroup(race, groupDrivers, g, customRotations);
-        heatList.addAll(groupHeats);
-      }
-
-      if (groupOptions.isRotateGroupHeats()) {
-        heatList = isStepUpRace ? resortStepUpGroupHeats(heatList) : resortGroupHeats(heatList);
-      }
+      heatList =
+          buildGroupHeats(
+              race, activeDrivers, numLanes, groupOptions, isStepUpRace, customRotations);
     } else {
       heatList = buildHeatsForGroup(race, activeDrivers, 0, customRotations);
     }
+
+    boolean customHasStepUps = false;
+    if (isCustom) {
+      for (Heat h : heatList) {
+        if (h.isStepUpBoundary() || h.getStep() > 1) {
+          customHasStepUps = true;
+          break;
+        }
+      }
+    }
+    boolean isAnyStepUpRace = isStepUpRace || customHasStepUps;
 
     // Heat Times Through
     int timesThrough = race.getRaceModel().getHeatTimesThrough();
@@ -77,43 +56,12 @@ public class HeatBuilder {
         "buildHeats: timesThrough={}, reverseHeats={}",
         timesThrough,
         race.getRaceModel().isReverseHeats());
-    if (timesThrough > 1 && !isStepUpRace) {
-      List<Heat> baseHeats = new ArrayList<>(heatList);
-      for (int i = 1; i < timesThrough; i++) {
-        for (int hIdx = 0; hIdx < baseHeats.size(); hIdx++) {
-          Heat h = baseHeats.get(hIdx);
-          int totalHeatIdx = i * baseHeats.size() + hIdx;
-          List<DriverHeatData> clonedDrivers = new ArrayList<>();
-          for (DriverHeatData dhd : h.getDrivers()) {
-            RaceParticipant participant = dhd.getDriver();
-            DriverHeatData newDhd = new DriverHeatData(participant);
-            newDhd.setLane(dhd.getLane());
-            if (participant != null
-                && participant.isTeamParticipant()
-                && participant.getTeam() != null
-                && participant.getTeamDrivers() != null
-                && !participant.getTeamDrivers().isEmpty()) {
-              int teamDriverIdx = totalHeatIdx % participant.getTeamDrivers().size();
-              newDhd.setActualDriver(participant.getTeamDrivers().get(teamDriverIdx));
-            } else {
-              newDhd.setActualDriver(dhd.getActualDriver());
-            }
-            clonedDrivers.add(newDhd);
-          }
-          heatList.add(
-              new Heat(
-                  totalHeatIdx + 1,
-                  clonedDrivers,
-                  h.getGroup(),
-                  race.getRaceModel().getHeatScoring(),
-                  race.getRaceModel().getOverallScoring(),
-                  race.getRaceModel().isPractice()));
-        }
-      }
+    if (timesThrough > 1 && !isAnyStepUpRace) {
+      heatList = applyHeatTimesThrough(heatList, race, timesThrough);
     }
 
     // Reverse Heats
-    if (race.getRaceModel().isReverseHeats() && !isStepUpRace) {
+    if (race.getRaceModel().isReverseHeats() && !isAnyStepUpRace) {
       Collections.reverse(heatList);
     }
 
@@ -123,6 +71,90 @@ public class HeatBuilder {
     }
 
     return heatList;
+  }
+
+  private static List<Heat> buildGroupHeats(
+      Race race,
+      List<RaceParticipant> activeDrivers,
+      int numLanes,
+      GroupOptions groupOptions,
+      boolean isStepUpRace,
+      List<CustomRotation> customRotations) {
+    List<Integer> driverGroups =
+        getGroups(
+            activeDrivers,
+            numLanes,
+            groupOptions.getMaxGroups(),
+            groupOptions.isBalance(),
+            groupOptions.isAllowEmptyLanes(),
+            groupOptions.isForceMultipleOfMax());
+
+    int numGroups = 0;
+    for (int g : driverGroups) {
+      if (g >= numGroups) {
+        numGroups = g + 1;
+      }
+    }
+
+    List<Heat> heatList = new ArrayList<>();
+    for (int g = 0; g < numGroups; g++) {
+      List<RaceParticipant> groupDrivers = new ArrayList<>();
+      for (int i = 0; i < activeDrivers.size(); i++) {
+        if (driverGroups.get(i) == g) {
+          groupDrivers.add(activeDrivers.get(i));
+        }
+      }
+
+      if (groupDrivers.isEmpty()) {
+        continue;
+      }
+
+      List<Heat> groupHeats = buildHeatsForGroup(race, groupDrivers, g, customRotations);
+      heatList.addAll(groupHeats);
+    }
+
+    if (groupOptions.isRotateGroupHeats()) {
+      heatList = isStepUpRace ? resortStepUpGroupHeats(heatList) : resortGroupHeats(heatList);
+    }
+    return heatList;
+  }
+
+  private static List<Heat> applyHeatTimesThrough(
+      List<Heat> heatList, Race race, int timesThrough) {
+    List<Heat> result = new ArrayList<>(heatList);
+    List<Heat> baseHeats = new ArrayList<>(heatList);
+    for (int i = 1; i < timesThrough; i++) {
+      for (int hIdx = 0; hIdx < baseHeats.size(); hIdx++) {
+        Heat h = baseHeats.get(hIdx);
+        int totalHeatIdx = i * baseHeats.size() + hIdx;
+        List<DriverHeatData> clonedDrivers = new ArrayList<>();
+        for (DriverHeatData dhd : h.getDrivers()) {
+          RaceParticipant participant = dhd.getDriver();
+          DriverHeatData newDhd = new DriverHeatData(participant);
+          newDhd.setLane(dhd.getLane());
+          if (participant != null
+              && participant.isTeamParticipant()
+              && participant.getTeam() != null
+              && participant.getTeamDrivers() != null
+              && !participant.getTeamDrivers().isEmpty()) {
+            int teamDriverIdx = totalHeatIdx % participant.getTeamDrivers().size();
+            newDhd.setActualDriver(participant.getTeamDrivers().get(teamDriverIdx));
+          } else {
+            newDhd.setActualDriver(dhd.getActualDriver());
+          }
+          clonedDrivers.add(newDhd);
+        }
+        result.add(
+            new Heat(
+                totalHeatIdx + 1,
+                clonedDrivers,
+                h.getGroup(),
+                race.getRaceModel().getHeatScoring(),
+                race.getRaceModel().getOverallScoring(),
+                race.getRaceModel().isPractice()));
+      }
+    }
+    return result;
   }
 
   private static List<Integer> getRoundRobinRotationSequence(int numLanes) {
@@ -476,14 +508,38 @@ public class HeatBuilder {
           }
 
           heatDrivers.add(data);
+        } else if (driverIdx < 0) {
+          int stepUpIdx = -driverIdx;
+          RaceParticipant stepUpParticipant =
+              RaceParticipant.createStepUpParticipant(stepUpIdx - 1);
+          DriverHeatData data = new DriverHeatData(stepUpParticipant);
+          data.setLane(l);
+          data.setStepUpLaneIndex(stepUpIdx);
+          data.setActualDriver(stepUpParticipant.getDriver());
+          heatDrivers.add(data);
         } else {
           DriverHeatData emptyDhd = new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER));
           emptyDhd.setLane(l);
           heatDrivers.add(emptyDhd);
         }
       }
-      heatList.add(
-          new Heat(h + 1, heatDrivers, customHeat.getGroup(), scoring, overallScoring, practice));
+      Heat heat =
+          new Heat(h + 1, heatDrivers, customHeat.getGroup(), scoring, overallScoring, practice);
+      heat.setStepUpBoundary(customHeat.isStepUpBoundary());
+      heat.setStep(customHeat.getStep());
+      heatList.add(heat);
+    }
+
+    java.util.Map<Integer, Integer> groupSteps = new java.util.HashMap<>();
+    for (Heat heat : heatList) {
+      int group = heat.getGroup();
+      int currentStep = groupSteps.getOrDefault(group, 1);
+      if (heat.getStep() <= 0) {
+        heat.setStep(currentStep);
+      }
+      if (heat.isStepUpBoundary()) {
+        groupSteps.put(group, currentStep + 1);
+      }
     }
 
     return heatList;
@@ -508,11 +564,14 @@ public class HeatBuilder {
               + maxStepUp
               + ")");
     }
-    if (stepUp > 0 && drivers.size() > numLanes && stepUp < numLanes) {
+    HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
+    if (stepUp > 0
+        && drivers.size() > numLanes
+        && stepUp < numLanes
+        && rotationType != HeatRotationType.Custom) {
       return buildStepUpHeatsForGroup(
           race, drivers, groupNumber, customRotations, stepUp, numLanes);
     }
-    HeatRotationType rotationType = race.getRaceModel().getHeatRotationType();
     List<Heat> heatList = generateHeatsByRotation(race, drivers, customRotations, rotationType);
 
     for (Heat heat : heatList) {

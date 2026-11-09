@@ -2,6 +2,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   areCustomRotationStatesEqual,
+  assignCustomRotationStepNumbers,
   buildRotationsAssetExportJson,
   buildSingleRotationExportJson,
   checkRotationLaneEqualityDirect,
@@ -13,6 +14,8 @@ import {
   hasValidationErrors,
   heatHasError,
   heatHasGroupConflict,
+  heatHasStepUpInStepOne,
+  rotationHasStepUps,
 } from "./rotation-export.utils";
 
 describe("rotation-export.utils", () => {
@@ -26,7 +29,7 @@ describe("rotation-export.utils", () => {
       heats: [{ driverIndices: [1, 2, 3, 4] }, { driverIndices: [2, 3, 4, 1] }],
     };
     const sig = getRotationSignature(rot, 4);
-    expect(sig).toBe("4:4:1,2,3,4|2,3,4,1");
+    expect(sig).toBe("4:4:1,2,3,4:0:0:1|2,3,4,1:0:0:1");
   });
 
   it("should check rotation lane equality direct", () => {
@@ -131,6 +134,141 @@ describe("rotation-export.utils", () => {
     };
     expect(heatHasError(rotWithDupDriversInHeat, 0)).toBeTrue();
     expect(hasValidationErrors([rotWithDupDriversInHeat])).toBeTrue();
+  });
+
+  it("should assign correct step numbers for non-group rotation", () => {
+    const rot: {
+      numDrivers: number;
+      heats: {
+        group: number;
+        driverIndices: number[];
+        isStepUpBoundary: boolean;
+        step?: number;
+      }[];
+    } = {
+      numDrivers: 4,
+      heats: [
+        { group: 0, driverIndices: [1, 2, 3, 4], isStepUpBoundary: false },
+        { group: 0, driverIndices: [1, 2, 3, 4], isStepUpBoundary: true },
+        { group: 0, driverIndices: [-1, 2, 3, 4], isStepUpBoundary: false },
+        { group: 0, driverIndices: [-1, 2, 3, 4], isStepUpBoundary: true },
+        { group: 0, driverIndices: [-2, 2, 3, 4], isStepUpBoundary: false },
+      ],
+    };
+    assignCustomRotationStepNumbers(rot);
+    expect(rot.heats[0].step).toBe(1);
+    expect(rot.heats[1].step).toBe(1);
+    expect(rot.heats[2].step).toBe(2);
+    expect(rot.heats[3].step).toBe(2);
+    expect(rot.heats[4].step).toBe(3);
+  });
+
+  it("should assign correct step numbers independently per group", () => {
+    const rot: {
+      numDrivers: number;
+      heats: {
+        group: number;
+        driverIndices: number[];
+        isStepUpBoundary: boolean;
+        step?: number;
+      }[];
+    } = {
+      numDrivers: 6,
+      heats: [
+        { group: 0, driverIndices: [1, 2, 3], isStepUpBoundary: true }, // G0, step 1
+        { group: 1, driverIndices: [4, 5, 6], isStepUpBoundary: false }, // G1, step 1
+        { group: 0, driverIndices: [-1, 2, 3], isStepUpBoundary: false }, // G0, step 2
+        { group: 1, driverIndices: [4, 5, 6], isStepUpBoundary: true }, // G1, step 1
+        { group: 1, driverIndices: [-1, 5, 6], isStepUpBoundary: false }, // G1, step 2
+      ],
+    };
+    assignCustomRotationStepNumbers(rot);
+    expect(rot.heats[0].step).toBe(1);
+    expect(rot.heats[1].step).toBe(1);
+    expect(rot.heats[2].step).toBe(2);
+    expect(rot.heats[3].step).toBe(1);
+    expect(rot.heats[4].step).toBe(2);
+  });
+
+  it("should detect step-ups and flag step 1 step-ups as errors", () => {
+    const normalRot = {
+      numDrivers: 4,
+      heats: [{ group: 0, driverIndices: [1, 2, 3, 4], step: 1 }],
+    };
+    expect(rotationHasStepUps(normalRot)).toBeFalse();
+    expect(heatHasStepUpInStepOne(normalRot, 0)).toBeFalse();
+    expect(heatHasError(normalRot, 0)).toBeFalse();
+
+    const stepUpRot = {
+      numDrivers: 4,
+      heats: [
+        { group: 0, driverIndices: [1, -1, 3, 4], step: 1 },
+        { group: 0, driverIndices: [1, -1, 3, 4], step: 2 },
+      ],
+    };
+    expect(rotationHasStepUps(stepUpRot)).toBeTrue();
+    expect(heatHasStepUpInStepOne(stepUpRot, 0)).toBeTrue();
+    expect(heatHasStepUpInStepOne(stepUpRot, 1)).toBeFalse();
+    expect(heatHasError(stepUpRot, 0)).toBeTrue();
+    expect(heatHasError(stepUpRot, 1)).toBeFalse();
+  });
+
+  it("should check lane equality including step-up drivers", () => {
+    const rot = {
+      numDrivers: 1,
+      heats: [{ driverIndices: [1, -1] }, { driverIndices: [-1, 1] }],
+    };
+    const result = checkRotationLaneEqualityDirect(
+      rot,
+      2,
+      mockTranslationService,
+    );
+    expect(result.allEqual).toBeTrue();
+
+    const rotUnequal = {
+      numDrivers: 1,
+      heats: [{ driverIndices: [1, -1] }, { driverIndices: [1, -1] }],
+    };
+    const resultUnequal = checkRotationLaneEqualityDirect(
+      rotUnequal,
+      2,
+      mockTranslationService,
+    );
+    expect(resultUnequal.allEqual).toBeFalse();
+    expect(resultUnequal.reports.length).toBeGreaterThan(0);
+  });
+
+  it("should export step-up boundaries and step numbers in single rotation and asset JSON", () => {
+    const rot = {
+      numDrivers: 4,
+      heats: [
+        {
+          group: 0,
+          driverIndices: [1, 2, 3, 4],
+          isStepUpBoundary: true,
+          step: 1,
+        },
+        {
+          group: 0,
+          driverIndices: [-1, 2, 3, 4],
+          isStepUpBoundary: false,
+          step: 2,
+        },
+      ],
+    };
+    const singleExport = buildSingleRotationExportJson("StepUpRot", 4, rot);
+    const parsedSingle = JSON.parse(singleExport.jsonContent);
+    expect(parsedSingle.Heats[0].IsStepUpBoundary).toBeTrue();
+    expect(parsedSingle.Heats[0].Step).toBe(1);
+    expect(parsedSingle.Heats[1].IsStepUpBoundary).toBeFalse();
+    expect(parsedSingle.Heats[1].Step).toBe(2);
+    expect(parsedSingle.Heats[1].Drivers[0]).toBe(-1);
+
+    const assetExport = buildRotationsAssetExportJson("StepUpAsset", 4, [rot]);
+    const parsedAsset = JSON.parse(assetExport.jsonContent);
+    expect(parsedAsset.Rotations[0].Heats[0].IsStepUpBoundary).toBeTrue();
+    expect(parsedAsset.Rotations[0].Heats[0].Step).toBe(1);
+    expect(parsedAsset.Rotations[0].Heats[1].Drivers[0]).toBe(-1);
   });
 
   describe("downloadJsonFile", () => {

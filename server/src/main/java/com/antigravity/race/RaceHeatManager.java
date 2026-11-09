@@ -624,7 +624,10 @@ public class RaceHeatManager {
     }
     int step = completedHeat.getStep();
     int group = completedHeat.getGroup();
-    int stepUp = this.race.getRaceModel().getStepUp();
+    int nextStep = step + 1;
+
+    int maxNextStepUpIndex = getMaxStepUpIndexInStep(group, nextStep);
+    int stepUp = maxNextStepUpIndex > 0 ? maxNextStepUpIndex : this.race.getRaceModel().getStepUp();
     if (stepUp <= 0) {
       return;
     }
@@ -664,9 +667,16 @@ public class RaceHeatManager {
       advancing.add(stepParticipants.get(i));
     }
 
-    int nextStep = step + 1;
+    assignAdvancingParticipants(group, nextStep, advancing);
+
+    this.race.updateAndBroadcastOverallStandings();
+    this.race.broadcast(this.race.createSnapshot());
+  }
+
+  private int getMaxStepUpIndexInStep(int group, int targetStep) {
+    int maxNextStepUpIndex = 0;
     for (Heat h : this.race.getHeats()) {
-      if (h.getGroup() == group && h.getStep() == nextStep) {
+      if (h.getGroup() == group && h.getStep() == targetStep) {
         for (DriverHeatData dhd : h.getDrivers()) {
           if (dhd.isStepUpLane()
               || (dhd.getDriver() != null && dhd.getDriver().isStepUpParticipant())) {
@@ -674,7 +684,30 @@ public class RaceHeatManager {
             if (sIdx <= 0 && dhd.getDriver() != null) {
               sIdx = dhd.getDriver().getStepUpIndex();
             }
-            if (sIdx <= 0) sIdx = 1;
+            if (sIdx > maxNextStepUpIndex) {
+              maxNextStepUpIndex = sIdx;
+            }
+          }
+        }
+      }
+    }
+    return maxNextStepUpIndex;
+  }
+
+  private void assignAdvancingParticipants(
+      int group, int targetStep, List<RaceParticipant> advancing) {
+    for (Heat h : this.race.getHeats()) {
+      if (h.getGroup() == group && h.getStep() == targetStep) {
+        for (DriverHeatData dhd : h.getDrivers()) {
+          if (dhd.isStepUpLane()
+              || (dhd.getDriver() != null && dhd.getDriver().isStepUpParticipant())) {
+            int sIdx = dhd.getStepUpLaneIndex();
+            if (sIdx <= 0 && dhd.getDriver() != null) {
+              sIdx = dhd.getDriver().getStepUpIndex();
+            }
+            if (sIdx <= 0) {
+              sIdx = 1;
+            }
             int advIdx = sIdx - 1;
             if (advIdx >= 0 && advIdx < advancing.size()) {
               RaceParticipant adv = advancing.get(advIdx);
@@ -692,9 +725,6 @@ public class RaceHeatManager {
         }
       }
     }
-
-    this.race.updateAndBroadcastOverallStandings();
-    this.race.broadcast(this.race.createSnapshot());
   }
 
   public void revertStepUpAdvancement(Heat heat) {
