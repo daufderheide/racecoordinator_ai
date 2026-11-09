@@ -852,5 +852,30 @@ describe("modify-heats-modal.utils", () => {
       expect(h4.step).toBe(2);
       expect(h5.step).toBe(3);
     });
+
+    it("should track steps per group when interleaved group heats are present", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.group = 0;
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.group = 1;
+      const h3 = new Heat("h3", 3, [], [], false);
+      h3.group = 0;
+      h3.isStepUpBoundary = true;
+      const h4 = new Heat("h4", 4, [], [], false);
+      h4.group = 1;
+      h4.isStepUpBoundary = true;
+      const h5 = new Heat("h5", 5, [], [], false);
+      h5.group = 0;
+      const h6 = new Heat("h6", 6, [], [], false);
+      h6.group = 1;
+
+      assignStepNumbers([h1, h2, h3, h4, h5, h6], 1);
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(1);
+      expect(h4.step).toBe(1);
+      expect(h5.step).toBe(2);
+      expect(h6.step).toBe(2);
+    });
   });
 });

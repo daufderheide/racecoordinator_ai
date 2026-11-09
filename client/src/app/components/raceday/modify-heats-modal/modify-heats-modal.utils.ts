@@ -832,18 +832,21 @@ export function inferBoundariesFromDrivers(heats: Heat[]): void {
 
 /**
  * Assigns sequential step numbers to all heats based on step-up boundaries.
+ * When groups are present, steps are tracked independently per group.
  * Every heat is guaranteed to have a valid step (>= 1).
  */
 export function assignStepNumbers(heats: Heat[], stepUp: number): void {
   if (!heats || heats.length === 0) return;
   if (!stepUp || stepUp <= 0) return;
 
-  let currentStep = 1;
+  const groupSteps = new Map<number, number>();
   for (let i = 0; i < heats.length; i++) {
     const h = heats[i];
+    const grp = h.group || 0;
+    const currentStep = groupSteps.get(grp) || 1;
     h.step = currentStep;
     if (h.isStepUpBoundary) {
-      currentStep++;
+      groupSteps.set(grp, currentStep + 1);
     }
   }
 }

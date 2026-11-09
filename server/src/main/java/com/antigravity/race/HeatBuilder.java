@@ -64,8 +64,8 @@ public class HeatBuilder {
         heatList.addAll(groupHeats);
       }
 
-      if (groupOptions.isRotateGroupHeats() && !isStepUpRace) {
-        heatList = resortGroupHeats(heatList);
+      if (groupOptions.isRotateGroupHeats()) {
+        heatList = isStepUpRace ? resortStepUpGroupHeats(heatList) : resortGroupHeats(heatList);
       }
     } else {
       heatList = buildHeatsForGroup(race, activeDrivers, 0, customRotations);
@@ -775,5 +775,32 @@ public class HeatBuilder {
       }
     }
     return newHeats;
+  }
+
+  private static List<Heat> resortStepUpGroupHeats(List<Heat> heats) {
+    int maxStep = 0;
+    for (Heat h : heats) {
+      int s = Math.max(1, h.getStep());
+      if (s > maxStep) {
+        maxStep = s;
+      }
+    }
+    if (maxStep <= 1) {
+      return resortGroupHeats(heats);
+    }
+    List<Heat> result = new ArrayList<>();
+    for (int step = 1; step <= maxStep; step++) {
+      List<Heat> stepHeats = new ArrayList<>();
+      for (Heat h : heats) {
+        int s = Math.max(1, h.getStep());
+        if (s == step) {
+          stepHeats.add(h);
+        }
+      }
+      if (!stepHeats.isEmpty()) {
+        result.addAll(resortGroupHeats(stepHeats));
+      }
+    }
+    return result;
   }
 }

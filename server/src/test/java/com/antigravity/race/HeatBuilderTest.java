@@ -2,6 +2,7 @@ package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -1368,6 +1369,67 @@ public class HeatBuilderTest {
     }
     assertTrue(foundGroup0);
     assertTrue(foundGroup1);
+  }
+
+  @Test
+  public void testStepUp_GroupRace_RotateGroupHeats_InterleavesEachStep() {
+    when(raceModel.getStepUp()).thenReturn(1);
+    GroupOptions groupOptions = mock(GroupOptions.class);
+    when(groupOptions.isEnabled()).thenReturn(true);
+    when(groupOptions.getMaxGroups()).thenReturn(2);
+    when(groupOptions.isRotateGroupHeats()).thenReturn(true);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+
+    List<RaceParticipant> drivers = createStepUpDrivers(10);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+    assertNotNull(heats);
+    assertFalse(heats.isEmpty());
+
+    // Verify step synchronization: once Step 2 starts, no Step 1 heats appear
+    boolean step2Started = false;
+    for (Heat h : heats) {
+      if (h.getStep() == 2) {
+        step2Started = true;
+      }
+      if (step2Started) {
+        assertNotEquals("Step 1 heat appeared after Step 2 started", 1, h.getStep());
+      }
+    }
+
+    // Verify interleaving within Step 1 and Step 2
+    List<Heat> step1Heats = new ArrayList<>();
+    List<Heat> step2Heats = new ArrayList<>();
+    for (Heat h : heats) {
+      if (h.getStep() == 1) {
+        step1Heats.add(h);
+      } else if (h.getStep() == 2) {
+        step2Heats.add(h);
+      }
+    }
+
+    assertFalse(step1Heats.isEmpty());
+    assertFalse(step2Heats.isEmpty());
+
+    // Check that groups alternate within step 1
+    for (int i = 0; i < step1Heats.size() - 1; i++) {
+      assertNotEquals(
+          "Adjacent heats within step 1 should belong to different groups",
+          step1Heats.get(i).getGroup(),
+          step1Heats.get(i + 1).getGroup());
+    }
+
+    // Check that groups alternate within step 2
+    for (int i = 0; i < step2Heats.size() - 1; i++) {
+      assertNotEquals(
+          "Adjacent heats within step 2 should belong to different groups",
+          step2Heats.get(i).getGroup(),
+          step2Heats.get(i + 1).getGroup());
+    }
+
+    // Both groups have a boundary in step 1
+    long step1Boundaries = step1Heats.stream().filter(Heat::isStepUpBoundary).count();
+    assertEquals(2, step1Boundaries);
   }
 
   @Test(expected = IllegalArgumentException.class)
