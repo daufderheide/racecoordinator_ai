@@ -62,8 +62,9 @@
                           | translate
                             : {
                                 n:
-                                  lane.stepUpIndex != null
-                                    ? lane.stepUpIndex + 1
+                                  lane.stepUpIndex != null &&
+                                  lane.stepUpIndex > 0
+                                    ? lane.stepUpIndex
                                     : 1,
                               })
                         : !lane.driverNumber || lane.driverNumber <= 0

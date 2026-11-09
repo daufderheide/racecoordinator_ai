@@ -20,6 +20,7 @@ import {
   filterDriverPool,
   getModifyHeatsValidationError,
   getParticipantKey,
+  getParticipantName,
   HeatCardBounds,
   isPlaceholderParticipant,
   isStepUpParticipant,
@@ -569,6 +570,37 @@ describe("modify-heats-modal.utils", () => {
       expect(protos.length).toBe(1);
       expect(protos[0].isStepUp).toBeTrue();
       expect(protos[0].stepUpIndex).toBe(1);
+    });
+
+    it("should return correct step-up participant name without off-by-one", () => {
+      const p1 = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step-Up 1", "SU1"),
+      );
+      p1.isStepUp = true;
+      p1.stepUpIndex = 1;
+
+      const p2 = createParticipantFromDriver(
+        new Driver("STEP_UP_1", "Step-Up 2", "SU2"),
+      );
+      p2.isStepUp = true;
+      p2.stepUpIndex = 2;
+
+      expect(getParticipantName(p1)).toBe("Step-Up 1");
+      expect(getParticipantName(p2)).toBe("Step-Up 2");
+
+      const mockTranslation: any = {
+        translate: jasmine
+          .createSpy("translate")
+          .and.callFake(
+            (key: string, params?: any) => `Translated Step-Up ${params?.n}`,
+          ),
+      };
+      expect(getParticipantName(p1, mockTranslation)).toBe(
+        "Translated Step-Up 1",
+      );
+      expect(getParticipantName(p2, mockTranslation)).toBe(
+        "Translated Step-Up 2",
+      );
     });
   });
 

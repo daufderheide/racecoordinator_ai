@@ -102,7 +102,7 @@ export function createStepUpPool(stepUp: number): RaceParticipant[] {
     );
     p.objectId = `STEP_UP_${s}`;
     p.isStepUp = true;
-    p.stepUpIndex = s;
+    p.stepUpIndex = s + 1;
     pool.push(p);
   }
   return pool;

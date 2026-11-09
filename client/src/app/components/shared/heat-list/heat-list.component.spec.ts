@@ -128,6 +128,35 @@ describe("HeatListComponent", () => {
     expect(await harness.hasHeader()).toBeFalse();
   });
 
+  it("should display correct Step-Up placeholder with 1-based index", () => {
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (key === "RD_STEP_UP_N") {
+          return `Step-Up ${params?.n}`;
+        }
+        return key;
+      },
+    );
+
+    fixture.componentRef.setInput("heats", [
+      {
+        heatNumber: 1,
+        lanes: [
+          { laneNumber: 1, isStepUp: true, stepUpIndex: 1 },
+          { laneNumber: 2, isStepUp: true, stepUpIndex: 2 },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+
+    const laneTexts = fixture.debugElement
+      .queryAll(By.css(".driver-number"))
+      .map((el) => el.nativeElement.textContent.trim());
+
+    expect(laneTexts[0]).toBe("Step-Up 1");
+    expect(laneTexts[1]).toBe("Step-Up 2");
+  });
+
   describe("Solo Rotation", () => {
     beforeEach(() => {
       fixture.componentRef.setInput("canDragLanes", true);

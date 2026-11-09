@@ -234,7 +234,9 @@ export function getParticipantName(
 ): string {
   if (isStepUpParticipant(participant)) {
     const idx =
-      (participant.stepUpIndex != null ? participant.stepUpIndex : 0) + 1;
+      participant.stepUpIndex != null && participant.stepUpIndex > 0
+        ? participant.stepUpIndex
+        : 1;
     return translationService
       ? translationService.translate("RD_STEP_UP_N", { n: idx })
       : `Step-Up ${idx}`;
