@@ -102,12 +102,14 @@ export class RaceEditorValidationHelper {
     if (!editingRace) return false;
     const stepUp = Number(editingRace.step_up || 0);
     if (stepUp < 0) return true;
-    if (stepUp > 0 && editingRace.track_entity_id) {
+    if (stepUp > 0) {
+      if (!editingRace.track_entity_id) return true;
       const track = (tracks || []).find(
         (t) => t.entity_id === editingRace.track_entity_id,
       );
       const numLanes = track?.lanes?.length || 0;
-      if (numLanes > 0 && stepUp >= numLanes) {
+      const maxStepUp = Math.max(0, numLanes - 1);
+      if (stepUp > maxStepUp) {
         return true;
       }
     }

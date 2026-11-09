@@ -494,8 +494,20 @@ public class HeatBuilder {
       List<RaceParticipant> drivers,
       int groupNumber,
       List<CustomRotation> customRotations) {
-    int stepUp = race.getRaceModel().getStepUp();
-    int numLanes = race.getTrack().getLanes().size();
+    int stepUp = race.getRaceModel() != null ? race.getRaceModel().getStepUp() : 0;
+    int numLanes =
+        race.getTrack() != null && race.getTrack().getLanes() != null
+            ? race.getTrack().getLanes().size()
+            : 0;
+    int maxStepUp = Math.max(0, numLanes - 1);
+    if (stepUp < 0 || (numLanes == 0 && stepUp > 0) || stepUp > maxStepUp) {
+      throw new IllegalArgumentException(
+          "Step-up count ("
+              + stepUp
+              + ") cannot exceed track lane count minus 1 ("
+              + maxStepUp
+              + ")");
+    }
     if (stepUp > 0 && drivers.size() > numLanes && stepUp < numLanes) {
       return buildStepUpHeatsForGroup(
           race, drivers, groupNumber, customRotations, stepUp, numLanes);

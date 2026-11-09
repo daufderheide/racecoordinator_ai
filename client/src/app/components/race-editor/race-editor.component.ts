@@ -470,6 +470,14 @@ export class RaceEditorComponent
     );
   }
 
+  get maxStepUp(): number {
+    const track = (this.tracks || []).find(
+      (t) => t.entity_id === this.editingRace?.track_entity_id,
+    );
+    const numLanes = track?.lanes?.length || 0;
+    return Math.max(0, numLanes - 1);
+  }
+
   get currentTrackHasPerLaneRelays(): boolean {
     return RaceEditorValidationHelper.currentTrackHasPerLaneRelays(
       this.editingRace,

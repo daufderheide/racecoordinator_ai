@@ -1369,4 +1369,11 @@ public class HeatBuilderTest {
     assertTrue(foundGroup0);
     assertTrue(foundGroup1);
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testStepUp_ExceedsLanesMinusOne_ThrowsException() {
+    when(raceModel.getStepUp()).thenReturn(4); // 4 lanes, max stepUp is 3
+    List<RaceParticipant> drivers = createStepUpDrivers(6);
+    HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+  }
 }

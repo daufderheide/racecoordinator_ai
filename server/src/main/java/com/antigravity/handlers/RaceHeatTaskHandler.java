@@ -81,6 +81,7 @@ public class RaceHeatTaskHandler {
   }
 
   public Race createRace(Race race) {
+    validateRace(race);
     final String raceName = race.getName();
     boolean existing =
         raceRepository.findAll().stream()
@@ -97,45 +98,7 @@ public class RaceHeatTaskHandler {
         || race.getEntityId().isEmpty()
         || "new".equals(race.getEntityId())) {
       String nextId = raceRepository.getNextSequence();
-      race =
-          new Race.Builder()
-              .withName(race.getName())
-              .withTrackEntityId(race.getTrackEntityId())
-              .withHeatRotationType(race.getHeatRotationType())
-              .withHeatScoring(race.getHeatScoring())
-              .withOverallScoring(race.getOverallScoring())
-              .withMinLapTime(race.getMinLapTime())
-              .withFuelOptions(race.getFuelOptions())
-              .withDigitalFuelOptions(race.getDigitalFuelOptions())
-              .withTeamOptions(race.getTeamOptions())
-              .withAutoAdvanceTime(race.getAutoAdvanceTime())
-              .withAutoStartTime(race.getAutoStartTime())
-              .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
-              .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
-              .withDriftTime(race.getDriftTime())
-              .withStartTime(race.getStartTime())
-              .withRestartTime(race.getRestartTime())
-              .withStartRandomizer(race.getStartRandomizer())
-              .withRestartRandomizer(race.getRestartRandomizer())
-              .withSoloLaneIndex(race.getSoloLaneIndex())
-              .withCustomRotationSequence(race.getCustomRotationSequence())
-              .withCustomRotationAssetId(race.getCustomRotationAssetId())
-              .withCustomRotationAssetName(race.getCustomRotationAssetName())
-              .withCustomRotations(race.getCustomRotations())
-              .withHeatTimesThrough(race.getHeatTimesThrough())
-              .withReverseHeats(race.isReverseHeats())
-              .withHotStart(race.isHotStart())
-              .withStartAtCurrent(race.isStartAtCurrent())
-              .withRestartOnFalseStart(race.isRestartOnFalseStart())
-              .withStartBehindSensor(race.isStartBehindSensor())
-              .withFalseStartLapPenalty(race.getFalseStartLapPenalty())
-              .withFalseStartTimePenalty(race.getFalseStartTimePenalty())
-              .withGroupOptions(race.getGroupOptions())
-              .withPractice(race.isPractice())
-              .withAdjustDriftLaps(race.isAdjustDriftLaps())
-              .withThemeId(race.getThemeId())
-              .withEntityId(nextId)
-              .build();
+      race = new Race.Builder().from(race).withEntityId(nextId).build();
     }
     raceRepository.insert(race);
     if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
@@ -170,6 +133,7 @@ public class RaceHeatTaskHandler {
   }
 
   public Race updateRace(String id, Race race) {
+    validateRace(race);
     final String updateRaceName = race.getName();
     boolean existing =
         raceRepository.findAll().stream()
@@ -324,6 +288,23 @@ public class RaceHeatTaskHandler {
     }
 
     int numLanes = track.getLanes() != null ? track.getLanes().size() : 0;
+    Number stepUpNum = (Number) body.get("stepUp");
+    if (stepUpNum == null) {
+      stepUpNum = (Number) body.get("step_up");
+    }
+    int stepUp = stepUpNum != null ? stepUpNum.intValue() : 0;
+    int maxStepUp = Math.max(0, numLanes - 1);
+    if (stepUp < 0 || stepUp > maxStepUp) {
+      ctx.status(400)
+          .result(
+              "Step-up count ("
+                  + stepUp
+                  + ") cannot exceed track lane count minus 1 ("
+                  + maxStepUp
+                  + ")");
+      return;
+    }
+
     List<CustomRotation> customRotations =
         resolveCustomRotationsFromBody(body, customRotationAssetId, numLanes);
 
@@ -574,86 +555,118 @@ public class RaceHeatTaskHandler {
   }
 
   public void validateRace(Race race) {
+    if (race == null) {
+      return;
+    }
+    validateStepUp(race);
     if (race.getHeatRotationType() == HeatRotationType.CustomRoundRobin) {
-      List<Integer> seq = race.getCustomRotationSequence();
-      if (seq == null || seq.isEmpty()) {
-        throw new IllegalArgumentException("Custom rotation sequence is required");
-      }
-      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      int numLanes = track != null ? track.getLanes().size() : Integer.MAX_VALUE;
-
-      Set<Integer> uniqueLanes = new HashSet<>();
-      for (Integer lane : seq) {
-        if (lane == null || lane < 0) {
-          throw new IllegalArgumentException(
-              "Lane numbers must be greater than or equal to 0 and not null");
-        }
-        if (lane > numLanes) {
-          throw new IllegalArgumentException(
-              "Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
-        }
-        if (lane > 0 && !uniqueLanes.add(lane)) {
-          throw new IllegalArgumentException(
-              "Lane number " + lane + " appears more than once in rotation sequence");
-        }
-      }
+      validateCustomRoundRobin(race);
     } else if (race.getHeatRotationType() == HeatRotationType.Custom) {
-      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      int numLanes = track != null && track.getLanes() != null ? track.getLanes().size() : 0;
-      String assetId = race.getCustomRotationAssetId();
-      if ((assetId == null || assetId.isEmpty()) && race.getCustomRotationAssetName() != null) {
-        assetId = race.getCustomRotationAssetName();
-      }
-      List<CustomRotation> rotations = null;
-      if (assetId != null && !assetId.isEmpty()) {
-        rotations = resolveCustomRotations(assetId, numLanes);
-      }
-      if (rotations == null || rotations.isEmpty()) {
-        if (race.getCustomRotationAssetName() != null
-            && !race.getCustomRotationAssetName().equals(assetId)) {
-          rotations = resolveCustomRotations(race.getCustomRotationAssetName(), numLanes);
-        }
-      }
-      if (rotations == null || rotations.isEmpty()) {
-        rotations = resolveCustomRotations(null, numLanes);
-      }
-      if (rotations == null || rotations.isEmpty()) {
-        throw new IllegalArgumentException("Custom rotation asset not found or empty");
-      }
+      validateCustomRotation(race);
+    }
+  }
 
-      Set<Integer> driverCounts = new HashSet<>();
-      for (CustomRotation rot : rotations) {
-        if (rot.getNumDrivers() <= 0) {
-          throw new IllegalArgumentException("Driver count must be greater than 0");
-        }
-        if (!driverCounts.add(rot.getNumDrivers())) {
+  private void validateStepUp(Race race) {
+    if (race.getStepUp() < 0) {
+      throw new IllegalArgumentException("Step-up count cannot be negative");
+    }
+    if (race.getStepUp() > 0) {
+      Track track =
+          trackRepository != null ? trackRepository.findByEntityId(race.getTrackEntityId()) : null;
+      int numLanes = track != null && track.getLanes() != null ? track.getLanes().size() : 0;
+      int maxStepUp = Math.max(0, numLanes - 1);
+      if (race.getStepUp() > maxStepUp) {
+        throw new IllegalArgumentException(
+            "Step-up count ("
+                + race.getStepUp()
+                + ") cannot exceed track lane count minus 1 ("
+                + maxStepUp
+                + ")");
+      }
+    }
+  }
+
+  private void validateCustomRoundRobin(Race race) {
+    List<Integer> seq = race.getCustomRotationSequence();
+    if (seq == null || seq.isEmpty()) {
+      throw new IllegalArgumentException("Custom rotation sequence is required");
+    }
+    Track track = trackRepository.findByEntityId(race.getTrackEntityId());
+    int numLanes = track != null ? track.getLanes().size() : Integer.MAX_VALUE;
+
+    Set<Integer> uniqueLanes = new HashSet<>();
+    for (Integer lane : seq) {
+      if (lane == null || lane < 0) {
+        throw new IllegalArgumentException(
+            "Lane numbers must be greater than or equal to 0 and not null");
+      }
+      if (lane > numLanes) {
+        throw new IllegalArgumentException(
+            "Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
+      }
+      if (lane > 0 && !uniqueLanes.add(lane)) {
+        throw new IllegalArgumentException(
+            "Lane number " + lane + " appears more than once in rotation sequence");
+      }
+    }
+  }
+
+  private void validateCustomRotation(Race race) {
+    Track track = trackRepository.findByEntityId(race.getTrackEntityId());
+    int numLanes = track != null && track.getLanes() != null ? track.getLanes().size() : 0;
+    String assetId = race.getCustomRotationAssetId();
+    if ((assetId == null || assetId.isEmpty()) && race.getCustomRotationAssetName() != null) {
+      assetId = race.getCustomRotationAssetName();
+    }
+    List<CustomRotation> rotations = null;
+    if (assetId != null && !assetId.isEmpty()) {
+      rotations = resolveCustomRotations(assetId, numLanes);
+    }
+    if (rotations == null || rotations.isEmpty()) {
+      if (race.getCustomRotationAssetName() != null
+          && !race.getCustomRotationAssetName().equals(assetId)) {
+        rotations = resolveCustomRotations(race.getCustomRotationAssetName(), numLanes);
+      }
+    }
+    if (rotations == null || rotations.isEmpty()) {
+      rotations = resolveCustomRotations(null, numLanes);
+    }
+    if (rotations == null || rotations.isEmpty()) {
+      throw new IllegalArgumentException("Custom rotation asset not found or empty");
+    }
+
+    Set<Integer> driverCounts = new HashSet<>();
+    for (CustomRotation rot : rotations) {
+      if (rot.getNumDrivers() <= 0) {
+        throw new IllegalArgumentException("Driver count must be greater than 0");
+      }
+      if (!driverCounts.add(rot.getNumDrivers())) {
+        throw new IllegalArgumentException(
+            "Duplicate driver count in custom rotations: " + rot.getNumDrivers());
+      }
+      if (rot.getHeats() == null || rot.getHeats().isEmpty()) {
+        throw new IllegalArgumentException(
+            "At least one heat is required for custom rotation with "
+                + rot.getNumDrivers()
+                + " drivers");
+      }
+      for (CustomHeat heat : rot.getHeats()) {
+        if (heat.getDriverIndices().size() != numLanes) {
           throw new IllegalArgumentException(
-              "Duplicate driver count in custom rotations: " + rot.getNumDrivers());
+              "Heat must specify "
+                  + numLanes
+                  + " driver indices for a "
+                  + numLanes
+                  + " lane track");
         }
-        if (rot.getHeats() == null || rot.getHeats().isEmpty()) {
-          throw new IllegalArgumentException(
-              "At least one heat is required for custom rotation with "
-                  + rot.getNumDrivers()
-                  + " drivers");
-        }
-        for (CustomHeat heat : rot.getHeats()) {
-          if (heat.getDriverIndices().size() != numLanes) {
+        for (Integer dIdx : heat.getDriverIndices()) {
+          if (dIdx < 0 || dIdx > rot.getNumDrivers()) {
             throw new IllegalArgumentException(
-                "Heat must specify "
-                    + numLanes
-                    + " driver indices for a "
-                    + numLanes
-                    + " lane track");
-          }
-          for (Integer dIdx : heat.getDriverIndices()) {
-            if (dIdx < 0 || dIdx > rot.getNumDrivers()) {
-              throw new IllegalArgumentException(
-                  "Invalid driver index "
-                      + dIdx
-                      + " for custom rotation with "
-                      + rot.getNumDrivers()
-                      + " drivers");
-            }
+                "Invalid driver index "
+                    + dIdx
+                    + " for custom rotation with "
+                    + rot.getNumDrivers()
+                    + " drivers");
           }
         }
       }

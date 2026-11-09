@@ -316,6 +316,90 @@ describe("RaceEditorValidationHelper", () => {
     });
   });
 
+  describe("isStepUpInvalid", () => {
+    const tracks = [
+      new Track({
+        entity_id: "track_4_lane",
+        name: "4 Lane Track",
+        lanes: [{}, {}, {}, {}] as any,
+      }),
+      new Track({
+        entity_id: "track_1_lane",
+        name: "1 Lane Track",
+        lanes: [{}] as any,
+      }),
+    ];
+
+    it("should return false if editingRace is null", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(null, tracks),
+      ).toBeFalse();
+    });
+
+    it("should return false if step_up is 0 or undefined", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: 0 },
+          tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane" },
+          tracks,
+        ),
+      ).toBeFalse();
+    });
+
+    it("should return true if step_up is negative", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: -1 },
+          tracks,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return true if step_up is positive but track is not found", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "unknown_track", step_up: 1 },
+          tracks,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should validate step_up against track lane count minus 1", () => {
+      // 4-lane track: max stepUp is 3
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: 3 },
+          tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: 4 },
+          tracks,
+        ),
+      ).toBeTrue();
+
+      // 1-lane track: max stepUp is 0
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_1_lane", step_up: 0 },
+          tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_1_lane", step_up: 1 },
+          tracks,
+        ),
+      ).toBeTrue();
+    });
+  });
+
   describe("getUnsavedReasons", () => {
     it("should return reasons for empty name, duplicate name, missing track, or invalid rotation", () => {
       mockHost.editingRace.name = "";

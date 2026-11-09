@@ -75,6 +75,118 @@ public class RaceHeatTaskHandlerTest {
     handler.validateRace(race);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateRace_StepUpNegative_ThrowsException() {
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withHeatRotationType(HeatRotationType.EuropeanRoundRobin)
+            .withStepUp(-1)
+            .build();
+    handler.validateRace(race);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateRace_StepUpExceedsLanesMinusOne_ThrowsException() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_stepup_val").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("red", "black", 100));
+    lanes.add(new com.antigravity.models.Lane("blue", "white", 101));
+    lanes.add(new com.antigravity.models.Lane("green", "yellow", 102));
+    lanes.add(new com.antigravity.models.Lane("orange", "purple", 103));
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("4-Lane Track")
+            .lanes(lanes)
+            .entityId("track_4lanes")
+            .build();
+    new com.antigravity.repository.SqliteRepository<>(
+            dbCtx, "tracks", com.antigravity.models.Track.class)
+        .insert(track);
+
+    Race race =
+        new Race.Builder()
+            .withName("Test Step Up Race")
+            .withTrackEntityId("track_4lanes")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withStepUp(4) // 4 lanes -> max step-up is 3. 4 is invalid!
+            .build();
+    realHandler.validateRace(race);
+  }
+
+  @Test
+  public void testValidateRace_StepUpValid_Success() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_stepup_val_ok").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("red", "black", 100));
+    lanes.add(new com.antigravity.models.Lane("blue", "white", 101));
+    lanes.add(new com.antigravity.models.Lane("green", "yellow", 102));
+    lanes.add(new com.antigravity.models.Lane("orange", "purple", 103));
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("4-Lane Track")
+            .lanes(lanes)
+            .entityId("track_4lanes")
+            .build();
+    new com.antigravity.repository.SqliteRepository<>(
+            dbCtx, "tracks", com.antigravity.models.Track.class)
+        .insert(track);
+
+    Race race =
+        new Race.Builder()
+            .withName("Test Step Up Race")
+            .withTrackEntityId("track_4lanes")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withStepUp(3) // 4 lanes -> max step-up is 3. 3 is valid!
+            .build();
+    realHandler.validateRace(race);
+  }
+
+  @Test
+  public void testPreviewHeats_StepUpExceedsLanesMinusOne_Returns400() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_stepup_preview").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("red", "black", 100));
+    lanes.add(new com.antigravity.models.Lane("blue", "white", 101));
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("2-Lane Track")
+            .lanes(lanes)
+            .entityId("track_2lanes")
+            .build();
+    new com.antigravity.repository.SqliteRepository<>(
+            dbCtx, "tracks", com.antigravity.models.Track.class)
+        .insert(track);
+
+    Context mockCtx = mock(Context.class);
+    Map<String, Object> body = new HashMap<>();
+    body.put("driverCount", 4);
+    body.put("trackId", "track_2lanes");
+    body.put("heatRotationType", "RoundRobin");
+    body.put("stepUp", 2); // 2 lanes -> max step-up is 1. 2 exceeds max!
+    when(mockCtx.bodyAsClass(Map.class)).thenReturn(body);
+    when(mockCtx.status(400)).thenReturn(mockCtx);
+
+    realHandler.previewHeats(mockCtx);
+
+    verify(mockCtx).status(400);
+  }
+
   @Test
   public void testPreviewHeats_InvalidDriverCount_Returns400() {
     Context mockCtx = mock(Context.class);
