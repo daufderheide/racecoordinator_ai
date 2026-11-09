@@ -9,7 +9,7 @@ Questa guida spiega come configurare **Race Coordinator AI (RC AI)** sulla sched
 L'**Arduino UNO Q** combina un Single Board Computer (SBC) Linux a 64 bit con un microcontrollore in tempo reale su un'unica scheda:
 
 - **MPU Linux (Qualcomm Cortex-A53 a 2,0 GHz)**: Esegue il server Race Coordinator AI, il database SQLite, il server client Web e l'aggiornamento automatico.
-- **MCU in tempo reale (STM32U585 Cortex-M33 a 160 MHz)**: Gestisce gli interrupt dei pin dei sensori di giro, i relè di alimentazione e i ponti di luci RGB FastLED con precisione sub-millisecondo.
+- **MCU in tempo reale (STM32U585 Cortex-M33 a 160 MHz)**: Gestisce gli interrupt dei pin dei sensori di giro, i tempi di settore, i pulsanti di chiamata e i relè di alimentazione della pista con precisione sub-millisecondo (nota: i LED RGB indirizzabili FastLED non sono supportati su questa architettura).
 - **Uscita display**: L'uscita USB-C DisplayPort si collega direttamente a un monitor, TV o touchscreen.
 
 ### Modelli da 4 GB rispetto a 2 GB
@@ -194,7 +194,7 @@ Se preferisci eseguire ogni passaggio manualmente:
    sudo systemctl restart racecoordinatorai-kiosk
    ```
 
-### Passaggio 4: Eseguire il flashing del firmware del microcontrollore (con supporto FastLED)
+### Passaggio 4: Eseguire il flashing del firmware del microcontrollore
 Compila e carica lo sketch hardware sulla MCU integrata:
 ```bash
 # Verifica schede e porte rilevate
@@ -204,10 +204,9 @@ arduino-cli board list
 arduino-cli core update-index
 arduino-cli core install arduino:zephyr
 
-# Installa le librerie Arduino richieste (bridge router Uno Q e FastLED)
+# Installa le librerie Arduino richieste (bridge router Uno Q)
 arduino-cli lib update-index
 arduino-cli lib install Arduino_RouterBridge
-arduino-cli lib install FastLED
 
 # Compila racecoordinatorai_sketch per la MCU Uno Q
 cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
@@ -247,13 +246,24 @@ Su Arduino Uno Q, Arduino Linux OS avvia «Arduino App Lab» all'accesso al desk
 
 ---
 
-## Configurazione del ponte luci RGB FastLED
+## Supporto FastLED e LED RGB (Non supportato su Uno Q)
 
-FastLED è completamente supportato su Uno Q. Le strisce LED RGB indirizzabili (WS2812B, NeoPixel, SK6812, APA102) si collegano direttamente ai pin di intestazione GPIO sulla MCU STM32.
+> [!WARNING] Strisce LED RGB indirizzabili FastLED non supportate sulla MCU di Uno Q
+> Le strisce luminose a LED RGB indirizzabili (WS2812B, NeoPixel, SK6812, APA102, ecc.) gestite tramite **FastLED non sono supportate sul microcontrollore integrato di Arduino Uno Q**. La MCU in tempo reale di Uno Q impiega un'architettura STM32U585 basata su Zephyr OS (CMSIS 6), che è priva del supporto a basso livello per registri e temporizzazione bit-banging nella libreria FastLED a monte. Di conseguenza, lo sketch di Race Coordinator AI (`racecoordinatorai_sketch.ino`) disabilita esplicitamente FastLED (`WITH_FAST_LED`) quando viene compilato per la MCU di Uno Q.
 
-- **Luci di partenza**: Animazione del conto alla rovescia in 5 fasi (rosso $\rightarrow$ giallo $\rightarrow$ verde).
-- **Corsia box / Rifornimento**: Indicatore di percentuale del livello di carburante in tempo reale per corsia.
-- **Leader e vittoria**: Impulso dinamico per il leader della manche e animazione con bandiera a scacchi.
+### Alternative di illuminazione disponibili
+
+Se desideri indicatori luminosi visivi su una configurazione Arduino Uno Q, sono disponibili due opzioni:
+
+1. **LED a uscita digitale standard**: I LED monocolore (ad es. i classici LED rossi, gialli o verdi pilotati tramite pin di uscita digitale con resistori di limitazione, transistor o relè) possono comunque essere configurati sulla MCU di Uno Q in Race Coordinator AI come normali indicatori di chiamata o stato della pista.
+2. **Arduino secondario dedicato per LED RGB FastLED (Consigliato per strisce RGB)**: Se desideri a tutti i costi strisce LED RGB indirizzabili per semafori di partenza con conto alla rovescia a più fasi, indicatori di livello carburante nei box in tempo reale e animazioni di vittoria con bandiera a scacchi, puoi collegare un **secondo Arduino** dedicato al pilotaggio dei LED RGB.
+
+> [!TIP] Utilizzo di un secondo Arduino per LED RGB FastLED
+> L'**architettura multi-interfaccia** di Race Coordinator AI supporta pienamente il collegamento e il funzionamento simultaneo di più controller hardware sulla stessa pista:
+> 
+> - **Interfaccia primaria (MCU integrata di Uno Q)**: Gestisce i segnali di gara critici in termini di tempo—sensori ottici di passaggio sul giro, tempi di settore, pulsanti di chiamata piloti e relè di alimentazione master della pista—con precisione sub-millisecondo.
+> - **Interfaccia secondaria (Secondo Arduino tramite USB)**: Collega una scheda Arduino standard economica (come un **Arduino Uno R3**, **Nano**, **Mega 2560**, **RP2040** o **ESP32**) a una delle porte host USB di Uno Q. Carica lo sketch standard `racecoordinatorai_sketch.ino` (in cui FastLED è abilitato) su questa seconda scheda.
+> - **Configurazione nell'Editor della pista**: Nell'interfaccia web di Race Coordinator AI, accedi all'**Editor della pista** $\rightarrow$ **Interfacce hardware** e fai clic su **Aggiungi interfaccia** per selezionare la porta seriale del secondo Arduino (ad es. `/dev/ttyUSB0` o `/dev/ttyACM0`). Configura le tue strisce luminose FastLED su questa seconda interfaccia. Race Coordinator AI gestisce e coordina automaticamente entrambe le schede in modo simultaneo durante le gare.
 
 ---
 

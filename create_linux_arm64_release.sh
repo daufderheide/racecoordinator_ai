@@ -316,10 +316,9 @@ if command -v arduino-cli >/dev/null 2>&1; then
     arduino-cli core install $VERBOSE_FLAG arduino:zephyr || true
   fi
 
-  echo "Installing required Arduino libraries (Arduino_RouterBridge, FastLED)..."
+  echo "Installing required Arduino libraries (Arduino_RouterBridge)..."
   arduino-cli lib update-index $VERBOSE_FLAG || true
   arduino-cli lib install $VERBOSE_FLAG Arduino_RouterBridge || true
-  arduino-cli lib install $VERBOSE_FLAG FastLED || true
 
   BOARD_INFO=$(arduino-cli board list 2>/dev/null | grep -i "uno.*q" | head -n1)
   PORT=$(echo "$BOARD_INFO" | awk '{print $1}')
