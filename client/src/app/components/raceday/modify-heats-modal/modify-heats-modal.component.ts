@@ -55,6 +55,7 @@ import { TeammateUtils } from "@app/utils/teammate.utils";
 import { ModifyHeatsService } from "./modify-heats.service";
 import {
   areModifyHeatsStatesEqual,
+  assignStepNumbers,
   buildDropListConnections,
   calculateHeatCardHoverAction,
   calculateHeatDropAction,
@@ -77,6 +78,7 @@ import {
   getParticipantName,
   HeatCardBounds,
   HeatDropAction,
+  inferBoundariesFromDrivers,
   isDriver,
   isHeatStarted as isHeatStartedHelper,
   isParticipantInStartedHeat,
@@ -302,6 +304,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.hasUnsavedChanges = true;
     }
 
+    if (this.race()?.step_up && this.race()!.step_up > 0) {
+      inferBoundariesFromDrivers(this.localHeats);
+      assignStepNumbers(this.localHeats, this.race()!.step_up);
+    }
+
     forkJoin({
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
@@ -379,6 +386,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       return cloned;
     });
     this.localParticipants = [...this.participants()];
+
+    if (this.race()?.step_up && this.race()!.step_up > 0) {
+      inferBoundariesFromDrivers(this.localHeats);
+      assignStepNumbers(this.localHeats, this.race()!.step_up);
+    }
 
     this.undoManager.initialize({
       heats: this.localHeats,
@@ -485,6 +497,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   protected toggleStepUpBoundary(heat: Heat) {
     heat.isStepUpBoundary = !heat.isStepUpBoundary;
+    if (this.race()?.step_up && this.race()!.step_up > 0) {
+      assignStepNumbers(this.localHeats, this.race()!.step_up);
+    }
     this.undoManager.captureState();
     this.autoSave();
   }
@@ -833,6 +848,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
     if (result.reordered) {
       this.localHeats = result.newHeats;
+      if (this.race()?.step_up && this.race()!.step_up > 0) {
+        assignStepNumbers(this.localHeats, this.race()!.step_up);
+      }
       this.updateDropListConnections();
       this.undoManager.captureState();
       this.autoSave();
@@ -844,6 +862,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     const newHeatNumber = this.localHeats.length + 1;
     const newHeat = new Heat(`new-heat-${Date.now()}`, newHeatNumber, [], []);
     this.localHeats.push(newHeat);
+    if (this.race()?.step_up && this.race()!.step_up > 0) {
+      assignStepNumbers(this.localHeats, this.race()!.step_up);
+    }
     this.updateDropListConnections();
     this.undoManager.captureState();
     this.autoSave();
@@ -859,6 +880,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.localHeats.splice(index, 1);
     // Renumber heats
     this.localHeats.forEach((h, i) => (h.heatNumber = i + 1));
+    if (this.race()?.step_up && this.race()!.step_up > 0) {
+      assignStepNumbers(this.localHeats, this.race()!.step_up);
+    }
 
     this.updateDriverPool();
     this.updateDropListConnections();

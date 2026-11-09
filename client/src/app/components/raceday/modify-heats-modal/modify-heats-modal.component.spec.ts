@@ -2475,4 +2475,65 @@ describe("ModifyHeatsModalComponent", () => {
       expect(heat.heatDrivers.length).toBe(1);
     });
   });
+
+  describe("Step-Up Race Heat Header and Step Assignment", () => {
+    it("should assign step numbers to heats on initialization when step_up > 0", () => {
+      fixture.componentRef.setInput("raceInput", {
+        step_up: 2,
+        group_options: { enabled: false },
+      } as any);
+
+      const h1 = new Heat("h1", 1, [], [], false);
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.isStepUpBoundary = true;
+      const h3 = new Heat("h3", 3, [], [], false);
+
+      fixture.componentRef.setInput("heatsInput", [h1, h2, h3]);
+      component["initializeState"]();
+
+      expect(component["localHeats"][0].step).toBe(1);
+      expect(component["localHeats"][1].step).toBe(1);
+      expect(component["localHeats"][2].step).toBe(2);
+    });
+
+    it("should toggle step-up boundary and recalculate step assignments", () => {
+      fixture.componentRef.setInput("raceInput", {
+        step_up: 2,
+        group_options: { enabled: false },
+      } as any);
+
+      const h1 = new Heat("h1", 1, [], [], false);
+      const h2 = new Heat("h2", 2, [], [], false);
+      const h3 = new Heat("h3", 3, [], [], false);
+      component["localHeats"] = [h1, h2, h3];
+
+      component["toggleStepUpBoundary"](h1);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(2);
+      expect(h3.step).toBe(2);
+
+      component["toggleStepUpBoundary"](h1);
+      expect(h1.isStepUpBoundary).toBeFalse();
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(1);
+    });
+
+    it("should assign step numbers when adding a new heat in step-up race", () => {
+      fixture.componentRef.setInput("raceInput", {
+        step_up: 1,
+        group_options: { enabled: false },
+      } as any);
+
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.isStepUpBoundary = true;
+      component["localHeats"] = [h1];
+
+      component["onAddHeat"]();
+      expect(component["localHeats"].length).toBe(2);
+      expect(component["localHeats"][0].step).toBe(1);
+      expect(component["localHeats"][1].step).toBe(2);
+    });
+  });
 });

@@ -403,6 +403,7 @@
             [attr.data-heat-idx]="hIdx"
             [class.started]="isHeatStarted(heat)"
             [class.heat-has-highlight]="isHeatHighlighted(heat)"
+            [class.is-step-boundary]="heat.isStepUpBoundary"
             [class.heat-dimmed]="
               hasHighlightedDrivers() && !isHeatHighlighted(heat)
             "
@@ -468,97 +469,31 @@
                 <span class="material-icons drag-handle-icon"
                   >drag_indicator</span
                 >
-                <h4>
+                <h4 class="heat-title-text">
                   {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
-                  @if (getHeatHighlightColors(heat); as pips) {
-                    @if (pips.length > 0) {
-                      <span class="heat-highlight-pips">
-                        @for (pipColor of pips; track pipColor) {
-                          <span
-                            class="heat-pip"
-                            [style.background-color]="pipColor"
-                            [style.box-shadow]="'0 0 6px ' + pipColor"
-                          ></span>
-                        }
-                      </span>
-                    }
-                  }
-                  @if (
-                    race() &&
-                    race().group_options &&
-                    race().group_options.enabled
-                  ) {
-                    -
-                    @if (getCustomGroupName(heat.group)) {
-                      {{ getCustomGroupName(heat.group) }}:
-                    } @else {
-                      {{ "RE_GROUPS_LABEL" | translate }}:
-                    }
-                    <input
-                      type="number"
-                      class="group-input"
-                      [ngModel]="heat.group + 1"
-                      (ngModelChange)="onGroupChange(heat, $event)"
-                      min="1"
-                    />
-                  }
                   @if (race() && race().step_up > 0) {
-                    -
-                    {{ "RD_STEP_LADDER_STEP" | translate: { step: "" } }}
-                    <input
-                      type="number"
-                      class="step-input"
-                      style="
-                        width: 44px;
-                        margin-left: 4px;
-                        padding: 2px 4px;
-                        border-radius: 4px;
-                        border: 1px solid #475569;
-                        background: #1e293b;
-                        color: #f8fafc;
-                      "
-                      [ngModel]="heat.step || 1"
-                      (ngModelChange)="onStepChange(heat, $event)"
-                      min="1"
-                    />
-                    <button
-                      type="button"
-                      class="btn-boundary-toggle"
-                      [style.background]="
-                        heat.isStepUpBoundary
-                          ? 'rgba(56, 189, 248, 0.2)'
-                          : 'transparent'
-                      "
-                      [style.color]="
-                        heat.isStepUpBoundary ? '#38bdf8' : '#94a3b8'
-                      "
-                      [style.border]="
-                        heat.isStepUpBoundary
-                          ? '1px solid #38bdf8'
-                          : '1px solid #475569'
-                      "
-                      style="
-                        margin-left: 6px;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                        cursor: pointer;
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 4px;
-                        font-size: 11px;
-                      "
-                      (click)="
-                        toggleStepUpBoundary(heat); $event.stopPropagation()
-                      "
-                      [title]="'RD_STEP_UP_BOUNDARY' | translate"
+                    <span class="step-badge"
+                      >-
+                      {{
+                        "RD_STEP_LADDER_STEP"
+                          | translate: { step: heat.step || 1 }
+                      }}</span
                     >
-                      <span class="material-icons" style="font-size: 14px"
-                        >flag</span
-                      >
-                      {{ "RD_STEP_UP_BOUNDARY" | translate }}
-                    </button>
                   }
                 </h4>
+                @if (getHeatHighlightColors(heat); as pips) {
+                  @if (pips.length > 0) {
+                    <span class="heat-highlight-pips">
+                      @for (pipColor of pips; track pipColor) {
+                        <span
+                          class="heat-pip"
+                          [style.background-color]="pipColor"
+                          [style.box-shadow]="'0 0 6px ' + pipColor"
+                        ></span>
+                      }
+                    </span>
+                  }
+                }
               </div>
               <div class="header-actions">
                 @if (isHeatStarted(heat)) {
@@ -593,6 +528,38 @@
                   >{{ getOriginalHeatDisplay(heat) }}</span
                 >
               </span>
+              @if (race() && race().step_up > 0) {
+                <button
+                  type="button"
+                  class="boundary-badge"
+                  [class.is-boundary]="heat.isStepUpBoundary"
+                  (click)="toggleStepUpBoundary(heat); $event.stopPropagation()"
+                  [attr.aria-label]="'RD_STEP_UP_BOUNDARY' | translate"
+                  [title]="'RD_STEP_UP_BOUNDARY' | translate"
+                >
+                  {{ "RD_STEP_UP_BOUNDARY" | translate }}
+                </button>
+              }
+              @if (
+                race() && race().group_options && race().group_options.enabled
+              ) {
+                <span class="heat-group-tag">
+                  <span class="group-label">
+                    @if (getCustomGroupName(heat.group)) {
+                      {{ getCustomGroupName(heat.group) }}:
+                    } @else {
+                      {{ "RE_GROUPS_LABEL" | translate }}:
+                    }
+                  </span>
+                  <input
+                    type="number"
+                    class="group-input"
+                    [ngModel]="heat.group + 1"
+                    (ngModelChange)="onGroupChange(heat, $event)"
+                    min="1"
+                  />
+                </span>
+              }
             </div>
             <div class="heat-lanes">
               @for (lane of track().lanes; track $index; let lIdx = $index) {

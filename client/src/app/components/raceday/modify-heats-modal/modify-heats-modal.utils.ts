@@ -804,3 +804,46 @@ export function getHeatHighlightColors(
   }
   return colors;
 }
+
+/**
+ * Infers step-up boundaries from step-up participants or existing steps when no boundaries are set.
+ */
+export function inferBoundariesFromDrivers(heats: Heat[]): void {
+  if (!heats || heats.length === 0) return;
+  if (heats.some((h) => h.isStepUpBoundary)) {
+    return;
+  }
+  for (let i = 0; i < heats.length - 1; i++) {
+    const curHeat = heats[i];
+    const nextHeat = heats[i + 1];
+    const curHasStepUp = curHeat.heatDrivers.some((dhd) =>
+      isStepUpParticipant(dhd.participant),
+    );
+    const nextHasStepUp = nextHeat.heatDrivers.some((dhd) =>
+      isStepUpParticipant(dhd.participant),
+    );
+    if (!curHasStepUp && nextHasStepUp) {
+      curHeat.isStepUpBoundary = true;
+    } else if (curHeat.step && nextHeat.step && curHeat.step < nextHeat.step) {
+      curHeat.isStepUpBoundary = true;
+    }
+  }
+}
+
+/**
+ * Assigns sequential step numbers to all heats based on step-up boundaries.
+ * Every heat is guaranteed to have a valid step (>= 1).
+ */
+export function assignStepNumbers(heats: Heat[], stepUp: number): void {
+  if (!heats || heats.length === 0) return;
+  if (!stepUp || stepUp <= 0) return;
+
+  let currentStep = 1;
+  for (let i = 0; i < heats.length; i++) {
+    const h = heats[i];
+    h.step = currentStep;
+    if (h.isStepUpBoundary) {
+      currentStep++;
+    }
+  }
+}

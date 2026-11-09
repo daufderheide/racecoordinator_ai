@@ -8,6 +8,7 @@ import { Heat } from "@app/race/heat";
 import {
   allocateHighlightColor,
   areModifyHeatsStatesEqual,
+  assignStepNumbers,
   buildDropListConnections,
   calculateHeatDropAction,
   cloneHeat,
@@ -22,6 +23,7 @@ import {
   getParticipantKey,
   getParticipantName,
   HeatCardBounds,
+  inferBoundariesFromDrivers,
   isPlaceholderParticipant,
   isStepUpParticipant,
 } from "./modify-heats-modal.utils";
@@ -761,6 +763,94 @@ describe("modify-heats-modal.utils", () => {
         mockTranslationService,
       );
       expect(error).toBeNull();
+    });
+  });
+
+  describe("inferBoundariesFromDrivers", () => {
+    it("should not modify boundaries if any boundary is already set", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.isStepUpBoundary = true;
+      const h2 = new Heat("h2", 2, [], [], false);
+      inferBoundariesFromDrivers([h1, h2]);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h2.isStepUpBoundary).toBeFalsy();
+    });
+
+    it("should infer boundary when non-step-up heat is followed by step-up participant heat", () => {
+      const pReg = createParticipantFromDriver(
+        new Driver("d1", "Regular", "R1"),
+      );
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step-Up", "SU"),
+      );
+      pStep.isStepUp = true;
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", pReg, 0)],
+        [],
+        false,
+      );
+      const h2 = new Heat(
+        "h2",
+        2,
+        [new DriverHeatData("dhd2", pStep, 0)],
+        [],
+        false,
+      );
+
+      inferBoundariesFromDrivers([h1, h2]);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h2.isStepUpBoundary).toBeFalsy();
+    });
+
+    it("should infer boundary when heat.step < nextHeat.step", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.step = 1;
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.step = 2;
+
+      inferBoundariesFromDrivers([h1, h2]);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h2.isStepUpBoundary).toBeFalsy();
+    });
+  });
+
+  describe("assignStepNumbers", () => {
+    it("should not modify heats if stepUp <= 0", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.step = 0;
+      assignStepNumbers([h1], 0);
+      expect(h1.step).toBe(0);
+    });
+
+    it("should assign step 1 to all heats when no boundary is set", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      const h2 = new Heat("h2", 2, [], [], false);
+      const h3 = new Heat("h3", 3, [], [], false);
+
+      assignStepNumbers([h1, h2, h3], 2);
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(1);
+    });
+
+    it("should increment step after each boundary heat", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.isStepUpBoundary = true;
+      const h3 = new Heat("h3", 3, [], [], false);
+      const h4 = new Heat("h4", 4, [], [], false);
+      h4.isStepUpBoundary = true;
+      const h5 = new Heat("h5", 5, [], [], false);
+
+      assignStepNumbers([h1, h2, h3, h4, h5], 2);
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(2);
+      expect(h4.step).toBe(2);
+      expect(h5.step).toBe(3);
     });
   });
 });
