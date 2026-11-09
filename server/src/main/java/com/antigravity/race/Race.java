@@ -889,6 +889,15 @@ public class Race implements ProtocolListener {
     return isDemoMode;
   }
 
+  @Override
+  public boolean isFuelRace() {
+    FuelOptions analogFuel = getFuelOptions();
+    FuelOptions digitalFuel =
+        getRaceModel() != null ? getRaceModel().getDigitalFuelOptions() : null;
+    return (analogFuel != null && analogFuel.isEnabled())
+        || (digitalFuel != null && digitalFuel.isEnabled());
+  }
+
   public FuelOptions getFuelOptions() {
     if (track != null && track.hasDigitalFuel()) {
       return model.getDigitalFuelOptions();

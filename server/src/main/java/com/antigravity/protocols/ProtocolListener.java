@@ -16,4 +16,8 @@ public interface ProtocolListener {
   void onCarData(CarData carData);
 
   void onInterfaceEvent(InterfaceEvent event);
+
+  default boolean isFuelRace() {
+    return false;
+  }
 }

@@ -5,6 +5,23 @@ import { RaceState } from "@app/proto/antigravity";
 import { AudioAssociation, AudioPriority } from "@app/services/audio.service";
 import { resolveAudioUrl } from "@app/utils/audio";
 
+export interface AudioSetResolution {
+  status:
+    | "no_theme_service"
+    | "slot_not_configured"
+    | "not_audio_set"
+    | "no_asset_id"
+    | "asset_not_found"
+    | "asset_not_audio_set"
+    | "entry_not_found"
+    | "entry_disabled"
+    | "entry_missing_content"
+    | "ready";
+  entryItem?: { config: AudioConfig; playableUrl?: string };
+  assetName?: string;
+  assetId?: string;
+}
+
 export class RacedayTimedAudioHelper {
   static resolveAssetPlayableUrl(
     host: any,
@@ -24,23 +41,30 @@ export class RacedayTimedAudioHelper {
     return resolveAudioUrl(urlOrId, host.dataService?.serverUrl);
   }
 
-  static getAudioFromSetEntry(
+  static getAudioSetResolution(
     host: any,
     slotKey: string,
     timeSeconds: number,
     triggerMode: string = "remaining",
-  ): { config: AudioConfig; playableUrl?: string } | null {
+  ): AudioSetResolution {
     if (
       !host.themeService ||
       typeof host.themeService.resolveAudioConfig !== "function"
     ) {
-      return null;
+      return { status: "no_theme_service" };
     }
     const config = host.themeService.resolveAudioConfig(slotKey);
-    if (!config || config.type !== "audio_set") return null;
+    if (!config || config.type === "none") {
+      return { status: "slot_not_configured" };
+    }
+    if (config.type !== "audio_set") {
+      return { status: "not_audio_set" };
+    }
 
     const assetId = config.url;
-    if (!assetId) return null;
+    if (!assetId) {
+      return { status: "no_asset_id" };
+    }
 
     const asset = (host.assets || []).find(
       (a: any) =>
@@ -49,7 +73,12 @@ export class RacedayTimedAudioHelper {
         a._id === assetId ||
         a.name === assetId,
     );
-    if (!asset || asset.type !== "audio_set") return null;
+    if (!asset) {
+      return { status: "asset_not_found", assetId };
+    }
+    if (asset.type !== "audio_set") {
+      return { status: "asset_not_audio_set", assetId, assetName: asset.name };
+    }
 
     const entries = asset.audioEntries || (asset as any)?.audio_entries;
     const entry = entries?.find((e: any) => {
@@ -66,22 +95,70 @@ export class RacedayTimedAudioHelper {
         mode === triggerMode
       );
     });
-    if (!entry) return null;
+    if (!entry) {
+      return {
+        status: "entry_not_found",
+        assetId,
+        assetName: asset.name || assetId,
+      };
+    }
 
     const entryType = entry.type || "preset";
-    if (entryType === "none") return null;
+    if (entryType === "none") {
+      return {
+        status: "entry_disabled",
+        assetId,
+        assetName: asset.name || assetId,
+      };
+    }
 
     const playableUrl = entry.url
       ? RacedayTimedAudioHelper.resolveAssetPlayableUrl(host, entry.url)
       : undefined;
+
+    if (entryType === "preset" && !playableUrl) {
+      return {
+        status: "entry_missing_content",
+        assetId,
+        assetName: asset.name || assetId,
+      };
+    }
+    if (entryType === "tts" && !entry.text?.trim()) {
+      return {
+        status: "entry_missing_content",
+        assetId,
+        assetName: asset.name || assetId,
+      };
+    }
+
     return {
-      config: {
-        type: entryType,
-        url: playableUrl,
-        text: entry.text || undefined,
+      status: "ready",
+      assetId,
+      assetName: asset.name || assetId,
+      entryItem: {
+        config: {
+          type: entryType,
+          url: playableUrl,
+          text: entry.text || undefined,
+        },
+        playableUrl,
       },
-      playableUrl,
     };
+  }
+
+  static getAudioFromSetEntry(
+    host: any,
+    slotKey: string,
+    timeSeconds: number,
+    triggerMode: string = "remaining",
+  ): { config: AudioConfig; playableUrl?: string } | null {
+    const res = RacedayTimedAudioHelper.getAudioSetResolution(
+      host,
+      slotKey,
+      timeSeconds,
+      triggerMode,
+    );
+    return res.status === "ready" ? (res.entryItem ?? null) : null;
   }
 
   static playAudioFromSet(
@@ -314,6 +391,84 @@ export class RacedayTimedAudioHelper {
     );
   }
 
+  static playTimedSecondsCallout(
+    host: any,
+    threshold: number,
+    triggerMode: "remaining" | "elapsed" = "remaining",
+  ): boolean {
+    const res = RacedayTimedAudioHelper.getAudioSetResolution(
+      host,
+      THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
+      threshold,
+      triggerMode,
+    );
+
+    if (res.status === "ready") {
+      const played = RacedayTimedAudioHelper.playAudioFromSet(
+        host,
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
+        threshold,
+        { widgetType: "timer" },
+        triggerMode,
+      );
+      if (!played) {
+        host.logger?.warn(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) threshold ${threshold}s was dropped by audio manager (channel busy, cadence spacing, or UI relevance)`,
+        );
+      }
+      return played;
+    }
+
+    switch (res.status) {
+      case "slot_not_configured":
+        host.logger?.debug(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) theme slot '${THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT}' is not configured or disabled`,
+        );
+        break;
+      case "not_audio_set":
+        host.logger?.debug(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) theme slot '${THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT}' is configured as single sound, not an audio set`,
+        );
+        break;
+      case "no_asset_id":
+        host.logger?.debug(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) theme slot '${THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT}' has no audio set asset selected`,
+        );
+        break;
+      case "asset_not_found":
+        host.logger?.warn(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) audio set asset '${res.assetId}' not found in loaded assets`,
+        );
+        break;
+      case "asset_not_audio_set":
+        host.logger?.warn(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) asset '${res.assetId}' is not an audio set`,
+        );
+        break;
+      case "entry_not_found":
+        host.logger?.debug(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) threshold ${threshold}s has no entry configured in audio set '${res.assetName || res.assetId}'`,
+        );
+        break;
+      case "entry_disabled":
+        host.logger?.debug(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) threshold ${threshold}s audio entry is disabled (type: 'none')`,
+        );
+        break;
+      case "entry_missing_content":
+        host.logger?.warn(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) threshold ${threshold}s audio entry has missing URL or text content`,
+        );
+        break;
+      default:
+        host.logger?.debug(
+          `[AUDIO-TIMED] Seconds left (${triggerMode}) threshold ${threshold}s could not be resolved (status: ${res.status})`,
+        );
+        break;
+    }
+    return false;
+  }
+
   private static checkRemainingSecondsThresholds(
     host: any,
     totalDuration: number,
@@ -349,18 +504,11 @@ export class RacedayTimedAudioHelper {
         host.logger?.info(
           `[AUDIO-TIMED] Seconds left (remaining) threshold ${threshold}s triggered (currentTime: ${currentTime.toFixed(2)}s, prevTime: ${previousTime.toFixed(2)}s)`,
         );
-        const played = RacedayTimedAudioHelper.playAudioFromSet(
+        RacedayTimedAudioHelper.playTimedSecondsCallout(
           host,
-          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
           threshold,
-          { widgetType: "timer" },
           "remaining",
         );
-        if (!played) {
-          host.logger?.warn(
-            `[AUDIO-TIMED] Seconds left (remaining) threshold ${threshold}s was NOT played (dropped or missing entry)`,
-          );
-        }
         host.playedSecondsLeft.add(threshold);
       }
     }
@@ -405,18 +553,11 @@ export class RacedayTimedAudioHelper {
         host.logger?.info(
           `[AUDIO-TIMED] Seconds left (elapsed) threshold ${threshold}s triggered (currentElapsed: ${currentElapsed.toFixed(2)}s, prevElapsed: ${previousElapsed.toFixed(2)}s)`,
         );
-        const played = RacedayTimedAudioHelper.playAudioFromSet(
+        RacedayTimedAudioHelper.playTimedSecondsCallout(
           host,
-          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
           threshold,
-          { widgetType: "timer" },
           "elapsed",
         );
-        if (!played) {
-          host.logger?.warn(
-            `[AUDIO-TIMED] Seconds left (elapsed) threshold ${threshold}s was NOT played (dropped or missing entry)`,
-          );
-        }
         host.playedSecondsElapsed.add(threshold);
       }
     }

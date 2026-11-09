@@ -155,4 +155,32 @@ public class PitManagerTest {
     pitManager.reset();
     assertFalse(pitManager.isLaneInPits(0));
   }
+
+  @Test
+  public void testIsFuelRaceHandling() {
+    MockProtocolListener listener = new MockProtocolListener();
+    PitManager pitManager = new PitManager(2, lane -> false, () -> listener);
+
+    // By default, MockProtocolListener has fuelRace = false
+    assertFalse(pitManager.isFuelRace());
+
+    // When fuelRace becomes true on listener
+    listener.fuelRace = true;
+    assertTrue(pitManager.isFuelRace());
+
+    // Test with explicit BooleanSupplier
+    PitManager explicitPitManager =
+        new PitManager(
+            2, lane -> false, () -> listener, System::currentTimeMillis, null, () -> false);
+    assertFalse(explicitPitManager.isFuelRace());
+
+    // State transitions work normally regardless of fuel race flag
+    pitManager.updatePitState(0, true);
+    assertTrue(pitManager.isLaneInPits(0));
+    pitManager.updatePitState(0, false);
+    assertFalse(pitManager.isLaneInPits(0));
+
+    explicitPitManager.updatePitState(0, true);
+    assertTrue(explicitPitManager.isLaneInPits(0));
+  }
 }
