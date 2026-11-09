@@ -858,6 +858,16 @@ export class LaneColumnDriverCache {
         -1,
         participant.driver,
       );
+      const bestLap = participant.bestLapTime || participant.best_lap_time;
+      const avgLap = participant.averageLapTime || participant.average_lap_time;
+      const medianLap =
+        participant.medianLapTime || participant.median_lap_time;
+      const lastLap =
+        participant.lastLapTime || participant.last_lap_time || bestLap;
+      if (bestLap) (synth as any).overallBestLapTime = bestLap;
+      if (avgLap) (synth as any).overallAverageLapTime = avgLap;
+      if (medianLap) (synth as any).overallMedianLapTime = medianLap;
+      if (lastLap) (synth as any).currentLapTime = lastLap;
       this.syntheticHeatDrivers.set(participant.objectId, synth);
     }
     return synth;

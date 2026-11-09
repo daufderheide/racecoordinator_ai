@@ -751,6 +751,32 @@
               [personalBest]="targetDriver?.bestLapTime || 0"
               [personalAvg]="targetDriver?.averageLapTime || 0"
               [personalMedian]="targetDriver?.medianLapTime || 0"
+              [overallPersonalBest]="
+                parent()?.getOverallPersonalBest
+                  ? parent().getOverallPersonalBest(targetDriver)
+                  : targetDriver?.participant?.bestLapTime || 0
+              "
+              [overallPersonalAvg]="
+                parent()?.getOverallPersonalAvg
+                  ? parent().getOverallPersonalAvg(targetDriver)
+                  : targetDriver?.participant?.averageLapTime || 0
+              "
+              [overallPersonalMedian]="
+                parent()?.getOverallPersonalMedian
+                  ? parent().getOverallPersonalMedian(targetDriver)
+                  : targetDriver?.participant?.medianLapTime || 0
+              "
+              [overallLeaderBest]="
+                parent()?.overallLeaderBestTime ||
+                parent()?.bestRaceLapTime ||
+                parent()?.raceRecordLapTime ||
+                0
+              "
+              [overallLeaderAvg]="parent()?.overallLeaderAvgTime || 0"
+              [overallLeaderMedian]="parent()?.overallLeaderMedianTime || 0"
+              [overallRecord]="
+                parent()?.raceRecordLapTime || parent()?.bestRaceLapTime || 0
+              "
               [laneRecord]="
                 parent()?.getLaneRecordEntry?.(targetDriver?.laneIndex ?? 0)
                   ?.value || 0

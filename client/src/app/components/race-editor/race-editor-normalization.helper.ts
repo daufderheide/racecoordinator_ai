@@ -76,12 +76,12 @@ export class RaceEditorNormalizationHelper {
         finish_method: "Lap",
         finish_value: 10,
         heat_ranking: "LAP_COUNT",
-        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+        heat_ranking_tiebreaker: "FIRST_TO_SET_TIME",
         allow_finish: "None",
         finishMethod: "Lap",
         finishValue: 10,
         heatRanking: "LAP_COUNT",
-        heatRankingTiebreaker: "FASTEST_LAP_TIME",
+        heatRankingTiebreaker: "FIRST_TO_SET_TIME",
         allowFinish: "None",
       };
     }
@@ -91,10 +91,19 @@ export class RaceEditorNormalizationHelper {
       heatScoring.finish_value ?? heatScoring.finishValue ?? 10;
     const heatRanking =
       heatScoring.heat_ranking ?? heatScoring.heatRanking ?? "LAP_COUNT";
-    const heatRankingTiebreaker =
+    let heatRankingTiebreaker =
       heatScoring.heat_ranking_tiebreaker ??
       heatScoring.heatRankingTiebreaker ??
-      "FASTEST_LAP_TIME";
+      "FIRST_TO_SET_TIME";
+    const validTiebreakers = [
+      "FIRST_TO_SET_TIME",
+      "SECOND_BEST_LAP_TIME",
+      "AVERAGE_LAP_TIME",
+      "MEDIAN_LAP_TIME",
+    ];
+    if (!validTiebreakers.includes(heatRankingTiebreaker)) {
+      heatRankingTiebreaker = "FIRST_TO_SET_TIME";
+    }
     const allowFinish =
       heatScoring.allow_finish ?? heatScoring.allowFinish ?? "None";
 

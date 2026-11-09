@@ -922,6 +922,45 @@ describe("UIEditorComponent", () => {
     });
   });
 
+  it("should include all 7 overall pacing columns in availableColumns", () => {
+    const overallPacingCols = [
+      {
+        key: "overallGhostPacing",
+        label: "RD_COL_OVERALL_GHOST_PACING_RECORD",
+      },
+      {
+        key: "overallGhostPacingPB",
+        label: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_BEST",
+      },
+      {
+        key: "overallGhostPacingPersonalAvg",
+        label: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_AVG",
+      },
+      {
+        key: "overallGhostPacingPersonalMedian",
+        label: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_MEDIAN",
+      },
+      {
+        key: "overallGhostPacingLeaderAvg",
+        label: "RD_COL_OVERALL_GHOST_PACING_LEADER_AVG",
+      },
+      {
+        key: "overallGhostPacingLeaderMedian",
+        label: "RD_COL_OVERALL_GHOST_PACING_LEADER_MEDIAN",
+      },
+      {
+        key: "overallGhostPacingLeaderBest",
+        label: "RD_COL_OVERALL_GHOST_PACING_LEADER_BEST",
+      },
+    ];
+
+    overallPacingCols.forEach(({ key, label }) => {
+      const col = component.availableColumns.find((c) => c.key === key);
+      expect(col).toBeTruthy(`Expected column with key ${key} to exist`);
+      expect(col?.label).toBe(label);
+    });
+  });
+
   describe("column integrity guardrails", () => {
     it("should have unique keys across all BASE_AVAILABLE_COLUMNS", () => {
       const keys = BASE_AVAILABLE_COLUMNS.map((c) => c.key);

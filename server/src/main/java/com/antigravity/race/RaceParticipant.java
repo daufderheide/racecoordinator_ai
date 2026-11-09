@@ -4,6 +4,7 @@ import com.antigravity.models.Driver;
 import com.antigravity.models.Team;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -228,6 +229,36 @@ public class RaceParticipant extends ServerToClientObject
 
   public List<Double> getAllScoringLaps() {
     return allScoringLaps;
+  }
+
+  @Override
+  public List<Double> getSortedValidLapTimes() {
+    if (allScoringLaps == null || allScoringLaps.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Double> valid = new ArrayList<>();
+    for (Double t : allScoringLaps) {
+      if (t != null && t > 0.0) {
+        valid.add(t);
+      }
+    }
+    Collections.sort(valid);
+    return valid;
+  }
+
+  @Override
+  public double getBestLapRecordedTime() {
+    double best = getBestLapTime();
+    if (best <= 0.0 || allScoringLaps == null || allScoringLaps.isEmpty()) {
+      return Double.MAX_VALUE;
+    }
+    for (int i = 0; i < allScoringLaps.size(); i++) {
+      Double lap = allScoringLaps.get(i);
+      if (lap != null && Math.abs(lap - best) < 0.000001) {
+        return getTimeAtLap(i + 1);
+      }
+    }
+    return Double.MAX_VALUE;
   }
 
   public double getConsistencyScore() {

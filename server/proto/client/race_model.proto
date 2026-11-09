@@ -36,6 +36,8 @@ message HeatScoring {
     HRT_FASTEST_LAP_TIME = 0;
     HRT_MEDIAN_LAP_TIME = 1;
     HRT_AVERAGE_LAP_TIME = 2;
+    HRT_FIRST_TO_SET_TIME = 3;
+    HRT_SECOND_BEST_LAP_TIME = 4;
   }
 
   enum AllowFinish {

@@ -226,6 +226,17 @@ public class OverallStandings {
       // Add tiebreaker
       if (heatScoring.getHeatRankingTiebreaker() != null) {
         switch (heatScoring.getHeatRankingTiebreaker()) {
+          case FIRST_TO_SET_TIME:
+            comparator =
+                comparator.thenComparingDouble(
+                    d ->
+                        d.getBestLapRecordedTime() == 0
+                            ? Double.MAX_VALUE
+                            : d.getBestLapRecordedTime());
+            break;
+          case SECOND_BEST_LAP_TIME:
+            comparator = comparator.thenComparing(StandingsComparator::compareNthBestLaps);
+            break;
           case FASTEST_LAP_TIME:
             comparator =
                 comparator.thenComparingDouble(

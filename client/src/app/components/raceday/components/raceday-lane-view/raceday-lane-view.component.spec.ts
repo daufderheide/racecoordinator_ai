@@ -843,11 +843,72 @@ describe("RacedayLaneViewComponent", () => {
       "HEAT_LEADER",
     );
     expect(component.getPacingBenchmarkType(undefined)).toBe("LANE_RECORD");
+
+    // Explicit overall pacing properties
+    expect(component.getPacingBenchmarkType("overallGhostPacing")).toBe(
+      "OVERALL_RECORD",
+    );
+    expect(component.getPacingBenchmarkType("overallGhostPacingPB")).toBe(
+      "OVERALL_PERSONAL_BEST",
+    );
+    expect(
+      component.getPacingBenchmarkType("overallGhostPacingPersonalAvg"),
+    ).toBe("OVERALL_PERSONAL_AVG");
+    expect(
+      component.getPacingBenchmarkType("overallGhostPacingPersonalMedian"),
+    ).toBe("OVERALL_PERSONAL_MEDIAN");
+    expect(
+      component.getPacingBenchmarkType("overallGhostPacingLeaderAvg"),
+    ).toBe("OVERALL_LEADER_AVG");
+    expect(
+      component.getPacingBenchmarkType("overallGhostPacingLeaderMedian"),
+    ).toBe("OVERALL_LEADER_MEDIAN");
+    expect(
+      component.getPacingBenchmarkType("overallGhostPacingLeaderBest"),
+    ).toBe("OVERALL_LEADER");
+  });
+
+  it("should adapt standard ghost pacing properties to overall benchmarks when grid is overall", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "w-lane-view",
+      widgetType: "lane-view",
+      customSettings: {
+        gridType: "overall",
+      },
+    } as any);
+    fixture.detectChanges();
+
+    expect(component.getPacingBenchmarkType("ghostPacing")).toBe(
+      "OVERALL_RECORD",
+    );
+    expect(component.getPacingBenchmarkType("ghostPacingPB")).toBe(
+      "OVERALL_PERSONAL_BEST",
+    );
+    expect(component.getPacingBenchmarkType("ghostPacingPersonalAvg")).toBe(
+      "OVERALL_PERSONAL_AVG",
+    );
+    expect(component.getPacingBenchmarkType("ghostPacingPersonalMedian")).toBe(
+      "OVERALL_PERSONAL_MEDIAN",
+    );
+    expect(component.getPacingBenchmarkType("ghostPacingLeaderAvg")).toBe(
+      "OVERALL_LEADER_AVG",
+    );
+    expect(component.getPacingBenchmarkType("ghostPacingLeaderMedian")).toBe(
+      "OVERALL_LEADER_MEDIAN",
+    );
+    expect(component.getPacingBenchmarkType("ghostPacingLeaderBest")).toBe(
+      "OVERALL_LEADER",
+    );
   });
 
   it("should check if property is a pacing property", () => {
     expect(component.isPacingProperty("ghostPacing")).toBe(true);
     expect(component.isPacingProperty("ghostPacingPB")).toBe(true);
+    expect(component.isPacingProperty("overallGhostPacing")).toBe(true);
+    expect(component.isPacingProperty("overallGhostPacingPB")).toBe(true);
+    expect(component.isPacingProperty("overallGhostPacingLeaderBest")).toBe(
+      true,
+    );
     expect(component.isPacingProperty("driver.name")).toBe(false);
     expect(component.isPacingProperty(undefined)).toBe(false);
   });

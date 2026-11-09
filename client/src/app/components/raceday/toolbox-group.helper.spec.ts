@@ -48,7 +48,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(122);
+    expect(rcAiGroup.totalCount).toBe(129);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -87,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(122);
+    expect(rcAiGroup.totalCount).toBe(129);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
@@ -500,13 +500,14 @@ describe("ToolboxGroupHelper", () => {
     );
     expect(overallDataSubgroup).toBeDefined();
     expect(overallDataSubgroup!.nameKey).toBe("UE_TOOLBOX_GROUP_OVERALL_DATA");
-    expect(overallDataSubgroup!.subgroups?.length).toBe(7);
+    expect(overallDataSubgroup!.subgroups?.length).toBe(8);
 
     const expectedSubgroups = [
       "overall-data-sg-driver-team",
       "overall-data-sg-overall-analysis",
       "overall-data-sg-overall-gaps",
       "overall-data-sg-overall-lap-times",
+      "overall-data-sg-overall-pacing",
       "overall-data-sg-overall-standings",
       "overall-data-sg-predictions",
       "overall-data-sg-media-custom",
@@ -514,6 +515,19 @@ describe("ToolboxGroupHelper", () => {
     expect(overallDataSubgroup!.subgroups?.map((sg) => sg.id)).toEqual(
       expectedSubgroups,
     );
+
+    const pacingSg = overallDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "overall-data-sg-overall-pacing",
+    );
+    expect(pacingSg).toBeDefined();
+    const pacingTypes = pacingSg!.widgets.map((w) => w.type);
+    expect(pacingTypes).toContain("lane-col:overallGhostPacing");
+    expect(pacingTypes).toContain("lane-col:overallGhostPacingPB");
+    expect(pacingTypes).toContain("lane-col:overallGhostPacingPersonalAvg");
+    expect(pacingTypes).toContain("lane-col:overallGhostPacingPersonalMedian");
+    expect(pacingTypes).toContain("lane-col:overallGhostPacingLeaderBest");
+    expect(pacingTypes).toContain("lane-col:overallGhostPacingLeaderAvg");
+    expect(pacingTypes).toContain("lane-col:overallGhostPacingLeaderMedian");
 
     const analysisSg = overallDataSubgroup!.subgroups?.find(
       (sg) => sg.id === "overall-data-sg-overall-analysis",

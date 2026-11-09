@@ -27,6 +27,8 @@ import {
   resolveHeatGridDriver,
   resolveLaneColumnImageUrl,
   resolveOverallGridDriver,
+  resolvePacingBenchmarkType,
+  resolvePacingDecimalPlaces,
   safeguardTextOverflow,
 } from "./raceday-lane-column.utils";
 
@@ -2373,6 +2375,137 @@ describe("raceday-lane-column.utils", () => {
       expect(styles["font-weight"]).toBe("normal");
       expect(styles["text-decoration"]).toBe("none");
       expect(styles["font-style"]).toBeUndefined();
+    });
+  });
+
+  describe("resolvePacingBenchmarkType", () => {
+    it("should map explicit overallGhostPacing* keys to OVERALL_* benchmarks regardless of isOverall flag", () => {
+      expect(resolvePacingBenchmarkType("overallGhostPacing", false)).toBe(
+        "OVERALL_RECORD",
+      );
+      expect(resolvePacingBenchmarkType("overallGhostPacing", true)).toBe(
+        "OVERALL_RECORD",
+      );
+      expect(resolvePacingBenchmarkType("overallGhostPacingPB", false)).toBe(
+        "OVERALL_PERSONAL_BEST",
+      );
+      expect(resolvePacingBenchmarkType("overallGhostPacingPB", true)).toBe(
+        "OVERALL_PERSONAL_BEST",
+      );
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingPersonalAvg", false),
+      ).toBe("OVERALL_PERSONAL_AVG");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingPersonalAvg", true),
+      ).toBe("OVERALL_PERSONAL_AVG");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingPersonalMedian", false),
+      ).toBe("OVERALL_PERSONAL_MEDIAN");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingPersonalMedian", true),
+      ).toBe("OVERALL_PERSONAL_MEDIAN");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingLeaderBest", false),
+      ).toBe("OVERALL_LEADER");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingLeaderBest", true),
+      ).toBe("OVERALL_LEADER");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingLeaderAvg", false),
+      ).toBe("OVERALL_LEADER_AVG");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingLeaderAvg", true),
+      ).toBe("OVERALL_LEADER_AVG");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingLeaderMedian", false),
+      ).toBe("OVERALL_LEADER_MEDIAN");
+      expect(
+        resolvePacingBenchmarkType("overallGhostPacingLeaderMedian", true),
+      ).toBe("OVERALL_LEADER_MEDIAN");
+    });
+
+    it("should map ghostPacing* keys to heat benchmarks when isOverall is false", () => {
+      expect(resolvePacingBenchmarkType("ghostPacing", false)).toBe(
+        "LANE_RECORD",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingPB", false)).toBe(
+        "PERSONAL_BEST",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingPersonalAvg", false)).toBe(
+        "PERSONAL_AVG",
+      );
+      expect(
+        resolvePacingBenchmarkType("ghostPacingPersonalMedian", false),
+      ).toBe("PERSONAL_MEDIAN");
+      expect(resolvePacingBenchmarkType("ghostPacingLeaderBest", false)).toBe(
+        "HEAT_LEADER",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingLeaderAvg", false)).toBe(
+        "HEAT_LEADER_AVG",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingLeaderMedian", false)).toBe(
+        "HEAT_LEADER_MEDIAN",
+      );
+    });
+
+    it("should adapt ghostPacing* keys to overall benchmarks when isOverall is true", () => {
+      expect(resolvePacingBenchmarkType("ghostPacing", true)).toBe(
+        "OVERALL_RECORD",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingPB", true)).toBe(
+        "OVERALL_PERSONAL_BEST",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingPersonalAvg", true)).toBe(
+        "OVERALL_PERSONAL_AVG",
+      );
+      expect(
+        resolvePacingBenchmarkType("ghostPacingPersonalMedian", true),
+      ).toBe("OVERALL_PERSONAL_MEDIAN");
+      expect(resolvePacingBenchmarkType("ghostPacingLeaderBest", true)).toBe(
+        "OVERALL_LEADER",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingLeaderAvg", true)).toBe(
+        "OVERALL_LEADER_AVG",
+      );
+      expect(resolvePacingBenchmarkType("ghostPacingLeaderMedian", true)).toBe(
+        "OVERALL_LEADER_MEDIAN",
+      );
+    });
+  });
+
+  describe("resolvePacingDecimalPlaces", () => {
+    it("should resolve decimals specifically for overallGhostPacing column", () => {
+      const settings: any = {
+        columnDecimals: { overallGhostPacing: 1 },
+      };
+      expect(
+        resolvePacingDecimalPlaces(settings, null, "overallGhostPacing"),
+      ).toBe(1);
+    });
+
+    it("should resolve decimals using overallGhostPacing prefix fallback", () => {
+      const settings: any = {
+        columnDecimals: { overallGhostPacingPB: 2 },
+      };
+      expect(
+        resolvePacingDecimalPlaces(
+          settings,
+          null,
+          "overallGhostPacingLeaderAvg",
+        ),
+      ).toBe(2);
+    });
+
+    it("should fallback to timeDecimalPlaces or default 3", () => {
+      const settings1: any = { timeDecimalPlaces: 0 };
+      expect(
+        resolvePacingDecimalPlaces(settings1, null, "overallGhostPacing"),
+      ).toBe(0);
+
+      const settings2: any = {};
+      expect(
+        resolvePacingDecimalPlaces(settings2, null, "overallGhostPacing"),
+      ).toBe(3);
     });
   });
 });

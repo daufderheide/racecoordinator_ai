@@ -97,6 +97,31 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
     key: "ghostPacingLeaderBest",
     label: "RD_COL_GHOST_PACING_LEADER_BEST",
   },
+  { key: "overallGhostPacing", label: "RD_COL_OVERALL_GHOST_PACING_RECORD" },
+  {
+    key: "overallGhostPacingPB",
+    label: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_BEST",
+  },
+  {
+    key: "overallGhostPacingPersonalAvg",
+    label: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_AVG",
+  },
+  {
+    key: "overallGhostPacingPersonalMedian",
+    label: "RD_COL_OVERALL_GHOST_PACING_PERSONAL_MEDIAN",
+  },
+  {
+    key: "overallGhostPacingLeaderAvg",
+    label: "RD_COL_OVERALL_GHOST_PACING_LEADER_AVG",
+  },
+  {
+    key: "overallGhostPacingLeaderMedian",
+    label: "RD_COL_OVERALL_GHOST_PACING_LEADER_MEDIAN",
+  },
+  {
+    key: "overallGhostPacingLeaderBest",
+    label: "RD_COL_OVERALL_GHOST_PACING_LEADER_BEST",
+  },
 ];
 
 export const AVAILABLE_TRANSITIONS = [

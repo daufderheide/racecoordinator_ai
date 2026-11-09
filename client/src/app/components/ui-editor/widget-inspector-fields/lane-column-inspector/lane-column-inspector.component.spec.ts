@@ -2768,6 +2768,10 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.isPacingColumn).toBeTrue();
       expect(component.isTextColumn).toBeFalse();
 
+      component.currentSettings["columnKey"] = "overallGhostPacingLeaderBest";
+      expect(component.isPacingColumn).toBeTrue();
+      expect(component.isTextColumn).toBeFalse();
+
       component.currentSettings["columnKey"] = "imageset_fuel-gauge-builtin";
       expect(component.isFuelGaugeColumn).toBeTrue();
       expect(component.isTextColumn).toBeFalse();

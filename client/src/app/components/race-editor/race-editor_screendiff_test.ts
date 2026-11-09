@@ -499,6 +499,46 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
+  test("should display Scoring section with Fastest Lap and tiebreaker selector", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    // Collapse sections to isolate Scoring
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+
+    // Select FASTEST_LAP in Heat Ranking dropdown
+    const rankingSelect = page.locator("#heat-ranking-select");
+    await rankingSelect.scrollIntoViewIfNeeded();
+    await rankingSelect.click();
+    await page
+      .locator(".custom-select-option[data-value='FASTEST_LAP']")
+      .click();
+
+    // Ensure tiebreaker selector is visible
+    const tiebreakerSelect = page.locator("#heat-tiebreaker-select");
+    await tiebreakerSelect.waitFor({ state: "visible", timeout: 10000 });
+
+    await TestSetupHelper.blurActiveElement(page);
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator("#scoring-section")).toHaveScreenshot(
+      "race-editor-scoring-fastest-lap-tiebreaker.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
   test("should display Analog Fuel section expanded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

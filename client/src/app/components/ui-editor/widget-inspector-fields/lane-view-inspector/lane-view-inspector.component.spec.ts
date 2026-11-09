@@ -202,6 +202,27 @@ describe("LaneViewInspectorComponent", () => {
     expect(component.getColumnLabel("ghostPacingLeaderBest")).toBe(
       "RD_COL_GHOST_PACING_LEADER_BEST",
     );
+    expect(component.getColumnLabel("overallGhostPacing")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_RECORD",
+    );
+    expect(component.getColumnLabel("overallGhostPacingPB")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_PERSONAL_BEST",
+    );
+    expect(component.getColumnLabel("overallGhostPacingPersonalAvg")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_PERSONAL_AVG",
+    );
+    expect(component.getColumnLabel("overallGhostPacingPersonalMedian")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_PERSONAL_MEDIAN",
+    );
+    expect(component.getColumnLabel("overallGhostPacingLeaderAvg")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_LEADER_AVG",
+    );
+    expect(component.getColumnLabel("overallGhostPacingLeaderMedian")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_LEADER_MEDIAN",
+    );
+    expect(component.getColumnLabel("overallGhostPacingLeaderBest")).toBe(
+      "RD_COL_OVERALL_GHOST_PACING_LEADER_BEST",
+    );
     expect(component.getColumnLabel("unknown")).toBe("unknown");
   });
 

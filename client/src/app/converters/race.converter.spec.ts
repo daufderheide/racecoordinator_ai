@@ -305,4 +305,34 @@ describe("RaceConverter", () => {
     expect(result.custom_rotation_asset_id).toBe("Llany Rotations");
     expect(result.custom_rotation_asset_name).toBe("Llany Rotations");
   });
+
+  it("should map heatRankingTiebreaker enum values correctly", () => {
+    const makeProto = (tiebreaker: number): IRaceModel => ({
+      model: { entityId: "r21" },
+      name: "Tiebreaker Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatScoring: {
+        finishMethod: 1,
+        finishValue: 10,
+        heatRanking: 2, // FASTEST_LAP
+        heatRankingTiebreaker: tiebreaker,
+      },
+    });
+
+    expect(
+      RaceConverter.fromProto(makeProto(0)).heat_scoring.heatRankingTiebreaker,
+    ).toBe("FASTEST_LAP_TIME");
+    expect(
+      RaceConverter.fromProto(makeProto(1)).heat_scoring.heatRankingTiebreaker,
+    ).toBe("MEDIAN_LAP_TIME");
+    expect(
+      RaceConverter.fromProto(makeProto(2)).heat_scoring.heatRankingTiebreaker,
+    ).toBe("AVERAGE_LAP_TIME");
+    expect(
+      RaceConverter.fromProto(makeProto(3)).heat_scoring.heatRankingTiebreaker,
+    ).toBe("FIRST_TO_SET_TIME");
+    expect(
+      RaceConverter.fromProto(makeProto(4)).heat_scoring.heatRankingTiebreaker,
+    ).toBe("SECOND_BEST_LAP_TIME");
+  });
 });

@@ -17,10 +17,19 @@ export class RaceEditorScoringHelper {
     const heatRanking = hs.heat_ranking ?? hs.heatRanking ?? "LAP_COUNT";
     hs.heat_ranking = heatRanking;
     hs.heatRanking = heatRanking;
-    const tiebreaker =
+    let tiebreaker =
       hs.heat_ranking_tiebreaker ??
       hs.heatRankingTiebreaker ??
-      "FASTEST_LAP_TIME";
+      "FIRST_TO_SET_TIME";
+    const validTiebreakers = [
+      "FIRST_TO_SET_TIME",
+      "SECOND_BEST_LAP_TIME",
+      "AVERAGE_LAP_TIME",
+      "MEDIAN_LAP_TIME",
+    ];
+    if (!validTiebreakers.includes(tiebreaker)) {
+      tiebreaker = "FIRST_TO_SET_TIME";
+    }
     hs.heat_ranking_tiebreaker = tiebreaker;
     hs.heatRankingTiebreaker = tiebreaker;
   }

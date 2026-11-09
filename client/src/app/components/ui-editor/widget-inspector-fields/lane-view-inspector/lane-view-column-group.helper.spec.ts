@@ -18,8 +18,8 @@ describe("LaneViewColumnGroupHelper", () => {
     return map[key] || key;
   };
 
-  it("should have 13 defined column groups", () => {
-    expect(LANE_VIEW_COLUMN_GROUPS.length).toBe(13);
+  it("should have 14 defined column groups", () => {
+    expect(LANE_VIEW_COLUMN_GROUPS.length).toBe(14);
     const ids = LANE_VIEW_COLUMN_GROUPS.map((g) => g.id);
     expect(ids).toEqual([
       "driver-team",
@@ -31,6 +31,7 @@ describe("LaneViewColumnGroupHelper", () => {
       "overall-lap-times",
       "overall-analysis",
       "overall-gaps",
+      "overall-pacing",
       "pacing",
       "telemetry",
       "predictions",
@@ -154,6 +155,40 @@ describe("LaneViewColumnGroupHelper", () => {
       expect(
         LaneViewColumnGroupHelper.getGroupIdForColumn("ghostPacingLeaderBest"),
       ).toBe("pacing");
+    });
+
+    it("should return overall-pacing for overall ghost pacing columns", () => {
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallGhostPacing"),
+      ).toBe("overall-pacing");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("overallGhostPacingPB"),
+      ).toBe("overall-pacing");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "overallGhostPacingPersonalAvg",
+        ),
+      ).toBe("overall-pacing");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "overallGhostPacingPersonalMedian",
+        ),
+      ).toBe("overall-pacing");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "overallGhostPacingLeaderBest",
+        ),
+      ).toBe("overall-pacing");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "overallGhostPacingLeaderAvg",
+        ),
+      ).toBe("overall-pacing");
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn(
+          "overallGhostPacingLeaderMedian",
+        ),
+      ).toBe("overall-pacing");
     });
 
     it("should return telemetry for fuel and speed columns", () => {

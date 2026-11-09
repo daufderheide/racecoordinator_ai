@@ -252,23 +252,38 @@ export * from "./raceday-lane-column-last-laps.helper";
 
 export function resolvePacingBenchmarkType(
   columnKey: string,
+  isOverall?: boolean,
 ): GhostBenchmarkType {
   switch (columnKey) {
+    case "overallGhostPacingPB":
+      return "OVERALL_PERSONAL_BEST";
+    case "overallGhostPacingPersonalAvg":
+      return "OVERALL_PERSONAL_AVG";
+    case "overallGhostPacingPersonalMedian":
+      return "OVERALL_PERSONAL_MEDIAN";
+    case "overallGhostPacingLeaderAvg":
+      return "OVERALL_LEADER_AVG";
+    case "overallGhostPacingLeaderMedian":
+      return "OVERALL_LEADER_MEDIAN";
+    case "overallGhostPacingLeaderBest":
+      return "OVERALL_LEADER";
+    case "overallGhostPacing":
+      return "OVERALL_RECORD";
     case "ghostPacingPB":
-      return "PERSONAL_BEST";
+      return isOverall ? "OVERALL_PERSONAL_BEST" : "PERSONAL_BEST";
     case "ghostPacingPersonalAvg":
-      return "PERSONAL_AVG";
+      return isOverall ? "OVERALL_PERSONAL_AVG" : "PERSONAL_AVG";
     case "ghostPacingPersonalMedian":
-      return "PERSONAL_MEDIAN";
+      return isOverall ? "OVERALL_PERSONAL_MEDIAN" : "PERSONAL_MEDIAN";
     case "ghostPacingLeaderAvg":
-      return "HEAT_LEADER_AVG";
+      return isOverall ? "OVERALL_LEADER_AVG" : "HEAT_LEADER_AVG";
     case "ghostPacingLeaderMedian":
-      return "HEAT_LEADER_MEDIAN";
+      return isOverall ? "OVERALL_LEADER_MEDIAN" : "HEAT_LEADER_MEDIAN";
     case "ghostPacingLeaderBest":
-      return "HEAT_LEADER";
+      return isOverall ? "OVERALL_LEADER" : "HEAT_LEADER";
     case "ghostPacing":
     default:
-      return "LANE_RECORD";
+      return isOverall ? "OVERALL_RECORD" : "LANE_RECORD";
   }
 }
 
@@ -298,7 +313,7 @@ export function resolvePacingDecimalPlaces(
     }
     for (const k of Object.keys(customColDecimals)) {
       if (
-        k.startsWith("ghostPacing") &&
+        (k.startsWith("ghostPacing") || k.startsWith("overallGhostPacing")) &&
         customColDecimals[k] !== undefined &&
         customColDecimals[k] !== null &&
         customColDecimals[k] !== ""

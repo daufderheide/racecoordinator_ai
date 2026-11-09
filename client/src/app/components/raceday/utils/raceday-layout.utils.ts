@@ -238,7 +238,8 @@ export class RacedayLayoutUtils {
       k === "overallGapPosition" ||
       k === "overallGapLeaderF1" ||
       k === "overallGapPositionF1" ||
-      k.startsWith("ghostPacing");
+      k.startsWith("ghostPacing") ||
+      k.startsWith("overallGhostPacing");
 
     if (isTimeBase(baseKey)) return true;
     const parts = key.split("_");
@@ -332,7 +333,15 @@ export class RacedayLayoutUtils {
       base === "ghostPacingLeaderAvg" ||
       base === "ghostPacingLeaderMedian" ||
       base === "ghostPacingLeaderBest" ||
-      base.startsWith("ghostPacing")
+      base === "overallGhostPacing" ||
+      base === "overallGhostPacingPB" ||
+      base === "overallGhostPacingPersonalAvg" ||
+      base === "overallGhostPacingPersonalMedian" ||
+      base === "overallGhostPacingLeaderAvg" ||
+      base === "overallGhostPacingLeaderMedian" ||
+      base === "overallGhostPacingLeaderBest" ||
+      base.startsWith("ghostPacing") ||
+      base.startsWith("overallGhostPacing")
     );
   }
 
@@ -433,6 +442,13 @@ export class RacedayLayoutUtils {
     ghostPacingLeaderAvg: "RD_COL_GHOST_PACING",
     ghostPacingLeaderMedian: "RD_COL_GHOST_PACING",
     ghostPacingLeaderBest: "RD_COL_GHOST_PACING",
+    overallGhostPacing: "RD_COL_GHOST_PACING",
+    overallGhostPacingPB: "RD_COL_GHOST_PACING",
+    overallGhostPacingPersonalAvg: "RD_COL_GHOST_PACING",
+    overallGhostPacingPersonalMedian: "RD_COL_GHOST_PACING",
+    overallGhostPacingLeaderAvg: "RD_COL_GHOST_PACING",
+    overallGhostPacingLeaderMedian: "RD_COL_GHOST_PACING",
+    overallGhostPacingLeaderBest: "RD_COL_GHOST_PACING",
   };
 
   private static readonly COLUMN_WIDTHS: Record<string, number> = {
@@ -519,6 +535,13 @@ export class RacedayLayoutUtils {
     ghostPacingLeaderAvg: 330,
     ghostPacingLeaderMedian: 330,
     ghostPacingLeaderBest: 330,
+    overallGhostPacing: 330,
+    overallGhostPacingPB: 330,
+    overallGhostPacingPersonalAvg: 330,
+    overallGhostPacingPersonalMedian: 330,
+    overallGhostPacingLeaderAvg: 330,
+    overallGhostPacingLeaderMedian: 330,
+    overallGhostPacingLeaderBest: 330,
   };
 
   static getLabelKeyForColumn(
@@ -539,7 +562,8 @@ export class RacedayLayoutUtils {
     }
     if (
       typeof propertyKey === "string" &&
-      propertyKey.startsWith("ghostPacing")
+      (propertyKey.startsWith("ghostPacing") ||
+        propertyKey.startsWith("overallGhostPacing"))
     ) {
       return "RD_COL_GHOST_PACING";
     }
@@ -582,7 +606,8 @@ export class RacedayLayoutUtils {
     }
     if (
       typeof propertyKey === "string" &&
-      propertyKey.startsWith("ghostPacing")
+      (propertyKey.startsWith("ghostPacing") ||
+        propertyKey.startsWith("overallGhostPacing"))
     ) {
       return 330;
     }

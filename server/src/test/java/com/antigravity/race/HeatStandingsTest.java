@@ -833,10 +833,20 @@ public class HeatStandingsTest {
 
     HeatStandings standings = new HeatStandings(data, heatScoring, overallScoring, false);
 
-    // In heat standings, LAP_COUNT + FASTEST_LAP_TIME tiebreaker governs:
-    // Both have 10 laps, but d1 has a faster best lap (4.0s < 4.8s) -> d1 is P1
-    assertEquals(d1.getObjectId(), standings.getStandings().get(0));
-    assertEquals(d2.getObjectId(), standings.getStandings().get(1));
+    // In heat standings with LAP_COUNT, equal laps are resolved by track position / elapsed time:
+    // Both have 10 laps, but d2 finished in 50s vs d1 in 60s -> d2 is P1
+    assertEquals(d2.getObjectId(), standings.getStandings().get(0));
+    assertEquals(d1.getObjectId(), standings.getStandings().get(1));
+
+    // When heatScoring is FASTEST_LAP, fastest lap governs:
+    HeatScoring heatScoringFastestLap =
+        new HeatScoring(
+            FinishMethod.Lap, 10, HeatRanking.FASTEST_LAP, HeatRankingTiebreaker.FIRST_TO_SET_TIME);
+    HeatStandings standingsFastestLap =
+        new HeatStandings(data, heatScoringFastestLap, overallScoring, false);
+    // d1 has faster best lap (4.0s < 4.8s) -> d1 is P1
+    assertEquals(d1.getObjectId(), standingsFastestLap.getStandings().get(0));
+    assertEquals(d2.getObjectId(), standingsFastestLap.getStandings().get(1));
 
     // Verify reverse: heatScoring is TOTAL_TIME, overallScoring is LAP_COUNT
     HeatScoring heatScoring2 =

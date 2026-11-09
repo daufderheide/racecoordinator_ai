@@ -179,10 +179,12 @@ export class RaceConverter {
         HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME,
         HeatRankingTiebreaker.HRT_MEDIAN_LAP_TIME,
         HeatRankingTiebreaker.HRT_AVERAGE_LAP_TIME,
+        HeatRankingTiebreaker.HRT_FIRST_TO_SET_TIME,
+        HeatRankingTiebreaker.HRT_SECOND_BEST_LAP_TIME,
       ];
       heatRankingTiebreaker =
         tiebreakers[heatRankingTiebreaker] ||
-        HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME;
+        HeatRankingTiebreaker.HRT_FIRST_TO_SET_TIME;
     }
 
     let allowFinish = rawScoring.allowFinish;

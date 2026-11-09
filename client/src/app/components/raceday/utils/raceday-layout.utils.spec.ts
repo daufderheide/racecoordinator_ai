@@ -359,6 +359,27 @@ describe("RacedayLayoutUtils", () => {
     expect(RacedayLayoutUtils.isPacingProperty("ghostPacingLeaderBest")).toBe(
       true,
     );
+    expect(RacedayLayoutUtils.isPacingProperty("overallGhostPacing")).toBe(
+      true,
+    );
+    expect(RacedayLayoutUtils.isPacingProperty("overallGhostPacingPB")).toBe(
+      true,
+    );
+    expect(
+      RacedayLayoutUtils.isPacingProperty("overallGhostPacingPersonalAvg"),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isPacingProperty("overallGhostPacingPersonalMedian"),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isPacingProperty("overallGhostPacingLeaderAvg"),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isPacingProperty("overallGhostPacingLeaderMedian"),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isPacingProperty("overallGhostPacingLeaderBest"),
+    ).toBe(true);
     expect(RacedayLayoutUtils.isPacingProperty("lapCount")).toBe(false);
     expect(RacedayLayoutUtils.isPacingProperty("")).toBe(false);
   });

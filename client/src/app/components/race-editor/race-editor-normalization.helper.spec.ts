@@ -71,6 +71,7 @@ describe("RaceEditorNormalizationHelper", () => {
       expect(result.finish_method).toBe("Lap");
       expect(result.finish_value).toBe(10);
       expect(result.heat_ranking).toBe("LAP_COUNT");
+      expect(result.heat_ranking_tiebreaker).toBe("FIRST_TO_SET_TIME");
       expect(result.allow_finish).toBe("None");
       expect(result.finishMethod).toBe("Lap");
     });

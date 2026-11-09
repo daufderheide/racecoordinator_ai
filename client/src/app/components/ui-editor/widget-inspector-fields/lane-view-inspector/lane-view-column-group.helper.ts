@@ -125,6 +125,19 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
     columnKeys: ["overallGap"],
   },
   {
+    id: "overall-pacing",
+    nameKey: "UE_COL_GROUP_OVERALL_PACING",
+    columnKeys: [
+      "overallGhostPacing",
+      "overallGhostPacingPB",
+      "overallGhostPacingPersonalAvg",
+      "overallGhostPacingPersonalMedian",
+      "overallGhostPacingLeaderAvg",
+      "overallGhostPacingLeaderMedian",
+      "overallGhostPacingLeaderBest",
+    ],
+  },
+  {
     id: "pacing",
     nameKey: "UE_COL_GROUP_PACING",
     columnKeys: [
@@ -187,6 +200,7 @@ export class LaneViewColumnGroupHelper {
     "overall-lap-times",
     "overall-analysis",
     "overall-gaps",
+    "overall-pacing",
     "predictions",
     "media-custom",
   ];
@@ -203,6 +217,7 @@ export class LaneViewColumnGroupHelper {
     UE_COL_GROUP_OVERALL_ANALYSIS: "Overall Analysis & Consistency",
     UE_COL_GROUP_OVERALL_GAPS: "Overall Gaps & Intervals",
     UE_COL_GROUP_OVERALL_LAP_TIMES: "Overall Lap Times & Records",
+    UE_COL_GROUP_OVERALL_PACING: "Overall Pacing",
     UE_COL_GROUP_OVERALL_STANDINGS: "Overall Standings & Laps",
     UE_COL_GROUP_PACING: "Pacing",
     UE_COL_GROUP_PREDICTIONS: "Predictions",

@@ -290,8 +290,24 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
     return RacedayRecordsStatsHelper.getPersonalBest(hd);
   }
 
+  getOverallPersonalBest(hd?: DriverHeatData): number {
+    return RacedayRecordsStatsHelper.getOverallPersonalBest(hd, this);
+  }
+
+  getOverallPersonalAvg(hd?: DriverHeatData): number {
+    return RacedayRecordsStatsHelper.getOverallPersonalAvg(hd, this);
+  }
+
+  getOverallPersonalMedian(hd?: DriverHeatData): number {
+    return RacedayRecordsStatsHelper.getOverallPersonalMedian(hd, this);
+  }
+
   getLeaderHeatDriver(): DriverHeatData | undefined {
     return RacedayRecordsStatsHelper.getLeaderHeatDriver(this);
+  }
+
+  getLeaderOverallParticipant(): RaceParticipant | undefined {
+    return RacedayRecordsStatsHelper.getLeaderOverallParticipant(this);
   }
 
   get heatLeaderAvgTime(): number {
@@ -308,6 +324,44 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
     const leader = this.getLeaderHeatDriver();
     if (leader && leader.bestLapTime > 0) return leader.bestLapTime;
     return (this as any).heatBestTime || 0;
+  }
+
+  get overallLeaderAvgTime(): number {
+    const leader = this.getLeaderOverallParticipant();
+    if (leader && leader.averageLapTime > 0) return leader.averageLapTime;
+    if ((this as any).isUIEditorMode?.()) return 2.3;
+    return 0;
+  }
+
+  get overallLeaderMedianTime(): number {
+    const leader = this.getLeaderOverallParticipant();
+    if (leader && leader.medianLapTime > 0) return leader.medianLapTime;
+    if ((this as any).isUIEditorMode?.()) return 2.2;
+    return 0;
+  }
+
+  get overallLeaderBestTime(): number {
+    const leader = this.getLeaderOverallParticipant();
+    if (leader && leader.bestLapTime > 0) return leader.bestLapTime;
+    if ((this as any).isUIEditorMode?.()) return 2.0;
+    return (
+      (this as any).currentRaceBestTime ||
+      (this as any).bestRaceLapTime ||
+      (this as any).raceRecordLapTime ||
+      0
+    );
+  }
+
+  get overallBestLapTime(): number {
+    const leader = this.getLeaderOverallParticipant();
+    if (leader && leader.bestLapTime > 0) return leader.bestLapTime;
+    if ((this as any).isUIEditorMode?.()) return 2.0;
+    return (
+      (this as any).currentRaceBestTime ||
+      (this as any).bestRaceLapTime ||
+      (this as any).raceRecordLapTime ||
+      0
+    );
   }
 
   get leaderBoardWindow(): Window | null {

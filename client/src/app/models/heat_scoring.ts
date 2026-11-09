@@ -10,9 +10,11 @@ export enum HeatRanking {
 }
 
 export enum HeatRankingTiebreaker {
-  HRT_FASTEST_LAP_TIME = "FASTEST_LAP_TIME",
-  HRT_MEDIAN_LAP_TIME = "MEDIAN_LAP_TIME",
+  HRT_FIRST_TO_SET_TIME = "FIRST_TO_SET_TIME",
+  HRT_SECOND_BEST_LAP_TIME = "SECOND_BEST_LAP_TIME",
   HRT_AVERAGE_LAP_TIME = "AVERAGE_LAP_TIME",
+  HRT_MEDIAN_LAP_TIME = "MEDIAN_LAP_TIME",
+  HRT_FASTEST_LAP_TIME = "FASTEST_LAP_TIME",
 }
 
 export enum AllowFinish {
@@ -34,7 +36,7 @@ export class HeatScoring {
     finishMethod: FinishMethod = FinishMethod.Lap,
     finishValue: number = 10,
     heatRanking: HeatRanking = HeatRanking.HR_LAP_COUNT,
-    heatRankingTiebreaker: HeatRankingTiebreaker = HeatRankingTiebreaker.HRT_FASTEST_LAP_TIME,
+    heatRankingTiebreaker: HeatRankingTiebreaker = HeatRankingTiebreaker.HRT_FIRST_TO_SET_TIME,
     allowFinish: AllowFinish = AllowFinish.AF_NONE,
   ) {
     this.finishMethod = finishMethod;
