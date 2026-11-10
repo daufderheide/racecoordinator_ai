@@ -319,6 +319,7 @@ describe("RaceEditorComponent", () => {
       1,
       false,
       jasmine.any(Object),
+      0,
     );
     expect(component.generatedHeats.length).toBeGreaterThan(0);
   }));
@@ -342,6 +343,7 @@ describe("RaceEditorComponent", () => {
       1,
       false,
       jasmine.any(Object),
+      0,
     );
 
     component.driverCount = 12;
@@ -359,6 +361,7 @@ describe("RaceEditorComponent", () => {
       1,
       false,
       jasmine.any(Object),
+      0,
     );
   }));
 
@@ -1920,6 +1923,7 @@ describe("RaceEditorComponent", () => {
         1,
         false,
         jasmine.any(Object),
+        0,
       );
     }));
   });
@@ -2073,6 +2077,7 @@ describe("RaceEditorComponent", () => {
         3, // heatTimesThrough
         jasmine.any(Boolean),
         jasmine.any(Object),
+        jasmine.any(Number),
       );
     }));
 
@@ -2099,6 +2104,7 @@ describe("RaceEditorComponent", () => {
         jasmine.any(Number),
         true, // reverseHeats
         jasmine.any(Object),
+        jasmine.any(Number),
       );
     }));
 
@@ -3031,6 +3037,53 @@ describe("RaceEditorComponent", () => {
 
       component.editingRace.custom_rotation_asset_id = "asset-rot-1";
       expect(component.isRotationInvalid).toBeFalse();
+    });
+
+    it("should validate step_up option via isStepUpInvalid getter", () => {
+      component.tracks = [
+        {
+          entity_id: "trk1",
+          lanes: [{}, {}, {}, {}],
+        } as any,
+      ];
+      component.editingRace.track_entity_id = "trk1";
+
+      component.editingRace.step_up = 0;
+      expect(component.isStepUpInvalid).toBeFalse();
+
+      component.editingRace.step_up = -1;
+      expect(component.isStepUpInvalid).toBeTrue();
+
+      component.editingRace.step_up = 4; // 4 lanes -> invalid (max is 3)
+      expect(component.isStepUpInvalid).toBeTrue();
+
+      component.editingRace.step_up = 3; // 4 lanes -> valid (3 is lanes - 1)
+      expect(component.isStepUpInvalid).toBeFalse();
+
+      component.editingRace.step_up = 2; // valid
+      expect(component.isStepUpInvalid).toBeFalse();
+    });
+
+    it("should compute maxStepUp based on selected track lanes minus 1", () => {
+      component.tracks = [
+        {
+          entity_id: "trk1",
+          lanes: [{}, {}, {}, {}],
+        } as any,
+      ];
+      component.editingRace.track_entity_id = "trk1";
+      expect(component.maxStepUp).toBe(3);
+
+      component.tracks = [
+        {
+          entity_id: "trk1",
+          lanes: [{}],
+        } as any,
+      ];
+      expect(component.maxStepUp).toBe(0);
+
+      component.editingRace.track_entity_id = "missing";
+      expect(component.maxStepUp).toBe(0);
     });
   });
 

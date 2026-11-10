@@ -92,6 +92,7 @@ public class RaceConverter {
       }
       builder.setHeatTimesThrough(race.getHeatTimesThrough());
       builder.setReverseHeats(race.isReverseHeats());
+      builder.setStepUp(race.getStepUp());
 
       if (race.getGroupOptions() != null) {
         builder.setGroupOptions(buildGroupOptions(race.getGroupOptions()));

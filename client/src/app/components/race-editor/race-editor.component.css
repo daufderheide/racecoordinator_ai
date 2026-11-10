@@ -31,7 +31,8 @@
 
 /* Editor Panel (Left) */
 .editor-panel {
-  width: 300px;
+  width: 380px;
+  min-width: 380px;
   height: calc(100% + 15px);
   display: flex;
   flex-direction: column;

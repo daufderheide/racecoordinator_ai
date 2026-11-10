@@ -23,8 +23,11 @@ export function parseImportHeats(
         return 0;
       }
       const val = Number(d);
-      if (isNaN(val) || val < 0) {
+      if (isNaN(val)) {
         return 0;
+      }
+      if (val < 0) {
+        return val;
       }
       return isRc1 ? val + 1 : val;
     });
@@ -41,9 +44,19 @@ export function parseImportHeats(
       group = 0;
     }
 
+    const isStepUpBoundary =
+      h.IsStepUpBoundary !== undefined
+        ? !!h.IsStepUpBoundary
+        : !!(h.isStepUpBoundary || h.is_step_up_boundary);
+
+    const stepVal = h.Step !== undefined ? Number(h.Step) : Number(h.step);
+    const step = !isNaN(stepVal) && stepVal > 0 ? stepVal : 1;
+
     return {
       driverIndices: drivers,
       group: group,
+      isStepUpBoundary: isStepUpBoundary,
+      step: step,
     };
   });
 }

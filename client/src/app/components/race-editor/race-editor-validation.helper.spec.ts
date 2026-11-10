@@ -208,11 +208,82 @@ describe("RaceEditorValidationHelper", () => {
     });
   });
 
+  describe("isStepUpInvalid", () => {
+    it("should return false if editingRace is null", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(null, mockHost.tracks),
+      ).toBeFalse();
+    });
+
+    it("should return false when step_up is 0 or undefined", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { step_up: 0, track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeFalse();
+    });
+
+    it("should return true when step_up is negative", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { step_up: -1, track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return true when step_up is greater than or equal to track lane count", () => {
+      // track_1 has 4 lanes
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { step_up: 4, track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeTrue();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { step_up: 5, track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return false when step_up is valid positive value less than track lanes", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { step_up: 1, track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { step_up: 2, track_entity_id: "track_1" },
+          mockHost.tracks,
+        ),
+      ).toBeFalse();
+    });
+  });
+
   describe("isConfigValid", () => {
     it("should return true when all fields are valid", () => {
       expect(RaceEditorValidationHelper.isConfigValid(mockHost)).toBeTrue();
       mockHost.isNameInvalid = true;
       expect(RaceEditorValidationHelper.isConfigValid(mockHost)).toBeFalse();
+    });
+
+    it("should return false when step_up is invalid", () => {
+      mockHost.isNameInvalid = false;
+      mockHost.editingRace.step_up = 4; // 4 >= 4 lanes
+      expect(RaceEditorValidationHelper.isConfigValid(mockHost)).toBeFalse();
+      mockHost.editingRace.step_up = 1;
+      expect(RaceEditorValidationHelper.isConfigValid(mockHost)).toBeTrue();
     });
   });
 
@@ -245,6 +316,90 @@ describe("RaceEditorValidationHelper", () => {
     });
   });
 
+  describe("isStepUpInvalid", () => {
+    const tracks = [
+      new Track({
+        entity_id: "track_4_lane",
+        name: "4 Lane Track",
+        lanes: [{}, {}, {}, {}] as any,
+      }),
+      new Track({
+        entity_id: "track_1_lane",
+        name: "1 Lane Track",
+        lanes: [{}] as any,
+      }),
+    ];
+
+    it("should return false if editingRace is null", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(null, tracks),
+      ).toBeFalse();
+    });
+
+    it("should return false if step_up is 0 or undefined", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: 0 },
+          tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane" },
+          tracks,
+        ),
+      ).toBeFalse();
+    });
+
+    it("should return true if step_up is negative", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: -1 },
+          tracks,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return true if step_up is positive but track is not found", () => {
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "unknown_track", step_up: 1 },
+          tracks,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should validate step_up against track lane count minus 1", () => {
+      // 4-lane track: max stepUp is 3
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: 3 },
+          tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_4_lane", step_up: 4 },
+          tracks,
+        ),
+      ).toBeTrue();
+
+      // 1-lane track: max stepUp is 0
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_1_lane", step_up: 0 },
+          tracks,
+        ),
+      ).toBeFalse();
+      expect(
+        RaceEditorValidationHelper.isStepUpInvalid(
+          { track_entity_id: "track_1_lane", step_up: 1 },
+          tracks,
+        ),
+      ).toBeTrue();
+    });
+  });
+
   describe("getUnsavedReasons", () => {
     it("should return reasons for empty name, duplicate name, missing track, or invalid rotation", () => {
       mockHost.editingRace.name = "";
@@ -264,6 +419,11 @@ describe("RaceEditorValidationHelper", () => {
       mockHost.editingRace.heat_rotation_type = "";
       reasons = RaceEditorValidationHelper.getUnsavedReasons(mockHost);
       expect(reasons).toContain("DISCARD_REASON_RACE_NO_ROTATION");
+
+      mockHost.editingRace.heat_rotation_type = "RoundRobin";
+      mockHost.editingRace.step_up = 4; // 4 >= 4 lanes on track_1
+      reasons = RaceEditorValidationHelper.getUnsavedReasons(mockHost);
+      expect(reasons).toContain("DISCARD_REASON_RACE_STEP_UP_INVALID");
     });
 
     it("should return saving or exit too quickly reasons", () => {

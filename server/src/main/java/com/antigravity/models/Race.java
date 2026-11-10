@@ -134,6 +134,10 @@ public class Race extends Model {
   @JsonAlias("themeId")
   private final String themeId;
 
+  @JsonProperty("step_up")
+  @JsonAlias("stepUp")
+  private final int stepUp;
+
   @JsonCreator
   public Race(
       @JsonProperty("name") String name,
@@ -189,6 +193,7 @@ public class Race extends Model {
       @JsonProperty("practice") @JsonAlias("practice") Boolean practice,
       @JsonProperty("adjust_drift_laps") @JsonAlias("adjustDriftLaps") Boolean adjustDriftLaps,
       @JsonProperty("theme_id") @JsonAlias("themeId") String themeId,
+      @JsonProperty("step_up") @JsonAlias("stepUp") Integer stepUp,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -239,6 +244,7 @@ public class Race extends Model {
     this.practice = practice != null ? practice : false;
     this.adjustDriftLaps = adjustDriftLaps != null ? adjustDriftLaps : false;
     this.themeId = themeId != null ? themeId : Theme.DEFAULT_THEME_ID;
+    this.stepUp = stepUp != null ? stepUp : 0;
   }
 
   public static class Builder {
@@ -279,6 +285,7 @@ public class Race extends Model {
     private boolean practice = false;
     private boolean adjustDriftLaps = false;
     private String themeId = Theme.DEFAULT_THEME_ID;
+    private int stepUp = 0;
     private String entityId;
     private String id;
 
@@ -319,6 +326,7 @@ public class Race extends Model {
       this.practice = other.isPractice();
       this.adjustDriftLaps = other.isAdjustDriftLaps();
       this.themeId = other.getThemeId();
+      this.stepUp = other.getStepUp();
       this.entityId = other.getEntityId();
       this.id = other.getId();
       return this;
@@ -504,6 +512,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withStepUp(int stepUp) {
+      this.stepUp = stepUp;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -553,9 +566,14 @@ public class Race extends Model {
           practice,
           adjustDriftLaps,
           themeId,
+          stepUp,
           entityId,
           id);
     }
+  }
+
+  public int getStepUp() {
+    return stepUp;
   }
 
   public double getMinLapTime() {

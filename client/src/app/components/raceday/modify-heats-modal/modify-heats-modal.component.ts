@@ -54,10 +54,9 @@ import { TeammateUtils } from "@app/utils/teammate.utils";
 
 import { ModifyHeatsService } from "./modify-heats.service";
 import {
-  allocateHighlightColor,
   areModifyHeatsStatesEqual,
+  assignStepNumbers,
   buildDropListConnections,
-  calculateHeatCardHoverAction,
   calculateHeatDropAction,
   calculateModalScale,
   cloneHeat,
@@ -69,7 +68,6 @@ import {
   filterDriverPool,
   getContrastTextColor,
   getDatabaseItemTrackId,
-  getHeatHighlightColors as extractHeatHighlightColors,
   getLastStartedHeatIndex,
   getModifyHeatsValidationError,
   getOriginalHeatDisplay as getOriginalHeatDisplayHelper,
@@ -79,16 +77,29 @@ import {
   getParticipantName,
   HeatCardBounds,
   HeatDropAction,
+  inferBoundariesFromDrivers,
   isDriver,
   isHeatStarted as isHeatStartedHelper,
   isParticipantInStartedHeat,
   isPlaceholderParticipant,
+  isStepUpParticipant,
   isTeam,
   ModifyHeatsState,
   performLaneCheck,
   revertSaveFailure,
   validateGroupSequence,
 } from "./modify-heats-modal.utils";
+import {
+  applyTeammateChange,
+  calculateStepUpPool,
+  DriverHighlightManager,
+  getDropdownArrowBg as createDropdownArrowBg,
+  getHeatDriverMeta as extractHeatDriverMeta,
+  handleHeatHoverAction,
+  handleUndoRedoKey,
+  resolveHeatCardHover,
+  resolveHeatDropFromPoint,
+} from "./modify-heats-ui.helper";
 
 @Component({
   standalone: true,
@@ -157,6 +168,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected localHeats: Heat[] = [];
   protected localParticipants: RaceParticipant[] = [];
   protected driverPool: RaceParticipant[] = [];
+  protected stepUpPool: RaceParticipant[] = [];
   protected databaseDrivers: Driver[] = [];
   protected databaseTeams: Team[] = [];
   protected databaseParticipants: (Driver | Team)[] = [];
@@ -188,7 +200,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected equalityReport: any[] | null = null;
   protected isHeatsEqual: boolean = false;
   protected isAvailableDriversCollapsed = false;
-  protected highlightedDrivers = new Map<string, string>();
+  private cdr = inject(ChangeDetectorRef);
+  private highlightManager = new DriverHighlightManager(this.cdr);
+  protected get highlightedDrivers(): Map<string, string> {
+    return this.highlightManager.highlightedDrivers;
+  }
 
   private translationService = inject(TranslationService);
   private router = inject(Router);
@@ -208,7 +224,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected heatDropListIds: string[] = ["driver-pool", "database-drivers"];
   protected connectedTo: string[] = ["driver-pool", "database-drivers"];
 
-  private cdr = inject(ChangeDetectorRef);
   private modifyHeatsService = inject(ModifyHeatsService);
 
   constructor(private dataService: DataService) {
@@ -241,18 +256,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
-      event.preventDefault();
-      if (event.shiftKey) {
-        this.undoManager.redo();
-      } else {
-        this.undoManager.undo();
-      }
-    }
-    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
-      event.preventDefault();
-      this.undoManager.redo();
-    }
+    handleUndoRedoKey(event, this.undoManager);
   }
 
   private updateScale() {
@@ -260,7 +264,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    (window as any).tempModifyHeats = this;
     this.updateScale();
 
     // Ensure we are connected to the websocket to maintain race persistence
@@ -291,6 +294,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       // as it might be 'dirty' relative to the server but it's what the user wants.
       this.undoManager.captureState();
       this.hasUnsavedChanges = true;
+    }
+
+    if (this.isStepUpEnabled) {
+      inferBoundariesFromDrivers(this.localHeats);
+      assignStepNumbers(this.localHeats, this.race()?.step_up);
     }
 
     forkJoin({
@@ -371,6 +379,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     });
     this.localParticipants = [...this.participants()];
 
+    if (this.isStepUpEnabled) {
+      inferBoundariesFromDrivers(this.localHeats);
+      assignStepNumbers(this.localHeats, this.race()?.step_up);
+    }
+
     this.undoManager.initialize({
       heats: this.localHeats,
       participants: this.localParticipants,
@@ -409,68 +422,38 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected isDriverHighlighted(
     participant: RaceParticipant | null | undefined,
   ): boolean {
-    if (!participant) return false;
-    const key = getParticipantKey(participant);
-    return key !== "" && this.highlightedDrivers.has(key);
+    return this.highlightManager.isDriverHighlighted(participant);
   }
 
   protected getDriverHighlightColor(
     participant: RaceParticipant | null | undefined,
   ): string | null {
-    if (!participant) return null;
-    const key = getParticipantKey(participant);
-    return key !== "" ? (this.highlightedDrivers.get(key) ?? null) : null;
+    return this.highlightManager.getDriverHighlightColor(participant);
   }
 
   protected toggleDriverHighlight(
     participant: RaceParticipant | null | undefined,
     event?: MouseEvent,
-  ) {
-    if (event) {
-      event.stopPropagation();
-      if (event.button !== 0) return;
-    }
-    if (!participant) return;
-    const key = getParticipantKey(participant);
-    if (!key) return;
-
-    if (this.highlightedDrivers.has(key)) {
-      this.highlightedDrivers.delete(key);
-    } else {
-      const usedColors = new Set(
-        Array.from(this.highlightedDrivers.values()).map((c) =>
-          c.toLowerCase(),
-        ),
-      );
-      const color = allocateHighlightColor(usedColors);
-      this.highlightedDrivers.set(key, color);
-    }
-    this.cdr.markForCheck();
+  ): void {
+    this.highlightManager.toggleDriverHighlight(participant, event);
   }
 
   protected clearDriverHighlights(): void {
-    this.highlightedDrivers.clear();
-    this.cdr.markForCheck();
+    this.highlightManager.clearDriverHighlights();
   }
 
   protected getContrastTextColor = getContrastTextColor;
 
   protected hasHighlightedDrivers(): boolean {
-    return this.highlightedDrivers.size > 0;
+    return this.highlightManager.hasHighlightedDrivers();
   }
 
   protected isHeatHighlighted(heat: Heat): boolean {
-    if (this.highlightedDrivers.size === 0) return false;
-    return heat.heatDrivers.some((dhd) =>
-      this.isDriverHighlighted(dhd.participant),
-    );
+    return this.highlightManager.isHeatHighlighted(heat);
   }
 
   protected getHeatHighlightColors(heat: Heat): string[] {
-    if (this.highlightedDrivers.size === 0) return [];
-    return extractHeatHighlightColors(heat, (p) =>
-      this.getDriverHighlightColor(p),
-    );
+    return this.highlightManager.getHeatHighlightColors(heat);
   }
 
   protected getCustomGroupName(groupIdx: number): string {
@@ -489,8 +472,51 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     return "";
   }
 
+  protected get isStepUpEnabled(): boolean {
+    const r = this.race();
+    if (r?.step_up && r.step_up > 0) return true;
+    if (r?.heat_rotation_type === "Custom") return true;
+    return this.localHeats.some(
+      (h) =>
+        h.isStepUpBoundary ||
+        (h.step && h.step > 1) ||
+        h.heatDrivers?.some((d) => isStepUpParticipant(d.participant)),
+    );
+  }
+
   private updateDriverPool() {
     this.driverPool = filterDriverPool(this.localParticipants);
+    this.updateStepUpPool();
+  }
+
+  private updateStepUpPool() {
+    this.stepUpPool = calculateStepUpPool(
+      this.localHeats,
+      this.race()?.step_up || 0,
+      this.track()?.lanes?.length || 4,
+      this.isStepUpEnabled,
+    );
+  }
+
+  protected onStepChange(heat: Heat, newStep: number) {
+    heat.step = Math.max(1, Number(newStep) || 1);
+    this.undoManager.captureState();
+    this.autoSave();
+  }
+
+  protected toggleStepUpBoundary(heat: Heat) {
+    heat.isStepUpBoundary = !heat.isStepUpBoundary;
+    if (this.isStepUpEnabled) {
+      assignStepNumbers(this.localHeats, this.race()?.step_up);
+    }
+    this.undoManager.captureState();
+    this.autoSave();
+  }
+
+  protected isStepUpParticipant(
+    p: RaceParticipant | null | undefined,
+  ): boolean {
+    return isStepUpParticipant(p);
   }
 
   private updateDatabaseParticipants() {
@@ -550,9 +576,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getDropdownArrowBg(color: string): SafeStyle {
-    const encodedColor = encodeURIComponent(color);
-    const svg = `data:image/svg+xml;utf8,<svg fill="%23${encodedColor.replace(/^%23/, "")}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>`;
-    return this.sanitizer.bypassSecurityTrustStyle(`url('${svg}')`);
+    return createDropdownArrowBg(this.sanitizer, color);
   }
 
   protected onTeammateChange(
@@ -564,37 +588,22 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       typeof eventOrValue === "string"
         ? eventOrValue
         : ((eventOrValue?.target as HTMLSelectElement)?.value ?? eventOrValue);
-    const driver = this.allDrivers.find((d) => {
-      const id = d.entity_id;
-      return id === selectedDriverId;
-    });
-    if (driver) {
-      const newDhd = new DriverHeatData(
-        dhd.objectId,
-        dhd.participant,
-        dhd.laneIndex,
-        driver,
-      );
-      const heat = this.localHeats[heatIdx];
-      heat.heatDrivers = heat.heatDrivers.map((d) =>
-        d.laneIndex === dhd.laneIndex ? newDhd : d,
-      );
+    if (
+      applyTeammateChange(
+        this.localHeats,
+        heatIdx,
+        dhd,
+        selectedDriverId,
+        this.allDrivers,
+      )
+    ) {
       this.undoManager.captureState();
       this.autoSave();
     }
   }
 
   protected getHeatDriverMeta(dhd: DriverHeatData): string {
-    if (dhd.participant && dhd.participant.team) {
-      const actual = dhd.actualDriver;
-      if (actual && !actual.isEmpty()) {
-        return actual.nickname || actual.name;
-      }
-      return (
-        dhd.participant.driver?.nickname || dhd.participant.driver?.name || ""
-      );
-    }
-    return this.getParticipantMeta(dhd.participant);
+    return extractHeatDriverMeta(dhd, this.translationService);
   }
 
   protected getDriverStats(hd: DriverHeatData, driverId: string): string {
@@ -655,9 +664,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.localHeats = result.updatedHeats;
       this.localParticipants = result.updatedParticipants;
       const removedKey = getParticipantKey(participant);
-      if (removedKey && this.highlightedDrivers.has(removedKey)) {
-        this.highlightedDrivers.delete(removedKey);
-      }
+      this.highlightManager.removeDriver(removedKey);
       this.updateSeeds();
       this.updateDriverPool();
       this.updateDatabaseParticipants();
@@ -728,21 +735,15 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected onHeatHover(index: number) {
-    if (this.isDraggingHeat) {
-      if (index === -1) {
-        this.heatDropAction = null;
-        this.hoveredHeatIdx = -1;
-      } else {
-        const lastStartedIdx = this.getLastStartedHeatIndex();
-        if (
-          index > lastStartedIdx &&
-          !this.isHeatStarted(this.localHeats[index])
-        ) {
-          this.heatDropAction = { type: "swap", targetIndex: index };
-          this.hoveredHeatIdx = index;
-        }
-      }
-    }
+    const res = handleHeatHoverAction(
+      index,
+      this.isDraggingHeat,
+      this.localHeats,
+      this.getLastStartedHeatIndex(),
+      (h) => this.isHeatStarted(h),
+    );
+    this.heatDropAction = res.action;
+    this.hoveredHeatIdx = res.hoveredHeatIdx;
   }
 
   protected onHeatMouseEnter(index: number, event: MouseEvent) {
@@ -762,18 +763,15 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   private updateHeatCardHover(index: number, event: MouseEvent) {
-    const cardEl = event.currentTarget as HTMLElement;
-    if (!cardEl) return;
-    const action = calculateHeatCardHoverAction(
+    const res = resolveHeatCardHover(
       index,
-      cardEl.getBoundingClientRect(),
-      event.clientX,
+      event,
       this.getLastStartedHeatIndex(),
       this.localHeats[index],
       (h) => this.isHeatStarted(h),
     );
-    this.heatDropAction = action;
-    this.hoveredHeatIdx = action?.type === "swap" ? action.targetIndex : -1;
+    this.heatDropAction = res.action;
+    this.hoveredHeatIdx = res.hoveredHeatIdx;
   }
 
   protected onGridMouseMove(event: MouseEvent) {
@@ -790,16 +788,15 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   private updateDropActionFromPoint(pointerX: number, pointerY: number) {
-    const cards = this.getHeatCardBounds();
-    const lastStartedIdx = this.getLastStartedHeatIndex();
-    const action = calculateHeatDropAction(
+    const res = resolveHeatDropFromPoint(
       pointerX,
       pointerY,
-      cards,
-      lastStartedIdx,
+      this.localHeats,
+      this.getLastStartedHeatIndex(),
+      (h) => this.isHeatStarted(h),
     );
-    this.heatDropAction = action;
-    this.hoveredHeatIdx = action?.type === "swap" ? action.targetIndex : -1;
+    this.heatDropAction = res.action;
+    this.hoveredHeatIdx = res.hoveredHeatIdx;
   }
 
   private getHeatCardBounds(): HeatCardBounds[] {
@@ -844,6 +841,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
     if (result.reordered) {
       this.localHeats = result.newHeats;
+      if (this.isStepUpEnabled) {
+        assignStepNumbers(this.localHeats, this.race()?.step_up);
+      }
       this.updateDropListConnections();
       this.undoManager.captureState();
       this.autoSave();
@@ -855,6 +855,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     const newHeatNumber = this.localHeats.length + 1;
     const newHeat = new Heat(`new-heat-${Date.now()}`, newHeatNumber, [], []);
     this.localHeats.push(newHeat);
+    if (this.isStepUpEnabled) {
+      assignStepNumbers(this.localHeats, this.race()?.step_up);
+    }
     this.updateDropListConnections();
     this.undoManager.captureState();
     this.autoSave();
@@ -870,6 +873,9 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.localHeats.splice(index, 1);
     // Renumber heats
     this.localHeats.forEach((h, i) => (h.heatNumber = i + 1));
+    if (this.isStepUpEnabled) {
+      assignStepNumbers(this.localHeats, this.race()?.step_up);
+    }
 
     this.updateDriverPool();
     this.updateDropListConnections();

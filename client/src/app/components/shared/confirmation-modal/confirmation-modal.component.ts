@@ -4,6 +4,9 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 @Component({
   standalone: true,
   selector: "app-confirmation-modal",
+  host: {
+    "[attr.title]": "null",
+  },
   template: `
     @if (visible()) {
       <div

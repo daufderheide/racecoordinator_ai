@@ -333,6 +333,7 @@ export class DataService {
     heatTimesThrough: number = 1,
     reverseHeats: boolean = false,
     groupOptions: any = null,
+    stepUp: number = 0,
   ): Observable<any> {
     return this.raceControlHelper.previewHeats(
       trackId,
@@ -345,6 +346,7 @@ export class DataService {
       heatTimesThrough,
       reverseHeats,
       groupOptions,
+      stepUp,
     );
   }
 

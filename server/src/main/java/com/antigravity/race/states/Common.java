@@ -59,6 +59,10 @@ public class Common {
     Heat currentHeat = race.getCurrentHeat();
     int currentIndex = heats != null ? heats.indexOf(currentHeat) : -1;
 
+    if (currentHeat != null && currentHeat.isStepUpBoundary() && race.getHeatManager() != null) {
+      race.getHeatManager().handleStepUpAdvancement(currentHeat);
+    }
+
     int nextIndex = -1;
     if (heats != null) {
       for (int i = currentIndex + 1; i < heats.size(); i++) {

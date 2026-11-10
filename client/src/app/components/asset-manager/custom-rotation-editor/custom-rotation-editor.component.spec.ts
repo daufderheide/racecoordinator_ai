@@ -959,7 +959,17 @@ describe("CustomRotationEditorComponent", () => {
           AssetName: "FormatTest",
           NumLanes: 2,
           Rotations: [
-            { NumDrivers: 2, Heats: [{ Drivers: [1, 2], Group: 2 }] },
+            {
+              NumDrivers: 2,
+              Heats: [
+                {
+                  Drivers: [1, 2],
+                  Group: 2,
+                  IsStepUpBoundary: false,
+                  Step: 1,
+                },
+              ],
+            },
           ],
         }),
         null,
@@ -995,7 +1005,14 @@ describe("CustomRotationEditorComponent", () => {
           Version: "1.0",
           NumDrivers: 2,
           NumLanes: 2,
-          Heats: [{ Drivers: [1, 2], Group: 2 }],
+          Heats: [
+            {
+              Drivers: [1, 2],
+              Group: 2,
+              IsStepUpBoundary: false,
+              Step: 1,
+            },
+          ],
         }),
         null,
         2,
@@ -1670,6 +1687,134 @@ describe("CustomRotationEditorComponent", () => {
         fixture.detectChanges();
         expect(grid.style.zoom).toBe("1.2");
       });
+    });
+
+    describe("Step-Up Support", () => {
+      it("should initialize step-up pool according to numStepUpDrivers", () => {
+        fixture.detectChanges();
+        expect(component.numStepUpDrivers).toBe(component.internalNumLanes - 1);
+        expect(component.stepUpDrivers.length).toBe(
+          component.internalNumLanes - 1,
+        );
+        expect(component.stepUpDrivers[0].id).toBe(-1);
+        expect(component.stepUpDrivers[0].name).toBe("Step-Up 1");
+      });
+
+      it("should update stepUpDrivers when onNumStepUpDriversChange is called", () => {
+        fixture.detectChanges();
+        component.numStepUpDrivers = 1;
+        component.onNumStepUpDriversChange();
+        expect(component.numStepUpDrivers).toBe(1);
+        expect(component.stepUpDrivers.length).toBe(1);
+        expect(component.stepUpDrivers[0].id).toBe(-1);
+
+        component.numStepUpDrivers = 5;
+        component.onNumStepUpDriversChange();
+        expect(component.numStepUpDrivers).toBe(5);
+        expect(component.stepUpDrivers.length).toBe(5);
+        expect(component.stepUpDrivers[4].id).toBe(-5);
+        expect(component.stepUpDrivers[4].name).toBe("Step-Up 5");
+      });
+
+      it("should allow dropping step-up driver onto heat lane", () => {
+        fixture.detectChanges();
+        component.addRotation();
+        const rot = component.internalRotations[0];
+        const event = {
+          previousContainer: { id: "step-up-pool" },
+          container: { id: "rot-0-heat-0-lane-0" },
+          item: { data: { id: -1 } },
+        } as any;
+
+        component.onDrop(event);
+        expect(rot.heats?.[0]?.driverIndices?.[0]).toBe(-1);
+        expect(component.isDirtyState()).toBeTrue();
+      });
+
+      it("should toggle step-up boundary on heat and recalculate step numbers", () => {
+        fixture.detectChanges();
+        component.addRotation();
+        const rot = component.internalRotations[0];
+        component.addHeat(rot);
+        expect(rot.heats?.length).toBe(2);
+
+        expect(rot.heats?.[0]?.isStepUpBoundary).toBeFalse();
+        expect(rot.heats?.[0]?.step).toBe(1);
+        expect(rot.heats?.[1]?.step).toBe(1);
+
+        component.toggleStepUpBoundary(rot, rot.heats![0]);
+        expect(rot.heats?.[0]?.isStepUpBoundary).toBeTrue();
+        expect(rot.heats?.[0]?.step).toBe(1);
+        expect(rot.heats?.[1]?.step).toBe(2);
+        expect(component.isDirtyState()).toBeTrue();
+
+        // Toggle back off
+        component.toggleStepUpBoundary(rot, rot.heats![0]);
+        expect(rot.heats?.[0]?.isStepUpBoundary).toBeFalse();
+        expect(rot.heats?.[0]?.step).toBe(1);
+        expect(rot.heats?.[1]?.step).toBe(1);
+      });
+
+      it("should render step badge and boundary button in heat card header", () => {
+        fixture.detectChanges();
+        component.addRotation();
+        const rot = component.internalRotations[0];
+        component.addHeat(rot);
+        fixture.detectChanges();
+
+        const boundaryBtn = fixture.nativeElement.querySelector(
+          ".boundary-badge",
+        ) as HTMLButtonElement;
+        expect(boundaryBtn).toBeTruthy();
+        expect(boundaryBtn.classList.contains("is-boundary")).toBeFalse();
+
+        boundaryBtn.click();
+        fixture.detectChanges();
+        expect(boundaryBtn.classList.contains("is-boundary")).toBeTrue();
+        expect(rot.heats?.[0]?.isStepUpBoundary).toBeTrue();
+
+        const stepBadge = fixture.nativeElement.querySelector(".step-badge");
+        expect(stepBadge).toBeTruthy();
+        expect(stepBadge.textContent).toContain("RD_STEP_LADDER_STEP");
+      });
+
+      it("should display step-up driver item in lane cell", () => {
+        fixture.detectChanges();
+        component.addRotation();
+        const rot = component.internalRotations[0];
+        rot.heats![0].driverIndices![0] = -1;
+        fixture.detectChanges();
+
+        const stepUpItem = fixture.nativeElement.querySelector(".step-up-item");
+        expect(stepUpItem).toBeTruthy();
+        expect(stepUpItem.textContent).toContain("RD_STEP_UP_N");
+      });
+
+      it("should automatically expand rotation numDrivers to maximum driver index in heats on save", fakeAsync(() => {
+        mockDataService.saveCustomRotation = jasmine
+          .createSpy("saveCustomRotation")
+          .and.returnValue(of({}));
+        fixture.detectChanges();
+        component.internalAssetName = "Step-Up";
+        component.addRotation();
+        const rot = component.internalRotations[0];
+        rot.numDrivers = 4;
+        rot.heats![0].driverIndices = [10, 9, 8, 0];
+        mockDataService.saveCustomRotation.calls.reset();
+
+        component.save();
+        tick();
+
+        expect(rot.numDrivers).toBe(10);
+        expect(mockDataService.saveCustomRotation).toHaveBeenCalledWith(
+          "Step-Up",
+          jasmine.any(Number),
+          jasmine.arrayContaining([
+            jasmine.objectContaining({ numDrivers: 10 }),
+          ]),
+          undefined,
+        );
+      }));
     });
   });
 });

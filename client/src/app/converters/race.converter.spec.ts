@@ -105,6 +105,18 @@ describe("RaceConverter", () => {
     expect(result.start_behind_sensor).toBeFalse();
   });
 
+  it("should map step_up from proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r-stepup" },
+      name: "Test Step Up Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      stepUp: 2,
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.step_up).toBe(2);
+  });
+
   it("should default start_behind_sensor to true if missing in proto", () => {
     const mockProto: IRaceModel = {
       model: { entityId: "r7" },

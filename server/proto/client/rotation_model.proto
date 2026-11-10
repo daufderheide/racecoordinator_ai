@@ -13,4 +13,6 @@ message CustomRotation {
 message CustomHeat {
   repeated int32 driver_indices = 1;
   int32 group = 2;
+  bool is_step_up_boundary = 3;
+  int32 step = 4;
 }

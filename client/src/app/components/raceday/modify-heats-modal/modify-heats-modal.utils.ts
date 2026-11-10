@@ -4,7 +4,6 @@ import {
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Driver } from "@app/models/driver";
-import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
 import { Track } from "@app/models/track";
@@ -24,7 +23,23 @@ export function isPlaceholderParticipant(
   p: RaceParticipant | null | undefined,
 ): boolean {
   if (!p) return true;
+  if (p.isStepUp) return false;
   return Driver.isEmpty(p.driver) && !p.team;
+}
+
+export function isStepUpParticipant(
+  p: RaceParticipant | null | undefined,
+): boolean {
+  if (!p) return false;
+  if (p.isStepUp) return true;
+  if (
+    p.driver &&
+    (Driver.isStepUp(p.driver) ||
+      (p.driver.entity_id && p.driver.entity_id.startsWith("STEP_UP_")))
+  ) {
+    return true;
+  }
+  return !!p.objectId && p.objectId.startsWith("STEP_UP_");
 }
 
 export function areModifyHeatsStatesEqual(
@@ -125,7 +140,7 @@ export function buildDropListConnections(
   heatCount: number,
   laneCount: number,
 ): string[] {
-  const ids: string[] = ["driver-pool", "database-drivers"];
+  const ids: string[] = ["driver-pool", "database-drivers", "step-up-pool"];
   for (let hIdx = 0; hIdx < heatCount; hIdx++) {
     for (let lIdx = 0; lIdx < laneCount; lIdx++) {
       ids.push(`heat-${hIdx}-lane-${lIdx}`);
@@ -158,6 +173,8 @@ export function cloneHeat(heat: Heat): Heat {
     heat.started,
   );
   newHeat.group = heat.group;
+  newHeat.step = heat.step || 0;
+  newHeat.isStepUpBoundary = !!heat.isStepUpBoundary;
   newHeat.originalHeatNumber = heat.originalHeatNumber;
   return newHeat;
 }
@@ -211,7 +228,19 @@ export function isTeam(data: any): data is Team {
   return data instanceof Team || "driverIds" in data;
 }
 
-export function getParticipantName(participant: RaceParticipant): string {
+export function getParticipantName(
+  participant: RaceParticipant,
+  translationService?: TranslationService,
+): string {
+  if (isStepUpParticipant(participant)) {
+    const idx =
+      participant.stepUpIndex != null && participant.stepUpIndex > 0
+        ? participant.stepUpIndex
+        : 1;
+    return translationService
+      ? translationService.translate("RD_STEP_UP_N", { n: idx })
+      : `Step-Up ${idx}`;
+  }
   if (participant.team) {
     return participant.team.name;
   }
@@ -293,13 +322,10 @@ export function getParticipantAvatar(
   return participant.driver.avatarUrl;
 }
 
-export function validateGroupSequence(_heats: Heat[]): {
-  isValid: boolean;
-  expected?: number;
-  found?: number;
-} {
-  return { isValid: true };
-}
+export {
+  getModifyHeatsValidationError,
+  validateGroupSequence,
+} from "./modify-heats-validation.helper";
 
 export function convertHeatsToProto(
   heats: Heat[],
@@ -312,9 +338,14 @@ export function convertHeatsToProto(
     for (let i = 0; i < laneCount; i++) {
       const dhd = h.heatDrivers.find((d) => d.laneIndex === i);
       if (dhd && !isPlaceholderParticipant(dhd.participant)) {
+        const isStepUp = isStepUpParticipant(dhd.participant);
         heatDrivers.push({
           objectId: dhd.objectId,
-          driver: { objectId: dhd.participant.objectId } as any,
+          driver: {
+            objectId: dhd.participant.objectId,
+            isStepUp,
+            stepUpIndex: dhd.participant.stepUpIndex || 0,
+          } as any,
         });
       } else {
         heatDrivers.push({
@@ -331,6 +362,8 @@ export function convertHeatsToProto(
       started: isHeatStarted(h),
       standings: h.standings,
       group: h.group,
+      step: h.step || 0,
+      isStepUpBoundary: !!h.isStepUpBoundary,
     } as IHeat;
   });
 }
@@ -348,6 +381,8 @@ export function convertParticipantsToProto(
         model: { entityId: p.driver.entity_id },
       },
       seed: p.seed,
+      isStepUp: p.isStepUp || false,
+      stepUpIndex: p.stepUpIndex || 0,
     };
     if (p.team) {
       proto.team = {
@@ -359,103 +394,6 @@ export function convertParticipantsToProto(
     }
     return proto;
   });
-}
-
-export function getModifyHeatsValidationError(
-  localHeats: Heat[],
-  originalHeats: Heat[],
-  localParticipants: RaceParticipant[],
-  race: Race | undefined,
-  isHeatStarted: (h: Heat) => boolean,
-  translationService: TranslationService,
-): string | null {
-  // 1. Check if any started heat was modified
-  for (const localH of localHeats) {
-    const originalH = originalHeats.find((h) => h.objectId === localH.objectId);
-    if (originalH && isHeatStarted(originalH)) {
-      const localDrivers = localH.heatDrivers.filter(
-        (d) => !isPlaceholderParticipant(d.participant),
-      );
-      const originalDrivers = originalH.heatDrivers.filter(
-        (d) => !isPlaceholderParticipant(d.participant),
-      );
-      if (localDrivers.length !== originalDrivers.length) {
-        return translationService.translate("RD_ERR_STARTED_HEAT_MODIFIED");
-      }
-      for (let i = 0; i < localDrivers.length; i++) {
-        const localDhd = localDrivers[i];
-        const originalDhd = originalDrivers.find(
-          (d) => d.laneIndex === localDhd.laneIndex,
-        );
-        if (
-          !originalDhd ||
-          localDhd.participant.objectId !== originalDhd.participant.objectId
-        ) {
-          return translationService.translate("RD_ERR_STARTED_HEAT_MODIFIED");
-        }
-      }
-    }
-  }
-
-  // 2. Check if any participant who was in a started heat was removed from the race
-  for (const originalH of originalHeats) {
-    if (isHeatStarted(originalH)) {
-      for (const dhd of originalH.heatDrivers) {
-        // Skip empty lanes
-        if (isPlaceholderParticipant(dhd.participant)) {
-          continue;
-        }
-        const stillInRace = localParticipants.some(
-          (p) => p.objectId === dhd.participant.objectId,
-        );
-        if (!stillInRace) {
-          return translationService.translate(
-            "RD_ERR_STARTED_PARTICIPANT_REMOVED",
-          );
-        }
-      }
-    }
-  }
-
-  // 3. Group Validation
-  if (race && race.group_options && race.group_options.enabled) {
-    const participantGroups = new Map<string, number>();
-    for (const h of localHeats) {
-      for (const dhd of h.heatDrivers) {
-        const p = dhd.participant;
-        if (isPlaceholderParticipant(p)) continue;
-
-        if (
-          participantGroups.has(p.objectId) &&
-          participantGroups.get(p.objectId) !== h.group
-        ) {
-          return translationService.translate(
-            "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS",
-            {
-              participant: getParticipantName(p),
-              group1: participantGroups.get(p.objectId)! + 1,
-              group2: h.group + 1,
-            },
-          );
-        }
-        participantGroups.set(p.objectId, h.group);
-      }
-    }
-
-    if (localHeats.some((h) => h.group < 0)) {
-      return translationService.translate("RD_ERR_GROUP_MIN_VALUE");
-    }
-
-    const seqResult = validateGroupSequence(localHeats);
-    if (!seqResult.isValid) {
-      return translationService.translate("RD_ERR_GROUP_NON_SEQUENTIAL", {
-        found: seqResult.found,
-        expected: seqResult.expected,
-      });
-    }
-  }
-
-  return null;
 }
 
 export type HeatDropAction =
@@ -870,4 +808,58 @@ export function getHeatHighlightColors(
     }
   }
   return colors;
+}
+
+/**
+ * Infers step-up boundaries from step-up participants or existing steps when no boundaries are set.
+ */
+export function inferBoundariesFromDrivers(heats: Heat[]): void {
+  if (!heats || heats.length === 0) return;
+  if (heats.some((h) => h.isStepUpBoundary)) {
+    return;
+  }
+  for (let i = 0; i < heats.length - 1; i++) {
+    const curHeat = heats[i];
+    const nextHeat = heats[i + 1];
+    const curHasStepUp = curHeat.heatDrivers.some((dhd) =>
+      isStepUpParticipant(dhd.participant),
+    );
+    const nextHasStepUp = nextHeat.heatDrivers.some((dhd) =>
+      isStepUpParticipant(dhd.participant),
+    );
+    if (!curHasStepUp && nextHasStepUp) {
+      curHeat.isStepUpBoundary = true;
+    } else if (curHeat.step && nextHeat.step && curHeat.step < nextHeat.step) {
+      curHeat.isStepUpBoundary = true;
+    }
+  }
+}
+
+/**
+ * Assigns sequential step numbers to all heats based on step-up boundaries.
+ * When groups are present, steps are tracked independently per group.
+ * Every heat is guaranteed to have a valid step (>= 1).
+ */
+export function assignStepNumbers(heats: Heat[], stepUp?: number): void {
+  if (!heats || heats.length === 0) return;
+  const hasStepUp =
+    (stepUp != null && stepUp > 0) ||
+    heats.some(
+      (h) =>
+        h.isStepUpBoundary ||
+        (h.step && h.step > 1) ||
+        h.heatDrivers?.some((d) => isStepUpParticipant(d.participant)),
+    );
+  if (!hasStepUp) return;
+
+  const groupSteps = new Map<number, number>();
+  for (let i = 0; i < heats.length; i++) {
+    const h = heats[i];
+    const grp = h.group || 0;
+    const currentStep = groupSteps.get(grp) || 1;
+    h.step = currentStep;
+    if (h.isStepUpBoundary) {
+      groupSteps.set(grp, currentStep + 1);
+    }
+  }
 }

@@ -39,5 +39,7 @@ export class RaceParticipant {
     public heatsRaced: number = 0,
     public heatsRemaining: number = 0,
     public totalHeats: number = 0,
+    public isStepUp: boolean = false,
+    public stepUpIndex: number = 0,
   ) {}
 }

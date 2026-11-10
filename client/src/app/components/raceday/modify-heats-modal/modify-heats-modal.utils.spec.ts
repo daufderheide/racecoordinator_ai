@@ -1,23 +1,31 @@
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
+import { Track } from "@app/models/track";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 
 import {
   allocateHighlightColor,
   areModifyHeatsStatesEqual,
+  assignStepNumbers,
   buildDropListConnections,
   calculateHeatDropAction,
   cloneHeat,
+  convertHeatsToProto,
+  convertParticipantsToProto,
   createParticipantFromDriver,
   DRIVER_HIGHLIGHT_PALETTE,
   executeHeatReorder,
   filterDatabaseParticipants,
   filterDriverPool,
+  getModifyHeatsValidationError,
   getParticipantKey,
+  getParticipantName,
   HeatCardBounds,
+  inferBoundariesFromDrivers,
   isPlaceholderParticipant,
+  isStepUpParticipant,
 } from "./modify-heats-modal.utils";
 
 describe("modify-heats-modal.utils", () => {
@@ -340,6 +348,15 @@ describe("modify-heats-modal.utils", () => {
       expect(cloned.heatDrivers[0].laneIndex).toBe(0);
       expect(cloned.heatDrivers[0].participant.driver.name).toBe("Real");
     });
+
+    it("should preserve step and isStepUpBoundary when cloned", () => {
+      const h = new Heat("h1", 1, [], [], false);
+      h.step = 3;
+      h.isStepUpBoundary = true;
+      const cloned = cloneHeat(h);
+      expect(cloned.step).toBe(3);
+      expect(cloned.isStepUpBoundary).toBeTrue();
+    });
   });
 
   describe("isPlaceholderParticipant", () => {
@@ -433,6 +450,7 @@ describe("modify-heats-modal.utils", () => {
       expect(ids).toEqual([
         "driver-pool",
         "database-drivers",
+        "step-up-pool",
         "heat-0-lane-0",
         "heat-0-lane-1",
         "heat-1-lane-0",
@@ -498,6 +516,467 @@ describe("modify-heats-modal.utils", () => {
       const genColor2 = allocateHighlightColor(used);
       expect(genColor2).toMatch(/^hsl\(\d+,\s*90%,\s*55%\)$/);
       expect(genColor2).not.toBe(genColor1);
+    });
+  });
+
+  describe("isStepUpParticipant", () => {
+    it("should return false for null or undefined", () => {
+      expect(isStepUpParticipant(null)).toBeFalse();
+      expect(isStepUpParticipant(undefined)).toBeFalse();
+    });
+
+    it("should return true when isStepUp property is true", () => {
+      const p = createParticipantFromDriver(new Driver("d1", "Driver 1", "D1"));
+      p.isStepUp = true;
+      expect(isStepUpParticipant(p)).toBeTrue();
+    });
+
+    it("should return true when driver entity_id starts with STEP_UP_", () => {
+      const p = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step-Up 1", "SU1"),
+      );
+      expect(isStepUpParticipant(p)).toBeTrue();
+    });
+
+    it("should return false for regular driver", () => {
+      const p = createParticipantFromDriver(new Driver("d1", "Driver 1", "D1"));
+      expect(isStepUpParticipant(p)).toBeFalse();
+    });
+  });
+
+  describe("convertHeatsToProto and convertParticipantsToProto", () => {
+    it("should preserve step and isStepUpBoundary in convertHeatsToProto", () => {
+      const h = new Heat("h1", 1, [], [], false);
+      h.step = 2;
+      h.isStepUpBoundary = true;
+      const track = new Track({
+        entity_id: "trk1",
+        name: "Track",
+        lanes: [{}, {}] as any,
+      });
+
+      const protos = convertHeatsToProto([h], track, () => false);
+      expect(protos.length).toBe(1);
+      expect(protos[0].step).toBe(2);
+      expect(protos[0].isStepUpBoundary).toBeTrue();
+    });
+
+    it("should preserve isStepUp and stepUpIndex in convertParticipantsToProto", () => {
+      const p = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step-Up 1", "SU1"),
+      );
+      p.isStepUp = true;
+      p.stepUpIndex = 1;
+
+      const protos = convertParticipantsToProto([p]);
+      expect(protos.length).toBe(1);
+      expect(protos[0].isStepUp).toBeTrue();
+      expect(protos[0].stepUpIndex).toBe(1);
+    });
+
+    it("should return correct step-up participant name without off-by-one", () => {
+      const p1 = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step-Up 1", "SU1"),
+      );
+      p1.isStepUp = true;
+      p1.stepUpIndex = 1;
+
+      const p2 = createParticipantFromDriver(
+        new Driver("STEP_UP_1", "Step-Up 2", "SU2"),
+      );
+      p2.isStepUp = true;
+      p2.stepUpIndex = 2;
+
+      expect(getParticipantName(p1)).toBe("Step-Up 1");
+      expect(getParticipantName(p2)).toBe("Step-Up 2");
+
+      const mockTranslation: any = {
+        translate: jasmine
+          .createSpy("translate")
+          .and.callFake(
+            (key: string, params?: any) => `Translated Step-Up ${params?.n}`,
+          ),
+      };
+      expect(getParticipantName(p1, mockTranslation)).toBe(
+        "Translated Step-Up 1",
+      );
+      expect(getParticipantName(p2, mockTranslation)).toBe(
+        "Translated Step-Up 2",
+      );
+    });
+  });
+
+  describe("getModifyHeatsValidationError step-up rules", () => {
+    const mockTranslationService: any = {
+      translate: jasmine
+        .createSpy("translate")
+        .and.callFake((key: string) => key),
+    };
+
+    it("should return null when step_up is 0", () => {
+      const race = { step_up: 0 } as any;
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.step = 1;
+      const error = getModifyHeatsValidationError(
+        [h1],
+        [h1],
+        [],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBeNull();
+    });
+
+    it("should return error if Step 1 contains a step-up driver", () => {
+      const race = { step_up: 1 } as any;
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up", "SU"),
+      );
+      pStep.isStepUp = true;
+      const dhdStep = new DriverHeatData("dhd1", pStep, 0);
+
+      const h1 = new Heat("h1", 1, [dhdStep], [], false);
+      h1.step = 1;
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [pStep],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBe("RD_ERR_STEP_UP_IN_STEP_ONE");
+    });
+
+    it("should return error if Step 1 has fewer than 2 distinct drivers", () => {
+      const race = { step_up: 1 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const dhd1 = new DriverHeatData("dhd1", p1, 0);
+
+      const h1 = new Heat("h1", 1, [dhd1], [], false);
+      h1.step = 1;
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [p1],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBe("RD_ERR_STEP_UP_BOTTOM_STEP_MIN_DRIVERS");
+    });
+
+    it("should return error if higher step heat does not match step_up count", () => {
+      const race = { step_up: 1 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const p2 = createParticipantFromDriver(
+        new Driver("d2", "Driver 2", "D2"),
+      );
+      const p3 = createParticipantFromDriver(
+        new Driver("d3", "Driver 3", "D3"),
+      );
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", p1, 0), new DriverHeatData("dhd2", p2, 1)],
+        [],
+        false,
+      );
+      h1.step = 1;
+
+      // Higher step heat has no step-up driver (expected 1)
+      const h2 = new Heat(
+        "h2",
+        2,
+        [new DriverHeatData("dhd3", p3, 0)],
+        [],
+        false,
+      );
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [p1, p2, p3],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBe("RD_ERR_STEP_UP_COUNT_MISMATCH");
+    });
+
+    it("should return null for valid multi-step configuration", () => {
+      const race = { step_up: 1 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const p2 = createParticipantFromDriver(
+        new Driver("d2", "Driver 2", "D2"),
+      );
+      const p3 = createParticipantFromDriver(
+        new Driver("d3", "Driver 3", "D3"),
+      );
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up", "SU"),
+      );
+      pStep.isStepUp = true;
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", p1, 0), new DriverHeatData("dhd2", p2, 1)],
+        [],
+        false,
+      );
+      h1.step = 1;
+
+      const h2 = new Heat(
+        "h2",
+        2,
+        [
+          new DriverHeatData("dhd3", p3, 0),
+          new DriverHeatData("dhd4", pStep, 1),
+        ],
+        [],
+        false,
+      );
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [p1, p2, p3, pStep],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBeNull();
+    });
+
+    it("should allow variable step-up driver counts across steps when rotation is Custom", () => {
+      const race = { heat_rotation_type: "Custom", step_up: 2 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const p2 = createParticipantFromDriver(
+        new Driver("d2", "Driver 2", "D2"),
+      );
+      const p3 = createParticipantFromDriver(
+        new Driver("d3", "Driver 3", "D3"),
+      );
+      const pStep1 = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up 1", "SU1"),
+      );
+      pStep1.isStepUp = true;
+      const pStep2 = createParticipantFromDriver(
+        new Driver("STEP_UP_1", "Step Up 2", "SU2"),
+      );
+      pStep2.isStepUp = true;
+
+      // Heat 1: Step 1 (no step ups)
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", p1, 0), new DriverHeatData("dhd2", p2, 1)],
+        [],
+        false,
+      );
+      h1.step = 1;
+      h1.isStepUpBoundary = true;
+
+      // Heat 2: Step 2 with 2 step-up drivers
+      const h2 = new Heat(
+        "h2",
+        2,
+        [
+          new DriverHeatData("dhd3", p3, 0),
+          new DriverHeatData("dhd4", pStep1, 1),
+          new DriverHeatData("dhd5", pStep2, 2),
+        ],
+        [],
+        false,
+      );
+      h2.step = 2;
+      h2.isStepUpBoundary = true;
+
+      // Heat 3: Step 3 with 1 step-up driver (even though race.step_up is 2)
+      const h3 = new Heat(
+        "h3",
+        3,
+        [
+          new DriverHeatData("dhd6", p3, 0),
+          new DriverHeatData("dhd7", pStep1, 1),
+        ],
+        [],
+        false,
+      );
+      h3.step = 3;
+      h3.isStepUpBoundary = true;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2, h3],
+        [h1, h2, h3],
+        [p1, p2, p3, pStep1, pStep2],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBeNull();
+    });
+
+    it("should still reject step-up drivers in Step 1 for Custom rotation races", () => {
+      const race = { heat_rotation_type: "Custom", step_up: 2 } as any;
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up 1", "SU1"),
+      );
+      pStep.isStepUp = true;
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", pStep, 0)],
+        [],
+        false,
+      );
+      h1.step = 1;
+
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [pStep],
+        race,
+        () => false,
+        mockTranslationService,
+      );
+      expect(error).toBe("RD_ERR_STEP_UP_IN_STEP_ONE");
+    });
+  });
+
+  describe("inferBoundariesFromDrivers", () => {
+    it("should not modify boundaries if any boundary is already set", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.isStepUpBoundary = true;
+      const h2 = new Heat("h2", 2, [], [], false);
+      inferBoundariesFromDrivers([h1, h2]);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h2.isStepUpBoundary).toBeFalsy();
+    });
+
+    it("should infer boundary when non-step-up heat is followed by step-up participant heat", () => {
+      const pReg = createParticipantFromDriver(
+        new Driver("d1", "Regular", "R1"),
+      );
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step-Up", "SU"),
+      );
+      pStep.isStepUp = true;
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", pReg, 0)],
+        [],
+        false,
+      );
+      const h2 = new Heat(
+        "h2",
+        2,
+        [new DriverHeatData("dhd2", pStep, 0)],
+        [],
+        false,
+      );
+
+      inferBoundariesFromDrivers([h1, h2]);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h2.isStepUpBoundary).toBeFalsy();
+    });
+
+    it("should infer boundary when heat.step < nextHeat.step", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.step = 1;
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.step = 2;
+
+      inferBoundariesFromDrivers([h1, h2]);
+      expect(h1.isStepUpBoundary).toBeTrue();
+      expect(h2.isStepUpBoundary).toBeFalsy();
+    });
+  });
+
+  describe("assignStepNumbers", () => {
+    it("should not modify heats if stepUp <= 0", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.step = 0;
+      assignStepNumbers([h1], 0);
+      expect(h1.step).toBe(0);
+    });
+
+    it("should assign step 1 to all heats when no boundary is set", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      const h2 = new Heat("h2", 2, [], [], false);
+      const h3 = new Heat("h3", 3, [], [], false);
+
+      assignStepNumbers([h1, h2, h3], 2);
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(1);
+    });
+
+    it("should increment step after each boundary heat", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.isStepUpBoundary = true;
+      const h3 = new Heat("h3", 3, [], [], false);
+      const h4 = new Heat("h4", 4, [], [], false);
+      h4.isStepUpBoundary = true;
+      const h5 = new Heat("h5", 5, [], [], false);
+
+      assignStepNumbers([h1, h2, h3, h4, h5], 2);
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(2);
+      expect(h4.step).toBe(2);
+      expect(h5.step).toBe(3);
+    });
+
+    it("should track steps per group when interleaved group heats are present", () => {
+      const h1 = new Heat("h1", 1, [], [], false);
+      h1.group = 0;
+      const h2 = new Heat("h2", 2, [], [], false);
+      h2.group = 1;
+      const h3 = new Heat("h3", 3, [], [], false);
+      h3.group = 0;
+      h3.isStepUpBoundary = true;
+      const h4 = new Heat("h4", 4, [], [], false);
+      h4.group = 1;
+      h4.isStepUpBoundary = true;
+      const h5 = new Heat("h5", 5, [], [], false);
+      h5.group = 0;
+      const h6 = new Heat("h6", 6, [], [], false);
+      h6.group = 1;
+
+      assignStepNumbers([h1, h2, h3, h4, h5, h6], 1);
+      expect(h1.step).toBe(1);
+      expect(h2.step).toBe(1);
+      expect(h3.step).toBe(1);
+      expect(h4.step).toBe(1);
+      expect(h5.step).toBe(2);
+      expect(h6.step).toBe(2);
     });
   });
 });

@@ -14,6 +14,7 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.OverallScoring.OverallRankingTiebreaker;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
@@ -1166,5 +1167,105 @@ public class OverallStandingsTest {
         "Recalculate during concurrent heat modifications should not throw exception: "
             + error.get(),
         error.get());
+  }
+
+  private Heat createStepHeat(
+      int heatNum,
+      int step,
+      boolean isBoundary,
+      RaceParticipant p1,
+      int laps1,
+      double time1,
+      RaceParticipant p2,
+      int laps2,
+      double time2,
+      HeatScoring scoring) {
+    List<DriverHeatData> dhdList = new ArrayList<>();
+    if (p1 != null) {
+      DriverHeatData d1 = new DriverHeatData(p1);
+      for (int i = 0; i < laps1; i++) {
+        d1.addLap(time1 / laps1, false, true);
+      }
+      dhdList.add(d1);
+    }
+    if (p2 != null) {
+      DriverHeatData d2 = new DriverHeatData(p2);
+      for (int i = 0; i < laps2; i++) {
+        d2.addLap(time2 / laps2, false, true);
+      }
+      dhdList.add(d2);
+    }
+    Heat heat = new Heat(heatNum, dhdList, scoring, false);
+    heat.setStep(step);
+    heat.setStepUpBoundary(isBoundary);
+    heat.setStarted(true);
+    return heat;
+  }
+
+  @Test
+  public void testStepScoreIsolation_AndTieredRanking() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false, 1);
+
+    RaceParticipant driverA = new RaceParticipant(new Driver("d1", "Driver A"));
+    driverA.setSeed(3);
+
+    RaceParticipant driverB = new RaceParticipant(new Driver("d2", "Driver B"));
+    driverB.setSeed(2);
+
+    RaceParticipant driverC = new RaceParticipant(new Driver("d3", "Driver C"));
+    driverC.setSeed(1);
+
+    List<RaceParticipant> participants = new ArrayList<>(Arrays.asList(driverA, driverB, driverC));
+    List<Heat> heats = new ArrayList<>();
+
+    heats.add(createStepHeat(1, 1, true, driverA, 50, 100.0, driverB, 40, 100.0, heatScoring));
+    heats.add(createStepHeat(2, 2, false, driverB, 10, 50.0, driverC, 15, 50.0, heatScoring));
+
+    os.recalculate(participants, heats);
+
+    assertEquals(10.0, driverB.getTotalLaps(), 0.001);
+    assertEquals(15.0, driverC.getTotalLaps(), 0.001);
+    assertEquals(50.0, driverA.getTotalLaps(), 0.001);
+
+    assertEquals(1, driverC.getRank());
+    assertEquals(2, driverB.getRank());
+    assertEquals(3, driverA.getRank());
+  }
+
+  @Test
+  public void testFinalStepWinnerIsOverallWinner() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false, 1);
+
+    RaceParticipant driverA = new RaceParticipant(new Driver("d1", "Driver A"));
+    driverA.setSeed(3);
+
+    RaceParticipant driverB = new RaceParticipant(new Driver("d2", "Driver B"));
+    driverB.setSeed(2);
+
+    RaceParticipant driverC = new RaceParticipant(new Driver("d3", "Driver C"));
+    driverC.setSeed(1);
+
+    List<RaceParticipant> participants = new ArrayList<>(Arrays.asList(driverA, driverB, driverC));
+    List<Heat> heats = new ArrayList<>();
+
+    heats.add(createStepHeat(1, 1, true, driverA, 100, 200.0, null, 0, 0, heatScoring));
+    heats.add(createStepHeat(2, 2, false, driverC, 5, 20.0, null, 0, 0, heatScoring));
+
+    os.recalculate(participants, heats);
+
+    assertEquals(1, driverC.getRank());
+    assertTrue(driverC.getRank() < driverA.getRank());
   }
 }

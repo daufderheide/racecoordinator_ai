@@ -106,6 +106,46 @@
         </div>
       </div>
 
+      <!-- Step-Up Drivers -->
+      @if (isStepUpEnabled) {
+        <div class="driver-pool-section step-up-pool-section">
+          <div class="section-header">
+            <h3>{{ "RE_STEP_UP" | translate }}</h3>
+            <span class="badge">{{ stepUpPool.length }}</span>
+          </div>
+          <div
+            id="step-up-pool"
+            cdkDropList
+            [cdkDropListData]="stepUpPool"
+            [cdkDropListConnectedTo]="heatDropListIds"
+            class="driver-pool"
+            (cdkDropListDropped)="onDrop($event)"
+          >
+            @for (
+              stepParticipant of stepUpPool;
+              track stepParticipant.objectId
+            ) {
+              <div
+                class="driver-item step-up-item"
+                cdkDrag
+                [cdkDragData]="stepParticipant"
+              >
+                <span
+                  class="material-icons step-up-icon"
+                  style="color: #38bdf8; font-size: 24px; margin-right: 8px"
+                  >arrow_upward</span
+                >
+                <div class="driver-details">
+                  <div class="driver-name">
+                    {{ getParticipantName(stepParticipant) }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Available Drivers -->
       <div
         class="driver-pool-section"
@@ -363,6 +403,7 @@
             [attr.data-heat-idx]="hIdx"
             [class.started]="isHeatStarted(heat)"
             [class.heat-has-highlight]="isHeatHighlighted(heat)"
+            [class.is-step-boundary]="heat.isStepUpBoundary"
             [class.heat-dimmed]="
               hasHighlightedDrivers() && !isHeatHighlighted(heat)
             "
@@ -428,41 +469,31 @@
                 <span class="material-icons drag-handle-icon"
                   >drag_indicator</span
                 >
-                <h4>
+                <h4 class="heat-title-text">
                   {{ "RD_HEAT" | translate }} {{ heat.heatNumber }}
-                  @if (getHeatHighlightColors(heat); as pips) {
-                    @if (pips.length > 0) {
-                      <span class="heat-highlight-pips">
-                        @for (pipColor of pips; track pipColor) {
-                          <span
-                            class="heat-pip"
-                            [style.background-color]="pipColor"
-                            [style.box-shadow]="'0 0 6px ' + pipColor"
-                          ></span>
-                        }
-                      </span>
-                    }
-                  }
-                  @if (
-                    race() &&
-                    race().group_options &&
-                    race().group_options.enabled
-                  ) {
-                    -
-                    @if (getCustomGroupName(heat.group)) {
-                      {{ getCustomGroupName(heat.group) }}:
-                    } @else {
-                      {{ "RE_GROUPS_LABEL" | translate }}:
-                    }
-                    <input
-                      type="number"
-                      class="group-input"
-                      [ngModel]="heat.group + 1"
-                      (ngModelChange)="onGroupChange(heat, $event)"
-                      min="1"
-                    />
+                  @if (isStepUpEnabled) {
+                    <span class="step-badge"
+                      >-
+                      {{
+                        "RD_STEP_LADDER_STEP"
+                          | translate: { step: heat.step || 1 }
+                      }}</span
+                    >
                   }
                 </h4>
+                @if (getHeatHighlightColors(heat); as pips) {
+                  @if (pips.length > 0) {
+                    <span class="heat-highlight-pips">
+                      @for (pipColor of pips; track pipColor) {
+                        <span
+                          class="heat-pip"
+                          [style.background-color]="pipColor"
+                          [style.box-shadow]="'0 0 6px ' + pipColor"
+                        ></span>
+                      }
+                    </span>
+                  }
+                }
               </div>
               <div class="header-actions">
                 @if (isHeatStarted(heat)) {
@@ -497,6 +528,38 @@
                   >{{ getOriginalHeatDisplay(heat) }}</span
                 >
               </span>
+              @if (isStepUpEnabled) {
+                <button
+                  type="button"
+                  class="boundary-badge"
+                  [class.is-boundary]="heat.isStepUpBoundary"
+                  (click)="toggleStepUpBoundary(heat); $event.stopPropagation()"
+                  [attr.aria-label]="'RD_STEP_UP_BOUNDARY' | translate"
+                  [title]="'RD_STEP_UP_BOUNDARY' | translate"
+                >
+                  {{ "RD_STEP_UP_BOUNDARY" | translate }}
+                </button>
+              }
+              @if (
+                race() && race().group_options && race().group_options.enabled
+              ) {
+                <span class="heat-group-tag">
+                  <span class="group-label">
+                    @if (getCustomGroupName(heat.group)) {
+                      {{ getCustomGroupName(heat.group) }}:
+                    } @else {
+                      {{ "RE_GROUPS_LABEL" | translate }}:
+                    }
+                  </span>
+                  <input
+                    type="number"
+                    class="group-input"
+                    [ngModel]="heat.group + 1"
+                    (ngModelChange)="onGroupChange(heat, $event)"
+                    min="1"
+                  />
+                </span>
+              }
             </div>
             <div class="heat-lanes">
               @for (lane of track().lanes; track $index; let lIdx = $index) {
@@ -532,15 +595,29 @@
                         [style.color]="track().lanes[lIdx].foreground_color"
                         (dblclick)="onRemoveFromHeat(hIdx, lIdx)"
                       >
-                        <img
-                          [src]="
-                            getParticipantAvatar(dhd.participant) | avatarUrl
-                          "
-                          class="driver-avatar"
-                          [style.border-color]="
-                            track().lanes[lIdx].foreground_color
-                          "
-                        />
+                        @if (isStepUpParticipant(dhd.participant)) {
+                          <span
+                            class="material-icons step-up-icon"
+                            style="
+                              font-size: 24px;
+                              margin-right: 6px;
+                              display: inline-flex;
+                              align-items: center;
+                              justify-content: center;
+                            "
+                            >arrow_upward</span
+                          >
+                        } @else {
+                          <img
+                            [src]="
+                              getParticipantAvatar(dhd.participant) | avatarUrl
+                            "
+                            class="driver-avatar"
+                            [style.border-color]="
+                              track().lanes[lIdx].foreground_color
+                            "
+                          />
+                        }
                         <div
                           class="driver-details"
                           style="position: relative; flex: 1; min-width: 0"

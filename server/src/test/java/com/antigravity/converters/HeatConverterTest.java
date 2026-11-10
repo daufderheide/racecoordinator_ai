@@ -140,4 +140,17 @@ public class HeatConverterTest {
     assertEquals(3, proto.getTrackCalls());
     assertEquals(2, proto.getHeatDrivers(0).getTrackCalls());
   }
+
+  @Test
+  public void testToProto_StepAndStepUpBoundary() {
+    HeatScoring scoring = new HeatScoring();
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, new ArrayList<>(), scoring, false);
+    heat.setStep(2);
+    heat.setStepUpBoundary(true);
+
+    Heat proto = HeatConverter.toProto(heat, new HashSet<>());
+    assertEquals(2, proto.getStep());
+    assertTrue(proto.getIsStepUpBoundary());
+  }
 }

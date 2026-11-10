@@ -544,6 +544,8 @@ public class AssetService {
         }
         heatNode.set("driver_indices", driverArray);
         heatNode.put("group", heat.getGroup());
+        heatNode.put("is_step_up_boundary", heat.getIsStepUpBoundary());
+        heatNode.put("step", heat.getStep());
         heatArray.add(heatNode);
       }
       rotNode.set("heats", heatArray);
@@ -681,6 +683,12 @@ public class AssetService {
               }
             }
             heatBuilder.setGroup(heat.has("group") ? heat.get("group").asInt() : 0);
+            boolean isBoundary =
+                heat.has("is_step_up_boundary")
+                    ? heat.get("is_step_up_boundary").asBoolean()
+                    : (heat.has("isStepUpBoundary") && heat.get("isStepUpBoundary").asBoolean());
+            heatBuilder.setIsStepUpBoundary(isBoundary);
+            heatBuilder.setStep(heat.has("step") ? heat.get("step").asInt() : 0);
             rotBuilder.addHeats(heatBuilder.build());
           }
         }

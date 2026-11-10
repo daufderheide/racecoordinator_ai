@@ -154,7 +154,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
+  min-height: 180px;
   overflow: hidden;
   gap: 12px;
   background: rgba(30, 41, 59, 0.4);
@@ -162,6 +162,11 @@
   border-radius: 8px;
   padding: 16px;
   backdrop-filter: blur(10px);
+}
+
+.step-up-pool-section {
+  flex: 1;
+  min-height: 180px;
 }
 
 .section-header {
@@ -281,6 +286,19 @@
   border-color: rgba(56, 189, 248, 0.4);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.driver-item.step-up-item {
+  border-left: 3px solid #38bdf8;
+}
+
+.step-up-icon {
+  font-size: 22px;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .driver-seed {
@@ -533,7 +551,8 @@
 
 /* Heat Card component */
 .heat-card {
-  flex: 0 0 220px;
+  flex: 0 0 290px;
+  width: 290px;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(56, 189, 248, 0.25);
   border-radius: 8px;
@@ -549,6 +568,11 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
+.heat-card.is-step-boundary {
+  border-color: rgba(56, 189, 248, 0.55);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
 .heat-card.heat-error {
   border-color: #ef4444;
   box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
@@ -556,28 +580,39 @@
 
 /* Heat Card Header */
 .heat-header {
+  padding: 8px 10px;
+  background: rgba(30, 41, 59, 0.85);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(30, 41, 59, 0.8);
+  align-items: center;
   border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  gap: 8px;
+  min-height: 42px;
+  box-sizing: border-box;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  cursor: grab;
   color: #f8fafc;
+  transition: color 0.2s;
+  min-width: 0;
+  flex: 1;
+}
+
+.header-title:hover {
+  color: #38bdf8;
 }
 
 .drag-handle-icon {
+  font-size: 1.1rem;
+  color: rgba(148, 163, 184, 0.6);
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  color: rgba(148, 163, 184, 0.6);
-  cursor: grab;
   user-select: none;
   padding: 2px;
   border-radius: 4px;
@@ -593,25 +628,59 @@
   cursor: grabbing;
 }
 
-.header-title h4 {
+.heat-header h4,
+.heat-title-text {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
+  color: #f8fafc;
   font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.step-badge {
+  color: #38bdf8;
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+
+.heat-subheader {
+  padding: 3px 10px;
+  background: rgba(15, 23, 42, 0.45);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.12);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+.heat-group-tag {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  color: #f8fafc;
-  user-select: none;
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.heat-group-tag .group-label {
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .group-input {
-  width: 40px;
+  width: 36px;
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 4px;
   color: #38bdf8;
-  padding: 2px 4px;
-  font-size: 0.9rem;
+  padding: 1px 4px;
+  font-size: 0.82rem;
   font-weight: 700;
   text-align: center;
   outline: none;
@@ -622,6 +691,51 @@
 .group-input:focus {
   border-color: #38bdf8;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.boundary-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  outline: none;
+  font-family: inherit;
+  background: rgba(15, 23, 42, 0.6);
+  color: #64748b;
+  border: 1px solid rgba(71, 85, 105, 0.4);
+}
+
+.boundary-badge:hover {
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.boundary-badge.is-boundary {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
+}
+
+.boundary-badge.is-boundary:hover {
+  background: rgba(56, 189, 248, 0.3);
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
 }
 
 .btn-remove {

@@ -39,6 +39,8 @@ public class RaceParticipant extends ServerToClientObject
   private int heatsRaced;
   private int heatsRemaining;
   private int totalHeats;
+  private boolean isStepUp = false;
+  private int stepUpIndex = 0;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -88,6 +90,7 @@ public class RaceParticipant extends ServerToClientObject
   @com.fasterxml.jackson.annotation.JsonIgnore
   @Override
   public boolean isEmptyParticipant() {
+    if (isStepUp) return false;
     if (driver != null) {
       if (driver.isEmpty()) return true;
       if ("EMPTY_LANE".equalsIgnoreCase(driver.getEntityId())) return true;
@@ -101,6 +104,38 @@ public class RaceParticipant extends ServerToClientObject
     }
     if (driver == null && team == null) return true;
     return false;
+  }
+
+  public boolean isStepUpParticipant() {
+    return isStepUp;
+  }
+
+  public boolean isStepUp() {
+    return isStepUp;
+  }
+
+  public void setStepUpParticipant(boolean isStepUp) {
+    this.isStepUp = isStepUp;
+  }
+
+  public int getStepUpIndex() {
+    return stepUpIndex;
+  }
+
+  public void setStepUpIndex(int stepUpIndex) {
+    this.stepUpIndex = stepUpIndex;
+  }
+
+  public static RaceParticipant createStepUpParticipant(int index) {
+    Driver d =
+        new Driver.Builder()
+            .withName("Step-Up " + (index + 1))
+            .withEntityId(Driver.STEP_UP_DRIVER_ID_PREFIX + index)
+            .build();
+    RaceParticipant p = new RaceParticipant(d);
+    p.setStepUpParticipant(true);
+    p.setStepUpIndex(index + 1);
+    return p;
   }
 
   public Driver getDriver() {

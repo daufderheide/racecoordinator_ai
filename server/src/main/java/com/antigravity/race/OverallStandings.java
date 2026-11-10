@@ -19,16 +19,27 @@ public class OverallStandings {
   private final OverallScoring overallScoring;
   private final GroupOptions groupOptions;
   private final boolean practice;
+  private final int stepUp;
+
+  public OverallStandings(
+      HeatScoring heatScoring,
+      OverallScoring overallScoring,
+      GroupOptions groupOptions,
+      boolean practice,
+      int stepUp) {
+    this.heatScoring = heatScoring;
+    this.overallScoring = overallScoring;
+    this.groupOptions = groupOptions;
+    this.practice = practice;
+    this.stepUp = stepUp;
+  }
 
   public OverallStandings(
       HeatScoring heatScoring,
       OverallScoring overallScoring,
       GroupOptions groupOptions,
       boolean practice) {
-    this.heatScoring = heatScoring;
-    this.overallScoring = overallScoring;
-    this.groupOptions = groupOptions;
-    this.practice = practice;
+    this(heatScoring, overallScoring, groupOptions, practice, 0);
   }
 
   public int getDroppedHeats() {
@@ -56,22 +67,47 @@ public class OverallStandings {
       Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber = new HashMap<>();
       Map<String, Integer> driverToGroup = new HashMap<>();
       Map<Integer, Boolean> heatStartedByNumber = new HashMap<>();
+      Map<Integer, Integer> heatStepByNumber = new HashMap<>();
+      Map<String, Integer> driverMaxStep = new HashMap<>();
 
-      // 1. Index heats to drivers by heat number and group
-      indexHeats(heats, driverHeatsByNumber, driverToGroup, heatStartedByNumber);
+      // 1. Index heats to drivers by heat number, group, and step
+      indexHeats(
+          heats,
+          driverHeatsByNumber,
+          driverToGroup,
+          heatStartedByNumber,
+          heatStepByNumber,
+          driverMaxStep);
+
+      boolean isStepUpRace =
+          this.stepUp > 0 || heatStepByNumber.values().stream().anyMatch(s -> s > 0);
 
       // 2. Aggregate stats for each driver
       for (RaceParticipant driver : new ArrayList<>(drivers)) {
         if (driver != null) {
           Map<Integer, List<DriverHeatData>> heatsByNumber =
               driverHeatsByNumber.getOrDefault(driver.getStableId(), Collections.emptyMap());
+          if (isStepUpRace) {
+            int maxStep = driverMaxStep.getOrDefault(driver.getStableId(), 0);
+            if (maxStep > 0) {
+              Map<Integer, List<DriverHeatData>> stepHeatsByNumber = new LinkedHashMap<>();
+              for (Map.Entry<Integer, List<DriverHeatData>> entry : heatsByNumber.entrySet()) {
+                if (heatStepByNumber.getOrDefault(entry.getKey(), 0) == maxStep) {
+                  stepHeatsByNumber.put(entry.getKey(), entry.getValue());
+                }
+              }
+              heatsByNumber = stepHeatsByNumber;
+            }
+          }
           calculateDriverStats(driver, heatsByNumber, rotationType, heatStartedByNumber);
         }
       }
 
       // 3. Rank drivers
       if (!practice) {
-        if (groupOptions != null
+        if (isStepUpRace) {
+          rankStepUpDrivers(drivers, driverToGroup, driverMaxStep);
+        } else if (groupOptions != null
             && groupOptions.isEnabled()
             && groupOptions.getMinAdvancing() > 0) {
           rankWithMinAdvancing(drivers, driverToGroup);
@@ -112,7 +148,9 @@ public class OverallStandings {
       List<Heat> heats,
       Map<String, Map<Integer, List<DriverHeatData>>> driverHeatsByNumber,
       Map<String, Integer> driverToGroup,
-      Map<Integer, Boolean> heatStartedByNumber) {
+      Map<Integer, Boolean> heatStartedByNumber,
+      Map<Integer, Integer> heatStepByNumber,
+      Map<String, Integer> driverMaxStep) {
     if (heats == null) {
       return;
     }
@@ -123,6 +161,8 @@ public class OverallStandings {
     for (Heat heat : heatsCopy) {
       int heatNum = heat.getHeatNumber();
       int heatGroup = heat.getGroup();
+      int heatStep = heat.getStep();
+      heatStepByNumber.put(heatNum, heatStep);
       if (heat.isStarted()) {
         heatStartedByNumber.put(heatNum, true);
       }
@@ -139,6 +179,12 @@ public class OverallStandings {
                 .computeIfAbsent(heatNum, k -> new ArrayList<>())
                 .add(dhd);
             driverToGroup.put(stableId, heatGroup);
+            if (heatStep > 0) {
+              int curMax = driverMaxStep.getOrDefault(stableId, 0);
+              if (heatStep > curMax) {
+                driverMaxStep.put(stableId, heatStep);
+              }
+            }
           }
         }
       }
@@ -304,6 +350,53 @@ public class OverallStandings {
     drivers.clear();
     drivers.addAll(forcedTop);
     drivers.addAll(theRest);
+    drivers.addAll(emptyDrivers);
+  }
+
+  private void rankStepUpDrivers(
+      List<RaceParticipant> drivers,
+      Map<String, Integer> driverToGroup,
+      Map<String, Integer> driverMaxStep) {
+
+    Map<Integer, List<RaceParticipant>> groupedDrivers = new HashMap<>();
+    List<RaceParticipant> emptyDrivers = new ArrayList<>();
+
+    for (RaceParticipant driver : new ArrayList<>(drivers)) {
+      if (driver.getDriver() != null && driver.getDriver().isEmpty()) {
+        emptyDrivers.add(driver);
+      } else {
+        int group = driverToGroup.getOrDefault(driver.getStableId(), 0);
+        groupedDrivers.computeIfAbsent(group, k -> new ArrayList<>()).add(driver);
+      }
+    }
+
+    Comparator<RaceParticipant> baseComparator = getComparator();
+    Comparator<RaceParticipant> stepUpComparator =
+        (a, b) -> {
+          int stepA = driverMaxStep.getOrDefault(a.getStableId(), 0);
+          int stepB = driverMaxStep.getOrDefault(b.getStableId(), 0);
+          if (stepA != stepB) {
+            return Integer.compare(stepB, stepA); // Higher step ranks ahead
+          }
+          int comp = baseComparator.compare(a, b);
+          if (comp != 0) {
+            return comp;
+          }
+          return Integer.compare(a.getSeed(), b.getSeed());
+        };
+
+    List<RaceParticipant> sorted = new ArrayList<>();
+    List<Integer> sortedGroups = new ArrayList<>(groupedDrivers.keySet());
+    Collections.sort(sortedGroups);
+
+    for (int grp : sortedGroups) {
+      List<RaceParticipant> groupList = groupedDrivers.get(grp);
+      groupList.sort(stepUpComparator);
+      sorted.addAll(groupList);
+    }
+
+    drivers.clear();
+    drivers.addAll(sorted);
     drivers.addAll(emptyDrivers);
   }
 

@@ -9,6 +9,7 @@ import java.util.List;
 public class Driver extends Model {
   public static final String EMPTY_DRIVER_ID = "EMPTY_LANE";
   public static final Driver EMPTY_DRIVER = new Driver("Empty", "Empty", EMPTY_DRIVER_ID, null);
+  public static final String STEP_UP_DRIVER_ID_PREFIX = "STEP_UP_";
 
   private final String name;
   private final String nickname;
@@ -354,6 +355,14 @@ public class Driver extends Model {
 
   public static boolean isEmpty(Driver driver) {
     return driver == null || isEmptyId(driver.getEntityId());
+  }
+
+  public static boolean isStepUpId(String id) {
+    return id != null && id.startsWith(STEP_UP_DRIVER_ID_PREFIX);
+  }
+
+  public static boolean isStepUp(Driver driver) {
+    return driver != null && isStepUpId(driver.getEntityId());
   }
 
   public boolean isEmpty() {

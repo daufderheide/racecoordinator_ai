@@ -461,6 +461,60 @@ public class RaceTest {
       race.getStatistics().setStartMillis(1700000000000L);
       assertFalse(race.getStartTime().isEmpty());
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRace_StepUpNegative_ThrowsIllegalArgumentException() {
+      Track track = mock(Track.class);
+      when(track.getLanes())
+          .thenReturn(
+              Arrays.asList(
+                  new Lane("#FFFFFF", "#FF0000", 50), new Lane("#FFFFFF", "#00FF00", 50)));
+      Race model = mock(Race.class);
+      when(model.getStepUp()).thenReturn(-1);
+
+      new com.antigravity.race.Race.Builder().model(model).track(track).isDemoMode(true).build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRace_StepUpExceedsLanesMinusOne_ThrowsIllegalArgumentException() {
+      Track track = mock(Track.class);
+      when(track.getLanes())
+          .thenReturn(
+              Arrays.asList(
+                  new Lane("#FFFFFF", "#FF0000", 50), new Lane("#FFFFFF", "#00FF00", 50)));
+      Race model = mock(Race.class);
+      when(model.getStepUp()).thenReturn(2); // 2 lanes, max stepUp is 1
+
+      new com.antigravity.race.Race.Builder().model(model).track(track).isDemoMode(true).build();
+    }
+
+    @Test
+    public void testRace_StepUpValid_Success() {
+      Track track = mock(Track.class);
+      when(track.getLanes())
+          .thenReturn(
+              Arrays.asList(
+                  new Lane("#FFFFFF", "#FF0000", 50),
+                  new Lane("#FFFFFF", "#00FF00", 50),
+                  new Lane("#FFFFFF", "#0000FF", 50),
+                  new Lane("#FFFFFF", "#FFFF00", 50)));
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+      when(model.getStepUp()).thenReturn(3); // 4 lanes, max stepUp is 3
+
+      List<Heat> heats = new ArrayList<>();
+      heats.add(mock(Heat.class));
+
+      com.antigravity.race.Race r =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .databaseContext(dbContext)
+              .heats(heats)
+              .isDemoMode(true)
+              .build();
+      assertNotNull(r);
+    }
   }
 
   // =========================================================================

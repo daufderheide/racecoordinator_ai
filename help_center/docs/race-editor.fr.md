@@ -207,6 +207,22 @@ L'accordéon Options de manche configure le rythme automatisé, les cycles et la
 - **Méthode de fin** : Détermine comment la fin d'une manche est établie (par **Nombre de tours** ou **Temps** écoulé en secondes).
 - **Autoriser l'arrivée** : Détermine comment les voitures finissent leurs tours lorsque le leader termine ou le temps expire (ex. fin immédiate, autoriser tous à finir, tour unique ou crédit de segments automatiques).
 - **Méthode de classement général** : Classement général sur l'ensemble des manches avec bris d'égalité et manches éliminées configurables.
+- **Progression (Step-Up)** : Configure une course progressive en échelle. Valeur par défaut : `0` (désactivé). Avec une valeur $S > 0$, les manches sont découpées en échelons progressifs où les pilotes des échelons supérieurs attendent les qualifiés promus des échelons inférieurs.
+
+### Courses en Échelle (Step-Up)
+
+Lorsque l'option **Progression (Step-Up)** est configurée avec un entier positif ($S > 0$), Race Coordinator AI réorganise les manches et les classements en échelle progressive :
+
+- **Échelons de l'échelle** : Les pilotes sont placés dans des échelons progressifs selon leur tête de série. Les pilotes les moins bien classés courent dans l'Échelon 1 (l'échelon inférieur).
+- **Répartition des pilotes** :
+  - L'échelon inférieur contient entre 2 et le nombre de voies de la piste ($2 \le N_{bottom} \le L$) pilotes.
+  - Chaque échelon supérieur subséquent contient $L - S$ pilotes désignés et $S$ places de progression réservées aux pilotes qualifiés de l'échelon précédent.
+  - L'échelon supérieur représente la Finale, où les meilleurs pilotes attendent les qualifiés promus.
+- **Rotations complètes par échelon** : Chaque échelon exécute l'intégralité de la rotation configurée pour la course (ex. Round Robin ou rotation personnalisée).
+- **Promotion et réinitialisation des scores** : Lorsqu'un échelon se termine (marqué par la manche frontière d'échelon), les $S$ meilleurs pilotes sont promus à l'échelon suivant. Leurs statistiques cumulées sont réinitialisées : seules les manches de l'échelon le plus élevé atteint comptent pour le classement général.
+- **Classement général hiérarchisé** : Les pilotes des échelons inférieurs ne peuvent pas devancer les pilotes des échelons supérieurs au classement général, quels que soient leurs tours ou temps bruts. Le vainqueur de l'échelon final remporte la course.
+- **Courses par groupes** : Dans les courses par groupes avec progression, chaque groupe suit sa propre échelle de manière indépendante.
+- **Support dans Modifier les manches** : Dans l'écran Modifier les manches, les pilotes promus sont identifiés par un badge dédié et les frontières d'échelon peuvent être examinées et modifiées.
 
 ## Groupes et étapes {: #groups-and-stages }
 

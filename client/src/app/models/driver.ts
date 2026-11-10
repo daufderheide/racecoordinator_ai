@@ -36,6 +36,7 @@ export interface DriverInit extends DriverAudioConfig {
 }
 
 export const EMPTY_DRIVER_ID = "EMPTY_LANE";
+export const STEP_UP_DRIVER_ID_PREFIX = "STEP_UP_";
 
 export function sanitizeDriverAudio(
   audio?: AudioConfig,
@@ -329,5 +330,20 @@ export class Driver implements Model {
       return true;
     }
     return false;
+  }
+
+  static isStepUpId(id?: string | null): boolean {
+    return !!id && id.startsWith(STEP_UP_DRIVER_ID_PREFIX);
+  }
+
+  static isStepUp(
+    driver?:
+      | Driver
+      | { entity_id?: string; model?: { entityId?: string } }
+      | null,
+  ): boolean {
+    if (!driver) return false;
+    const id = (driver as any).entity_id || (driver as any).model?.entityId;
+    return Driver.isStepUpId(id);
   }
 }

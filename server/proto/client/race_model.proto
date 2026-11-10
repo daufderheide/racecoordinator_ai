@@ -132,6 +132,7 @@ message RaceModel {
   bool adjust_drift_laps = 34;
   string theme_id = 35;
   reserved 36;
+  int32 step_up = 37;
 }
 
 // CustomRotation and CustomHeat moved to rotation_model.proto

@@ -207,6 +207,22 @@ El expansor de Opciones de tanda configura los tiempos automatizados, los ciclos
 - **Método de finalización**: Establece cómo se determina el final de una tanda (por **Número de vueltas** o **Tiempo** transcurrido en segundos).
 - **Permitir llegada**: Elija cómo completan las vueltas los coches al terminar el líder o expirar el tiempo (por ejemplo, final inmediato, permitir terminar a todos, vuelta única o crédito de segmentos automáticos).
 - **Método de clasificación general**: Clasifique la tabla general de la carrera tras todas las tandas con desempates y descartes personalizados.
+- **Ascenso (Step-Up)**: Configura la carrera en escalera progresiva. Por defecto es `0` (desactivado). Con valores $S > 0$, las tandas se dividen en escalones progresivos donde los pilotos de escalones superiores esperan a los clasificados que ascienden desde los inferiores.
+
+### Carreras en Escalera (Step-Up)
+
+Cuando **Ascenso (Step-Up)** se configura con un entero positivo ($S > 0$), Race Coordinator AI reorganiza las tandas y clasificaciones en una escalera progresiva:
+
+- **Escalones de la escalera**: Los pilotos se asignan a escalones según su posición inicial. Los pilotos de menor posición compiten en el Escalón 1 (el inferior).
+- **Distribución de pilotos**:
+  - El escalón inferior contiene entre 2 y el número de carriles de la pista ($2 \le N_{bottom} \le L$) pilotos.
+  - Cada escalón superior subsiguiente contiene $L - S$ pilotos asignados y $S$ plazas de ascenso reservadas para los clasificados del escalón anterior.
+  - El escalón superior representa la Final, donde los mejores clasificados esperan a los clasificados ascendidos.
+- **Rotaciones completas por escalón**: Cada escalón ejecuta la rotación de tandas completa según la configuración de la carrera (p. ej., Round Robin o rotación personalizada).
+- **Ascenso y reinicio de puntuación**: Al concluir un escalón (marcado por la tanda límite de escalón), los mejores $S$ pilotos ascienden al siguiente escalón. Su puntuación acumulada se reinicia: solo las tandas del escalón más alto alcanzado cuentan para la clasificación general.
+- **Clasificación general escalonada**: Los pilotos de escalones inferiores nunca pueden quedar por encima de los pilotos de escalones superiores en la clasificación general final, sin importar sus vueltas o tiempos individuales. El ganador del escalón final es el ganador de la carrera.
+- **Carreras por grupos**: En carreras por grupos con ascenso activado, cada grupo progresa por su propia escalera de forma independiente.
+- **Soporte en Modificar tandas**: En la pantalla de Modificar tandas, los pilotos de ascenso se identifican con distintivos propios y los límites de escalón pueden revisarse y conmutarse.
 
 ### Ajustes de Temporizador
 - **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.

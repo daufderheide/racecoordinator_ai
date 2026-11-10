@@ -122,6 +122,22 @@ public class Race implements ProtocolListener {
   private Race(Builder builder) {
     this.model = builder.model;
     this.track = builder.track;
+    int numLanes =
+        this.track != null && this.track.getLanes() != null ? this.track.getLanes().size() : 0;
+    int maxStepUp = Math.max(0, numLanes - 1);
+    if (this.model != null) {
+      if (this.model.getStepUp() < 0) {
+        throw new IllegalArgumentException("Step-up count cannot be negative");
+      }
+      if (this.model.getStepUp() > maxStepUp) {
+        throw new IllegalArgumentException(
+            "Step-up count ("
+                + this.model.getStepUp()
+                + ") cannot exceed track lane count minus 1 ("
+                + maxStepUp
+                + ")");
+      }
+    }
     if (builder.theme != null) {
       this.theme = builder.theme;
     } else if (builder.databaseContext != null) {
@@ -163,7 +179,8 @@ public class Race implements ProtocolListener {
             model.getHeatScoring(),
             model.getOverallScoring(),
             model.getGroupOptions(),
-            model.isPractice());
+            model.isPractice(),
+            model.getStepUp());
     this.demoConfig = builder.demoConfig;
     boolean isFinishedRace =
         builder.skipHardwareInterface
@@ -956,7 +973,10 @@ public class Race implements ProtocolListener {
       for (com.antigravity.proto.CustomHeat protoHeat : protoRot.getHeatsList()) { // fqn-collision
         heats.add(
             new CustomHeat(
-                new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
+                new ArrayList<>(protoHeat.getDriverIndicesList()),
+                protoHeat.getGroup(),
+                protoHeat.getIsStepUpBoundary(),
+                protoHeat.getStep()));
       }
       result.add(new CustomRotation(protoRot.getNumDrivers(), heats));
     }
@@ -1802,6 +1822,10 @@ public class Race implements ProtocolListener {
     if (state instanceof RaceOver)
       return com.antigravity.proto.RaceState.RACE_OVER; // fqn-collision
     return com.antigravity.proto.RaceState.UNKNOWN_STATE; // fqn-collision
+  }
+
+  public RaceHeatManager getHeatManager() {
+    return heatManager;
   }
 
   public synchronized ModifyHeatsResponse modifyHeats(ModifyHeatsRequest request) {

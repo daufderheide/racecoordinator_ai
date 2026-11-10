@@ -67,4 +67,10 @@ describe("ConfirmationModalComponent", () => {
 
     expect(component.confirm.emit).toHaveBeenCalled();
   });
+
+  it("should not set native title attribute on host element", () => {
+    fixture.componentRef.setInput("title", "UE_CONFIRM_DISCARD_TITLE");
+    fixture.detectChanges();
+    expect(fixture.nativeElement.getAttribute("title")).toBeNull();
+  });
 });

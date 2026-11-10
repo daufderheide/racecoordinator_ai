@@ -73,6 +73,7 @@ export class DataRaceControlHelper {
     heatTimesThrough: number = 1,
     reverseHeats: boolean = false,
     groupOptions: any = null,
+    stepUp: number = 0,
   ): Observable<any> {
     return this.http.post<any>(`${this.getBaseUrl()}/api/heats/preview`, {
       trackId,
@@ -85,6 +86,7 @@ export class DataRaceControlHelper {
       heatTimesThrough,
       reverseHeats,
       groupOptions,
+      stepUp,
     });
   }
 

@@ -240,4 +240,19 @@ public class HeatOverTest {
 
     verify(em).applyEndHeatAutoSegments();
   }
+
+  @Test
+  public void testEnter_DoesNotAdvanceStepUpDrivers() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    when(currentHeat.getStatistics()).thenReturn(new com.antigravity.race.RaceHeatStatistics());
+    when(currentHeat.isStepUpBoundary()).thenReturn(true);
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    com.antigravity.race.RaceHeatManager rhm = mock(com.antigravity.race.RaceHeatManager.class);
+    when(race.getHeatManager()).thenReturn(rhm);
+
+    heatOver.enter(race);
+
+    verify(rhm, org.mockito.Mockito.never())
+        .handleStepUpAdvancement(org.mockito.ArgumentMatchers.any());
+  }
 }

@@ -463,6 +463,21 @@ export class RaceEditorComponent
     );
   }
 
+  get isStepUpInvalid(): boolean {
+    return RaceEditorValidationHelper.isStepUpInvalid(
+      this.editingRace,
+      this.tracks,
+    );
+  }
+
+  get maxStepUp(): number {
+    const track = (this.tracks || []).find(
+      (t) => t.entity_id === this.editingRace?.track_entity_id,
+    );
+    const numLanes = track?.lanes?.length || 0;
+    return Math.max(0, numLanes - 1);
+  }
+
   get currentTrackHasPerLaneRelays(): boolean {
     return RaceEditorValidationHelper.currentTrackHasPerLaneRelays(
       this.editingRace,
@@ -510,7 +525,8 @@ export class RaceEditorComponent
         Boolean(
           this.editingRace?.name?.trim() &&
           !this.isNameDuplicate() &&
-          !this.isRotationInvalid,
+          !this.isRotationInvalid &&
+          !this.isStepUpInvalid,
         ),
       isSaving: () => this.isSaving,
       onAutoSave: () => this.updateRace(true),

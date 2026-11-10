@@ -61,6 +61,8 @@ public class RaceParticipantConverter {
         .setHeatsRaced(participant.getHeatsRaced())
         .setHeatsRemaining(participant.getHeatsRemaining())
         .setTotalHeats(participant.getTotalHeats())
+        .setIsStepUp(participant.isStepUpParticipant())
+        .setStepUpIndex(participant.getStepUpIndex())
         .build();
   }
 }

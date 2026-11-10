@@ -129,14 +129,10 @@ test.describe("Modify Heats Modal Visuals", () => {
     await TestSetupHelper.waitForLocalization(page);
 
     // Wait for data to settle
-    await page.waitForFunction(
-      async () => {
-        const dbCount =
-          (await (window as any).tempModifyHeats?.databaseDrivers?.length) ?? 0;
-        return dbCount > 0;
-      },
-      { timeout: 15000 },
-    );
+    await page
+      .locator("#database-drivers .driver-item")
+      .first()
+      .waitFor({ state: "visible", timeout: 15000 });
 
     // Wait for Charlie to be visible in the racing pool
     await page
@@ -145,6 +141,434 @@ test.describe("Modify Heats Modal Visuals", () => {
 
     await modalHarness.waitForLoaderToBeHidden();
     await expect(page).toHaveScreenshot("modify-heats-initial-state.png");
+  });
+
+  test("should show step-up race with step-up pool, step badges, and boundary controls", async ({
+    page,
+  }) => {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1", stepUp: 2 },
+          name: "Step-Up Screendiff Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ff0000",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#00ff00",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+              {
+                objectId: "l3",
+                backgroundColor: "#0000ff",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l4",
+                backgroundColor: "#ffff00",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            seed: 1,
+            driver: { model: { entityId: "d1" }, name: "Driver 1" },
+          },
+          {
+            objectId: "rp2",
+            seed: 2,
+            driver: { model: { entityId: "d2" }, name: "Driver 2" },
+          },
+          {
+            objectId: "rp3",
+            seed: 3,
+            driver: { model: { entityId: "d3" }, name: "Driver 3" },
+          },
+          {
+            objectId: "rp4",
+            seed: 4,
+            driver: { model: { entityId: "d4" }, name: "Driver 4" },
+          },
+          {
+            objectId: "rp5",
+            seed: 5,
+            driver: { model: { entityId: "d5" }, name: "Driver 5" },
+          },
+          {
+            objectId: "rp6",
+            seed: 6,
+            driver: { model: { entityId: "d6" }, name: "Driver 6" },
+          },
+        ],
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            step: 1,
+            isStepUpBoundary: false,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                laneIndex: 0,
+                driverId: "rp1",
+                driver: { objectId: "rp1" },
+              },
+              {
+                objectId: "hd2",
+                laneIndex: 1,
+                driverId: "rp2",
+                driver: { objectId: "rp2" },
+              },
+              {
+                objectId: "hd3",
+                laneIndex: 2,
+                driverId: "rp3",
+                driver: { objectId: "rp3" },
+              },
+              {
+                objectId: "hd4",
+                laneIndex: 3,
+                driverId: "rp4",
+                driver: { objectId: "rp4" },
+              },
+            ],
+          },
+          {
+            objectId: "h2",
+            heatNumber: 2,
+            step: 1,
+            isStepUpBoundary: true,
+            heatDrivers: [
+              {
+                objectId: "hd5",
+                laneIndex: 0,
+                driverId: "rp4",
+                driver: { objectId: "rp4" },
+              },
+              {
+                objectId: "hd6",
+                laneIndex: 1,
+                driverId: "rp3",
+                driver: { objectId: "rp3" },
+              },
+              {
+                objectId: "hd7",
+                laneIndex: 2,
+                driverId: "rp2",
+                driver: { objectId: "rp2" },
+              },
+              {
+                objectId: "hd8",
+                laneIndex: 3,
+                driverId: "rp1",
+                driver: { objectId: "rp1" },
+              },
+            ],
+          },
+          {
+            objectId: "h3",
+            heatNumber: 3,
+            step: 2,
+            isStepUpBoundary: true,
+            heatDrivers: [
+              {
+                objectId: "hd9",
+                laneIndex: 0,
+                driverId: "rp5",
+                driver: { objectId: "rp5" },
+              },
+              {
+                objectId: "hd10",
+                laneIndex: 1,
+                driverId: "rp6",
+                driver: { objectId: "rp6" },
+              },
+              {
+                objectId: "hd11",
+                laneIndex: 2,
+                driver: {
+                  objectId: "STEP_UP_0",
+                  isStepUp: true,
+                  stepUpIndex: 1,
+                },
+              },
+              {
+                objectId: "hd12",
+                laneIndex: 3,
+                driver: {
+                  objectId: "STEP_UP_1",
+                  isStepUp: true,
+                  stepUpIndex: 2,
+                },
+              },
+            ],
+          },
+        ],
+        currentHeat: { objectId: "h1", heatNumber: 1 },
+        state: RaceState.NOT_STARTED,
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    await TestSetupHelper.waitForLocalization(page);
+    await modalHarness.waitForLoaderToBeHidden();
+
+    await page
+      .locator("#step-up-pool")
+      .waitFor({ state: "visible", timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("modify-heats-step-up.png");
+  });
+
+  test("should show group step-up race with group selectors, step badges, and boundary controls", async ({
+    page,
+  }) => {
+    const racedayHarness = new DefaultRacedayHarnessE2e(
+      page.locator(".dashboard-wrapper"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: {
+            entityId: "r1",
+            stepUp: 2,
+            groupOptions: {
+              enabled: true,
+              maxGroups: 2,
+            },
+          },
+          name: "Group Step-Up Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ff0000",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#00ff00",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+              {
+                objectId: "l3",
+                backgroundColor: "#0000ff",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l4",
+                backgroundColor: "#ffff00",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            seed: 1,
+            driver: { model: { entityId: "d1" }, name: "Driver 1" },
+          },
+          {
+            objectId: "rp2",
+            seed: 2,
+            driver: { model: { entityId: "d2" }, name: "Driver 2" },
+          },
+          {
+            objectId: "rp3",
+            seed: 3,
+            driver: { model: { entityId: "d3" }, name: "Driver 3" },
+          },
+          {
+            objectId: "rp4",
+            seed: 4,
+            driver: { model: { entityId: "d4" }, name: "Driver 4" },
+          },
+          {
+            objectId: "rp5",
+            seed: 5,
+            driver: { model: { entityId: "d5" }, name: "Driver 5" },
+          },
+          {
+            objectId: "rp6",
+            seed: 6,
+            driver: { model: { entityId: "d6" }, name: "Driver 6" },
+          },
+          {
+            objectId: "rp7",
+            seed: 7,
+            driver: { model: { entityId: "d7" }, name: "Driver 7" },
+          },
+          {
+            objectId: "rp8",
+            seed: 8,
+            driver: { model: { entityId: "d8" }, name: "Driver 8" },
+          },
+        ],
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            group: 0,
+            step: 1,
+            isStepUpBoundary: false,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                laneIndex: 0,
+                driverId: "rp1",
+                driver: { objectId: "rp1" },
+              },
+              {
+                objectId: "hd2",
+                laneIndex: 1,
+                driverId: "rp2",
+                driver: { objectId: "rp2" },
+              },
+              {
+                objectId: "hd3",
+                laneIndex: 2,
+                driverId: "rp3",
+                driver: { objectId: "rp3" },
+              },
+              {
+                objectId: "hd4",
+                laneIndex: 3,
+                driverId: "rp4",
+                driver: { objectId: "rp4" },
+              },
+            ],
+          },
+          {
+            objectId: "h2",
+            heatNumber: 2,
+            group: 1,
+            step: 1,
+            isStepUpBoundary: true,
+            heatDrivers: [
+              {
+                objectId: "hd5",
+                laneIndex: 0,
+                driverId: "rp5",
+                driver: { objectId: "rp5" },
+              },
+              {
+                objectId: "hd6",
+                laneIndex: 1,
+                driverId: "rp6",
+                driver: { objectId: "rp6" },
+              },
+              {
+                objectId: "hd7",
+                laneIndex: 2,
+                driverId: "rp7",
+                driver: { objectId: "rp7" },
+              },
+              {
+                objectId: "hd8",
+                laneIndex: 3,
+                driverId: "rp8",
+                driver: { objectId: "rp8" },
+              },
+            ],
+          },
+          {
+            objectId: "h3",
+            heatNumber: 3,
+            group: 0,
+            step: 2,
+            isStepUpBoundary: true,
+            heatDrivers: [
+              {
+                objectId: "hd9",
+                laneIndex: 0,
+                driverId: "rp1",
+                driver: { objectId: "rp1" },
+              },
+              {
+                objectId: "hd10",
+                laneIndex: 1,
+                driverId: "rp2",
+                driver: { objectId: "rp2" },
+              },
+              {
+                objectId: "hd11",
+                laneIndex: 2,
+                driver: {
+                  objectId: "STEP_UP_0",
+                  isStepUp: true,
+                  stepUpIndex: 1,
+                },
+              },
+              {
+                objectId: "hd12",
+                laneIndex: 3,
+                driver: {
+                  objectId: "STEP_UP_1",
+                  isStepUp: true,
+                  stepUpIndex: 2,
+                },
+              },
+            ],
+          },
+        ],
+        currentHeat: { objectId: "h1", heatNumber: 1 },
+        state: RaceState.NOT_STARTED,
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+
+    await racedayHarness.clickMenuButton("Race Director");
+    await racedayHarness.clickMenuItem("Modify Heats");
+
+    const modalHarness = new ModifyHeatsModalHarnessE2e(
+      page.locator("app-modify-heats-modal"),
+    );
+    await page.locator("app-modify-heats-modal").waitFor();
+
+    await TestSetupHelper.waitForLocalization(page);
+    await modalHarness.waitForLoaderToBeHidden();
+
+    await page
+      .locator("#step-up-pool")
+      .waitFor({ state: "visible", timeout: 15000 });
+
+    await expect(page).toHaveScreenshot("modify-heats-group-step-up.png");
   });
 
   test("should show when three heats have been started and cannot be edited, along with an editable heat", async ({

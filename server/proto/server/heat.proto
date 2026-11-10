@@ -16,4 +16,6 @@ message Heat {
   int32 group = 6;
   int32 master_track_calls = 7;
   int32 track_calls = 8;
+  int32 step = 9;
+  bool is_step_up_boundary = 10;
 }
