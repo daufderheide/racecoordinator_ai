@@ -131,11 +131,25 @@ public class AnalyticsService {
             : 0);
     params.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
     params.put("is_demo", race.isDemoMode());
-    params.put("heat_rotation_type", race.getRaceModel().getHeatRotationType().name());
-    params.put("heat_scoring_method", race.getRaceModel().getHeatScoring().getHeatRanking().name());
+    params.put(
+        "heat_rotation_type",
+        race.getRaceModel() != null && race.getRaceModel().getHeatRotationType() != null
+            ? race.getRaceModel().getHeatRotationType().name()
+            : "None");
+    params.put(
+        "heat_scoring_method",
+        race.getRaceModel() != null
+                && race.getRaceModel().getHeatScoring() != null
+                && race.getRaceModel().getHeatScoring().getHeatRanking() != null
+            ? race.getRaceModel().getHeatScoring().getHeatRanking().name()
+            : "None");
     params.put(
         "overall_scoring_method",
-        race.getRaceModel().getOverallScoring().getRankingMethod().name());
+        race.getRaceModel() != null
+                && race.getRaceModel().getOverallScoring() != null
+                && race.getRaceModel().getOverallScoring().getRankingMethod() != null
+            ? race.getRaceModel().getOverallScoring().getRankingMethod().name()
+            : "None");
     params.put(
         "fuel_system",
         race.getFuelOptions() != null && race.getFuelOptions().isEnabled()
@@ -167,6 +181,10 @@ public class AnalyticsService {
     params.put(
         "has_season", race.getSeasonEntityId() != null && !race.getSeasonEntityId().isEmpty());
     params.put("is_event", EventExecutionManager.getInstance().isEventActive());
+    boolean hasStepUps = race.getRaceModel() != null && race.getRaceModel().getStepUp() > 0;
+    params.put("has_step_ups", hasStepUps);
+    params.put("step_ups_enabled", hasStepUps);
+    params.put("step_up_count", race.getRaceModel() != null ? race.getRaceModel().getStepUp() : 0);
 
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());

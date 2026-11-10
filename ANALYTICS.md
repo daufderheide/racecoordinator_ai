@@ -56,6 +56,9 @@ All server-side events automatically include the following parameters:
    - `groups_enabled` (true/false tracking)
    - `has_season` (true/false tracking)
    - `is_event` (true/false tracking)
+   - `has_step_ups` (true/false tracking)
+   - `step_ups_enabled` (true/false tracking, alias for `has_step_ups`)
+   - `step_up_count` (numeric count of step-up positions)
 2. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
    - `analytics_enabled`: A boolean capturing whether they are actively enabling or disabling. 
    - *Note: This particular event intentionally bypasses the disabled check to reliably inform system metrics of uninstalls/opt-outs.*
@@ -144,6 +147,9 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `Groups Enabled`, Event parameter: `groups_enabled`
 - Dimension Name: `Has Season`, Event parameter: `has_season`
 - Dimension Name: `Is Event`, Event parameter: `is_event`
+- Dimension Name: `Has Step-Ups`, Event parameter: `has_step_ups`
+- Dimension Name: `Step-Ups Enabled`, Event parameter: `step_ups_enabled`
+- Dimension Name: `Step-Up Count`, Event parameter: `step_up_count`
 - Dimension Name: `Hardware Interface`, Event parameter: `hardware_interface`
 - Dimension Name: `Fuel System`, Event parameter: `fuel_system`
 - Dimension Name: `Heat Rotation Type`, Event parameter: `heat_rotation_type`
@@ -157,7 +163,7 @@ To retain custom strings and metrics into your timeline explorations, register t
 Once Dimensions are registered (they take ~24 hours to populate moving forward):
 1. Navigate to the **Explore** tab from the main left toolbar.
 2. Build a **Blank Free-form exploration**.
-3. Import your new Custom Dimensions into the far-left Dimensions panel (like `Guide Name`, `Groups Enabled`, `Has Season`, `Is Event`).
+3. Import your new Custom Dimensions into the far-left Dimensions panel (like `Guide Name`, `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`).
 4. Drop `Event name` and your new dimension into the **Rows** setup. Add `Event Count` into the **Values** panel. Feel free to use the Filter panel to isolate specifically to events like `backend_race_started` or `help_ended_early`.
 
 ### Step 4: Viewing in Standard Reports
@@ -165,7 +171,7 @@ If you don't want to build a custom Exploration, you can view your registered cu
 
 1. Navigate to **Reports > Engagement > Events**.
 2. In the data table, look for the **plus sign (+)** next to the "Event name" column header.
-3. Search for your **Custom Dimension** (e.g., "Groups Enabled", "Has Season", "Is Event") and select it.
+3. Search for your **Custom Dimension** (e.g., "Groups Enabled", "Has Season", "Is Event", "Has Step-Ups") and select it.
 4. It will now appear as a **secondary dimension** in the table!
 
 **Pro Tip:** You can also click on a specific event name (like `backend_race_started` or `help_started`) within the Events report to see a detailed dashboard for that specific event, which includes cards for any registered custom parameters associated with it.
@@ -193,11 +199,11 @@ Google Looker Studio (formerly Data Studio) allows you to build custom dashboard
 6. Confirm adding the data source to the report.
 
 ### Step 2: Refresh Fields to Load Custom Dimensions
-Whenever you register new custom dimensions in GA4 (such as `groups_enabled`, `has_season`, `is_event`), you must refresh the Looker Studio data source field list:
+Whenever you register new custom dimensions in GA4 (such as `groups_enabled`, `has_season`, `is_event`, `has_step_ups`), you must refresh the Looker Studio data source field list:
 1. In Looker Studio, open the menu: **Resource > Manage added data sources**.
 2. Click **Edit** next to your GA4 data source.
 3. In the lower-left corner of the fields list, click **Refresh fields**.
-4. Looker Studio will scan GA4 and display newly discovered dimensions (e.g., `Groups Enabled`, `Has Season`, `Is Event`).
+4. Looker Studio will scan GA4 and display newly discovered dimensions (e.g., `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`).
 5. Click **Apply** and then **Done** (top right).
 
 *Note: GA4 custom dimensions can take up to 24-48 hours after registration to begin returning historical data in Looker Studio, though realtime counts in GA4 start sooner.*
@@ -230,8 +236,14 @@ To focus your charts on race data:
 - **Metric**: `Event count`.
 - Shows the split between multi-race events and standalone individual races.
 
-#### 5. Combined Race Overview Table
+#### 5. Step-Ups Usage Breakdown (Donut / Pie Chart or Bar Chart)
+- **Chart Type**: Pie chart or Donut chart.
+- **Dimension**: `Has Step-Ups` (or custom formula: `IF(Has Step-Ups = "true", "Step-Ups Used", "No Step-Ups")`).
+- **Metric**: `Event count`.
+- Shows the proportion of races run with step-up ladders configured vs standard rotations.
+
+#### 6. Combined Race Overview Table
 - **Chart Type**: Table.
-- **Dimensions**: `Date`, `Hardware Interface`, `Fuel System`, `Groups Enabled`, `Has Season`, `Is Event`.
+- **Dimensions**: `Date`, `Hardware Interface`, `Fuel System`, `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`.
 - **Metric**: `Event count`, `Total users`.
 - Gives a comprehensive operational breakdown of how users configure their race days.
