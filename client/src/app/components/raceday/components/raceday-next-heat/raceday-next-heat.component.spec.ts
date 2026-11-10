@@ -20,7 +20,14 @@ describe("RacedayNextHeatComponent", () => {
   let originalOnError: any;
 
   beforeEach(async () => {
-    mockTranslationService.translate.and.callFake((key: string) => key);
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (key === "HL_LANE_TAG" && params) {
+          return `L${params.lane}`;
+        }
+        return key;
+      },
+    );
     roleSubject = new BehaviorSubject<string>("VIEWER");
 
     // Suppress ResizeObserver loop errors in tests

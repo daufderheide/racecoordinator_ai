@@ -895,7 +895,10 @@
                                           "
                                           [style.color]="lane.foreground_color"
                                         >
-                                          L{{ laneIdx + 1 }}
+                                          {{
+                                            "HL_LANE_TAG"
+                                              | translate: { lane: laneIdx + 1 }
+                                          }}
                                         </div>
                                         <input
                                           type="color"

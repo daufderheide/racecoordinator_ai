@@ -46,6 +46,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { LoggerService } from "@app/services/logger.service";
+import { TranslationService } from "@app/services/translation.service";
 
 @Component({
   standalone: true,
@@ -102,6 +103,7 @@ export class RacedayAbsoluteWidgetComponent
 
   private customWidgetService = inject(CustomWidgetService, { optional: true });
   private logger = inject(LoggerService, { optional: true });
+  private translationService = inject(TranslationService, { optional: true });
   private widgetSub?: Subscription;
 
   get isSelected(): boolean {
@@ -323,6 +325,9 @@ export class RacedayAbsoluteWidgetComponent
             ? s["targetIndex"]
             : 0) + 1;
       const mode = s["bindingMode"] || "lane";
+      const laneTag =
+        this.translationService?.translate("HL_LANE_TAG", { lane: idx }) ||
+        `L${idx}`;
       const prefix =
         mode === "position"
           ? `P${idx}`
@@ -330,7 +335,7 @@ export class RacedayAbsoluteWidgetComponent
             ? `OP${idx}`
             : mode === "seed"
               ? `S${idx}`
-              : `L${idx}`;
+              : laneTag;
       return col ? `${prefix} · ${col}` : prefix;
     }
     return w.widgetType;

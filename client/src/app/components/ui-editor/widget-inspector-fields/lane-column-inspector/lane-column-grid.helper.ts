@@ -648,7 +648,10 @@ export class LaneColumnGridHelper {
         "Station Driver"
       );
     }
-    return `Lane ${idx}`;
+    return (
+      translationService?.translate?.("DR_LABEL_LANE", { lane: idx }) ||
+      `Lane ${idx}`
+    );
   }
 
   public static getAvailableIndices(

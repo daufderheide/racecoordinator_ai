@@ -310,6 +310,23 @@ describe("LaneColumnGridHelper", () => {
       expect(LaneColumnGridHelper.getCellBreadcrumbLabel(settings, false)).toBe(
         "Lane 1",
       );
+      const mockTranslator = {
+        translate: jasmine
+          .createSpy("translate")
+          .and.callFake((key: string, params?: any) =>
+            key === "DR_LABEL_LANE" ? `Baan ${params?.lane}` : key,
+          ),
+      };
+      expect(
+        LaneColumnGridHelper.getCellBreadcrumbLabel(
+          settings,
+          false,
+          mockTranslator,
+        ),
+      ).toBe("Baan 1");
+      expect(mockTranslator.translate).toHaveBeenCalledWith("DR_LABEL_LANE", {
+        lane: 1,
+      });
       settings.bindingMode = "hostLane";
       expect(LaneColumnGridHelper.getCellBreadcrumbLabel(settings, false)).toBe(
         "Station Lane",

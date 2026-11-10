@@ -17,7 +17,12 @@ describe("RacedayHeatDriversComponent", () => {
     mockTranslationService = {
       translate: jasmine
         .createSpy("translate")
-        .and.callFake((key: string) => key),
+        .and.callFake((key: string, params?: any) => {
+          if (key === "HL_LANE_TAG" && params) {
+            return `L${params.lane}`;
+          }
+          return key;
+        }),
     };
 
     await TestBed.configureTestingModule({
@@ -297,6 +302,32 @@ describe("RacedayHeatDriversComponent", () => {
         laneIndex: 1,
       };
       expect(component.trackByDriver(1, hd)).toBe("lane-1");
+    });
+
+    it("should localize lane badge using HL_LANE_TAG in Dutch (e.g. B1)", () => {
+      mockTranslationService.translate.and.callFake(
+        (key: string, params?: any) => {
+          if (key === "HL_LANE_TAG" && params) {
+            return `B${params.lane}`;
+          }
+          return key;
+        },
+      );
+      componentRef.setInput("type", "next-heat");
+      componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+      componentRef.setInput("heats", [
+        { heatNumber: 1, heatDrivers: [] },
+        {
+          heatNumber: 2,
+          heatDrivers: [
+            { driver: { name: "Speedy", isEmpty: () => false }, laneIndex: 0 },
+          ],
+        },
+      ]);
+      fixture.detectChanges();
+      const badgeEl = fixture.nativeElement.querySelector(".lane-badge");
+      expect(badgeEl).toBeTruthy();
+      expect(badgeEl.textContent.trim()).toBe("B1");
     });
   });
 });

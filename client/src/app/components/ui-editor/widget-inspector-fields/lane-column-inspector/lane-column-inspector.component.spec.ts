@@ -15,7 +15,14 @@ describe("LaneColumnInspectorComponent", () => {
   let mockSettings: any;
 
   beforeEach(async () => {
-    mockTranslationService.translate.and.callFake((key: string) => key);
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: Record<string, any>) => {
+        if (key === "DR_LABEL_LANE" && params?.["lane"] != null) {
+          return `Lane ${params["lane"]}`;
+        }
+        return key;
+      },
+    );
 
     const fontSpy = jasmine.createSpyObj("FontService", ["loadLocalFonts"], {
       availableFonts: () => ["Font A", "Font B"],
@@ -336,6 +343,25 @@ describe("LaneColumnInspectorComponent", () => {
     expect(component.gridBreadcrumbLabel).toBe("Grid (4 Lanes)");
     expect(component.columnBreadcrumbLabel).toBe("Driver");
     expect(component.cellBreadcrumbLabel).toBe("Lane 1");
+
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: Record<string, any>) => {
+        if (key === "DR_LABEL_LANE" && params?.["lane"] != null) {
+          return `Baan ${params["lane"]}`;
+        }
+        return key;
+      },
+    );
+    expect(component.cellBreadcrumbLabel).toBe("Baan 1");
+
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: Record<string, any>) => {
+        if (key === "DR_LABEL_LANE" && params?.["lane"] != null) {
+          return `Lane ${params["lane"]}`;
+        }
+        return key;
+      },
+    );
 
     const scopeNav = fixture.debugElement.query(By.css(".grid-scope-nav"));
     expect(scopeNav).toBeTruthy();
