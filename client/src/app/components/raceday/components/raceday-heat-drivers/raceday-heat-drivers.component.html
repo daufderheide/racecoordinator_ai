@@ -182,7 +182,7 @@
           "
           style="flex-shrink: 0; margin-left: 0.5em"
         >
-          L{{ hd.laneIndex + 1 }}
+          {{ "HL_LANE_TAG" | translate: { lane: hd.laneIndex + 1 } }}
         </span>
       </div>
     } @empty {

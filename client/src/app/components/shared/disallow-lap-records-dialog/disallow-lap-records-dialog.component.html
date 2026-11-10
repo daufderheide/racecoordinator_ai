@@ -522,7 +522,9 @@
                           [style.backgroundColor]="lap.laneColor"
                         ></span>
                       }
-                      <span class="lane-label">L{{ lap.laneIndex + 1 }}</span>
+                      <span class="lane-label">{{
+                        "HL_LANE_TAG" | translate: { lane: lap.laneIndex + 1 }
+                      }}</span>
                     </span>
                   </div>
 

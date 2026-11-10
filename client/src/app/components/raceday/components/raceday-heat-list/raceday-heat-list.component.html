@@ -293,7 +293,9 @@
                   "
                 >
                   <div class="lane-badge-header">
-                    <span class="lane-badge-tag">L{{ lane.laneNumber }}</span>
+                    <span class="lane-badge-tag">{{
+                      "HL_LANE_TAG" | translate: { lane: lane.laneNumber }
+                    }}</span>
                   </div>
                   <div class="lane-driver-info">
                     <span

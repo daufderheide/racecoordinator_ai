@@ -17,6 +17,12 @@ public class MockProtocolListener implements ProtocolListener {
   public InterfaceEvent lastEvent;
   public List<MockSegment> segments = new ArrayList<>();
   public List<CarData> carData = new ArrayList<>();
+  public boolean fuelRace = false;
+
+  @Override
+  public boolean isFuelRace() {
+    return fuelRace;
+  }
 
   public static class MockSegment {
 

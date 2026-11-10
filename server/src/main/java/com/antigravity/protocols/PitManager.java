@@ -6,6 +6,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
@@ -31,6 +32,7 @@ public class PitManager {
   private final Supplier<ProtocolListener> listenerSupplier;
   private final LongSupplier timeSupplier;
   private final Supplier<ScheduledExecutorService> schedulerSupplier;
+  private final BooleanSupplier isFuelRaceSupplier;
 
   private ScheduledExecutorService internalScheduler;
   private ScheduledFuture<?> refuelFuture;
@@ -40,7 +42,13 @@ public class PitManager {
       int numLanes,
       Function<Integer, Boolean> hasPitInConfiguredSupplier,
       Supplier<ProtocolListener> listenerSupplier) {
-    this(numLanes, hasPitInConfiguredSupplier, listenerSupplier, System::currentTimeMillis, null);
+    this(
+        numLanes,
+        hasPitInConfiguredSupplier,
+        listenerSupplier,
+        System::currentTimeMillis,
+        null,
+        null);
   }
 
   public PitManager(
@@ -49,6 +57,22 @@ public class PitManager {
       Supplier<ProtocolListener> listenerSupplier,
       LongSupplier timeSupplier,
       Supplier<ScheduledExecutorService> schedulerSupplier) {
+    this(
+        numLanes,
+        hasPitInConfiguredSupplier,
+        listenerSupplier,
+        timeSupplier,
+        schedulerSupplier,
+        null);
+  }
+
+  public PitManager(
+      int numLanes,
+      Function<Integer, Boolean> hasPitInConfiguredSupplier,
+      Supplier<ProtocolListener> listenerSupplier,
+      LongSupplier timeSupplier,
+      Supplier<ScheduledExecutorService> schedulerSupplier,
+      BooleanSupplier isFuelRaceSupplier) {
     this.numLanes = Math.max(0, numLanes);
     this.laneInPits = new boolean[this.numLanes];
     this.lastPitOutActive = new boolean[this.numLanes];
@@ -59,6 +83,17 @@ public class PitManager {
     this.listenerSupplier = listenerSupplier != null ? listenerSupplier : () -> null;
     this.timeSupplier = timeSupplier != null ? timeSupplier : System::currentTimeMillis;
     this.schedulerSupplier = schedulerSupplier;
+    this.isFuelRaceSupplier =
+        isFuelRaceSupplier != null
+            ? isFuelRaceSupplier
+            : () -> {
+              ProtocolListener listener = this.listenerSupplier.get();
+              return listener != null && listener.isFuelRace();
+            };
+  }
+
+  public boolean isFuelRace() {
+    return isFuelRaceSupplier != null && isFuelRaceSupplier.getAsBoolean();
   }
 
   public synchronized void start() {
@@ -213,8 +248,10 @@ public class PitManager {
       return;
     }
     if (laneInPits[laneIndex] != inPits) {
-      logger.info(
-          "updatePitState: Lane {} transition to {}", laneIndex, inPits ? "IN_PITS" : "OUT_PITS");
+      if (isFuelRace()) {
+        logger.debug(
+            "updatePitState: Lane {} transition to {}", laneIndex, inPits ? "IN_PITS" : "OUT_PITS");
+      }
       laneInPits[laneIndex] = inPits;
 
       ProtocolListener listener = listenerSupplier.get();

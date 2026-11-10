@@ -211,7 +211,10 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
       }
 
       // Lane badge text
-      const badgeText = `L${hd.laneIndex + 1}`;
+      const badgeText =
+        this.translationService.translate("HL_LANE_TAG", {
+          lane: hd.laneIndex + 1,
+        }) || `L${hd.laneIndex + 1}`;
       context.font = `bold 87.5px ${laneFontFamily}`;
       const badgeTextWidth = context.measureText(badgeText).width || 1;
       const badgeWidth = badgeTextWidth + 105; // text width + padding

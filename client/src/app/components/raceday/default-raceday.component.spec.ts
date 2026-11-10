@@ -54,6 +54,7 @@ import { AuthService } from "@app/services/auth.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import * as _audio from "@app/utils/audio";
 
+import { RacedayTimedAudioHelper } from "./helpers/raceday-timed-audio.helper";
 import { LaneGridAnimationHelper } from "./utils/lane-grid-animation.helper";
 import { RacedayLayoutUtils } from "./utils/raceday-layout.utils";
 
@@ -8088,6 +8089,179 @@ describe("DefaultRacedayComponent", () => {
         undefined,
         { widgetType: "countdown" },
       );
+    });
+
+    describe("RacedayTimedAudioHelper diagnostics and logging", () => {
+      beforeEach(() => {
+        mockLogger.debug.calls.reset();
+        mockLogger.info.calls.reset();
+        mockLogger.warn.calls.reset();
+      });
+
+      it("should log debug when seconds_left slot is not configured or disabled", () => {
+        mockThemeService.resolveAudioConfig.and.returnValue(null);
+
+        const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
+          component,
+          30,
+          "remaining",
+        );
+
+        expect(result).toBeFalse();
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          jasmine.stringMatching(
+            /Seconds left \(remaining\) theme slot 'audio\.seconds_left' is not configured or disabled/,
+          ),
+        );
+        expect(mockLogger.warn).not.toHaveBeenCalled();
+      });
+
+      it("should log debug when seconds_left slot is configured as single sound instead of audio_set", () => {
+        mockThemeService.resolveAudioConfig.and.returnValue({
+          type: "preset",
+          url: "preset-sound",
+        });
+
+        const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
+          component,
+          30,
+          "remaining",
+        );
+
+        expect(result).toBeFalse();
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          jasmine.stringMatching(
+            /is configured as single sound, not an audio set/,
+          ),
+        );
+        expect(mockLogger.warn).not.toHaveBeenCalled();
+      });
+
+      it("should log debug when audio set has no entry for requested threshold", () => {
+        mockThemeService.resolveAudioConfig.and.returnValue({
+          type: "audio_set",
+          url: "partial-audio-set",
+        });
+        component["assets"] = [
+          {
+            entity_id: "partial-audio-set",
+            name: "Partial Set",
+            type: "audio_set",
+            audio_entries: [
+              {
+                time_seconds: 60,
+                type: "preset",
+                url: "/assets/60.mp3",
+                trigger_mode: "remaining",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
+          component,
+          30,
+          "remaining",
+        );
+
+        expect(result).toBeFalse();
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          jasmine.stringMatching(
+            /threshold 30s has no entry configured in audio set 'Partial Set'/,
+          ),
+        );
+        expect(mockLogger.warn).not.toHaveBeenCalled();
+      });
+
+      it("should log debug when audio set entry is explicitly disabled (type none)", () => {
+        mockThemeService.resolveAudioConfig.and.returnValue({
+          type: "audio_set",
+          url: "disabled-entry-set",
+        });
+        component["assets"] = [
+          {
+            entity_id: "disabled-entry-set",
+            type: "audio_set",
+            audio_entries: [
+              {
+                time_seconds: 30,
+                type: "none",
+                trigger_mode: "remaining",
+              },
+            ],
+          } as any,
+        ];
+
+        const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
+          component,
+          30,
+          "remaining",
+        );
+
+        expect(result).toBeFalse();
+        expect(mockLogger.debug).toHaveBeenCalledWith(
+          jasmine.stringMatching(
+            /threshold 30s audio entry is disabled \(type: 'none'\)/,
+          ),
+        );
+        expect(mockLogger.warn).not.toHaveBeenCalled();
+      });
+
+      it("should log warn when referenced audio set asset is not found", () => {
+        mockThemeService.resolveAudioConfig.and.returnValue({
+          type: "audio_set",
+          url: "missing-asset-id",
+        });
+        component["assets"] = [];
+
+        const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
+          component,
+          30,
+          "remaining",
+        );
+
+        expect(result).toBeFalse();
+        expect(mockLogger.warn).toHaveBeenCalledWith(
+          jasmine.stringMatching(
+            /audio set asset 'missing-asset-id' not found in loaded assets/,
+          ),
+        );
+      });
+
+      it("should log warn when audio manager drops callout", () => {
+        mockThemeService.resolveAudioConfig.and.returnValue({
+          type: "audio_set",
+          url: "valid-set",
+        });
+        component["assets"] = [
+          {
+            entity_id: "valid-set",
+            type: "audio_set",
+            audio_entries: [
+              {
+                time_seconds: 30,
+                type: "tts",
+                text: "Thirty seconds remaining",
+                trigger_mode: "remaining",
+              },
+            ],
+          } as any,
+        ];
+        spyOn(component["audioService"], "playCallout").and.returnValue(false);
+
+        const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
+          component,
+          30,
+          "remaining",
+        );
+
+        expect(result).toBeFalse();
+        expect(mockLogger.warn).toHaveBeenCalledWith(
+          jasmine.stringMatching(
+            /threshold 30s was dropped by audio manager \(channel busy, cadence spacing, or UI relevance\)/,
+          ),
+        );
+      });
     });
 
     it("should preload countdown audio entries across seconds 0 through 5", () => {

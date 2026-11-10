@@ -23,7 +23,14 @@ describe("RacedayAbsoluteWidgetComponent", () => {
   let mockWidget: AbsoluteWidgetNode;
 
   beforeEach(async () => {
-    mockTranslationService.translate.and.callFake((key: string) => key);
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: Record<string, any>) => {
+        if (key === "HL_LANE_TAG" && params?.["lane"] != null) {
+          return `L${params["lane"]}`;
+        }
+        return key;
+      },
+    );
 
     mockWidget = {
       id: "test-widget",
@@ -819,6 +826,25 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       };
       fixture.componentRef.setInput("widget", laneWidget);
       expect(component.widgetLabel).toBe("L3 · LAST LAP TIME");
+
+      mockTranslationService.translate.and.callFake(
+        (key: string, params?: Record<string, any>) => {
+          if (key === "HL_LANE_TAG" && params?.["lane"] != null) {
+            return `B${params["lane"]}`;
+          }
+          return key;
+        },
+      );
+      expect(component.widgetLabel).toBe("B3 · LAST LAP TIME");
+
+      mockTranslationService.translate.and.callFake(
+        (key: string, params?: Record<string, any>) => {
+          if (key === "HL_LANE_TAG" && params?.["lane"] != null) {
+            return `L${params["lane"]}`;
+          }
+          return key;
+        },
+      );
 
       const posWidget = {
         ...mockWidget,

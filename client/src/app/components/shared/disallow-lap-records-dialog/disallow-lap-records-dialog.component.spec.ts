@@ -104,7 +104,12 @@ describe("DisallowLapRecordsDialogComponent", () => {
     };
 
     const mockTranslationService = {
-      translate: (key: string) => key,
+      translate: (key: string, params?: any) => {
+        if (key === "HL_LANE_TAG" && params) {
+          return `L${params.lane}`;
+        }
+        return key;
+      },
       get: (key: string) => of(key),
     };
 
@@ -1476,5 +1481,12 @@ describe("DisallowLapRecordsDialogComponent", () => {
       "Bob",
       "Charlie",
     ]);
+  });
+
+  it("should render localized lane label using HL_LANE_TAG", () => {
+    fixture.detectChanges();
+    const laneLabels = fixture.nativeElement.querySelectorAll(".lane-label");
+    expect(laneLabels.length).toBeGreaterThan(0);
+    expect(laneLabels[0].textContent.trim()).toBe("L1");
   });
 });

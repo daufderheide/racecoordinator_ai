@@ -6,7 +6,16 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
+import { TranslationService } from "@app/services/translation.service";
+import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
+import deJson from "../../../../../assets/i18n/de.json";
+import enJson from "../../../../../assets/i18n/en.json";
+import esJson from "../../../../../assets/i18n/es.json";
+import frJson from "../../../../../assets/i18n/fr.json";
+import itJson from "../../../../../assets/i18n/it.json";
+import nlJson from "../../../../../assets/i18n/nl.json";
+import ptJson from "../../../../../assets/i18n/pt.json";
 import { RacedayHeatListComponent } from "./raceday-heat-list.component";
 
 describe("RacedayHeatListComponent", () => {
@@ -106,11 +115,21 @@ describe("RacedayHeatListComponent", () => {
       formattedTime: formattedTimeSubject.value,
     };
 
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (key === "HL_LANE_TAG" && params) {
+          return `L${params.lane}`;
+        }
+        return key;
+      },
+    );
+
     await TestBed.configureTestingModule({
       imports: [RacedayHeatListComponent, TranslatePipe],
       providers: [
         { provide: RaceFlagService, useValue: mockRaceFlagService },
         { provide: RaceTimeService, useValue: mockRaceTimeService },
+        { provide: TranslationService, useValue: mockTranslationService },
       ],
     }).compileComponents();
 
@@ -1805,6 +1824,55 @@ describe("RacedayHeatListComponent", () => {
       expect(heat3.querySelector(".heat-summary-table")).toBeTruthy();
       const heat3Row = heat3.querySelector(".summary-lane-row") as HTMLElement;
       expect(heat3Row.style.backgroundColor).toBe("");
+    });
+  });
+
+  describe("Lane Tag Localization", () => {
+    const i18nFiles = [
+      { lang: "en", json: enJson, expected: "L{{lane}}" },
+      { lang: "nl", json: nlJson, expected: "B{{lane}}" },
+      { lang: "de", json: deJson, expected: "S{{lane}}" },
+      { lang: "es", json: esJson, expected: "C{{lane}}" },
+      { lang: "fr", json: frJson, expected: "V{{lane}}" },
+      { lang: "it", json: itJson, expected: "C{{lane}}" },
+      { lang: "pt", json: ptJson, expected: "P{{lane}}" },
+    ];
+
+    it("should define HL_LANE_TAG correctly across all 7 supported languages", () => {
+      i18nFiles.forEach(({ lang, json, expected }) => {
+        expect((json as any).HL_LANE_TAG)
+          .withContext(`Incorrect or missing HL_LANE_TAG in ${lang}.json`)
+          .toBe(expected);
+      });
+    });
+
+    it("should display translated lane tags (e.g. B1, B2 in Dutch)", () => {
+      mockTranslationService.translate.and.callFake(
+        (key: string, params?: any) => {
+          if (key === "HL_LANE_TAG" && params) {
+            return `B${params.lane}`;
+          }
+          return key;
+        },
+      );
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        scaleMode: "window",
+        customSettings: {
+          showActiveSummary: false,
+          showCompletedSummary: false,
+        },
+      });
+      fixture.detectChanges();
+
+      const laneBadges =
+        fixture.nativeElement.querySelectorAll(".lane-badge-item");
+      expect(laneBadges.length).toBeGreaterThan(0);
+      const firstTag = laneBadges[0].querySelector(".lane-badge-tag");
+      const secondTag = laneBadges[1].querySelector(".lane-badge-tag");
+
+      expect(firstTag.textContent.trim()).toBe("B1");
+      expect(secondTag.textContent.trim()).toBe("B2");
     });
   });
 });
