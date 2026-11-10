@@ -66,6 +66,7 @@ describe("RaceHistoryDialogComponent", () => {
       "loadRaceHistory",
       "exportRaceHistoryToCsv",
       "updateHistoryLapSections",
+      "resetRaceRecords",
     ]);
     mockDataService.getAllFinishedRaceHistory.and.returnValue(
       of(mockHistories),
@@ -74,6 +75,7 @@ describe("RaceHistoryDialogComponent", () => {
     mockDataService.loadRaceHistory.and.returnValue(of({} as any));
     mockDataService.exportRaceHistoryToCsv.and.returnValue(of("csv data"));
     mockDataService.updateHistoryLapSections.and.returnValue(of({} as any));
+    mockDataService.resetRaceRecords.and.returnValue(of(undefined as any));
 
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
 
@@ -734,6 +736,127 @@ describe("RaceHistoryDialogComponent", () => {
       expect(groups.length).toBe(1);
       expect(groups[0].races.length).toBe(1);
       expect(groups[0].races[0]._id).toBe("rec_edited");
+    });
+  });
+
+  describe("Reset Race Records", () => {
+    it("should render reset button with correct disabled state based on admin status", () => {
+      roleSubject.next(Role.VIEWER);
+      fixture.detectChanges();
+
+      const resetBtns =
+        fixture.nativeElement.querySelectorAll(".btn-reset-records");
+      expect(resetBtns.length).toBeGreaterThan(0);
+      expect(resetBtns[0].disabled).toBeTrue();
+
+      roleSubject.next(Role.ADMIN);
+      fixture.detectChanges();
+      expect(resetBtns[0].disabled).toBeFalse();
+    });
+
+    it("should return correct tooltip based on admin status", () => {
+      component.isAdmin = true;
+      expect(component.getResetTooltip()).toBe("RM_BTN_RESET_RECORDS");
+
+      component.isAdmin = false;
+      expect(component.getResetTooltip()).toBe("RM_RESET_ADMIN_ONLY_TOOLTIP");
+    });
+
+    it("should open reset confirmation modal when admin triggers onResetRecords", () => {
+      roleSubject.next(Role.ADMIN);
+      fixture.detectChanges();
+
+      const group = component.filteredHistories[0];
+      component.onResetRecords(group);
+
+      expect(component.showResetConfirmation).toBeTrue();
+      expect(component.resetRaceName).toBe(group.raceName);
+      expect(component.resetRaceEntityId).toBe(
+        component.getRaceEntityId(group),
+      );
+    });
+
+    it("should not open reset confirmation modal if user is not admin", () => {
+      roleSubject.next(Role.VIEWER);
+      fixture.detectChanges();
+
+      const group = component.filteredHistories[0];
+      component.onResetRecords(group);
+
+      expect(component.showResetConfirmation).toBeFalse();
+    });
+
+    it("should cancel reset when onCancelReset is called", () => {
+      component.showResetConfirmation = true;
+      component.resetRaceEntityId = "race_1";
+
+      component.onCancelReset();
+
+      expect(component.showResetConfirmation).toBeFalse();
+      expect(component.resetRaceEntityId).toBe("");
+    });
+
+    it("should call dataService.resetRaceRecords and show success modal on confirmation", () => {
+      spyOn(component, "loadHistories").and.callThrough();
+      component.resetRaceEntityId = "race_1";
+      component.resetRaceName = "Grand Prix A";
+      component.showResetConfirmation = true;
+
+      component.onConfirmReset();
+
+      expect(component.showResetConfirmation).toBeFalse();
+      expect(mockDataService.resetRaceRecords).toHaveBeenCalledWith("race_1");
+      expect(component.showResetSuccess).toBeTrue();
+      expect(component.loadHistories).toHaveBeenCalled();
+    });
+
+    it("should handle error during resetRaceRecords", () => {
+      mockDataService.resetRaceRecords.and.returnValue(
+        throwError(() => new Error("Reset failed")),
+      );
+      component.resetRaceEntityId = "race_1";
+
+      component.onConfirmReset();
+
+      expect(component.isResetting).toBeFalse();
+      expect(component.showResetSuccess).toBeFalse();
+    });
+
+    it("should close success modal on onCloseResetSuccess", () => {
+      component.showResetSuccess = true;
+      component.resetRaceName = "Grand Prix A";
+      component.resetRaceEntityId = "race_1";
+
+      component.onCloseResetSuccess();
+
+      expect(component.showResetSuccess).toBeFalse();
+      expect(component.resetRaceName).toBe("");
+      expect(component.resetRaceEntityId).toBe("");
+    });
+
+    it("should correctly resolve raceEntityId from group", () => {
+      expect(component.getRaceEntityId(null as any)).toBe("");
+      expect(
+        component.getRaceEntityId({ raceEntityId: "custom_id" } as any),
+      ).toBe("custom_id");
+      expect(
+        component.getRaceEntityId({
+          raceName: "My Race",
+          races: [{ original_entity_id: "orig_1" }],
+        } as any),
+      ).toBe("orig_1");
+      expect(
+        component.getRaceEntityId({
+          raceName: "My Race",
+          races: [{ model: { entity_id: "model_eid" } }],
+        } as any),
+      ).toBe("model_eid");
+      expect(
+        component.getRaceEntityId({
+          raceName: "My Race",
+          races: [{ entity_id: "eid_1" }],
+        } as any),
+      ).toBe("eid_1");
     });
   });
 });

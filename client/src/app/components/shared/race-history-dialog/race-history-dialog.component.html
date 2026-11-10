@@ -157,11 +157,26 @@
                     <button
                       type="button"
                       class="btn-action btn-edit-laps"
-                      [disabled]="isLoadingDetails"
+                      [disabled]="isLoadingDetails || isResetting"
                       (click)="editRaceLaps(group)"
                     >
                       <span class="material-icons btn-icon">edit_note</span>
                       <span>{{ "RHD_BTN_EDIT_LAPS" | translate }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-reset-records danger"
+                      [disabled]="
+                        isLoadingDetails ||
+                        !isAdmin ||
+                        isResetting ||
+                        !getRaceEntityId(group)
+                      "
+                      (click)="onResetRecords(group)"
+                      [title]="getResetTooltip()"
+                    >
+                      <span class="material-icons btn-icon">restart_alt</span>
+                      <span>{{ "RHD_BTN_RESET_RECORDS" | translate }}</span>
                     </button>
                   </div>
                 </div>
@@ -213,3 +228,24 @@
     (close)="closeDisallowDialog()"
   ></app-disallow-lap-records-dialog>
 }
+
+<app-confirmation-modal
+  [visible]="showResetConfirmation"
+  [title]="'RM_CONFIRM_RESET_RECORDS_TITLE' | translate"
+  [message]="
+    'RM_CONFIRM_RESET_RECORDS_MSG' | translate: { name: resetRaceName }
+  "
+  (confirm)="onConfirmReset()"
+  (cancel)="onCancelReset()"
+>
+</app-confirmation-modal>
+
+<app-acknowledgement-modal
+  [visible]="showResetSuccess"
+  [title]="'RM_SUCCESS_RESET_RECORDS_TITLE' | translate"
+  [message]="
+    'RM_SUCCESS_RESET_RECORDS_MSG' | translate: { name: resetRaceName }
+  "
+  (acknowledge)="onCloseResetSuccess()"
+>
+</app-acknowledgement-modal>

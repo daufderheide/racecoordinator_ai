@@ -8,6 +8,7 @@ export abstract class RaceHistoryDialogHarnessBase {
     searchInput: ".search-input",
     clearSearchBtn: ".clear-search-btn",
     raceCards: ".race-card",
+    resetRecordsBtns: ".btn-reset-records",
     emptyState: ".empty-state",
     loadingState: ".loading-state",
   };

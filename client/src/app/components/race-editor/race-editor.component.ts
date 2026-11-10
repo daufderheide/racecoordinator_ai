@@ -2,15 +2,12 @@ import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
-  computed,
   ElementRef,
   HostListener,
-  inject,
   OnDestroy,
   OnInit,
   ViewChild,
 } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
@@ -34,11 +31,9 @@ import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
-import { Role } from "@app/models/role";
 import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { AuthService } from "@app/services/auth.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -210,39 +205,6 @@ export class RaceEditorComponent
   showAckModal: boolean = false;
   ackModalTitle: string = "";
   ackModalMessage: string = "";
-
-  private authService = inject(AuthService);
-  currentRole = toSignal(this.authService.currentRole$, {
-    initialValue: this.authService.currentRole,
-  });
-  isAdmin = computed(() => this.currentRole() === Role.ADMIN);
-
-  showResetConfirmation: boolean = false;
-  showResetSuccess: boolean = false;
-  resetRaceName: string = "";
-
-  getResetTooltip(): string {
-    return RaceEditorValidationHelper.getResetTooltip(
-      this.isAdmin(),
-      this.translationService,
-    );
-  }
-
-  onResetRecords(event?: Event) {
-    RaceEditorValidationHelper.onResetRecords(this, event);
-  }
-
-  onConfirmReset() {
-    RaceEditorValidationHelper.onConfirmReset(this);
-  }
-
-  onCancelReset() {
-    this.showResetConfirmation = false;
-  }
-
-  onCloseResetSuccess() {
-    this.showResetSuccess = false;
-  }
 
   sectionsExpanded: RaceEditorSections = {
     general: true,

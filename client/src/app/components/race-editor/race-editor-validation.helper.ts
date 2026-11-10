@@ -16,15 +16,11 @@ export interface RaceValidationHost {
   originalRace: any;
   tracks: Track[];
   isSaving: boolean;
-  showResetConfirmation: boolean;
-  showResetSuccess: boolean;
-  resetRaceName: string;
   undoManager: UndoManager<any>;
   dataService: DataService;
   translationService: TranslationService;
   logger: LoggerService;
   cdr: ChangeDetectorRef;
-  isAdmin(): boolean;
   isNameDuplicate(): boolean;
   isRotationInvalid: boolean;
   isNameInvalid: boolean;
@@ -145,45 +141,6 @@ export class RaceEditorValidationHelper {
     }
 
     return reasons;
-  }
-
-  static getResetTooltip(
-    isAdmin: boolean,
-    translationService: TranslationService,
-  ): string {
-    if (!isAdmin) {
-      return translationService.translate("RM_RESET_ADMIN_ONLY_TOOLTIP");
-    }
-    return translationService.translate("RM_BTN_RESET_RECORDS");
-  }
-
-  static onResetRecords(host: RaceValidationHost, event?: Event): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    if (!host.isAdmin() || !host.editingRace?.entity_id) {
-      return;
-    }
-    host.showResetConfirmation = true;
-  }
-
-  static onConfirmReset(host: RaceValidationHost): void {
-    host.showResetConfirmation = false;
-    if (!host.editingRace?.entity_id) {
-      return;
-    }
-    const raceId = host.editingRace.entity_id;
-    host.resetRaceName = host.editingRace.name || "";
-    host.dataService.resetRaceRecords(raceId).subscribe({
-      next: () => {
-        host.showResetSuccess = true;
-        host.cdr.detectChanges();
-      },
-      error: (err) => {
-        host.logger.error("Failed to reset race records:", err);
-        host.cdr.detectChanges();
-      },
-    });
   }
 
   static monitorConnection(host: RaceConnectionHost): Subscription {

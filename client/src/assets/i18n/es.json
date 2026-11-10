@@ -1852,6 +1852,7 @@
   "RHD_BTN_EXPORT_CSV": "Exportar CSV",
   "RHD_BTN_OPEN_RACE": "Abrir carrera",
   "RHD_BTN_OPEN_RESULTS": "Resultados",
+  "RHD_BTN_RESET_RECORDS": "Restablecer registros",
   "RHD_CLOSE_ARIA": "Cerrar",
   "RHD_DEFAULT_RACE_NAME": "Carrera completada",
   "RHD_DRIVERS_COUNT": "{{count}} Pilotos",

@@ -14,6 +14,8 @@ import {
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
@@ -24,10 +26,13 @@ import { isAtLeast, Role } from "@app/models/role";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { LoggerService } from "@app/services/logger.service";
+import { TranslationService } from "@app/services/translation.service";
 
 export interface GroupedRaceHistory {
   id: string;
   raceName: string;
+  raceEntityId?: string;
   isDemo: boolean;
   earliestDate: number | null;
   latestDate: number | null;
@@ -50,11 +55,15 @@ export interface GroupedRaceHistory {
     CustomSelectComponent,
     CustomOptionComponent,
     DisallowLapRecordsDialogComponent,
+    ConfirmationModalComponent,
+    AcknowledgementModalComponent,
   ],
 })
 export class RaceHistoryDialogComponent implements OnInit, OnChanges {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
+  private translationService = inject(TranslationService);
+  private logger = inject(LoggerService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
@@ -63,7 +72,13 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
   close = output<void>();
 
   canEdit: boolean = false;
+  isAdmin: boolean = false;
   isLoading: boolean = false;
+  isResetting: boolean = false;
+  showResetConfirmation: boolean = false;
+  showResetSuccess: boolean = false;
+  resetRaceName: string = "";
+  resetRaceEntityId: string = "";
   raceHistories: any[] = [];
   searchTerm: string = "";
 
@@ -79,6 +94,7 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((role) => {
         this.canEdit = isAtLeast(role, Role.DIRECTOR);
+        this.isAdmin = role === Role.ADMIN;
         this.cdr.markForCheck();
       });
   }
@@ -175,14 +191,13 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
       const isDemo = Boolean(h.is_demo);
       const raceName =
         (h.model?.name || h.name || "").trim() || "Completed Race";
-      const entityId = (
+      const raceEntityId = (
         h.original_entity_id ||
         h.model?.entity_id ||
         h.entity_id ||
-        h.model?.id ||
-        h.id ||
-        raceName
+        ""
       ).trim();
+      const entityId = (raceEntityId || h.model?.id || h.id || raceName).trim();
       const groupKey = `${isDemo ? "demo" : "prod"}:::${entityId}`;
 
       let group = groupsMap.get(groupKey);
@@ -190,6 +205,7 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
         group = {
           id: groupKey,
           raceName,
+          raceEntityId: raceEntityId || undefined,
           isDemo,
           earliestDate: null,
           latestDate: null,
@@ -198,6 +214,8 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
           trackName: h.track?.name,
         };
         groupsMap.set(groupKey, group);
+      } else if (!group.raceEntityId && raceEntityId) {
+        group.raceEntityId = raceEntityId;
       }
 
       const ts = this.getNumericRaceTimestamp(h);
@@ -488,6 +506,81 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  getRaceEntityId(group: GroupedRaceHistory): string {
+    if (!group) return "";
+    if (group.raceEntityId) return group.raceEntityId;
+    for (const r of group.races || []) {
+      const eid =
+        r.original_entity_id ||
+        r.model?.entity_id ||
+        r.entity_id ||
+        r.model?.id ||
+        r.id;
+      if (eid && eid !== group.raceName) {
+        return String(eid).trim();
+      }
+    }
+    return "";
+  }
+
+  getResetTooltip(): string {
+    if (!this.isAdmin) {
+      return this.translationService.translate("RM_RESET_ADMIN_ONLY_TOOLTIP");
+    }
+    return this.translationService.translate("RM_BTN_RESET_RECORDS");
+  }
+
+  onResetRecords(group: GroupedRaceHistory): void {
+    if (!this.isAdmin || !group) {
+      return;
+    }
+    const raceId = this.getRaceEntityId(group);
+    if (!raceId) {
+      return;
+    }
+    this.resetRaceName = group.raceName || "";
+    this.resetRaceEntityId = raceId;
+    this.showResetConfirmation = true;
+    this.cdr.markForCheck();
+  }
+
+  onCancelReset(): void {
+    this.showResetConfirmation = false;
+    this.resetRaceEntityId = "";
+    this.cdr.markForCheck();
+  }
+
+  onConfirmReset(): void {
+    this.showResetConfirmation = false;
+    if (!this.resetRaceEntityId) {
+      return;
+    }
+    const raceId = this.resetRaceEntityId;
+    this.isResetting = true;
+    this.cdr.markForCheck();
+
+    this.dataService.resetRaceRecords(raceId).subscribe({
+      next: () => {
+        this.isResetting = false;
+        this.showResetSuccess = true;
+        this.loadHistories();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isResetting = false;
+        this.logger.error("Failed to reset race records:", err);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  onCloseResetSuccess(): void {
+    this.showResetSuccess = false;
+    this.resetRaceName = "";
+    this.resetRaceEntityId = "";
+    this.cdr.markForCheck();
   }
 
   onDismiss(): void {
