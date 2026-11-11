@@ -138,7 +138,7 @@ Si vous préférez un contrôle manuel ou devez personnaliser votre configuratio
 2. **Configurer les autorisations et l'accès au groupe série** :
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
-   sudo usermod -a -G dialout arduino
+   sudo usermod -a -G dialout,audio arduino
    ```
 
 3. **Installer et enregistrer les services systemd** :
@@ -264,6 +264,50 @@ Si vous souhaitez des indicateurs lumineux visuels sur une configuration Arduino
 > - **Interface principale (MCU Uno Q intégrée)** : Gère les signaux de course critiques en temps réel—capteurs optiques de comptage des tours, temps intermédiaires, boutons d'appel des pilotes et relais principaux d'alimentation de piste—avec une précision inférieure à la milliseconde.
 > - **Interface secondaire (Second Arduino via USB)** : Branchez une carte Arduino standard économique (telle qu'un **Arduino Uno R3**, **Nano**, **Mega 2560**, **RP2040** ou **ESP32**) sur l'un des ports hôtes USB de l'Uno Q. Flashez le sketch standard `racecoordinatorai_sketch.ino` (où FastLED est activé) sur cette deuxième carte.
 > - **Configuration dans l'Éditeur de piste** : Dans l'interface web de Race Coordinator AI, accédez à l'**Éditeur de piste** $\rightarrow$ **Interfaces matérielles** et cliquez sur **Ajouter une interface** pour ajouter le port série du second Arduino (par exemple, `/dev/ttyUSB0` ou `/dev/ttyACM0`). Configurez vos bandeaux lumineux FastLED sur cette seconde interface. Race Coordinator AI orchestre automatiquement les deux cartes de façon synchrone pendant les courses.
+
+---
+
+## Dépannage de la synthèse vocale (TTS) et de l'audio
+
+Race Coordinator AI utilise la Web Speech API du navigateur (`window.speechSynthesis`) pour annoncer les temps au tour, les événements de course et les commentaires des pilotes. Contrairement à Windows ou macOS, Linux (Debian 12 sur l'Uno Q) ne dispose pas de synthétiseur vocal intégré, de sorte que Chromium s'appuie sur **Speech Dispatcher** et **eSpeak NG**.
+
+### Paquets requis
+L'installateur automatisé (`install.sh`) installe ces paquets automatiquement. Si vous avez effectué une installation manuelle ou si le TTS n'émet aucun son, assurez-vous que les paquets vocaux et audio requis sont installés :
+```bash
+sudo apt-get update
+sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
+```
+
+### Options du navigateur en mode kiosque
+En mode kiosque, Chromium est lancé via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Chromium désactive par défaut l'intégration de Speech Dispatcher sous Linux et bloque l'audio avant toute interaction de l'utilisateur, à moins que des options spécifiques ne soient passées. Assurez-vous que votre script `start_kiosk.sh` contient :
+```bash
+  --enable-speech-dispatcher \
+  --autoplay-policy=no-user-gesture-required \
+```
+*(Si vous modifiez `start_kiosk.sh` manuellement, redémarrez ensuite le service du kiosque : `sudo systemctl restart racecoordinatorai-kiosk`).*
+
+### Étapes de dépannage
+1. **Vérifier le mode de fonctionnement et la sortie audio** :
+   - **Mode écran kiosque** : L'audio est diffusé directement depuis l'Uno Q via la liaison USB-C DisplayPort/HDMI vers votre téléviseur/moniteur ou des haut-parleurs USB connectés.
+   - **Client réseau distant** : Si vous accédez à Race Coordinator AI depuis un ordinateur portable, une tablette ou un smartphone sur le réseau local (`http://<hostname>:7070`), l'audio et le TTS sont joués sur **le navigateur et les haut-parleurs de cet appareil**, et non sur la carte Uno Q.
+2. **Vérifier la sortie audio matérielle** :
+   Lancez un test sonore dans le terminal de l'Uno Q pour vérifier que la sortie audio est active et non muette :
+   ```bash
+   speaker-test -t wav -c 2 -l 1
+   ```
+   Si aucun son n'est émis, lancez `alsamixer` dans le terminal pour vérifier que les curseurs de volume Master/PCM/HDMI ne sont pas muets (`[MM]`, appuyez sur `M` pour basculer) et qu'ils sont suffisamment élevés.
+3. **Tester les synthétiseurs vocaux en ligne de commande** :
+   Vérifiez qu'eSpeak NG et Speech Dispatcher fonctionnent au niveau du système d'exploitation :
+   ```bash
+   # Tester la synthèse pure
+   espeak-ng "Testing speech synthesis"
+
+   # Tester Speech Dispatcher (le backend de Chromium)
+   spd-say "Testing speech dispatcher"
+   ```
+   Si `spd-say` renvoie une erreur ou reste bloqué, redémarrez le démon : `pkill -f speech-dispatcher && spd-say "Hello"`.
+4. **Tester dans l'interface web** :
+   Dans l'interface web de Race Coordinator AI, ouvrez **Personnaliser l'interface** (ou **Éditeur de thèmes** $\rightarrow$ **Paramètres audio**). Vérifiez la liste déroulante **Voix TTS** : les voix disponibles doivent apparaître. Cliquez sur **Tester la voix TTS** pour confirmer la restitution vocale.
 
 ---
 

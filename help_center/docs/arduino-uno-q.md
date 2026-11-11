@@ -138,7 +138,7 @@ If you prefer manual control or need to customize your configuration:
 2. **Configure permissions and serial group access**:
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
-   sudo usermod -a -G dialout arduino
+   sudo usermod -a -G dialout,audio arduino
    ```
 
 3. **Install and register systemd services**:
@@ -264,6 +264,50 @@ If you want visual lighting indicators on an Arduino Uno Q setup, you have two o
 > - **Primary Interface (Uno Q Onboard MCU)**: Handles the time-critical racing signals—optical lap timing sensors, sector split timing, driver call buttons, and master track power relays—with sub-millisecond precision.
 > - **Secondary Interface (Second Arduino via USB)**: Plug an inexpensive standard Arduino board (such as an **Arduino Uno R3**, **Nano**, **Mega 2560**, **RP2040**, or **ESP32**) into one of the Uno Q's USB host ports. Flash the standard `racecoordinatorai_sketch.ino` (where FastLED is enabled) to this second board.
 > - **Track Editor Configuration**: In the Race Coordinator AI web UI, navigate to the **Track Editor** $\rightarrow$ **Hardware Interfaces** and click **Add Interface** to add the secondary Arduino's serial port (e.g., `/dev/ttyUSB0` or `/dev/ttyACM0`). Configure your FastLED light strings on the second interface. Race Coordinator AI automatically orchestrates both boards simultaneously during races.
+
+---
+
+## Text-to-Speech (TTS) & Audio Troubleshooting
+
+Race Coordinator AI utilizes the browser's Web Speech API (`window.speechSynthesis`) to announce lap times, race events, and driver commentary. Unlike Windows or macOS, Linux (Debian 12 on the Uno Q) does not have a built-in voice synthesizer, so Chromium relies on **Speech Dispatcher** and **eSpeak NG**.
+
+### Required Packages
+The automated installer (`install.sh`) installs these packages automatically. If you performed a manual setup or TTS produces no sound, ensure the required speech and audio packages are installed:
+```bash
+sudo apt-get update
+sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
+```
+
+### Kiosk Browser Flags
+In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Chromium disables Linux Speech Dispatcher integration by default and blocks audio before user interaction unless specific flags are provided. Ensure your `start_kiosk.sh` includes:
+```bash
+  --enable-speech-dispatcher \
+  --autoplay-policy=no-user-gesture-required \
+```
+*(If you modify `start_kiosk.sh` manually, restart the kiosk display service: `sudo systemctl restart racecoordinatorai-kiosk`).*
+
+### Troubleshooting Steps
+1. **Verify Operating Mode & Audio Output**:
+   - **Kiosk Display Mode**: Audio plays directly from the Uno Q via the USB-C DisplayPort/HDMI connection to your TV/monitor or connected USB speakers.
+   - **Remote Network Client**: If viewing Race Coordinator AI from a laptop, tablet, or phone over the local network (`http://<hostname>:7070`), audio and TTS play through **that device's browser and speakers**, not the Uno Q board.
+2. **Verify Hardware Audio Output**:
+   Run a sound test in the Uno Q terminal to confirm sound output is unmuted and functional:
+   ```bash
+   speaker-test -t wav -c 2 -l 1
+   ```
+   If silent, launch `alsamixer` in the terminal to verify master/PCM/HDMI volume sliders are unmuted (press `M` to toggle unmute) and turned up.
+3. **Test Speech Synthesizers from Command Line**:
+   Verify eSpeak NG and Speech Dispatcher work at the OS level:
+   ```bash
+   # Test raw synthesis
+   espeak-ng "Testing speech synthesis"
+
+   # Test Speech Dispatcher (Chromium's backend)
+   spd-say "Testing speech dispatcher"
+   ```
+   If `spd-say` errors or hangs, restart the daemon: `pkill -f speech-dispatcher && spd-say "Hello"`.
+4. **Test in the Web UI**:
+   In the Race Coordinator AI web UI, open **Customize UI** (or **Theme Editor** $\rightarrow$ **Audio Settings**). Check the **TTS Voice** dropdown—available voices should appear. Click **Test TTS Voice** to confirm playback.
 
 ---
 

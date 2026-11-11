@@ -138,7 +138,7 @@ Se preferir o controle manual ou precisar personalizar sua configuração:
 2. **Configurar permissões e acesso ao grupo serial**:
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
-   sudo usermod -a -G dialout arduino
+   sudo usermod -a -G dialout,audio arduino
    ```
 
 3. **Instalar e registrar serviços systemd**:
@@ -264,6 +264,50 @@ Se desejar indicadores visuais de iluminação em uma instalação com o Arduino
 > - **Interface Principal (MCU integrada do Uno Q)**: Gerencia os sinais críticos da corrida—sensores ópticos de contagem de voltas, tempos de setor, botões de chamada dos pilotos e relés principais de energia da pista—com precisão submilisegundo.
 > - **Interface Secundária (Segundo Arduino via USB)**: Conecte uma placa Arduino padrão econômica (como um **Arduino Uno R3**, **Nano**, **Mega 2560**, **RP2040** ou **ESP32**) a uma das portas host USB do Uno Q. Grave o sketch padrão `racecoordinatorai_sketch.ino` (onde o FastLED está habilitado) nesta segunda placa.
 > - **Configuração no Editor de Pistas**: Na interface web do Race Coordinator AI, navegue até **Editor de Pistas** $\rightarrow$ **Interfaces de Hardware** e clique em **Adicionar Interface** para adicionar a porta serial do segundo Arduino (por exemplo, `/dev/ttyUSB0` ou `/dev/ttyACM0`). Configure as suas fitas de luzes FastLED nesta segunda interface. O Race Coordinator AI orquestra automaticamente ambas as placas de forma simultânea durante as corridas.
+
+---
+
+## Resolução de Problemas de Conversão de Texto em Fala (TTS) e Áudio
+
+O Race Coordinator AI utiliza a Web Speech API do navegador (`window.speechSynthesis`) para anunciar tempos de volta, eventos de corrida e comentários dos pilotos. Ao contrário do Windows ou macOS, o Linux (Debian 12 no Uno Q) não possui um sintetizador de voz integrado, de modo que o Chromium depende do **Speech Dispatcher** e do **eSpeak NG**.
+
+### Pacotes Necessários
+O instalador automatizado (`install.sh`) instala estes pacotes automaticamente. Se você realizou uma instalação manual ou o TTS não emite som, certifique-se de que os pacotes de fala e áudio necessários estejam instalados:
+```bash
+sudo apt-get update
+sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
+```
+
+### Parâmetros do Navegador no Modo Quiosque
+No modo quiosque, o Chromium é iniciado via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. O Chromium desativa a integração com o Speech Dispatcher do Linux por padrão e bloqueia o áudio antes da interação do usuário, a menos que parâmetros específicos sejam fornecidos. Certifique-se de que o seu script `start_kiosk.sh` inclua:
+```bash
+  --enable-speech-dispatcher \
+  --autoplay-policy=no-user-gesture-required \
+```
+*(Se você editar o `start_kiosk.sh` manualmente, reinicie o serviço do quiosque em seguida: `sudo systemctl restart racecoordinatorai-kiosk`).*
+
+### Passos de Resolução de Problemas
+1. **Verificar o Modo de Operação e a Saída de Áudio**:
+   - **Modo de Tela Quiosque**: O áudio é reproduzido diretamente do Uno Q através da conexão USB-C DisplayPort/HDMI para a sua TV/monitor ou caixas de som USB conectadas.
+   - **Cliente de Rede Remoto**: Se estiver visualizando o Race Coordinator AI a partir de um laptop, tablet ou celular na rede local (`http://<hostname>:7070`), o áudio e o TTS serão reproduzidos através do **navegador e das caixas de som desse dispositivo**, não pela placa Uno Q.
+2. **Verificar a Saída de Áudio do Hardware**:
+   Execute um teste de som no terminal do Uno Q para confirmar que a saída de áudio está ativa e não silenciada:
+   ```bash
+   speaker-test -t wav -c 2 -l 1
+   ```
+   Se não ouvir som, execute o `alsamixer` no terminal para verificar se os controles deslizantes de volume Master/PCM/HDMI não estão silenciados (`[MM]`, pressione `M` para alternar) e se estão em um nível adequado.
+3. **Testar os Sintetizadores de Fala na Linha de Comando**:
+   Verifique se o eSpeak NG e o Speech Dispatcher funcionam no nível do sistema operacional:
+   ```bash
+   # Testar a síntese pura
+   espeak-ng "Testing speech synthesis"
+
+   # Testar o Speech Dispatcher (o backend do Chromium)
+   spd-say "Testing speech dispatcher"
+   ```
+   Se o `spd-say` retornar erro ou travar, reinicie o daemon: `pkill -f speech-dispatcher && spd-say "Hello"`.
+4. **Testar na Interface Web**:
+   Na interface web do Race Coordinator AI, abra **Personalizar interface** (ou **Editor de temas** $\rightarrow$ **Configurações de áudio**). Verifique o menu suspenso **Voz de TTS**: as vozes disponíveis devem ser exibidas. Clique em **Testar voz TTS** para confirmar a reprodução.
 
 ---
 
