@@ -196,12 +196,39 @@ export class RacedayTimedAudioHelper {
           defaultAssoc,
         );
       }
+      if (
+        slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_START ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE
+      ) {
+        host.logger?.info(
+          `[AUDIO-SET] Triggering audio set '${slotKey}' at ${timeSeconds}s (${triggerMode}) with priority 'normal'`,
+        );
+        return host.audioService?.playCallout(
+          entryItem.config,
+          "normal",
+          undefined,
+          entryItem.playableUrl,
+          defaultAssoc,
+        );
+      }
+
       const isTimeCallout = slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT;
-      const priority: AudioPriority = isTimeCallout ? "high" : "normal";
+      const isLapsCallout = slotKey === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT;
+      const isUrgent =
+        (isTimeCallout && triggerMode === "remaining" && timeSeconds <= 5) ||
+        (isLapsCallout && triggerMode === "remaining" && timeSeconds <= 1);
+      const priority: AudioPriority = isUrgent
+        ? "urgent"
+        : isTimeCallout
+          ? "high"
+          : "normal";
       host.logger?.info(
         `[AUDIO-SET] Triggering audio set '${slotKey}' at ${timeSeconds}s (${triggerMode}) with priority '${priority}'`,
       );
-      return host.audioService?.playCallout(
+      const calloutFn = host.audioService?.queueCallout
+        ? host.audioService.queueCallout.bind(host.audioService)
+        : host.audioService?.playCallout.bind(host.audioService);
+      return calloutFn(
         entryItem.config,
         priority,
         undefined,

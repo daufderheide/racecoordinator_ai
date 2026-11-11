@@ -383,6 +383,23 @@
   cursor: not-allowed;
 }
 
+.btn-reset-records {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.btn-reset-records:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.btn-reset-records:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .btn-icon {
   font-size: 18px;
 }

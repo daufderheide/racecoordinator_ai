@@ -2981,6 +2981,71 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(emptyCard.textContent).toContain("RDS_NO_SEASON_SELECTED");
     });
 
+    it("should render event summary card with sequence table, wrapped title headers, and race items when selectedEvent is defined", () => {
+      component.races = [
+        {
+          entity_id: "r1",
+          name: "Practice Heat",
+          heat_scoring: { finish_method: "TIMED", finish_value: 0 },
+        } as any,
+        {
+          entity_id: "r2",
+          name: "Main Feature",
+          heat_scoring: { finish_method: "LAP", finish_value: 100 },
+        } as any,
+      ];
+      component.selectedEvent = {
+        entity_id: "e1",
+        name: "Grand Prix Event",
+        auto_advance_time: 45,
+        races: [
+          { race_id: "r1", max_drivers: 0 },
+          { race_id: "r2", max_drivers: 8 },
+        ],
+      } as any;
+      fixture.detectChanges();
+
+      const eventCard = fixture.nativeElement.querySelector(
+        ".event-details-card:not(.season-summary-card)",
+      );
+      expect(eventCard).toBeTruthy();
+      expect(
+        eventCard.querySelector(".event-detail-title").textContent,
+      ).toContain("Grand Prix Event");
+      expect(
+        eventCard.querySelector(".event-detail-sub").textContent,
+      ).toContain("Auto-Advance: 45s");
+
+      const headerTable = eventCard.querySelector(".header-table");
+      expect(headerTable).toBeTruthy();
+      const headers = headerTable.querySelectorAll("th");
+      expect(headers.length).toBe(5);
+      expect(headers[0].textContent.trim()).toBe("#");
+      expect(headers[1].classList.contains("col-name")).toBeTrue();
+      expect(headers[2].classList.contains("col-method")).toBeTrue();
+      expect(headers[3].classList.contains("col-value")).toBeTrue();
+      expect(headers[4].classList.contains("col-drivers")).toBeTrue();
+
+      const bodyTable = eventCard.querySelector(".body-table");
+      expect(bodyTable).toBeTruthy();
+      const rows = bodyTable.querySelectorAll("tbody tr");
+      expect(rows.length).toBe(2);
+      expect(rows[0].querySelector(".col-name").textContent).toContain(
+        "Practice Heat",
+      );
+      expect(rows[0].querySelector(".col-value").textContent).toContain(
+        "GEN_INFINITE",
+      );
+      expect(rows[0].querySelector(".col-drivers").textContent).toContain(
+        "EE_UNLIMITED",
+      );
+      expect(rows[1].querySelector(".col-name").textContent).toContain(
+        "Main Feature",
+      );
+      expect(rows[1].querySelector(".col-value").textContent).toContain("100");
+      expect(rows[1].querySelector(".col-drivers").textContent).toContain("8");
+    });
+
     it("should calculate uniform scale on resize", () => {
       spyOnProperty(window, "innerWidth", "get").and.returnValue(800);
       spyOnProperty(window, "innerHeight", "get").and.returnValue(600);

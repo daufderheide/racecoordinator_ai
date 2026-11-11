@@ -1,4 +1,4 @@
-import { of, throwError } from "rxjs";
+import { of } from "rxjs";
 import { Track } from "@app/models/track";
 import { ConnectionState } from "@app/services/connection-monitor.service";
 
@@ -56,9 +56,6 @@ describe("RaceEditorValidationHelper", () => {
         }),
       ],
       isSaving: false,
-      showResetConfirmation: false,
-      showResetSuccess: false,
-      resetRaceName: "",
       undoManager: {
         hasChanges: jasmine.createSpy("hasChanges").and.returnValue(false),
       } as any,
@@ -66,7 +63,6 @@ describe("RaceEditorValidationHelper", () => {
       translationService: mockTranslationService,
       logger: mockLogger,
       cdr: mockCdr,
-      isAdmin: jasmine.createSpy("isAdmin").and.returnValue(true),
       isNameDuplicate: jasmine
         .createSpy("isNameDuplicate")
         .and.returnValue(false),
@@ -435,50 +431,6 @@ describe("RaceEditorValidationHelper", () => {
       (mockHost.isDirtyState as jasmine.Spy).and.returnValue(true);
       reasons = RaceEditorValidationHelper.getUnsavedReasons(mockHost);
       expect(reasons).toContain("DISCARD_REASON_EXIT_TOO_QUICKLY");
-    });
-  });
-
-  describe("reset records methods", () => {
-    it("should return proper tooltip based on admin status", () => {
-      expect(
-        RaceEditorValidationHelper.getResetTooltip(
-          true,
-          mockTranslationService,
-        ),
-      ).toBe("translated_RM_BTN_RESET_RECORDS");
-      expect(
-        RaceEditorValidationHelper.getResetTooltip(
-          false,
-          mockTranslationService,
-        ),
-      ).toBe("translated_RM_RESET_ADMIN_ONLY_TOOLTIP");
-    });
-
-    it("should open reset confirmation on onResetRecords if admin", () => {
-      const event = { stopPropagation: jasmine.createSpy("stopPropagation") };
-      RaceEditorValidationHelper.onResetRecords(mockHost, event as any);
-      expect(event.stopPropagation).toHaveBeenCalled();
-      expect(mockHost.showResetConfirmation).toBeTrue();
-
-      (mockHost.isAdmin as jasmine.Spy).and.returnValue(false);
-      mockHost.showResetConfirmation = false;
-      RaceEditorValidationHelper.onResetRecords(mockHost);
-      expect(mockHost.showResetConfirmation).toBeFalse();
-    });
-
-    it("should reset records and show success modal", () => {
-      RaceEditorValidationHelper.onConfirmReset(mockHost);
-      expect(mockDataService.resetRaceRecords).toHaveBeenCalledWith("race_1");
-      expect(mockHost.showResetSuccess).toBeTrue();
-      expect(mockCdr.detectChanges).toHaveBeenCalled();
-    });
-
-    it("should handle reset error", () => {
-      mockDataService.resetRaceRecords.and.returnValue(
-        throwError(() => new Error("Reset error")),
-      );
-      RaceEditorValidationHelper.onConfirmReset(mockHost);
-      expect(mockLogger.error).toHaveBeenCalled();
     });
   });
 

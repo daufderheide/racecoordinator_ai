@@ -409,6 +409,16 @@ export class AudioService implements OnDestroy {
       );
     }
 
+    // High priority callouts break through cadence cooldown if no voice is actively speaking
+    if (priority === "high" && !this.activeVoice && this.isSpacingCoolingDown) {
+      this.logger.info(
+        `[AUDIO] High priority callout breaking through cadence cooldown: ${desc}`,
+      );
+      this.clearSpacingTimer();
+      this.executeVoiceCallout(config, priority, context, resolvedUrl);
+      return true;
+    }
+
     // Preempt active lower-priority voice if incoming priority is higher
     if (
       this.activeVoice &&
@@ -454,12 +464,20 @@ export class AudioService implements OnDestroy {
       if (association?.driverId && item.association?.driverId) {
         return item.association.driverId === association.driverId;
       }
+      if (
+        (association?.widgetType === "timer" &&
+          item.association?.widgetType === "timer") ||
+        (association?.widgetType === "countdown" &&
+          item.association?.widgetType === "countdown")
+      ) {
+        return true;
+      }
       return false;
     });
 
     if (existingIndex !== -1) {
       this.logger.info(
-        `[AUDIO] Replacing older queued callout for lane/driver with newer callout: ${desc}`,
+        `[AUDIO] Replacing older queued callout with newer callout: ${desc}`,
       );
       this.calloutQueue[existingIndex] = {
         config,

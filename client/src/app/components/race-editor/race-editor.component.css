@@ -645,51 +645,6 @@
   letter-spacing: 1px;
 }
 
-.section-action-btn {
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: transparent;
-  border: 1px solid transparent;
-  font-family: inherit;
-  margin-left: auto;
-}
-
-.section-action-btn .material-icons {
-  font-size: 1.3rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.section-action-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.section-action-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.section-action-btn.danger {
-  background: transparent;
-  color: #ef4444;
-  border: 1px solid transparent;
-}
-
-.section-action-btn.danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
-}
-
 .expander-icon {
   font-size: 0.8rem;
   color: #38bdf8;
