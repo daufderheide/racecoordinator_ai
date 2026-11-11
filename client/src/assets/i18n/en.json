@@ -1626,6 +1626,7 @@
   "HR_BTN_ADD_LAP_SECTIONS": "Adjust Lap Sections/Time",
   "HR_BTN_RACE_RESULTS": "Race Results",
   "HR_SELECT_HEAT": "Select Heat",
+  "HR_CURRENT_HEAT_BADGE": "Current",
   "RR_BTN_ADD_LAP_SECTIONS": "Adjust Lap Sections/Time",
   "RR_BTN_EXPORT_CSV": "Export CSV",
   "RR_BTN_HEAT_RESULTS": "Heat Results",

@@ -59,14 +59,15 @@
                 class="heat-selector"
                 [ngModel]="selectedHeatIndex"
                 (ngModelChange)="onHeatSelected($event)"
+                [extendToPageBottom]="true"
+                [fitWidestOption]="true"
               >
-                @for (
-                  h of heats;
-                  track h.objectId || $index;
-                  let idx = $index
-                ) {
-                  <app-custom-option [value]="idx">
+                @for (h of selectableHeats; track h.objectId || $index) {
+                  <app-custom-option [value]="getHeatIndex(h)">
                     {{ "HR_TITLE" | translate: { heat: h.heatNumber } }}
+                    @if (isCurrentHeat(h)) {
+                      ({{ "HR_CURRENT_HEAT_BADGE" | translate }})
+                    }
                   </app-custom-option>
                 }
               </app-custom-select>

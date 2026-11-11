@@ -782,6 +782,7 @@
   "HR_NO_HEAT_DATA": "No hay datos de pilotos disponibles para esta manga.",
   "HR_RANKINGS_HEADER": "CLASIFICACIONES",
   "HR_SELECT_HEAT": "Seleccionar manga",
+  "HR_CURRENT_HEAT_BADGE": "Actual",
   "HR_TITLE": "RESULTADOS DE LA MANGA {{heat}}",
   "HR_X_AXIS": "Tiempo Absoluto de Carrera (Segundos)",
   "HR_Y_AXIS": "Tiempo de Vuelta (Segundos)",
