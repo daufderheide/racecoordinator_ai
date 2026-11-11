@@ -108,10 +108,39 @@ The automated installer handles prerequisite checks, directory setup, serial per
 tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
 cd RaceCoordinator_Linux_ARM64
 sudo ./install.sh
-# Or for detailed verbose output:
-# sudo ./install.sh -v
 ```
 *(Note: Any `tar: Ignoring unknown extended header...` warnings are harmless macOS metadata tags and can be safely ignored).*
+
+##### Command-Line Options
+The installer supports optional command-line arguments to override or customize the installation:
+
+| Argument | Description | Default |
+| :--- | :--- | :--- |
+| `--board=<pi\|unoq\|generic>` | Explicitly set target hardware board type. | Auto-detected from hardware (`unoq` on Uno Q) |
+| `--user=<username>` | Linux user account to own files and run background systemd services. | Auto-detected from `$SUDO_USER` (defaults to `arduino` on Uno Q) |
+| `--skip-sketch`, `--skip-mcu` | Skip compiling and uploading the Arduino MCU firmware. | Upload firmware (`false`) |
+| `-v`, `--verbose` | Enable verbose compiler and package installation logging. | Standard output (`false`) |
+| `-h`, `--help` | Display usage and available options. | - |
+
+##### Pre-Flight Configuration Resolution Summary
+Before installing packages, copying files, or modifying services, the installer prints a configuration summary showing exactly how the hardware platform, service account, and firmware actions were resolved:
+```text
+==========================================================
+ Race Coordinator AI Installation Configuration
+==========================================================
+ Hardware Platform: unoq
+   Resolution:      Auto-detected (/proc/device-tree/model: Qualcomm QRB2210...)
+ Service Account:   arduino
+   Resolution:      Detected from sudo invocation ($SUDO_USER)
+   Home Directory:  /home/arduino
+   Account Status:  Account exists (UID: 1000, GID: 1000)
+ Target Directory:  /opt/racecoordinatorai
+ MCU Firmware:      COMPILE & UPLOAD to onboard Uno Q MCU (arduino:zephyr:unoq on 172.17.0.1)
+ Systemd Services:  racecoordinatorai.service, racecoordinatorai-kiosk.service
+ Sudoers Rule:      /etc/sudoers.d/racecoordinatorai (passwordless restart)
+ Web UI Port:       7070
+==========================================================
+```
 
 > [!NOTE] Zephyr Board Core Download & Duration (~5 to 10+ Minutes)
 > During initial setup, `arduino-cli` downloads and unpacks the **Zephyr board core (`arduino:zephyr`)** for the onboard STM32U5 Cortex-M33 MCU. This package contains the full Zephyr Real-Time Operating System, ARM cross-compiler toolchain, and hardware libraries (~500MB+ download and tens of thousands of files).

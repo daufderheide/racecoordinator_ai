@@ -108,10 +108,39 @@ El instalador automatizado gestiona la verificación de requisitos previos, la c
 tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
 cd RaceCoordinator_Linux_ARM64
 sudo ./install.sh
-# O para ver salida detallada:
-# sudo ./install.sh -v
 ```
 *(Nota: Cualquier advertencia del tipo `tar: Ignoring unknown extended header...` son etiquetas de metadatos de macOS inofensivas y se pueden ignorar con seguridad).*
+
+##### Opciones de línea de comandos
+El instalador admite argumentos opcionales por línea de comandos para personalizar o anular la configuración:
+
+| Argumento | Descripción | Valor predeterminado |
+| :--- | :--- | :--- |
+| `--board=<pi\|unoq\|generic>` | Especificar explícitamente el tipo de placa de hardware. | Detectado automáticamente (`unoq` en Uno Q) |
+| `--user=<username>` | Cuenta de usuario de Linux que poseerá los archivos y ejecutará los servicios systemd. | Detectado mediante `$SUDO_USER` (por defecto `arduino` en Uno Q) |
+| `--skip-sketch`, `--skip-mcu` | Omitir la compilación y carga del firmware del microcontrolador. | Cargar firmware (`false`) |
+| `-v`, `--verbose` | Habilitar registro detallado del compilador y de instalación de paquetes. | Salida estándar (`false`) |
+| `-h`, `--help` | Mostrar el menú de ayuda y las opciones disponibles. | - |
+
+##### Resumen de resolución de configuración previo a la instalación
+Antes de instalar paquetes, copiar archivos o modificar servicios, el instalador muestra un resumen claro que detalla cómo se resolvieron la plataforma de hardware, la cuenta de servicio y las acciones de firmware:
+```text
+==========================================================
+ Race Coordinator AI Installation Configuration
+==========================================================
+ Hardware Platform: unoq
+   Resolution:      Auto-detected (/proc/device-tree/model: Qualcomm QRB2210...)
+ Service Account:   arduino
+   Resolution:      Detected from sudo invocation ($SUDO_USER)
+   Home Directory:  /home/arduino
+   Account Status:  Account exists (UID: 1000, GID: 1000)
+ Target Directory:  /opt/racecoordinatorai
+ MCU Firmware:      COMPILE & UPLOAD to onboard Uno Q MCU (arduino:zephyr:unoq on 172.17.0.1)
+ Systemd Services:  racecoordinatorai.service, racecoordinatorai-kiosk.service
+ Sudoers Rule:      /etc/sudoers.d/racecoordinatorai (passwordless restart)
+ Web UI Port:       7070
+==========================================================
+```
 
 > [!NOTE] Descarga y duración del núcleo Zephyr (~5 a 10+ minutos)
 > Durante la instalación inicial, `arduino-cli` descarga y descomprime el **núcleo de placa Zephyr (`arduino:zephyr`)** para la MCU STM32U5 Cortex-M33 integrada. Este paquete contiene el sistema operativo en tiempo real Zephyr completo, la cadena de herramientas de compilador cruzado ARM y bibliotecas de hardware (~500 MB+ de descarga y decenas de miles de archivos).

@@ -108,10 +108,39 @@ Das automatische Installationsskript übernimmt die Überprüfung der Voraussetz
 tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
 cd RaceCoordinator_Linux_ARM64
 sudo ./install.sh
-# Oder für detaillierte ausführliche Ausgabe:
-# sudo ./install.sh -v
 ```
 *(Hinweis: Warnungen wie `tar: Ignoring unknown extended header...` sind harmlose macOS-Metadaten und können ignoriert werden).*
+
+##### Befehlszeilenoptionen
+Das Installationsskript unterstützt optionale Befehlszeilenparameter zur Anpassung der Installation:
+
+| Parameter | Beschreibung | Standard |
+| :--- | :--- | :--- |
+| `--board=<pi\|unoq\|generic>` | Board-Typ explizit festlegen. | Automatisch erkannt (`unoq` auf Uno Q) |
+| `--user=<username>` | Linux-Benutzerkonto für Dienste und Dateiberechtigungen. | Automatisch über `$SUDO_USER` erkannt (Standard `arduino` auf Uno Q) |
+| `--skip-sketch`, `--skip-mcu` | Kompilieren und Flashen der MCU-Firmware überspringen. | Firmware flashen (`false`) |
+| `-v`, `--verbose` | Ausführliche Protokollierung aktivieren. | Standardausgabe (`false`) |
+| `-h`, `--help` | Hilfe und Optionen anzeigen. | - |
+
+##### Konfigurationsübersicht vor der Installation
+Vor der Durchführung von Änderungen gibt das Skript eine Übersicht aus:
+```text
+==========================================================
+ Race Coordinator AI Installation Configuration
+==========================================================
+ Hardware Platform: unoq
+   Resolution:      Auto-detected (/proc/device-tree/model: Qualcomm QRB2210...)
+ Service Account:   arduino
+   Resolution:      Detected from sudo invocation ($SUDO_USER)
+   Home Directory:  /home/arduino
+   Account Status:  Account exists (UID: 1000, GID: 1000)
+ Target Directory:  /opt/racecoordinatorai
+ MCU Firmware:      COMPILE & UPLOAD to onboard Uno Q MCU (arduino:zephyr:unoq on 172.17.0.1)
+ Systemd Services:  racecoordinatorai.service, racecoordinatorai-kiosk.service
+ Sudoers Rule:      /etc/sudoers.d/racecoordinatorai (passwordless restart)
+ Web UI Port:       7070
+==========================================================
+```
 
 > [!NOTE] Download und Dauer des Zephyr-Board-Cores (~5 bis 10+ Minuten)
 > Während der Ersteinrichtung lädt `arduino-cli` den **Zephyr-Board-Core (`arduino:zephyr`)** für die integrierte STM32U5 Cortex-M33 MCU herunter und entpackt ihn. Dieses Paket enthält das vollständige Zephyr-Echtzeitbetriebssystem, die ARM-Cross-Compiler-Toolchain und Hardwarebibliotheken (~500 MB+ Download und zehntausende Dateien).

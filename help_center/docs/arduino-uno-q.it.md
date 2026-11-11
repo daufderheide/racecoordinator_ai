@@ -108,10 +108,39 @@ L'installer automatico gestisce il controllo dei prerequisiti, la configurazione
 tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
 cd RaceCoordinator_Linux_ARM64
 sudo ./install.sh
-# Oppure per un output dettagliato:
-# sudo ./install.sh -v
 ```
 *(Nota: Eventuali avvisi come `tar: Ignoring unknown extended header...` sono innocui tag di metadati macOS e possono essere ignorati).*
+
+##### Opzioni da riga di comando
+L'installer supporta argomenti opzionali da riga di comando per personalizzare o sovrascrivere la configurazione:
+
+| Argomento | Descrizione | Predefinito |
+| :--- | :--- | :--- |
+| `--board=<pi\|unoq\|generic>` | Specifica esplicitamente il tipo di scheda hardware. | Rilevato automaticamente (`unoq` su Uno Q) |
+| `--user=<username>` | Account utente Linux proprietario dei file ed esecutore dei servizi systemd. | Rilevato tramite `$SUDO_USER` (predefinito `arduino` su Uno Q) |
+| `--skip-sketch`, `--skip-mcu` | Salta la compilazione e il caricamento del firmware MCU. | Carica firmware (`false`) |
+| `-v`, `--verbose` | Abilita il log dettagliato di compilazione e installazione. | Output standard (`false`) |
+| `-h`, `--help` | Mostra la guida e le opzioni disponibili. | - |
+
+##### Riepilogo di risoluzione configurazione pre-installazione
+Prima di installare pacchetti, copiare file o modificare servizi, l'installer mostra un chiaro riepilogo che specifica come sono stati risolti piattaforma hardware, account di servizio e azioni firmware:
+```text
+==========================================================
+ Race Coordinator AI Installation Configuration
+==========================================================
+ Hardware Platform: unoq
+   Resolution:      Auto-detected (/proc/device-tree/model: Qualcomm QRB2210...)
+ Service Account:   arduino
+   Resolution:      Detected from sudo invocation ($SUDO_USER)
+   Home Directory:  /home/arduino
+   Account Status:  Account exists (UID: 1000, GID: 1000)
+ Target Directory:  /opt/racecoordinatorai
+ MCU Firmware:      COMPILE & UPLOAD to onboard Uno Q MCU (arduino:zephyr:unoq on 172.17.0.1)
+ Systemd Services:  racecoordinatorai.service, racecoordinatorai-kiosk.service
+ Sudoers Rule:      /etc/sudoers.d/racecoordinatorai (passwordless restart)
+ Web UI Port:       7070
+==========================================================
+```
 
 > [!NOTE] Download e durata del core Zephyr (~da 5 a più di 10 minuti)
 > Durante l'installazione iniziale, `arduino-cli` scarica ed estrae il **core della scheda Zephyr (`arduino:zephyr`)** per la MCU integrata STM32U5 Cortex-M33. Questo pacchetto contiene l'intero sistema operativo Real-Time Zephyr, la toolchain di cross-compilazione ARM e le librerie hardware (oltre 500 MB di download e decine di migliaia di file).

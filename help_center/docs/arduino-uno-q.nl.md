@@ -108,10 +108,39 @@ Het geautomatiseerde installatieprogramma regelt de controle van de vereisten, m
 tar -xzf ~/RaceCoordinatorAI-Linux-ARM64.tar.gz
 cd RaceCoordinator_Linux_ARM64
 sudo ./install.sh
-# Of voor gedetailleerde uitgebreide uitvoer:
-# sudo ./install.sh -v
 ```
 *(Opmerking: Meldingen zoals `tar: Ignoring unknown extended header...` zijn onschadelijke macOS-metagegevens en kunnen veilig worden genegeerd).*
+
+##### Opdrachtregelopties
+Het installatieprogramma ondersteunt optionele opdrachtregelargumenten om de installatie aan te passen of te overschrijven:
+
+| Argument | Beschrijving | Standaardwaarde |
+| :--- | :--- | :--- |
+| `--board=<pi\|unoq\|generic>` | Stel het doelbordtype expliciet in. | Automatisch gedetecteerd van hardware (`unoq` op Uno Q) |
+| `--user=<gebruikersnaam>` | Linux-gebruikersaccount voor bestandsbeheer en systemd-achtergrondservices. | Automatisch gedetecteerd via `$SUDO_USER` (standaard `arduino` op Uno Q) |
+| `--skip-sketch`, `--skip-mcu` | Sla het compileren en uploaden van de Arduino MCU-firmware over. | Firmware uploaden (`false`) |
+| `-v`, `--verbose` | Uitgebreide logboekregistratie voor compileren en pakketinstallatie inschakelen. | Standaarduitvoer (`false`) |
+| `-h`, `--help` | Toon help en beschikbare opties. | - |
+
+##### Configuratieoverzicht vóór installatie (Pre-Flight Banner)
+Voordat pakketten worden geïnstalleerd, bestanden worden gekopieerd of services worden gewijzigd, drukt het installatieprogramma een samenvatting af die precies laat zien hoe het hardwareplatform, het serviceaccount en firmwareacties zijn vastgesteld:
+```text
+==========================================================
+ Race Coordinator AI Installation Configuration
+==========================================================
+ Hardware Platform: unoq
+   Resolution:      Auto-detected (/proc/device-tree/model: Qualcomm QRB2210...)
+ Service Account:   arduino
+   Resolution:      Detected from sudo invocation ($SUDO_USER)
+   Home Directory:  /home/arduino
+   Account Status:  Account exists (UID: 1000, GID: 1000)
+ Target Directory:  /opt/racecoordinatorai
+ MCU Firmware:      COMPILE & UPLOAD to onboard Uno Q MCU (arduino:zephyr:unoq on 172.17.0.1)
+ Systemd Services:  racecoordinatorai.service, racecoordinatorai-kiosk.service
+ Sudoers Rule:      /etc/sudoers.d/racecoordinatorai (passwordless restart)
+ Web UI Port:       7070
+==========================================================
+```
 
 > [!NOTE] Download en duur van de Zephyr-boardcore (~5 tot 10+ minuten)
 > Tijdens de eerste installatie downloadt en pakt `arduino-cli` de **Zephyr-boardcore (`arduino:zephyr`)** uit voor de geïntegreerde STM32U5 Cortex-M33 MCU. Dit pakket bevat het volledige Zephyr Real-Time Besturingssysteem, de ARM cross-compiler toolchain en hardwarebibliotheken (~500 MB+ download en tienduizenden bestanden).
