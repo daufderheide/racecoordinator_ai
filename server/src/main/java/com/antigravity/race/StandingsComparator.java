@@ -115,6 +115,8 @@ public class StandingsComparator<T extends StandingsParticipant> implements Comp
         double aAvg = a.getAverageLapTime() > 0 ? a.getAverageLapTime() : Double.MAX_VALUE;
         double bAvg = b.getAverageLapTime() > 0 ? b.getAverageLapTime() : Double.MAX_VALUE;
         return Double.compare(aAvg, bAvg);
+      case POINTS:
+        return Double.compare(b.getTotalPoints(), a.getTotalPoints());
       default:
         return 0;
     }
@@ -126,6 +128,8 @@ public class StandingsComparator<T extends StandingsParticipant> implements Comp
       return 0;
     }
     switch (tiebreaker) {
+      case LAP_COUNT:
+        return Double.compare(getScoredLapCount(b), getScoredLapCount(a));
       case FIRST_TO_SET_TIME:
         double aRec = a.getBestLapRecordedTime();
         double bRec = b.getBestLapRecordedTime();

@@ -158,6 +158,20 @@ export class RaceEditorNormalizationHelper {
         position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
         heat_position_points: [3, 2, 1, 0],
       },
+      points_scoring: race.points_scoring || {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [3, 2, 1, 0],
+        heat_carry_over_pct: 0,
+        heat_bonus_fastest_lap: 0,
+        heat_bonus_led_lap: 0,
+        heat_bonus_most_laps_led: 0,
+        heat_one_bonus_per_driver: false,
+        overall_bonus_fastest_lap: 0,
+        overall_bonus_fastest_lap_per_lane: 0,
+        overall_bonus_led_lap: 0,
+        overall_bonus_most_laps_led: 0,
+        overall_one_bonus_per_driver: false,
+      },
       custom_rotation_sequence: race.custom_rotation_sequence || [],
       custom_rotations: race.custom_rotations || [],
     };
@@ -255,6 +269,20 @@ export class RaceEditorNormalizationHelper {
       season_scoring: {
         position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
         heat_position_points: [3, 2, 1, 0],
+      },
+      points_scoring: {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [3, 2, 1, 0],
+        heat_carry_over_pct: 0,
+        heat_bonus_fastest_lap: 0,
+        heat_bonus_led_lap: 0,
+        heat_bonus_most_laps_led: 0,
+        heat_one_bonus_per_driver: false,
+        overall_bonus_fastest_lap: 0,
+        overall_bonus_fastest_lap_per_lane: 0,
+        overall_bonus_led_lap: 0,
+        overall_bonus_most_laps_led: 0,
+        overall_one_bonus_per_driver: false,
       },
     };
   }

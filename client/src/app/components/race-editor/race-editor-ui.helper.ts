@@ -6,6 +6,7 @@ export interface RaceEditorSections {
   general: boolean;
   start_method: boolean;
   scoring: boolean;
+  points_scoring: boolean;
   season_points: boolean;
   heats: boolean;
   groups: boolean;
@@ -34,6 +35,11 @@ export class RaceEditorUiHelper {
         id: "scoring-section",
         label: translationService.translate("RE_SCORING_HEADER"),
         active: sectionsExpanded ? !!sectionsExpanded.scoring : false,
+      },
+      {
+        id: "points-scoring-section",
+        label: translationService.translate("RE_POINTS_SCORING_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.points_scoring : false,
       },
       {
         id: "group-section",
@@ -178,6 +184,7 @@ export class RaceEditorUiHelper {
       "general-section": "general",
       "start-method-section": "start_method",
       "scoring-section": "scoring",
+      "points-scoring-section": "points_scoring",
       "season-points-section": "season_points",
       "heats-section": "heats",
       "group-section": "groups",
@@ -209,5 +216,85 @@ export class RaceEditorUiHelper {
         element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
+  }
+
+  static areAllSectionsExpanded(sectionsExpanded: RaceEditorSections): boolean {
+    return Object.values(sectionsExpanded).every(Boolean);
+  }
+
+  static toggleAllSections(
+    sectionsExpanded: RaceEditorSections,
+    forcedState?: boolean,
+  ): void {
+    const next =
+      forcedState !== undefined
+        ? forcedState
+        : !this.areAllSectionsExpanded(sectionsExpanded);
+    (Object.keys(sectionsExpanded) as Array<keyof RaceEditorSections>).forEach(
+      (key) => {
+        sectionsExpanded[key] = next;
+      },
+    );
+    this.saveExpanderState(sectionsExpanded);
+  }
+
+  static toggleSection(
+    sectionsExpanded: RaceEditorSections,
+    section: keyof RaceEditorSections,
+    forcedState?: boolean,
+  ): void {
+    sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !sectionsExpanded[section];
+    this.saveExpanderState(sectionsExpanded);
+  }
+
+  static onToggleEditMode(component: any): void {
+    if (!component.isEditMode) {
+      component.isEditMode = true;
+      component.focusNameInput();
+      return;
+    }
+    if (component.isSaving) {
+      component.transitionToReadOnlyOnSave = true;
+      return;
+    }
+    if (component.isDirtyState()) {
+      if (!component.isConfigValid()) {
+        if (component.isNameDuplicate()) {
+          alert(component.translationService.translate("RE_ERROR_NAME_EXISTS"));
+        } else {
+          alert(
+            component.translationService.translate("RE_ERROR_NAME_REQUIRED"),
+          );
+        }
+        return;
+      }
+      component.updateRace(false);
+    } else {
+      component.isEditMode = false;
+    }
+  }
+
+  static onAddNewRace(component: any): void {
+    if (component.isEditMode && component.isDirtyState()) {
+      component.confirmDiscard().then((confirmed: boolean) => {
+        if (confirmed) {
+          component.startNewRace();
+        }
+      });
+    } else {
+      component.startNewRace();
+    }
+  }
+
+  static onBackClicked(component: any): void {
+    if (component.isConfigValid() && component.isDirtyState()) {
+      component.navigateBackOnSave = true;
+      component.updateRace();
+    } else {
+      component.onBack();
+    }
   }
 }

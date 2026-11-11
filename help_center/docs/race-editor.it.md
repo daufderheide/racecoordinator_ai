@@ -206,7 +206,7 @@ La sezione Opzioni manche definisce la gestione automatica dei tempi, i cicli e 
 - **Metodo di classifica manche**: Classifica i piloti in ogni manche per **Maggior numero di giri**, **Giro più veloce** o **Tempo totale più rapido**, con spareggi configurabili.
 - **Metodo di arrivo**: Stabilisce come viene determinata la fine di una manche (per **Numero di giri** o **Tempo** trascorso in secondi).
 - **Consenti arrivo**: Stabilisce come le auto completano i giri quando il leader taglia il traguardo o scade il tempo (es. fine immediata, consenti a tutti di finire, giro singolo o accredito segmenti automatici).
-- **Metodo di classifica generale**: Classifica generale della gara su tutte le manche completate con spareggi e manche scartate personalizzabili.
+- **Metodo di classifica generale**: Classifica generale della gara su tutte le manche completate per **Numero di giri**, **Giro più veloce**, **Tempo totale**, **Media sul giro** o **Punti**, con spareggi personalizzabili (incluso **Numero di giri**) e manche scartate.
 - **Avanzamento a gradini (Step-Up)**: Configura la gara a scala progressiva. Il valore predefinito è `0` (disattivato). Con valori $S > 0$, le manche vengono suddivise in gradini progressivi dove i piloti dei gradini superiori attendono i qualificati promossi dai gradini inferiori.
 
 ### Gare a Scala (Step-Up)
@@ -223,6 +223,32 @@ Quando **Avanzamento a gradini (Step-Up)** è configurato con un valore intero p
 - **Classifica generale a livelli**: I piloti dei gradini inferiori non possono mai superare i piloti dei gradini superiori nella classifica generale finale, a prescindere da giri o tempi individuali. Il vincitore del gradino finale vince la gara.
 - **Gare a gruppi**: Nelle gare a gruppi con avanzamento attivo, ogni gruppo scala la propria scala in modo indipendente.
 - **Supporto in Modifica manche**: Nella schermata Modifica manche, i piloti promossi sono contraddistinti da appositi badge e le manche limite possono essere esaminate e modificate.
+
+---
+
+## Punteggio a punti {: #points-scoring }
+
+La sezione Punteggio a punti configura la classifica generale basata sui punti. Quando il metodo di classifica generale è impostato su **Punti**, i piloti guadagnano punti in ogni manche in base alle loro posizioni di arrivo e ai criteri di bonus, e la classifica generale viene ordinata in base ai punti totali.
+
+> [!NOTE]
+> Questa sezione è abilitata solo quando il **Metodo di classifica generale** è impostato su **Punti**. Quando viene selezionato un altro metodo, la sezione viene disabilitata con l'indicazione "Non è una gara a punti".
+
+- **Punti posizione manche**: Assegna i punti attribuiti per le posizioni di arrivo (o per corsia) in ciascuna singola manche (ad es. 3 punti per il 1°, 2 per il 2°, 1 per il 3°, 0 per il 4°).
+- **Bonus generali**:
+    - *Giro più veloce*: Punti bonus assegnati al pilota che registra il giro singolo più veloce dell'intera gara.
+    - *Giro più veloce per corsia*: Punti bonus assegnati al pilota più veloce su ciascuna singola corsia.
+    - *Giro in testa*: Punti bonus assegnati per aver condotto almeno un giro nel corso della gara.
+    - *Maggior numero di giri in testa*: Punti bonus assegnati al pilota che ha condotto più giri in totale.
+    - *Limite di un solo bonus*: Limita ciascun pilota a un massimo di un bonus generale (il valore più alto).
+- **Bonus manche**:
+    - *% di riporto*: Percentuale dei giri della manche aggiunta al punteggio della manche.
+    - *Giro più veloce*: Punti bonus per il giro più veloce in una manche.
+    - *Giro in testa*: Punti bonus per aver condotto un giro in una manche.
+    - *Maggior numero di giri in testa*: Punti bonus per aver condotto più giri in una manche.
+    - *Limite di un solo bonus*: Limita ciascun pilota a un massimo di un bonus per manche.
+- **Criteri di spareggio**: In caso di parità di punti totali, la classifica viene decisa mediante criteri configurabili, tra cui **Numero di giri**, **Tempo del giro più veloce**, **Tempo mediano sul giro**, **Tempo medio sul giro** e **Tempo totale**.
+
+---
 
 ## Gruppi e fasi {: #groups-and-stages }
 

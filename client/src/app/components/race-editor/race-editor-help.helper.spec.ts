@@ -15,6 +15,7 @@ describe("RaceEditorHelpHelper", () => {
       general: false,
       heats: false,
       scoring: false,
+      points_scoring: false,
       groups: false,
       start_method: false,
       team: false,
@@ -24,12 +25,12 @@ describe("RaceEditorHelpHelper", () => {
     };
   });
 
-  it("should generate all 14 help steps in the expected order with targets, positions, and onEnter callbacks", () => {
+  it("should generate all 15 help steps in the expected order with targets, positions, and onEnter callbacks", () => {
     const steps = RaceEditorHelpHelper.getHelpSteps(
       mockTranslationService,
       sectionsExpanded,
     );
-    expect(steps.length).toBe(14);
+    expect(steps.length).toBe(15);
 
     // Step 0: Overview (General info)
     expect(steps[0].title).toBe("translated_RE_HELP_WELCOME_TITLE");
@@ -81,51 +82,59 @@ describe("RaceEditorHelpHelper", () => {
     expect(steps[7].title).toBe("translated_RE_HELP_EXPANDER_SCORING_TITLE");
     expect(steps[7].position).toBe("left");
 
-    // Step 8: Group section
-    expect(steps[8].targetId).toBe("group-section");
-    expect(steps[8].selector).toBe("#group-section");
-    expect(steps[8].title).toBe("translated_RE_HELP_EXPANDER_GROUPS_TITLE");
+    // Step 8: Points scoring section
+    expect(steps[8].targetId).toBe("points-scoring-section");
+    expect(steps[8].selector).toBe("#points-scoring-section");
+    expect(steps[8].title).toBe(
+      "translated_RE_HELP_EXPANDER_POINTS_SCORING_TITLE",
+    );
     expect(steps[8].position).toBe("left");
 
-    // Step 9: Start method section
-    expect(steps[9].targetId).toBe("start-method-section");
-    expect(steps[9].selector).toBe("#start-method-section");
-    expect(steps[9].title).toBe(
-      "translated_RE_HELP_EXPANDER_START_METHOD_TITLE",
-    );
+    // Step 9: Group section
+    expect(steps[9].targetId).toBe("group-section");
+    expect(steps[9].selector).toBe("#group-section");
+    expect(steps[9].title).toBe("translated_RE_HELP_EXPANDER_GROUPS_TITLE");
     expect(steps[9].position).toBe("left");
 
-    // Step 10: Team options section
-    expect(steps[10].targetId).toBe("team-options-section");
-    expect(steps[10].selector).toBe("#team-options-section");
+    // Step 10: Start method section
+    expect(steps[10].targetId).toBe("start-method-section");
+    expect(steps[10].selector).toBe("#start-method-section");
     expect(steps[10].title).toBe(
-      "translated_RE_HELP_EXPANDER_TEAM_OPTIONS_TITLE",
+      "translated_RE_HELP_EXPANDER_START_METHOD_TITLE",
     );
     expect(steps[10].position).toBe("left");
 
-    // Step 11: Analog fuel section
-    expect(steps[11].targetId).toBe("analog-fuel-section");
-    expect(steps[11].selector).toBe("#analog-fuel-section");
+    // Step 11: Team options section
+    expect(steps[11].targetId).toBe("team-options-section");
+    expect(steps[11].selector).toBe("#team-options-section");
     expect(steps[11].title).toBe(
-      "translated_RE_HELP_EXPANDER_ANALOG_FUEL_TITLE",
+      "translated_RE_HELP_EXPANDER_TEAM_OPTIONS_TITLE",
     );
     expect(steps[11].position).toBe("left");
 
-    // Step 12: Digital fuel outer section
-    expect(steps[12].targetId).toBe("digital-fuel-outer-section");
-    expect(steps[12].selector).toBe("#digital-fuel-outer-section");
+    // Step 12: Analog fuel section
+    expect(steps[12].targetId).toBe("analog-fuel-section");
+    expect(steps[12].selector).toBe("#analog-fuel-section");
     expect(steps[12].title).toBe(
-      "translated_RE_HELP_EXPANDER_DIGITAL_FUEL_TITLE",
+      "translated_RE_HELP_EXPANDER_ANALOG_FUEL_TITLE",
     );
     expect(steps[12].position).toBe("left");
 
-    // Step 13: Season points section
-    expect(steps[13].targetId).toBe("season-points-section");
-    expect(steps[13].selector).toBe("#season-points-section");
+    // Step 13: Digital fuel outer section
+    expect(steps[13].targetId).toBe("digital-fuel-outer-section");
+    expect(steps[13].selector).toBe("#digital-fuel-outer-section");
     expect(steps[13].title).toBe(
-      "translated_RE_HELP_EXPANDER_SEASON_POINTS_TITLE",
+      "translated_RE_HELP_EXPANDER_DIGITAL_FUEL_TITLE",
     );
     expect(steps[13].position).toBe("left");
+
+    // Step 14: Season points section
+    expect(steps[14].targetId).toBe("season-points-section");
+    expect(steps[14].selector).toBe("#season-points-section");
+    expect(steps[14].title).toBe(
+      "translated_RE_HELP_EXPANDER_SEASON_POINTS_TITLE",
+    );
+    expect(steps[14].position).toBe("left");
 
     // Verify onEnter callbacks expand corresponding sections
     expect(sectionsExpanded.general).toBeFalse();
@@ -140,28 +149,32 @@ describe("RaceEditorHelpHelper", () => {
     steps[7].onEnter?.();
     expect(sectionsExpanded.scoring).toBeTrue();
 
-    expect(sectionsExpanded.groups).toBeFalse();
+    expect(sectionsExpanded.points_scoring).toBeFalse();
     steps[8].onEnter?.();
+    expect(sectionsExpanded.points_scoring).toBeTrue();
+
+    expect(sectionsExpanded.groups).toBeFalse();
+    steps[9].onEnter?.();
     expect(sectionsExpanded.groups).toBeTrue();
 
     expect(sectionsExpanded.start_method).toBeFalse();
-    steps[9].onEnter?.();
+    steps[10].onEnter?.();
     expect(sectionsExpanded.start_method).toBeTrue();
 
     expect(sectionsExpanded.team).toBeFalse();
-    steps[10].onEnter?.();
+    steps[11].onEnter?.();
     expect(sectionsExpanded.team).toBeTrue();
 
     expect(sectionsExpanded.fuel_analog).toBeFalse();
-    steps[11].onEnter?.();
+    steps[12].onEnter?.();
     expect(sectionsExpanded.fuel_analog).toBeTrue();
 
     expect(sectionsExpanded.fuel_digital).toBeFalse();
-    steps[12].onEnter?.();
+    steps[13].onEnter?.();
     expect(sectionsExpanded.fuel_digital).toBeTrue();
 
     expect(sectionsExpanded.season_points).toBeFalse();
-    steps[13].onEnter?.();
+    steps[14].onEnter?.();
     expect(sectionsExpanded.season_points).toBeTrue();
   });
 
@@ -197,7 +210,7 @@ describe("RaceEditorHelpHelper", () => {
       sectionsExpanded,
     );
 
-    expect(steps.length).toBe(14);
+    expect(steps.length).toBe(15);
 
     for (const step of steps) {
       expect(step.title).not.toBe("");
@@ -225,16 +238,18 @@ describe("RaceEditorHelpHelper", () => {
     expect(steps[7].content).toContain("help-article-race-editor");
     expect(steps[7].content).toContain("help-section-scoring-rules");
     expect(steps[8].content).toContain("help-article-race-editor");
-    expect(steps[8].content).toContain("help-section-groups-and-stages");
+    expect(steps[8].content).toContain("help-section-points-scoring");
     expect(steps[9].content).toContain("help-article-race-editor");
-    expect(steps[9].content).toContain("help-section-start-methods");
+    expect(steps[9].content).toContain("help-section-groups-and-stages");
     expect(steps[10].content).toContain("help-article-race-editor");
-    expect(steps[10].content).toContain("help-section-team-racing");
+    expect(steps[10].content).toContain("help-section-start-methods");
     expect(steps[11].content).toContain("help-article-race-editor");
-    expect(steps[11].content).toContain("help-section-analog-fuel-simulation");
+    expect(steps[11].content).toContain("help-section-team-racing");
     expect(steps[12].content).toContain("help-article-race-editor");
-    expect(steps[12].content).toContain("help-section-digital-fuel-simulation");
+    expect(steps[12].content).toContain("help-section-analog-fuel-simulation");
     expect(steps[13].content).toContain("help-article-race-editor");
-    expect(steps[13].content).toContain("help-section-season-scoring");
+    expect(steps[13].content).toContain("help-section-digital-fuel-simulation");
+    expect(steps[14].content).toContain("help-article-race-editor");
+    expect(steps[14].content).toContain("help-section-season-scoring");
   });
 });

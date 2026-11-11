@@ -206,7 +206,7 @@ El expansor de Opciones de tanda configura los tiempos automatizados, los ciclos
 - **Método de clasificación de tanda**: Clasifique a los pilotos en cada tanda por **Más vueltas**, **Vuelta rápida** o **Tiempo total más rápido**, con criterios de desempate configurables.
 - **Método de finalización**: Establece cómo se determina el final de una tanda (por **Número de vueltas** o **Tiempo** transcurrido en segundos).
 - **Permitir llegada**: Elija cómo completan las vueltas los coches al terminar el líder o expirar el tiempo (por ejemplo, final inmediato, permitir terminar a todos, vuelta única o crédito de segmentos automáticos).
-- **Método de clasificación general**: Clasifique la tabla general de la carrera tras todas las tandas con desempates y descartes personalizados.
+- **Método de clasificación general**: Clasifique la tabla general de la carrera tras todas las tandas por **Número de vueltas**, **Vuelta rápida**, **Tiempo total**, **Promedio de vuelta** o **Puntos**, con desempates personalizables (incluyendo **Número de vueltas**) y descartes.
 - **Ascenso (Step-Up)**: Configura la carrera en escalera progresiva. Por defecto es `0` (desactivado). Con valores $S > 0$, las tandas se dividen en escalones progresivos donde los pilotos de escalones superiores esperan a los clasificados que ascienden desde los inferiores.
 
 ### Carreras en Escalera (Step-Up)
@@ -229,6 +229,30 @@ Cuando **Ascenso (Step-Up)** se configura con un entero positivo ($S > 0$), Race
 - **Tiempo Mínimo de Vuelta**: Tiempo mínimo permitido para filtrar falsos disparos de sensores.
 - **Tiempo de Drift**: Ventana de detección para deslizamientos sobre la línea de meta.
 - **Iniciar Detrás del Sensor**: Exige que los coches comiencen detrás del sensor en la vuelta cero.
+
+---
+
+## Puntuación por puntos {: #points-scoring }
+
+El expansor de Puntuación por puntos configura la clasificación general basada en puntos. Cuando el método de clasificación general está establecido en **Puntos**, los pilotos obtienen puntos en cada manga según sus posiciones finales y criterios de bonificación, y la clasificación general se ordena por el total de puntos.
+
+> [!NOTE]
+> Este expansor solo está habilitado cuando el **Método de clasificación general** está configurado en **Puntos**. Cuando se selecciona cualquier otro método, el expansor se deshabilita con el indicador "No es una carrera por puntos".
+
+- **Puntos por posición en manga**: Asigne los puntos otorgados por posiciones finales (o por carril) en cada manga individual (por ejemplo, 3 puntos al 1.º, 2 al 2.º, 1 al 3.º, 0 al 4.º).
+- **Bonificaciones generales**:
+    - *Vuelta rápida*: Puntos de bonificación otorgados al piloto con la vuelta más rápida de toda la carrera.
+    - *Vuelta rápida por carril*: Puntos de bonificación otorgados al piloto más rápido en cada carril individual.
+    - *Vuelta liderada*: Puntos de bonificación por liderar al menos una vuelta a lo largo de la carrera.
+    - *Más vueltas lideradas*: Puntos de bonificación para el piloto que lideró más vueltas en total.
+    - *Límite de una bonificación*: Restringe a cada piloto a un máximo de una bonificación general (la de mayor valor).
+- **Bonificaciones de manga**:
+    - *% de arrastre*: Porcentaje de vueltas de la manga que se suma a la puntuación de la manga.
+    - *Vuelta rápida*: Puntos de bonificación por registrar la vuelta más rápida en una manga.
+    - *Vuelta liderada*: Puntos de bonificación por liderar una vuelta en una manga.
+    - *Más vueltas lideradas*: Puntos de bonificación por liderar la mayor cantidad de vueltas en una manga.
+    - *Límite de una bonificación*: Restringe a cada piloto a un máximo de una bonificación por manga.
+- **Criterios de desempate**: En caso de empate en puntos totales, las posiciones se resuelven mediante criterios configurables, incluidos **Número de vueltas**, **Tiempo de vuelta rápida**, **Tiempo de vuelta mediana**, **Tiempo promedio de vuelta** y **Tiempo total**.
 
 ---
 

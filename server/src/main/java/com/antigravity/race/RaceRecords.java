@@ -468,6 +468,7 @@ public class RaceRecords {
     if (method == OverallRanking.FASTEST_LAP) return dhd.getBestLapTime();
     if (method == OverallRanking.TOTAL_TIME) return dhd.getTotalTime();
     if (method == OverallRanking.AVERAGE_LAP) return dhd.getAverageLapTime();
+    if (method == OverallRanking.POINTS) return dhd.getAdjustedLapCount();
     return 0;
   }
 

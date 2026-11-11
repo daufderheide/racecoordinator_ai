@@ -13,6 +13,7 @@ import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.OverallScoring.OverallRankingTiebreaker;
+import com.antigravity.models.PointsScoring;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -1267,5 +1268,72 @@ public class OverallStandingsTest {
 
     assertEquals(1, driverC.getRank());
     assertTrue(driverC.getRank() < driverA.getRank());
+  }
+
+  @Test
+  public void testPointsScoringOverallStandings() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.POINTS, OverallRankingTiebreaker.LAP_COUNT);
+    PointsScoring pointsScoring =
+        new PointsScoring(Arrays.asList(10.0, 8.0), Arrays.asList(5.0, 3.0));
+
+    OverallStandings os =
+        new OverallStandings(
+            heatScoring, overallScoring, pointsScoring, new GroupOptions(), false, 0);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    List<RaceParticipant> drivers = new ArrayList<>(Arrays.asList(p1, p2));
+
+    List<Heat> heats = new ArrayList<>();
+    // Heat 1: P1 10 laps, P2 8 laps -> P1 1st (5 pts), P2 2nd (3 pts)
+    heats.add(createHeat(1, p1, 10, 100.0, p2, 8, 100.0));
+    // Heat 2: P1 10 laps, P2 8 laps -> P1 1st (5 pts), P2 2nd (3 pts)
+    heats.add(createHeat(2, p1, 10, 100.0, p2, 8, 100.0));
+
+    os.recalculate(drivers, heats);
+
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
+    assertEquals(10.0, p1.getTotalPoints(), 0.001);
+    assertEquals(6.0, p2.getTotalPoints(), 0.001);
+    assertEquals(10.0, p1.getRankValue(), 0.001);
+    assertEquals(6.0, p2.getRankValue(), 0.001);
+  }
+
+  @Test
+  public void testPointsScoringTiebreakerLapCount() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 10, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.POINTS, OverallRankingTiebreaker.LAP_COUNT);
+    PointsScoring pointsScoring =
+        new PointsScoring(Arrays.asList(10.0, 8.0), Arrays.asList(5.0, 3.0));
+
+    OverallStandings os =
+        new OverallStandings(
+            heatScoring, overallScoring, pointsScoring, new GroupOptions(), false, 0);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    RaceParticipant p2 = createDriver("D2", "id2");
+    List<RaceParticipant> drivers = new ArrayList<>(Arrays.asList(p1, p2));
+
+    List<Heat> heats = new ArrayList<>();
+    // Heat 1: P1 wins with 12 laps (5 pts), P2 gets 8 laps (3 pts)
+    heats.add(createHeat(1, p1, 12, 100.0, p2, 8, 100.0));
+    // Heat 2: P2 wins with 9 laps (5 pts), P1 gets 8 laps (3 pts)
+    heats.add(createHeat(2, p1, 8, 100.0, p2, 9, 100.0));
+
+    // Both have 8.0 total points (5 + 3), but P1 has 20 laps total vs P2 with 17 laps total.
+    os.recalculate(drivers, heats);
+
+    assertEquals(8.0, p1.getTotalPoints(), 0.001);
+    assertEquals(8.0, p2.getTotalPoints(), 0.001);
+    assertEquals(1, p1.getRank());
+    assertEquals(2, p2.getRank());
   }
 }

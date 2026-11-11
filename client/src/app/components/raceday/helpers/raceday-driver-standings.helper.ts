@@ -20,7 +20,9 @@ export class RacedayDriverStandingsHelper {
   static updateLeaderboardEntries(host: any): void {
     const rankingMethod = host.race?.overall_scoring?.rankingMethod;
     const isTime =
-      rankingMethod && rankingMethod !== OverallRanking.OR_LAP_COUNT;
+      rankingMethod &&
+      rankingMethod !== OverallRanking.OR_LAP_COUNT &&
+      rankingMethod !== OverallRanking.OR_POINTS;
 
     const incoming = (host.participants || [])
       .filter((p: any) => p && p.driver && !Driver.isEmpty(p.driver))
@@ -60,7 +62,9 @@ export class RacedayDriverStandingsHelper {
   static updateGroupLeaderboardEntries(host: any): void {
     const rankingMethod = host.race?.overall_scoring?.rankingMethod;
     const isTime =
-      rankingMethod && rankingMethod !== OverallRanking.OR_LAP_COUNT;
+      rankingMethod &&
+      rankingMethod !== OverallRanking.OR_LAP_COUNT &&
+      rankingMethod !== OverallRanking.OR_POINTS;
 
     const incoming = (host.groupParticipants || [])
       .filter((p: any) => p && p.driver && !Driver.isEmpty(p.driver))

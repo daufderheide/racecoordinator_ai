@@ -2369,6 +2369,36 @@ describe("RaceEditorComponent", () => {
       );
     });
 
+    it("should sync points scoring heat position points with track lane count", () => {
+      component.tracks = [
+        {
+          entity_id: "track-modified",
+          name: "Modified Track",
+          lanes: [{}, {}, {}, {}],
+        } as any,
+      ];
+      component.editingRace.track_entity_id = "track-modified";
+      component.editingRace.points_scoring = {
+        position_points: [25, 18, 15, 12],
+        heat_position_points: [3, 2],
+        heat_carry_over_pct: 0,
+        heat_bonus_fastest_lap: 0,
+        heat_bonus_led_lap: 0,
+        heat_bonus_most_laps_led: 0,
+        heat_one_bonus_per_driver: false,
+        overall_bonus_fastest_lap: 0,
+        overall_bonus_fastest_lap_per_lane: 0,
+        overall_bonus_led_lap: 0,
+        overall_bonus_most_laps_led: 0,
+        overall_one_bonus_per_driver: false,
+      };
+
+      component.syncHeatPositionPoints();
+      expect(component.editingRace.points_scoring.heat_position_points).toEqual(
+        [3, 2, 0, 0],
+      );
+    });
+
     it("should handle null editingRace or missing track safely in syncHeatPositionPoints", () => {
       component.editingRace = null as any;
       expect(() => component.syncHeatPositionPoints()).not.toThrow();
@@ -2383,10 +2413,80 @@ describe("RaceEditorComponent", () => {
     });
   });
 
+  describe("Points Scoring Configuration", () => {
+    beforeEach(() => {
+      component.tracks = [
+        {
+          entity_id: "track-1",
+          name: "Test Track",
+          lanes: [{}, {}, {}, {}],
+        } as any,
+      ];
+      component.editingRace = {
+        name: "Test Points Race",
+        track_entity_id: "track-1",
+        overall_scoring: {
+          ranking_method: "LAP_COUNT",
+          tiebreaker: "FASTEST_LAP_TIME",
+          dropped_heats: 0,
+        },
+      } as any;
+    });
+
+    it("should initialize points scoring and set default tiebreaker to LAP_COUNT when switching to POINTS", () => {
+      component.sectionsExpanded.points_scoring = false;
+      component.onOverallRankingMethodChange("POINTS");
+
+      expect(component.editingRace.points_scoring).toBeDefined();
+      expect(component.editingRace.points_scoring.position_points.length).toBe(
+        10,
+      );
+      expect(
+        component.editingRace.points_scoring.heat_position_points.length,
+      ).toBe(4);
+      expect(component.editingRace.overall_scoring.tiebreaker).toBe(
+        "LAP_COUNT",
+      );
+      expect(component.sectionsExpanded.points_scoring).toBeTrue();
+    });
+
+    it("should not change tiebreaker if already set to non-default when switching to POINTS", () => {
+      component.editingRace.overall_scoring.tiebreaker = "MEDIAN_LAP_TIME";
+      component.onOverallRankingMethodChange("POINTS");
+
+      expect(component.editingRace.overall_scoring.tiebreaker).toBe(
+        "MEDIAN_LAP_TIME",
+      );
+    });
+
+    it("should not override existing points scoring configuration when switching to POINTS", () => {
+      component.editingRace.points_scoring = {
+        position_points: [100, 80],
+        heat_position_points: [10, 5, 2, 1],
+        heat_carry_over_pct: 10,
+        heat_bonus_fastest_lap: 2,
+        heat_bonus_led_lap: 1,
+        heat_bonus_most_laps_led: 3,
+        heat_one_bonus_per_driver: true,
+        overall_bonus_fastest_lap: 5,
+        overall_bonus_fastest_lap_per_lane: 2,
+        overall_bonus_led_lap: 1,
+        overall_bonus_most_laps_led: 4,
+        overall_one_bonus_per_driver: true,
+      };
+
+      component.onOverallRankingMethodChange("POINTS");
+      expect(component.editingRace.points_scoring.position_points).toEqual([
+        100, 80,
+      ]);
+      expect(component.editingRace.points_scoring.heat_carry_over_pct).toBe(10);
+    });
+  });
+
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(14);
+      expect(steps.length).toBe(15);
       expect(steps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(steps[1].selector).toBe("#editor-object-nav");
       expect(steps[2].selector).toBe("#edit-track-btn");
@@ -2397,18 +2497,20 @@ describe("RaceEditorComponent", () => {
       expect(steps[5].selector).toBe("#general-section");
       expect(steps[6].selector).toBe("#heats-section");
       expect(steps[7].selector).toBe("#scoring-section");
-      expect(steps[8].selector).toBe("#group-section");
-      expect(steps[9].selector).toBe("#start-method-section");
-      expect(steps[10].selector).toBe("#team-options-section");
-      expect(steps[11].selector).toBe("#analog-fuel-section");
-      expect(steps[12].selector).toBe("#digital-fuel-outer-section");
-      expect(steps[13].selector).toBe("#season-points-section");
+      expect(steps[8].selector).toBe("#points-scoring-section");
+      expect(steps[9].selector).toBe("#group-section");
+      expect(steps[10].selector).toBe("#start-method-section");
+      expect(steps[11].selector).toBe("#team-options-section");
+      expect(steps[12].selector).toBe("#analog-fuel-section");
+      expect(steps[13].selector).toBe("#digital-fuel-outer-section");
+      expect(steps[14].selector).toBe("#season-points-section");
     });
 
     it("should expand corresponding sections when executing onEnter hooks", () => {
       component.sectionsExpanded.general = false;
       component.sectionsExpanded.start_method = false;
       component.sectionsExpanded.scoring = false;
+      component.sectionsExpanded.points_scoring = false;
       component.sectionsExpanded.season_points = false;
       component.sectionsExpanded.heats = false;
       component.sectionsExpanded.groups = false;
@@ -2427,21 +2529,24 @@ describe("RaceEditorComponent", () => {
       expect(component.sectionsExpanded.scoring).toBeTrue();
 
       steps[8].onEnter!();
-      expect(component.sectionsExpanded.groups).toBeTrue();
+      expect(component.sectionsExpanded.points_scoring).toBeTrue();
 
       steps[9].onEnter!();
-      expect(component.sectionsExpanded.start_method).toBeTrue();
+      expect(component.sectionsExpanded.groups).toBeTrue();
 
       steps[10].onEnter!();
-      expect(component.sectionsExpanded.team).toBeTrue();
+      expect(component.sectionsExpanded.start_method).toBeTrue();
 
       steps[11].onEnter!();
-      expect(component.sectionsExpanded.fuel_analog).toBeTrue();
+      expect(component.sectionsExpanded.team).toBeTrue();
 
       steps[12].onEnter!();
-      expect(component.sectionsExpanded.fuel_digital).toBeTrue();
+      expect(component.sectionsExpanded.fuel_analog).toBeTrue();
 
       steps[13].onEnter!();
+      expect(component.sectionsExpanded.fuel_digital).toBeTrue();
+
+      steps[14].onEnter!();
       expect(component.sectionsExpanded.season_points).toBeTrue();
     });
 
@@ -2452,14 +2557,15 @@ describe("RaceEditorComponent", () => {
       const calledSteps = (
         helpService.startGuide as jasmine.Spy
       ).calls.mostRecent().args[0];
-      expect(calledSteps.length).toBe(14);
+      expect(calledSteps.length).toBe(15);
       expect(calledSteps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(calledSteps[1].selector).toBe("#editor-object-nav");
       expect(calledSteps[2].selector).toBe("#edit-track-btn");
       expect(calledSteps[3].selector).toBe("#race-config-panel");
       expect(calledSteps[4].selector).toBe("#race-editor-tabs");
       expect(calledSteps[5].selector).toBe("#general-section");
-      expect(calledSteps[13].selector).toBe("#season-points-section");
+      expect(calledSteps[8].selector).toBe("#points-scoring-section");
+      expect(calledSteps[14].selector).toBe("#season-points-section");
     });
 
     it("should verify that all guide step DOM targets exist in the component DOM", () => {
@@ -3088,13 +3194,14 @@ describe("RaceEditorComponent", () => {
   });
 
   describe("Editor Tabs and Section Navigation", () => {
-    it("should return the 9 configuration tabs with IDs and labels", () => {
+    it("should return the 10 configuration tabs with IDs and labels", () => {
       const tabs = component.raceTabs;
-      expect(tabs.length).toBe(9);
+      expect(tabs.length).toBe(10);
       expect(tabs.map((t) => t.id)).toEqual([
         "general-section",
         "heats-section",
         "scoring-section",
+        "points-scoring-section",
         "group-section",
         "start-method-section",
         "team-options-section",

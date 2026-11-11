@@ -1,6 +1,10 @@
 // Force refresh for unit tests
 import { IRaceModel } from "@app/proto/antigravity";
 
+import {
+  OverallRanking,
+  OverallRankingTiebreaker,
+} from "../models/overall_scoring";
 import {} from "../models/race";
 import { RaceConverter } from "./race.converter";
 
@@ -346,5 +350,64 @@ describe("RaceConverter", () => {
     expect(
       RaceConverter.fromProto(makeProto(4)).heat_scoring.heatRankingTiebreaker,
     ).toBe("SECOND_BEST_LAP_TIME");
+  });
+
+  it("should map points scoring and POINTS overall ranking from proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r22" },
+      name: "Points Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      overallScoring: {
+        rankingMethod: 4, // OR_POINTS
+        tiebreaker: 4, // ORT_LAP_COUNT
+        droppedHeats: 1,
+      },
+      pointsScoring: {
+        positionPoints: [10, 8, 6, 5],
+        heatPositionPoints: [3, 2, 1],
+        heatCarryOverPct: 50,
+        heatBonusFastestLap: 1,
+        heatBonusLedLap: 0.5,
+        heatBonusMostLapsLed: 2,
+        heatOneBonusPerDriver: true,
+        overallBonusFastestLap: 2,
+        overallBonusFastestLapPerLane: 1,
+        overallBonusLedLap: 0.5,
+        overallBonusMostLapsLed: 3,
+        overallOneBonusPerDriver: false,
+      },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.overall_scoring.rankingMethod).toBe(OverallRanking.OR_POINTS);
+    expect(result.overall_scoring.tiebreaker).toBe(
+      OverallRankingTiebreaker.ORT_LAP_COUNT,
+    );
+    expect(result.overall_scoring.droppedHeats).toBe(1);
+
+    expect(result.points_scoring).toBeDefined();
+    expect(result.points_scoring!.position_points).toEqual([10, 8, 6, 5]);
+    expect(result.points_scoring!.heat_position_points).toEqual([3, 2, 1]);
+    expect(result.points_scoring!.heat_carry_over_pct).toBe(50);
+    expect(result.points_scoring!.heat_bonus_fastest_lap).toBe(1);
+    expect(result.points_scoring!.heat_bonus_led_lap).toBe(0.5);
+    expect(result.points_scoring!.heat_bonus_most_laps_led).toBe(2);
+    expect(result.points_scoring!.heat_one_bonus_per_driver).toBeTrue();
+    expect(result.points_scoring!.overall_bonus_fastest_lap).toBe(2);
+    expect(result.points_scoring!.overall_bonus_fastest_lap_per_lane).toBe(1);
+    expect(result.points_scoring!.overall_bonus_led_lap).toBe(0.5);
+    expect(result.points_scoring!.overall_bonus_most_laps_led).toBe(3);
+    expect(result.points_scoring!.overall_one_bonus_per_driver).toBeFalse();
+  });
+
+  it("should handle missing points scoring gracefully in fromProto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r23" },
+      name: "Standard Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.points_scoring).toBeUndefined();
   });
 });

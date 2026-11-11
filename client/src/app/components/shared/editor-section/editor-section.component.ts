@@ -25,17 +25,20 @@ export class EditorSectionComponent {
   headingLevel = input<"h1" | "h2" | "h3" | "h4">("h1");
   collapsible = input<boolean>(true);
   bordered = input<boolean>(false);
+  disabled = input<boolean>(false);
+  disabledBadgeKey = input<string | undefined>(undefined);
+  disabledTooltipKey = input<string | undefined>(undefined);
   customClass = input<string | undefined>(undefined);
 
   toggle = output<boolean>();
 
   onHeaderClick(_event: MouseEvent) {
-    if (!this.collapsible()) return;
+    if (this.disabled() || !this.collapsible()) return;
     this.toggleSection();
   }
 
   onKeydown(e: Event) {
-    if (!this.collapsible()) return;
+    if (this.disabled() || !this.collapsible()) return;
     e.preventDefault();
     this.toggleSection();
   }

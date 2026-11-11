@@ -50,6 +50,10 @@ public class RaceConverter {
         builder.setOverallScoring(buildOverallScoring(race.getOverallScoring()));
       }
 
+      if (race.getPointsScoring() != null) {
+        builder.setPointsScoring(buildPointsScoring(race.getPointsScoring()));
+      }
+
       builder.setMinLapTime(race.getMinLapTime());
 
       if (race.getFuelOptions() != null) {
@@ -140,6 +144,29 @@ public class RaceConverter {
             com.antigravity.proto.OverallScoring.OverallRankingTiebreaker // fqn-collision
                 .valueOf("ORT_" + scoring.getTiebreaker().name()))
         .build();
+  }
+
+  private static com.antigravity.proto.PointsScoring buildPointsScoring( // fqn-collision
+      com.antigravity.models.PointsScoring scoring) { // fqn-collision
+    com.antigravity.proto.PointsScoring.Builder builder = // fqn-collision
+        com.antigravity.proto.PointsScoring.newBuilder(); // fqn-collision
+    if (scoring.getPositionPoints() != null) {
+      builder.addAllPositionPoints(scoring.getPositionPoints());
+    }
+    if (scoring.getHeatPositionPoints() != null) {
+      builder.addAllHeatPositionPoints(scoring.getHeatPositionPoints());
+    }
+    builder.setHeatCarryOverPct(scoring.getHeatCarryOverPct());
+    builder.setHeatBonusFastestLap(scoring.getHeatBonusFastestLap());
+    builder.setHeatBonusLedLap(scoring.getHeatBonusLedLap());
+    builder.setHeatBonusMostLapsLed(scoring.getHeatBonusMostLapsLed());
+    builder.setHeatOneBonusPerDriver(scoring.isHeatOneBonusPerDriver());
+    builder.setOverallBonusFastestLap(scoring.getOverallBonusFastestLap());
+    builder.setOverallBonusFastestLapPerLane(scoring.getOverallBonusFastestLapPerLane());
+    builder.setOverallBonusLedLap(scoring.getOverallBonusLedLap());
+    builder.setOverallBonusMostLapsLed(scoring.getOverallBonusMostLapsLed());
+    builder.setOverallOneBonusPerDriver(scoring.isOverallOneBonusPerDriver());
+    return builder.build();
   }
 
   private static com.antigravity.proto.AnalogFuelOptions buildAnalogFuelOptions( // fqn-collision

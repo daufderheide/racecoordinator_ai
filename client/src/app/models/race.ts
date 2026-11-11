@@ -4,6 +4,7 @@ import { GroupOptions } from "./group_options";
 import { HeatScoring } from "./heat_scoring";
 import { Model } from "./model";
 import { OverallScoring } from "./overall_scoring";
+import { PointsScoring } from "./points_scoring";
 import { SeasonScoring } from "./season";
 import { TeamOptions } from "./team_options";
 import { Track } from "./track";
@@ -15,6 +16,7 @@ export class Race implements Model {
   readonly heat_scoring: HeatScoring;
   readonly overall_scoring: OverallScoring;
   readonly season_scoring?: SeasonScoring;
+  readonly points_scoring?: PointsScoring;
   readonly fuel_options: AnalogFuelOptions;
   readonly digital_fuel_options: DigitalFuelOptions;
   readonly team_options: TeamOptions;
@@ -94,6 +96,7 @@ export class Race implements Model {
     start_time_millis?: number,
     custom_rotation_asset_name?: string,
     step_up: number = 0,
+    points_scoring?: PointsScoring,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -137,6 +140,7 @@ export class Race implements Model {
     this.season_scoring = season_scoring;
     this.start_time_millis = start_time_millis;
     this.step_up = step_up;
+    this.points_scoring = points_scoring;
   }
 
   get objectId(): string {

@@ -3,6 +3,7 @@ export enum OverallRanking {
   OR_FASTEST_LAP = "FASTEST_LAP",
   OR_TOTAL_TIME = "TOTAL_TIME",
   OR_AVERAGE_LAP = "AVERAGE_LAP",
+  OR_POINTS = "POINTS",
 }
 
 export enum OverallRankingTiebreaker {
@@ -10,6 +11,7 @@ export enum OverallRankingTiebreaker {
   ORT_MEDIAN_LAP_TIME = "MEDIAN_LAP_TIME",
   ORT_AVERAGE_LAP_TIME = "AVERAGE_LAP_TIME",
   ORT_TOTAL_TIME = "TOTAL_TIME",
+  ORT_LAP_COUNT = "LAP_COUNT",
 }
 
 export class OverallScoring {
@@ -29,7 +31,11 @@ export class OverallScoring {
 }
 
 export function getOverallScoreFormat(rankingMethod?: OverallRanking): string {
-  if (rankingMethod && rankingMethod !== OverallRanking.OR_LAP_COUNT) {
+  if (
+    rankingMethod &&
+    rankingMethod !== OverallRanking.OR_LAP_COUNT &&
+    rankingMethod !== OverallRanking.OR_POINTS
+  ) {
     return "1.3-3";
   }
   return "1.2-2";

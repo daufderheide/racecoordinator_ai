@@ -178,6 +178,7 @@ public class Race implements ProtocolListener {
         new OverallStandings(
             model.getHeatScoring(),
             model.getOverallScoring(),
+            model.getPointsScoring(),
             model.getGroupOptions(),
             model.isPractice(),
             model.getStepUp());

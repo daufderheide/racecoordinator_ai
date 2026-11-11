@@ -6,5 +6,6 @@ public enum TiebreakerMethod {
   FASTEST_LAP_TIME,
   MEDIAN_LAP_TIME,
   AVERAGE_LAP_TIME,
-  TOTAL_TIME
+  TOTAL_TIME,
+  LAP_COUNT
 }

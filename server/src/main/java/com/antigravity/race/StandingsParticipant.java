@@ -32,6 +32,11 @@ public interface StandingsParticipant {
     return java.util.Collections.emptyList();
   }
 
+  /** Gets the total points scored. */
+  default double getTotalPoints() {
+    return 0.0;
+  }
+
   /** Gets the total elapsed time when the best lap was completed (in seconds). */
   default double getBestLapRecordedTime() {
     return Double.MAX_VALUE;

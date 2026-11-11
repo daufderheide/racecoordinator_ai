@@ -204,7 +204,7 @@ The Scoring Rules expander defines how drivers are ranked in heats and across th
 - **Heat Ranking Method**: Rank drivers in each heat by **Most Laps**, **Fastest Lap**, or **Fastest Total Time**, with configurable tiebreakers.
 - **Finish Method**: Set how the end of a heat is determined (by target **Lap Count** or elapsed **Time** in seconds).
 - **Allow Finish**: Choose how cars complete their laps when the leader finishes or time expires (e.g., immediate end, allow all to finish, single lap finish, or automatic segment credit).
-- **Overall Ranking Method**: Rank overall race standings across all completed heats with customizable tiebreakers and dropped heats.
+- **Overall Ranking Method**: Rank overall race standings across all completed heats by **Lap Count**, **Fastest Lap**, **Total Time**, **Average Lap**, or **Points**, with customizable tiebreakers (including **Lap Count**) and dropped heats.
 - **Step-Up**: Configures progressive ladder step-up racing. Defaults to `0` (disabled). When set to a positive integer $S > 0$, heats are organized into progressive ladder steps where drivers in higher steps await advancing qualifiers from lower steps.
 
 ### Step-Up Ladder Racing
@@ -248,6 +248,30 @@ Race Coordinator AI allows race directors to manually adjust a driver's lap coun
 | **Best Lap Time** | **No impact** (fastest physical lap) | **No impact** (fastest physical lap) |
 | **Median Lap Time** | **No impact** (median physical lap) | **No impact** (median physical lap) |
 | **Gaps (`gapLeader`, `gapPosition`)** | Updates lap differential | Updates time and pace differential |
+
+---
+
+## Points Scoring {: #points-scoring }
+
+The Points Scoring expander configures points-based overall race scoring. When the overall ranking method is set to **Points**, drivers earn points in each heat according to their heat finish positions and bonus criteria, and overall standings are ranked by total points.
+
+> [!NOTE]
+> This expander is only enabled when **Overall Ranking Method** is set to **Points**. When any other ranking method is selected, the expander is disabled with a "Not a Points Race" indicator.
+
+- **Heat Position Points**: Assign points awarded for finishing positions (or per lane) in each individual heat (e.g., 3 points for 1st, 2 for 2nd, 1 for 3rd, 0 for 4th).
+- **Overall Bonuses**:
+    - *Fastest Lap*: Bonus points awarded to the driver with the fastest single lap across the entire race.
+    - *Fastest Lap Per Lane*: Bonus points awarded to the fastest driver on each individual track lane.
+    - *Led a Lap*: Bonus points awarded for leading at least one lap across the race.
+    - *Most Laps Led*: Bonus points awarded to the driver who led the most laps overall.
+    - *One Bonus Limit*: Restricts each driver to at most one overall bonus (the highest value).
+- **Heat Bonuses**:
+    - *Carryover %*: Percentage of heat laps added to the heat points score.
+    - *Fastest Lap*: Bonus points awarded for setting the fastest lap in a heat.
+    - *Led a Lap*: Bonus points awarded for leading a lap in a heat.
+    - *Most Laps Led*: Bonus points awarded for leading the most laps in a heat.
+    - *One Bonus Limit*: Restricts each driver to at most one bonus per heat.
+- **Tiebreakers**: When drivers finish with equal total points, standings are broken using configurable tiebreakers including **Lap Count**, **Fastest Lap Time**, **Median Lap Time**, **Average Lap Time**, and **Total Time**.
 
 ---
 

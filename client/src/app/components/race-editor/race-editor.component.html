@@ -636,7 +636,7 @@
                       data-testid="overall-ranking-select"
                       [disabled]="!isEditMode"
                       [(ngModel)]="editingRace.overall_scoring.ranking_method"
-                      (ngModelChange)="captureState()"
+                      (ngModelChange)="onOverallRankingMethodChange($event)"
                       [title]="'RE_TOOLTIP_OVERALL_RANKING' | translate"
                     >
                       <app-custom-option value="LAP_COUNT"
@@ -651,6 +651,9 @@
                       <app-custom-option value="AVERAGE_LAP"
                         >Average Lap</app-custom-option
                       >
+                      <app-custom-option value="POINTS">
+                        {{ "RE_OR_POINTS" | translate }}
+                      </app-custom-option>
                     </app-custom-select>
                   </div>
                   <div class="config-section">
@@ -663,6 +666,9 @@
                       [(ngModel)]="editingRace.overall_scoring.tiebreaker"
                       (ngModelChange)="captureState()"
                     >
+                      <app-custom-option value="LAP_COUNT">
+                        {{ "RE_ORT_LAP_COUNT" | translate }}
+                      </app-custom-option>
                       <app-custom-option value="FASTEST_LAP_TIME">
                         Fastest Lap Time
                       </app-custom-option>
@@ -704,6 +710,320 @@
                       [title]="'RE_TOOLTIP_STEP_UP' | translate"
                     />
                   </div>
+                </div>
+              </div>
+            </app-editor-section>
+
+            <!-- Points Scoring Section -->
+            <app-editor-section
+              sectionId="points-scoring-section"
+              titleKey="RE_POINTS_SCORING_HEADER"
+              [bordered]="true"
+              headingLevel="h1"
+              [disabled]="
+                editingRace.overall_scoring?.ranking_method !== 'POINTS'
+              "
+              disabledBadgeKey="RE_POINTS_DISABLED_BADGE"
+              disabledTooltipKey="RE_POINTS_DISABLED_NOTICE"
+              [(expanded)]="sectionsExpanded.points_scoring"
+              (toggle)="toggleSection('points_scoring', $event)"
+            >
+              <div class="scoring-layout">
+                <!-- Heat Position Points -->
+                <div
+                  id="points-heat-position-points-section"
+                  class="scoring-column"
+                >
+                  <h2 class="config-header">
+                    {{ "RE_POINTS_HEAT_POSITION_POINTS" | translate }}
+                  </h2>
+                  @if (editingRace.points_scoring) {
+                    <div class="config-section">
+                      <div
+                        class="season-points-list"
+                        [class.two-columns]="
+                          (editingRace.points_scoring.heat_position_points
+                            ?.length || 0) > 4
+                        "
+                      >
+                        @for (
+                          hpts of editingRace.points_scoring
+                            .heat_position_points;
+                          track $index;
+                          let lidx = $index
+                        ) {
+                          <div class="season-point-row">
+                            <span class="season-pos-label"
+                              >Lane {{ lidx + 1 }}:</span
+                            >
+                            <input
+                              id="points-heat-pos-{{ lidx }}"
+                              type="number"
+                              [(ngModel)]="
+                                editingRace.points_scoring.heat_position_points[
+                                  lidx
+                                ]
+                              "
+                              (ngModelChange)="captureState()"
+                              min="0"
+                              class="season-point-input"
+                              [disabled]="
+                                !isEditMode ||
+                                editingRace.overall_scoring?.ranking_method !==
+                                  'POINTS'
+                              "
+                            />
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Bonuses Layout -->
+              <div class="scoring-layout">
+                <!-- Overall Bonuses -->
+                <div id="points-overall-bonuses-section" class="scoring-column">
+                  <h2 class="config-header">
+                    {{ "RE_POINTS_OVERALL_BONUSES" | translate }}
+                  </h2>
+                  @if (editingRace.points_scoring) {
+                    <div class="editor-section">
+                      <label>{{ "SS_BONUS_FASTEST_LAP" | translate }}</label>
+                      <input
+                        id="points-overall-fastest-lap-input"
+                        class="points-overall-fastest-lap-input"
+                        data-testid="points-overall-fastest-lap-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.overall_bonus_fastest_lap
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>{{
+                        "SS_BONUS_FASTEST_LAP_LANE" | translate
+                      }}</label>
+                      <input
+                        id="points-overall-fastest-lap-lane-input"
+                        class="points-overall-fastest-lap-lane-input"
+                        data-testid="points-overall-fastest-lap-lane-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring
+                            .overall_bonus_fastest_lap_per_lane
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>{{ "SS_BONUS_MOST_LAPS_LED" | translate }}</label>
+                      <input
+                        id="points-overall-most-laps-led-input"
+                        class="points-overall-most-laps-led-input"
+                        data-testid="points-overall-most-laps-led-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.overall_bonus_most_laps_led
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
+                      <input
+                        id="points-overall-led-lap-input"
+                        class="points-overall-led-lap-input"
+                        data-testid="points-overall-led-lap-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.overall_bonus_led_lap
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div
+                      class="config-section checkbox-section"
+                      style="margin-top: 8px; margin-bottom: 0"
+                    >
+                      <label
+                        id="points-overall-one-bonus-input"
+                        class="checkbox-container"
+                        [class.disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      >
+                        <input
+                          type="checkbox"
+                          id="points_overall_one_bonus"
+                          [(ngModel)]="
+                            editingRace.points_scoring
+                              .overall_one_bonus_per_driver
+                          "
+                          (ngModelChange)="captureState()"
+                          class="points-overall-one-bonus-input"
+                          data-testid="points-overall-one-bonus-input"
+                          [disabled]="
+                            !isEditMode ||
+                            editingRace.overall_scoring?.ranking_method !==
+                              'POINTS'
+                          "
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">{{
+                          "SS_ONE_BONUS_PER_DRIVER" | translate
+                        }}</span>
+                      </label>
+                    </div>
+                  }
+                </div>
+
+                <!-- Heat Bonuses -->
+                <div id="points-heat-bonuses-section" class="scoring-column">
+                  <h2 class="config-header">
+                    {{ "RE_POINTS_HEAT_BONUSES" | translate }}
+                  </h2>
+                  @if (editingRace.points_scoring) {
+                    <div class="editor-section">
+                      <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
+                      <input
+                        id="points-heat-carry-over-input"
+                        class="points-heat-carry-over-input"
+                        data-testid="points-heat-carry-over-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.heat_carry_over_pct
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        max="100"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>{{ "SS_BONUS_FASTEST_LAP" | translate }}</label>
+                      <input
+                        id="points-heat-fastest-lap-input"
+                        class="points-heat-fastest-lap-input"
+                        data-testid="points-heat-fastest-lap-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.heat_bonus_fastest_lap
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>{{ "SS_BONUS_MOST_LAPS_LED" | translate }}</label>
+                      <input
+                        id="points-heat-most-laps-led-input"
+                        class="points-heat-most-laps-led-input"
+                        data-testid="points-heat-most-laps-led-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.heat_bonus_most_laps_led
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
+                      <input
+                        id="points-heat-led-lap-input"
+                        class="points-heat-led-lap-input"
+                        data-testid="points-heat-led-lap-input"
+                        type="number"
+                        [(ngModel)]="
+                          editingRace.points_scoring.heat_bonus_led_lap
+                        "
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      />
+                    </div>
+                    <div
+                      class="config-section checkbox-section"
+                      style="margin-top: 8px; margin-bottom: 0"
+                    >
+                      <label
+                        id="points-heat-one-bonus-input"
+                        class="checkbox-container"
+                        [class.disabled]="
+                          !isEditMode ||
+                          editingRace.overall_scoring?.ranking_method !==
+                            'POINTS'
+                        "
+                      >
+                        <input
+                          type="checkbox"
+                          id="points_heat_one_bonus"
+                          [(ngModel)]="
+                            editingRace.points_scoring.heat_one_bonus_per_driver
+                          "
+                          (ngModelChange)="captureState()"
+                          class="points-heat-one-bonus-input"
+                          data-testid="points-heat-one-bonus-input"
+                          [disabled]="
+                            !isEditMode ||
+                            editingRace.overall_scoring?.ranking_method !==
+                              'POINTS'
+                          "
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">{{
+                          "SS_ONE_BONUS_PER_DRIVER" | translate
+                        }}</span>
+                      </label>
+                    </div>
+                  }
                 </div>
               </div>
             </app-editor-section>

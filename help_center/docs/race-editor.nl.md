@@ -206,7 +206,7 @@ Het uitklapgedeelte Heat-opties regelt geautomatiseerde timing, herhalingscycli 
 - **Rangschikkingsmethode heats**: Rangschik coureurs in elke heat op basis van **Meeste ronden**, **Snelste ronde** of **Snelste totale tijd**, met instelbare tiebreakers.
 - **Finishmethode**: Bepaalt hoe het einde van een heat wordt vastgesteld (op basis van **Rondenaantal** of verstreken **Tijd** in seconden).
 - **Finish toestaan**: Kies hoe auto's hun rondes voltooien wanneer de leider finisht of de tijd verstrijkt (bijv. direct einde, iedereen laten finishen, enkele ronde of automatische segmenten).
-- **Rangschikkingsmethode eindstand**: Rangschik de algemene race-eindstand over alle voltooide heats met aanpasbare tiebreakers en schrapresultaten.
+- **Rangschikkingsmethode eindstand**: Rangschik de algemene race-eindstand over alle voltooide heats op basis van **Rondenaantal**, **Snelste ronde**, **Totale tijd**, **Gemiddelde ronde** of **Punten**, met aanpasbare tiebreakers (inclusief **Rondenaantal**) en schrapresultaten.
 - **Promotie (Step-Up)**: Configureert een progressieve laddereace. Standaardwaarde is `0` (uitgeschakeld). Bij waarden $S > 0$ worden heats verdeeld in opeenvolgende treden, waarbij coureurs op hogere treden wachten op gepromoveerde coureurs van lagere treden.
 
 ### Ladderraces (Step-Up)
@@ -223,6 +223,32 @@ Wanneer **Promotie (Step-Up)** is ingesteld op een positief geheel getal ($S > 0
 - **Gelaagde eindstand**: Coureurs op lagere treden kunnen in de eindstand nooit hoger eindigen dan coureurs op hogere treden, ongeacht hun rondes of tijden. De winnaar van de finaletrede wint de race.
 - **Groepsraces**: Bij groepsraces met promotie doorloopt elke groep zelfstandig zijn eigen ladder.
 - **Ondersteuning in Heats bewerken**: In het scherm Heats bewerken worden promotiecoureurs aangeduid met een speciale badge en kunnen tredegrenzen worden bekeken en aangepast.
+
+---
+
+## Puntenscore {: #points-scoring }
+
+Het uitklapgedeelte Puntenscore configureert de puntgebaseerde algemene racescore. Wanneer de rangschikkingsmethode voor de eindstand is ingesteld op **Punten**, verdienen coureurs in elke heat punten op basis van hun finishpositie en bonuscriteria, en wordt het algemene klassement gerangschikt op basis van het totale aantal punten.
+
+> [!NOTE]
+> Dit uitklapgedeelte is alleen ingeschakeld wanneer **Rangschikkingsmethode eindstand** is ingesteld op **Punten**. Wanneer een andere rangschikkingsmethode is geselecteerd, is het uitklapgedeelte uitgeschakeld met de melding "Geen puntenrace".
+
+- **Positiepunten per heat**: Wijs punten toe die worden toegekend voor finishposities (of per baan) in elke individuele heat (bijv. 3 punten voor 1e, 2 voor 2e, 1 voor 3e, 0 voor 4e).
+- **Algemene bonussen**:
+    - *Snelste ronde*: Bonuspunten voor de coureur met de snelste individuele ronde van de hele race.
+    - *Snelste ronde per baan*: Bonuspunten voor de snelste coureur op elke afzonderlijke baan.
+    - *Ronde geleid*: Bonuspunten voor het leiden van ten minste één ronde tijdens de race.
+    - *Meeste ronden geleid*: Bonuspunten voor de coureur die over de hele race de meeste ronden aan de leiding heeft gelegen.
+    - *Limiet van één bonus*: Beperkt elke coureur tot maximaal één algemene bonus (de hoogste waarde).
+- **Heatbonussen**:
+    - *Overdracht %*: Percentage van de heatronden dat wordt opgeteld bij de heatscore.
+    - *Snelste ronde*: Bonuspunten voor het neerzetten van de snelste ronde in een heat.
+    - *Ronde geleid*: Bonuspunten voor het leiden van een ronde in een heat.
+    - *Meeste ronden geleid*: Bonuspunten voor het leiden van de meeste ronden in een heat.
+    - *Limiet van één bonus*: Beperkt elke coureur tot maximaal één bonus per heat.
+- **Tiebreakers**: Wanneer coureurs eindigen met een gelijk aantal punten, wordt de stand beslist met instelbare tiebreakers, waaronder **Rondenaantal**, **Snelste rondetijd**, **Mediane rondetijd**, **Gemiddelde rondetijd** en **Totale tijd**.
+
+---
 
 ## Groepen en fases {: #groups-and-stages }
 

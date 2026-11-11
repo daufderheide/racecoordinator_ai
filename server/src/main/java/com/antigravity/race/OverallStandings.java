@@ -4,7 +4,9 @@ import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.PointsScoring;
 import com.antigravity.models.RankingMethod;
+import com.antigravity.util.PointsScoringCalculator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -17,6 +19,7 @@ public class OverallStandings {
 
   private final HeatScoring heatScoring;
   private final OverallScoring overallScoring;
+  private final PointsScoring pointsScoring;
   private final GroupOptions groupOptions;
   private final boolean practice;
   private final int stepUp;
@@ -24,11 +27,13 @@ public class OverallStandings {
   public OverallStandings(
       HeatScoring heatScoring,
       OverallScoring overallScoring,
+      PointsScoring pointsScoring,
       GroupOptions groupOptions,
       boolean practice,
       int stepUp) {
     this.heatScoring = heatScoring;
     this.overallScoring = overallScoring;
+    this.pointsScoring = pointsScoring;
     this.groupOptions = groupOptions;
     this.practice = practice;
     this.stepUp = stepUp;
@@ -38,8 +43,17 @@ public class OverallStandings {
       HeatScoring heatScoring,
       OverallScoring overallScoring,
       GroupOptions groupOptions,
+      boolean practice,
+      int stepUp) {
+    this(heatScoring, overallScoring, null, groupOptions, practice, stepUp);
+  }
+
+  public OverallStandings(
+      HeatScoring heatScoring,
+      OverallScoring overallScoring,
+      GroupOptions groupOptions,
       boolean practice) {
-    this(heatScoring, overallScoring, groupOptions, practice, 0);
+    this(heatScoring, overallScoring, null, groupOptions, practice, 0);
   }
 
   public int getDroppedHeats() {
@@ -101,6 +115,13 @@ public class OverallStandings {
           }
           calculateDriverStats(driver, heatsByNumber, rotationType, heatStartedByNumber);
         }
+      }
+
+      // 2b. Calculate points if points scoring is used
+      if (HeatStandings.resolveOverallRankingMethod(heatScoring, overallScoring)
+          == RankingMethod.POINTS) {
+        PointsScoringCalculator.calculatePoints(
+            drivers, heats, pointsScoring, heatScoring, overallScoring, getDroppedHeats());
       }
 
       // 3. Rank drivers
@@ -214,6 +235,9 @@ public class OverallStandings {
             break;
           case AVERAGE_LAP:
             rankValue = driver.getAverageLapTime();
+            break;
+          case POINTS:
+            rankValue = driver.getTotalPoints();
             break;
           default:
             rankValue = 0;

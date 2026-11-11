@@ -688,6 +688,11 @@ public class DriverHeatData extends ServerToClientObject
     return isFinished;
   }
 
+  @Override
+  public double getTotalPoints() {
+    return 0.0;
+  }
+
   public void setFinished(boolean isFinished) {
     this.isFinished = isFinished;
   }

@@ -1,6 +1,8 @@
 import { Track } from "@app/models/track";
 import { TranslationService } from "@app/services/translation.service";
 
+import { RaceEditorSections } from "./race-editor-ui.helper";
+
 export class RaceEditorScoringHelper {
   static syncHeatScoringProperties(editingRace: any): void {
     if (!editingRace?.heat_scoring) return;
@@ -179,5 +181,93 @@ export class RaceEditorScoringHelper {
         laneCount,
       );
     }
+  }
+
+  static syncPointsScoringHeatPositionPoints(
+    editingRace: any,
+    tracks: Track[],
+  ): void {
+    if (!editingRace) return;
+    if (!editingRace.points_scoring) {
+      editingRace.points_scoring = {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [],
+        heat_carry_over_pct: 0,
+        heat_bonus_fastest_lap: 0,
+        heat_bonus_led_lap: 0,
+        heat_bonus_most_laps_led: 0,
+        heat_one_bonus_per_driver: false,
+        overall_bonus_fastest_lap: 0,
+        overall_bonus_fastest_lap_per_lane: 0,
+        overall_bonus_led_lap: 0,
+        overall_bonus_most_laps_led: 0,
+        overall_one_bonus_per_driver: false,
+      };
+    }
+    if (!Array.isArray(editingRace.points_scoring.heat_position_points)) {
+      editingRace.points_scoring.heat_position_points = [];
+    }
+
+    const track = (tracks || []).find(
+      (t) => t.entity_id === editingRace?.track_entity_id,
+    );
+    if (!track) return;
+
+    const laneCount = track.lanes ? track.lanes.length : 0;
+    const currentPoints = editingRace.points_scoring.heat_position_points;
+
+    if (currentPoints.length === 0 && laneCount > 0) {
+      const defaultPoints = [3, 2, 1, 0];
+      const initialPoints = defaultPoints.slice(0, laneCount);
+      while (initialPoints.length < laneCount) {
+        initialPoints.push(0);
+      }
+      editingRace.points_scoring.heat_position_points = initialPoints;
+    } else if (currentPoints.length < laneCount) {
+      while (currentPoints.length < laneCount) {
+        currentPoints.push(0);
+      }
+    } else if (currentPoints.length > laneCount) {
+      editingRace.points_scoring.heat_position_points = currentPoints.slice(
+        0,
+        laneCount,
+      );
+    }
+  }
+
+  static onOverallRankingMethodChange(
+    editingRace: any,
+    tracks: Track[],
+    sectionsExpanded: RaceEditorSections,
+    captureState: () => void,
+    method: string,
+  ): void {
+    if (method === "POINTS") {
+      if (!editingRace.points_scoring) {
+        editingRace.points_scoring = {
+          position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+          heat_position_points: [],
+          heat_carry_over_pct: 0,
+          heat_bonus_fastest_lap: 0,
+          heat_bonus_led_lap: 0,
+          heat_bonus_most_laps_led: 0,
+          heat_one_bonus_per_driver: false,
+          overall_bonus_fastest_lap: 0,
+          overall_bonus_fastest_lap_per_lane: 0,
+          overall_bonus_led_lap: 0,
+          overall_bonus_most_laps_led: 0,
+          overall_one_bonus_per_driver: false,
+        };
+      }
+      this.syncPointsScoringHeatPositionPoints(editingRace, tracks);
+      sectionsExpanded.points_scoring = true;
+      if (
+        !editingRace.overall_scoring?.tiebreaker ||
+        editingRace.overall_scoring.tiebreaker === "FASTEST_LAP_TIME"
+      ) {
+        editingRace.overall_scoring.tiebreaker = "LAP_COUNT";
+      }
+    }
+    captureState();
   }
 }

@@ -16,3 +16,22 @@
 .section-header:not(.collapsible) {
   cursor: default;
 }
+
+.section-header.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.disabled-reason-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.75rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  letter-spacing: 0.02em;
+}

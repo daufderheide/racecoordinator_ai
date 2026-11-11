@@ -11,6 +11,7 @@ describe("RaceEditorUiHelper", () => {
       general: true,
       start_method: true,
       scoring: true,
+      points_scoring: true,
       season_points: true,
       heats: true,
       groups: true,

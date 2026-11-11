@@ -63,6 +63,11 @@ public interface GapParticipant {
   /** Sets the gap to the position immediately ahead in laps. */
   void setGapPositionLaps(double gapPositionLaps);
 
+  /** Gets the total points scored. */
+  default double getTotalPoints() {
+    return 0.0;
+  }
+
   /** Returns true if this participant is considered empty (e.g., an empty lane). */
   default boolean isEmptyParticipant() {
     return false;

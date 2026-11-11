@@ -9,14 +9,16 @@ public class OverallScoring {
     LAP_COUNT,
     FASTEST_LAP,
     TOTAL_TIME,
-    AVERAGE_LAP
+    AVERAGE_LAP,
+    POINTS
   }
 
   public enum OverallRankingTiebreaker {
     FASTEST_LAP_TIME,
     MEDIAN_LAP_TIME,
     AVERAGE_LAP_TIME,
-    TOTAL_TIME
+    TOTAL_TIME,
+    LAP_COUNT
   }
 
   @JsonProperty("dropped_heats")
@@ -69,6 +71,8 @@ public class OverallScoring {
         return RankingMethod.TOTAL_TIME;
       case AVERAGE_LAP:
         return RankingMethod.AVERAGE_LAP;
+      case POINTS:
+        return RankingMethod.POINTS;
       default:
         return RankingMethod.LAP_COUNT;
     }
@@ -87,6 +91,8 @@ public class OverallScoring {
         return TiebreakerMethod.AVERAGE_LAP_TIME;
       case TOTAL_TIME:
         return TiebreakerMethod.TOTAL_TIME;
+      case LAP_COUNT:
+        return TiebreakerMethod.LAP_COUNT;
       default:
         return TiebreakerMethod.AVERAGE_LAP_TIME;
     }

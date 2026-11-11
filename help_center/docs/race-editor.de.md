@@ -206,7 +206,7 @@ Der Bereich Lauf-Optionen konfiguriert automatisierte Zeitsteuerungen, Durchläu
 - **Laufwertungsmethode**: Platzierung der Fahrer in jedem Lauf nach **Meiste Runden**, **Schnellste Runde** oder **Schnellste Gesamtzeit** mit konfigurierbaren Tiebreakern.
 - **Zielmethode**: Legt fest, wie das Ende eines Laufs bestimmt wird (nach **Rundenzahl** oder verstrichener **Zeit** in Sekunden).
 - **Zielerlaubnis**: Bestimmt, wie Fahrzeuge ihre Runden beenden, wenn der Führende das Ziel erreicht oder die Zeit abläuft (z. B. sofortiges Ende, alle beenden lassen, Einzelrundenabschluss oder automatische Segmentgutschrift).
-- **Gesamtwertungsmethode**: Platzierung der Gesamtrangliste über alle Läufe mit anpassbaren Tiebreakern und Streichergebnissen.
+- **Gesamtwertungsmethode**: Platzierung der Gesamtrangliste über alle Läufe nach **Rundenzahl**, **Schnellste Runde**, **Gesamtzeit**, **Durchschnittliche Runde** oder **Punkte** mit anpassbaren Tiebreakern (einschließlich **Rundenzahl**) und Streichergebnissen.
 - **Aufstieg (Step-Up)**: Konfiguriert das progressive Stufenleiter-Rennen. Standardmäßig `0` (deaktiviert). Bei Werten $S > 0$ werden Läufe in progressive Stufen unterteilt, bei denen Fahrer in höheren Stufen auf aufsteigende Qualifikanten aus unteren Stufen warten.
 
 ### Stufenleiter-Rennen (Step-Up)
@@ -223,6 +223,32 @@ Wenn **Aufstieg (Step-Up)** auf einen positiven Wert ($S > 0$) eingestellt ist, 
 - **Gestaffelte Gesamtwertung**: Fahrer aus niedrigeren Stufen können in der Gesamtwertung niemals vor Fahrern höherer Stufen platziert werden, unabhängig von ihren Runden oder Zeiten. Der Sieger der Finalstufe gewinnt das Rennen.
 - **Gruppenrennen**: Bei Gruppenrennen mit aktiviertem Aufstieg durchläuft jede Gruppe ihre eigene Leiter unabhängig.
 - **Unterstützung bei Läufe bearbeiten**: Auf der Seite „Läufe bearbeiten“ werden Aufstiegsfahrer mit Abzeichen markiert und Stufengrenzen können überprüft und umgeschaltet werden.
+
+---
+
+## Punktewertung {: #points-scoring }
+
+Der Bereich Punktewertung konfiguriert die punktebasierte Gesamtwertung eines Rennens. Wenn die Gesamtwertungsmethode auf **Punkte** eingestellt ist, erhalten die Fahrer in jedem Lauf Punkte entsprechend ihrer Lauf-Platzierungen und Bonuskriterien, und die Gesamtwertung richtet sich nach den Gesamtpunkten.
+
+> [!NOTE]
+> Dieser Bereich ist nur aktiviert, wenn die **Gesamtwertungsmethode** auf **Punkte** eingestellt ist. Wenn eine andere Wertungsmethode ausgewählt ist, ist der Bereich mit dem Hinweis „Kein Punkterennen“ deaktiviert.
+
+- **Lauf-Platzierungspunkte**: Legen Sie Punkte für Platzierungen (oder pro Spur) in jedem einzelnen Lauf fest (z. B. 3 Punkte für Platz 1, 2 für Platz 2, 1 für Platz 3, 0 für Platz 4).
+- **Gesamt-Boni**:
+    - *Schnellste Runde*: Bonuspunkte für den Fahrer mit der schnellsten Einzelrunde des gesamten Rennens.
+    - *Schnellste Runde pro Spur*: Bonuspunkte für den schnellsten Fahrer auf jeder einzelnen Spur.
+    - *Führungsrunde*: Bonuspunkte für das Führen von mindestens einer Runde im gesamten Rennen.
+    - *Meiste Führungsrunden*: Bonuspunkte für den Fahrer, der insgesamt die meisten Runden angeführt hat.
+    - *Ein-Bonus-Begrenzung*: Beschränkt jeden Fahrer auf maximal einen Gesamtbonus (den höchsten Wert).
+- **Lauf-Boni**:
+    - *Übertrag %*: Prozentsatz der Laufsrunden, der zu den Laufpunkten hinzugefügt wird.
+    - *Schnellste Runde*: Bonuspunkte für die schnellste Runde in einem Lauf.
+    - *Führungsrunde*: Bonuspunkte für das Führen einer Runde in einem Lauf.
+    - *Meiste Führungsrunden*: Bonuspunkte für die meisten Führungsrunden in einem Lauf.
+    - *Ein-Bonus-Begrenzung*: Beschränkt jeden Fahrer auf maximal einen Bonus pro Lauf.
+- **Tiebreaker**: Bei Punktegleichstand wird die Rangliste anhand konfigurierbarer Tiebreaker entschieden, darunter **Rundenzahl**, **Schnellste Rundenzeit**, **Mediane Rundenzeit**, **Durchschnittliche Rundenzeit** und **Gesamtzeit**.
+
+---
 
 ## Gruppen & Stufen {: #groups-and-stages }
 

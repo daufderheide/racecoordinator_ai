@@ -11,6 +11,7 @@ import {
   OverallRankingTiebreaker,
   OverallScoring,
 } from "@app/models/overall_scoring";
+import { PointsScoring } from "@app/models/points_scoring";
 import { Race } from "@app/models/race";
 import { TeamOptions } from "@app/models/team_options";
 import { Track } from "@app/models/track";
@@ -158,6 +159,7 @@ export class RaceConverter {
         p.custom_rotation_name ||
         undefined,
       p.stepUp ?? p.step_up ?? (proto as any).stepUp ?? 0,
+      this.parsePointsScoring(p.pointsScoring || p.points_scoring),
     );
   }
 
@@ -219,6 +221,7 @@ export class RaceConverter {
         OverallRanking.OR_FASTEST_LAP,
         OverallRanking.OR_TOTAL_TIME,
         OverallRanking.OR_AVERAGE_LAP,
+        OverallRanking.OR_POINTS,
       ];
       rankingMethod = methods[rankingMethod] || OverallRanking.OR_LAP_COUNT;
     }
@@ -230,6 +233,7 @@ export class RaceConverter {
         OverallRankingTiebreaker.ORT_MEDIAN_LAP_TIME,
         OverallRankingTiebreaker.ORT_AVERAGE_LAP_TIME,
         OverallRankingTiebreaker.ORT_TOTAL_TIME,
+        OverallRankingTiebreaker.ORT_LAP_COUNT,
       ];
       tiebreaker =
         tiebreakers[tiebreaker] ||
@@ -241,6 +245,52 @@ export class RaceConverter {
       rankingMethod as unknown as OverallRanking,
       tiebreaker as unknown as OverallRankingTiebreaker,
     );
+  }
+
+  private static parsePointsScoring(
+    rawScoring: any,
+  ): PointsScoring | undefined {
+    if (!rawScoring) return undefined;
+    return {
+      position_points:
+        rawScoring.positionPoints || rawScoring.position_points || [],
+      heat_position_points:
+        rawScoring.heatPositionPoints || rawScoring.heat_position_points || [],
+      heat_carry_over_pct:
+        rawScoring.heatCarryOverPct ?? rawScoring.heat_carry_over_pct ?? 0,
+      heat_bonus_fastest_lap:
+        rawScoring.heatBonusFastestLap ??
+        rawScoring.heat_bonus_fastest_lap ??
+        0,
+      heat_bonus_led_lap:
+        rawScoring.heatBonusLedLap ?? rawScoring.heat_bonus_led_lap ?? 0,
+      heat_bonus_most_laps_led:
+        rawScoring.heatBonusMostLapsLed ??
+        rawScoring.heat_bonus_most_laps_led ??
+        0,
+      heat_one_bonus_per_driver:
+        rawScoring.heatOneBonusPerDriver ??
+        rawScoring.heat_one_bonus_per_driver ??
+        false,
+      overall_bonus_fastest_lap:
+        rawScoring.overallBonusFastestLap ??
+        rawScoring.overall_bonus_fastest_lap ??
+        0,
+      overall_bonus_fastest_lap_per_lane:
+        rawScoring.overallBonusFastestLapPerLane ??
+        rawScoring.overall_bonus_fastest_lap_per_lane ??
+        0,
+      overall_bonus_led_lap:
+        rawScoring.overallBonusLedLap ?? rawScoring.overall_bonus_led_lap ?? 0,
+      overall_bonus_most_laps_led:
+        rawScoring.overallBonusMostLapsLed ??
+        rawScoring.overall_bonus_most_laps_led ??
+        0,
+      overall_one_bonus_per_driver:
+        rawScoring.overallOneBonusPerDriver ??
+        rawScoring.overall_one_bonus_per_driver ??
+        false,
+    };
   }
 
   private static parseTeamOptions(rawOptions: any): TeamOptions {

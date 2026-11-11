@@ -53,6 +53,20 @@ public class GapCalculator {
         continue;
       }
 
+      if (rankMethod == RankingMethod.POINTS) {
+        double gapLeaderPts = Math.max(0.0, leader.getTotalPoints() - current.getTotalPoints());
+        double gapPosPts = Math.max(0.0, ahead.getTotalPoints() - current.getTotalPoints());
+        current.setGapLeader(gapLeaderPts);
+        current.setGapPosition(gapPosPts);
+        current.setGapLeaderF1(gapLeaderPts);
+        current.setGapPositionF1(gapPosPts);
+        current.setGapLeaderLaps(
+            Math.max(0.0, leader.getEffectiveLapCount() - current.getEffectiveLapCount()));
+        current.setGapPositionLaps(
+            Math.max(0.0, ahead.getEffectiveLapCount() - current.getEffectiveLapCount()));
+        continue;
+      }
+
       current.setGapLeader(calculateGap(leader, current, finishMethod));
       current.setGapPosition(calculateGap(ahead, current, finishMethod));
 

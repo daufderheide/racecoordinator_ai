@@ -206,7 +206,7 @@ L'accordéon Options de manche configure le rythme automatisé, les cycles et la
 - **Méthode de classement de manche** : Classement des pilotes dans chaque manche par **Plus de tours**, **Meilleur tour** ou **Temps total le plus rapide**, avec bris d'égalité configurables.
 - **Méthode de fin** : Détermine comment la fin d'une manche est établie (par **Nombre de tours** ou **Temps** écoulé en secondes).
 - **Autoriser l'arrivée** : Détermine comment les voitures finissent leurs tours lorsque le leader termine ou le temps expire (ex. fin immédiate, autoriser tous à finir, tour unique ou crédit de segments automatiques).
-- **Méthode de classement général** : Classement général sur l'ensemble des manches avec bris d'égalité et manches éliminées configurables.
+- **Méthode de classement général** : Classement général sur l'ensemble des manches par **Nombre de tours**, **Meilleur tour**, **Temps total**, **Moyenne au tour** ou **Points**, avec bris d'égalité personnalisables (y compris **Nombre de tours**) et manches éliminées.
 - **Progression (Step-Up)** : Configure une course progressive en échelle. Valeur par défaut : `0` (désactivé). Avec une valeur $S > 0$, les manches sont découpées en échelons progressifs où les pilotes des échelons supérieurs attendent les qualifiés promus des échelons inférieurs.
 
 ### Courses en Échelle (Step-Up)
@@ -223,6 +223,32 @@ Lorsque l'option **Progression (Step-Up)** est configurée avec un entier positi
 - **Classement général hiérarchisé** : Les pilotes des échelons inférieurs ne peuvent pas devancer les pilotes des échelons supérieurs au classement général, quels que soient leurs tours ou temps bruts. Le vainqueur de l'échelon final remporte la course.
 - **Courses par groupes** : Dans les courses par groupes avec progression, chaque groupe suit sa propre échelle de manière indépendante.
 - **Support dans Modifier les manches** : Dans l'écran Modifier les manches, les pilotes promus sont identifiés par un badge dédié et les frontières d'échelon peuvent être examinées et modifiées.
+
+---
+
+## Attribution des points {: #points-scoring }
+
+L'accordéon Attribution des points configure le classement général basé sur les points. Lorsque la méthode de classement général est définie sur **Points**, les pilotes gagnent des points dans chaque manche selon leur position d'arrivée et les critères de bonus, et le classement général est ordonné par le total des points.
+
+> [!NOTE]
+> Cet accordéon est uniquement activé lorsque la **Méthode de classement général** est définie sur **Points**. Lorsqu'une autre méthode est sélectionnée, l'accordéon est désactivé avec la mention « Pas une course aux points ».
+
+- **Points de position en manche** : Définissez les points attribués pour les positions d'arrivée (ou par voie) dans chaque manche individuelle (par ex. 3 points pour le 1er, 2 pour le 2e, 1 pour le 3e, 0 pour le 4e).
+- **Bonus généraux** :
+    - *Meilleur tour* : Points bonus attribués au pilote ayant réalisé le meilleur tour individuel de l'ensemble de la course.
+    - *Meilleur tour par voie* : Points bonus attribués au pilote le plus rapide sur chaque voie individuelle.
+    - *Tour mené* : Points bonus pour avoir mené au moins un tour au cours de la course.
+    - *Plus grand nombre de tours menés* : Points bonus attribués au pilote ayant mené le plus grand nombre de tours au total.
+    - *Limite d'un seul bonus* : Limite chaque pilote à un maximum d'un bonus général (la valeur la plus élevée).
+- **Bonus de manche** :
+    - *% de report* : Pourcentage des tours de manche ajouté au score de points de la manche.
+    - *Meilleur tour* : Points bonus pour le meilleur tour d'une manche.
+    - *Tour mené* : Points bonus pour avoir mené un tour dans une manche.
+    - *Plus grand nombre de tours menés* : Points bonus pour avoir mené le plus grand nombre de tours dans une manche.
+    - *Limite d'un seul bonus* : Limite chaque pilote à un maximum d'un bonus par manche.
+- **Bris d'égalité** : En cas d'égalité de points totaux, le départage s'effectue via des critères configurables tels que le **Nombre de tours**, le **Temps du meilleur tour**, le **Temps de tour médian**, le **Temps moyen au tour** et le **Temps total**.
+
+---
 
 ## Groupes et étapes {: #groups-and-stages }
 

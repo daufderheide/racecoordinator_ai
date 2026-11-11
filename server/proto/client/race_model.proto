@@ -61,6 +61,7 @@ message OverallScoring {
     OR_FASTEST_LAP = 1;
     OR_TOTAL_TIME = 2;
     OR_AVERAGE_LAP = 3;
+    OR_POINTS = 4;
   }
 
   enum OverallRankingTiebreaker {
@@ -68,11 +69,27 @@ message OverallScoring {
     ORT_MEDIAN_LAP_TIME = 1;
     ORT_AVERAGE_LAP_TIME = 2;
     ORT_TOTAL_TIME = 3;
+    ORT_LAP_COUNT = 4;
   }
 
   int32 dropped_heats = 1;
   OverallRanking ranking_method = 2;
   OverallRankingTiebreaker tiebreaker = 3;
+}
+
+message PointsScoring {
+  repeated double position_points = 1;
+  repeated double heat_position_points = 2;
+  double heat_carry_over_pct = 3;
+  double heat_bonus_fastest_lap = 4;
+  double heat_bonus_led_lap = 5;
+  double heat_bonus_most_laps_led = 6;
+  bool heat_one_bonus_per_driver = 7;
+  double overall_bonus_fastest_lap = 8;
+  double overall_bonus_fastest_lap_per_lane = 9;
+  double overall_bonus_led_lap = 10;
+  double overall_bonus_most_laps_led = 11;
+  bool overall_one_bonus_per_driver = 12;
 }
 
 message TeamOptions {
@@ -133,6 +150,7 @@ message RaceModel {
   string theme_id = 35;
   reserved 36;
   int32 step_up = 37;
+  PointsScoring points_scoring = 38;
 }
 
 // CustomRotation and CustomHeat moved to rotation_model.proto

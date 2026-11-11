@@ -248,6 +248,7 @@ export class RaceEditorComponent
     general: true,
     start_method: true,
     scoring: true,
+    points_scoring: true,
     season_points: true,
     heats: true,
     fuel_analog: true,
@@ -317,42 +318,11 @@ export class RaceEditorComponent
   }
 
   onToggleEditMode() {
-    if (!this.isEditMode) {
-      this.isEditMode = true;
-      this.focusNameInput();
-      return;
-    }
-
-    if (this.isSaving) {
-      this.transitionToReadOnlyOnSave = true;
-      return;
-    }
-
-    if (this.isDirtyState()) {
-      if (!this.isConfigValid()) {
-        if (this.isNameDuplicate()) {
-          alert(this.translationService.translate("RE_ERROR_NAME_EXISTS"));
-        } else {
-          alert(this.translationService.translate("RE_ERROR_NAME_REQUIRED"));
-        }
-        return;
-      }
-      this.updateRace(false);
-    } else {
-      this.isEditMode = false;
-    }
+    RaceEditorUiHelper.onToggleEditMode(this);
   }
 
   onAddNewRace() {
-    if (this.isEditMode && this.isDirtyState()) {
-      this.confirmDiscard().then((confirmed) => {
-        if (confirmed) {
-          this.startNewRace();
-        }
-      });
-    } else {
-      this.startNewRace();
-    }
+    RaceEditorUiHelper.onAddNewRace(this);
   }
 
   startNewRace() {
@@ -376,16 +346,7 @@ export class RaceEditorComponent
   }
 
   onBackClicked() {
-    if (this.isConfigValid()) {
-      if (this.isDirtyState()) {
-        this.navigateBackOnSave = true;
-        this.updateRace();
-      } else {
-        this.onBack();
-      }
-    } else {
-      this.onBack();
-    }
+    RaceEditorUiHelper.onBackClicked(this);
   }
 
   onBack() {
@@ -410,28 +371,19 @@ export class RaceEditorComponent
     section: keyof typeof this.sectionsExpanded,
     forcedState?: boolean,
   ) {
-    this.sectionsExpanded[section] =
-      typeof forcedState === "boolean"
-        ? forcedState
-        : !this.sectionsExpanded[section];
-    RaceEditorUiHelper.saveExpanderState(this.sectionsExpanded);
+    RaceEditorUiHelper.toggleSection(
+      this.sectionsExpanded,
+      section,
+      forcedState,
+    );
   }
 
   areAllSectionsExpanded(): boolean {
-    return Object.values(this.sectionsExpanded).every(Boolean);
+    return RaceEditorUiHelper.areAllSectionsExpanded(this.sectionsExpanded);
   }
 
   toggleAllSections(forcedState?: boolean) {
-    const next =
-      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
-    (
-      Object.keys(this.sectionsExpanded) as Array<
-        keyof typeof this.sectionsExpanded
-      >
-    ).forEach((key) => {
-      this.sectionsExpanded[key] = next;
-    });
-    RaceEditorUiHelper.saveExpanderState(this.sectionsExpanded);
+    RaceEditorUiHelper.toggleAllSections(this.sectionsExpanded, forcedState);
   }
 
   loadExpanderState() {
@@ -1133,6 +1085,20 @@ export class RaceEditorComponent
     RaceEditorScoringHelper.syncHeatPositionPoints(
       this.editingRace,
       this.tracks,
+    );
+    RaceEditorScoringHelper.syncPointsScoringHeatPositionPoints(
+      this.editingRace,
+      this.tracks,
+    );
+  }
+
+  onOverallRankingMethodChange(method: string): void {
+    RaceEditorScoringHelper.onOverallRankingMethodChange(
+      this.editingRace,
+      this.tracks,
+      this.sectionsExpanded,
+      () => this.captureState(),
+      method,
     );
   }
 

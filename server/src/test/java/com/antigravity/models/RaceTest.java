@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import org.junit.Test;
 
 public class RaceTest {
@@ -37,6 +38,18 @@ public class RaceTest {
     assertEquals(3, cloned.getGroupOptions().getMaxGroups());
     assertEquals(1, cloned.getGroupOptions().getMinAdvancing());
     assertTrue(cloned.getGroupOptions().isRotateGroupHeats());
+  }
+
+  @Test
+  public void testRaceCloneWithPointsScoring() {
+    PointsScoring ps = new PointsScoring(Arrays.asList(10.0), Arrays.asList(5.0));
+    Race original = new Race.Builder().withName("Original").withPointsScoring(ps).build();
+
+    Race cloned = new Race.Builder().from(original).build();
+
+    assertNotNull(cloned.getPointsScoring());
+    assertEquals(1, cloned.getPointsScoring().getPositionPoints().size());
+    assertEquals(10.0, cloned.getPointsScoring().getPositionPoints().get(0), 0.001);
   }
 
   @Test

@@ -31,6 +31,12 @@ const EXPANDER_HELP_DEFS: ExpanderHelpDef[] = [
     sectionKey: "scoring",
   },
   {
+    targetId: "points-scoring-section",
+    titleKey: "RE_HELP_EXPANDER_POINTS_SCORING_TITLE",
+    contentKey: "RE_HELP_EXPANDER_POINTS_SCORING_CONTENT",
+    sectionKey: "points_scoring",
+  },
+  {
     targetId: "group-section",
     titleKey: "RE_HELP_EXPANDER_GROUPS_TITLE",
     contentKey: "RE_HELP_EXPANDER_GROUPS_CONTENT",

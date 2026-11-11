@@ -7,6 +7,8 @@ import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.FuelCurvePoint;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
+import com.antigravity.models.OverallScoring;
+import com.antigravity.models.PointsScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceModel;
@@ -730,6 +732,73 @@ public class RaceConverterTest {
 
     RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
     assertEquals(2, proto.getStepUp());
+  }
+
+  @Test
+  public void testToProto_PointsScoring() {
+    PointsScoring pointsScoring =
+        new PointsScoring(
+            Arrays.asList(25.0, 18.0, 15.0),
+            Arrays.asList(5.0, 3.0, 2.0),
+            10.0,
+            1.5,
+            2.0,
+            3.0,
+            true,
+            4.0,
+            2.5,
+            1.0,
+            3.5,
+            true);
+    Race race =
+        new Race.Builder()
+            .withName("Points Race")
+            .withTrackEntityId("track-1")
+            .withPointsScoring(pointsScoring)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertNotNull(proto.getPointsScoring());
+    assertEquals(3, proto.getPointsScoring().getPositionPointsCount());
+    assertEquals(25.0, proto.getPointsScoring().getPositionPoints(0), 0.001);
+    assertEquals(3, proto.getPointsScoring().getHeatPositionPointsCount());
+    assertEquals(5.0, proto.getPointsScoring().getHeatPositionPoints(0), 0.001);
+    assertEquals(10.0, proto.getPointsScoring().getHeatCarryOverPct(), 0.001);
+    assertEquals(1.5, proto.getPointsScoring().getHeatBonusFastestLap(), 0.001);
+    assertEquals(2.0, proto.getPointsScoring().getHeatBonusLedLap(), 0.001);
+    assertEquals(3.0, proto.getPointsScoring().getHeatBonusMostLapsLed(), 0.001);
+    org.junit.Assert.assertTrue(proto.getPointsScoring().getHeatOneBonusPerDriver());
+    assertEquals(4.0, proto.getPointsScoring().getOverallBonusFastestLap(), 0.001);
+    assertEquals(2.5, proto.getPointsScoring().getOverallBonusFastestLapPerLane(), 0.001);
+    assertEquals(1.0, proto.getPointsScoring().getOverallBonusLedLap(), 0.001);
+    assertEquals(3.5, proto.getPointsScoring().getOverallBonusMostLapsLed(), 0.001);
+    org.junit.Assert.assertTrue(proto.getPointsScoring().getOverallOneBonusPerDriver());
+  }
+
+  @Test
+  public void testToProto_OverallScoring_PointsAndLapCountTiebreaker() {
+    OverallScoring overall =
+        new OverallScoring(
+            2,
+            OverallScoring.OverallRanking.POINTS,
+            OverallScoring.OverallRankingTiebreaker.LAP_COUNT);
+    Race race =
+        new Race.Builder()
+            .withName("Points Overall Race")
+            .withTrackEntityId("track-1")
+            .withOverallScoring(overall)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(
+        com.antigravity.proto.OverallScoring.OverallRanking.OR_POINTS,
+        proto.getOverallScoring().getRankingMethod());
+    assertEquals(
+        com.antigravity.proto.OverallScoring.OverallRankingTiebreaker.ORT_LAP_COUNT,
+        proto.getOverallScoring().getTiebreaker());
+    assertEquals(2, proto.getOverallScoring().getDroppedHeats());
   }
 
   private void assertNotNull(Object obj) {

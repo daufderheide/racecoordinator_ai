@@ -26,6 +26,10 @@ public class Race extends Model {
   @JsonAlias("seasonScoring")
   private final SeasonScoring seasonScoring;
 
+  @JsonProperty("points_scoring")
+  @JsonAlias("pointsScoring")
+  private final PointsScoring pointsScoring;
+
   @JsonProperty("min_lap_time")
   private final double minLapTime;
 
@@ -148,6 +152,7 @@ public class Race extends Model {
       @JsonProperty("race_scoring") HeatScoring oldHeatScoring,
       @JsonProperty("overall_scoring") @JsonAlias("overallScoring") OverallScoring overallScoring,
       @JsonProperty("season_scoring") @JsonAlias("seasonScoring") SeasonScoring seasonScoring,
+      @JsonProperty("points_scoring") @JsonAlias("pointsScoring") PointsScoring pointsScoring,
       @JsonProperty("min_lap_time") @JsonAlias("minLapTime") Double minLapTime,
       @JsonProperty("fuel_options") @JsonAlias("fuelOptions") AnalogFuelOptions fuelOptions,
       @JsonProperty("digital_fuel_options") @JsonAlias("digitalFuelOptions")
@@ -206,6 +211,7 @@ public class Race extends Model {
             : (oldHeatScoring != null ? oldHeatScoring : new HeatScoring());
     this.overallScoring = overallScoring != null ? overallScoring : new OverallScoring();
     this.seasonScoring = seasonScoring != null ? seasonScoring : new SeasonScoring();
+    this.pointsScoring = pointsScoring != null ? pointsScoring : new PointsScoring();
     this.minLapTime = minLapTime != null ? minLapTime : 1.5;
     this.fuelOptions = fuelOptions != null ? fuelOptions : new AnalogFuelOptions();
     this.digitalFuelOptions =
@@ -255,6 +261,7 @@ public class Race extends Model {
     private HeatScoring heatScoring = new HeatScoring();
     private OverallScoring overallScoring = new OverallScoring();
     private SeasonScoring seasonScoring = new SeasonScoring();
+    private PointsScoring pointsScoring = new PointsScoring();
     private double minLapTime = 1.5;
     private AnalogFuelOptions fuelOptions = new AnalogFuelOptions();
     private DigitalFuelOptions digitalFuelOptions = new DigitalFuelOptions();
@@ -296,6 +303,7 @@ public class Race extends Model {
       this.heatScoring = other.getHeatScoring();
       this.overallScoring = other.getOverallScoring();
       this.seasonScoring = other.getSeasonScoring();
+      this.pointsScoring = other.getPointsScoring();
       this.minLapTime = other.getMinLapTime();
       this.fuelOptions = other.getFuelOptions();
       this.digitalFuelOptions = other.getDigitalFuelOptions();
@@ -359,6 +367,11 @@ public class Race extends Model {
 
     public Builder withSeasonScoring(SeasonScoring seasonScoring) {
       this.seasonScoring = seasonScoring;
+      return this;
+    }
+
+    public Builder withPointsScoring(PointsScoring pointsScoring) {
+      this.pointsScoring = pointsScoring;
       return this;
     }
 
@@ -536,6 +549,7 @@ public class Race extends Model {
           null,
           overallScoring,
           seasonScoring,
+          pointsScoring,
           minLapTime,
           fuelOptions,
           digitalFuelOptions,
@@ -602,6 +616,10 @@ public class Race extends Model {
 
   public SeasonScoring getSeasonScoring() {
     return seasonScoring;
+  }
+
+  public PointsScoring getPointsScoring() {
+    return pointsScoring;
   }
 
   public AnalogFuelOptions getFuelOptions() {

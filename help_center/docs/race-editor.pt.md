@@ -206,7 +206,7 @@ O acordeão de Opções de bateria configura os tempos automatizados, ciclos de 
 - **Método de classificação da bateria**: Classifique os pilotos em cada bateria por **Mais voltas**, **Volta mais rápida** ou **Tempo total mais rápido**, com desempates configuráveis.
 - **Método de término**: Define como o final de uma bateria é determinado (por **Contagem de voltas** ou **Tempo** decorrido em segundos).
 - **Permitir chegada**: Escolha como os carros concluem suas voltas quando o líder termina ou o tempo se esgota (por exemplo, término imediato, permitir que todos terminem, volta única ou crédito de segmentos automáticos).
-- **Método de classificação geral**: Classifique a classificação geral da corrida em todas as baterias com desempates e baterias descartadas personalizáveis.
+- **Método de classificação geral**: Classifique a classificação geral da corrida em todas as baterias por **Contagem de voltas**, **Volta mais rápida**, **Tempo total**, **Média de voltas** ou **Pontos**, com desempates personalizáveis (incluindo **Contagem de voltas**) e baterias descartadas.
 - **Avanço por degraus (Step-Up)**: Configura uma corrida progressiva em escada. O padrão é `0` (desativado). Com valores $S > 0$, as baterias são divididas em degraus progressivos onde pilotos dos degraus superiores aguardam os classificados promovidos dos degraus inferiores.
 
 ### Corridas em Escada (Step-Up)
@@ -229,6 +229,30 @@ Quando o **Avanço por degraus (Step-Up)** é configurado com um valor inteiro p
 - **Tempo Mínimo de Volta**: Tempo mínimo permitido para filtrar acionamentos falsos de sensores.
 - **Tempo de Drift**: Janela de detecção para deslizamento de carros sobre a linha de chegada.
 - **Iniciar Atrás do Sensor**: Exige que os carros comecem atrás do sensor na volta zero.
+
+---
+
+## Pontuação por pontos {: #points-scoring }
+
+O expansor de Pontuação por pontos configura a pontuação geral da corrida baseada em pontos. Quando o método de classificação geral está definido como **Pontos**, os pilotos acumulam pontos em cada bateria conforme sua posição de chegada e critérios de bônus, e a classificação geral é definida pelo total de pontos.
+
+> [!NOTE]
+> Este expansor só fica habilitado quando o **Método de classificação geral** está definido como **Pontos**. Quando qualquer outro método de classificação estiver selecionado, o expansor fica desabilitado com o aviso "Não é uma corrida por pontos".
+
+- **Pontos por posição na bateria**: Defina os pontos atribuídos para as posições de chegada (ou por fresta/pista) em cada bateria individual (ex.: 3 pontos para 1º, 2 para 2º, 1 para 3º, 0 para 4º).
+- **Bônus gerais**:
+    - *Volta mais rápida*: Pontos de bônus concedidos ao piloto com a volta mais rápida individual em toda a corrida.
+    - *Volta mais rápida por fresta*: Pontos de bônus concedidos ao piloto mais rápido em cada fresta/pista individual.
+    - *Liderou uma volta*: Pontos de bônus concedidos por liderar ao menos uma volta durante a corrida.
+    - *Mais voltas lideradas*: Pontos de bônus concedidos ao piloto que liderou o maior número de voltas no total.
+    - *Limite de um bônus*: Restringe cada piloto a no máximo um bônus geral (o de maior valor).
+- **Bônus por bateria**:
+    - *% de transferência*: Porcentagem das voltas da bateria adicionada à pontuação da bateria.
+    - *Volta mais rápida*: Pontos de bônus concedidos pela volta mais rápida em uma bateria.
+    - *Liderou uma volta*: Pontos de bônus concedidos por liderar uma volta na bateria.
+    - *Mais voltas lideradas*: Pontos de bônus concedidos por liderar a maioria das voltas na bateria.
+    - *Limite de um bônus*: Restringe cada piloto a no máximo um bônus por bateria.
+- **Desempates**: Quando pilotos terminam empatados em pontos totais, o desempate é realizado por critérios configuráveis, incluindo **Contagem de voltas**, **Tempo de volta mais rápida**, **Tempo médio de volta**, **Tempo mediano de volta** e **Tempo total**.
 
 ---
 
