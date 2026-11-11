@@ -640,6 +640,83 @@ public class AnalyticsServiceTest {
     assertEquals(false, params.get("has_step_ups"));
     assertEquals(false, params.get("step_ups_enabled"));
     assertEquals(0, params.get("step_up_count"));
+    assertEquals(false, params.get("has_points_scoring"));
+    assertEquals(false, params.get("points_scoring_enabled"));
+    assertEquals(false, params.get("points_system_enabled"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_WithPointsScoring() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.POINTS);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(true, params.get("has_points_scoring"));
+    assertEquals(true, params.get("points_scoring_enabled"));
+    assertEquals(true, params.get("points_system_enabled"));
+    assertEquals(OverallScoring.OverallRanking.POINTS.name(), params.get("overall_scoring_method"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_WithoutPointsScoring() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(false, params.get("has_points_scoring"));
+    assertEquals(false, params.get("points_scoring_enabled"));
+    assertEquals(false, params.get("points_system_enabled"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_NullOverallScoring() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(null);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(false, params.get("has_points_scoring"));
+    assertEquals(false, params.get("points_scoring_enabled"));
+    assertEquals(false, params.get("points_system_enabled"));
   }
 
   @Test
@@ -657,5 +734,8 @@ public class AnalyticsServiceTest {
     assertEquals(false, params.get("has_step_ups"));
     assertEquals(false, params.get("step_ups_enabled"));
     assertEquals(0, params.get("step_up_count"));
+    assertEquals(false, params.get("has_points_scoring"));
+    assertEquals(false, params.get("points_scoring_enabled"));
+    assertEquals(false, params.get("points_system_enabled"));
   }
 }

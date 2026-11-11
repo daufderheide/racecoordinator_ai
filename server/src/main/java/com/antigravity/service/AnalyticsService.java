@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import com.antigravity.App;
+import com.antigravity.models.OverallScoring;
 import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -185,6 +186,14 @@ public class AnalyticsService {
     params.put("has_step_ups", hasStepUps);
     params.put("step_ups_enabled", hasStepUps);
     params.put("step_up_count", race.getRaceModel() != null ? race.getRaceModel().getStepUp() : 0);
+    boolean hasPointsScoring =
+        race.getRaceModel() != null
+            && race.getRaceModel().getOverallScoring() != null
+            && race.getRaceModel().getOverallScoring().getRankingMethod()
+                == OverallScoring.OverallRanking.POINTS;
+    params.put("has_points_scoring", hasPointsScoring);
+    params.put("points_scoring_enabled", hasPointsScoring);
+    params.put("points_system_enabled", hasPointsScoring);
 
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());

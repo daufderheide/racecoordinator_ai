@@ -48,15 +48,13 @@ public class PointsScoringCalculator {
         if (heat == null || heat.getDrivers() == null) continue;
         if (!isHeatScorable(heat)) continue;
 
-        int heatNum = heat.getHeatNumber() > 0 ? heat.getHeatNumber() : (hIdx + 1);
-        processHeat(
-            heat, heatNum, pointsScoring, heatScoring, overallScoring, driverHeatPointsList);
+        processHeat(heat, pointsScoring, heatScoring, overallScoring, driverHeatPointsList);
       }
     }
 
     // Calculate overall bonuses across all heats
     Map<String, Double> overallBonuses =
-        calculateOverallBonuses(participants, heats, pointsScoring, heatScoring, overallScoring);
+        calculateOverallBonuses(heats, pointsScoring, overallScoring);
 
     // Sum up total points for each participant
     for (RaceParticipant rp : participants) {
@@ -107,7 +105,6 @@ public class PointsScoringCalculator {
 
   private static void processHeat(
       Heat heat,
-      int heatNum,
       PointsScoring pointsScoring,
       HeatScoring heatScoring,
       OverallScoring overallScoring,
@@ -130,7 +127,7 @@ public class PointsScoringCalculator {
 
     // Calculate heat bonuses
     Map<String, List<Double>> heatBonusesMap = new HashMap<>();
-    calculateHeatBonuses(heat, heatNum, pointsScoring, hRank, hTie, heatBonusesMap);
+    calculateHeatBonuses(heat, pointsScoring, hRank, hTie, heatBonusesMap);
 
     boolean oneBonus = pointsScoring.isHeatOneBonusPerDriver();
 
@@ -164,7 +161,6 @@ public class PointsScoringCalculator {
 
   private static void calculateHeatBonuses(
       Heat heat,
-      int heatNum,
       PointsScoring pointsScoring,
       RankingMethod hRank,
       TiebreakerMethod hTie,
@@ -220,11 +216,7 @@ public class PointsScoringCalculator {
   }
 
   private static Map<String, Double> calculateOverallBonuses(
-      List<RaceParticipant> participants,
-      List<Heat> heats,
-      PointsScoring pointsScoring,
-      HeatScoring heatScoring,
-      OverallScoring overallScoring) {
+      List<Heat> heats, PointsScoring pointsScoring, OverallScoring overallScoring) {
     Map<String, List<Double>> bonusesMap = new HashMap<>();
     if (heats == null || heats.isEmpty()) {
       return Collections.emptyMap();

@@ -59,6 +59,9 @@ All server-side events automatically include the following parameters:
    - `has_step_ups` (true/false tracking)
    - `step_ups_enabled` (true/false tracking, alias for `has_step_ups`)
    - `step_up_count` (numeric count of step-up positions)
+   - `has_points_scoring` (true/false tracking)
+   - `points_scoring_enabled` (true/false tracking, alias for `has_points_scoring`)
+   - `points_system_enabled` (true/false tracking, alias for `has_points_scoring`)
 2. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
    - `analytics_enabled`: A boolean capturing whether they are actively enabling or disabling. 
    - *Note: This particular event intentionally bypasses the disabled check to reliably inform system metrics of uninstalls/opt-outs.*
@@ -150,6 +153,9 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `Has Step-Ups`, Event parameter: `has_step_ups`
 - Dimension Name: `Step-Ups Enabled`, Event parameter: `step_ups_enabled`
 - Dimension Name: `Step-Up Count`, Event parameter: `step_up_count`
+- Dimension Name: `Has Points Scoring`, Event parameter: `has_points_scoring`
+- Dimension Name: `Points Scoring Enabled`, Event parameter: `points_scoring_enabled`
+- Dimension Name: `Points System Enabled`, Event parameter: `points_system_enabled`
 - Dimension Name: `Hardware Interface`, Event parameter: `hardware_interface`
 - Dimension Name: `Fuel System`, Event parameter: `fuel_system`
 - Dimension Name: `Heat Rotation Type`, Event parameter: `heat_rotation_type`
@@ -199,11 +205,11 @@ Google Looker Studio (formerly Data Studio) allows you to build custom dashboard
 6. Confirm adding the data source to the report.
 
 ### Step 2: Refresh Fields to Load Custom Dimensions
-Whenever you register new custom dimensions in GA4 (such as `groups_enabled`, `has_season`, `is_event`, `has_step_ups`), you must refresh the Looker Studio data source field list:
+Whenever you register new custom dimensions in GA4 (such as `groups_enabled`, `has_season`, `is_event`, `has_step_ups`, `has_points_scoring`), you must refresh the Looker Studio data source field list:
 1. In Looker Studio, open the menu: **Resource > Manage added data sources**.
 2. Click **Edit** next to your GA4 data source.
 3. In the lower-left corner of the fields list, click **Refresh fields**.
-4. Looker Studio will scan GA4 and display newly discovered dimensions (e.g., `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`).
+4. Looker Studio will scan GA4 and display newly discovered dimensions (e.g., `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`, `Has Points Scoring`, `Points Scoring Enabled`).
 5. Click **Apply** and then **Done** (top right).
 
 *Note: GA4 custom dimensions can take up to 24-48 hours after registration to begin returning historical data in Looker Studio, though realtime counts in GA4 start sooner.*
@@ -242,8 +248,14 @@ To focus your charts on race data:
 - **Metric**: `Event count`.
 - Shows the proportion of races run with step-up ladders configured vs standard rotations.
 
-#### 6. Combined Race Overview Table
+#### 6. Points Scoring Usage Breakdown (Donut / Pie Chart or Bar Chart)
+- **Chart Type**: Pie chart or Donut chart.
+- **Dimension**: `Has Points Scoring` (or custom formula: `IF(Has Points Scoring = "true", "Points Scoring Used", "Standard Scoring")`).
+- **Metric**: `Event count`.
+- Shows the proportion of races run with the points scoring system configured vs standard scoring methods.
+
+#### 7. Combined Race Overview Table
 - **Chart Type**: Table.
-- **Dimensions**: `Date`, `Hardware Interface`, `Fuel System`, `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`.
+- **Dimensions**: `Date`, `Hardware Interface`, `Fuel System`, `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`, `Has Points Scoring`, `Points Scoring Enabled`.
 - **Metric**: `Event count`, `Total users`.
 - Gives a comprehensive operational breakdown of how users configure their race days.
