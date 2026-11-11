@@ -149,51 +149,6 @@ If you prefer manual control or need to customize your configuration:
    sudo systemctl enable racecoordinatorai.service
    ```
 
-#### Upgrading an Existing Installation Manually (From Downloaded Archive)
-When you download a release update (such as `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` saved to `~/Downloads/` via the browser save dialog or transferred manually), you can apply the update using any of the following methods:
-
-##### Method 1: Built-In Update Helper Script (Fastest & Recommended)
-Race Coordinator AI includes an automated in-place update script that unpacks the release over `/opt/racecoordinatorai`, recompiles and uploads the microcontroller firmware if updated, and restarts services:
-```bash
-sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
-```
-
-##### Method 2: Extract & Run `install.sh` from the Downloaded Package
-```bash
-# Extract the downloaded archive
-tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
-
-# Run the installer over the existing directory (preserves database & settings)
-cd RaceCoordinator_Linux_ARM64
-sudo ./install.sh
-```
-
-##### Method 3: Direct Manual File Extraction
-If you prefer to perform each step by hand:
-1. **Stop the active services**:
-   ```bash
-   sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
-   ```
-2. **Extract updated files over `/opt/racecoordinatorai`**:
-   ```bash
-   sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
-   ```
-3. **Ensure correct permissions**:
-   ```bash
-   sudo chown -R arduino:arduino /opt/racecoordinatorai
-   ```
-4. **Re-flash microcontroller firmware (if sketch was updated)**:
-   ```bash
-   cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
-   arduino-cli compile --fqbn arduino:zephyr:unoq .
-   arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
-   ```
-5. **Restart services**:
-   ```bash
-   sudo systemctl restart racecoordinatorai
-   sudo systemctl restart racecoordinatorai-kiosk
-   ```
-
 ### Step 4: Flash Microcontroller Firmware
 Compile and upload the hardware sketch to the onboard MCU:
 ```bash
@@ -231,6 +186,112 @@ sudo systemctl enable racecoordinatorai-kiosk.service
 # Start the fullscreen TV kiosk display immediately
 sudo systemctl start racecoordinatorai-kiosk.service
 ```
+
+---
+
+## Updating an Existing Installation { #updating-an-existing-installation }
+
+Once Race Coordinator AI is up and running on your Arduino Uno Q, keeping it updated with new features, bug fixes, and firmware enhancements is straightforward. Depending on whether your board is connected to the network or running completely offline at the track, choose the update approach that matches your environment:
+
+- **[Updating with an Active Network Connection (Recommended)](#updating-with-a-network-connection)**: Hands-free automatic updates configured directly from within the web interface.
+- **[Updating without a Network Connection (Offline via USB)](#updating-without-a-network-connection)**: Copying a release archive onto the board via a USB flash drive and updating in-place.
+
+---
+
+### Updating with a Network Connection { #updating-with-a-network-connection }
+
+If your Arduino Uno Q is connected to your local network with internet access (via Wi-Fi or Ethernet), you can take advantage of automatic background updates directly from the Race Coordinator AI web interface:
+
+1. **Enable Automatic Updates in the Web UI**:
+   - In Race Coordinator AI, navigate to **Options → Automatic Updates** from Raceday Setup or the Raceday Top Menu Bar.
+   - Choose your preferred update release channel:
+     - **🟢 Official / Production Releases**: Fully validated, stable releases recommended for standard race operations and club events where maximum operational stability is paramount.
+     - **🟡 Beta Releases**: Feature-complete preview releases published during active development cycles for community testing and real-world race verification. Recommended to test new capabilities and provide feedback before official release.
+     - **🔵 Daily Alpha Builds**: Automated daily builds from the active development branch with the latest cutting-edge features.
+   - For an in-depth explanation of how release channels work and how versions are promoted, see the [Release Channels & Auto-Updates](downloads.md#release-channels) section in the Help Center.
+
+2. **How Automatic Updates Work on the Arduino Uno Q**:
+   When an update is detected for your configured channel:
+   - **Background Download**: The board downloads the new Linux ARM64 package (`RaceCoordinatorAI-Linux-ARM64*.tar.gz`) in the background without interrupting active race sessions.
+   - **Service Restart**: The updater seamlessly extracts the new binaries over `/opt/racecoordinatorai` and restarts `racecoordinatorai.service` (and the kiosk display) via `systemctl`.
+   - **MCU Sketch Synchronization**: If the new release includes updates to the real-time microcontroller firmware (`racecoordinatorai_sketch.ino`), the updater automatically recompiles the sketch and re-flashes the onboard STM32 microcontroller over the internal network bridge using `arduino-cli`.
+   - All race history, track configurations, custom themes, driver rosters, and your SQLite database are fully preserved.
+
+3. **Manual Check for Updates**:
+   Even if automatic background updates are disabled or set to manual, you can trigger an immediate update check at any time by selecting **Check for Updates** from the web UI menu.
+
+---
+
+### Updating without a Network Connection { #updating-without-a-network-connection }
+
+If your Arduino Uno Q is operated completely offline at the track without an internet connection, you can easily update the installation manually using a standard USB flash drive (thumb stick).
+
+#### Step 1: Transfer the Update Package onto the Board via USB
+
+1. **Download the Release Package on a Connected PC**:
+   From a computer with internet access (Mac, Windows, or Linux), open the [Downloads & Releases](downloads.md) portal or the [GitHub Releases](https://github.com/daufderheide/racecoordinator_ai/releases) page and download the Linux ARM64 package:
+   - File format: `RaceCoordinatorAI-Linux-ARM64.tar.gz` (or versioned as `RaceCoordinatorAI-Linux-ARM64_v*.tar.gz`).
+2. **Copy to a USB Flash Drive**:
+   Copy the downloaded `.tar.gz` file onto a standard FAT32 or exFAT-formatted USB flash drive.
+3. **Plug the USB Drive into the Uno Q**:
+   Insert the USB flash drive into one of the available USB host ports on the Arduino Uno Q.
+4. **Copy the File to the Board**:
+   - **Using the Desktop GUI**: Open the Linux file manager on the Uno Q desktop, click on the mounted USB drive in the sidebar, and copy the `.tar.gz` file to your `~/Downloads/` folder (or home directory `~/`).
+   - **Using the Terminal / SSH**: The system automatically mounts USB storage under `/media/arduino/<DRIVE_NAME>` (or you can mount it manually with `sudo mount /dev/sda1 /mnt`). Copy the archive to your local directory:
+     ```bash
+     cp /media/arduino/*/RaceCoordinatorAI-Linux-ARM64*.tar.gz ~/Downloads/
+     ```
+     *(Alternatively, if your laptop is connected directly to the board via Ethernet cable or a local Wi-Fi router without internet, you can transfer the file via `scp`: `scp RaceCoordinatorAI-Linux-ARM64*.tar.gz arduino@<hostname>:~/Downloads/`).*
+
+#### Step 2: Apply the Update
+
+Once the `.tar.gz` archive is copied to the board (e.g. in `~/Downloads/`), select one of the following three methods to apply the update:
+
+##### Option 1: Built-In Update Helper Script (Fastest & Recommended)
+Race Coordinator AI includes a dedicated, turnkey in-place update script located at `/opt/racecoordinatorai/scripts/update_app.sh`. It automatically stops running services, unpacks the release over `/opt/racecoordinatorai`, recompiles and uploads the microcontroller firmware if updated, sets file permissions, and restarts all services:
+```bash
+sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+```
+*(All database records, race data, custom UI layouts, and user preferences are automatically preserved).*
+
+##### Option 2: Extract & Run `install.sh` from the Update Package
+You can unpack the downloaded package into a temporary folder and run its included `install.sh`. The installer detects the existing `/opt/racecoordinatorai` installation, updates the application files, recompiles and flashes the microcontroller firmware, and restarts systemd services:
+```bash
+# Extract the downloaded archive
+tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+
+# Run the installer over the existing directory (preserves database & settings)
+cd RaceCoordinator_Linux_ARM64
+sudo ./install.sh
+```
+
+##### Option 3: Manual Step-by-Step Linux Commands (No Scripts)
+If you prefer to perform the update entirely by hand without relying on any provided helper scripts, run the following sequence of commands in the terminal:
+
+1. **Stop active services**:
+   ```bash
+   sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
+   ```
+2. **Extract updated files over `/opt/racecoordinatorai`**:
+   ```bash
+   sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
+   ```
+   *(Note: This updates application binaries, web client files, and scripts in place while leaving your SQLite database and custom assets untouched).*
+3. **Verify correct file ownership and permissions**:
+   ```bash
+   sudo chown -R arduino:arduino /opt/racecoordinatorai
+   ```
+4. **Re-compile and re-flash the onboard microcontroller firmware (if sketch was updated)**:
+   ```bash
+   cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
+   arduino-cli compile --fqbn arduino:zephyr:unoq .
+   arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
+   ```
+5. **Restart the backend and kiosk services**:
+   ```bash
+   sudo systemctl restart racecoordinatorai
+   sudo systemctl restart racecoordinatorai-kiosk
+   ```
 
 ---
 
@@ -309,16 +370,4 @@ In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/sta
    If `spd-say` errors or hangs, restart the daemon: `pkill -f speech-dispatcher && spd-say "Hello"`.
 4. **Test in the Web UI**:
    In the Race Coordinator AI web UI, open **Customize UI** (or **Theme Editor** $\rightarrow$ **Audio Settings**). Check the **TTS Voice** dropdown—available voices should appear. Click **Test TTS Voice** to confirm playback.
-
----
-
-## Automatic Software Updates
-
-When connected to Wi-Fi, Race Coordinator AI checks GitHub Releases automatically:
-1. **App Update**: Downloads the new Linux ARM64 package in the background.
-2. **Service Restart**: Restarts `racecoordinatorai.service` via systemd seamlessly.
-3. **MCU Sketch Sync**: Automatically re-flashes the STM32 microcontroller firmware using `arduino-cli` if `racecoordinatorai_sketch.ino` was updated.
-
-> [!TIP]
-> If you downloaded a `.tar.gz` release archive via the **Download Update** link in the browser, see [Upgrading an Existing Installation Manually](#upgrading-an-existing-installation-manually-from-downloaded-archive) above to install the update from your downloaded file.
 
