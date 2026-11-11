@@ -49,7 +49,12 @@ test.describe("Race Editor Visuals", () => {
     sectionText: string,
     expand: boolean,
   ) {
-    const header = page.locator(`.section-header:has-text("${sectionText}")`);
+    const escapedText = sectionText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const header = page.locator(".section-header").filter({
+      has: page.locator("h1, h2, h3, h4", {
+        hasText: new RegExp(`^\\s*${escapedText}\\s*$`),
+      }),
+    });
     const icon = header.locator(".expander-icon");
     const isCollapsed = await icon.evaluate((node: HTMLElement) =>
       node.classList.contains("collapsed"),
@@ -885,6 +890,85 @@ test.describe("Race Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
     await expect(page.locator("#season-points-section")).toHaveScreenshot(
       "race-editor-season-points-expanded.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
+  test("should display Points Scoring section disabled when overall scoring is not points", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    // Collapse other sections to isolate Points Scoring
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+    await ensureSectionState(page, "Groups", false);
+    await ensureSectionState(page, "Season Points", false);
+
+    const pointsSection = page.locator("#points-scoring-section");
+    await pointsSection.scrollIntoViewIfNeeded();
+    await TestSetupHelper.blurActiveElement(page);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(pointsSection).toHaveScreenshot(
+      "race-editor-points-scoring-disabled.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
+  test("should display Points Scoring section expanded when overall scoring is points", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    // Select POINTS in Overall Scoring dropdown
+    const rankingSelect = page.locator("#overall-ranking-select");
+    await rankingSelect.scrollIntoViewIfNeeded();
+    await rankingSelect.click();
+    await page.locator(".custom-select-option[data-value='POINTS']").click();
+
+    // Collapse other sections to isolate Points Scoring
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+    await ensureSectionState(page, "Groups", false);
+    await ensureSectionState(page, "Season Points", false);
+
+    // Ensure Points Scoring section is expanded
+    await ensureSectionState(page, "Points Scoring", true);
+
+    const pointsSection = page.locator("#points-scoring-section");
+    await pointsSection.scrollIntoViewIfNeeded();
+    await TestSetupHelper.blurActiveElement(page);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(pointsSection).toHaveScreenshot(
+      "race-editor-points-scoring-expanded.png",
       { timeout: 15000, maxDiffPixelRatio: 0.05 },
     );
   });
