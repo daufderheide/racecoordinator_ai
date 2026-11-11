@@ -1138,6 +1138,36 @@ describe("AudioService", () => {
       expect(service.getCalloutQueue()[0].config.text).toBe("3.21");
     });
 
+    it("should replace older queued callout for the same widgetType timer or countdown with newer callout", () => {
+      const activeCallout: AudioConfig = { type: "preset", url: "active.wav" };
+      service.playCallout(activeCallout, "urgent");
+
+      const timer15Callout: AudioConfig = {
+        type: "tts",
+        text: "15 seconds remaining",
+      };
+      const timer10Callout: AudioConfig = {
+        type: "tts",
+        text: "10 seconds remaining",
+      };
+
+      service.queueCallout(timer15Callout, "high", undefined, undefined, {
+        widgetType: "timer",
+      });
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.text).toBe(
+        "15 seconds remaining",
+      );
+
+      service.queueCallout(timer10Callout, "high", undefined, undefined, {
+        widgetType: "timer",
+      });
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.text).toBe(
+        "10 seconds remaining",
+      );
+    });
+
     it("should sort queued callouts with higher priority first", () => {
       const activeCallout: AudioConfig = { type: "preset", url: "active.wav" };
       service.playCallout(activeCallout, "urgent");
@@ -1197,6 +1227,22 @@ describe("AudioService", () => {
         url: "halfway.wav",
       };
       service.playCallout(halfwayCallout, "high");
+
+      expect(service.isCoolingDown()).toBeFalse();
+      expect(service.getActiveVoice()?.priority).toBe("high");
+    }));
+
+    it("should break through cadence cooldown if high priority callout is queued when no voice is speaking", fakeAsync(() => {
+      const callout1: AudioConfig = { type: "preset", url: "callout1.wav" };
+      service.playCallout(callout1, "normal");
+      mockAudioInstance.onended();
+      expect(service.isCoolingDown()).toBeTrue();
+
+      const halfwayCallout: AudioConfig = {
+        type: "preset",
+        url: "halfway.wav",
+      };
+      service.queueCallout(halfwayCallout, "high");
 
       expect(service.isCoolingDown()).toBeFalse();
       expect(service.getActiveVoice()?.priority).toBe("high");

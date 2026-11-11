@@ -2,7 +2,7 @@ import { FinishMethod } from "@app/models/heat_scoring";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { LapType } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
-import { AudioAssociation } from "@app/services/audio.service";
+import { AudioAssociation, AudioPriority } from "@app/services/audio.service";
 import {
   dispatchLapAudio,
   getEffectiveDriver,
@@ -123,10 +123,12 @@ export class RacedayLapAudioHelper {
           "remaining",
         );
         if (entry) {
+          const isUrgent = threshold <= 1;
+          const priority: AudioPriority = isUrgent ? "urgent" : "normal";
           return {
             id: "laps_left",
             config: entry.config,
-            priority: "normal",
+            priority,
             context: undefined,
             resolvedUrl: entry.playableUrl,
             association: { widgetType: "timer" },

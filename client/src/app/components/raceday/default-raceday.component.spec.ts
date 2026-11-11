@@ -17,7 +17,7 @@ import {
 import { ActivatedRoute, Router } from "@angular/router";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { DataService } from "@app/data.service";
-import { Driver } from "@app/models/driver";
+import { AudioConfig, Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { OverallRanking } from "@app/models/overall_scoring";
 import { Settings } from "@app/models/settings";
@@ -6976,7 +6976,7 @@ describe("DefaultRacedayComponent", () => {
           type: "tts",
           text: "Final Lap",
         }),
-        "normal",
+        "urgent",
         undefined,
         undefined,
         { widgetType: "timer" },
@@ -6995,7 +6995,7 @@ describe("DefaultRacedayComponent", () => {
           type: "tts",
           text: "Leader finished",
         }),
-        "normal",
+        "urgent",
         undefined,
         undefined,
         { widgetType: "timer" },
@@ -8247,7 +8247,7 @@ describe("DefaultRacedayComponent", () => {
             ],
           } as any,
         ];
-        spyOn(component["audioService"], "playCallout").and.returnValue(false);
+        spyOn(component["audioService"], "queueCallout").and.returnValue(false);
 
         const result = RacedayTimedAudioHelper.playTimedSecondsCallout(
           component,
@@ -8390,7 +8390,7 @@ describe("DefaultRacedayComponent", () => {
         },
       } as any;
 
-      const playCalloutSpy = spyOn(component["audioService"], "playCallout");
+      const playCalloutSpy = spyOn(component["audioService"], "queueCallout");
 
       // At 30s elapsed: previous time 571 (29s elapsed), current time 569 (31s elapsed)
       (component as any).checkAudioCallouts(569, 571);
@@ -8430,7 +8430,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should trigger seconds left time callout with high priority and log diagnostic info", () => {
+    it("should trigger seconds left time callout with urgent priority for critical low time remaining (<=5s) and log diagnostic info", () => {
       component["assets"] = [
         {
           entity_id: "time-left-set",
@@ -8459,9 +8459,9 @@ describe("DefaultRacedayComponent", () => {
         },
       } as any;
 
-      const playCalloutSpy = spyOn(
+      const queueCalloutSpy = spyOn(
         component["audioService"],
-        "playCallout",
+        "queueCallout",
       ).and.returnValue(true);
       const loggerInfoSpy = (component as any).logger.info;
       loggerInfoSpy.calls.reset();
@@ -8469,12 +8469,12 @@ describe("DefaultRacedayComponent", () => {
       // Crossing 3s remaining: previous time 3.5, current time 2.8
       (component as any).checkAudioCallouts(2.8, 3.5);
 
-      expect(playCalloutSpy).toHaveBeenCalledWith(
+      expect(queueCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
           text: "White Flag - Finish your lap",
         }),
-        "high",
+        "urgent",
         undefined,
         undefined,
         jasmine.anything(),
@@ -8483,6 +8483,55 @@ describe("DefaultRacedayComponent", () => {
         jasmine.stringMatching(
           /\[AUDIO-TIMED\] Seconds left \(remaining\) threshold 3s triggered/,
         ),
+      );
+    });
+
+    it("should trigger seconds left time callout with high priority for remaining time > 5s", () => {
+      component["assets"] = [
+        {
+          entity_id: "time-left-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 15,
+              triggerMode: "remaining",
+              text: "15 seconds remaining",
+              type: "tts",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "time-left-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+      } as any;
+
+      const queueCalloutSpy = spyOn(
+        component["audioService"],
+        "queueCallout",
+      ).and.returnValue(true);
+
+      // Crossing 15s remaining: previous time 16, current time 14.5
+      (component as any).checkAudioCallouts(14.5, 16);
+
+      expect(queueCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "15 seconds remaining",
+        }),
+        "high",
+        undefined,
+        undefined,
+        jasmine.anything(),
       );
     });
 
@@ -8575,6 +8624,125 @@ describe("DefaultRacedayComponent", () => {
       (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 99);
 
       expect(window.Audio).not.toHaveBeenCalled();
+    });
+
+    it("should preempt an active high priority voice when seconds left threshold <= 5s triggers with urgent priority", () => {
+      component["assets"] = [
+        {
+          entity_id: "time-left-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 3,
+              triggerMode: "remaining",
+              text: "White Flag - Finish your lap",
+              type: "tts",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "time-left-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 20,
+        },
+      } as any;
+
+      const audioService = component["audioService"];
+      // Simulate an active high priority milestone voice currently speaking
+      const activeHighCallout: AudioConfig = {
+        type: "tts",
+        text: "New Race Leader Driver 11",
+      };
+      audioService.playCallout(activeHighCallout, "high");
+      expect(audioService.getActiveVoice()?.priority).toBe("high");
+
+      // Crossing 3s remaining: previous time 3.5, current time 2.8
+      (component as any).checkAudioCallouts(2.8, 3.5);
+
+      // Active voice should have been preempted immediately by urgent White Flag
+      expect(audioService.getActiveVoice()?.priority).toBe("urgent");
+    });
+
+    it("should win arbitration with urgent priority when heat leader reaches 1 lap to go on a milestone lap", () => {
+      component["assets"] = [
+        {
+          entity_id: "laps-left-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 1,
+              triggerMode: "remaining",
+              text: "White flag one lap to go",
+              type: "tts",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "laps-left-set" };
+        }
+        return { type: "none" };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 10,
+        },
+        track: component["track"],
+      } as any;
+
+      const driver = {
+        entity_id: "driver-1",
+        name: "Speedy",
+        newRaceLeaderAudio: { type: "tts", text: "New Race Leader" },
+      };
+
+      const leaderHd = {
+        objectId: "hd-1",
+        driver,
+        laneIndex: 0,
+        lapCount: 9,
+      } as any;
+
+      component["leaderLaps"] = 8;
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      // Lap 9 out of 10 -> 1 lap left (White flag). Driver is also new race leader (high priority).
+      const lap = {
+        objectId: "hd-1",
+        lapNumber: 9,
+        lapTime: 3.2,
+        isNewRaceLeader: true,
+      };
+
+      (component as any).handleLapEvent(lap, leaderHd);
+
+      // Urgent White Flag must win over High priority milestone
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "White flag one lap to go",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
     });
   });
 
