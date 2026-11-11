@@ -45,7 +45,7 @@ Também pode clicar nos recursos para os selecionar. Com elementos selecionados,
 
 O Gestor de Recursos disponibiliza ferramentas superiores para encontrar e organizar os seus ficheiros com facilidade:
 
-- **Separadores de filtro:** Filtre a biblioteca por tipo de recurso:
+- **Separadores de filtro:** Filtre a biblioteca por tipo de recurso (o separador selecionado é gravado e restaurado automaticamente ao voltar ao Gestor de Recursos):
   - **Todos:** Apresenta todos os ficheiros armazenados na base de dados.
   - **Imagens:** Ficheiros de imagem estáticos (`.png`, `.jpg`, `.svg`, etc.).
   - **Conjuntos de imagens:** Animações e medidores formados por várias imagens.

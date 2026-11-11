@@ -87,9 +87,15 @@ app-raceday-absolute-widget:has(.custom-select-container.open),
 .raceday-grid-container:has(app-custom-select.open),
 .raceday-grid-container:has(.custom-select-container.open),
 .raceday-grid-top-header:has(app-custom-select.open),
-.raceday-grid-top-header:has(.custom-select-container.open) {
+.raceday-grid-top-header:has(.custom-select-container.open),
+.header-bar:has(app-custom-select.open),
+.header-bar:has(.custom-select-container.open),
+.race-name-container:has(app-custom-select.open),
+.race-name-container:has(.custom-select-container.open),
+.heat-select-wrapper:has(app-custom-select.open),
+.heat-select-wrapper:has(.custom-select-container.open) {
   overflow: visible !important;
-  z-index: 100000 !important;
+  z-index: 2000000 !important;
 }
 
 .raceday-lane-column-card:has(app-custom-select.open) .lane-col-body,

@@ -138,7 +138,7 @@ Si vous préférez un contrôle manuel ou devez personnaliser votre configuratio
 2. **Configurer les autorisations et l'accès au groupe série** :
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
-   sudo usermod -a -G dialout arduino
+   sudo usermod -a -G dialout,audio arduino
    ```
 
 3. **Installer et enregistrer les services systemd** :
@@ -147,51 +147,6 @@ Si vous préférez un contrôle manuel ou devez personnaliser votre configuratio
    sudo cp /opt/racecoordinatorai/systemd/racecoordinatorai-kiosk.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable racecoordinatorai.service
-   ```
-
-#### Mettre à jour manuellement une installation existante (À partir de l'archive téléchargée)
-Lorsque vous téléchargez une archive de mise à jour (telle que `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` enregistrée dans `~/Downloads/` via la boîte de dialogue du navigateur ou transférée manuellement), vous pouvez appliquer la mise à jour en utilisant l'une des méthodes suivantes :
-
-##### Méthode 1 : Script d'aide à la mise à jour intégré (Le plus rapide et recommandé)
-Race Coordinator AI inclut un script de mise à jour automatisé sur place qui extrait la version sur `/opt/racecoordinatorai`, recompile et téléverse le micrologiciel du microcontrôleur s'il a été mis à jour, et redémarre les services :
-```bash
-sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
-```
-
-##### Méthode 2 : Extraire et exécuter `install.sh` depuis le package téléchargé
-```bash
-# Extraire l'archive téléchargée
-tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
-
-# Exécuter l'installateur sur l'installation existante (préserve la base de données et les paramètres)
-cd RaceCoordinator_Linux_ARM64
-sudo ./install.sh
-```
-
-##### Méthode 3 : Extraction manuelle directe des fichiers
-Si vous préférez effectuer chaque étape à la main :
-1. **Arrêter les services actifs** :
-   ```bash
-   sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
-   ```
-2. **Extraire les fichiers mis à jour sur `/opt/racecoordinatorai`** :
-   ```bash
-   sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
-   ```
-3. **S'assurer des autorisations correctes** :
-   ```bash
-   sudo chown -R arduino:arduino /opt/racecoordinatorai
-   ```
-4. **Reflasher le micrologiciel du microcontrôleur (si le sketch a été modifié)** :
-   ```bash
-   cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
-   arduino-cli compile --fqbn arduino:zephyr:unoq .
-   arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
-   ```
-5. **Redémarrer les services** :
-   ```bash
-   sudo systemctl restart racecoordinatorai
-   sudo systemctl restart racecoordinatorai-kiosk
    ```
 
 ### Étape 4 : Flasher le micrologiciel du microcontrôleur
@@ -234,6 +189,112 @@ sudo systemctl start racecoordinatorai-kiosk.service
 
 ---
 
+## Mettre à jour une installation existante { #updating-an-existing-installation }
+
+Une fois Race Coordinator AI installé et opérationnel sur votre Arduino Uno Q, le maintenir à jour avec les dernières fonctionnalités, correctifs et améliorations de micrologiciel est très simple. Selon que votre carte est connectée au réseau ou fonctionne de manière totalement autonome sur le circuit, choisissez la méthode appropriée :
+
+- **[Mise à jour avec connexion réseau (Recommandé)](#mise-a-jour-avec-connexion-reseau)** : Mises à jour automatiques transparentes en arrière-plan configurées directement depuis l'interface web.
+- **[Mise à jour sans connexion réseau (Hors ligne via clé USB)](#mise-a-jour-sans-connexion-reseau)** : Copie d'une archive de mise à jour via une clé USB et application locale sur la carte.
+
+---
+
+### Mise à jour avec connexion réseau { #mise-a-jour-avec-connexion-reseau }
+
+Si votre Arduino Uno Q est connecté à votre réseau local avec un accès Internet (via Wi-Fi ou Ethernet), vous pouvez utiliser les mises à jour automatiques directement depuis l'interface web de Race Coordinator AI :
+
+1. **Activer les mises à jour automatiques dans l'interface web** :
+   - Dans Race Coordinator AI, accédez à **Options → Mises à jour automatiques** depuis la Configuration du jour de course ou la barre de menu supérieure.
+   - Choisissez votre canal de publication préféré :
+     - **🟢 Versions officielles / de production** : Versions stables et entièrement validées, recommandées pour les opérations de course standard et les événements de club où la stabilité maximale est primordiale.
+     - **🟡 Versions bêta** : Versions complètes publiées pendant les cycles de développement actif pour les tests communautaires et la vérification en conditions réelles de course. Recommandées pour tester de nouvelles fonctionnalités et faire des retours avant la sortie officielle.
+     - **🔵 Builds quotidiens Alpha** : Versions compilées quotidiennement depuis la branche de développement actif avec les toutes dernières fonctionnalités expérimentales.
+   - Pour une explication détaillée sur le fonctionnement des canaux de publication et la promotion des versions, consultez la section [Canaux de publication et mises à jour automatiques](downloads.fr.md#release-channels) dans le Centre d'aide.
+
+2. **Fonctionnement des mises à jour automatiques sur l'Arduino Uno Q** :
+   Lorsqu'une mise à jour est détectée pour votre canal configuré :
+   - **Téléchargement en arrière-plan** : La carte télécharge le nouveau package Linux ARM64 (`RaceCoordinatorAI-Linux-ARM64*.tar.gz`) en arrière-plan sans interrompre les sessions de course actives.
+   - **Redémarrage du service** : Le gestionnaire de mise à jour extrait les nouveaux fichiers sur `/opt/racecoordinatorai` et redémarre `racecoordinatorai.service` (ainsi que l'affichage kiosque) de manière transparente via `systemctl`.
+   - **Synchronisation du sketch du microcontrôleur** : Si la nouvelle version inclut des modifications du micrologiciel temps réel (`racecoordinatorai_sketch.ino`), l'outil recompile automatiquement le sketch et re-flashe le microcontrôleur STM32 via le pont réseau interne avec `arduino-cli`.
+   - L'historique des courses, les configurations de piste, les dispositions personnalisées, les listes de pilotes et votre base de données SQLite sont intégralement préservés.
+
+3. **Vérification manuelle des mises à jour** :
+   Même si les mises à jour automatiques sont désactivées ou configurées en mode manuel, vous pouvez lancer une vérification immédiate à tout moment en sélectionnant **Rechercher des mises à jour** dans le menu de l'interface web.
+
+---
+
+### Mise à jour sans connexion réseau { #mise-a-jour-sans-connexion-reseau }
+
+Si votre Arduino Uno Q fonctionne entièrement hors ligne sur le circuit sans connexion Internet, vous pouvez mettre à jour l'installation manuellement à l'aide d'une clé USB standard.
+
+#### Étape 1 : Transférer l'archive de mise à jour sur la carte via USB
+
+1. **Télécharger le package de mise à jour sur un ordinateur connecté** :
+   Depuis un ordinateur avec accès Internet (Mac, Windows ou Linux), ouvrez le portail [Téléchargements et versions](downloads.fr.md) ou la page [GitHub Releases](https://github.com/daufderheide/racecoordinator_ai/releases) et téléchargez le package Linux ARM64 :
+   - Format de fichier : `RaceCoordinatorAI-Linux-ARM64.tar.gz` (ou avec numéro de version : `RaceCoordinatorAI-Linux-ARM64_v*.tar.gz`).
+2. **Copier sur une clé USB** :
+   Copiez le fichier `.tar.gz` téléchargé sur une clé USB standard formatée en FAT32 ou exFAT.
+3. **Brancher la clé USB sur l'Uno Q** :
+   Insérez la clé USB dans l'un des ports USB hôtes disponibles de l'Arduino Uno Q.
+4. **Copier le fichier sur la carte** :
+   - **Via l'interface graphique du bureau** : Ouvrez le gestionnaire de fichiers sur le bureau de l'Uno Q, cliquez sur la clé USB montée dans la barre latérale et copiez l'archive `.tar.gz` dans votre dossier `~/Downloads/` (ou votre dossier personnel `~/`).
+   - **Via le terminal / SSH** : Le système monte automatiquement les périphériques de stockage USB sous `/media/arduino/<NOM_PERIPHERIQUE>` (ou montez-le manuellement avec `sudo mount /dev/sda1 /mnt`). Copiez l'archive dans votre dossier local :
+     ```bash
+     cp /media/arduino/*/RaceCoordinatorAI-Linux-ARM64*.tar.gz ~/Downloads/
+     ```
+     *(Alternativement, si votre ordinateur portable est connecté directement à la carte par câble Ethernet ou via un routeur Wi-Fi local sans Internet, vous pouvez transférer le fichier par `scp` : `scp RaceCoordinatorAI-Linux-ARM64*.tar.gz arduino@<hostname>:~/Downloads/`).*
+
+#### Étape 2 : Appliquer la mise à jour
+
+Une fois l'archive `.tar.gz` copiée sur la carte (par exemple dans `~/Downloads/`), choisissez l'une des trois méthodes suivantes pour appliquer la mise à jour :
+
+##### Option 1 : Script d'aide à la mise à jour intégré (Le plus rapide et recommandé)
+Race Coordinator AI comprend un script de mise à jour dédié situé dans `/opt/racecoordinatorai/scripts/update_app.sh`. Il arrête automatiquement les services actifs, extrait la nouvelle version sur `/opt/racecoordinatorai`, recompile et téléverse le micrologiciel du microcontrôleur si nécessaire, ajuste les permissions et redémarre tous les services :
+```bash
+sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+```
+*(Toutes les données de course, la base de données SQLite, les dispositions d'écran et les préférences utilisateur sont automatiquement préservées).*
+
+##### Option 2 : Extraire et exécuter `install.sh` depuis le package téléchargé
+Vous pouvez extraire l'archive de mise à jour dans un dossier temporaire et exécuter son script `install.sh`. L'installateur détecte l'installation existante dans `/opt/racecoordinatorai`, met à jour les fichiers de l'application, re-flashe le micrologiciel du microcontrôleur et redémarre les services systemd :
+```bash
+# Extraire l'archive téléchargée
+tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+
+# Exécuter l'installateur sur l'installation existante (préserve la base de données et les paramètres)
+cd RaceCoordinator_Linux_ARM64
+sudo ./install.sh
+```
+
+##### Option 3 : Mise à jour manuelle via les commandes Linux (Sans scripts d'aide)
+Si vous préférez effectuer la mise à jour entièrement à la main sans utiliser les scripts fournis, exécutez la séquence de commandes suivante dans le terminal :
+
+1. **Arrêter les services actifs** :
+     ```bash
+     sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
+     ```
+2. **Extraire les fichiers mis à jour sur `/opt/racecoordinatorai`** :
+     ```bash
+     sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
+     ```
+     *(Remarque : Cela met à jour les binaires, les fichiers du client web et les scripts sur place tout en laissant votre base de données SQLite et vos médias personnalisés intacts).*
+3. **Vérifier les droits et l'appartenance des fichiers** :
+     ```bash
+     sudo chown -R arduino:arduino /opt/racecoordinatorai
+     ```
+4. **Recompiler et re-flasher le micrologiciel du microcontrôleur (si le sketch a été mis à jour)** :
+     ```bash
+     cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
+     arduino-cli compile --fqbn arduino:zephyr:unoq .
+     arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
+     ```
+5. **Redémarrer les services serveur et kiosque** :
+     ```bash
+     sudo systemctl restart racecoordinatorai
+     sudo systemctl restart racecoordinatorai-kiosk
+     ```
+
+---
+
 ## Focus des fenêtres et applications au démarrage du bureau (ex. Arduino App Lab)
 
 Sur l'Arduino Uno Q, Arduino Linux OS lance « Arduino App Lab » lors de la connexion au bureau.
@@ -267,13 +328,46 @@ Si vous souhaitez des indicateurs lumineux visuels sur une configuration Arduino
 
 ---
 
-## Mises à jour logicielles automatiques
+## Dépannage de la synthèse vocale (TTS) et de l'audio
 
-Lorsqu'il est connecté au Wi-Fi, Race Coordinator AI vérifie automatiquement les versions GitHub :
-1. **Mise à jour de l'application** : Télécharge le nouveau package Linux ARM64 en arrière-plan.
-2. **Redémarrage du service** : Redémarre `racecoordinatorai.service` via systemd de manière transparente.
-3. **Synchronisation du sketch MCU** : Re-flashe automatiquement le micrologiciel du microcontrôleur STM32 à l'aide d'arduino-cli si `racecoordinatorai_sketch.ino` a été mis à jour.
+Race Coordinator AI utilise la Web Speech API du navigateur (`window.speechSynthesis`) pour annoncer les temps au tour, les événements de course et les commentaires des pilotes. Contrairement à Windows ou macOS, Linux (Debian 12 sur l'Uno Q) ne dispose pas de synthétiseur vocal intégré, de sorte que Chromium s'appuie sur **Speech Dispatcher** et **eSpeak NG**.
 
-> [!TIP]
-> Si vous avez téléchargé une archive de version `.tar.gz` via le lien **Télécharger la mise à jour** dans le navigateur, consultez [Mettre à jour manuellement une installation existante](#mettre-a-jour-manuellement-une-installation-existante-a-partir-de-larchive-telechargee) ci-dessus pour appliquer la mise à jour.
+### Paquets requis
+L'installateur automatisé (`install.sh`) installe ces paquets automatiquement. Si vous avez effectué une installation manuelle ou si le TTS n'émet aucun son, assurez-vous que les paquets vocaux et audio requis sont installés :
+```bash
+sudo apt-get update
+sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
+```
+
+### Options du navigateur en mode kiosque et navigation multi-onglets
+En mode kiosque, Chromium est lancé via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI utilise `--start-maximized` (plutôt que le mode restrictif `--kiosk`) pour garantir que les onglets secondaires — tels que Résultats de manche, Résultats de course, vues de thèmes et le Centre d'aide hors ligne — restent visibles et accessibles depuis la barre d'onglets en haut de l'écran du téléviseur. Chromium nécessite également des options spécifiques pour activer Speech Dispatcher et la lecture audio automatique. Assurez-vous que votre script `start_kiosk.sh` contient :
+```bash
+  --start-maximized \
+  --enable-speech-dispatcher \
+  --autoplay-policy=no-user-gesture-required \
+```
+*(Si vous modifiez `start_kiosk.sh` manuellement, redémarrez ensuite le service du kiosque : `sudo systemctl restart racecoordinatorai-kiosk`).*
+
+### Étapes de dépannage
+1. **Vérifier le mode de fonctionnement et la sortie audio** :
+   - **Mode écran kiosque** : L'audio est diffusé directement depuis l'Uno Q via la liaison USB-C DisplayPort/HDMI vers votre téléviseur/moniteur ou des haut-parleurs USB connectés.
+   - **Client réseau distant** : Si vous accédez à Race Coordinator AI depuis un ordinateur portable, une tablette ou un smartphone sur le réseau local (`http://<hostname>:7070`), l'audio et le TTS sont joués sur **le navigateur et les haut-parleurs de cet appareil**, et non sur la carte Uno Q.
+2. **Vérifier la sortie audio matérielle** :
+   Lancez un test sonore dans le terminal de l'Uno Q pour vérifier que la sortie audio est active et non muette :
+   ```bash
+   speaker-test -t wav -c 2 -l 1
+   ```
+   Si aucun son n'est émis, lancez `alsamixer` dans le terminal pour vérifier que les curseurs de volume Master/PCM/HDMI ne sont pas muets (`[MM]`, appuyez sur `M` pour basculer) et qu'ils sont suffisamment élevés.
+3. **Tester les synthétiseurs vocaux en ligne de commande** :
+   Vérifiez qu'eSpeak NG et Speech Dispatcher fonctionnent au niveau du système d'exploitation :
+   ```bash
+   # Tester la synthèse pure
+   espeak-ng "Testing speech synthesis"
+
+   # Tester Speech Dispatcher (le backend de Chromium)
+   spd-say "Testing speech dispatcher"
+   ```
+   Si `spd-say` renvoie une erreur ou reste bloqué, redémarrez le démon : `pkill -f speech-dispatcher && spd-say "Hello"`.
+4. **Tester dans l'interface web** :
+   Dans l'interface web de Race Coordinator AI, ouvrez **Personnaliser l'interface** (ou **Éditeur de thèmes** $\rightarrow$ **Paramètres audio**). Vérifiez la liste déroulante **Voix TTS** : les voix disponibles doivent apparaître. Cliquez sur **Tester la voix TTS** pour confirmer la restitution vocale.
 

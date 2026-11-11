@@ -783,6 +783,7 @@
   "HR_NO_HEAT_DATA": "Geen coureursgegevens beschikbaar voor deze heat.",
   "HR_RANKINGS_HEADER": "KLASSEMENTEN",
   "HR_SELECT_HEAT": "Heat selecteren",
+  "HR_CURRENT_HEAT_BADGE": "Huidig",
   "HR_TITLE": "HEAT {{heat}} RESULTATEN",
   "HR_X_AXIS": "Absolute Looptijd (Seconden)",
   "HR_Y_AXIS": "Rondetijd (Seconden)",

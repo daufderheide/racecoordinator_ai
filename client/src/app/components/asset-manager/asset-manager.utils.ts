@@ -1,8 +1,11 @@
 import { normalizeAssetType } from "@app/models/asset";
 import {
+  IAssetMessage,
   IAudioSetEntry,
   ICustomRotation,
   IImageSetEntry,
+  ISaveAudioSetEntry,
+  ISaveImageSetEntry,
 } from "@app/proto/antigravity";
 
 // Interface matching the mock/view needs, mapped from Protobuf
@@ -156,5 +159,96 @@ export function readAssetFile(
     };
     reader.onerror = (e) => reject(e);
     reader.readAsArrayBuffer(file);
+  });
+}
+
+export function isCsvAsset(asset?: {
+  type?: string;
+  name?: string;
+  url?: string;
+}): boolean {
+  if (!asset) {
+    return false;
+  }
+  if (asset.type === "custom_rotation") {
+    return false;
+  }
+  const name = (asset.name || "").toLowerCase();
+  const url = (asset.url || "").toLowerCase();
+  return asset.type === "csv" || name.endsWith(".csv") || url.endsWith(".csv");
+}
+
+export function calculateTotalAssetBytes(assets: AssetView[]): number {
+  return (assets || []).reduce(
+    (sum, asset) => sum + parseAssetSize(asset.size),
+    0,
+  );
+}
+
+export function formatTotalAssetSize(assets: AssetView[]): string {
+  return formatAssetBytes(calculateTotalAssetBytes(assets));
+}
+
+export function toImageSetEditorEntries(
+  images?: IImageSetEntry[],
+): ISaveImageSetEntry[] {
+  return (images || []).map((img) => ({
+    percentage: img.percentage,
+    url: img.url,
+    name: img.name,
+    data: new Uint8Array(),
+  }));
+}
+
+export function toAudioSetEditorEntries(
+  entries?: IAudioSetEntry[],
+): ISaveAudioSetEntry[] {
+  return (entries || []).map((entry) => ({
+    timeSeconds: entry.timeSeconds,
+    url: entry.url,
+    name: entry.name,
+    data: new Uint8Array(),
+    type: entry.type || "preset",
+    text: entry.text || "",
+    percentage:
+      (entry as any).percentage != null
+        ? (entry as any).percentage
+        : Math.round(entry.timeSeconds || 0),
+    triggerMode:
+      entry.triggerMode || (entry as any).trigger_mode || "remaining",
+  }));
+}
+
+export function mapServerAssetsToViews(
+  serverAssets: IAssetMessage[],
+  getAssetUrl: (a: IAssetMessage) => string,
+): AssetView[] {
+  if (!serverAssets) return [];
+  return serverAssets.map((a) => {
+    let type: any = a.type;
+    if (a.customRotations && a.customRotations.length > 0) {
+      type = "custom_rotation";
+    } else if (a.audioEntries && a.audioEntries.length > 0) {
+      type = "audio_set";
+    } else if (a.images && a.images.length > 0) {
+      type = "image_set";
+    } else {
+      type = normalizeAssetType(type);
+    }
+
+    return {
+      id: a.model?.entityId || "",
+      name: a.name || "Unknown",
+      type: type,
+      size: a.size || "0 B",
+      url: getAssetUrl(a),
+      editMode: false,
+      selected: false,
+      images: a.images || [],
+      audioEntries: a.audioEntries || [],
+      numLanes: a.numLanes ?? undefined,
+      customRotations: a.customRotations || [],
+      currentPreviewIndex: 0,
+    };
   });
 }

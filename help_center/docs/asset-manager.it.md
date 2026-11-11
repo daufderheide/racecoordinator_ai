@@ -45,7 +45,7 @@ Puoi anche selezionare più risorse facendo clic su di esse. Con elementi selezi
 
 La Gestione Risorse offre strumenti rapidi per trovare e organizzare le risorse:
 
-- **Schede di filtro:** Filtra rapidamente la libreria in base al tipo di risorsa:
+- **Schede di filtro:** Filtra rapidamente la libreria in base al tipo di risorsa (la scheda selezionata viene automaticamente salvata e ripristinata alle visite successive):
   - **Tutte:** Mostra ogni risorsa memorizzata nel database.
   - **Immagini:** Singoli file grafici statici (`.png`, `.jpg`, `.svg`, ecc.).
   - **Set di immagini:** Animazioni e indicatori composti da più immagini.

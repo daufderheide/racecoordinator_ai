@@ -783,6 +783,7 @@
   "HR_NO_HEAT_DATA": "Nenhum dado de piloto disponível para esta manga.",
   "HR_RANKINGS_HEADER": "CLASSIFICAÇÕES",
   "HR_SELECT_HEAT": "Selecionar bateria",
+  "HR_CURRENT_HEAT_BADGE": "Atual",
   "HR_TITLE": "RESULTADOS DA MANGA {{heat}}",
   "HR_X_AXIS": "Tempo de Corrida Absoluto (Segundos)",
   "HR_Y_AXIS": "Tempo de Volta (Segundos)",

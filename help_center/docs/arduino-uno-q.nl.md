@@ -138,7 +138,7 @@ Als u de voorkeur geeft aan handmatige controle of uw configuratie wilt aanpasse
 2. **Machtigingen en toegang tot de seriële groep configureren**:
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
-   sudo usermod -a -G dialout arduino
+   sudo usermod -a -G dialout,audio arduino
    ```
 
 3. **Systemd-services installeren en registreren**:
@@ -147,51 +147,6 @@ Als u de voorkeur geeft aan handmatige controle of uw configuratie wilt aanpasse
    sudo cp /opt/racecoordinatorai/systemd/racecoordinatorai-kiosk.service /etc/systemd/system/
    sudo systemctl daemon-reload
    sudo systemctl enable racecoordinatorai.service
-   ```
-
-#### Een bestaande installatie handmatig bijwerken (Vanuit gedownload archief)
-Wanneer u een release-update downloadt (zoals `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` opgeslagen in `~/Downloads/` via het opslagvenster van de browser of handmatig overgedragen), kunt u de update toepassen met een van de volgende methoden:
-
-##### Methode 1: Ingebouwd update-helperscript (Snelste & Aanbevolen)
-Race Coordinator AI bevat een geautomatiseerd in-place updatescript dat de release uitpakt over `/opt/racecoordinatorai`, indien nodig de microcontroller-firmware opnieuw compileert en uploadt, en services herstart:
-```bash
-sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
-```
-
-##### Methode 2: `install.sh` uit het gedownloade pakket uitpakken en uitvoeren
-```bash
-# Gedownload archief uitpakken
-tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
-
-# Voer het installatieprogramma uit over de bestaande installatie (behoudt database en instellingen)
-cd RaceCoordinator_Linux_ARM64
-sudo ./install.sh
-```
-
-##### Methode 3: Direct handmatig bestanden uitpakken
-Als u de stappen liever handmatig uitvoert:
-1. **Actieve services stoppen**:
-   ```bash
-   sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
-   ```
-2. **Bijgewerkte bestanden uitpakken over `/opt/racecoordinatorai`**:
-   ```bash
-   sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
-   ```
-3. **Zorg voor de juiste machtigingen**:
-   ```bash
-   sudo chown -R arduino:arduino /opt/racecoordinatorai
-   ```
-4. **Microcontroller-firmware opnieuw flashen (als de sketch is bijgewerkt)**:
-   ```bash
-   cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
-   arduino-cli compile --fqbn arduino:zephyr:unoq .
-   arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
-   ```
-5. **Services herstarten**:
-   ```bash
-   sudo systemctl restart racecoordinatorai
-   sudo systemctl restart racecoordinatorai-kiosk
    ```
 
 ### Stap 4: Microcontroller-firmware flashen
@@ -234,6 +189,112 @@ sudo systemctl start racecoordinatorai-kiosk.service
 
 ---
 
+## Een bestaande installatie bijwerken { #updating-an-existing-installation }
+
+Zodra Race Coordinator AI is geïnstalleerd en operationeel is op uw Arduino Uno Q, is het eenvoudig om het systeem up-to-date te houden met nieuwe functies, bugfixes en firmware-verbeteringen. Afhankelijk van of uw bord is verbonden met het netwerk of volledig offline op het circuit draait, kiest u de gewenste updatemethode:
+
+- **[Bijwerken met een netwerkverbinding (Aanbevolen)](#bijwerken-met-een-netwerkverbinding)**: Volautomatische achtergrond-updates die rechtstreeks vanuit de webinterface worden geconfigureerd.
+- **[Bijwerken zonder netwerkverbinding (Offline via USB)](#bijwerken-zonder-netwerkverbinding)**: Een release-archief via een USB-stick naar het bord kopiëren en lokaal bijwerken.
+
+---
+
+### Bijwerken met een netwerkverbinding { #bijwerken-met-een-netwerkverbinding }
+
+Als uw Arduino Uno Q is verbonden met uw lokale netwerk en toegang heeft tot internet (via Wi-Fi of Ethernet), kunt u profiteren van automatische achtergrond-updates rechtstreeks vanuit de webinterface van Race Coordinator AI:
+
+1. **Automatische updates inschakelen in de webinterface**:
+   - Navigeer in Race Coordinator AI naar **Opties → Automatische updates** in Racedag-instellingen of via de bovenste menubalk.
+   - Kies uw gewenste releasekanaal:
+     - **🟢 Officiële / Productiereleases**: Volledig gevalideerde, stabiele releases aanbevolen voor standaard raceactiviteiten en clubevenementen waarbij maximale operationele stabiliteit voorop staat.
+     - **🟡 Bètareleases**: Functie-complete preview-releases die tijdens actieve ontwikkelingscycli worden gepubliceerd voor communitytests en verificatie op de racebaan. Aanbevolen om nieuwe functies te testen en feedback te geven vóór de officiële release.
+     - **🔵 Dagelijkse Alpha-builds**: Geautomatiseerde dagelijkse builds van de actieve ontwikkelingstak met de allernieuwste functies.
+   - Voor een uitgebreide uitleg van de releasekanalen en hoe versies worden gepromoveerd, raadpleegt u het gedeelte [Releasekanalen & Automatische Updates](downloads.nl.md#release-channels) in het Helpcentrum.
+
+2. **Hoe automatische updates werken op de Arduino Uno Q**:
+   Wanneer een update wordt gedetecteerd voor uw geconfigureerde kanaal:
+   - **Downloaden op de achtergrond**: Het bord downloadt het nieuwe Linux ARM64-pakket (`RaceCoordinatorAI-Linux-ARM64*.tar.gz`) op de achtergrond zonder actieve racesessies te onderbreken.
+   - **Service herstarten**: De updater pakt de nieuwe release uit over `/opt/racecoordinatorai` en herstart `racecoordinatorai.service` (en het kiosk-display) naadloos via `systemctl`.
+   - **MCU-sketch-synchronisatie**: Als de nieuwe release updates bevat voor de realtime microcontroller-firmware (`racecoordinatorai_sketch.ino`), hercompileert het updateprogramma de sketch automatisch en flasht de firmware opnieuw naar de STM32-microcontroller via de interne netwerkbrug met `arduino-cli`.
+   - Alle racegeschiedenis, baanconfiguraties, aangepaste layouts, coureurslijsten en uw SQLite-database blijven volledig behouden.
+
+3. **Handmatige controle op updates**:
+   Zelfs als automatische updates zijn uitgeschakeld of op handmatig zijn ingesteld, kunt u op elk gewenst moment een directe controle uitvoeren door in het menu van de webinterface op **Controleren op updates** te klikken.
+
+---
+
+### Bijwerken zonder netwerkverbinding { #bijwerken-zonder-netwerkverbinding }
+
+Als uw Arduino Uno Q volledig offline op het circuit wordt gebruikt zonder internetverbinding, kunt u de installatie eenvoudig handmatig bijwerken met een standaard USB-stick.
+
+#### Stap 1: Het updatepakket via USB overbrengen naar het bord
+
+1. **Het releasepakket downloaden op een computer met internet**:
+   Open op een computer met internettoegang (Mac, Windows of Linux) het [Download- & releaseportaal](downloads.nl.md) of de [GitHub Releases](https://github.com/daufderheide/racecoordinator_ai/releases) pagina en download het Linux ARM64-pakket:
+   - Bestandsformaat: `RaceCoordinatorAI-Linux-ARM64.tar.gz` (of met versienummer: `RaceCoordinatorAI-Linux-ARM64_v*.tar.gz`).
+2. **Kopiëren naar een USB-stick**:
+   Kopieer het gedownloade `.tar.gz`-bestand naar een standaard FAT32- of exFAT-geformatteerde USB-stick.
+3. **De USB-stick aansluiten op de Uno Q**:
+   Steek de USB-stick in een van de beschikbare USB-poorten van de Arduino Uno Q.
+4. **Het bestand naar het bord kopiëren**:
+   - **Via de desktop-interface**: Open het bestandsbeheer op het bureaublad van de Uno Q, selecteer de gekoppelde USB-stick in de zijbalk en kopieer het `.tar.gz`-archief naar uw map `~/Downloads/` (of persoonlijke map `~/`).
+   - **Via de terminal / SSH**: Het systeem koppelt USB-opslagmedia automatisch onder `/media/arduino/<STATIONNAAM>` (of koppel het handmatig met `sudo mount /dev/sda1 /mnt`). Kopieer het bestand naar uw lokale map:
+     ```bash
+     cp /media/arduino/*/RaceCoordinatorAI-Linux-ARM64*.tar.gz ~/Downloads/
+     ```
+     *(Als uw laptop rechtstreeks via een ethernetkabel of een lokale Wi-Fi-router zonder internet met het bord is verbonden, kunt u het bestand ook overbrengen via `scp`: `scp RaceCoordinatorAI-Linux-ARM64*.tar.gz arduino@<hostname>:~/Downloads/`).*
+
+#### Stap 2: De update toepassen
+
+Zodra het `.tar.gz`-archief op het bord staat (bijvoorbeeld in `~/Downloads/`), kiest u een van de volgende drie methoden om de update toe te passen:
+
+##### Optie 1: Ingebouwd update-helperscript (Snelste & Aanbevolen)
+Race Coordinator AI bevat een kant-en-klaar updatescript op locatie op `/opt/racecoordinatorai/scripts/update_app.sh`. Dit script stopt automatisch de actieve services, pakt de nieuwe release uit over `/opt/racecoordinatorai`, hercompileert en flasht de microcontroller-firmware indien bijgewerkt, stelt de juiste bestandsrechten in en start alle services opnieuw:
+```bash
+sudo /opt/racecoordinatorai/scripts/update_app.sh ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+```
+*(Alle databaserecords, racegegevens, aangepaste UI-layouts en gebruikersinstellingen blijven automatisch behouden).*
+
+##### Optie 2: `install.sh` uit het updatepakket uitpakken en uitvoeren
+U kunt het gedownloade releasepakket uitpakken in een tijdelijke map en het meegeleverde `install.sh` uitvoeren. Het installatieprogramma detecteert de bestaande installatie in `/opt/racecoordinatorai`, werkt de toepassingsbestanden bij, flasht de microcontroller-firmware opnieuw en herstart de systemd-services:
+```bash
+# Gedownload archief uitpakken
+tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz
+
+# Installer over bestaande installatie uitvoeren (behoudt database & instellingen)
+cd RaceCoordinator_Linux_ARM64
+sudo ./install.sh
+```
+
+##### Optie 3: Handmatig bijwerken via Linux-opdrachten (Zonder helperscripts)
+Als u de update liever volledig handmatig uitvoert zonder gebruik te maken van de meegeleverde scripts, voert u de volgende opdrachten uit in de terminal:
+
+1. **Actieve services stoppen**:
+     ```bash
+     sudo systemctl stop racecoordinatorai-kiosk racecoordinatorai
+     ```
+2. **Bijgewerkte bestanden uitpakken over `/opt/racecoordinatorai`**:
+     ```bash
+     sudo tar -xzf ~/Downloads/RaceCoordinatorAI-Linux-ARM64*.tar.gz -C /opt/racecoordinatorai/ --strip-components=1
+     ```
+     *(Opmerking: Dit werkt de programmabestanden, webclientbestanden en scripts bij, terwijl uw SQLite-database en aangepaste bestanden onaangeroerd blijven).*
+3. **Juiste bestandseigendom en machtigingen verifiëren**:
+     ```bash
+     sudo chown -R arduino:arduino /opt/racecoordinatorai
+     ```
+4. **Microcontroller-firmware opnieuw compileren en flashen (als de sketch is bijgewerkt)**:
+     ```bash
+     cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
+     arduino-cli compile --fqbn arduino:zephyr:unoq .
+     arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
+     ```
+5. **De server- en kiosk-services opnieuw starten**:
+     ```bash
+     sudo systemctl restart racecoordinatorai
+     sudo systemctl restart racecoordinatorai-kiosk
+     ```
+
+---
+
 ## Vensterfocus en automatisch startende desktop-apps (bijv. Arduino App Lab)
 
 Op de Arduino Uno Q start Arduino Linux OS bij het inloggen op het bureaublad standaard «Arduino App Lab».
@@ -267,13 +328,46 @@ Als u visuele verlichtingsindicatoren wilt op een Arduino Uno Q-opstelling, hebt
 
 ---
 
-## Automatische software-updates
+## Probleemoplossing voor tekst-naar-spraak (TTS) en audio
 
-Wanneer verbonden met wifi, controleert Race Coordinator AI automatisch GitHub Releases:
-1. **App-update**: Downloadt het nieuwe Linux ARM64-pakket op de achtergrond.
-2. **Herstart van de service**: Herstart `racecoordinatorai.service` naadloos via systemd.
-3. **MCU Sketch Sync**: Flasht de firmware van de STM32-microcontroller automatisch opnieuw met behulp van `arduino-cli` als `racecoordinatorai_sketch.ino` is bijgewerkt.
+Race Coordinator AI gebruikt de Web Speech API van de browser (`window.speechSynthesis`) om rondetijden, racegebeurtenissen en commentaar van coureurs aan te kondigen. In tegenstelling tot Windows of macOS heeft Linux (Debian 12 op de Uno Q) geen ingebouwde spraaksynthesizer, waardoor Chromium afhankelijk is van **Speech Dispatcher** en **eSpeak NG**.
 
-> [!TIP]
-> Als u een `.tar.gz`-release-archief heeft gedownload via de link **Update downloaden** in de browser, raadpleegt u hierboven [Een bestaande installatie handmatig bijwerken](#een-bestaande-installatie-handmatig-bijwerken-vanuit-gedownload-archief) om de update toe te passen.
+### Vereiste pakketten
+Het geautomatiseerde installatieprogramma (`install.sh`) installeert deze pakketten automatisch. Als u een handmatige installatie hebt uitgevoerd of TTS geen geluid produceert, zorg er dan voor dat de vereiste spraak- en audiopakketten zijn geïnstalleerd:
+```bash
+sudo apt-get update
+sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
+```
+
+### Browserparameters in kioskmodus en navigatie met meerdere tabbladen
+In de kioskmodus wordt Chromium gestart via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI gebruikt `--start-maximized` (in plaats van het restrictieve `--kiosk`) om ervoor te zorgen dat secundaire tabbladen —zoals Heatresultaten, Raceresultaten, themaweergaven en het offline Helpcentrum— zichtbaar en toegankelijk blijven via de tabbladenbalk bovenaan het tv-scherm. Chromium vereist ook specifieke parameters om Speech Dispatcher en automatisch afspelen van audio in te schakelen. Zorg ervoor dat uw script `start_kiosk.sh` het volgende bevat:
+```bash
+  --start-maximized \
+  --enable-speech-dispatcher \
+  --autoplay-policy=no-user-gesture-required \
+```
+*(Als u `start_kiosk.sh` handmatig bewerkt, herstart dan de kioskservice: `sudo systemctl restart racecoordinatorai-kiosk`).*
+
+### Stappen voor probleemoplossing
+1. **Bedrijfsmodus en audio-uitgang controleren**:
+   - **Kiosk Display-modus**: Audio wordt rechtstreeks vanaf de Uno Q afgespeeld via de USB-C DisplayPort/HDMI-verbinding naar uw tv/monitor of aangesloten USB-luidsprekers.
+   - **Externe netwerkclient**: Als u Race Coordinator AI bekijkt vanaf een laptop, tablet of smartphone via het lokale netwerk (`http://<hostname>:7070`), worden audio en TTS afgespeeld via **de browser en luidsprekers van dat apparaat**, niet via het Uno Q-bord.
+2. **Hardware-audio-uitgang controleren**:
+   Voer een geluidstest uit in de Uno Q-terminal om te controleren of de audio-uitgang actief is en niet is gedempt:
+   ```bash
+   speaker-test -t wav -c 2 -l 1
+   ```
+   Als er geen geluid klinkt, start dan `alsamixer` in de terminal om te controleren of de Master/PCM/HDMI-volumeregelaars niet zijn gedempt (`[MM]`, druk op `M` om te schakelen) en voldoende hoog staan.
+3. **Spraaksynthesizers testen vanaf de opdrachtregel**:
+   Controleer of eSpeak NG en Speech Dispatcher op besturingssysteemniveau functioneren:
+   ```bash
+   # Zuivere spraaksynthese testen
+   espeak-ng "Testing speech synthesis"
+
+   # Speech Dispatcher testen (de backend van Chromium)
+   spd-say "Testing speech dispatcher"
+   ```
+   Als `spd-say` een foutmelding geeft of blijft hangen, start de daemon dan opnieuw: `pkill -f speech-dispatcher && spd-say "Hello"`.
+4. **Testen in de webinterface**:
+   Open in de Race Coordinator AI-webinterface **Interface aanpassen** (of **Thema-editor** $\rightarrow$ **Audio-instellingen**). Controleer het vervolgkeuzemenu **TTS-stem**: de beschikbare stemmen moeten worden weergegeven. Klik op **TTS-stem testen** om het afspelen te verifiëren.
 

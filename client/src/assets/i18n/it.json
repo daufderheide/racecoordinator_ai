@@ -783,6 +783,7 @@
   "HR_NO_HEAT_DATA": "Nessun dato del pilota disponibile per questa manche.",
   "HR_RANKINGS_HEADER": "CLASSIFICHE",
   "HR_SELECT_HEAT": "Seleziona manche",
+  "HR_CURRENT_HEAT_BADGE": "Attuale",
   "HR_TITLE": "RISULTATI DELLA MANCHE {{heat}}",
   "HR_X_AXIS": "Tempo di corsa assoluto (Secondi)",
   "HR_Y_AXIS": "Tempo sul giro (Secondi)",

@@ -361,6 +361,41 @@ export class HeatResultsHelper {
     };
   }
 
+  static createMultiHeatMockData(): any {
+    const mockData = this.createMockHeatData();
+    const baseHeat = mockData.race.heats[0];
+
+    const heat1 = JSON.parse(JSON.stringify(baseHeat));
+    heat1.objectId = "h1";
+    heat1.heatNumber = 1;
+    heat1.started = true;
+    heat1.completed = true;
+
+    const heat2 = JSON.parse(JSON.stringify(baseHeat));
+    heat2.objectId = "h2";
+    heat2.heatNumber = 2;
+    heat2.started = true;
+    heat2.completed = false;
+
+    const heat3 = JSON.parse(JSON.stringify(baseHeat));
+    heat3.objectId = "h3";
+    heat3.heatNumber = 3;
+    heat3.started = false;
+    heat3.completed = false;
+
+    const heat4 = JSON.parse(JSON.stringify(baseHeat));
+    heat4.objectId = "h4";
+    heat4.heatNumber = 4;
+    heat4.started = false;
+    heat4.completed = false;
+
+    mockData.race.heats = [heat1, heat2, heat3, heat4];
+    mockData.race.currentHeat = heat2;
+    mockData.heat = heat2;
+    mockData.raceState = 2; // RACING
+    return mockData;
+  }
+
   static async injectMockRaceData(page: any, mockData: any) {
     const buffer = RaceData.encode(mockData).finish();
     const dataArray = Array.from(buffer);

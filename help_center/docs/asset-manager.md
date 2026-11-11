@@ -45,7 +45,7 @@ You can also click assets to select them. When assets are selected, the top tool
 
 The Asset Manager provides powerful controls along the top of the library to find and display assets:
 
-- **Filter Tabs:** Quickly filter the library by resource type:
+- **Filter Tabs:** Quickly filter the library by resource type (your selected filter tab is automatically saved and restored when returning to the Asset Manager):
   - **All:** Displays every asset in the database.
   - **Images:** Shows only individual static image files (`.png`, `.jpg`, `.svg`, etc.).
   - **Image Sets:** Shows only grouped multi-frame image animations and fuel gauge sequences.

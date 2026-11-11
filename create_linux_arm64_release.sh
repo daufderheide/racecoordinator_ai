@@ -91,14 +91,16 @@ until curl -s http://localhost:7070 >/dev/null 2>&1; do
   sleep 1
 done
 
-# Launch Chromium in fullscreen kiosk mode
+# Launch Chromium in maximized window mode with Speech Dispatcher, unprompted autoplay, and multi-tab support
 BROWSER_BIN=$(command -v chromium || command -v chromium-browser || echo "chromium")
 "$BROWSER_BIN" \
-  --kiosk \
+  --start-maximized \
+  --enable-speech-dispatcher \
+  --autoplay-policy=no-user-gesture-required \
+  --no-first-run \
   --noerrdialogs \
   --disable-infobars \
   --check-for-update-interval=31536000 \
-  --incognito \
   http://localhost:7070 &
 BROWSER_PID=$!
 
@@ -124,6 +126,25 @@ TARGET_DIR="/opt/racecoordinatorai"
 if [ -z "$ARCHIVE_PATH" ] || [ ! -f "$ARCHIVE_PATH" ]; then
   echo "Usage: update_app.sh /path/to/RaceCoordinatorAI-Linux-ARM64.tar.gz"
   exit 1
+fi
+
+# Check prerequisites if running as root
+if [ "$EUID" -eq 0 ]; then
+  REQUIRED_PKGS=(default-jre-headless chromium wmctrl espeak-ng speech-dispatcher speech-dispatcher-espeak-ng alsa-utils git curl unzip)
+  MISSING_PKGS=()
+  for pkg in "${REQUIRED_PKGS[@]}"; do
+    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+      MISSING_PKGS+=("$pkg")
+    fi
+  done
+  if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
+    echo "Installing missing system prerequisites: ${MISSING_PKGS[*]}..."
+    apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${MISSING_PKGS[@]}"
+  fi
+  if id "arduino" &>/dev/null; then
+    usermod -a -G dialout,audio arduino 2>/dev/null || true
+  fi
 fi
 
 echo "Updating Race Coordinator AI..."
@@ -279,7 +300,7 @@ fi
 # 3. User permissions & serial access
 if id "arduino" &>/dev/null; then
   chown -R arduino:arduino "$INSTALL_DIR"
-  usermod -a -G dialout arduino 2>/dev/null || true
+  usermod -a -G dialout,audio arduino 2>/dev/null || true
 
   # Allow arduino user to restart racecoordinatorai services without password for in-app auto-updates
   if [ -d "/etc/sudoers.d" ]; then
@@ -382,7 +403,7 @@ fi
 
 if id "arduino" &>/dev/null; then
   chown -R arduino:arduino "$INSTALL_DIR"
-  usermod -a -G dialout arduino 2>/dev/null || true
+  usermod -a -G dialout,audio arduino 2>/dev/null || true
 
   if [ -d "/etc/sudoers.d" ]; then
     cat << 'SUDO_EOF' > /etc/sudoers.d/racecoordinatorai

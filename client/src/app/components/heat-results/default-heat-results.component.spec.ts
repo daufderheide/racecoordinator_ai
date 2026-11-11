@@ -4,12 +4,14 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
+import { CustomSelectComponent } from "@app/components/shared/custom-select/custom-select.component";
 import { HeatDriverExpanderComponent } from "@app/components/shared/heat-driver-expander/heat-driver-expander.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { Role } from "@app/models/role";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
@@ -123,6 +125,8 @@ describe("DefaultHeatResultsComponent", () => {
     };
 
     mockRaceTimeService = {
+      raceState: RaceState.RACING,
+      raceState$: of(RaceState.RACING),
       get formattedTime() {
         return formattedTimeSubject.value;
       },
@@ -607,6 +611,104 @@ describe("DefaultHeatResultsComponent", () => {
       component.onHeatSelected(1);
       expect(component.selectedHeatIndex).toBe(1);
       expect((component as any).heat).toBe(mockH2);
+    });
+
+    it("should configure heat selector with extendToPageBottom and fitWidestOption", () => {
+      const mockH1 = new Heat("h1", 1, []);
+      const mockH2 = new Heat("h2", 2, []);
+      mockRaceService.getHeats.and.returnValue([mockH1, mockH2]);
+      fixture.detectChanges();
+
+      const selectDebug = fixture.debugElement.query(
+        By.directive(CustomSelectComponent),
+      );
+      expect(selectDebug).toBeTruthy();
+      const selectInst = selectDebug.componentInstance as CustomSelectComponent;
+      expect(selectInst.extendToPageBottom()).toBeTrue();
+      expect(selectInst.fitWidestOption()).toBeTrue();
+    });
+
+    it("should filter heats after the current heat during an active race", () => {
+      const h1 = new Heat("h1", 1, []);
+      const h2 = new Heat("h2", 2, []);
+      const h3 = new Heat("h3", 3, []);
+      const h4 = new Heat("h4", 4, []);
+      mockRaceService.getHeats.and.returnValue([h1, h2, h3, h4]);
+      mockRaceService.getCurrentHeat.and.returnValue(h2);
+
+      expect(component.selectableHeats).toEqual([h1, h2]);
+      expect(component.isCurrentHeat(h1)).toBeFalse();
+      expect(component.isCurrentHeat(h2)).toBeTrue();
+      expect(component.isCurrentHeat(h3)).toBeFalse();
+      expect(component.getHeatIndex(h2)).toBe(1);
+    });
+
+    it("should allow all heats when reviewing a past race or when race is over", () => {
+      const h1 = new Heat("h1", 1, []);
+      const h2 = new Heat("h2", 2, []);
+      const h3 = new Heat("h3", 3, []);
+      mockRaceService.getHeats.and.returnValue([h1, h2, h3]);
+      mockRaceService.getCurrentHeat.and.returnValue(h1);
+
+      // Reviewing past race
+      (component as any).race = { historyRecordId: "hist_123" };
+      expect(component.isReviewingPastRace).toBeTrue();
+      expect(component.selectableHeats).toEqual([h1, h2, h3]);
+      expect(component.isCurrentHeat(h1)).toBeFalse();
+
+      // Live race over via raceState
+      (component as any).race = {};
+      mockRaceTimeService.raceState = RaceState.RACE_OVER;
+      expect(component.isRaceOver).toBeTrue();
+      expect(component.selectableHeats).toEqual([h1, h2, h3]);
+      expect(component.isCurrentHeat(h1)).toBeFalse();
+
+      // Live race over via raceHasEnded
+      mockRaceTimeService.raceState = RaceState.RACING;
+      component.raceHasEnded = true;
+      expect(component.isRaceOver).toBeTrue();
+      expect(component.selectableHeats).toEqual([h1, h2, h3]);
+    });
+
+    it("should return all heats if currentHeat is not set", () => {
+      const h1 = new Heat("h1", 1, []);
+      const h2 = new Heat("h2", 2, []);
+      mockRaceService.getHeats.and.returnValue([h1, h2]);
+      mockRaceService.getCurrentHeat.and.returnValue(undefined);
+
+      expect(component.selectableHeats).toEqual([h1, h2]);
+    });
+
+    it("should reset selected heat to current heat if pointing to a filtered-out heat", () => {
+      const h1 = new Heat("h1", 1, []);
+      const h2 = new Heat("h2", 2, []);
+      const h3 = new Heat("h3", 3, []);
+      mockRaceService.getHeats.and.returnValue([h1, h2, h3]);
+      mockRaceService.getCurrentHeat.and.returnValue(h2);
+
+      component.selectedHeatIndex = 2; // h3 is not selectable
+      (component as any).loadRaceData();
+
+      expect(component.selectedHeatIndex).toBe(1); // falls back to h2 (index 1)
+      expect((component as any).heat).toBe(h2);
+    });
+
+    it("should render selectable heats in dropdown and label current heat", () => {
+      const h1 = new Heat("h1", 1, []);
+      const h2 = new Heat("h2", 2, []);
+      const h3 = new Heat("h3", 3, []);
+      mockRaceService.getHeats.and.returnValue([h1, h2, h3]);
+      mockRaceService.getCurrentHeat.and.returnValue(h2);
+      mockRaceTimeService.raceState = RaceState.RACING;
+      fixture.detectChanges();
+
+      const optionEls =
+        fixture.nativeElement.querySelectorAll("app-custom-option");
+      expect(optionEls.length).toBe(2);
+      expect(optionEls[0].textContent).toContain("HR_TITLE");
+      expect(optionEls[0].textContent).not.toContain("HR_CURRENT_HEAT_BADGE");
+      expect(optionEls[1].textContent).toContain("HR_TITLE");
+      expect(optionEls[1].textContent).toContain("HR_CURRENT_HEAT_BADGE");
     });
 
     it("should open and close add lap sections dialog", () => {
