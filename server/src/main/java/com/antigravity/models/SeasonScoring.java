@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SeasonScoring {
+public class SeasonScoring implements BonusScoringConfig {
 
   @JsonProperty("position_points")
   private final List<Double> positionPoints;

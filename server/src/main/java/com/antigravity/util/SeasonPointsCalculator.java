@@ -448,193 +448,6 @@ public class SeasonPointsCalculator {
     if (heats == null || heats.isEmpty()) {
       return;
     }
-
-    calculateOverallFastestLapBonus(
-        heats, scoring.getOverallBonusFastestLap(), overallBonusesMap, overallBreakdownMap);
-    calculateOverallFastestLapPerLaneBonus(
-        heats, scoring.getOverallBonusFastestLapPerLane(), overallBonusesMap, overallBreakdownMap);
-    calculateOverallLapsLedBonuses(
-        runtimeRace,
-        heats,
-        scoring.getOverallBonusLedLap(),
-        scoring.getOverallBonusMostLapsLed(),
-        overallBonusesMap,
-        overallBreakdownMap);
-  }
-
-  private static void calculateOverallFastestLapBonus(
-      List<Heat> heats,
-      double bonus,
-      Map<String, List<Double>> overallBonusesMap,
-      Map<String, Map<String, Double>> overallBreakdownMap) {
-    if (bonus <= 0 || heats == null || heats.isEmpty()) return;
-    double minLap = Double.MAX_VALUE;
-    for (Heat heat : heats) {
-      if (heat == null || heat.getDrivers() == null) continue;
-      for (DriverHeatData dhd : heat.getDrivers()) {
-        if (dhd == null || dhd.isEmptyParticipant()) continue;
-        double best = dhd.getBestLapTime();
-        if (best > 0 && best < minLap) {
-          minLap = best;
-        }
-      }
-    }
-    if (minLap < Double.MAX_VALUE) {
-      for (Heat heat : heats) {
-        if (heat == null || heat.getDrivers() == null) continue;
-        for (DriverHeatData dhd : heat.getDrivers()) {
-          if (dhd == null || dhd.isEmptyParticipant()) continue;
-          if (Math.abs(dhd.getBestLapTime() - minLap) < 0.0001) {
-            String driverId = getDriverIdFromDhd(dhd);
-            if (driverId != null
-                && !driverId.isEmpty()
-                && overallBonusesMap.containsKey(driverId)
-                && !overallBonusesMap.get(driverId).contains(bonus)) {
-              overallBonusesMap.get(driverId).add(bonus);
-              if (overallBreakdownMap.containsKey(driverId)) {
-                overallBreakdownMap.get(driverId).put("fastest_lap", bonus);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void calculateOverallFastestLapPerLaneBonus(
-      List<Heat> heats,
-      double bonus,
-      Map<String, List<Double>> overallBonusesMap,
-      Map<String, Map<String, Double>> overallBreakdownMap) {
-    if (bonus <= 0 || heats == null || heats.isEmpty()) return;
-
-    // Find the minimum lap time per lane across all heats
-    Map<Integer, Double> laneMinLap = new HashMap<>();
-    for (Heat heat : heats) {
-      if (heat == null || heat.getDrivers() == null) continue;
-      for (int laneIdx = 0; laneIdx < heat.getDrivers().size(); laneIdx++) {
-        DriverHeatData dhd = heat.getDrivers().get(laneIdx);
-        if (dhd == null || dhd.isEmptyParticipant()) continue;
-        int lane = getLaneForDhd(dhd, laneIdx, heat);
-        double best = dhd.getBestLapTime();
-        if (best > 0) {
-          double currentMin = laneMinLap.getOrDefault(lane, Double.MAX_VALUE);
-          if (best < currentMin) {
-            laneMinLap.put(lane, best);
-          }
-        }
-      }
-    }
-
-    // For each lane, find the unique driver(s) who got the fastest lap in that lane
-    for (Map.Entry<Integer, Double> entry : laneMinLap.entrySet()) {
-      int lane = entry.getKey();
-      double minForLane = entry.getValue();
-      Set<String> laneWinners = new HashSet<>();
-
-      for (Heat heat : heats) {
-        if (heat == null || heat.getDrivers() == null) continue;
-        for (int laneIdx = 0; laneIdx < heat.getDrivers().size(); laneIdx++) {
-          DriverHeatData dhd = heat.getDrivers().get(laneIdx);
-          if (dhd == null || dhd.isEmptyParticipant()) continue;
-          int currentLane = getLaneForDhd(dhd, laneIdx, heat);
-          if (currentLane == lane) {
-            double best = dhd.getBestLapTime();
-            if (best > 0 && Math.abs(best - minForLane) < 0.0001) {
-              String driverId = getDriverIdFromDhd(dhd);
-              if (driverId != null && !driverId.isEmpty()) {
-                laneWinners.add(driverId);
-              }
-            }
-          }
-        }
-      }
-
-      for (String driverId : laneWinners) {
-        if (overallBonusesMap.containsKey(driverId)) {
-          overallBonusesMap.get(driverId).add(bonus);
-          if (overallBreakdownMap.containsKey(driverId)) {
-            overallBreakdownMap.get(driverId).put("fastest_lap_lane_" + (lane + 1), bonus);
-          }
-        }
-      }
-    }
-  }
-
-  private static int getLaneForDhd(DriverHeatData dhd, int laneIdx, Heat heat) {
-    if (dhd == null) return laneIdx;
-    if (dhd.getLane() >= 0) {
-      if (heat != null && heat.getDrivers() != null && heat.getDrivers().size() > 1) {
-        int dupCount = 0;
-        for (DriverHeatData other : heat.getDrivers()) {
-          if (other != null && !other.isEmptyParticipant() && other.getLane() == dhd.getLane()) {
-            dupCount++;
-          }
-        }
-        if (dupCount > 1) {
-          return laneIdx;
-        }
-      }
-      return dhd.getLane();
-    }
-    return laneIdx;
-  }
-
-  private static String getDriverIdFromDhd(DriverHeatData dhd) {
-    if (dhd == null) return null;
-    if (dhd.getDriver() != null && dhd.getDriver().getDriver() != null) {
-      String id = dhd.getDriver().getDriver().getEntityId();
-      if (id != null && !id.isEmpty()) return id;
-    }
-    if (dhd.getActualDriver() != null) {
-      String id = dhd.getActualDriver().getEntityId();
-      if (id != null && !id.isEmpty()) return id;
-    }
-    String id = dhd.getParticipantId();
-    if (id != null && !id.isEmpty()) return id;
-    return null;
-  }
-
-  private static void calculateOverallLapsLedBonuses(
-      Race runtimeRace,
-      List<Heat> heats,
-      double ledLapBonus,
-      double mostLapsLedBonus,
-      Map<String, List<Double>> overallBonusesMap,
-      Map<String, Map<String, Double>> overallBreakdownMap) {
-    if (ledLapBonus <= 0 && mostLapsLedBonus <= 0) return;
-
-    Map<String, List<DriverHeatData.LapData>> driverLaps = new HashMap<>();
-    Map<String, DriverHeatData> driverFirstDhd = new HashMap<>();
-
-    for (Heat heat : heats) {
-      if (heat == null || heat.getDrivers() == null) continue;
-      for (DriverHeatData dhd : heat.getDrivers()) {
-        if (dhd == null || dhd.isEmptyParticipant()) continue;
-        String driverId =
-            dhd.getDriver() != null && dhd.getDriver().getDriver() != null
-                ? dhd.getDriver().getDriver().getEntityId()
-                : dhd.getParticipantId();
-        if (driverId == null || driverId.isEmpty()) continue;
-        driverFirstDhd.putIfAbsent(driverId, dhd);
-
-        if (dhd.getLaps() != null && !dhd.getLaps().isEmpty()) {
-          driverLaps.computeIfAbsent(driverId, k -> new ArrayList<>()).addAll(dhd.getLaps());
-        }
-      }
-    }
-
-    List<DriverHeatData> consolidatedDrivers = new ArrayList<>();
-    for (Map.Entry<String, DriverHeatData> entry : driverFirstDhd.entrySet()) {
-      String driverId = entry.getKey();
-      DriverHeatData templateDhd = entry.getValue();
-      List<DriverHeatData.LapData> laps = driverLaps.getOrDefault(driverId, new ArrayList<>());
-      DriverHeatData consolidated =
-          new DriverHeatData(templateDhd.getDriver(), templateDhd.getActualDriver());
-      consolidated.setLaps(laps);
-      consolidatedDrivers.add(consolidated);
-    }
-
     RankingMethod oRank = RankingMethod.LAP_COUNT;
     TiebreakerMethod oTie = TiebreakerMethod.AVERAGE_LAP_TIME;
     if (runtimeRace.getRaceModel() != null
@@ -642,54 +455,18 @@ public class SeasonPointsCalculator {
       oRank = runtimeRace.getRaceModel().getOverallScoring().toRankingMethod();
       oTie = runtimeRace.getRaceModel().getOverallScoring().toTiebreakerMethod();
     }
+    PointsBonusCalculator.calculateOverallBonuses(
+        heats,
+        scoring,
+        oRank,
+        oTie,
+        runtimeRace.getDrivers(),
+        overallBonusesMap,
+        overallBreakdownMap);
+  }
 
-    Map<String, Integer> overallLapsLed =
-        GhostRaceSimulator.calculateLapsLed(consolidatedDrivers, oRank, oTie);
-    int maxLed = 0;
-    String mostLapsLedDriver = null;
-
-    List<RaceParticipant> participants = runtimeRace.getDrivers();
-    if (participants != null && !participants.isEmpty()) {
-      for (RaceParticipant rp : participants) {
-        if (rp == null || rp.getDriver() == null || rp.getDriver().getEntityId() == null) continue;
-        String driverId = rp.getDriver().getEntityId();
-        int led = overallLapsLed.getOrDefault(driverId, 0);
-        if (led > 0 && ledLapBonus > 0 && overallBonusesMap.containsKey(driverId)) {
-          overallBonusesMap.get(driverId).add(ledLapBonus);
-          if (overallBreakdownMap.containsKey(driverId)) {
-            overallBreakdownMap.get(driverId).put("led_lap", ledLapBonus);
-          }
-        }
-        if (led > maxLed) {
-          maxLed = led;
-          mostLapsLedDriver = driverId;
-        }
-      }
-    } else {
-      for (DriverHeatData dhd : consolidatedDrivers) {
-        String driverId = dhd.getParticipantId();
-        int led = overallLapsLed.getOrDefault(driverId, 0);
-        if (led > 0 && ledLapBonus > 0 && overallBonusesMap.containsKey(driverId)) {
-          overallBonusesMap.get(driverId).add(ledLapBonus);
-          if (overallBreakdownMap.containsKey(driverId)) {
-            overallBreakdownMap.get(driverId).put("led_lap", ledLapBonus);
-          }
-        }
-        if (led > maxLed) {
-          maxLed = led;
-          mostLapsLedDriver = driverId;
-        }
-      }
-    }
-
-    if (maxLed > 0 && mostLapsLedBonus > 0 && mostLapsLedDriver != null) {
-      if (overallBonusesMap.containsKey(mostLapsLedDriver)) {
-        overallBonusesMap.get(mostLapsLedDriver).add(mostLapsLedBonus);
-        if (overallBreakdownMap.containsKey(mostLapsLedDriver)) {
-          overallBreakdownMap.get(mostLapsLedDriver).put("most_laps_led", mostLapsLedBonus);
-        }
-      }
-    }
+  private static String getDriverIdFromDhd(DriverHeatData dhd) {
+    return PointsBonusCalculator.getDriverIdFromDhd(dhd);
   }
 
   private static void calculateHeatPointsAndBonuses(
@@ -815,132 +592,28 @@ public class SeasonPointsCalculator {
       SeasonScoring scoring,
       Map<String, List<Double>> heatSpecificBonuses,
       Map<String, Map<String, Double>> heatSpecificBreakdown) {
-    double heatBonusFastestLap = scoring.getHeatBonusFastestLap();
-    double heatBonusLedLap = scoring.getHeatBonusLedLap();
-    double heatBonusMostLapsLed = scoring.getHeatBonusMostLapsLed();
-
-    if (heatBonusFastestLap > 0) {
-      double minLap = Double.MAX_VALUE;
-      for (DriverHeatData dhd : heat.getDrivers()) {
-        if (dhd.isEmptyParticipant()) continue;
-        double best = dhd.getBestLapTime();
-        if (best > 0 && best < minLap) {
-          minLap = best;
-        }
-      }
-      if (minLap < Double.MAX_VALUE) {
-        for (DriverHeatData dhd : heat.getDrivers()) {
-          if (dhd.isEmptyParticipant()) continue;
-          if (Math.abs(dhd.getBestLapTime() - minLap) < 0.0001) {
-            String driverId = getDriverIdFromDhd(dhd);
-            if (driverId != null && heatSpecificBonuses.containsKey(driverId)) {
-              heatSpecificBonuses.get(driverId).add(heatBonusFastestLap);
-              heatSpecificBreakdown
-                  .computeIfAbsent(driverId, k -> new HashMap<>())
-                  .put("fastest_lap_heat_" + heatNum, heatBonusFastestLap);
-            }
-          }
-        }
-      }
+    RankingMethod hRank = RankingMethod.LAP_COUNT;
+    TiebreakerMethod hTie = TiebreakerMethod.AVERAGE_LAP_TIME;
+    if (runtimeRace.getRaceModel() != null && runtimeRace.getRaceModel().getHeatScoring() != null) {
+      hRank = runtimeRace.getRaceModel().getHeatScoring().toRankingMethod();
+      hTie = runtimeRace.getRaceModel().getHeatScoring().toTiebreakerMethod();
     }
-
-    if (heatBonusLedLap > 0 || heatBonusMostLapsLed > 0) {
-      RankingMethod hRank = RankingMethod.LAP_COUNT;
-      TiebreakerMethod hTie = TiebreakerMethod.AVERAGE_LAP_TIME;
-      if (runtimeRace.getRaceModel() != null
-          && runtimeRace.getRaceModel().getHeatScoring() != null) {
-        hRank = runtimeRace.getRaceModel().getHeatScoring().toRankingMethod();
-        hTie = runtimeRace.getRaceModel().getHeatScoring().toTiebreakerMethod();
-      }
-
-      Map<String, Integer> heatLapsLed =
-          GhostRaceSimulator.calculateLapsLed(heat.getDrivers(), hRank, hTie);
-
-      if (heatBonusLedLap > 0) {
-        for (Map.Entry<String, Integer> entry : heatLapsLed.entrySet()) {
-          String driverId = entry.getKey();
-          int led = entry.getValue();
-          if (led > 0 && heatSpecificBonuses.containsKey(driverId)) {
-            heatSpecificBonuses.get(driverId).add(heatBonusLedLap);
-            heatSpecificBreakdown
-                .computeIfAbsent(driverId, k -> new HashMap<>())
-                .put("led_lap_heat_" + heatNum, heatBonusLedLap);
-          }
-        }
-      }
-
-      if (heatBonusMostLapsLed > 0) {
-        int maxLedInHeat = 0;
-        String mostLapsLedDriver = null;
-
-        List<RaceParticipant> participants = runtimeRace.getDrivers();
-        if (participants != null && !participants.isEmpty()) {
-          for (RaceParticipant rp : participants) {
-            if (rp == null || rp.getDriver() == null || rp.getDriver().getEntityId() == null) {
-              continue;
-            }
-            String driverId = rp.getDriver().getEntityId();
-            int led = heatLapsLed.getOrDefault(driverId, 0);
-            if (led > maxLedInHeat) {
-              maxLedInHeat = led;
-              mostLapsLedDriver = driverId;
-            }
-          }
-        } else {
-          for (DriverHeatData dhd : heat.getDrivers()) {
-            if (dhd.isEmptyParticipant()) continue;
-            String driverId = getDriverIdFromDhd(dhd);
-            if (driverId == null) continue;
-            int led = heatLapsLed.getOrDefault(driverId, 0);
-            if (led > maxLedInHeat) {
-              maxLedInHeat = led;
-              mostLapsLedDriver = driverId;
-            }
-          }
-        }
-
-        if (maxLedInHeat > 0
-            && mostLapsLedDriver != null
-            && heatSpecificBonuses.containsKey(mostLapsLedDriver)) {
-          heatSpecificBonuses.get(mostLapsLedDriver).add(heatBonusMostLapsLed);
-          heatSpecificBreakdown
-              .computeIfAbsent(mostLapsLedDriver, k -> new HashMap<>())
-              .put("most_laps_led_heat_" + heatNum, heatBonusMostLapsLed);
-        }
-      }
-    }
+    PointsBonusCalculator.calculateSingleHeatBonuses(
+        heat,
+        heatNum,
+        scoring,
+        hRank,
+        hTie,
+        runtimeRace.getDrivers(),
+        heatSpecificBonuses,
+        heatSpecificBreakdown);
   }
 
   private static void resolveOneBonusPerDriver(
       Map<String, List<Double>> bonusesMap,
       Map<String, Map<String, Double>> breakdownMap,
       boolean oneBonusPerDriver) {
-    if (!oneBonusPerDriver) return;
-    for (Map.Entry<String, List<Double>> entry : bonusesMap.entrySet()) {
-      String driverId = entry.getKey();
-      if (!entry.getValue().isEmpty()) {
-        List<Double> sortedBonuses = new ArrayList<>(entry.getValue());
-        Collections.sort(sortedBonuses, Collections.reverseOrder());
-        double bestBonus = sortedBonuses.get(0);
-        entry.getValue().clear();
-        entry.getValue().add(bestBonus);
-
-        if (breakdownMap != null && breakdownMap.containsKey(driverId)) {
-          Map<String, Double> driverBreakdown = breakdownMap.get(driverId);
-          String bestCategory = null;
-          for (Map.Entry<String, Double> bEntry : driverBreakdown.entrySet()) {
-            if (Math.abs(bEntry.getValue() - bestBonus) < 0.0001) {
-              bestCategory = bEntry.getKey();
-              break;
-            }
-          }
-          driverBreakdown.clear();
-          if (bestCategory != null) {
-            driverBreakdown.put(bestCategory, bestBonus);
-          }
-        }
-      }
-    }
+    PointsBonusCalculator.resolveOneBonusPerDriver(bonusesMap, breakdownMap, oneBonusPerDriver);
   }
 
   private static List<SeasonDriverResult> buildFinalDriverResults(
