@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +43,16 @@ import org.slf4j.LoggerFactory;
 public class HistoryPredictionTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(HistoryPredictionTaskHandler.class);
-  private final DatabaseContext databaseContext;
-  private final ConcurrentHashMap<String, CompletableFuture<RacePredictionRecord>>
+  private static final ExecutorService backgroundPredictionExecutor =
+      Executors.newSingleThreadExecutor(
+          r -> {
+            Thread t = new Thread(r, "PreRace-Prediction-Worker");
+            t.setDaemon(true);
+            return t;
+          });
+  private static final ConcurrentHashMap<String, CompletableFuture<RacePredictionRecord>>
       inFlightPredictions = new ConcurrentHashMap<>();
+  private final DatabaseContext databaseContext;
 
   public HistoryPredictionTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
@@ -636,13 +645,24 @@ public class HistoryPredictionTaskHandler {
         record = dbService.getRacePredictionRecord(dbContext, targetRaceId, scope.isDemo());
       }
 
-      boolean isStale = isStalePredictionRecord(dbContext, record, activeRace, scope.isDemo());
+      if (record != null && !forceRecalc) {
+        boolean isStale = isStalePredictionRecord(dbContext, record, activeRace, scope.isDemo());
+        if (isStale && activeRace != null && activeRace.getRaceModel() != null) {
+          String activeRaceId = activeRace.getRaceModel().getEntityId();
+          if (activeRaceId != null && activeRaceId.equals(targetRaceId)) {
+            logger.info(
+                "Race prediction for raceId={} is stale; returning cached record immediately and scheduling background update",
+                targetRaceId);
+            scheduleBackgroundPrediction(dbContext, activeRace, activeRaceId, scope);
+          }
+        }
+        ctx.json(record);
+        return;
+      }
 
-      if ((record == null || isStale || forceRecalc)
-          && activeRace != null
-          && activeRace.getRaceModel() != null) {
+      if (activeRace != null && activeRace.getRaceModel() != null) {
         String activeRaceId = activeRace.getRaceModel().getEntityId();
-        if (activeRaceId != null && !activeRaceId.isEmpty()) {
+        if (activeRaceId != null && activeRaceId.equals(targetRaceId)) {
           record = getOrComputePrediction(dbContext, activeRace, activeRaceId, scope);
         }
       }
@@ -656,6 +676,50 @@ public class HistoryPredictionTaskHandler {
       logger.error("Error fetching race prediction record", e);
       ctx.status(500).result("Error fetching race prediction record: " + e.getMessage());
     }
+  }
+
+  private void scheduleBackgroundPrediction(
+      DatabaseContext dbContext,
+      com.antigravity.race.Race activeRace, // fqn-collision
+      String activeRaceId,
+      RaceScope scope) {
+    if (activeRace == null || activeRaceId == null || activeRaceId.isEmpty()) {
+      return;
+    }
+    String computationKey = activeRaceId + ":" + scope.isDemo();
+    CompletableFuture<RacePredictionRecord> future = new CompletableFuture<>();
+    CompletableFuture<RacePredictionRecord> existing =
+        inFlightPredictions.putIfAbsent(computationKey, future);
+
+    if (existing != null) {
+      logger.debug(
+          "Background prediction already in flight for raceId={}, skipping duplicate schedule",
+          activeRaceId);
+      return;
+    }
+
+    backgroundPredictionExecutor.submit(
+        () -> {
+          try {
+            logger.info(
+                "Starting background pre-race prediction recalculation for raceId={}",
+                activeRaceId);
+            RacePredictionRecord computed =
+                doComputePrediction(dbContext, activeRace, activeRaceId, scope);
+            future.complete(computed);
+            logger.info(
+                "Completed background pre-race prediction recalculation for raceId={}",
+                activeRaceId);
+          } catch (Throwable t) {
+            logger.warn(
+                "Failed background pre-race prediction recalculation for raceId={}",
+                activeRaceId,
+                t);
+            future.completeExceptionally(t);
+          } finally {
+            inFlightPredictions.remove(computationKey, future);
+          }
+        });
   }
 
   private RacePredictionRecord getOrComputePrediction(
@@ -682,50 +746,8 @@ public class HistoryPredictionTaskHandler {
     }
 
     try {
-      List<RaceParticipant> participants =
-          activeRace.getDrivers() != null
-              ? new ArrayList<>(activeRace.getDrivers())
-              : Collections.emptyList();
-      List<Heat> heats =
-          activeRace.getHeats() != null
-              ? new ArrayList<>(activeRace.getHeats())
-              : Collections.emptyList();
-
-      RacePredictionService.getInstance()
-          .generateAndSavePreRacePrediction(
-              dbContext,
-              activeRaceId,
-              activeRace.getRaceModel(),
-              participants,
-              heats,
-              scope.isDemo(),
-              true);
-
-      int currentHeatIdx =
-          heats != null && activeRace.getCurrentHeat() != null
-              ? heats.indexOf(activeRace.getCurrentHeat())
-              : 0;
-      if (currentHeatIdx < 0) {
-        currentHeatIdx = 0;
-      }
-
-      Map<String, PredictionEngine.DriverHeatState> actualLaps =
-          HeatExecutionManager.buildDriverHeatStates(activeRace);
-
-      RacePredictionService.getInstance()
-          .updateRealtimePrediction(
-              dbContext,
-              activeRaceId,
-              activeRace.getRaceModel(),
-              participants,
-              heats,
-              currentHeatIdx,
-              actualLaps,
-              scope.isDemo());
-
       RacePredictionRecord computed =
-          DatabaseService.getInstance()
-              .getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
+          doComputePrediction(dbContext, activeRace, activeRaceId, scope);
       future.complete(computed);
       return computed;
     } catch (Throwable t) {
@@ -736,6 +758,64 @@ public class HistoryPredictionTaskHandler {
       throw new RuntimeException("Error computing pre-race prediction", t);
     } finally {
       inFlightPredictions.remove(computationKey, future);
+    }
+  }
+
+  private RacePredictionRecord doComputePrediction(
+      DatabaseContext dbContext,
+      com.antigravity.race.Race activeRace, // fqn-collision
+      String activeRaceId,
+      RaceScope scope) {
+    List<RaceParticipant> participants =
+        activeRace.getDrivers() != null
+            ? new ArrayList<>(activeRace.getDrivers())
+            : Collections.emptyList();
+    List<Heat> heats =
+        activeRace.getHeats() != null
+            ? new ArrayList<>(activeRace.getHeats())
+            : Collections.emptyList();
+
+    RacePredictionService.getInstance()
+        .generateAndSavePreRacePrediction(
+            dbContext,
+            activeRaceId,
+            activeRace.getRaceModel(),
+            participants,
+            heats,
+            scope.isDemo(),
+            true);
+
+    int currentHeatIdx =
+        heats != null && activeRace.getCurrentHeat() != null
+            ? heats.indexOf(activeRace.getCurrentHeat())
+            : 0;
+    if (currentHeatIdx < 0) {
+      currentHeatIdx = 0;
+    }
+
+    Map<String, PredictionEngine.DriverHeatState> actualLaps =
+        HeatExecutionManager.buildDriverHeatStates(activeRace);
+
+    RacePredictionService.getInstance()
+        .updateRealtimePrediction(
+            dbContext,
+            activeRaceId,
+            activeRace.getRaceModel(),
+            participants,
+            heats,
+            currentHeatIdx,
+            actualLaps,
+            scope.isDemo());
+
+    return DatabaseService.getInstance()
+        .getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
+  }
+
+  public static void flushBackgroundPredictions() {
+    try {
+      backgroundPredictionExecutor.submit(() -> {}).get(5, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      logger.warn("Failed to flush background predictions", e);
     }
   }
 

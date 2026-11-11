@@ -618,4 +618,152 @@ public class HistoryPredictionTaskHandlerTest {
     verify(ctx1).json(any(RacePredictionRecord.class));
     verify(ctx2).json(any(RacePredictionRecord.class));
   }
+
+  @Test
+  public void testGetRacePredictionRecord_StaleReturnsCachedImmediatelyAndTriggersBackgroundRecalc()
+      throws Exception {
+    String raceId = "stale_pred_race";
+    String trackId = "track_1";
+
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("StalePredRace")
+            .withEntityId(raceId)
+            .withTrackEntityId(trackId)
+            .build();
+
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver.Builder().withName("D1").withEntityId("d1").build();
+    com.antigravity.models.Driver d2 =
+        new com.antigravity.models.Driver.Builder().withName("D2").withEntityId("d2").build();
+
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData(p1);
+    dhd1.setLane(0);
+    com.antigravity.race.DriverHeatData dhd2 = new com.antigravity.race.DriverHeatData(p2);
+    dhd2.setLane(1);
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, java.util.Arrays.asList(dhd1, dhd2), false);
+
+    RacePredictionRecord cachedRecord = new RacePredictionRecord();
+    cachedRecord.setId(raceId);
+    cachedRecord.setRaceId(raceId);
+    cachedRecord.setTimestamp(1000L);
+
+    RacePredictionRecord.PredictionSnapshot preRace = new RacePredictionRecord.PredictionSnapshot();
+    List<RacePredictionRecord.DriverProjection> standings = new ArrayList<>();
+    RacePredictionRecord.DriverProjection dp1 =
+        new RacePredictionRecord.DriverProjection("d1", "D1", 1, 100.0, 0.0, 0.6, 0.9);
+    dp1.setTotalSimulations(1000);
+    RacePredictionRecord.DriverProjection dp2 =
+        new RacePredictionRecord.DriverProjection("d2", "D2", 2, 98.0, 0.0, 0.4, 0.8);
+    dp2.setTotalSimulations(1000);
+    standings.add(dp1);
+    standings.add(dp2);
+    preRace.setProjectedStandings(standings);
+    cachedRecord.setPreRace(preRace);
+
+    com.antigravity.service.DatabaseService.getInstance()
+        .saveRacePredictionRecord(mockDbCtx, cachedRecord, false);
+
+    // Save driver track stats with timestamp > 1000L to trigger isStalePredictionRecord
+    com.antigravity.models.DriverTrackStats dts = new com.antigravity.models.DriverTrackStats();
+    dts.setId("d1_" + trackId);
+    dts.setDriverId("d1");
+    dts.setTrackId(trackId);
+    dts.setLastUpdated(5000L);
+    com.antigravity.service.DatabaseService.getInstance()
+        .saveDriverTrackStats(mockDbCtx, dts, false);
+
+    com.antigravity.race.Race mockActiveRace = mock(com.antigravity.race.Race.class);
+    when(mockActiveRace.getRaceModel()).thenReturn(raceModel);
+    when(mockActiveRace.getDrivers()).thenReturn(java.util.Arrays.asList(p1, p2));
+    when(mockActiveRace.getHeats()).thenReturn(java.util.Collections.singletonList(heat));
+    when(mockActiveRace.getCurrentHeat()).thenReturn(heat);
+    when(mockActiveRace.isDemoMode()).thenReturn(false);
+    when(mockActiveRace.getState()).thenReturn(new com.antigravity.race.states.NotStarted());
+
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(mockActiveRace);
+
+    Context ctx = mock(Context.class);
+    when(ctx.pathParam("id")).thenReturn(raceId);
+
+    // Call getRacePredictionRecord
+    handler.getRacePredictionRecord(ctx);
+
+    // 1. Must return cached record immediately without blocking
+    org.mockito.ArgumentCaptor<RacePredictionRecord> captor =
+        org.mockito.ArgumentCaptor.forClass(RacePredictionRecord.class);
+    verify(ctx).json(captor.capture());
+    RacePredictionRecord returned = captor.getValue();
+    org.junit.Assert.assertNotNull(returned);
+    org.junit.Assert.assertEquals(1000L, returned.getTimestamp());
+
+    // 2. Wait for background recalculation to finish
+    HistoryPredictionTaskHandler.flushBackgroundPredictions();
+
+    // 3. Database should now contain the refreshed record
+    RacePredictionRecord updated =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getRacePredictionRecord(mockDbCtx, raceId, false);
+    org.junit.Assert.assertNotNull(updated);
+    org.junit.Assert.assertTrue(
+        "Updated timestamp should be > 1000L: " + updated.getTimestamp(),
+        updated.getTimestamp() > 1000L);
+  }
+
+  @Test
+  public void testGetRacePredictionRecord_ForceRecalculateBypassesCache() {
+    String raceId = "force_recalc_race";
+    String trackId = "track_1";
+
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("ForceRecalcRace")
+            .withEntityId(raceId)
+            .withTrackEntityId(trackId)
+            .build();
+
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver.Builder().withName("D1").withEntityId("d1").build();
+
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData(p1);
+    dhd1.setLane(0);
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, java.util.Collections.singletonList(dhd1), false);
+
+    RacePredictionRecord cachedRecord = new RacePredictionRecord();
+    cachedRecord.setId(raceId);
+    cachedRecord.setRaceId(raceId);
+    cachedRecord.setTimestamp(1000L);
+    com.antigravity.service.DatabaseService.getInstance()
+        .saveRacePredictionRecord(mockDbCtx, cachedRecord, false);
+
+    com.antigravity.race.Race mockActiveRace = mock(com.antigravity.race.Race.class);
+    when(mockActiveRace.getRaceModel()).thenReturn(raceModel);
+    when(mockActiveRace.getDrivers()).thenReturn(java.util.Collections.singletonList(p1));
+    when(mockActiveRace.getHeats()).thenReturn(java.util.Collections.singletonList(heat));
+    when(mockActiveRace.getCurrentHeat()).thenReturn(heat);
+    when(mockActiveRace.isDemoMode()).thenReturn(false);
+    when(mockActiveRace.getState()).thenReturn(new com.antigravity.race.states.NotStarted());
+
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(mockActiveRace);
+
+    Context ctx = mock(Context.class);
+    when(ctx.pathParam("id")).thenReturn(raceId);
+    when(ctx.queryParam("force")).thenReturn("true");
+
+    handler.getRacePredictionRecord(ctx);
+
+    org.mockito.ArgumentCaptor<RacePredictionRecord> captor =
+        org.mockito.ArgumentCaptor.forClass(RacePredictionRecord.class);
+    verify(ctx).json(captor.capture());
+    RacePredictionRecord returned = captor.getValue();
+    org.junit.Assert.assertNotNull(returned);
+    org.junit.Assert.assertTrue(
+        "Forced recalc should return newly computed timestamp > 1000L",
+        returned.getTimestamp() > 1000L);
+  }
 }
