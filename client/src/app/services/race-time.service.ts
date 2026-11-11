@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from "@angular/core";
+import { Injectable, NgZone, OnDestroy, Optional } from "@angular/core";
 import { BehaviorSubject, Observable, Subscription } from "rxjs";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { IRaceTime, RaceState } from "@app/proto/antigravity";
@@ -21,6 +21,10 @@ export class RaceTimeService implements OnDestroy {
   private _isRestarting: boolean = false;
   private _showCountdownOverlay: boolean = false;
   private _timeFormat: string = "1.0-0";
+
+  private animFrameId: number | null = null;
+  private lastServerTime: number = 0;
+  private lastServerTimestamp: number = 0;
 
   private previousTime: number = 0;
   private subsecondThreshold: number = 10;
@@ -61,6 +65,7 @@ export class RaceTimeService implements OnDestroy {
   constructor(
     private raceConnectionService: RaceConnectionService,
     private raceService: RaceService,
+    @Optional() private ngZone?: NgZone,
   ) {
     if (this.raceConnectionService?.raceTime$) {
       this.subscriptions.add(
@@ -115,6 +120,7 @@ export class RaceTimeService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopInterpolationLoop();
     this.subscriptions.unsubscribe();
   }
 
@@ -255,25 +261,10 @@ export class RaceTimeService implements OnDestroy {
       time = this._autoAdvanceRemaining;
     }
 
-    if (this.timerFormatOptions.subsecondMode === "always") {
-      this._timeFormat = `1.${this.subsecondDecimals}-${this.subsecondDecimals}`;
-    } else if (this.timerFormatOptions.subsecondMode === "never") {
-      this._timeFormat = "1.0-0";
-    } else if (time > this.previousTime) {
-      this._timeFormat = "1.0-0";
-    } else if (time < this.previousTime) {
-      if (this._raceState === RaceState.STARTING) {
-        this._timeFormat = "1.0-0";
-      } else {
-        if (time < this.subsecondThreshold && this.subsecondDecimals > 0) {
-          this._timeFormat = `1.${this.subsecondDecimals}-${this.subsecondDecimals}`;
-        } else {
-          this._timeFormat = "1.0-0";
-        }
-      }
-    } else {
-      if (time === 0) this._timeFormat = "1.0-0";
-    }
+    this.lastServerTime = time;
+    this.lastServerTimestamp = performance.now();
+
+    this.updateTimeFormat(time);
 
     if (
       time === 0 &&
@@ -287,6 +278,12 @@ export class RaceTimeService implements OnDestroy {
 
     this._time = time;
     this.previousTime = time;
+
+    if (this.shouldInterpolate) {
+      this.startInterpolationLoop();
+    } else {
+      this.stopInterpolationLoop();
+    }
 
     this.notifySubscribers();
   }
@@ -349,9 +346,193 @@ export class RaceTimeService implements OnDestroy {
         }
       }
       this._isRestarting = false;
+      if (this.lastServerTimestamp === 0) {
+        this.lastServerTime = this._time;
+        this.lastServerTimestamp = performance.now();
+      }
+    }
+
+    if (this.shouldInterpolate) {
+      if (this.lastServerTimestamp === 0) {
+        this.lastServerTime = this._time;
+        this.lastServerTimestamp = performance.now();
+      }
+      this.startInterpolationLoop();
+    } else {
+      this.stopInterpolationLoop();
     }
 
     this.notifySubscribers();
+  }
+
+  private get shouldInterpolate(): boolean {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return false;
+    }
+    if (this._raceState === RaceState.RACING) {
+      return true;
+    }
+    if (
+      (this._raceState === RaceState.NOT_STARTED ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoStartRemaining > 0 &&
+      !this._isRestarting
+    ) {
+      return true;
+    }
+    if (
+      (this._raceState === RaceState.HEAT_OVER ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoAdvanceRemaining > 0
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  private get isCountDown(): boolean {
+    if (
+      (this._raceState === RaceState.NOT_STARTED ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoStartRemaining > 0
+    ) {
+      return true;
+    }
+    if (
+      (this._raceState === RaceState.HEAT_OVER ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoAdvanceRemaining > 0
+    ) {
+      return true;
+    }
+    const race = this.raceService?.getRace();
+    const scoring = race?.heat_scoring;
+    if (scoring) {
+      const isTimed = scoring.finishMethod === FinishMethod.Timed;
+      const limit = scoring.finishValue || 0;
+      return isTimed && limit > 0;
+    }
+    return this._time <= this.previousTime && this._time > 0;
+  }
+
+  private updateTimeFormat(time: number): void {
+    if (this.timerFormatOptions.subsecondMode === "always") {
+      this._timeFormat = `1.${this.subsecondDecimals}-${this.subsecondDecimals}`;
+    } else if (this.timerFormatOptions.subsecondMode === "never") {
+      this._timeFormat = "1.0-0";
+    } else if (
+      this._autoStartRemaining > 0 ||
+      this._autoAdvanceRemaining > 0 ||
+      this._raceState === RaceState.NOT_STARTED ||
+      this._raceState === RaceState.STARTING ||
+      this._raceState === RaceState.HEAT_OVER
+    ) {
+      this._timeFormat = "1.0-0";
+    } else if (this.isCountDown || time < this.previousTime) {
+      if (time < this.subsecondThreshold && this.subsecondDecimals > 0) {
+        this._timeFormat = `1.${this.subsecondDecimals}-${this.subsecondDecimals}`;
+      } else {
+        this._timeFormat = "1.0-0";
+      }
+    } else if (time > this.previousTime) {
+      this._timeFormat = "1.0-0";
+    } else {
+      if (time === 0) this._timeFormat = "1.0-0";
+    }
+  }
+
+  private startInterpolationLoop(): void {
+    if (
+      this.animFrameId !== null ||
+      typeof window === "undefined" ||
+      typeof window.requestAnimationFrame !== "function"
+    ) {
+      return;
+    }
+
+    const start = () => {
+      const loop = () => {
+        if (!this.shouldInterpolate) {
+          this.stopInterpolationLoop();
+          return;
+        }
+
+        this.tickInterpolation();
+        this.animFrameId = window.requestAnimationFrame(loop);
+      };
+      this.animFrameId = window.requestAnimationFrame(loop);
+    };
+
+    if (this.ngZone) {
+      this.ngZone.runOutsideAngular(start);
+    } else {
+      start();
+    }
+  }
+
+  private stopInterpolationLoop(): void {
+    if (this.animFrameId !== null && typeof window !== "undefined") {
+      window.cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
+  }
+
+  private tickInterpolation(): void {
+    if (this.lastServerTimestamp === 0 || !this.shouldInterpolate) {
+      return;
+    }
+
+    const now = performance.now();
+    const elapsedSec = (now - this.lastServerTimestamp) / 1000;
+    let currentTime: number;
+
+    if (this.isCountDown) {
+      currentTime = Math.max(0, this.lastServerTime - elapsedSec);
+    } else {
+      currentTime = this.lastServerTime + elapsedSec;
+    }
+
+    this._time = currentTime;
+
+    if (
+      (this._raceState === RaceState.NOT_STARTED ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoStartRemaining > 0
+    ) {
+      this._autoStartRemaining = currentTime;
+    } else if (
+      (this._raceState === RaceState.HEAT_OVER ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoAdvanceRemaining > 0
+    ) {
+      this._autoAdvanceRemaining = currentTime;
+    }
+
+    this.updateTimeFormat(currentTime);
+
+    const newFormatted = this.formattedTime;
+    if (newFormatted !== this.formattedTimeSubject.value) {
+      this.formattedTimeSubject.next(newFormatted);
+    }
+
+    const newIsWarmup = this.isWarmup;
+    if (newIsWarmup !== this.isWarmupSubject.value) {
+      this.isWarmupSubject.next(newIsWarmup);
+    }
+
+    const newIsCooldown = this.isCooldown;
+    if (newIsCooldown !== this.isCooldownSubject.value) {
+      this.isCooldownSubject.next(newIsCooldown);
+    }
+
+    const newStatusLabel = this.autoStatusLabel;
+    if (newStatusLabel !== this.autoStatusLabelSubject.value) {
+      this.autoStatusLabelSubject.next(newStatusLabel);
+    }
   }
 
   get autoStatusLabel(): string {
@@ -493,6 +674,9 @@ export class RaceTimeService implements OnDestroy {
   }
 
   reset(): void {
+    this.stopInterpolationLoop();
+    this.lastServerTime = 0;
+    this.lastServerTimestamp = 0;
     this._time = 0;
     this.previousTime = 0;
     this._autoStartRemaining = 0;

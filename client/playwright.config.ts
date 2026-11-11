@@ -38,6 +38,9 @@ export default defineConfig({
 
     /* Capture screenshots on failure */
     screenshot: "only-on-failure",
+
+    /* Ensure visual tests run with reduced motion so animation and interpolation loops don't jitter */
+    reducedMotion: "reduce",
   },
 
   /* Configure projects for major browsers */

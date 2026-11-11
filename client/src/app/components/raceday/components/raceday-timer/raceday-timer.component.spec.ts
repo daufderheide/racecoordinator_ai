@@ -276,4 +276,35 @@ describe("RacedayTimerComponent", () => {
     expect(await localHarness.getWarmupLabel()).toBe("RD_COOLDOWN");
     expect(await localHarness.getCooldownLabel()).toBe("RD_COOLDOWN");
   });
+
+  it("should skip fitText layout calculations when text length and container dimensions are unchanged", () => {
+    const textEl = fixture.nativeElement.querySelector(".timer-text");
+    const panelEl = fixture.nativeElement.querySelector(".timer-panel");
+    spyOnProperty(panelEl, "clientWidth", "get").and.returnValue(200);
+    spyOnProperty(panelEl, "clientHeight", "get").and.returnValue(100);
+
+    const setPropertySpy = spyOn(
+      panelEl.style,
+      "setProperty",
+    ).and.callThrough();
+
+    // First fitting
+    textEl.textContent = "01:23.45";
+    (component as any).fitText();
+    const firstCallCount = setPropertySpy.calls.count();
+    expect(firstCallCount).toBeGreaterThan(0);
+
+    // Second fitting with identical length and dimensions ("01:23.46")
+    textEl.textContent = "01:23.46";
+    (component as any).fitText();
+
+    // setProperty should not be called again because of cache hit
+    expect(setPropertySpy.calls.count()).toBe(firstCallCount);
+
+    // Third fitting with different length ("1:23.46")
+    textEl.textContent = "1:23.46";
+    (component as any).fitText();
+
+    expect(setPropertySpy.calls.count()).toBeGreaterThan(firstCallCount);
+  });
 });

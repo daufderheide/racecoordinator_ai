@@ -2782,6 +2782,8 @@ export class TestSetupHelper {
   }
 
   static async disableAnimations(page: Page) {
+    await page.emulateMedia({ reducedMotion: "reduce" }).catch(() => {});
+
     const css = `
       *, *::before, *::after, svg, svg *, path, circle, rect, line, polygon, polyline, ellipse, text {
         transition: none !important;
@@ -2806,6 +2808,26 @@ export class TestSetupHelper {
 
     // Persist across navigation
     await page.addInitScript((styleContent) => {
+      // Ensure prefers-reduced-motion matches true when animations are disabled
+      if (typeof window !== "undefined" && window.matchMedia) {
+        const origMatchMedia = window.matchMedia.bind(window);
+        window.matchMedia = (query: string) => {
+          if (query && query.includes("prefers-reduced-motion")) {
+            return {
+              matches: true,
+              media: query,
+              onchange: null,
+              addListener: () => {},
+              removeListener: () => {},
+              addEventListener: () => {},
+              removeEventListener: () => {},
+              dispatchEvent: () => false,
+            } as any;
+          }
+          return origMatchMedia(query);
+        };
+      }
+
       const injectStyle = () => {
         if (document.getElementById("playwright-disable-animations")) return;
         const style = document.createElement("style");

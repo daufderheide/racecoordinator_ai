@@ -81,6 +81,11 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
   private timerPanel = viewChild<ElementRef<HTMLElement>>("timerPanel");
   private resizeObserver?: ResizeObserver;
 
+  private lastFittedTextLength = 0;
+  private lastFittedScaleMode: string | null = null;
+  private lastFittedWidth = 0;
+  private lastFittedHeight = 0;
+
   constructor() {
     effect(() => {
       // Trigger whenever inputs change
@@ -125,6 +130,24 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     }
 
     const textString = textEl.textContent?.trim() || "00:00";
+    const panelWidth = panelEl.clientWidth;
+    const panelHeight = panelEl.clientHeight;
+    const scaleMode = widgetData?.scaleMode || "auto";
+
+    if (
+      this.lastFittedTextLength === textString.length &&
+      this.lastFittedScaleMode === scaleMode &&
+      Math.abs(this.lastFittedWidth - panelWidth) < 1 &&
+      Math.abs(this.lastFittedHeight - panelHeight) < 1
+    ) {
+      return;
+    }
+
+    this.lastFittedTextLength = textString.length;
+    this.lastFittedScaleMode = scaleMode;
+    this.lastFittedWidth = panelWidth;
+    this.lastFittedHeight = panelHeight;
+
     const style = window.getComputedStyle(textEl);
     const fontFamily = style.fontFamily || "'Courier New', Courier, monospace";
     const fontWeight = style.fontWeight || "bold";

@@ -473,4 +473,302 @@ describe("RaceTimeService", () => {
       expect(service.formattedTime).toBe("--");
     });
   });
+
+  describe("Subsecond Interpolation Loop", () => {
+    let rafSpy: jasmine.Spy;
+    let cancelRafSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      rafSpy = spyOn(window, "requestAnimationFrame").and.returnValue(12345);
+      cancelRafSpy = spyOn(window, "cancelAnimationFrame");
+    });
+
+    it("should start interpolation loop when transitioning into RACING", () => {
+      service.raceState = RaceState.RACING;
+      expect(rafSpy).toHaveBeenCalled();
+    });
+
+    it("should start interpolation loop on handleRaceTimeUpdate during RACING", () => {
+      service.raceState = RaceState.NOT_STARTED;
+      rafSpy.calls.reset();
+
+      service.raceState = RaceState.RACING;
+      expect(rafSpy).toHaveBeenCalled();
+
+      // Reset spy to check handleRaceTimeUpdate with an existing frame id
+      rafSpy.calls.reset();
+      service.handleRaceTimeUpdate({ time: 50 });
+      expect(rafSpy).not.toHaveBeenCalled();
+    });
+
+    it("should stop interpolation loop when transitioning from RACING to PAUSED or HEAT_OVER", () => {
+      service.raceState = RaceState.RACING;
+      expect(rafSpy).toHaveBeenCalled();
+
+      service.raceState = RaceState.PAUSED;
+      expect(cancelRafSpy).toHaveBeenCalledWith(12345);
+    });
+
+    it("should stop interpolation loop on ngOnDestroy", () => {
+      service.raceState = RaceState.RACING;
+      expect(rafSpy).toHaveBeenCalled();
+
+      service.ngOnDestroy();
+      expect(cancelRafSpy).toHaveBeenCalledWith(12345);
+    });
+
+    it("should execute animation frame callback and schedule next frame", () => {
+      let callback: FrameRequestCallback | null = null;
+      rafSpy.and.callFake((cb: FrameRequestCallback) => {
+        callback = cb;
+        return 999;
+      });
+
+      service.raceState = RaceState.RACING;
+      expect(callback).not.toBeNull();
+
+      spyOn(service as any, "tickInterpolation");
+      callback!(performance.now());
+
+      expect((service as any).tickInterpolation).toHaveBeenCalled();
+      expect(rafSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it("should stop loop inside animation callback if state transitioned away from RACING", () => {
+      let callback: FrameRequestCallback | null = null;
+      rafSpy.and.callFake((cb: FrameRequestCallback) => {
+        callback = cb;
+        return 999;
+      });
+
+      service.raceState = RaceState.RACING;
+      expect(callback).not.toBeNull();
+
+      service.raceState = RaceState.HEAT_OVER;
+      callback!(performance.now());
+
+      expect(cancelRafSpy).toHaveBeenCalled();
+    });
+
+    it("should interpolate countdown time correctly during tickInterpolation", () => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 60 },
+      });
+      service.raceState = RaceState.RACING;
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({ time: 50 });
+      expect(service.time).toBe(50);
+
+      perfNow = 1250;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBeCloseTo(49.75, 2);
+      expect(service.formattedTime).toBe("49");
+    });
+
+    it("should clamp countdown time to 0 when elapsed time exceeds remaining time", () => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 60 },
+      });
+      service.raceState = RaceState.RACING;
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({ time: 0.5 });
+      expect(service.time).toBe(0.5);
+
+      perfNow = 2000;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBe(0);
+      expect(service.formattedTime).toBe("0");
+    });
+
+    it("should interpolate count-up time correctly for Lap races", () => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Lap, finishValue: 50 },
+      });
+      service.raceState = RaceState.RACING;
+
+      let perfNow = 2000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({ time: 10 });
+      expect(service.time).toBe(10);
+
+      perfNow = 2500;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBeCloseTo(10.5, 2);
+    });
+
+    it("should update formattedTimeSubject only when formatted text changes", () => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 60 },
+      });
+      service.raceState = RaceState.RACING;
+      service.setSubsecondSettings(10, 2);
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({ time: 8.0 });
+      expect(service.formattedTime).toBe("8.00");
+
+      const emitted: string[] = [];
+      const sub = service.formattedTime$.subscribe((val) => emitted.push(val));
+
+      // Advance 1ms: 8.0 - 0.001 = 7.999 -> rounds to 8.00
+      perfNow = 1001;
+      (service as any).tickInterpolation();
+      expect(emitted[emitted.length - 1]).toBe("8.00");
+
+      // Advance 21ms: 8.0 - 0.021 = 7.979 -> rounds to 7.98
+      perfNow = 1021;
+      (service as any).tickInterpolation();
+      expect(emitted[emitted.length - 1]).toBe("7.98");
+
+      sub.unsubscribe();
+    });
+
+    it("should not perform tickInterpolation if shouldInterpolate is false", () => {
+      service.raceState = RaceState.PAUSED;
+      service.time = 25;
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      perfNow = 2000;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBe(25);
+    });
+
+    it("should start interpolation loop and interpolate countdown during autoStartRemaining in NOT_STARTED", () => {
+      service.raceState = RaceState.NOT_STARTED;
+      service.setSubsecondSettings(10, 2);
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({
+        time: 0,
+        autoStartRemaining: 8.0,
+      });
+
+      expect(rafSpy).toHaveBeenCalled();
+      expect(service.time).toBe(8.0);
+      expect(service.formattedTime).toBe("8");
+
+      // Advance clock by 250ms (0.25s)
+      perfNow = 1250;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBeCloseTo(7.75, 2);
+      expect(service.autoStartRemaining).toBeCloseTo(7.75, 2);
+      expect(service.formattedTime).toBe("7");
+    });
+
+    it("should start interpolation loop and interpolate countdown during autoAdvanceRemaining in HEAT_OVER", () => {
+      service.raceState = RaceState.HEAT_OVER;
+      service.setSubsecondSettings(10, 2);
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({
+        time: 0,
+        autoAdvanceRemaining: 5.0,
+      });
+
+      expect(rafSpy).toHaveBeenCalled();
+      expect(service.time).toBe(5.0);
+      expect(service.formattedTime).toBe("5");
+
+      // Advance clock by 400ms (0.40s)
+      perfNow = 1400;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBeCloseTo(4.6, 2);
+      expect(service.autoAdvanceRemaining).toBeCloseTo(4.6, 2);
+      expect(service.formattedTime).toBe("4");
+    });
+
+    it("should clamp and stop interpolation when autoAdvanceRemaining reaches 0", () => {
+      service.raceState = RaceState.HEAT_OVER;
+
+      let perfNow = 1000;
+      spyOn(performance, "now").and.callFake(() => perfNow);
+
+      service.handleRaceTimeUpdate({
+        time: 0,
+        autoAdvanceRemaining: 0.2,
+      });
+
+      // Advance clock past 0.2s (e.g. 500ms)
+      perfNow = 1500;
+      (service as any).tickInterpolation();
+
+      expect(service.time).toBe(0);
+      expect(service.autoAdvanceRemaining).toBe(0);
+      expect((service as any).shouldInterpolate).toBeFalse();
+    });
+
+    it("should not start interpolation loop if prefers-reduced-motion matches", () => {
+      spyOn(window, "matchMedia").and.returnValue({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+      } as any);
+
+      service.raceState = RaceState.RACING;
+      rafSpy.calls.reset();
+
+      service.handleRaceTimeUpdate({ time: 10 });
+      expect(rafSpy).not.toHaveBeenCalled();
+      expect((service as any).shouldInterpolate).toBeFalse();
+    });
+
+    it("should format auto-start and auto-advance as whole seconds in threshold mode", () => {
+      service.raceState = RaceState.NOT_STARTED;
+      service.setTimerFormatOptions({
+        subsecondMode: "threshold",
+        subsecondThreshold: 10,
+        subsecondDecimals: 2,
+      });
+
+      service.handleRaceTimeUpdate({
+        time: 5,
+        autoStartRemaining: 5,
+      });
+
+      expect(service.formattedTime).toBe("5");
+
+      service.raceState = RaceState.HEAT_OVER;
+      service.handleRaceTimeUpdate({
+        time: 8,
+        autoAdvanceRemaining: 8,
+      });
+
+      expect(service.formattedTime).toBe("8");
+    });
+
+    it("should format auto-start as subseconds when subsecondMode is always", () => {
+      service.raceState = RaceState.NOT_STARTED;
+      service.setTimerFormatOptions({
+        subsecondMode: "always",
+        subsecondDecimals: 2,
+      });
+
+      service.handleRaceTimeUpdate({
+        time: 5,
+        autoStartRemaining: 5,
+      });
+
+      expect(service.formattedTime).toBe("5.00");
+    });
+  });
 });
