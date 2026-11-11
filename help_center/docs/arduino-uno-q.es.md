@@ -278,9 +278,10 @@ sudo apt-get update
 sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
 ```
 
-### Indicadores del navegador en modo quiosco
-En el modo quiosco, Chromium se inicia mediante `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Chromium desactiva la integración con Speech Dispatcher de Linux de forma predeterminada y bloquea el audio antes de la interacción del usuario salvo que se proporcionen opciones específicas. Asegúrese de que su script `start_kiosk.sh` incluya:
+### Indicadores del navegador en modo quiosco y navegación con varias pestañas
+En el modo quiosco, Chromium se inicia mediante `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI utiliza `--start-maximized` (en lugar del restrictivo `--kiosk`) para garantizar que las pestañas secundarias —como Resultados de manga, Resultados de carrera, vistas de temas y el Centro de ayuda sin conexión— permanezcan visibles y accesibles desde la barra de pestañas en la parte superior del televisor. Chromium también requiere opciones específicas para habilitar Speech Dispatcher y la reproducción automática de audio. Asegúrese de que su script `start_kiosk.sh` incluya:
 ```bash
+  --start-maximized \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```

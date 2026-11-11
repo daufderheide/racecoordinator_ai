@@ -278,9 +278,10 @@ sudo apt-get update
 sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
 ```
 
-### Kiosk Browser Flags
-In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Chromium disables Linux Speech Dispatcher integration by default and blocks audio before user interaction unless specific flags are provided. Ensure your `start_kiosk.sh` includes:
+### Kiosk Browser Flags & Multi-Tab Navigation
+In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI uses `--start-maximized` (rather than locked-down `--kiosk`) to ensure secondary tabs—such as Heat Results, Race Results, Theme views, and the offline Help Center—remain visible and switchable via the tab bar at the top of the TV screen. Chromium also requires explicit flags to enable Speech Dispatcher and unprompted audio autoplay. Ensure your `start_kiosk.sh` includes:
 ```bash
+  --start-maximized \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```

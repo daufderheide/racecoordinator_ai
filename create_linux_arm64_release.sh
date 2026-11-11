@@ -91,16 +91,16 @@ until curl -s http://localhost:7070 >/dev/null 2>&1; do
   sleep 1
 done
 
-# Launch Chromium in fullscreen kiosk mode with Speech Dispatcher and unprompted autoplay enabled
+# Launch Chromium in maximized window mode with Speech Dispatcher, unprompted autoplay, and multi-tab support
 BROWSER_BIN=$(command -v chromium || command -v chromium-browser || echo "chromium")
 "$BROWSER_BIN" \
-  --kiosk \
+  --start-maximized \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
+  --no-first-run \
   --noerrdialogs \
   --disable-infobars \
   --check-for-update-interval=31536000 \
-  --incognito \
   http://localhost:7070 &
 BROWSER_PID=$!
 

@@ -278,9 +278,10 @@ sudo apt-get update
 sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
 ```
 
-### Browserparameters in kioskmodus
-In de kioskmodus wordt Chromium gestart via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Chromium schakelt standaard de integratie met Linux Speech Dispatcher uit en blokkeert audio voorafgaand aan gebruikersinteractie, tenzij specifieke parameters worden meegegeven. Zorg ervoor dat uw script `start_kiosk.sh` het volgende bevat:
+### Browserparameters in kioskmodus en navigatie met meerdere tabbladen
+In de kioskmodus wordt Chromium gestart via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI gebruikt `--start-maximized` (in plaats van het restrictieve `--kiosk`) om ervoor te zorgen dat secundaire tabbladen —zoals Heatresultaten, Raceresultaten, themaweergaven en het offline Helpcentrum— zichtbaar en toegankelijk blijven via de tabbladenbalk bovenaan het tv-scherm. Chromium vereist ook specifieke parameters om Speech Dispatcher en automatisch afspelen van audio in te schakelen. Zorg ervoor dat uw script `start_kiosk.sh` het volgende bevat:
 ```bash
+  --start-maximized \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```
