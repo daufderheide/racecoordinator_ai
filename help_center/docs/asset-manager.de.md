@@ -45,7 +45,7 @@ Durch Klicken auf Assets können Sie diese auswählen. Bei ausgewählten Assets 
 
 Der Asset Manager bietet Filter- und Ansichtssteuerelemente am oberen Rand der Bibliothek:
 
-- **Filter-Reiter:** Schnelles Filtern nach Ressourcentyp:
+- **Filter-Reiter:** Schnelles Filtern nach Ressourcentyp (Ihre Registerkartenauswahl wird bei jedem Aufruf automatisch gespeichert und wiederhergestellt):
   - **Alle:** Zeigt jedes Asset in der Datenbank an.
   - **Bilder:** Zeigt nur einzelne statische Bilddateien an (`.png`, `.jpg`, `.svg` usw.).
   - **Bildersets:** Zeigt mehrstufige Bilderserien und Tankanzeigen an.

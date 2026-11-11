@@ -45,7 +45,7 @@ También puede hacer clic sobre los recursos para seleccionarlos. Con elementos 
 
 El Gestor de Recursos incluye controles superiores para localizar y organizar recursos fácilmente:
 
-- **Pestañas de filtro:** Filtre rápidamente la biblioteca por tipo de recurso:
+- **Pestañas de filtro:** Filtre rápidamente la biblioteca por tipo de recurso (la pestaña seleccionada se guarda y se restaura automáticamente al volver al Gestor de recursos):
   - **Todos:** Muestra cada uno de los recursos almacenados.
   - **Imágenes:** Archivos estáticos individuales (`.png`, `.jpg`, `.svg`, etc.).
   - **Conjuntos de imágenes:** Secuencias agrupadas de imágenes y medidores de combustible.

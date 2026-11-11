@@ -53,19 +53,36 @@ import {
   AssetView,
   calculateAssetUsagePercent,
   calculateListGridDimensions,
-  formatAssetBytes,
+  calculateTotalAssetBytes,
   formatAssetTooltip,
+  formatTotalAssetSize,
   getAssetBytesByType,
   getAssetCountByType,
-  parseAssetSize,
+  isCsvAsset,
+  mapServerAssetsToViews,
   readAssetFile,
   sortAudioSetEntries,
+  toAudioSetEditorEntries,
+  toImageSetEditorEntries,
 } from "./asset-manager.utils";
 import { getAssetManagerHelpSteps } from "./asset-manager-help";
+import {
+  AssetFilterType,
+  loadSavedAssetFilterType,
+  loadSavedAssetLayoutMode,
+  saveAssetFilterType,
+  saveAssetLayoutMode,
+} from "./asset-manager-storage.helper";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 
 export { AssetView } from "./asset-manager.utils";
+export {
+  ASSET_MANAGER_FILTER_FALLBACK_STORAGE_KEY,
+  ASSET_MANAGER_FILTER_STORAGE_KEY,
+  ASSET_MANAGER_LAYOUT_STORAGE_KEY,
+  AssetFilterType,
+} from "./asset-manager-storage.helper";
 
 @Component({
   standalone: true,
@@ -100,14 +117,7 @@ export class AssetManagerComponent
   private ttsSafetyTimeout: any = null;
 
   // Filtering
-  filterType:
-    | "all"
-    | "image"
-    | "sound"
-    | "audio"
-    | "image_set"
-    | "audio_set"
-    | "custom_rotation" = "all";
+  filterType: AssetFilterType = "all";
 
   filterName: string = "";
   isUploading: boolean = false;
@@ -170,19 +180,8 @@ export class AssetManagerComponent
   activeDatabaseName: string = "";
 
   ngOnInit() {
-    try {
-      const saved = localStorage.getItem("am_layout_mode") as AssetLayoutMode;
-      if (
-        saved === "list" ||
-        saved === "small" ||
-        saved === "medium" ||
-        saved === "large"
-      ) {
-        this.layoutMode = saved;
-      }
-    } catch {
-      // Ignore localStorage errors
-    }
+    this.layoutMode = loadSavedAssetLayoutMode(this.layoutMode);
+    this.filterType = loadSavedAssetFilterType(this.filterType);
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
@@ -315,38 +314,11 @@ export class AssetManagerComponent
     this.isLoading = true;
     this.dataService.listAssets().subscribe({
       next: (serverAssets) => {
-        if (serverAssets) {
-          this.assets = serverAssets.map((a) => {
-            // Determine type more robustly
-            let type: any = a.type;
-            if (a.customRotations && a.customRotations.length > 0) {
-              type = "custom_rotation";
-            } else if (a.audioEntries && a.audioEntries.length > 0) {
-              type = "audio_set";
-            } else if (a.images && a.images.length > 0) {
-              type = "image_set";
-            } else {
-              type = normalizeAssetType(type);
-            }
-
-            return {
-              id: a.model?.entityId || "",
-              name: a.name || "Unknown",
-              type: type,
-              size: a.size || "0 B",
-              url: this.getAssetUrl(a),
-              editMode: false,
-              selected: false,
-              images: a.images || [],
-              audioEntries: a.audioEntries || [],
-              numLanes: a.numLanes ?? undefined,
-              customRotations: a.customRotations || [],
-              currentPreviewIndex: 0,
-            };
-          });
+        this.assets = mapServerAssetsToViews(serverAssets, (a) =>
+          this.getAssetUrl(a),
+        );
+        if (this.assets.length > 0) {
           this.startPreviewCycling();
-        } else {
-          this.assets = [];
         }
         this.isLoading = false;
         if (!this.isDestroyed) {
@@ -415,18 +387,11 @@ export class AssetManagerComponent
   }
 
   get totalSize(): string {
-    let totalBytes = 0;
-    for (const asset of this.assets) {
-      totalBytes += parseAssetSize(asset.size);
-    }
-    return formatAssetBytes(totalBytes);
+    return formatTotalAssetSize(this.assets);
   }
 
   get totalBytes(): number {
-    return this.assets.reduce(
-      (sum, asset) => sum + parseAssetSize(asset.size),
-      0,
-    );
+    return calculateTotalAssetBytes(this.assets);
   }
 
   get imageBytes(): number {
@@ -484,22 +449,15 @@ export class AssetManagerComponent
     return getAssetCountByType(this.assets, "custom_rotation");
   }
 
-  setFilterType(
-    type:
-      | "all"
-      | "image"
-      | "sound"
-      | "audio"
-      | "image_set"
-      | "audio_set"
-      | "custom_rotation",
-  ) {
+  setFilterType(type: AssetFilterType) {
     this.filterType = type;
+    saveAssetFilterType(type);
     this.updateListGridDimensions();
   }
 
   onLayoutModeChange(mode: AssetLayoutMode) {
     this.layoutMode = mode;
+    saveAssetLayoutMode(mode);
     this.updateListGridDimensions();
   }
 
@@ -536,17 +494,7 @@ export class AssetManagerComponent
   }
 
   isCsvAsset(asset: AssetView): boolean {
-    if (!asset) {
-      return false;
-    }
-    if (asset.type === "custom_rotation") {
-      return false;
-    }
-    const name = (asset.name || "").toLowerCase();
-    const url = (asset.url || "").toLowerCase();
-    return (
-      asset.type === "csv" || name.endsWith(".csv") || url.endsWith(".csv")
-    );
+    return isCsvAsset(asset);
   }
 
   onImageError(asset: AssetView) {
@@ -1024,12 +972,7 @@ export class AssetManagerComponent
   openEditImageSetEditor(asset: AssetView) {
     this.editingAssetId = asset.id;
     this.editingAssetName = asset.name;
-    this.editingAssetEntries = (asset.images || []).map((img) => ({
-      percentage: img.percentage,
-      url: img.url,
-      name: img.name,
-      data: new Uint8Array(),
-    }));
+    this.editingAssetEntries = toImageSetEditorEntries(asset.images);
     this.showImageSetEditor = true;
   }
 
@@ -1047,20 +990,7 @@ export class AssetManagerComponent
   openEditAudioSetEditor(asset: AssetView) {
     this.editingAudioAssetId = asset.id;
     this.editingAudioAssetName = asset.name;
-    this.editingAudioAssetEntries = (asset.audioEntries || []).map((entry) => ({
-      timeSeconds: entry.timeSeconds,
-      url: entry.url,
-      name: entry.name,
-      data: new Uint8Array(),
-      type: entry.type || "preset",
-      text: entry.text || "",
-      percentage:
-        (entry as any).percentage != null
-          ? (entry as any).percentage
-          : Math.round(entry.timeSeconds || 0),
-      triggerMode:
-        entry.triggerMode || (entry as any).trigger_mode || "remaining",
-    }));
+    this.editingAudioAssetEntries = toAudioSetEditorEntries(asset.audioEntries);
     this.showAudioSetEditor = true;
     this.cdr.detectChanges();
   }

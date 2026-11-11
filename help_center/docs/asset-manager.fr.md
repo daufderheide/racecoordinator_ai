@@ -45,7 +45,7 @@ Vous pouvez aussi cliquer sur les ressources pour les sélectionner. Avec des é
 
 Le Gestionnaire de Ressources met à disposition des outils pour retrouver vos éléments facilement :
 
-- **Onglets de filtrage :** Filtrez la bibliothèque par type de ressource :
+- **Onglets de filtrage :** Filtrez la bibliothèque par type de ressource (votre sélection d'onglet est automatiquement mémorisée et restaurée lors de vos prochaines visites) :
   - **Tous :** Présente l'intégralité des ressources enregistrées.
   - **Images :** Fichiers images statiques (`.png`, `.jpg`, `.svg`, etc.).
   - **Ensembles d'images :** Animations et jauges composées de plusieurs images.

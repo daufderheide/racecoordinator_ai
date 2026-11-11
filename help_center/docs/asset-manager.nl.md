@@ -45,7 +45,7 @@ U kunt ook assets aanklikken om ze te selecteren. Bij geselecteerde items biedt 
 
 Bovenaan de bibliotheek vindt u diverse functies om snel het juiste bestand te vinden:
 
-- **Filtertabbladen:** Filter de bibliotheek op assettype:
+- **Filtertabbladen:** Filter de bibliotheek op assettype (uw geselecteerde tabblad wordt automatisch opgeslagen en hersteld bij een volgend bezoek):
   - **Alles:** Toont elk bestand in de database.
   - **Afbeeldingen:** Enkelvoudige statische afbeeldingen (`.png`, `.jpg`, `.svg`, enz.).
   - **Afbeeldingensets:** Animaties en brandstofmeters bestaande uit meerdere afbeeldingen.
