@@ -176,6 +176,7 @@ When a driver station display is opened (e.g. `/driver-station/1` for Lane 2):
 - Only audio belonging to that specific lane or driver is permitted to play (their routine lap tone, personal best lap, pit-in alert, and fuel warning).
 - Audio from other lanes is filtered out and silently ignored, preventing drivers from being distracted by their competitors' lap beeps.
 - General race control events (countdown start beeps, yellow flag sirens, heat over) remain active so the driver stays aware of race status.
+- **Mobile Device Audio Activation**: On mobile phones and tablets (such as scanning the driver station QR code with an iPhone or Android phone), mobile browser security requires an initial screen tap to enable audio and speech. A subtle floating prompt (**Tap anywhere to enable audio**) appears until tapped. Once tapped, Race Coordinator AI maintains an active audio session so that all subsequent lap announcements play without needing further interaction. On iPhones, ensure the physical silent switch is turned off.
 
 ### 4. Per-Page Audio Engine Isolation
 Each browser tab and client page runs its own dedicated `AudioService` instance (`providers: [AudioService]`).

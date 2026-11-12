@@ -76,13 +76,13 @@ export class AudioVoiceManager {
         ? masterVolumeOverride
         : (settings.masterVolume ?? 100);
 
+    const voices = this.getVoices();
     if (
       voiceName &&
       typeof window !== "undefined" &&
       window.speechSynthesis &&
       typeof window.speechSynthesis.getVoices === "function"
     ) {
-      const voices = this.getVoices();
       const matched = resolveBestTtsVoice(voices, voiceName);
       if (matched) {
         try {
@@ -92,10 +92,48 @@ export class AudioVoiceManager {
         }
       }
     }
+    if (
+      voiceNameOverride !== "" &&
+      !utterance.voice &&
+      voices &&
+      voices.length > 0
+    ) {
+      const targetLang = (
+        settings?.language ||
+        (typeof navigator !== "undefined" ? navigator.language : "en") ||
+        "en"
+      ).toLowerCase();
+      const langPrefix = targetLang.split("-")[0];
+      const langMatch = voices.find(
+        (v) =>
+          v.lang &&
+          (v.lang.toLowerCase() === targetLang ||
+            v.lang.toLowerCase().startsWith(langPrefix + "-") ||
+            v.lang.toLowerCase() === langPrefix),
+      );
+      if (langMatch) {
+        try {
+          utterance.voice = langMatch;
+        } catch {
+          // Native browser enforces SpeechSynthesisVoice instance; safely ignored if mock
+        }
+      }
+    }
     if (utterance.voice?.lang) {
       utterance.lang = utterance.voice.lang;
     } else if (!utterance.lang) {
-      utterance.lang = "en-US";
+      const rawLang =
+        settings?.language ||
+        (typeof navigator !== "undefined" ? navigator.language : "en") ||
+        "en";
+      const parts = rawLang.split("-");
+      if (parts.length > 1) {
+        utterance.lang = `${parts[0].toLowerCase()}-${parts[1].toUpperCase()}`;
+      } else {
+        const code = parts[0].toLowerCase();
+        utterance.lang =
+          code === "en" ? "en-US" : `${code}-${code.toUpperCase()}`;
+      }
     }
     if (rate != null) {
       utterance.rate = Math.max(0.1, Math.min(10, rate));

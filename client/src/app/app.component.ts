@@ -17,6 +17,7 @@ import { slideInAnimation } from "@app/utils/animations";
 
 import { AnalyticsService } from "./analytics.service";
 import { LockOverlayComponent } from "./components/lock-overlay/lock-overlay.component";
+import { AudioUnlockPromptComponent } from "./components/shared/audio-unlock-prompt/audio-unlock-prompt.component";
 import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
 import { ReplayStatusComponent } from "./components/shared/replay-status/replay-status.component";
 import { DataService } from "./data.service";
@@ -37,6 +38,7 @@ import { ThemeService } from "./services/theme.service";
     <app-help-overlay></app-help-overlay>
     <app-lock-overlay></app-lock-overlay>
     <app-replay-status></app-replay-status>
+    <app-audio-unlock-prompt></app-audio-unlock-prompt>
   `,
   animations: [slideInAnimation],
   styles: [
@@ -57,6 +59,7 @@ import { ThemeService } from "./services/theme.service";
     HelpOverlayComponent,
     LockOverlayComponent,
     ReplayStatusComponent,
+    AudioUnlockPromptComponent,
   ],
 })
 export class AppComponent implements OnInit {

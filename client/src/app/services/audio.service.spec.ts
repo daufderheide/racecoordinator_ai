@@ -4,6 +4,10 @@ import { AudioConfig } from "@app/models/driver";
 import { Settings } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
+import {
+  resetGlobalAudioUnlockerForTesting,
+  setMobileDeviceForTesting,
+} from "@app/utils/audio";
 
 import { AudioService } from "./audio.service";
 
@@ -270,6 +274,33 @@ describe("AudioService", () => {
       expect((window as any).Audio).not.toHaveBeenCalled();
       expect(mockAudioInstance.currentTime).toBe(0);
       expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should play preset voice via Web Audio on mobile devices", () => {
+      setMobileDeviceForTesting(true);
+      try {
+        const config: AudioConfig = {
+          type: "preset",
+          url: "default_yellow_flag",
+        };
+        const played = service.playCallout(config, "urgent");
+        expect(played).toBeTrue();
+        expect(service.getActiveVoice()?.priority).toBe("urgent");
+      } finally {
+        setMobileDeviceForTesting(false);
+      }
+    });
+
+    it("should play SFX via Web Audio on mobile devices without calling HTMLAudioElement.play()", () => {
+      setMobileDeviceForTesting(true);
+      try {
+        mockAudioInstance.play.calls.reset();
+        const played = service.playSfx("default_countdown_5");
+        expect(played).toBeTruthy();
+        expect(mockAudioInstance.play).not.toHaveBeenCalled();
+      } finally {
+        setMobileDeviceForTesting(false);
+      }
     });
 
     it("should clear preloaded audio cache on reset", () => {
@@ -1338,5 +1369,21 @@ describe("AudioService", () => {
         jasmine.anything(),
       );
     }));
+  });
+
+  describe("Audio Unlocking Delegation", () => {
+    beforeEach(() => {
+      resetGlobalAudioUnlockerForTesting();
+    });
+
+    afterEach(() => {
+      resetGlobalAudioUnlockerForTesting();
+    });
+
+    it("should correctly report whether audio is unlocked", () => {
+      expect(service.isAudioUnlocked()).toBeFalse();
+      service.unlockAudio();
+      expect(service.isAudioUnlocked()).toBeTrue();
+    });
   });
 });

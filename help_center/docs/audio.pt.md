@@ -142,6 +142,7 @@ No ecrã de um posto de piloto (`/driver-station/:lane`):
 - Apenas são emitidos os sons, recordes e avisos de combustível do **piloto dessa calha**.
 - Os sons dos concorrentes são filtrados para não desconcentrar o piloto.
 - Os avisos globais (partida, bandeira amarela, fim de manga) continuam audíveis.
+- **Ativação de áudio em dispositivos móveis**: Em celulares e tablets (como ao escanear o código QR da estação de piloto com um iPhone ou Android), a segurança do navegador móvel exige um toque inicial na tela para ativar áudio e voz. Uma mensagem flutuante (**Toque na tela para ativar o áudio**) é exibida até ser tocada. Depois disso, o Race Coordinator AI mantém uma sessão de áudio ativa para que todos os anúncios de voltas subsequentes sejam reproduzidos sem toques adicionais. Em iPhones, certifique-se de que o interruptor de silêncio físico esteja desativado.
 
 ### 4. Motores de Áudio Isolados por Janela
 Cada separador ou janela executa uma instância própria de `AudioService` (`providers: [AudioService]`). Os sons num posto de piloto nunca interferem com o ecrã da direção de prova.

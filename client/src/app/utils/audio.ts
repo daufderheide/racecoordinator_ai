@@ -657,19 +657,43 @@ function getSavedAudioSettings(): PlaySoundOptions {
   return {};
 }
 
-const activeUtterances = new Set<SpeechSynthesisUtterance>();
+import {
+  ensureAudioAwake,
+  getGlobalAudioContext,
+  globalAudioBufferCache,
+  initGlobalAudioUnlocker,
+  isGlobalAudioUnlocked,
+  isMobileDevice,
+  playWebAudioBufferSource,
+  playWebAudioSfx,
+  preloadWebAudioBuffer,
+  releaseUtterance,
+  resetGlobalAudioUnlockerForTesting,
+  retainUtterance,
+  setMobileDeviceForTesting,
+  startWebAudioVoiceCallout,
+  unlockGlobalAudio,
+  WebAudioPlaybackHandle,
+} from "./audio-unlocker";
 
-export function retainUtterance(utterance: SpeechSynthesisUtterance): void {
-  activeUtterances.add(utterance);
-}
-
-export function releaseUtterance(
-  utterance: SpeechSynthesisUtterance | null | undefined,
-): void {
-  if (utterance) {
-    activeUtterances.delete(utterance);
-  }
-}
+export {
+  ensureAudioAwake,
+  getGlobalAudioContext,
+  globalAudioBufferCache,
+  initGlobalAudioUnlocker,
+  isGlobalAudioUnlocked,
+  isMobileDevice,
+  playWebAudioBufferSource,
+  playWebAudioSfx,
+  preloadWebAudioBuffer,
+  releaseUtterance,
+  resetGlobalAudioUnlockerForTesting,
+  retainUtterance,
+  setMobileDeviceForTesting,
+  startWebAudioVoiceCallout,
+  unlockGlobalAudio,
+};
+export type { WebAudioPlaybackHandle };
 
 /** Resolves a matching TTS voice when a specific voiceName is configured; returns null to use the browser default when voiceName is empty. */
 export function resolveBestTtsVoice(
@@ -790,58 +814,6 @@ export function estimateSpokenWordCount(text: string): number {
 export function calculateTtsSafetyTimeout(text: string): number {
   const wordCount = estimateSpokenWordCount(text);
   return Math.max(4000, Math.min(15000, wordCount * 600 + 3000));
-}
-
-let globalAudioUnlocked = false;
-
-/**
- * Initializes global user gesture listeners to unlock web audio and speech synthesis.
- * Unlocks the Web Audio AudioContext and ensures SpeechSynthesis is not in a paused state.
- */
-export function initGlobalAudioUnlocker(): void {
-  if (typeof window === "undefined" || globalAudioUnlocked) return;
-
-  const unlock = () => {
-    try {
-      if (window.speechSynthesis && window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-      const AudioCtx =
-        window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioCtx) {
-        const ctx = new AudioCtx();
-        if (ctx.state === "suspended") {
-          ctx.resume().catch(() => {});
-        }
-        const buffer = ctx.createBuffer(1, 1, 22050);
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(ctx.destination);
-        source.start(0);
-        setTimeout(() => {
-          if (ctx.state !== "closed") {
-            ctx.close().catch(() => {});
-          }
-        }, 100);
-      }
-    } catch {
-      // ignore
-    }
-
-    globalAudioUnlocked = true;
-    window.removeEventListener("click", unlock, true);
-    window.removeEventListener("keydown", unlock, true);
-    window.removeEventListener("touchstart", unlock, true);
-    window.removeEventListener("pointerdown", unlock, true);
-  };
-
-  window.addEventListener("click", unlock, { capture: true, once: false });
-  window.addEventListener("keydown", unlock, { capture: true, once: false });
-  window.addEventListener("touchstart", unlock, { capture: true, once: false });
-  window.addEventListener("pointerdown", unlock, {
-    capture: true,
-    once: false,
-  });
 }
 
 function playPresetAudio(

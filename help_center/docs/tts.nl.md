@@ -39,3 +39,10 @@ TTS-aankondigingen worden beheerd door het centrale [Audiosysteem](audio.md):
 *   **Stem, Snelheid & Toonhoogte**: Stel uw voorkeursstem, spreeksnelheid (`0.1x`–`2.0x`), toonhoogte en volume in via **UI Editor -> Audio-instellingen**.
 *   **Prioriteitsniveaus**: Urgente meldingen (zoals gele vlag of heat afgelopen) onderbreken reguliere commentaren direct, zonder dat stemmen elkaar overlappen.
 *   **Audiorelevantie**: Op rijdersstations en extra beeldschermen worden gesproken meldingen gefilterd zodat rijders enkel relevante berichten voor hun eigen wagen en baan horen.
+
+## Mobiele Browsers & Rijdersstations
+
+Bij het bekijken van een rijdersstation of racedagscherm op een mobiele telefoon of tablet (bijv. het scannen van de QR-code van het rijdersstation met een iPhone of Android-apparaat):
+
+*   **Activering bij eerste tik**: Mobiele besturingssystemen (iOS en Android) vereisen een fysieke scherminteractie voordat webaudio of tekst-naar-spraak mag worden afgespeeld. Tik eenmaal op het scherm (of tik op de melding **Tik op het scherm om audio in te schakelen**) bij het openen van de pagina. Zodra Race Coordinator AI is geactiveerd, wordt een actieve audiosessie behouden, zodat u slechts één keer hoeft te tikken voor continue TTS-aankondigingen tijdens de hele race.
+*   **Fysieke stilschakelaar (iOS / iPhone)**: iPhones sturen Web Speech via het omgevingsaudiokanaal van het apparaat. Als uw iPhone een fysieke Bel/Stil-schakelaar heeft, zorg er dan voor dat deze is uitgeschakeld (niet in stille modus), anders wordt de spraakuitvoer gedempt.

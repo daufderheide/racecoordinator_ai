@@ -141,6 +141,7 @@ Auf einer Fahrerstation (`/driver-station/:lane`) spielt die Audio-Engine im **`
 - Nur Rundentöne, Bestzeiten, Boxen- und Tankwarnungen des **zugewiesenen Fahrers** werden abgespielt.
 - Signale konkurrierender Fahrer werden herausgefiltert.
 - Allgemeine Rennereignisse (Start-Countdown, Gelbphasen-Sirenen, Rennende) bleiben hörbar.
+- **Audio-Aktivierung auf Mobilgeräten**: Auf Mobiltelefonen und Tablets (z. B. beim Scannen des QR-Codes der Fahrerstation mit einem iPhone oder Android-Gerät) erfordert die Browsersicherheit ein erstes Antippen des Bildschirms, um Audio und Sprache zu aktivieren. Ein dezenter Hinweis (**Tippen Sie auf den Bildschirm, um Audio zu aktivieren**) wird angezeigt, bis er angetippt wird. Danach hält Race Coordinator AI eine aktive Audiositzung aufrecht, sodass alle nachfolgenden Rundenansagen ohne weiteres Tippen wiedergegeben werden. Stellen Sie bei iPhones sicher, dass der physische Stummschalter ausgeschaltet ist.
 
 ### 4. Isolierte Audio-Instanzen pro Seite
 Jedes Browser-Fenster führt eine eigene `AudioService`-Instanz aus (`providers: [AudioService]`). Töne auf einer Fahrerstation blockieren oder verdrängen niemals die Töne der Rennleitung.

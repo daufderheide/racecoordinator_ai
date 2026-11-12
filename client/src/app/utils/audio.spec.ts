@@ -2,17 +2,27 @@ import {
   calculateTtsSafetyTimeout,
   createTTSContext,
   dispatchLapAudio,
+  ensureAudioAwake,
   estimateSpokenWordCount,
   getDefaultAudioName,
   getEffectiveDriver,
   getLapAudioConfig,
+  globalAudioBufferCache,
+  initGlobalAudioUnlocker,
   interpolate,
+  isGlobalAudioUnlocked,
+  isMobileDevice,
   mockTTSContext,
   playSound,
+  playWebAudioBufferSource,
+  playWebAudioSfx,
+  resetGlobalAudioUnlockerForTesting,
   resolveAudioUrl,
   resolveBestTtsVoice,
   resolveLapAudio,
+  setMobileDeviceForTesting,
   setupTtsWatchdogs,
+  unlockGlobalAudio,
 } from "./audio";
 
 describe("playSound Utility", () => {
@@ -56,6 +66,8 @@ describe("playSound Utility", () => {
       "cancel",
       "speak",
       "getVoices",
+      "resume",
+      "pause",
     ]);
     mockSpeechSynthesis.getVoices.and.returnValue([
       { name: "Alex", voiceURI: "alex-uri" },
@@ -1559,6 +1571,487 @@ describe("playSound Utility", () => {
 
       const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
       expect(callArgs[0].voice).toBeNull();
+    });
+  });
+
+  describe("Global Audio Unlocker", () => {
+    beforeEach(() => {
+      resetGlobalAudioUnlockerForTesting();
+    });
+
+    afterEach(() => {
+      resetGlobalAudioUnlockerForTesting();
+    });
+
+    it("should report audio as locked initially when reset", () => {
+      expect(isGlobalAudioUnlocked()).toBeFalse();
+    });
+
+    it("should unlock audio, prime speech synthesis, and dispatch rcai-audio-unlocked event", () => {
+      const eventSpy = jasmine.createSpy("audioUnlockedEvent");
+      window.addEventListener("rcai-audio-unlocked", eventSpy);
+
+      unlockGlobalAudio();
+
+      expect(isGlobalAudioUnlocked()).toBeTrue();
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      expect(eventSpy).toHaveBeenCalled();
+
+      window.removeEventListener("rcai-audio-unlocked", eventSpy);
+    });
+
+    it("should configure navigator.audioSession type to playback if supported", () => {
+      const mockAudioSession = { type: "ambient" };
+      (navigator as any).audioSession = mockAudioSession;
+
+      unlockGlobalAudio();
+
+      expect(mockAudioSession.type).toBe("playback");
+      delete (navigator as any).audioSession;
+    });
+
+    it("should resume speech synthesis if it was paused when unlocking", () => {
+      (mockSpeechSynthesis as any).paused = true;
+
+      unlockGlobalAudio();
+
+      expect(mockSpeechSynthesis.resume).toHaveBeenCalled();
+      (mockSpeechSynthesis as any).paused = false;
+    });
+
+    it("should initialize user gesture listeners and unlock on click", () => {
+      initGlobalAudioUnlocker();
+      expect(isGlobalAudioUnlocked()).toBeFalse();
+
+      window.dispatchEvent(new MouseEvent("click"));
+
+      expect(isGlobalAudioUnlocked()).toBeTrue();
+    });
+
+    it("should initialize user gesture listeners and unlock on touchend", () => {
+      initGlobalAudioUnlocker();
+      expect(isGlobalAudioUnlocked()).toBeFalse();
+
+      window.dispatchEvent(new Event("touchend"));
+
+      expect(isGlobalAudioUnlocked()).toBeTrue();
+    });
+
+    it("should unlock immediately in initGlobalAudioUnlocker if user activation is already active", () => {
+      setMobileDeviceForTesting(false);
+      Object.defineProperty(navigator, "userActivation", {
+        value: { hasBeenActive: true, isActive: true },
+        configurable: true,
+      });
+
+      initGlobalAudioUnlocker();
+
+      expect(isGlobalAudioUnlocked()).toBeTrue();
+
+      Object.defineProperty(navigator, "userActivation", {
+        value: undefined,
+        configurable: true,
+      });
+      setMobileDeviceForTesting(null);
+    });
+
+    it("should keep audio awake when ensureAudioAwake is called", () => {
+      setMobileDeviceForTesting(true);
+      expect(() => ensureAudioAwake()).not.toThrow();
+      setMobileDeviceForTesting(null);
+    });
+
+    it("should detect mobile devices via userAgent and touch points", () => {
+      setMobileDeviceForTesting(null);
+      const userAgentSpy = spyOnProperty(navigator, "userAgent", "get");
+      const touchPointsSpy = spyOnProperty(
+        navigator,
+        "maxTouchPoints",
+        "get",
+      ).and.returnValue(0);
+
+      // iPhone
+      userAgentSpy.and.returnValue(
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15",
+      );
+      expect(isMobileDevice()).toBeTrue();
+
+      // Android
+      userAgentSpy.and.returnValue(
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36",
+      );
+      expect(isMobileDevice()).toBeTrue();
+
+      // iPadOS desktop-class browser (Macintosh with touch points)
+      userAgentSpy.and.returnValue(
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+      );
+      touchPointsSpy.and.returnValue(5);
+      expect(isMobileDevice()).toBeTrue();
+
+      // Desktop Mac (Macintosh with 0 touch points)
+      touchPointsSpy.and.returnValue(0);
+      expect(isMobileDevice()).toBeFalse();
+
+      // Desktop Windows PC
+      userAgentSpy.and.returnValue(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      );
+      expect(isMobileDevice()).toBeFalse();
+
+      setMobileDeviceForTesting(null);
+    });
+
+    it("should initialize keep-alive Web Audio buffer on mobile devices", () => {
+      setMobileDeviceForTesting(true);
+      const mockAudioCtxInstance = {
+        state: "running",
+        createBuffer: jasmine.createSpy("createBuffer").and.returnValue({}),
+        createBufferSource: jasmine
+          .createSpy("createBufferSource")
+          .and.returnValue({
+            connect: jasmine.createSpy("connect"),
+            start: jasmine.createSpy("start"),
+          }),
+        createGain: jasmine.createSpy("createGain").and.returnValue({
+          gain: { value: 0 },
+          connect: jasmine.createSpy("connect"),
+        }),
+        destination: {},
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+
+      const originalAudioContext = window.AudioContext;
+      (window as any).AudioContext = jasmine
+        .createSpy("AudioContext")
+        .and.returnValue(mockAudioCtxInstance);
+
+      try {
+        unlockGlobalAudio();
+        expect(mockAudioCtxInstance.createBufferSource).toHaveBeenCalled();
+      } finally {
+        (window as any).AudioContext = originalAudioContext;
+      }
+    });
+
+    it("should NOT initialize keep-alive Web Audio buffer on desktop devices", () => {
+      setMobileDeviceForTesting(false);
+      const mockAudioCtxInstance = {
+        state: "running",
+        createBuffer: jasmine.createSpy("createBuffer"),
+        createBufferSource: jasmine.createSpy("createBufferSource"),
+        destination: {},
+      };
+
+      const originalAudioContext = window.AudioContext;
+      (window as any).AudioContext = jasmine
+        .createSpy("AudioContext")
+        .and.returnValue(mockAudioCtxInstance);
+
+      try {
+        unlockGlobalAudio();
+        expect(mockAudioCtxInstance.createBufferSource).not.toHaveBeenCalled();
+      } finally {
+        (window as any).AudioContext = originalAudioContext;
+      }
+    });
+
+    it("should play confirmation chime and speak Audio enabled when speakConfirmation is true, even if already unlocked", () => {
+      resetGlobalAudioUnlockerForTesting();
+      const mockOsc = {
+        type: "",
+        frequency: { setValueAtTime: jasmine.createSpy("setValueAtTime") },
+        connect: jasmine.createSpy("connect"),
+        start: jasmine.createSpy("start"),
+        stop: jasmine.createSpy("stop"),
+      };
+      const mockGain = {
+        gain: {
+          setValueAtTime: jasmine.createSpy("setValueAtTime"),
+          exponentialRampToValueAtTime: jasmine.createSpy(
+            "exponentialRampToValueAtTime",
+          ),
+        },
+        connect: jasmine.createSpy("connect"),
+      };
+      const mockAudioCtxInstance = {
+        state: "running",
+        currentTime: 0,
+        createOscillator: jasmine
+          .createSpy("createOscillator")
+          .and.returnValue(mockOsc),
+        createGain: jasmine.createSpy("createGain").and.returnValue(mockGain),
+        createBuffer: jasmine.createSpy("createBuffer").and.returnValue({}),
+        createBufferSource: jasmine
+          .createSpy("createBufferSource")
+          .and.returnValue({
+            connect: jasmine.createSpy("connect"),
+            start: jasmine.createSpy("start"),
+          }),
+        destination: {},
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+
+      const originalAudioContext = window.AudioContext;
+      (window as any).AudioContext = jasmine
+        .createSpy("AudioContext")
+        .and.returnValue(mockAudioCtxInstance);
+
+      try {
+        unlockGlobalAudio(false);
+        expect(isGlobalAudioUnlocked()).toBeTrue();
+        mockSpeechSynthesis.speak.calls.reset();
+        mockAudioCtxInstance.createOscillator.calls.reset();
+
+        unlockGlobalAudio(true);
+        expect(mockAudioCtxInstance.createOscillator).toHaveBeenCalled();
+        expect(mockOsc.frequency.setValueAtTime).toHaveBeenCalledWith(
+          587.33,
+          0,
+        );
+        expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      } finally {
+        (window as any).AudioContext = originalAudioContext;
+      }
+    });
+
+    describe("playWebAudioSfx", () => {
+      it("should return false if AudioContext is not supported", () => {
+        const origCtx = window.AudioContext;
+        (window as any).AudioContext = undefined;
+        try {
+          expect(playWebAudioSfx("test.wav")).toBeFalse();
+        } finally {
+          (window as any).AudioContext = origCtx;
+        }
+      });
+
+      it("should play cached buffer via AudioBufferSourceNode", () => {
+        const mockSource = {
+          buffer: null as any,
+          connect: jasmine.createSpy("connect"),
+          start: jasmine.createSpy("start"),
+        };
+        const mockGain = {
+          gain: { value: 1 },
+          connect: jasmine.createSpy("connect"),
+        };
+        const mockAudioCtxInstance = {
+          state: "running",
+          currentTime: 0,
+          createBufferSource: jasmine
+            .createSpy("createBufferSource")
+            .and.returnValue(mockSource),
+          createGain: jasmine.createSpy("createGain").and.returnValue(mockGain),
+          destination: {},
+          close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+        };
+
+        const originalAudioContext = window.AudioContext;
+        (window as any).AudioContext = jasmine
+          .createSpy("AudioContext")
+          .and.returnValue(mockAudioCtxInstance);
+
+        const dummyBuffer = {} as AudioBuffer;
+        globalAudioBufferCache.set(
+          "http://localhost:7070/assets/beep.wav",
+          dummyBuffer,
+        );
+
+        try {
+          const result = playWebAudioSfx(
+            "http://localhost:7070/assets/beep.wav",
+            0.7,
+          );
+          expect(result).toBeTrue();
+          expect(mockAudioCtxInstance.createBufferSource).toHaveBeenCalled();
+          expect(mockSource.buffer).toBe(dummyBuffer);
+          expect(mockGain.gain.value).toBe(0.7);
+          expect(mockSource.start).toHaveBeenCalledWith(0);
+        } finally {
+          (window as any).AudioContext = originalAudioContext;
+        }
+      });
+
+      it("should resume suspended AudioContext when playing Web Audio SFX", () => {
+        const mockSource = {
+          buffer: null as any,
+          connect: jasmine.createSpy("connect"),
+          start: jasmine.createSpy("start"),
+        };
+        const mockGain = {
+          gain: { value: 1 },
+          connect: jasmine.createSpy("connect"),
+        };
+        const mockAudioCtxInstance = {
+          state: "suspended",
+          currentTime: 0,
+          resume: jasmine
+            .createSpy("resume")
+            .and.returnValue(Promise.resolve()),
+          createBufferSource: jasmine
+            .createSpy("createBufferSource")
+            .and.returnValue(mockSource),
+          createGain: jasmine.createSpy("createGain").and.returnValue(mockGain),
+          destination: {},
+          close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+        };
+
+        const originalAudioContext = window.AudioContext;
+        (window as any).AudioContext = jasmine
+          .createSpy("AudioContext")
+          .and.returnValue(mockAudioCtxInstance);
+
+        const dummyBuffer = {} as AudioBuffer;
+        globalAudioBufferCache.set(
+          "http://localhost:7070/assets/driveby.wav",
+          dummyBuffer,
+        );
+
+        try {
+          playWebAudioSfx("http://localhost:7070/assets/driveby.wav", 1.0);
+          expect(mockAudioCtxInstance.resume).toHaveBeenCalled();
+        } finally {
+          (window as any).AudioContext = originalAudioContext;
+        }
+      });
+    });
+
+    describe("playWebAudioBufferSource", () => {
+      it("should return null if AudioContext is not supported", () => {
+        const origCtx = window.AudioContext;
+        (window as any).AudioContext = undefined;
+        try {
+          expect(playWebAudioBufferSource("test.wav")).toBeNull();
+        } finally {
+          (window as any).AudioContext = origCtx;
+        }
+      });
+
+      it("should return handle and invoke onEnded when buffer ends", () => {
+        let endedCallback: (() => void) | undefined;
+        const mockSource = {
+          buffer: null as any,
+          connect: jasmine.createSpy("connect"),
+          start: jasmine.createSpy("start"),
+          stop: jasmine.createSpy("stop"),
+          disconnect: jasmine.createSpy("disconnect"),
+          set onended(cb: any) {
+            endedCallback = cb;
+          },
+        };
+        const mockGain = {
+          gain: { value: 1 },
+          connect: jasmine.createSpy("connect"),
+        };
+        const mockAudioCtxInstance = {
+          state: "running",
+          currentTime: 0,
+          createBufferSource: jasmine
+            .createSpy("createBufferSource")
+            .and.returnValue(mockSource),
+          createGain: jasmine.createSpy("createGain").and.returnValue(mockGain),
+          destination: {},
+          close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+        };
+
+        const originalAudioContext = window.AudioContext;
+        (window as any).AudioContext = jasmine
+          .createSpy("AudioContext")
+          .and.returnValue(mockAudioCtxInstance);
+
+        const dummyBuffer = { duration: 2.5 } as AudioBuffer;
+        globalAudioBufferCache.set(
+          "http://localhost:7070/assets/yellowflag.wav",
+          dummyBuffer,
+        );
+
+        try {
+          let endedCalled = false;
+          const handle = playWebAudioBufferSource(
+            "http://localhost:7070/assets/yellowflag.wav",
+            0.8,
+            () => {
+              endedCalled = true;
+            },
+          );
+          expect(handle).not.toBeNull();
+          expect(handle?.duration).toBe(2.5);
+          expect(mockAudioCtxInstance.createBufferSource).toHaveBeenCalled();
+          expect(mockGain.gain.value).toBe(0.8);
+          expect(mockSource.start).toHaveBeenCalledWith(0);
+
+          // Simulate playback completion
+          endedCallback?.();
+          expect(endedCalled).toBeTrue();
+
+          // Stop handle
+          handle?.stop();
+          expect(mockSource.stop).toHaveBeenCalled();
+          expect(mockSource.disconnect).toHaveBeenCalled();
+        } finally {
+          (window as any).AudioContext = originalAudioContext;
+        }
+      });
+    });
+
+    describe("unlockGlobalAudio with confirmation text", () => {
+      it("should speak custom confirmation text inside user gesture", () => {
+        resetGlobalAudioUnlockerForTesting();
+        const mockAudioCtxInstance = {
+          state: "suspended",
+          currentTime: 0,
+          resume: jasmine
+            .createSpy("resume")
+            .and.returnValue(Promise.resolve()),
+          createOscillator: jasmine
+            .createSpy("createOscillator")
+            .and.returnValue({
+              type: "sine",
+              frequency: {
+                setValueAtTime: jasmine.createSpy("setValueAtTime"),
+              },
+              connect: jasmine.createSpy("connect"),
+              start: jasmine.createSpy("start"),
+              stop: jasmine.createSpy("stop"),
+            }),
+          createGain: jasmine.createSpy("createGain").and.returnValue({
+            gain: {
+              setValueAtTime: jasmine.createSpy("setValueAtTime"),
+              exponentialRampToValueAtTime: jasmine.createSpy(
+                "exponentialRampToValueAtTime",
+              ),
+            },
+            connect: jasmine.createSpy("connect"),
+          }),
+          createBuffer: jasmine.createSpy("createBuffer").and.returnValue({}),
+          createBufferSource: jasmine
+            .createSpy("createBufferSource")
+            .and.returnValue({
+              connect: jasmine.createSpy("connect"),
+              start: jasmine.createSpy("start"),
+            }),
+          destination: {},
+          close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+        };
+
+        const originalAudioContext = window.AudioContext;
+        (window as any).AudioContext = jasmine
+          .createSpy("AudioContext")
+          .and.returnValue(mockAudioCtxInstance);
+
+        try {
+          unlockGlobalAudio(true, "Audio enabled");
+          expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+          const spokenUtterance =
+            mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+          expect(spokenUtterance.text).toBe("Audio enabled");
+          expect(spokenUtterance.volume).toBe(1.0);
+          expect(spokenUtterance.rate).toBe(1.0);
+        } finally {
+          (window as any).AudioContext = originalAudioContext;
+        }
+      });
     });
   });
 });

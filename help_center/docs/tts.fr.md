@@ -39,3 +39,10 @@ Les annonces TTS sont gérées par le [Système Audio](audio.md) centralisé :
 *   **Voix, Vitesse et Hauteur** : Choisissez la voix, la vitesse (`0.1x`–`2.0x`), la tonalité et le volume dans **Éditeur d'Interface -> Paramètres Audio**.
 *   **Niveaux de Priorité** : Les alertes urgentes (drapeau jaune, fin de manche) interrompent les commentaires réguliers pour éviter toute cacophonie.
 *   **Pertinence Audio** : Sur les postes de pilotage et écrans annexes, les annonces TTS sont filtrées pour ne diffuser que ce qui concerne le pilote concerné.
+
+## Navigateurs Mobiles et Postes de Pilotage
+
+Lorsque vous affichez un poste de pilotage ou un affichage de jour de course sur un téléphone mobile ou une tablette (par exemple, en scannant le code QR du poste de pilotage avec un iPhone ou un appareil Android) :
+
+*   **Activation au premier toucher** : Les systèmes d'exploitation mobiles (iOS et Android) nécessitent une interaction physique avec l'écran avant d'autoriser la lecture de l'audio Web ou de la synthèse vocale. Touchez l'écran une fois (ou touchez le message **Touchez l'écran pour activer l'audio**) lors de l'ouverture de la page. Une fois activé, Race Coordinator AI maintient une session audio active afin que vous n'ayez à toucher qu'une seule fois pour bénéficier d'annonces TTS continues tout au long de la course.
+*   **Bouton Silence Physique (iOS / iPhone)** : Les iPhone acheminent la synthèse vocale Web via le canal audio ambiant de l'appareil. Si votre iPhone dispose d'un interrupteur physique Sonnerie/Silence, assurez-vous qu'il est désactivé (pas en mode silencieux), sinon la sortie vocale sera coupée.

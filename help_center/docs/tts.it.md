@@ -39,3 +39,10 @@ Gli annunci TTS sono gestiti dal [Sistema Audio](audio.md) centralizzato:
 *   **Voce, Velocità e Intonazione**: Configura la voce, la velocità (`0.1x`–`2.0x`), l'intonazione e il volume nel pannello **Editor Interfaccia -> Impostazioni Audio**.
 *   **Livelli di Priorità**: Gli annunci urgenti (bandiera gialla, manche terminata) hanno la precedenza sui commenti di routine, impedendo sovrapposizioni.
 *   **Rilevanza Audio**: Nelle postazioni pilota e sugli schermi secondari, i messaggi TTS sono filtrati affinché ciascun pilota ascolti solo gli avvisi della propria corsia.
+
+## Browser Mobili e Postazioni Pilota
+
+Quando si visualizza una postazione pilota o una schermata del giorno di gara su un telefono cellulare o tablet (ad esempio scansionando il codice QR della postazione pilota con un iPhone o dispositivo Android):
+
+*   **Attivazione al primo tocco**: I sistemi operativi mobili (iOS e Android) richiedono un'interazione fisica con lo schermo prima di consentire la riproduzione di audio web o sintesi vocale. Tocca lo schermo una volta (o tocca l'avviso **Tocca lo schermo per abilitare l'audio**) all'apertura della pagina. Una volta attivato, Race Coordinator AI mantiene una sessione audio attiva, quindi è necessario toccare solo una volta per ricevere annunci TTS continui per l'intera gara.
+*   **Interruttore silenzioso hardware (iOS / iPhone)**: Gli iPhone instradano la sintesi vocale web attraverso il canale audio ambientale del dispositivo. Se l'iPhone dispone di un interruttore fisico Suoneria/Silenzioso, assicurarsi che sia disattivato (non in modalità silenziosa), altrimenti l'uscita vocale risulterà disattivata.

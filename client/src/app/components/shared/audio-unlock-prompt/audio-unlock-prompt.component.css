@@ -1,0 +1,68 @@
+:host {
+  display: block;
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 16px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647 !important;
+  pointer-events: none;
+}
+
+.audio-unlock-banner {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 2px solid #38bdf8;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 16px rgba(56, 189, 248, 0.35);
+  cursor: pointer;
+  user-select: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: audioUnlockPulse 2s infinite ease-in-out;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+.audio-unlock-banner:hover,
+.audio-unlock-banner:active {
+  background: rgba(30, 41, 59, 1);
+  border-color: #7dd3fc;
+  transform: scale(1.04);
+}
+
+.audio-unlock-icon {
+  font-size: 22px;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-unlock-text {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+
+@keyframes audioUnlockPulse {
+  0% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 0 rgba(56, 189, 248, 0.5);
+  }
+  70% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 14px rgba(56, 189, 248, 0);
+  }
+  100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 0 0 rgba(56, 189, 248, 0);
+  }
+}
+
+

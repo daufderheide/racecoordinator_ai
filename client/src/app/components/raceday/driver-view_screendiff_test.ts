@@ -223,4 +223,122 @@ test.describe("Driver View Visuals", () => {
       maxDiffPixelRatio: 0.1,
     });
   });
+
+  test("should display tap to enable audio banner on mobile driver station page", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "userAgent", {
+        get: () =>
+          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.0.0 Mobile/15E148 Safari/604.1",
+        configurable: true,
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-station/1"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Championship Race",
+          heatScoring: { finishMethod: 0, finishValue: 10 },
+          fuelOptions: { enabled: false },
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [
+              {
+                objectId: "l1",
+                length: 10,
+                backgroundColor: "#dc2626",
+                foregroundColor: "#ffffff",
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            rank: 1,
+            totalLaps: 15,
+            bestLapTime: 2.123,
+            driver: {
+              model: { entityId: "d1" },
+              name: "Driver 1",
+              nickname: "Apex",
+            },
+          },
+        ],
+        heats: [
+          {
+            objectId: "h1",
+            heatNumber: 1,
+            heatDrivers: [
+              {
+                objectId: "hd1",
+                laneIndex: 0,
+                lapCount: 8,
+                lastLapTime: 2.345,
+                bestLapTime: 2.123,
+                gapLeader: 0,
+                laps: [
+                  { lapTime: 2.45 },
+                  { lapTime: 2.345 },
+                  { lapTime: 2.123 },
+                ],
+                driver: {
+                  objectId: "rp1",
+                  driver: {
+                    model: { entityId: "d1" },
+                    name: "Driver 1",
+                    nickname: "Apex",
+                  },
+                },
+              },
+            ],
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              lapCount: 8,
+              lastLapTime: 2.345,
+              bestLapTime: 2.123,
+              gapLeader: 0,
+              laps: [{ lapTime: 2.45 }, { lapTime: 2.345 }, { lapTime: 2.123 }],
+              driver: {
+                objectId: "rp1",
+                driver: {
+                  model: { entityId: "d1" },
+                  name: "Driver 1",
+                  nickname: "Apex",
+                },
+              },
+            },
+          ],
+          standings: ["hd1"],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page.locator(".scalable-content").waitFor({ state: "visible" });
+    await page.locator(".audio-unlock-banner").waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot(
+      "driver-station-audio-unlock-banner.png",
+      {
+        maxDiffPixelRatio: 0.1,
+      },
+    );
+  });
 });
