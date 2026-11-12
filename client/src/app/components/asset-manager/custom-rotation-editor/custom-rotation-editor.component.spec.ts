@@ -1672,4 +1672,187 @@ describe("CustomRotationEditorComponent", () => {
       });
     });
   });
+
+  describe("Sorting & Smart Insertion", () => {
+    it("should sort rotations ascending by driver count on initial load", fakeAsync(() => {
+      const mockAsset = {
+        name: "Unsorted Asset",
+        numLanes: 4,
+        customRotations: [
+          { numDrivers: 8, heats: [{ driverIndices: [1, 2, 3, 4] }] },
+          { numDrivers: 4, heats: [{ driverIndices: [1, 2, 3, 4] }] },
+          { numDrivers: 6, heats: [{ driverIndices: [1, 2, 3, 4] }] },
+        ],
+        model: { entityId: "unsorted-id" },
+      };
+
+      const activatedRoute = TestBed.inject(ActivatedRoute);
+      spyOn(activatedRoute.snapshot.queryParamMap, "get").and.callFake(
+        (key: string) => (key === "id" ? "unsorted-id" : null),
+      );
+
+      mockDataService.listAssets.and.returnValue(of([mockAsset as any]));
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6, 8,
+      ]);
+      expect(component.isRotationsSorted()).toBeTrue();
+    }));
+
+    it("should smart-insert rotations on addRotation filling gaps and sorting", () => {
+      fixture.detectChanges();
+      component.selectedTrackId = "t2";
+      component.onTrackChange();
+      expect(component.internalRotations.length).toBe(0);
+
+      // First rotation defaults to internalNumLanes (4)
+      component.addRotation();
+      expect(component.internalRotations[0].numDrivers).toBe(4);
+
+      // Second rotation fills next available (5)
+      component.addRotation();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 5,
+      ]);
+
+      // Manually adjust the second rotation to 7 drivers (leaves 5 and 6 missing)
+      component.internalRotations[1].numDrivers = 7;
+
+      // Third rotation should choose 5 and insert before 7
+      component.addRotation();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 5, 7,
+      ]);
+
+      // Fourth rotation should choose 6 and insert before 7
+      component.addRotation();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 5, 6, 7,
+      ]);
+    });
+
+    it("should expand numVirtualDrivers when adding a rotation with driver count exceeding current pool", () => {
+      fixture.detectChanges();
+      component.selectedTrackId = "t2";
+      component.onTrackChange();
+      component.numVirtualDrivers = 5;
+      component.updateVirtualDriversList();
+      component.internalRotations = [
+        { numDrivers: 4, heats: [], isExpanded: true },
+        { numDrivers: 5, heats: [], isExpanded: true },
+      ];
+
+      component.addRotation(); // candidate = 6 (exceeds 5)
+      expect(component.numVirtualDrivers).toBe(6);
+      expect(component.virtualDrivers.length).toBe(6);
+    });
+
+    it("should manually sort rotations and register undo state when sortRotations is called", () => {
+      fixture.detectChanges();
+      component.internalRotations = [
+        { numDrivers: 8, heats: [], isExpanded: true },
+        { numDrivers: 4, heats: [], isExpanded: true },
+        { numDrivers: 6, heats: [], isExpanded: true },
+      ];
+
+      expect(component.isRotationsSorted()).toBeFalse();
+
+      spyOn(component, "captureState").and.callThrough();
+      component.sortRotations();
+
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6, 8,
+      ]);
+      expect(component.isRotationsSorted()).toBeTrue();
+      expect(component.captureState).toHaveBeenCalled();
+    });
+
+    it("should do nothing in sortRotations when 1 or fewer rotations exist", () => {
+      fixture.detectChanges();
+      component.internalRotations = [{ numDrivers: 4 }];
+      spyOn(component, "captureState");
+
+      component.sortRotations();
+      expect(component.captureState).not.toHaveBeenCalled();
+    });
+
+    it("should render the sort button in title-actions and trigger sortRotations on click", () => {
+      fixture.detectChanges();
+      component.internalRotations = [
+        { numDrivers: 6, heats: [], isExpanded: true },
+        { numDrivers: 4, heats: [], isExpanded: true },
+      ];
+      fixture.detectChanges();
+
+      const sortBtn = fixture.nativeElement.querySelector(
+        "#sort-rotations-btn",
+      ) as HTMLButtonElement;
+      expect(sortBtn).toBeTruthy();
+      expect(
+        sortBtn.querySelector(".material-icons")?.textContent?.trim(),
+      ).toBe("swap_vert");
+      expect(sortBtn.disabled).toBeFalse();
+      expect(sortBtn.classList.contains("needs-sort")).toBeTrue();
+
+      spyOn(component, "sortRotations").and.callThrough();
+      sortBtn.click();
+      fixture.detectChanges();
+
+      expect(component.sortRotations).toHaveBeenCalled();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6,
+      ]);
+    });
+
+    it("should disable sort button when saving or internalRotations length <= 1", () => {
+      fixture.detectChanges();
+      component.internalRotations = [{ numDrivers: 4 }];
+      fixture.detectChanges();
+
+      const sortBtn = fixture.nativeElement.querySelector(
+        "#sort-rotations-btn",
+      ) as HTMLButtonElement;
+      expect(sortBtn.disabled).toBeTrue();
+
+      component.internalRotations.push({ numDrivers: 5 });
+      component.savingCount = 1;
+      fixture.detectChanges();
+      expect(sortBtn.disabled).toBeTrue();
+    });
+
+    it("should sort rotations before saving in save()", () => {
+      fixture.detectChanges();
+      component.internalAssetName = "Test Asset";
+      component.internalRotations = [
+        {
+          numDrivers: 6,
+          heats: [{ driverIndices: [1, 2, 3, 4], group: 0 }],
+          isExpanded: true,
+        },
+        {
+          numDrivers: 4,
+          heats: [{ driverIndices: [1, 2, 3, 4], group: 0 }],
+          isExpanded: true,
+        },
+      ];
+
+      component.save();
+
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6,
+      ]);
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledWith(
+        "Test Asset",
+        component.internalNumLanes,
+        jasmine.arrayContaining([
+          jasmine.objectContaining({ numDrivers: 4 }),
+          jasmine.objectContaining({ numDrivers: 6 }),
+        ]),
+        undefined,
+      );
+    });
+  });
 });

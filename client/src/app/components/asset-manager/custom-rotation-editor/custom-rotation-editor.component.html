@@ -23,6 +23,20 @@
     [showZoom]="true"
     [(zoomLevel)]="zoomLevel"
   >
+    <div title-actions class="rotation-title-actions">
+      <button
+        id="sort-rotations-btn"
+        type="button"
+        class="rotation-title-btn"
+        [class.needs-sort]="!isRotationsSorted()"
+        (click)="sortRotations()"
+        [disabled]="isSaving || internalRotations.length <= 1"
+        [title]="'AM_BTN_SORT_ROTATIONS' | translate"
+        [attr.aria-label]="'AM_BTN_SORT_ROTATIONS' | translate"
+      >
+        <span class="material-icons">swap_vert</span>
+      </button>
+    </div>
   </app-editor-title>
 
   <div class="content-split">
@@ -188,7 +202,7 @@
 
         @for (
           rotation of internalRotations;
-          track $index;
+          track rotation;
           let rotIdx = $index
         ) {
           <div

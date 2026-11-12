@@ -45,6 +45,7 @@ import { LaneEqualityResult } from "@app/utils/lane-equality";
 
 import {
   areCustomRotationStatesEqual,
+  areRotationsSorted,
   buildRotationsAssetExportJson,
   buildSingleRotationExportJson,
   checkRotationLaneEqualityDirect,
@@ -52,12 +53,15 @@ import {
   CustomRotationState,
   downloadJsonFile,
   driverHasGroupConflict,
+  findNextAvailableDriverCount,
+  findSortedInsertionIndex,
   getDriverGroupConflicts,
   getRotationSignature,
   hasValidationErrors,
   heatHasError,
   heatHasGroupConflict,
   LocalRotation,
+  sortRotationsByDrivers,
 } from "./rotation-export.utils";
 import { parseAndValidateImportFile } from "./rotation-import.utils";
 
@@ -362,6 +366,7 @@ export class CustomRotationEditorComponent
               isExpanded: true,
             }),
           );
+          this.sortRotationsByDrivers();
         } else {
           this.fallbackToInputs();
           if (!idParam || idParam === "new") {
@@ -397,6 +402,7 @@ export class CustomRotationEditorComponent
       ...r,
       isExpanded: true,
     }));
+    this.sortRotationsByDrivers();
   }
 
   generateUniqueName(baseName: string = "New Custom Rotation"): string {
@@ -633,6 +639,24 @@ export class CustomRotationEditorComponent
     this.captureState();
   }
 
+  sortRotationsByDrivers() {
+    sortRotationsByDrivers(this.internalRotations);
+    this.updateDropListConnections();
+  }
+
+  isRotationsSorted(): boolean {
+    return areRotationsSorted(this.internalRotations);
+  }
+
+  sortRotations() {
+    if (this.internalRotations.length <= 1) {
+      return;
+    }
+    this.sortRotationsByDrivers();
+    this.validateAllRotationsLaneEquality();
+    this.captureState();
+  }
+
   onHeatGroupChange(
     rotation: ICustomRotation,
     heat: ICustomHeat,
@@ -643,12 +667,32 @@ export class CustomRotationEditorComponent
   }
 
   addRotation() {
-    const newRot: any = {
-      numDrivers: this.internalNumLanes,
+    const candidate = findNextAvailableDriverCount(
+      this.internalRotations,
+      this.internalNumLanes,
+    );
+
+    if (candidate > this.numVirtualDrivers) {
+      this.numVirtualDrivers = candidate;
+      this.updateVirtualDriversList();
+    }
+
+    const newRot: LocalRotation = {
+      numDrivers: candidate,
       heats: [],
       isExpanded: true,
     };
-    this.internalRotations.push(newRot);
+
+    const insertIdx = findSortedInsertionIndex(
+      this.internalRotations,
+      candidate,
+    );
+    if (insertIdx === -1) {
+      this.internalRotations.push(newRot);
+    } else {
+      this.internalRotations.splice(insertIdx, 0, newRot);
+    }
+
     this.addHeat(newRot, false);
     this.updateDropListConnections();
     this.captureState();
@@ -788,6 +832,7 @@ export class CustomRotationEditorComponent
   }
 
   save() {
+    this.sortRotationsByDrivers();
     this.validateAllRotationsLaneEquality();
     if (!this.isConfigValid()) {
       return;
@@ -1028,6 +1073,7 @@ export class CustomRotationEditorComponent
       });
     }
 
+    this.sortRotationsByDrivers();
     this.importSummary = results;
     input.value = "";
     this.updateDropListConnections();
@@ -1051,10 +1097,11 @@ export class CustomRotationEditorComponent
   }
 
   async exportRotations() {
+    const sortedRotations = sortRotationsByDrivers([...this.internalRotations]);
     const { fileName, jsonContent } = buildRotationsAssetExportJson(
       this.internalAssetName,
       this.internalNumLanes,
-      this.internalRotations,
+      sortedRotations,
     );
     await downloadJsonFile(fileName, jsonContent);
     this.logger.info("Export asset process completed");

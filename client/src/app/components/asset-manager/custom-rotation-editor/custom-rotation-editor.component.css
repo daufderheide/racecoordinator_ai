@@ -1074,3 +1074,53 @@
     opacity: 0.8;
   }
 }
+
+/* Title Actions & Sort Button */
+.rotation-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 12px;
+  border-right: 1px solid rgba(148, 163, 184, 0.25);
+  margin-right: 4px;
+}
+
+.rotation-title-btn {
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  font-family: inherit;
+}
+
+.rotation-title-btn .material-icons {
+  font-size: 1.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rotation-title-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.rotation-title-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.rotation-title-btn.needs-sort:not(:disabled) {
+  color: #38bdf8;
+}
+

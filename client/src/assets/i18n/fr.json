@@ -154,6 +154,7 @@
   "AM_BTN_REMOVE_HEAT": "Supprimer la série",
   "AM_BTN_REMOVE_ROTATION": "Supprimer la rotation",
   "AM_BTN_SAVE": "SAUVER",
+  "AM_BTN_SORT_ROTATIONS": "Trier les rotations par nombre de pilotes",
   "AM_BTN_UPLOAD_NEW": "TÉLÉCHARGER NOUVEL ASSET",
   "AM_CONFIRM_DELETE": "Voulez-vous vraiment supprimer cet asset ?",
   "AM_CONFIRM_DELETE_TITLE": "Supprimer l'asset",

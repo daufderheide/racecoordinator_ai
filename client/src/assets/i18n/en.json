@@ -156,6 +156,7 @@
   "AM_BTN_REMOVE_HEAT": "Remove Heat",
   "AM_BTN_REMOVE_ROTATION": "Remove Rotation",
   "AM_BTN_SAVE": "SAVE",
+  "AM_BTN_SORT_ROTATIONS": "Sort Rotations by Driver Count",
   "AM_BTN_UPLOAD_NEW": "UPLOAD NEW ASSET",
   "AM_CONFIRM_DELETE": "Are you sure you want to delete this asset?",
   "AM_CONFIRM_DELETE_TITLE": "Delete Asset",
