@@ -958,7 +958,7 @@ public class Race implements ProtocolListener {
             new CustomHeat(
                 new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
       }
-      result.add(new CustomRotation(protoRot.getNumDrivers(), heats));
+      result.add(new CustomRotation(protoRot.getNumDrivers(), heats, protoRot.getDescription()));
     }
     return result;
   }

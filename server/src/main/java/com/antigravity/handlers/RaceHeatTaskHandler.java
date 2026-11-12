@@ -667,7 +667,7 @@ public class RaceHeatTaskHandler {
             new CustomHeat(
                 new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
       }
-      list.add(new CustomRotation(protoRot.getNumDrivers(), heats));
+      list.add(new CustomRotation(protoRot.getNumDrivers(), heats, protoRot.getDescription()));
     }
     return list;
   }
@@ -684,6 +684,8 @@ public class RaceHeatTaskHandler {
         numDriversObj = rotMap.get("num_drivers");
       }
       int numDrivers = numDriversObj instanceof Number ? ((Number) numDriversObj).intValue() : 0;
+      Object descObj = rotMap.get("description");
+      String description = descObj != null ? descObj.toString() : "";
       List<Map<String, Object>> heatsRaw = (List<Map<String, Object>>) rotMap.get("heats");
       List<CustomHeat> heats = new ArrayList<>();
       if (heatsRaw != null) {
@@ -704,7 +706,7 @@ public class RaceHeatTaskHandler {
           heats.add(new CustomHeat(driverIndices, group));
         }
       }
-      customRotations.add(new CustomRotation(numDrivers, heats));
+      customRotations.add(new CustomRotation(numDrivers, heats, description));
     }
     return customRotations;
   }

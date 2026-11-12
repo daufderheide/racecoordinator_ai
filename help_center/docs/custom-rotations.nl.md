@@ -102,7 +102,8 @@ Om een nieuw aangepast rotatieset-asset aan te maken:
 
 1. Klik op de knop **Rotatie Toevoegen** (`+`) in de bovenste werkbalk om uw eerste rotatiekaart te maken.
 2. Stel het veld **Aantal Rijders** in de kop van de kaart in. Dit definieert de maximale rijderscapaciteit voor die specifieke rotatie.
-3. De kaart wordt automatisch gevuld met een eerste heat met baanposities voor uw circuit.
+3. Voer desgewenst een **Beschrijving** (label) in de kop in om de rotatie te identificeren (bijv. `EURO D18 G3-666 X>1`, `Sprintformaat` of `Exhibitie`). Bij het aanmaken van een nieuwe rotatie is dit veld leeg; bij het importeren van een bestand krijgt het standaard automatisch de bestandsnaam van het geïmporteerde bestand.
+4. De kaart wordt automatisch gevuld met een eerste heat met baanposities voor uw circuit.
 
 ### Heats Toevoegen en Herschikken {: #adding-heats }
 
@@ -144,7 +145,7 @@ U kunt rotaties uitwisselen tussen computers of archiveren:
 
 - **Volledig Asset Exporteren:** Klik op **Exporteren** in de bovenste werkbalk om het volledige aangepaste rotatieset-asset als `.json`-bestand te downloaden.
 - **Enkele Rotatie Exporteren:** Klik op het exporticoon (`upload`) op een individuele rotatiekaart om alleen die specifieke configuratie te exporteren.
-- **Rotaties Importeren:** Klik op **Importeren** om `.json`-rotatiebestanden of oudere Race Coordinator-bestanden (`.txt` in RC1-formaat) in uw asset te laden.
+- **Rotaties Importeren:** Klik op **Importeren** om `.json`-rotatiebestanden of oudere Race Coordinator-bestanden (`.txt` in RC1-formaat) in uw asset te laden. De beschrijving van de rotatie krijgt automatisch de geïmporteerde bestandsnaam als standaardwaarde.
 
 ---
 

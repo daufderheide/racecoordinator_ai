@@ -102,7 +102,8 @@ So erstellen Sie ein neues Asset für ein benutzerdefiniertes Rotationsset:
 
 1. Klicken Sie in der oberen Symbolleiste auf die Schaltfläche **Rotation hinzufügen** (`+`), um Ihre erste Rotationskarte zu erstellen.
 2. Legen Sie im Kopfbereich der Karte das Feld **Anzahl der Fahrer** fest. Dies definiert die maximale Fahrerkapazität für diese spezifische Rotation.
-3. Die Rotationskarte wird automatisch mit einem ersten Heat befüllt, der Spurplätze für Ihre Strecke enthält.
+3. Geben Sie optional eine **Beschreibung** (Bezeichnung) in der Kopfzeile ein, um die Rotation zu kennzeichnen (z. B. `EURO D18 G3-666 X>1`, `Sprintformat` oder `Schaurennen`). Beim Erstellen einer neuen Rotation ist dieses Feld leer; beim Importieren einer Datei wird automatisch der Dateiname als Standard übernommen.
+4. Die Rotationskarte wird automatisch mit einem ersten Heat befüllt, der Spurplätze für Ihre Strecke enthält.
 
 ### Heats hinzufügen und anordnen {: #adding-heats }
 
@@ -144,7 +145,7 @@ Sie können Rotationen zwischen Systemen teilen oder archivieren:
 
 - **Gesamtes Asset exportieren:** Klicken Sie in der oberen Symbolleiste auf **Exportieren**, um das gesamte Asset als `.json`-Datei herunterzuladen.
 - **Einzelne Rotation exportieren:** Klicken Sie auf das Export-Symbol (`upload`) einer einzelnen Rotationskarte, um nur diese Fahreranzahl-Konfiguration zu exportieren.
-- **Rotationen importieren:** Klicken Sie auf **Importieren**, um `.json`-Rotationsdateien oder ältere Race Coordinator-Dateien (`.txt` im RC1-Format) in Ihr Asset zu laden.
+- **Rotationen importieren:** Klicken Sie auf **Importieren**, um `.json`-Rotationsdateien oder ältere Race Coordinator-Dateien (`.txt` im RC1-Format) in Ihr Asset zu laden. Die Beschreibung der Rotation übernimmt automatisch den importierten Dateinamen als Standard.
 
 ---
 

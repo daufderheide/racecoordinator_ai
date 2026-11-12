@@ -208,6 +208,7 @@ describe("CustomRotationEditorComponent", () => {
 
     component.addRotation();
     expect(component.internalRotations.length).toBe(1);
+    expect(component.internalRotations[0].description).toBe("");
 
     component.removeRotation(0);
     expect(component.internalRotations.length).toBe(0);
@@ -666,6 +667,7 @@ describe("CustomRotationEditorComponent", () => {
 
       expect(component.internalRotations.length).toBe(1);
       expect(component.internalRotations[0].numDrivers).toBe(5);
+      expect(component.internalRotations[0].description).toBe("rotation5");
       expect(component.internalRotations[0].heats?.length).toBe(5);
       expect(component.importSummary?.[0].success).toBeTrue();
       expect(component.importSummary?.[0].key).toBe("AM_IMPORT_SUCCESS");
@@ -707,6 +709,7 @@ describe("CustomRotationEditorComponent", () => {
         4, 1, 2, 3,
       ]);
       expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+      expect(component.internalRotations[0].description).toBe("rc1");
     });
 
     it("should assume standard import and NOT convert 0-indexed drivers if there is a version field", async () => {
@@ -735,6 +738,31 @@ describe("CustomRotationEditorComponent", () => {
       ]);
       // Group should be converted 1 -> 0 (standard 1-based to internal 0-based)
       expect(component.internalRotations[0].heats?.[0].group).toBe(0);
+      expect(component.internalRotations[0].description).toBe(
+        "standard_versioned",
+      );
+    });
+
+    it("should retain explicit description when importing a file that includes Description", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      const jsonWithDesc = JSON.stringify({
+        Version: "1.0",
+        NumDrivers: 8,
+        NumLanes: 4,
+        Description: "EURO D18 G3-666 X>1",
+        Heats: [{ Drivers: [1, 2, 3, 4], Group: 1 }],
+      });
+
+      const file = createMockFile(jsonWithDesc, "custom_import_file.json");
+      const event = createImportEvent([file]);
+
+      component.internalRotations = [];
+      await component.onImportFiles(event);
+
+      expect(component.internalRotations[0].description).toBe(
+        "EURO D18 G3-666 X>1",
+      );
     });
 
     it("should correctly import the user's exact RC1 rotation file with 0-based drivers and groups", async () => {
@@ -793,7 +821,8 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
         4, 1, 2, 3,
       ]);
-      expect(component.internalRotations[0].heats?.[0].group).toBe(1); // 2 - 1 = 1 internal 0-based group
+      expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+      expect(component.internalRotations[0].description).toBe("standard"); // 2 - 1 = 1 internal 0-based group
     });
 
     it("should report error for invalid JSON", async () => {
@@ -899,7 +928,11 @@ describe("CustomRotationEditorComponent", () => {
         NumLanes: 4,
         Rotations: [
           { NumDrivers: 4, Heats: [{ Drivers: [1, 2, 3, 4], Group: 2 }] },
-          { NumDrivers: 5, Heats: [{ Drivers: [1, 2, 3, 4, 0], Group: 1 }] },
+          {
+            NumDrivers: 5,
+            Description: "5-Driver Heat Set",
+            Heats: [{ Drivers: [1, 2, 3, 4, 0], Group: 1 }],
+          },
         ],
       });
       const file = createMockFile(combinedAssetJson, "combined.json");
@@ -911,7 +944,11 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.internalRotations.length).toBe(2);
       expect(component.internalRotations[0].numDrivers).toBe(4);
       expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+      expect(component.internalRotations[0].description).toBe("combined");
       expect(component.internalRotations[1].numDrivers).toBe(5);
+      expect(component.internalRotations[1].description).toBe(
+        "5-Driver Heat Set",
+      );
     });
 
     it("should report error if combined asset JSON has lane count mismatch", async () => {
@@ -1025,6 +1062,7 @@ describe("CustomRotationEditorComponent", () => {
       expect(writtenJson.AssetName).toBe("FormatTest");
       expect(writtenJson.NumLanes).toBe(2);
       expect(writtenJson.Rotations[0].NumDrivers).toBe(2);
+      expect(writtenJson.Rotations[0].Description).toBe("");
       expect(writtenJson.Rotations[0].Heats[0].Drivers).toEqual([1, 2]);
       expect(writtenJson.Rotations[0].Heats[0].Group).toBe(2);
 
@@ -1035,7 +1073,11 @@ describe("CustomRotationEditorComponent", () => {
           AssetName: "FormatTest",
           NumLanes: 2,
           Rotations: [
-            { NumDrivers: 2, Heats: [{ Drivers: [1, 2], Group: 2 }] },
+            {
+              NumDrivers: 2,
+              Description: "",
+              Heats: [{ Drivers: [1, 2], Group: 2 }],
+            },
           ],
         }),
         null,
@@ -1063,6 +1105,7 @@ describe("CustomRotationEditorComponent", () => {
       expect(writtenJson.Version).toBe("1.0");
       expect(writtenJson.NumDrivers).toBe(2);
       expect(writtenJson.NumLanes).toBe(2);
+      expect(writtenJson.Description).toBe("");
       expect(writtenJson.Heats[0].Drivers).toEqual([1, 2]);
       expect(writtenJson.Heats[0].Group).toBe(2);
 
@@ -1071,6 +1114,7 @@ describe("CustomRotationEditorComponent", () => {
           Version: "1.0",
           NumDrivers: 2,
           NumLanes: 2,
+          Description: "",
           Heats: [{ Drivers: [1, 2], Group: 2 }],
         }),
         null,
@@ -1288,6 +1332,15 @@ describe("CustomRotationEditorComponent", () => {
       mockDataService.saveCustomRotation.calls.reset();
       component.internalRotations[0].numDrivers = 99;
       component.onNumDriversChange();
+      expect(captureSpy).toHaveBeenCalled();
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
+
+      // Rotation Description Change
+      captureSpy.calls.reset();
+      mockDataService.saveCustomRotation.calls.reset();
+      component.internalRotations[0].description = "New Desc";
+      component.onInputChange();
+      component.onInputBlur();
       expect(captureSpy).toHaveBeenCalled();
       expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
 

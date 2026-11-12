@@ -433,6 +433,42 @@
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
+.rotation-desc-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.rotation-desc-label {
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.rotation-desc-input {
+  width: 240px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+  color: #f8fafc;
+  padding: 4px 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.rotation-desc-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.rotation-desc-input::placeholder {
+  color: rgba(148, 163, 184, 0.5);
+  font-style: italic;
+}
+
 /* Header Action Buttons */
 .expander-actions {
   display: flex;

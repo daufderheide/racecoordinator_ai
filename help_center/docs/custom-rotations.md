@@ -102,7 +102,8 @@ To create a new custom rotation set asset:
 
 1. Click the **Add Rotation** button (`+`) in the top toolbar to create your first rotation card.
 2. Set the **Number of Drivers** field in the rotation card's header. This defines the maximum driver capacity for that specific rotation.
-3. The rotation card automatically populates with an initial heat containing lane slots for your track.
+3. Optionally enter a **Description** (label) in the header to identify the rotation (e.g. `EURO D18 G3-666 X>1`, `Sprint Format`, or `Exhibition`). When creating a new rotation, this field starts blank; when importing a rotation file, it automatically defaults to the import file's name.
+4. The rotation card automatically populates with an initial heat containing lane slots for your track.
 
 ### Adding and Reordering Heats {: #adding-heats }
 
@@ -144,7 +145,7 @@ You can share rotations between systems or archive rotation sets:
 
 - **Export Full Asset:** Click the **Export** button in the top toolbar to download the entire custom rotation set asset (including all rotations and heats) as a `.json` file.
 - **Export Single Rotation:** Click the export icon (`upload`) on an individual rotation expander card to export only that specific driver count configuration.
-- **Import Rotations:** Click the **Import** button in the top toolbar to load `.json` rotation files or legacy Race Coordinator (`.txt` RC1 format) rotation files into your asset.
+- **Import Rotations:** Click the **Import** button in the top toolbar to load `.json` rotation files or legacy Race Coordinator (`.txt` RC1 format) rotation files into your asset. The rotation's description automatically defaults to the imported file name.
 
 ---
 

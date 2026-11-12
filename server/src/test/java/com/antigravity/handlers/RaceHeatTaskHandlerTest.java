@@ -1,5 +1,6 @@
 package com.antigravity.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -93,10 +94,13 @@ public class RaceHeatTaskHandlerTest {
     List<Map<String, Object>> rawList = new ArrayList<>();
     Map<String, Object> rot1 = new HashMap<>();
     rot1.put("numDrivers", 4);
+    rot1.put("description", "4-Driver Test");
     rawList.add(rot1);
 
-    List<?> result = handler.parseCustomRotations(rawList);
+    List<com.antigravity.models.CustomRotation> result = handler.parseCustomRotations(rawList);
     assertNotNull(result);
+    assertEquals(1, result.size());
+    assertEquals("4-Driver Test", result.get(0).getDescription());
   }
 
   @org.junit.Rule

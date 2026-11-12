@@ -8,6 +8,7 @@ option java_outer_classname = "RotationModelProto";
 message CustomRotation {
   int32 num_drivers = 1;
   repeated CustomHeat heats = 2;
+  string description = 3;
 }
 
 message CustomHeat {

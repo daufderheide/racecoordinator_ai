@@ -102,7 +102,8 @@ Para criar um novo ativo de conjunto de rotações personalizadas:
 
 1. Clique no botão **Adicionar Rotação** (`+`) na barra de ferramentas superior para criar o seu primeiro cartão de rotação.
 2. Defina o campo **Número de Pilotos** no cabeçalho do cartão. Este valor estabelece a capacidade máxima de pilotos para essa rotação específica.
-3. O cartão é preenchido automaticamente com uma bateria inicial contendo as pistas do seu circuito.
+3. Opcionalmente, introduza uma **Descrição** (rótulo) no cabeçalho para identificar a rotação (por exemplo, `EURO D18 G3-666 X>1`, `Formato Sprint` ou `Exibição`). Ao criar uma nova rotação, este campo começa em branco; ao importar um ficheiro, assume automaticamente o nome do ficheiro importado por defeito.
+4. O cartão é preenchido automaticamente com uma bateria inicial contendo as pistas do seu circuito.
 
 ### Adição e Reordenação de Baterias {: #adding-heats }
 
@@ -144,7 +145,7 @@ Pode partilhar rotações entre computadores ou arquivá-las:
 
 - **Exportar Ativo Completo:** Clique no botão **Exportar** na barra de ferramentas superior para descarregar todo o ativo de conjunto de rotações personalizadas em formato `.json`.
 - **Exportar Rotação Individual:** Clique no ícone de exportação (`upload`) no cartão de uma rotação para exportar unicamente essa configuração.
-- **Importar Rotações:** Clique em **Importar** para carregar ficheiros `.json` ou ficheiros legados do Race Coordinator (`.txt` em formato RC1) no seu ativo.
+- **Importar Rotações:** Clique em **Importar** para carregar ficheiros `.json` ou ficheiros legados do Race Coordinator (`.txt` em formato RC1) no seu ativo. A descrição da rotação assume automaticamente o nome do ficheiro importado como padrão.
 
 ---
 

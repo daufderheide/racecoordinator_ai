@@ -242,6 +242,34 @@
                     class="drivers-count-input"
                   />
                 </div>
+                <div
+                  class="rotation-desc-inline"
+                  (click)="$event.stopPropagation()"
+                >
+                  <label
+                    [for]="'rotation-desc-input-' + rotIdx"
+                    class="expander-title rotation-desc-label"
+                  >
+                    {{ "AM_LABEL_ROTATION_DESCRIPTION" | translate }}:
+                  </label>
+                  <input
+                    [id]="'rotation-desc-input-' + rotIdx"
+                    type="text"
+                    [(ngModel)]="rotation.description"
+                    (ngModelChange)="onInputChange()"
+                    (focus)="onInputFocus()"
+                    (blur)="onInputBlur()"
+                    [placeholder]="
+                      'AM_ROTATION_DESCRIPTION_PLACEHOLDER' | translate
+                    "
+                    [title]="'AM_ROTATION_DESCRIPTION_TOOLTIP' | translate"
+                    [attr.aria-label]="
+                      'AM_ROTATION_DESCRIPTION_TOOLTIP' | translate
+                    "
+                    class="rotation-desc-input"
+                    maxlength="100"
+                  />
+                </div>
               </div>
 
               <!-- Header Actions -->

@@ -83,11 +83,18 @@ describe("rotation-export.utils", () => {
       rotations: [{ numDrivers: 5, heats: [] }],
     };
     expect(areCustomRotationStatesEqual(state, diffDrivers)).toBeFalse();
+
+    const diffDesc = {
+      ...state,
+      rotations: [{ ...state.rotations[0], description: "Different" }],
+    };
+    expect(areCustomRotationStatesEqual(state, diffDesc)).toBeFalse();
   });
 
   it("should build single rotation export JSON", () => {
     const rot = {
       numDrivers: 4,
+      description: "My Custom Desc",
       heats: [{ group: 0, driverIndices: [1, 2, 3, 4] }],
     };
     const res = buildSingleRotationExportJson("MyRot", 4, rot);
@@ -95,6 +102,7 @@ describe("rotation-export.utils", () => {
     const parsed = JSON.parse(res.jsonContent);
     expect(parsed.NumDrivers).toBe(4);
     expect(parsed.NumLanes).toBe(4);
+    expect(parsed.Description).toBe("My Custom Desc");
     expect(parsed.Heats[0].Group).toBe(1);
   });
 
@@ -102,6 +110,7 @@ describe("rotation-export.utils", () => {
     const rots = [
       {
         numDrivers: 4,
+        description: "Group A",
         heats: [{ group: 1, driverIndices: [1, 2, 3, 4] }],
       },
     ];
@@ -111,6 +120,7 @@ describe("rotation-export.utils", () => {
     expect(parsed.IsAsset).toBeTrue();
     expect(parsed.AssetName).toBe("MyRot");
     expect(parsed.Rotations.length).toBe(1);
+    expect(parsed.Rotations[0].Description).toBe("Group A");
     expect(parsed.Rotations[0].Heats[0].Group).toBe(2);
   });
 

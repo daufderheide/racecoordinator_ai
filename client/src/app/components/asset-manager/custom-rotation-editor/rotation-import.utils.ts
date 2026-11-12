@@ -75,6 +75,7 @@ function importWholeAsset(
   const newRotations: LocalRotation[] = [];
   const batchDriverCounts = [...existingDriverCounts];
 
+  const fileBaseName = fileName.replace(/\.[^/.]+$/, "");
   for (const rot of rotations) {
     const rotNumDrivers =
       rot.NumDrivers !== undefined ? rot.NumDrivers : rot.numDrivers;
@@ -88,9 +89,19 @@ function importWholeAsset(
       continue;
     }
 
+    const rotDescription =
+      rot.Description !== undefined ? rot.Description : rot.description;
+    const description =
+      rotDescription !== undefined &&
+      rotDescription !== null &&
+      String(rotDescription).trim() !== ""
+        ? String(rotDescription).trim()
+        : fileBaseName;
+
     const heats = parseImportHeats(rotHeats, isRc1);
     newRotations.push({
       numDrivers: rotNumDrivers,
+      description: description,
       heats: heats,
       isExpanded: true,
     });
@@ -160,6 +171,16 @@ function importSingleRotation(
   }
 
   const heats: ICustomHeat[] = parseImportHeats(jsonHeats, isRc1);
+  const fileBaseName = fileName.replace(/\.[^/.]+$/, "");
+  const jsonDescription =
+    json.Description !== undefined ? json.Description : json.description;
+  const description =
+    jsonDescription !== undefined &&
+    jsonDescription !== null &&
+    String(jsonDescription).trim() !== ""
+      ? String(jsonDescription).trim()
+      : fileBaseName;
+
   return {
     success: true,
     key: "AM_IMPORT_SUCCESS",
@@ -167,6 +188,7 @@ function importSingleRotation(
     newRotations: [
       {
         numDrivers: jsonNumDrivers,
+        description: description,
         heats: heats,
         isExpanded: true,
       },

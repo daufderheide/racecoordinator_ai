@@ -84,6 +84,11 @@ export function areCustomRotationStatesEqual(
     if (rot.numDrivers !== otherRot.numDrivers) {
       return false;
     }
+    const rotDesc = rot.description || "";
+    const otherRotDesc = otherRot.description || "";
+    if (rotDesc !== otherRotDesc) {
+      return false;
+    }
     const heats = rot.heats || [];
     const otherHeats = otherRot.heats || [];
     if (heats.length !== otherHeats.length) {
@@ -129,6 +134,7 @@ export function buildSingleRotationExportJson(
     Version: "1.0",
     NumDrivers: numDrivers,
     NumLanes: numLanes,
+    Description: rotation.description || "",
     Heats:
       rotation.heats?.map((h) => ({
         Drivers: h.driverIndices,
@@ -156,6 +162,7 @@ export function buildRotationsAssetExportJson(
     NumLanes: numLanes,
     Rotations: rotations.map((rotation) => ({
       NumDrivers: rotation.numDrivers || 0,
+      Description: rotation.description || "",
       Heats:
         rotation.heats?.map((h) => ({
           Drivers: h.driverIndices,

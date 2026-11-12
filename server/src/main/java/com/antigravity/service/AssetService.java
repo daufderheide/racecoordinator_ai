@@ -535,6 +535,9 @@ public class AssetService {
     for (CustomRotation rot : rotations) {
       ObjectNode rotNode = objectMapper.createObjectNode();
       rotNode.put("num_drivers", rot.getNumDrivers());
+      if (rot.getDescription() != null && !rot.getDescription().isEmpty()) {
+        rotNode.put("description", rot.getDescription());
+      }
       ArrayNode heatArray = objectMapper.createArrayNode();
       for (CustomHeat heat : rot.getHeatsList()) {
         ObjectNode heatNode = objectMapper.createObjectNode();
@@ -663,6 +666,9 @@ public class AssetService {
           numDrivers = rot.get("numDrivers").asInt();
         }
         CustomRotation.Builder rotBuilder = CustomRotation.newBuilder().setNumDrivers(numDrivers);
+        if (rot.has("description")) {
+          rotBuilder.setDescription(rot.get("description").asText());
+        }
 
         if (rot.has("heats") && rot.get("heats").isArray()) {
           for (JsonNode heat : rot.get("heats")) {

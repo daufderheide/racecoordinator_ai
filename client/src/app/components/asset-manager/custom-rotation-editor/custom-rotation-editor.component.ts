@@ -691,6 +691,7 @@ export class CustomRotationEditorComponent
 
     const newRot: LocalRotation = {
       numDrivers: candidate,
+      description: "",
       heats: [],
       isExpanded: true,
     };

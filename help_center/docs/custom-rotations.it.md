@@ -102,7 +102,8 @@ Per creare una nuova entità di set di rotazioni personalizzate:
 
 1. Fare clic sul pulsante **Aggiungi Rotazione** (`+`) nella barra degli strumenti in alto per creare la prima scheda di rotazione.
 2. Impostare il campo **Numero di Piloti** nell'intestazione della scheda. Questo valore stabilisce la capacità massima di piloti per quella specifica rotazione.
-3. La scheda conterrà automaticamente una prima manche con le corsie previste per la vostra pista.
+3. È possibile inserire facoltativamente una **Descrizione** (etichetta) nell'intestazione per identificare la rotazione (es. `EURO D18 G3-666 X>1`, `Formato Sprint` o `Esibizione`). Quando si crea una nuova rotazione, questo campo è vuoto; quando si importa un file, assume automaticamente come valore predefinito il nome del file importato.
+4. La scheda conterrà automaticamente una prima manche con le corsie previste per la vostra pista.
 
 ### Aggiunta e Riordino delle Manche {: #adding-heats }
 
@@ -144,7 +145,7 @@ Fare clic sul pulsante **Ordina Rotazioni** (`swap_vert`) nella barra del titolo
 
 - **Esporta Intera Risorsa:** Fare clic su **Esporta** nella barra degli strumenti superiore per scaricare l'intera entità di set di rotazioni personalizzate in formato `.json`.
 - **Esporta Singola Rotazione:** Fare clic sull'icona di esportazione (`upload`) nella scheda di una rotazione per esportare soltanto quella configurazione.
-- **Importa Rotazioni:** Fare clic su **Importa** per caricare file `.json` o file cronologici di Race Coordinator (`.txt` in formato RC1) nella propria risorsa.
+- **Importa Rotazioni:** Fare clic su **Importa** per caricare file `.json` o file cronologici di Race Coordinator (`.txt` in formato RC1) nella propria risorsa. La descrizione della rotazione assume automaticamente per impostazione predefinita il nome del file importato.
 
 ---
 
