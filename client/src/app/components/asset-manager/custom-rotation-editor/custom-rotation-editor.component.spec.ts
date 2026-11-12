@@ -12,6 +12,7 @@ import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ICustomHeat } from "@app/proto/antigravity";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_TRACK_INSTANCES } from "@app/testing/data/tracks_data";
@@ -28,8 +29,11 @@ import { CustomRotationEditorComponent } from "./custom-rotation-editor.componen
 describe("CustomRotationEditorComponent", () => {
   let component: CustomRotationEditorComponent;
   let fixture: ComponentFixture<CustomRotationEditorComponent>;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
 
   beforeEach(async () => {
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
+
     TestBed.configureTestingModule({
       imports: [FormsModule, CustomRotationEditorComponent, TranslatePipe],
       providers: [
@@ -37,6 +41,7 @@ describe("CustomRotationEditorComponent", () => {
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -75,7 +80,9 @@ describe("CustomRotationEditorComponent", () => {
     const titleEl = fixture.debugElement.query(By.css("app-editor-title"));
     expect(titleEl).toBeTruthy();
     expect(titleEl.componentInstance.titleKey()).toBe("AM_ROTATION_EDITOR");
-    expect(titleEl.componentInstance.itemName()).toBe("New Custom Rotation 1");
+    expect(titleEl.componentInstance.itemName()).toBe(
+      "New Custom Rotation Set 1",
+    );
     expect(titleEl.componentInstance.showZoom()).toBeTrue();
 
     const headerEl = titleEl.nativeElement.querySelector(".header");
@@ -99,6 +106,75 @@ describe("CustomRotationEditorComponent", () => {
     const emptyStateText = compiled.querySelector(".empty-state-text");
     expect(emptyStateText).toBeTruthy();
     expect(emptyStateText?.textContent).toContain("AM_HELP_EMPTY_ROTATIONS");
+
+    const learnMoreLink = compiled.querySelector(
+      "#custom-rotation-learn-more-link",
+    );
+    expect(learnMoreLink).toBeTruthy();
+    expect(learnMoreLink?.textContent).toContain(
+      "AM_LEARN_MORE_CUSTOM_ROTATIONS",
+    );
+  });
+
+  it("should render updated empty state message when AM_HELP_EMPTY_ROTATIONS is translated", () => {
+    mockTranslationService.translate.and.callFake((key: string) => {
+      if (key === "AM_HELP_EMPTY_ROTATIONS") {
+        return "Import rotation files or create one or more custom rotations for your new set.";
+      }
+      return key;
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const emptyStateText = compiled.querySelector(".empty-state-text");
+    expect(emptyStateText?.textContent).toContain(
+      "Import rotation files or create one or more custom rotations for your new set.",
+    );
+  });
+
+  it("should call helpLinkService.openHelp with custom-rotations when openLearnMore is called", () => {
+    component.openLearnMore();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith(
+      "custom-rotations",
+    );
+  });
+
+  it("should prevent default and stop propagation when openLearnMore is called with event", () => {
+    const mockEvent = jasmine.createSpyObj("Event", [
+      "preventDefault",
+      "stopPropagation",
+    ]);
+    component.openLearnMore(mockEvent);
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith(
+      "custom-rotations",
+    );
+  });
+
+  it("should trigger openLearnMore when clicking the empty state learn more link", () => {
+    spyOn(component, "openLearnMore");
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const learnMoreLink = compiled.querySelector(
+      "#custom-rotation-learn-more-link",
+    ) as HTMLAnchorElement;
+    expect(learnMoreLink).toBeTruthy();
+    learnMoreLink.click();
+
+    expect(component.openLearnMore).toHaveBeenCalled();
+  });
+
+  it("should call openLearnMore when help event is emitted from app-editor-title", () => {
+    spyOn(component, "openLearnMore");
+    fixture.detectChanges();
+
+    const titleEl = fixture.debugElement.query(By.css("app-editor-title"));
+    expect(titleEl).toBeTruthy();
+    titleEl.triggerEventHandler("help", null);
+
+    expect(component.openLearnMore).toHaveBeenCalled();
   });
 
   it("should load tracks and select the first one by default", fakeAsync(() => {
@@ -1371,33 +1447,33 @@ describe("CustomRotationEditorComponent", () => {
       component.allAssets = [
         {
           type: "custom_rotation",
-          name: "New Custom Rotation 1",
+          name: "New Custom Rotation Set 1",
           model: { entityId: "1" },
         },
         {
           type: "custom_rotation",
-          name: "New Custom Rotation 2",
+          name: "New Custom Rotation Set 2",
           model: { entityId: "2" },
         },
         {
           type: "other_asset",
-          name: "New Custom Rotation 3",
+          name: "New Custom Rotation Set 3",
           model: { entityId: "3" },
         }, // Different type
       ];
       component.internalAssetId = "new";
 
       const uniqueName = component.generateUniqueName();
-      // Should find "New Custom Rotation 3" since the existing asset with that name is of a different type
-      expect(uniqueName).toBe("New Custom Rotation 3");
+      // Should find "New Custom Rotation Set 3" since the existing asset with that name is of a different type
+      expect(uniqueName).toBe("New Custom Rotation Set 3");
 
       component.allAssets.push({
         type: "custom_rotation",
-        name: "New Custom Rotation 3",
+        name: "New Custom Rotation Set 3",
         model: { entityId: "4" },
       });
       const nextUniqueName = component.generateUniqueName();
-      expect(nextUniqueName).toBe("New Custom Rotation 4");
+      expect(nextUniqueName).toBe("New Custom Rotation Set 4");
     });
 
     it("should evaluate isConfigValid correctly based on name, rotations, and validation errors", () => {
@@ -1620,17 +1696,18 @@ describe("CustomRotationEditorComponent", () => {
         tick();
 
         expect(component.defaultRotationName).toBe(component.internalAssetName);
+        expect(component.isNew).toBeTrue();
         expect(component.focusNameInput).toHaveBeenCalled();
       }));
 
       it("should duplicate rotation via saveAsNew and focus input", fakeAsync(() => {
         spyOn(component, "focusNameInput").and.callThrough();
         spyOn(component, "save").and.stub();
-        component.internalAssetName = "Custom Rotation 1";
+        component.internalAssetName = "Custom Rotation Set 1";
         component.allAssets = [
           {
             type: "custom_rotation",
-            name: "Custom Rotation 1",
+            name: "Custom Rotation Set 1",
             model: { entityId: "cr1" },
           } as any,
         ];
@@ -1638,15 +1715,16 @@ describe("CustomRotationEditorComponent", () => {
         component.saveAsNew();
         tick();
 
-        expect(component.internalAssetName).toBe("Custom Rotation 2");
-        expect(component.defaultRotationName).toBe("Custom Rotation 2");
+        expect(component.internalAssetName).toBe("Custom Rotation Set 2");
+        expect(component.defaultRotationName).toBe("Custom Rotation Set 2");
+        expect(component.isNew).toBeTrue();
         expect(component.internalAssetId).toBeUndefined();
         expect(component.save).toHaveBeenCalled();
         expect(component.focusNameInput).toHaveBeenCalled();
       }));
 
       it("should bind appAutoSelectDefault to asset name input in template", () => {
-        component.defaultRotationName = "New Custom Rotation 1";
+        component.defaultRotationName = "New Custom Rotation Set 1";
         fixture.detectChanges();
 
         const inputEl = fixture.nativeElement.querySelector(

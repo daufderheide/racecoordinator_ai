@@ -20,6 +20,7 @@
     (copy)="saveAsNew()"
     (import)="fileInput.click()"
     (export)="exportRotations()"
+    (help)="openLearnMore()"
     [showZoom]="true"
     [(zoomLevel)]="zoomLevel"
   >
@@ -196,6 +197,15 @@
               <div class="empty-state-text">
                 {{ "AM_HELP_EMPTY_ROTATIONS" | translate }}
               </div>
+              <a
+                id="custom-rotation-learn-more-link"
+                class="empty-state-help-link"
+                href="javascript:void(0)"
+                (click)="openLearnMore($event)"
+                [attr.aria-label]="'AM_LEARN_MORE_CUSTOM_ROTATIONS' | translate"
+              >
+                {{ "AM_LEARN_MORE_CUSTOM_ROTATIONS" | translate }}
+              </a>
             </div>
           </div>
         }

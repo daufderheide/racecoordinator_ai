@@ -1044,6 +1044,24 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
+.empty-state-help-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  color: #38bdf8;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.empty-state-help-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
 /* Animations */
 .animate-fade-in {
   animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;

@@ -6,6 +6,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
@@ -133,6 +134,12 @@ describe("AssetManagerComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should configure manager header with showAdd false so create new button is not shown in toolbar", () => {
+    const headerEl = fixture.debugElement.query(By.css("app-manager-header"));
+    expect(headerEl).toBeTruthy();
+    expect(headerEl.componentInstance.showAdd()).toBeFalse();
   });
 
   it("should filter assets by type", () => {

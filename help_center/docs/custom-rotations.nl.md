@@ -1,4 +1,161 @@
-# Aangepaste Rotaties
+# Aangepaste Rotatiesets
 
-!!! note "Vertaling in behandeling"
-    Deze pagina is nog niet vertaald naar het Nederlands. De inhoud zal binnenkort beschikbaar zijn.
+## Overzicht {: #overview }
+
+Met de **Editor voor Aangepaste Rotatiesets** kunt u op maat gemaakte heatrotatieschema's voor uw baan ontwerpen, bewerken en organiseren. Waar Race Coordinator AI standaard algoritmische rotaties biedt—zoals **Round Robin**, **Europees Round Robin**, **Enkele Heat** en **Step Up Races**—bieden aangepaste rotatiesets wedstrijdleiders volledige handmatige controle, baan voor baan, over de planning van rijders, de volgorde van heats en de baantoewijzingen.
+
+Een **Aangepast Rotatieset-Asset** vertegenwoordigt een verzameling (of set) van individuele rotatieconfiguraties die specifiek zijn afgestemd op het fysieke baanaantal van een circuit (zoals 2, 4, 6 of 8 banen). Binnen één enkel aangepast rotatieset-asset kunt u meerdere rotatiepatronen definiëren die zijn geoptimaliseerd voor verschillende aantallen deelnemers.
+
+Aangepaste rotatiesets zijn ideaal voor:
+
+- **Afwijkende Baanconfiguraties:** Banen met specifieke baankenmerken, handicapinstellingen of pitstraatvereisten.
+- **Clubformaten en Huisregels:** Traditionele clubrotatieschema's waarbij specifieke rijderskoppels of baanvolgordes strikt moeten worden gehandhaafd.
+- **Vaste Fasen- en Stintreeksen:** Speciale demonstratieraces, derby's of teamformaten waarbij algoritmische Round Robin-schema's niet overeenkomen met het wedstrijdreglement.
+
+---
+
+## Hoe Aangepaste Rotatiesets Werken {: #how-custom-rotations-work }
+
+### Maximale Rijderscapaciteit per Rotatie {: #maximum-driver-capacity }
+
+Een aangepast rotatieset-asset definieert niet slechts één enkel statisch schema; het bevat een **set van rotaties**, waarbij **elke rotatie een rotatie voor een maximaal aantal rijders** (`numDrivers`) specificeert.
+
+Binnen elke rotatie:
+
+- **Virtuele Rijders-Plaatsingsnummers:** Rijders worden aangeduid met plaatsingsnummers: `Rijder 1`, `Rijder 2`, ... tot en met `Rijder N` (waarbij `N` de maximale rijderscapaciteit van de rotatie is).
+- **Baantoewijzingen:** Voor elke heat krijgt elke fysieke baan een specifiek virtueel plaatsingsnummer toegewezen (bijv. Baan 1: Rijder 1, Baan 2: Rijder 2), of blijft deze leeg/niet-toegewezen.
+- **Deelnemersindeling:** Wanneer een race begint, worden de geregistreerde rijders toegewezen aan de plaatsingen 1 tot en met $M$ volgens hun kwalificatievolgorde (of willekeurige loting).
+
+Een asset "4-Bans Club Sprint" kan bijvoorbeeld bevatten:
+
+- Een **4-Rijders Rotatie:** Een schema van 4 heats waarin 4 rijders elk eenmaal op elk van de 4 banen rijden.
+- Een **5-Rijders Rotatie:** Een schema van 5 heats waarbij 5 rijders roteren over de 4 banen, met in elke heat één rustende rijder.
+- Een **6-Rijders Rotatie:** Een schema van 6 heats dat een evenwichtige baantijd garandeert.
+- Een **8-Rijders Rotatie:** Een schema van 8 heats voor grotere deelnemersvelden.
+
+---
+
+### Algoritme voor Rotatieselectie {: #rotation-selection-algorithm }
+
+Wanneer een race met een aangepast rotatieformaat start (of tijdens het genereren van het live heatoverzicht in de race-editor), bepaalt Race Coordinator AI automatisch welke rotatie uit de set van het asset wordt gebruikt.
+
+Het systeem telt het aantal actieve deelnemende rijders (`driverCount`) en kiest de optimale rotatie via een strikte **prioriteringsstrategie met drie niveaus**:
+
+#### 1. Niveau 1: Exacte Overeenkomst {: #selection-tier-1 }
+Het systeem zoekt eerst naar een rotatie waarvan het geconfigureerde maximum aantal rijders (`numDrivers`) **exact gelijk is** aan het actieve aantal rijders (`numDrivers == driverCount`).
+
+- **Resultaat:** De exact passende rotatie wordt geselecteerd.
+- **Baantoewijzing:** Elke deelnemende rijder komt 1:1 overeen met diens virtuele plaatsingsnummer (Rijder 1 rijdt als Plaatsing 1, Rijder 2 als Plaatsing 2, enz.). Er zijn geen lege banen, tenzij de rotatie zelf expliciet met onbezette banen is ontworpen.
+
+#### 2. Niveau 2: Dichtstbijzijnde Bovenliggende (Kleinste Rotatie Groter dan Aantal Rijders) {: #selection-tier-2 }
+Als geen enkele rotatie overeenkomt met het exacte rijdersaantal, zoekt het systeem naar alle rotaties in de set met een capaciteit **groter dan** het actieve rijdersaantal (`numDrivers > driverCount`). Hieruit selecteert het de rotatie met het **kleinste verschil**:
+
+$$\min(\text{numDrivers} - \text{driverCount})$$
+
+- **Resultaat:** De dichtstbijzijnde grotere rotatie wordt gekozen om te garanderen dat alle aanwezige rijders kunnen racen.
+- **Afhandeling van Lege Banen:** Omdat er minder rijders aanwezig zijn dan waarvoor de rotatie is ontworpen, wordt elke baanplek die is toegewezen aan een plaatsingsnummer hoger dan het actieve rijdersaantal (`Plaatsing > driverCount`) automatisch ingevuld met een **lege rijdersplek** (`Driver.EMPTY_DRIVER`). Die baan blijft in die heat onbezet, terwijl alle deelnemende rijders op hun geplande posities rijden.
+
+#### 3. Niveau 3: Dichtstbijzijnde Onderliggende (Grootste Rotatie Kleiner dan Aantal Rijders) {: #selection-tier-3 }
+Indien het actieve rijdersaantal de maximale capaciteit van **elke** rotatie in de set overschrijdt (bijvoorbeeld als er 9 rijders meedoen, maar de grootste rotatie in de set maximaal 8 rijders ondersteunt), valt het systeem terug op de rotatie met de **grootste capaciteit onder het actieve rijdersaantal**:
+
+$$\min(\text{driverCount} - \text{numDrivers})$$
+
+- **Resultaat:** De dichtstbijzijnde kleinere rotatie wordt geselecteerd.
+- **Capaciteitsbeperking:** Alleen rijders van wie het plaatsingsnummer binnen de capaciteit van de geselecteerde rotatie valt (Rijders 1 tot en met `numDrivers`), worden in heats ingedeeld. Rijders met hogere plaatsingsnummers worden niet ingepland.
+
+!!! tip "Ontwerptip: Dek Alle Deelnemersaantallen Af"
+    Om te waarborgen dat alle rijders racen zonder niet-ingeplande deelnemers of onverwachte lege banen, maakt u binnen hetzelfde aangepaste rotatieset-asset voor elke verwachte veldgrootte (bijv. 4, 5, 6, 7 en 8 rijders) een eigen rotatie aan.
+
+---
+
+### Praktijkvoorbeelden van Selectie {: #selection-examples }
+
+Stel dat uw aangepaste rotatieset-asset drie rotaties bevat: **4 Rijders**, **6 Rijders** en **8 Rijders**. De onderstaande tabel toont welke rotatie Race Coordinator AI selecteert afhankelijk van het deelnemersaantal:
+
+| Geregistreerde Rijders | Beschikbaar in Set | Geselecteerde Rotatie | Selectieregel | Gedrag Baan & Lege Banen |
+| :---: | :---: | :---: | :---: | :--- |
+| **4 Rijders** | 4, 6, 8 | **4-Rijders Rotatie** | **Niveau 1 (Exacte Overeenkomst)** | Perfecte aansluiting. Alle banen bezet; alle 4 rijders racen. |
+| **5 Rijders** | 4, 6, 8 | **6-Rijders Rotatie** | **Niveau 2 (Dichtstbijzijnde Bovenliggende)** | Plaatsing 6-posities zijn lege banen. Rijders 1–5 racen. |
+| **6 Rijders** | 4, 6, 8 | **6-Rijders Rotatie** | **Niveau 1 (Exacte Overeenkomst)** | Perfecte aansluiting. Alle banen bezet; alle 6 rijders racen. |
+| **7 Rijders** | 4, 6, 8 | **8-Rijders Rotatie** | **Niveau 2 (Dichtstbijzijnde Bovenliggende)** | Plaatsing 8-posities zijn lege banen. Rijders 1–7 racen. |
+| **8 Rijders** | 4, 6, 8 | **8-Rijders Rotatie** | **Niveau 1 (Exacte Overeenkomst)** | Perfecte aansluiting. Alle banen bezet; alle 8 rijders racen. |
+| **9 Rijders** | 4, 6, 8 | **8-Rijders Rotatie** | **Niveau 3 (Dichtstbijzijnde Onderliggende)** | Rijders 1–8 racen. Rijder 9 wordt niet ingepland. |
+
+---
+
+## Een Aangepaste Rotatieset Aanmaken {: #creating-custom-rotations }
+
+Om een nieuw aangepast rotatieset-asset aan te maken:
+
+1. Open **Assetbeheer** vanuit het hoofdmenu of instellingenscherm.
+2. Klik in het linkerpaneel op de knop **Nieuwe Aangepaste Rotatieset** (of filter op **Aangepaste Rotatiesets** en klik op een bestaande kaart om deze te bewerken).
+3. De **Rotatie-editor** wordt geopend:
+   - Bij het aanmaken van een nieuw asset toont de editor eerst een lege statuskaart met uitleg en een link **Meer informatie over aangepaste rotatiesets** naar deze documentatie.
+   - Voer een unieke **Assetnaam** in het configuratiepaneel in.
+   - Selecteer uw gewenste **Baan**. Deze selectie stelt automatisch het aantal banen in voor alle rotaties binnen de set.
+
+---
+
+## Heats & Banen Ontwerpen {: #designing-heats }
+
+### Rotaties aan de Set Toevoegen {: #adding-rotations }
+
+1. Klik op de knop **Rotatie Toevoegen** (`+`) in de bovenste werkbalk om uw eerste rotatiekaart te maken.
+2. Stel het veld **Aantal Rijders** in de kop van de kaart in. Dit definieert de maximale rijderscapaciteit voor die specifieke rotatie.
+3. De kaart wordt automatisch gevuld met een eerste heat met baanposities voor uw circuit.
+
+### Heats Toevoegen en Herschikken {: #adding-heats }
+
+- **Heat Toevoegen:** Klik op het `+`-icoon in de rotatiekop om extra heats toe te voegen.
+- **Heats Herschikken:** Versleep heatkaarten binnen het raster om de volgorde van heats te wijzigen.
+- **Heat Verwijderen:** Klik op het prullenbakicoon van een heatkaart om deze te verwijderen.
+
+### Rijders aan Banen Toewijzen {: #assigning-drivers }
+
+- **Pool van Virtuele Rijders:** Het linkerpaneel biedt een verzameling virtuele rijders (`Rijder 1`, `Rijder 2`, enz.). U kunt het aantal rijders in de pool aanpassen om zoveel plaatsingen te maken als nodig is.
+- **Slepen en Neerzetten:** Sleep rijdersfiches vanuit de pool direct naar de baanposities van een heatkaart.
+- **Banen Wisselen:** Sleep een rijdersfiche van de ene baan naar de andere om hun toewijzingen om te wisselen.
+- **Baan Legen:** Sleep een rijder uit een baan om deze onbezet (leeg) te laten.
+
+### Groepstoewijzingen {: #group-assignments }
+
+Elke heatkaart bevat een invoerveld voor de **Groep**:
+
+- Wijs heats toe aan verschillende groepsnummers (bijv. Groep 1, Groep 2) bij races met meerdere groepen of fasen.
+- Rijders in verschillende groepen racen onafhankelijk van elkaar, en klassementen kunnen in de raceconfiguratie per groep worden gescheiden.
+
+### Controle op Baangelijkheid {: #lane-equality-validation }
+
+Eerlijkheid is cruciaal bij slotcar-racing. Race Coordinator AI controleert continu de baanverdeling voor elke rotatie:
+
+- **Groen Vinkje:** Geeft aan dat elke rijder binnen de rotatie even vaak op elke baan rijdt.
+- **Oranje Waarschuwingsbadge:** Geeft aan dat de baantoewijzingen onevenwichtig zijn (bijv. Rijder 1 rijdt tweemaal op Baan 1, maar nooit op Baan 4).
+- **Gelijkheidsrapport:** Klik op de gelijkheidsbadge om het gedetailleerde **Baangelijkheidsrapport** te openen. Dit toont een matrix met het exacte aantal ritten van elke rijder op elke baan.
+
+### Rotaties Sorteren {: #sorting-rotations }
+
+Klik op de knop **Rotaties Sorteren** (`swap_vert`) in de titelwerkbalk om alle rotatiekaarten automatisch oplopend te rangschikken op hun maximale aantal rijders.
+
+---
+
+## Rotaties Importeren & Exporteren {: #importing-exporting }
+
+U kunt rotaties uitwisselen tussen computers of archiveren:
+
+- **Volledig Asset Exporteren:** Klik op **Exporteren** in de bovenste werkbalk om het volledige aangepaste rotatieset-asset als `.json`-bestand te downloaden.
+- **Enkele Rotatie Exporteren:** Klik op het exporticoon (`upload`) op een individuele rotatiekaart om alleen die specifieke configuratie te exporteren.
+- **Rotaties Importeren:** Klik op **Importeren** om `.json`-rotatiebestanden of oudere Race Coordinator-bestanden (`.txt` in RC1-formaat) in uw asset te laden.
+
+---
+
+## Aangepaste Rotatiesets in Races Gebruiken {: #using-in-races }
+
+Nadat uw aangepaste rotatieset-asset is opgeslagen:
+
+1. Open de [Race-editor](race-editor.md).
+2. Stel in de sectie **Race-instellingen** in het linkerpaneel het **Heatrotatieformaat** in op **Aangepaste rotatieset**.
+3. Selecteer uw aangepaste rotatieset-asset in het dropdownmenu **Aangepaste rotatieset**.
+4. Pas de race-instellingen naar wens aan:
+   - **Volledige Heatcycli:** Herhaalt de gehele aangepaste rotatiereeks $N$ keer.
+   - **Heats Omkeren:** Keert de heatvolgorde om zodat de heats in omgekeerde volgorde worden verreden.
+5. Gebruik de schuifregelaar voor het **Voorbeeld Aantal Rijders** en inspecteer het **Live Heatoverzicht** in het rechterpaneel om de baantoewijzingen vóór de racedag te controleren.

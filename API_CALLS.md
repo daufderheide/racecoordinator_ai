@@ -58,7 +58,7 @@ Themes define the colors and audio properties of the UI slots.
 
 ## 4. Asset Management APIs (`AssetTaskHandler`)
 
-Assets are divided into images, audios, and custom rotations. Most assets API requests and responses use **Protocol Buffers (Protobuf)** via binary byte streams (`application/octet-stream`).
+Assets are divided into images, audios, and custom rotation sets. Most assets API requests and responses use **Protocol Buffers (Protobuf)** via binary byte streams (`application/octet-stream`).
 
 | Method | Path | Request Format | Response Format | Description |
 |:---|:---|:---|:---|:---|

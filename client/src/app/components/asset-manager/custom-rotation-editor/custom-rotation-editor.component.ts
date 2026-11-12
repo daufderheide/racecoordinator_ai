@@ -36,6 +36,7 @@ import {
   ICustomRotation,
   ITrackModel,
 } from "@app/proto/antigravity";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -133,6 +134,7 @@ export class CustomRotationEditorComponent
   readonly saved = output<IAssetMessage>();
   readonly cancelled = output<void>();
   defaultRotationName: string = "";
+  isNew: boolean = false;
 
   focusNameInput() {
     setTimeout(() => {
@@ -199,6 +201,7 @@ export class CustomRotationEditorComponent
     private logger: LoggerService,
     private router: Router,
     private route: ActivatedRoute,
+    private helpLinkService: HelpLinkService,
   ) {
     this.undoManager = new UndoManager<CustomRotationState>(
       {
@@ -375,11 +378,11 @@ export class CustomRotationEditorComponent
         }
         this.isLoading = false;
         this.initEditorState();
-        const isNew =
+        this.isNew =
           this.route.snapshot.queryParamMap?.get("isNew") === "true" ||
           !idParam ||
           idParam === "new";
-        if (isNew) {
+        if (this.isNew) {
           this.defaultRotationName = this.internalAssetName;
           this.focusNameInput();
         }
@@ -405,7 +408,7 @@ export class CustomRotationEditorComponent
     this.sortRotationsByDrivers();
   }
 
-  generateUniqueName(baseName: string = "New Custom Rotation"): string {
+  generateUniqueName(baseName: string = "New Custom Rotation Set"): string {
     const pattern = /(_\d+|\s+\d+)$/;
     const base = baseName.replace(pattern, "");
     let index = 1;
@@ -425,13 +428,22 @@ export class CustomRotationEditorComponent
   }
 
   saveAsNew() {
-    const base = this.internalAssetName || "New Custom Rotation";
+    const base = this.internalAssetName || "New Custom Rotation Set";
     const newName = this.generateUniqueName(base);
     this.internalAssetId = undefined;
     this.internalAssetName = newName;
     this.defaultRotationName = newName;
+    this.isNew = true;
     this.save();
     this.focusNameInput();
+  }
+
+  openLearnMore(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.helpLinkService.openHelp("custom-rotations");
   }
 
   isNameUnique(): boolean {

@@ -1785,7 +1785,7 @@ export class TestSetupHelper {
         success: true,
         asset: {
           model: { entityId: "mock-new-rotation-id" },
-          name: "New Custom Rotation 1",
+          name: "New Custom Rotation Set 1",
           type: "custom_rotation",
           numLanes: 4,
           customRotations: [],
