@@ -114,6 +114,7 @@ Om een nieuw aangepast rotatieset-asset aan te maken:
 ### Rijders aan Banen Toewijzen {: #assigning-drivers }
 
 - **Pool van Virtuele Rijders:** Het linkerpaneel biedt een verzameling virtuele rijders (`Rijder 1`, `Rijder 2`, enz.). U kunt het aantal rijders in de pool aanpassen om zoveel plaatsingen te maken als nodig is.
+- **Pool van Promotiecoureurs:** Bevindt zich direct onder de virtuele rijders; biedt dynamische doorstroomfiches voor Step Up races (zie [Step Up Races & Promotieladders](#step-up-races) hieronder).
 - **Slepen en Neerzetten:** Sleep rijdersfiches vanuit de pool direct naar de baanposities van een heatkaart.
 - **Banen Wisselen:** Sleep een rijdersfiche van de ene baan naar de andere om hun toewijzingen om te wisselen.
 - **Baan Legen:** Sleep een rijder uit een baan om deze onbezet (leeg) te laten.
@@ -139,6 +140,47 @@ Klik op de knop **Rotaties Sorteren** (`swap_vert`) in de titelwerkbalk om alle 
 
 ---
 
+## Step Up Races & Promotieladders {: #step-up-races }
+
+Race Coordinator AI biedt volledige ondersteuning voor **Step Up races** (ook bekend als ladder-, hoofdrace-progressie of bump-up races) binnen aangepaste rotatiesets. In een step up-formaat is de competitie opgedeeld in oplopende treden of rondes—zoals **D-Finale $\rightarrow$ C-Finale $\rightarrow$ B-Finale $\rightarrow$ A-Finale**. Lager geplaatste deelnemers starten in de eerdere treden en de beste rijders promoveren ("Step Up") naar volgende rondes om het op te nemen tegen de reeds hoger geplaatste coureurs.
+
+### Pool van Promotiecoureurs {: #step-up-driver-pool }
+
+De linkerzijbalk bevat een speciale pool voor **Promotie**, direct onder de lijst met virtuele rijders:
+
+- **Aantal Promotieplaatsen Instellen:** Vul het gewenste aantal promotieplaatsen in bij het invoerveld **Aantal rijders**. Standaard wordt dit ingesteld op het aantal banen min één ($\text{numLanes} - 1$), maar dit kan flexibel worden aangepast tussen 1 en 99.
+- **Promotiefiches:** Virtuele promotiecoureurs worden aangeduid met een pijl omhoog (`arrow_upward`) en genummerde labels (`Promotie 1`, `Promotie 2`, enz.).
+- **Toewijzen aan Banen:** Sleep promotiefiches naar baanposities van heats in Trede 2 of hoger. Tijdens de race worden deze tijdelijke posities automatisch ingevuld door de gekwalificeerde rijders uit de voorafgaande trede.
+
+### Promotiegrenzen & Treden {: #step-up-boundaries }
+
+De overgang tussen treden wordt geregeld door **Promotiegrenzen**:
+
+- **Grenzen Inschakelen:** Elke heatkop bevat een knop **Promotiegrens**. Klik hierop om die heat aan te merken als de beslissende slotheat van die trede.
+- **Visuele Aanduiding:** Grensheats worden duidelijk gemarkeerd met een actieve grensbadge en een opvallende rand om scharnierpunten in het schema direct herkenbaar te maken.
+- **Automatische Tredeberekening:** Het markeren van een heat als grens schuift alle volgende heats binnen die groep automatisch door naar de volgende trede op de ladder (bijv. heats in Trede 1 gaan over naar **Trede 2**, vervolgens **Trede 3**, enz.). De actieve trede wordt getoond in de heatkop (`- Trede N`).
+- **Dynamische Promotie op de Racedag:** Zodra de aangewezen grensheat op de racedag is voltooid, berekent de race-engine het tussenklassement van die trede en plaatst de best geklasseerde rijders direct op de startposities `Promotie 1`, `Promotie 2`, enz. van de volgende trede.
+
+### Variabele Promoties per Trede {: #variable-step-ups }
+
+Waar standaard algoritmische step up races een vast promotieaantal hanteren voor elke ronde (bijv. telkens precies 2 rijders die doorstromen), ondersteunen aangepaste rotatiesets **variabele promoties per trede**:
+
+- **Aangepaste Doorstroomschema's:** U kunt per trede een afwijkend aantal doorstromers instellen. Bijvoorbeeld:
+  - **Trede 1 (D-Finale):** De beste 2 rijders stromen door naar Trede 2 (`Promotie 1` en `Promotie 2`).
+  - **Trede 2 (C-Finale):** De beste 3 rijders stromen door naar Trede 3 (`Promotie 1`, `Promotie 2` en `Promotie 3`).
+  - **Trede 3 (B-Finale):** Slechts de beste 1 rijder stroomt door naar de A-Finale (`Promotie 1`).
+- De race-engine analyseert de geplaatste promotiefiches in elke trede en promoveert exact het benodigde aantal deelnemers.
+
+### Promotieregels & Validatie {: #step-up-validation }
+
+De editor handhaaft strenge regels om een eerlijk en correct wedstrijdverloop te garanderen:
+
+- **Geen Promotiecoureurs in Trede 1:** Trede 1 is de openingsronde waarin alle deelnemers regulier ingeschreven rijders moeten zijn. Een promotiecoureur toewijzen in Trede 1 is ongeldig omdat er geen voorafgaande ronde bestaat om uit te kwalificeren. De editor toont een waarschuwingsicoon (`warning`) met de melding *"Trede 1 mag geen promotiecoureurs bevatten."*, en het opslaan van ongeldige toewijzingen in trede 1 wordt door de server geweigerd.
+- **Onafhankelijke Groepen:** Wanneer meerdere groepen worden gebruikt (bijv. Groep 1 en Groep 2), verlopen de ladders en promoties binnen elke groep geheel onafhankelijk van elkaar.
+- **Bescherming van Volgorde:** Step Up races vereisen een strikt chronologische afhandeling van heats zodat doorstromende rijders bekend zijn voordat de volgende trede start. Daarom worden opties zoals **Volledige Heatcycli** ($> 1$) en **Heats Omkeren** bij step up races automatisch uitgeschakeld om het klassement te waarborgen.
+
+---
+
 ## Rotaties Importeren & Exporteren {: #importing-exporting }
 
 U kunt rotaties uitwisselen tussen computers of archiveren:
@@ -157,6 +199,7 @@ Nadat uw aangepaste rotatieset-asset is opgeslagen:
 2. Stel in de sectie **Race-instellingen** in het linkerpaneel het **Heatrotatieformaat** in op **Aangepaste rotatieset**.
 3. Selecteer uw aangepaste rotatieset-asset in het dropdownmenu **Aangepaste rotatieset**.
 4. Pas de race-instellingen naar wens aan:
-   - **Volledige Heatcycli:** Herhaalt de gehele aangepaste rotatiereeks $N$ keer.
-   - **Heats Omkeren:** Keert de heatvolgorde om zodat de heats in omgekeerde volgorde worden verreden.
-5. Gebruik de schuifregelaar voor het **Voorbeeld Aantal Rijders** en inspecteer het **Live Heatoverzicht** in het rechterpaneel om de baantoewijzingen vóór de racedag te controleren.
+   - **Volledige Heatcycli:** Herhaalt de gehele aangepaste rotatiereeks $N$ keer (uitgeschakeld bij step up races).
+   - **Heats Omkeren:** Keert de heatvolgorde om (uitgeschakeld bij step up races).
+5. **Integratie met Step Up:** Bevat uw aangepaste rotatieset promotiegrenzen en promotiecoureurs, dan verzorgt Race Coordinator AI de promoties tijdens de wedstrijd geheel automatisch. In het **Live Heatoverzicht** tonen de begintreden de regulier geplaatste rijders, terwijl hogere treden promotiefiches bevatten die op de wedstrijddag dynamisch worden ingevuld.
+6. Gebruik de schuifregelaar voor het **Voorbeeld Aantal Rijders** en inspecteer het **Live Heatoverzicht** in het rechterpaneel om de baantoewijzingen vóór de racedag te controleren.

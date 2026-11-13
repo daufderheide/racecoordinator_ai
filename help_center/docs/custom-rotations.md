@@ -114,6 +114,7 @@ To create a new custom rotation set asset:
 ### Assigning Drivers to Lanes {: #assigning-drivers }
 
 - **Virtual Drivers Pool:** The left panel provides a pool of virtual drivers (`Driver 1`, `Driver 2`, etc.). You can adjust the **Number of Drivers** in the pool to generate as many virtual seeds as needed.
+- **Step-Up Drivers Pool:** Located directly below the virtual driver pool, providing dynamic advancement chips for step up races (see [Step Up Races & Progression Ladders](#step-up-races) below).
 - **Drag and Drop:** Drag driver chips from the pool directly into lane slots on any heat card.
 - **Lane Swapping:** Drag a driver chip from one lane and drop it onto another lane to swap their assignments.
 - **Clear Lane:** Click or drag a driver out of a lane to leave it unoccupied (empty).
@@ -139,6 +140,47 @@ Click the **Sort Rotations** button (`swap_vert`) in the title toolbar to automa
 
 ---
 
+## Step Up Races & Progression Ladders {: #step-up-races }
+
+Race Coordinator AI fully supports **Step Up races** (also known as ladder, main-event progression, or bump-up races) within custom rotation sets. In a step up format, racing is organized into ascending tiers or rounds—such as **D-Main $\rightarrow$ C-Main $\rightarrow$ B-Main $\rightarrow$ A-Main**. Lower-seeded participants compete in earlier steps, and the top-finishing drivers advance ("step up") into subsequent rounds to face higher-seeded drivers waiting in higher tiers.
+
+### Step-Up Driver Pool {: #step-up-driver-pool }
+
+The left sidebar includes a dedicated **Step-Up Drivers** pool located directly beneath the virtual drivers list:
+
+- **Configuring Step-Up Count:** Enter the desired number of step-up slots in the **Number of Drivers** input. By default, this initializes to the track's lane count minus one ($\text{numLanes} - 1$), but it can be adjusted to any value from 1 to 99.
+- **Step-Up Chips:** Virtual step-up drivers are identified with an upward arrow icon (`arrow_upward`) and numbered labels (`Step-Up 1`, `Step-Up 2`, etc.).
+- **Assigning to Lanes:** Drag and drop step-up chips into lane slots on any heat card in Step 2 or higher. During the race, these placeholder slots will be dynamically filled by the advancing drivers from the preceding step.
+
+### Step-Up Boundaries & Ladder Steps {: #step-up-boundaries }
+
+Progression between tiers is governed by **Step-Up Boundaries**:
+
+- **Toggling Boundaries:** Every heat card header features a **Step-Up Boundary** button. Click this button to designate the heat as the final, deciding heat of that step.
+- **Visual Styling:** Boundary heats are highlighted with an active boundary badge and border styling to easily identify cutoff points in the schedule.
+- **Automatic Step Calculation:** Marking a heat as a boundary automatically advances all subsequent heats in that group to the next ladder step (e.g. Heats in Step 1 transition to **Step 2**, then **Step 3**, etc.). The current step is displayed in the heat title badge (`- Step N`).
+- **Dynamic Advancement on Race Day:** When the designated boundary heat completes on race day, the race engine calculates cumulative standings for that step and instantly promotes the top finishers into the `Step-Up 1`, `Step-Up 2`, etc., lane assignments in the next step.
+
+### Variable Step-Ups per Step {: #variable-step-ups }
+
+While standard algorithmic step-up races enforce a uniform advancement count across all rounds (e.g., strictly 2 drivers advancing from every main), custom rotation sets allow **variable step-ups per step**:
+
+- **Custom Advancement Schemes:** You can configure different numbers of advancing drivers for each tier. For example:
+  - **Step 1 (D-Main):** Top 2 drivers advance to Step 2 (`Step-Up 1` and `Step-Up 2`).
+  - **Step 2 (C-Main):** Top 3 drivers advance to Step 3 (`Step-Up 1`, `Step-Up 2`, and `Step-Up 3`).
+  - **Step 3 (B-Main):** Only the top 1 driver advances to the A-Main final (`Step-Up 1`).
+- The race engine inspects the step-up chips assigned in each step and advances the exact number of drivers required.
+
+### Step-Up Rules & Validation {: #step-up-validation }
+
+The Custom Rotation Editor enforces key rules to ensure valid step ladder execution:
+
+- **No Step-Up Drivers in Step 1:** Step 1 is the opening tier where all participants must be registered drivers. Placing a step-up driver in Step 1 is invalid because there is no prior round to qualify from. The editor displays an inline warning icon (`warning`) with the message *"Step 1 cannot contain any step-up drivers"*, and the server validation will prevent saving invalid step 1 assignments.
+- **Independent Groups:** When using multiple groups (e.g. Group 1 and Group 2), step progression ladders and boundary advancements are calculated independently within each group.
+- **Execution Order Safeguards:** Step-up races depend on strict sequential completion of heats so advancing drivers can be resolved before the next step begins. Consequently, options such as **Heat Times Through** ($> 1$) and **Reverse Heats** are automatically disabled for step-up races to preserve ladder integrity.
+
+---
+
 ## Importing & Exporting Rotations {: #importing-exporting }
 
 You can share rotations between systems or archive rotation sets:
@@ -157,6 +199,7 @@ Once your custom rotation set asset is saved:
 2. Under the **Race Setup** section on the left panel, set **Heat Rotation Format** to **Custom Rotation Set**.
 3. Select your custom rotation set asset from the **Custom Rotation Set** dropdown.
 4. Adjust race settings as desired:
-   - **Heat Times Through:** Repeats the entire custom rotation sequence $N$ times.
-   - **Reverse Heats:** Inverts the heat order so drivers race the schedule in reverse sequence.
-5. Use the **Driver Count Preview** slider and inspect the **Live Heat Preview** on the right panel to verify how the rotation selection algorithm schedules heats for varying field sizes before race day.
+   - **Heat Times Through:** Repeats the entire custom rotation sequence $N$ times (disabled when step-ups are present).
+   - **Reverse Heats:** Inverts the heat order so drivers race the schedule in reverse sequence (disabled when step-ups are present).
+5. **Step Up Integration:** If your custom rotation set contains step-up boundaries and step-up drivers, Race Coordinator AI automatically manages driver promotion between steps throughout the race. In the **Live Heat Preview**, initial steps show assigned drivers while higher steps display placeholder step-up badges that populate dynamically during race day.
+6. Use the **Driver Count Preview** slider and inspect the **Live Heat Preview** on the right panel to verify how the rotation selection algorithm schedules heats for varying field sizes before race day.

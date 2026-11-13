@@ -114,6 +114,7 @@ So erstellen Sie ein neues Asset für ein benutzerdefiniertes Rotationsset:
 ### Fahrer Spuren zuweisen {: #assigning-drivers }
 
 - **Pool virtueller Fahrer:** Der linke Bereich bietet einen Pool virtueller Fahrer (`Fahrer 1`, `Fahrer 2` usw.). Sie können die Anzahl der Fahrer im Pool anpassen, um beliebig viele Startplätze bereitzustellen.
+- **Pool der Aufsteiger:** Direkt unter dem Pool der virtuellen Fahrer angeordnet; stellt dynamische Aufsteiger-Chips für Step Up Rennen bereit (siehe [Step Up Rennen & Aufstiegsstufen](#step-up-races) weiter unten).
 - **Drag-and-Drop:** Ziehen Sie Fahrerchips aus dem Pool direkt in die Spurplätze einer Heat-Karte.
 - **Spurtausch:** Ziehen Sie einen Fahrerchip von einer Spur auf eine andere, um deren Zuweisungen zu tauschen.
 - **Spur leeren:** Ziehen Sie einen Fahrer aus einer Spur heraus oder entfernen Sie ihn, um die Spur unbesetzt zu lassen.
@@ -139,6 +140,47 @@ Klicken Sie in der Titelleiste auf die Schaltfläche **Rotationen sortieren** (`
 
 ---
 
+## Step Up Rennen & Aufstiegsstufen {: #step-up-races }
+
+Race Coordinator AI unterstützt **Step Up Rennen** (auch bekannt als Stufenleiter-, Hauptrennen-Progressions- oder Bump-Up-Rennen) in benutzerdefinierten Rotationssets vollständig. In einem Step Up Format ist das Rennen in aufsteigende Stufen oder Runden unterteilt—wie z. B. **D-Hauptlauf $\rightarrow$ C-Hauptlauf $\rightarrow$ B-Hauptlauf $\rightarrow$ A-Hauptlauf**. Niedriger gesetzte Teilnehmer treten in früheren Stufen an, und die bestplatzierten Fahrer steigen auf ("Step Up"), um in höheren Stufen gegen dort gesetzte Fahrer anzutreten.
+
+### Pool der Aufsteiger {: #step-up-driver-pool }
+
+Die linke Seitenleiste enthält einen dedizierten Pool für **Aufsteiger**, der sich direkt unter der Liste der virtuellen Fahrer befindet:
+
+- **Aufsteigeranzahl konfigurieren:** Geben Sie die gewünschte Anzahl an Aufsteigerplätzen im Eingabefeld **Anzahl der Fahrer** ein. Standardmäßig ist dieser Wert auf die Anzahl der Bahnspuren minus eins initialisiert ($\text{numLanes} - 1$), kann jedoch flexibel von 1 bis 99 eingestellt werden.
+- **Aufsteiger-Chips:** Virtuelle Aufsteiger werden durch ein Pfeil-nach-oben-Symbol (`arrow_upward`) und nummerierte Bezeichnungen gekennzeichnet (`Aufsteiger 1`, `Aufsteiger 2` usw.).
+- **Spuren zuweisen:** Ziehen Sie Aufsteiger-Chips per Drag-and-Drop in die Spurplätze von Heats ab Stufe 2. Während des Rennens werden diese Platzhalter automatisch mit den aufsteigenden Fahrern der vorherigen Stufe besetzt.
+
+### Aufstiegsgrenzen & Stufen {: #step-up-boundaries }
+
+Der Übergang zwischen den Stufen wird über **Aufstiegsgrenzen** gesteuert:
+
+- **Grenzen umschalten:** Jeder Heat-Kopf verfügt über eine Schaltfläche **Aufstiegsgrenze**. Klicken Sie darauf, um den Heat als entscheidenden Abschluss-Heat dieser Stufe festzulegen.
+- **Visuelle Kennzeichnung:** Grenz-Heats werden durch ein aktives Aufstiegsgrenzen-Badge und eine hervorgehobene Umrandung deutlich sichtbar markiert.
+- **Automatische Stufenberechnung:** Das Markieren eines Heats als Grenze schaltet alle nachfolgenden Heats dieser Gruppe automatisch auf die nächste Stufe weiter (z. B. wechseln Heats von Stufe 1 zu **Stufe 2**, dann **Stufe 3** usw.). Die aktuelle Stufe wird im Titel-Badge des Heats angezeigt (`- Stufe N`).
+- **Dynamischer Aufstieg am Renntag:** Sobald der festgelegte Grenz-Heat am Renntag beendet ist, berechnet die Renn-Engine den Zwischenstand dieser Stufe und befördert die Bestplatzierten unmittelbar auf die Startplätze `Aufsteiger 1`, `Aufsteiger 2` usw. der nächsten Stufe.
+
+### Variable Aufsteiger pro Stufe {: #variable-step-ups }
+
+Während standardmäßige algoritmische Step Up Rennen eine einheitliche Aufsteigerzahl über alle Runden vorgeben (z. B. steigen immer genau 2 Fahrer auf), ermöglichen benutzerdefinierte Rotationssets **variable Aufsteiger pro Stufe**:
+
+- **Individuelle Aufstiegsschemata:** Sie können für jede Stufe eine unterschiedliche Anzahl aufsteigender Fahrer festlegen. Zum Beispiel:
+  - **Stufe 1 (D-Lauf):** Die besten 2 Fahrer steigen in Stufe 2 auf (`Aufsteiger 1` und `Aufsteiger 2`).
+  - **Stufe 2 (C-Lauf):** Die besten 3 Fahrer steigen in Stufe 3 auf (`Aufsteiger 1`, `Aufsteiger 2` und `Aufsteiger 3`).
+  - **Stufe 3 (B-Lauf):** Nur der beste 1 Fahrer steigt in das A-Finale auf (`Aufsteiger 1`).
+- Die Renn-Engine ermittelt anhand der platzierten Aufsteiger-Chips in jeder Stufe exakt, wie viele Fahrer befördert werden müssen.
+
+### Aufstiegsregeln & Validierung {: #step-up-validation }
+
+Der Editor erzwingt wichtige Regeln zur Gewährleistung eines korrekten Rennablaufs:
+
+- **Keine Aufsteiger in Stufe 1:** Stufe 1 ist die Einstiegsrunde, in der alle Teilnehmer regulär gesetzte Fahrer sein müssen. Das Zuweisen eines Aufsteigers in Stufe 1 ist ungültig, da keine vorherige Runde existiert. Der Editor zeigt ein Warnsymbol (`warning`) mit dem Hinweis *"Stufe 1 darf keine Aufsteiger enthalten."*, und das Speichern ungültiger Stufe-1-Zuweisungen wird serverseitig abgewiesen.
+- **Unabhängige Gruppen:** Werden mehrere Gruppen verwendet (z. B. Gruppe 1 und Gruppe 2), laufen Stufenleitern und Aufstiege innerhalb jeder Gruppe vollkommen unabhängig voneinander ab.
+- **Ablaufschutz:** Step Up Rennen erfordern eine strikt aufeinanderfolgende Durchführung der Heats, damit aufsteigende Fahrer feststehen, bevor die nächste Stufe startet. Optionen wie **Heat-Durchläufe** ($> 1$) und **Heats umkehren** werden für Step Up Rennen automatisch deaktiviert, um die Rangfolge nicht zu verfälschen.
+
+---
+
 ## Rotationen importieren & exportieren {: #importing-exporting }
 
 Sie können Rotationen zwischen Systemen teilen oder archivieren:
@@ -157,6 +199,7 @@ Sobald Ihr Asset gespeichert ist:
 2. Stellen Sie im Abschnitt **Renn-Setup** das **Heat-Rotationsformat** auf **Benutzerdefiniertes Rotationsset**.
 3. Wählen Sie Ihr benutzerdefiniertes Rotationsset-Asset aus dem Dropdown-Menü **Benutzerdefiniertes Rotationsset** aus.
 4. Passen Sie die Renneinstellungen wie gewünscht an:
-   - **Heat-Durchläufe:** Wiederholt die gesamte benutzerdefinierte Sequenz $N$-mal.
-   - **Heats umkehren:** Kehrt die Heat-Reihenfolge um.
-5. Nutzen Sie den Schieberegler für die **Fahreranzahl-Vorschau** und prüfen Sie die **Live-Heat-Vorschau**, um die Heateinteilung vor dem Renntag zu verifizieren.
+   - **Heat-Durchläufe:** Wiederholt die gesamte benutzerdefinierte Sequenz $N$-mal (deaktiviert bei Step Up Rennen).
+   - **Heats umkehren:** Kehrt die Heat-Reihenfolge um (deaktiviert bei Step Up Rennen).
+5. **Step Up Integration:** Enthält Ihr benutzerdefiniertes Rotationsset Aufstiegsgrenzen und Aufsteiger, verwaltet Race Coordinator AI den Aufstieg der Fahrer während des Rennens vollautomatisch. In der **Live-Heat-Vorschau** zeigen Anfangsstufen die gesetzten Fahrer, während höhere Stufen Aufsteiger-Platzhalter aufweisen, die sich am Renntag dynamisch füllen.
+6. Nutzen Sie den Schieberegler für die **Fahreranzahl-Vorschau** und prüfen Sie die **Live-Heat-Vorschau**, um die Heateinteilung vor dem Renntag zu verifizieren.

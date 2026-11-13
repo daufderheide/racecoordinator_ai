@@ -114,6 +114,7 @@ Pour créer un nouvel actif d'ensemble de rotations personnalisées :
 ### Attribution des Pilotes aux Voies {: #assigning-drivers }
 
 - **Bassin de Pilotes Virtuels :** Le panneau de gauche propose un réservoir de pilotes virtuels (`Pilote 1`, `Pilote 2`, etc.). Vous pouvez ajuster le nombre de pilotes du bassin pour générer autant de têtes de série que nécessaire.
+- **Réserve de Pilotes de Montée :** Située juste en dessous du bassin des pilotes virtuels, fournissant des jetons de qualification dynamique pour les courses Step Up (voir [Courses Step Up & Paliers de Progression](#step-up-races) ci-dessous).
 - **Glisser-Déposer :** Faites glisser les jetons de pilotes depuis le bassin directement vers les créneaux de voie d'une manche.
 - **Échange de Voies :** Faites glisser un jeton de pilote d'une voie à une autre pour échanger leurs affectations.
 - **Vider une Voie :** Retirez un pilote d'une voie pour la laisser inoccupée (vide).
@@ -139,6 +140,47 @@ Cliquez sur le bouton **Trier les Rotations** (`swap_vert`) dans la barre de tit
 
 ---
 
+## Courses Step Up & Paliers de Progression {: #step-up-races }
+
+Race Coordinator AI prend pleinement en charge les **courses Step Up** (également appelées courses à échelle, progression par finales ou bump-up) au sein des ensembles de rotations personnalisées. Dans un format step up, l'événement est divisé en plusieurs paliers ou tours ascendants—tels que **Finale D $\rightarrow$ Finale C $\rightarrow$ Finale B $\rightarrow$ Finale A**. Les concurrents les moins bien classés s'affrontent lors des premiers paliers, et les meilleurs pilotes sont promus ("Step Up") vers les paliers suivants pour y défier les têtes de série directement qualifiées dans ces niveaux supérieurs.
+
+### Réserve de Pilotes de Montée {: #step-up-driver-pool }
+
+Le panneau latéral gauche comprend un réservoir dédié à la **Montée** situé directement sous la liste des pilotes virtuels :
+
+- **Configuration du Nombre de Montées :** Saisissez le nombre de places de montée souhaité dans le champ **Nombre de pilotes**. Par défaut, cette valeur s'initialise au nombre de voies de la piste moins une ($\text{numLanes} - 1$), mais peut être ajustée librement entre 1 et 99.
+- **Jetons de Montée :** Les pilotes virtuels de montée sont identifiés par une icône de flèche vers le haut (`arrow_upward`) et des libellés numérotés (`Montée 1`, `Montée 2`, etc.).
+- **Attribution aux Voies :** Glissez-déposez les jetons de montée sur les voies des manches appartenant au Palier 2 ou supérieur. Pendant la course, ces emplacements temporaires seront automatiquement remplis par les pilotes qualifiés issus du palier précédent.
+
+### Frontières de Montée et Paliers {: #step-up-boundaries }
+
+La progression entre les niveaux est encadrée par des **Frontières de Montée** :
+
+- **Activation des Frontières :** L'en-tête de chaque carte de manche comprend un bouton **Frontière de montée**. Cliquez sur ce bouton pour désigner la manche comme la manche finale décisive de ce palier.
+- **Style Visuel :** Les manches frontières sont mises en évidence par un badge actif et une bordure colorée distinctive afin de repérer immédiatement les étapes charnières du programme.
+- **Calcul Automatique des Paliers :** Définir une manche comme frontière fait automatiquement passer toutes les manches suivantes de ce groupe au palier supérieur de l'échelle (par exemple, les manches du Palier 1 basculent au **Palier 2**, puis au **Palier 3**, etc.). Le palier actif s'affiche dans le badge de titre de la manche (`- Palier N`).
+- **Promotion Dynamique le Jour de la Course :** Dès que la manche frontière se termine lors de la journée de course, le moteur calcule le classement cumulé du palier et place instantanément les pilotes les mieux classés sur les positions `Montée 1`, `Montée 2`, etc. du palier suivant.
+
+### Nombre Variable de Montées par Palier {: #variable-step-ups }
+
+Contrairement aux courses step up algorithmiques standard qui imposent un nombre fixe et uniforme de montées à chaque niveau (par exemple, 2 pilotes promus à chaque étape), les ensembles de rotations personnalisées autorisent des **montées variables par palier** :
+
+- **Schémas de Progression Personnalisés :** Vous pouvez déterminer des quotas de montée distincts pour chaque palier. Par exemple :
+  - **Palier 1 (Finale D) :** Les 2 meilleurs pilotes montent au Palier 2 (`Montée 1` et `Montée 2`).
+  - **Palier 2 (Finale C) :** Les 3 meilleurs pilotes montent au Palier 3 (`Montée 1`, `Montée 2` et `Montée 3`).
+  - **Palier 3 (Finale B) :** Seul le 1 meilleur pilote monte en Finale A (`Montée 1`).
+- Le moteur de course examine les jetons de montée assignés dans chaque palier et qualifie avec exactitude le nombre de pilotes requis.
+
+### Règles et Validation des Montées {: #step-up-validation }
+
+L'éditeur applique des règles de contrôle fondamentales :
+
+- **Aucun Pilote de Montée au Palier 1 :** Le Palier 1 est la manche inaugurale où tous les concurrents doivent être des pilotes réguliers inscrits. Assigner un pilote de montée au Palier 1 est interdit puisqu'aucun tour préalable n'existe pour générer des qualifiés. L'éditeur affiche une icône d'avertissement (`warning`) précisant *"Le palier 1 ne peut pas contenir de pilotes de montée."*, et le serveur refusera l'enregistrement de configurations non conformes au palier 1.
+- **Groupes Indépendants :** Lorsque plusieurs groupes sont configurés (par exemple Groupe 1 et Groupe 2), les échelles de progression et les montées sont calculées de façon totalement indépendante au sein de chaque groupe.
+- **Protection de l'Ordre Séquentiel :** Les courses step up requièrent un déroulement chronologique rigoureux afin d'établir les qualifiés avant d'engager le palier suivant. De ce fait, les options telles que **Tours de Manches Complets** ($> 1$) et **Inverser les Manches** sont automatiquement désactivées pour les courses comportant des montées afin de préserver la hiérarchie.
+
+---
+
 ## Importation et Exportation de Rotations {: #importing-exporting }
 
 Vous pouvez partager des rotations entre différents systèmes ou les archiver :
@@ -157,6 +199,7 @@ Une fois votre actif d'ensemble de rotations personnalisées enregistré :
 2. Dans la section **Configuration de Course** du panneau de gauche, réglez le **Format de Rotation des Manches** sur **Ensemble de rotations personnalisées**.
 3. Sélectionnez votre actif d'ensemble de rotations personnalisées dans le menu déroulant **Ensemble de rotations personnalisées**.
 4. Ajustez les paramètres de course selon vos besoins :
-   - **Tours de Manches Complets :** Répète la séquence complète de rotation personnalisée $N$ fois.
-   - **Inverser les Manches :** Inverse l'ordre des manches pour courir la séquence à l'envers.
-5. Utilisez le curseur d'**Aperçu du Nombre de Pilotes** et examinez l'**Aperçu des Manches en Direct** dans le panneau de droite pour vérifier les affectations avant le jour de course.
+   - **Tours de Manches Complets :** Répète la séquence complète de rotation personnalisée $N$ fois (désactivé si des montées sont présentes).
+   - **Inverser les Manches :** Inverse l'ordre des manches pour courir la séquence à l'envers (désactivé si des montées sont présentes).
+5. **Intégration Step Up :** Si votre rotation personnalisée comporte des frontières et des pilotes de montée, Race Coordinator AI gère automatiquement la promotion des pilotes tout au long de la compétition. Dans l'**Aperçu des Manches en Direct**, les paliers initiaux affichent les pilotes assignés tandis que les paliers supérieurs présentent des jetons d'attente qui se complèteront le jour de la course.
+6. Utilisez le curseur d'**Aperçu du Nombre de Pilotes** et examinez l'**Aperçu des Manches en Direct** dans le panneau de droite pour vérifier les affectations avant le jour de course.

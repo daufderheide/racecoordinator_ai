@@ -114,6 +114,7 @@ Para crear un nuevo activo de conjunto de rotaciones personalizadas:
 ### Asignación de Pilotos a Carriles {: #assigning-drivers }
 
 - **Grupo de Pilotos Virtuales:** El panel izquierdo ofrece un grupo de pilotos virtuales (`Piloto 1`, `Piloto 2`, etc.). Puede ajustar el número de pilotos en el grupo para generar tantas cabezas de serie como necesite.
+- **Grupo de Pilotos de Ascenso:** Situado directamente debajo de los pilotos virtuales, proporciona fichas dinámicas de ascenso para carreras Step Up (consulte [Carreras Step Up y Escalones de Progresión](#step-up-races) más abajo).
 - **Arrastrar y Soltar:** Arrastre las fichas de piloto desde el grupo directamente a los espacios de carril de cualquier heat.
 - **Intercambio de Carriles:** Arrastre la ficha de un piloto de un carril a otro para intercambiar sus asignaciones.
 - **Vaciar Carril:** Arrastre un piloto fuera de un carril o retírelo para dejarlo desocupado.
@@ -139,6 +140,47 @@ Haga clic en el botón **Ordenar Rotaciones** (`swap_vert`) en la barra de herra
 
 ---
 
+## Carreras Step Up y Escalones de Progresión {: #step-up-races }
+
+Race Coordinator AI es totalmente compatible con **carreras Step Up** (también conocidas como carreras de escalera, progresión por mangas principales o bump-up) dentro de conjuntos de rotaciones personalizadas. En un formato step up, la competición se organiza en niveles o rondas ascendentes—como **Final D $\rightarrow$ Final C $\rightarrow$ Final B $\rightarrow$ Final A**. Los participantes con posiciones más bajas compiten en las fases iniciales, y los mejores clasificados ascienden ("step up") a las rondas siguientes para medirse con los pilotos cabezas de serie situados en niveles superiores.
+
+### Grupo de Pilotos de Ascenso {: #step-up-driver-pool }
+
+La barra lateral izquierda incluye un grupo dedicado para **Ascenso** situado justo debajo de la lista de pilotos virtuales:
+
+- **Configuración del Número de Ascensos:** Introduzca el número deseado de plazas de ascenso en el campo **Número de Pilotos**. Por defecto, se inicializa en el número de carriles de la pista menos uno ($\text{numLanes} - 1$), pero puede ajustarse entre 1 y 99.
+- **Fichas de Ascenso:** Los pilotos virtuales de ascenso se identifican con un icono de flecha hacia arriba (`arrow_upward`) y etiquetas numeradas (`Ascenso 1`, `Ascenso 2`, etc.).
+- **Asignación a Carriles:** Arrastre y suelte las fichas de ascenso en los carriles de heats pertenecientes al Escalón 2 o superior. Durante la carrera, estos huecos temporales se rellenarán automáticamente con los pilotos clasificados del escalón anterior.
+
+### Límites de Ascenso y Escalones {: #step-up-boundaries }
+
+La transición entre fases se gestiona mediante **Límites de Ascenso**:
+
+- **Activación de Límites:** Cada tarjeta de heat incluye un botón **Límite de ascenso**. Haga clic en este botón para designar el heat como la manga decisiva de cierre de ese escalón.
+- **Estilo Visual:** Los heats límite se destacan visualmente con una insignia activa y un borde resaltado para identificar claramente los puntos de corte en el calendario.
+- **Cálculo Automático de Escalones:** Marcar un heat como límite avanza automáticamente todos los heats posteriores de ese grupo al siguiente escalón de la escalera (p. ej., los heats del Escalón 1 pasan al **Escalón 2**, luego al **Escalón 3**, etc.). El escalón actual se visualiza en la insignia del título del heat (`- Escalón N`).
+- **Ascenso Dinámico el Día de la Carrera:** Cuando finaliza el heat límite programado durante la jornada de carreras, el motor calcula la clasificación acumulada del escalón y promueve de inmediato a los mejores clasificados a las posiciones de `Ascenso 1`, `Ascenso 2`, etc. del siguiente escalón.
+
+### Ascensos Variables por Escalón {: #variable-step-ups }
+
+A diferencia de las carreras step up algorítmicas estándar que imponen un número uniforme de ascensos en todas las rondas (p. ej., exactamente 2 pilotos suben en cada fase), los conjuntos de rotaciones personalizadas admiten **ascensos variables por escalón**:
+
+- **Esquemas Personalizados de Ascenso:** Puede configurar diferentes cantidades de pilotos que suben en cada nivel. Por ejemplo:
+  - **Escalón 1 (Final D):** Los 2 mejores pilotos ascienden al Escalón 2 (`Ascenso 1` y `Ascenso 2`).
+  - **Escalón 2 (Final C):** Los 3 mejores pilotos ascienden al Escalón 3 (`Ascenso 1`, `Ascenso 2` y `Ascenso 3`).
+  - **Escalón 3 (Final B):** Solo el 1 mejor piloto asciende a la Final A (`Ascenso 1`).
+- El motor de carreras analiza las fichas de ascenso asignadas en cada escalón y promueve exactamente el número requerido de pilotos.
+
+### Reglas y Validación de Ascensos {: #step-up-validation }
+
+El editor aplica reglas esenciales para garantizar un desarrollo correcto:
+
+- **Sin Pilotos de Ascenso en el Escalón 1:** El Escalón 1 es la ronda inicial donde todos los participantes deben ser pilotos registrados. Colocar un piloto de ascenso en el Escalón 1 no es válido porque no existe una ronda anterior de la cual clasificar. El editor muestra un icono de advertencia (`warning`) con el mensaje *"El escalón 1 no puede contener pilotos de ascenso."*, y el servidor denegará guardar configuraciones inválidas en el escalón 1.
+- **Grupos Independientes:** Si se usan varios grupos (p. ej., Grupo 1 y Grupo 2), las escaleras de progresión y los límites de ascenso se calculan de manera independiente dentro de cada grupo.
+- **Protección del Orden de Ejecución:** Las carreras step up requieren una finalización secuencial estricta para resolver los clasificados antes de iniciar el siguiente escalón. Por este motivo, opciones como **Veces a Través de Heats** ($> 1$) e **Invertir Heats** se desactivan automáticamente en carreras con ascensos para preservar la jerarquía clasificatoria.
+
+---
+
 ## Importación y Exportación de Rotaciones {: #importing-exporting }
 
 Puede compartir rotaciones entre equipos o archivarlas:
@@ -157,6 +199,7 @@ Una vez guardado su activo de conjunto de rotaciones personalizadas:
 2. En la sección **Configuración de Carrera** del panel izquierdo, establezca el **Formato de Rotación de Heats** en **Conjunto de rotaciones personalizadas**.
 3. Seleccione su activo de conjunto de rotaciones personalizadas en el menú desplegable **Conjunto de rotaciones personalizadas**.
 4. Ajuste la configuración según lo deseado:
-   - **Veces a Través de Heats:** Repite la secuencia completa de rotación personalizada $N$ veces.
-   - **Invertir Heats:** Invierte el orden de los heats para correr la secuencia al revés.
-5. Utilice el control deslizante de **Vista Previa de Pilotos** y examine la **Vista Previa de Heats en Vivo** en el panel derecho para comprobar las asignaciones antes del día de la carrera.
+   - **Veces a Través de Heats:** Repite la secuencia completa de rotación personalizada $N$ veces (desactivado si hay ascensos).
+   - **Invertir Heats:** Invierte el orden de los heats para correr la secuencia al revés (desactivado si hay ascensos).
+5. **Integración con Step Up:** Si su rotación personalizada contiene límites de ascenso y pilotos de ascenso, Race Coordinator AI gestionará la promoción de pilotos entre fases de manera totalmente automática. En la **Vista Previa de Heats en Vivo**, los escalones iniciales muestran los pilotos asignados mientras que los escalones superiores muestran insignias provisionales de ascenso que se completarán el día de la carrera.
+6. Utilice el control deslizante de **Vista Previa de Pilotos** y examine la **Vista Previa de Heats en Vivo** en el panel derecho para comprobar las asignaciones antes del día de la carrera.

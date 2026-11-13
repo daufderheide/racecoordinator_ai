@@ -114,6 +114,7 @@ Per creare una nuova entità di set di rotazioni personalizzate:
 ### Assegnazione dei Piloti alle Corsie {: #assigning-drivers }
 
 - **Gruppo Piloti Virtuali:** Il pannello di sinistra mette a disposizione un gruppo di piloti virtuali (`Pilota 1`, `Pilota 2`, ecc.). È possibile regolare il numero di piloti nel gruppo per generare tutte le teste di serie necessarie.
+- **Pool dei Piloti di Avanzamento:** Posizionato subito sotto il gruppo dei piloti virtuali; fornisce pedine di promozione dinamica per le gare Step Up (vedere [Gare Step Up e Gradini di Progressione](#step-up-races) di seguito).
 - **Trascina e Rilascia:** Trascinare le pedine dei piloti dal gruppo direttamente nelle caselle delle corsie di qualsiasi manche.
 - **Scambio di Corsia:** Trascinare la pedina di un pilota da una corsia all'altra per scambiarne le posizioni.
 - **Svuota Corsia:** Trascinare un pilota fuori da una corsia per lasciarla libera.
@@ -139,6 +140,47 @@ Fare clic sul pulsante **Ordina Rotazioni** (`swap_vert`) nella barra del titolo
 
 ---
 
+## Gare Step Up e Gradini di Progressione {: #step-up-races }
+
+Race Coordinator AI supporta pienamente le **gare Step Up** (note anche come gare a scala, progressione a finali principali o bump-up) nei set di rotazioni personalizzate. In questo formato, la manifestazione è suddivisa in livelli o turni ascendenti—quali **Finale D $\rightarrow$ Finale C $\rightarrow$ Finale B $\rightarrow$ Finale A**. I piloti con teste di serie inferiori gareggiano nei primi gradini e i migliori avanzano ("Step Up") ai gradini successivi per sfidare i piloti direttamente inseriti in tali categorie superiori.
+
+### Pool dei Piloti di Avanzamento {: #step-up-driver-pool }
+
+La barra laterale sinistra comprende un pool dedicato all'**Avanzamento** posizionato subito sotto l'elenco dei piloti virtuali:
+
+- **Configurazione del Numero di Avanzamenti:** Digitare il numero di posti di avanzamento desiderati nella casella **Numero di piloti**. Di base, questo valore corrisponde al numero di corsie del tracciato meno uno ($\text{numLanes} - 1$), ma può essere impostato liberamente tra 1 e 99.
+- **Pedine di Avanzamento:** I piloti virtuali di avanzamento sono contraddistinti da un'icona freccia verso l'alto (`arrow_upward`) e da diciture numerate (`Avanzamento 1`, `Avanzamento 2`, ecc.).
+- **Assegnazione alle Corsie:** Trascinare e rilasciare le pedine di avanzamento nelle corsie delle manche appartenenti al Gradino 2 o superiore. Nel corso della gara, tali caselle provvisorie verranno occupate automaticamente dai piloti promossi dal gradino precedente.
+
+### Limiti di Avanzamento e Gradini {: #step-up-boundaries }
+
+La transizione tra i vari livelli è regolata dai **Limiti di Avanzamento**:
+
+- **Attivazione del Limite:** Ciascuna scheda di manche include un pulsante **Limite di avanzamento**. Fare clic su questo pulsante per stabilire che la manche rappresenta la manche decisiva di chiusura di quel gradino.
+- **Stile Grafico:** Le manche limite vengono evidenziate tramite un apposito contrassegno attivo e un bordo colorato distintivo, facilitando l'individuazione dei punti cardine del programma.
+- **Calcolo Automatico dei Gradini:** Contrassegnare una manche come limite fa scattare automaticamente tutte le manche successive di quel gruppo al gradino successivo (ad esempio, le manche del Gradino 1 avanzano a **Gradino 2**, quindi a **Gradino 3**, ecc.). Il gradino corrente viene indicato nel contrassegno del titolo della manche (`- Gradino N`).
+- **Promozione Dinamica il Giorno della Gara:** Al termine della manche limite designata durante l'evento, il motore di gara elabora la classifica cumulativa del gradino e promuove all'istante i primi classificati nelle caselle `Avanzamento 1`, `Avanzamento 2`, ecc. del gradino successivo.
+
+### Avanzamenti Variabili per Gradino {: #variable-step-ups }
+
+Mentre le gare step up algoritmiche standard impongono un numero fisso di promozioni identico per tutte le manche (ad esempio, avanzano sempre esattamente 2 piloti), i set di rotazioni personalizzate consentono **avanzamenti variabili per gradino**:
+
+- **Schemi di Avanzamento Personalizzati:** È possibile definire un numero differente di piloti promossi per ciascun gradino. Ad esempio:
+  - **Gradino 1 (Finale D):** I migliori 2 piloti avanzano al Gradino 2 (`Avanzamento 1` e `Avanzamento 2`).
+  - **Gradino 2 (Finale C):** I migliori 3 piloti avanzano al Gradino 3 (`Avanzamento 1`, `Avanzamento 2` e `Avanzamento 3`).
+  - **Gradino 3 (Finale B):** Soltanto il miglior 1 pilota avanza alla Finale A (`Avanzamento 1`).
+- Il motore analizza le pedine di avanzamento posizionate in ciascun gradino e promuove esattamente il numero previsto di partecipanti.
+
+### Regole e Convalida degli Avanzamenti {: #step-up-validation }
+
+L'editor applica verifiche rigorose per garantire la regolarità sportiva:
+
+- **Nessun Pilota di Avanzamento nel Gradino 1:** Il Gradino 1 costituisce il turno inaugurale in cui tutti i partecipanti devono essere piloti iscritti regolarmente. Inserire un pilota di avanzamento nel Gradino 1 non è consentito poiché non esiste alcun turno precedente da cui qualificarsi. L'editor mostra un'icona di avviso (`warning`) con l'indicazione *"Il gradino 1 non può contenere piloti di avanzamento."*, e il server impedirà il salvataggio di impostazioni non conformi per il gradino 1.
+- **Gruppi Indipendenti:** In presenza di più gruppi (ad esempio Gruppo 1 e Gruppo 2), le progressioni dei gradini e le promozioni dei limiti avvengono in modo totalmente autonomo all'interno di ciascun gruppo.
+- **Rispetto dell'Ordine Cronologico:** Le gare step up esigono il completamento sequenziale rigoroso delle manche affinché i piloti promossi siano definiti prima dell'avvio del gradino successivo. Di conseguenza, impostazioni quali **Giri Completi di Manche** ($> 1$) e **Inverti Manche** vengono disattivate automaticamente nelle gare con promozioni per preservare l'integrità della scala.
+
+---
+
 ## Importazione ed Esportazione delle Rotazioni {: #importing-exporting }
 
 È possibile condividere rotazioni tra postazioni o archiviarle:
@@ -157,6 +199,7 @@ Dopo aver salvato la risorsa di set di rotazioni personalizzate:
 2. Nella sezione **Configurazione Gara** del pannello di sinistra, impostare **Formato di Rotazione Manche** su **Set di rotazioni personalizzate**.
 3. Selezionare l'entità di set di rotazioni personalizzate dal menu a discesa **Set di rotazioni personalizzate**.
 4. Regolare i parametri di gara:
-   - **Giri Completi di Manche:** Ripete l'intera sequenza di rotazione personalizzata $N$ volte.
-   - **Inverti Manche:** Inverte l'ordine delle manche per disputare la sequenza al contrario.
-5. Utilizzare il dispositivo di scorrimento **Anteprima Numero Piloti** ed esaminare l'**Anteprima Manche in Tempo Reale** nel pannello di destra per verificare le assegnazioni prima dell'evento.
+   - **Giri Completi di Manche:** Ripete l'intera sequenza di rotazione personalizzata $N$ volte (disattivato in presenza di avanzamenti).
+   - **Inverti Manche:** Inverte l'ordine delle manche per disputare la sequenza al contrario (disattivato in presenza di avanzamenti).
+5. **Integrazione Step Up:** Se la rotazione personalizzata contiene limiti e piloti di avanzamento, Race Coordinator AI coordina in modo del tutto autonomo la progressione dei partecipanti tra i vari gradini. Nell'**Anteprima Manche in Tempo Reale**, i primi gradini presentano i piloti assegnati, mentre i gradini successivi mostrano pedine provvisorie destinate a popolarsi durante la gara.
+6. Utilizzare il dispositivo di scorrimento **Anteprima Numero Piloti** ed esaminare l'**Anteprima Manche in Tempo Reale** nel pannello di destra per verificare le assegnazioni prima dell'evento.

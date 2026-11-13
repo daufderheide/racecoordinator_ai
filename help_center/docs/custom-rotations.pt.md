@@ -114,6 +114,7 @@ Para criar um novo ativo de conjunto de rotações personalizadas:
 ### Atribuição de Pilotos às Pistas {: #assigning-drivers }
 
 - **Conjunto de Pilotos Virtuais:** O painel esquerdo disponibiliza uma reserva de pilotos virtuais (`Piloto 1`, `Piloto 2`, etc.). Pode ajustar o número de pilotos para gerar todas as cabeças de série necessárias.
+- **Grupo de Pilotos de Avanço:** Situado logo abaixo da reserva de pilotos virtuais; disponibiliza fichas dinâmicas de avanço para corridas Step Up (consulte [Corridas Step Up e Degraus de Progressão](#step-up-races) abaixo).
 - **Arrastar e Largar:** Arraste as fichas de pilotos do conjunto diretamente para os lugares de pista de qualquer bateria.
 - **Troca de Pista:** Arraste a ficha de um piloto de uma pista para outra para trocar as suas posições.
 - **Esvaziar Pista:** Arraste um piloto para fora de uma pista para deixá-la desocupada (vazia).
@@ -139,6 +140,47 @@ Clique no botão **Ordenar Rotações** (`swap_vert`) na barra de ferramentas su
 
 ---
 
+## Corridas Step Up e Degraus de Progressão {: #step-up-races }
+
+O Race Coordinator AI suporta integralmente as **corridas Step Up** (também denominadas corridas em escada, progressão por finais principais ou bump-up) nos conjuntos de rotações personalizadas. Num formato step up, a competição é estruturada em degraus ou fases ascendentes—tais como **Final D $\rightarrow$ Final C $\rightarrow$ Final B $\rightarrow$ Final A**. Os pilotos com cabeças de série inferiores correm nos primeiros degraus e os primeiros classificados avançam ("Step Up") para as fases seguintes a fim de enfrentar os pilotos diretamente qualificados nessas categorias superiores.
+
+### Grupo de Pilotos de Avanço {: #step-up-driver-pool }
+
+A barra lateral esquerda inclui uma reserva dedicada ao **Avanço** situada logo abaixo da lista de pilotos virtuais:
+
+- **Configuração do Número de Avanços:** Introduza o número de vagas de avanço pretendido no campo **Número de pilotos**. Por predefinição, este valor inicializa-se com o número de pistas menos uma ($\text{numLanes} - 1$), mas pode ser ajustado livremente entre 1 e 99.
+- **Fichas de Avanço:** Os pilotos virtuais de avanço são identificados por um ícone de seta para cima (`arrow_upward`) e designações numeradas (`Avanço 1`, `Avanço 2`, etc.).
+- **Atribuição às Pistas:** Arraste e solte fichas de avanço nos lugares de pista de baterias correspondentes ao Degrau 2 ou superior. Durante a corrida, estas vagas provisórias serão preenchidas automaticamente pelos pilotos qualificados no degrau anterior.
+
+### Limites de Avanço e Degraus {: #step-up-boundaries }
+
+A transição entre degraus é coordenada através de **Limites de Avanço**:
+
+- **Ativação de Limites:** O cabeçalho de cada cartão de bateria dispõe de um botão **Limite de avanço**. Clique neste botão para assinalar a bateria como a manga decisiva de encerramento desse degrau.
+- **Destaque Visual:** As baterias limite são destacadas com um selo ativo e um contorno realçado para identificar com clareza os pontos de corte da prova.
+- **Cálculo Automático dos Degraus:** Ao marcar uma bateria como limite, todas as baterias subsequentes desse grupo avançam automaticamente para o degrau seguinte da escada (por ex., baterias do Degrau 1 passam ao **Degrau 2**, depois **Degrau 3**, etc.). O degrau atual é apresentado no selo do título da bateria (`- Degrau N`).
+- **Avanço Dinâmico no Dia da Corrida:** Assim que a bateria limite se conclui durante a prova, o motor calcula a classificação acumulada do degrau e promove de imediato os pilotos mais bem classificados para os lugares `Avanço 1`, `Avanço 2`, etc. do degrau seguinte.
+
+### Avanços Variáveis por Degrau {: #variable-step-ups }
+
+Ao contrário das corridas step up algorítmicas padrão que impõem um número fixo e uniforme de avanços em todas as rondas (por ex., avançam sempre exatamente 2 pilotos), os conjuntos de rotações personalizadas permitem **avanços variáveis por degrau**:
+
+- **Esquemas Personalizados de Avanço:** Pode definir números distintos de pilotos promovidos em cada nível. Por exemplo:
+  - **Degrau 1 (Final D):** Os 2 melhores pilotos avançam para o Degrau 2 (`Avanço 1` e `Avanço 2`).
+  - **Degrau 2 (Final C):** Os 3 melhores pilotos avançam para o Degrau 3 (`Avanço 1`, `Avanço 2` e `Avanço 3`).
+  - **Degrau 3 (Final B):** Apenas o melhor 1 piloto avança para a Final A (`Avanço 1`).
+- O motor de corrida verifica as fichas de avanço atribuídas em cada degrau e promove com precisão o número estipulado de participantes.
+
+### Regras e Validação de Avanço {: #step-up-validation }
+
+O editor assegura regras estritas para garantir o rigor desportivo:
+
+- **Sem Pilotos de Avanço no Degrau 1:** O Degrau 1 é a ronda de abertura onde todos os concorrentes têm de ser pilotos inscritos regularmente. Inserir um piloto de avanço no Degrau 1 é inválido dado que não existe qualquer fase anterior para apurar concorrentes. O editor exibe um ícone de aviso (`warning`) com a mensagem *"O degrau 1 não pode conter pilotos de avanço."*, e o servidor recusará guardar configurações inválidas no degrau 1.
+- **Grupos Independentes:** Na presença de vários grupos (por ex., Grupo 1 e Grupo 2), as progressões e as transições de limites são calculadas de forma totalmente autónoma em cada grupo.
+- **Segurança da Ordem Cronológica:** As corridas step up exigem uma realização rigorosamente sequencial das baterias para apurar os qualificados antes de iniciar o degrau seguinte. Deste modo, opções como **Ciclos Completos de Baterias** ($> 1$) e **Inverter Baterias** são desativadas automaticamente em corridas com avanços para não corromper a tabela de qualificação.
+
+---
+
 ## Importação e Exportação de Rotações {: #importing-exporting }
 
 Pode partilhar rotações entre computadores ou arquivá-las:
@@ -157,6 +199,7 @@ Após guardar o seu ativo de conjunto de rotações personalizadas:
 2. Na secção **Configuração da Corrida** do painel esquerdo, defina o **Formato de Rotação de Baterias** para **Conjunto de rotações personalizadas**.
 3. Selecione o seu ativo de conjunto de rotações personalizadas no menu pendente **Conjunto de rotações personalizadas**.
 4. Ajuste as opções da corrida:
-   - **Ciclos Completos de Baterias:** Repete a sequência completa de rotação personalizada $N$ vezes.
-   - **Inverter Baterias:** Inverte a ordem das baterias para realizar a sequência ao contrário.
-5. Utilize a barra de deslocamento de **Pré-visualização do Número de Pilotos** e analise a **Pré-visualização de Baterias ao Vivo** no painel direito para conferir as atribuições antes do dia da corrida.
+   - **Ciclos Completos de Baterias:** Repete a sequência completa de rotação personalizada $N$ vezes (desativado se houver avanços).
+   - **Inverter Baterias:** Inverte a ordem das baterias para realizar a sequência ao contrário (desativado se houver avanços).
+5. **Integração Step Up:** Se o seu conjunto de rotações personalizadas contiver limites de avanço e pilotos de avanço, o Race Coordinator AI coordena as promoções de concorrentes ao longo da prova de modo automático. Na **Pré-visualização de Baterias ao Vivo**, os degraus iniciais indicam os pilotos atribuídos enquanto os degraus seguintes apresentam vagas transitórias que se preencherão no dia da corrida.
+6. Utilize a barra de deslocamento de **Pré-visualização do Número de Pilotos** e analise a **Pré-visualização de Baterias ao Vivo** no painel direito para conferir as atribuições antes do dia da corrida.
