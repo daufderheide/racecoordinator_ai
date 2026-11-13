@@ -3338,5 +3338,16 @@
   "UI_EDITOR_SCALE_MODE_FIT_WIDTH": "Aanpassen aan breedte",
   "UI_EDITOR_SCALE_MODE_LETTERBOX": "Aanpassen aan scherm",
   "UI_EDITOR_SCALE_MODE_STRETCH": "Uitrekken tot vullend",
-  "UI_EDITOR_ZOOM_TITLE": "Canvas zoom"
+  "UI_EDITOR_ZOOM_TITLE": "Canvas zoom",
+  "RE_BANNER_READ_ONLY_TITLE": "Alleen-lezen (Gedowngrade versie)",
+  "RE_BANNER_READ_ONLY_DESC": "Deze race is geconfigureerd in een nieuwere versie en bevat incompatibele functies. Het kan niet direct worden bewerkt of gestart. Dupliceer het om een uitvoerbare kopie met terugvalinstellingen te maken.",
+  "RE_BANNER_DEGRADED_TITLE": "Instellingen genegeerd (Gedowngrade versie)",
+  "RE_BANNER_DEGRADED_DESC": "Deze race bevat geavanceerde instellingen die zijn opgeslagen door een nieuwere versie en die in deze versie worden genegeerd. Uw originele instellingen blijven behouden als u wijzigingen opslaat.",
+  "RE_ERROR_READ_ONLY_DOWNGRADE": "Deze race is alleen-lezen omdat het instellingen van een nieuwere versie bevat. Dupliceer het om een bewerkbare kopie te maken.",
+  "RE_TOOLTIP_EDIT_DISABLED_DOWNGRADE": "Deze race kan niet worden bewerkt omdat deze in een nieuwere versie is geconfigureerd. Dupliceer het om een bewerkbare kopie te maken.",
+  "RD_BADGE_IGNORED_SETTINGS": "Genegeerde instellingen",
+  "RD_BADGE_READ_ONLY": "Incompatibel",
+  "RD_BTN_DUPLICATE_TO_RUN": "Dupliceren om te starten",
+  "RD_MSG_CANNOT_RUN_INCOMPATIBLE": "Deze race kan niet worden gestart omdat het instellingen van een nieuwere versie bevat. Dupliceer het met terugvalinstellingen om te starten.",
+  "RDS_ERR_CANNOT_RUN_RACE": "Kan race niet starten"
 }

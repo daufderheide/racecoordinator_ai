@@ -3338,5 +3338,16 @@
   "UI_EDITOR_SCALE_MODE_FIT_WIDTH": "Adapter à la largeur",
   "UI_EDITOR_SCALE_MODE_LETTERBOX": "Adapter à l'écran",
   "UI_EDITOR_SCALE_MODE_STRETCH": "Étirer pour remplir",
-  "UI_EDITOR_ZOOM_TITLE": "Zoom du canevas"
+  "UI_EDITOR_ZOOM_TITLE": "Zoom du canevas",
+  "RE_BANNER_READ_ONLY_TITLE": "Lecture seule (Version rétrogradée)",
+  "RE_BANNER_READ_ONLY_DESC": "Cette course a été configurée dans une version plus récente et contient des fonctionnalités incompatibles. Elle ne peut pas être modifiée ou lancée directement. Dupliquez-la pour créer une copie exécutable avec des paramètres de secours.",
+  "RE_BANNER_DEGRADED_TITLE": "Paramètres ignorés (Version rétrogradée)",
+  "RE_BANNER_DEGRADED_DESC": "Cette course contient des paramètres avancés enregistrés par une version plus récente qui sont ignorés dans cette version. Vos paramètres d'origine seront conservés si vous enregistrez les modifications.",
+  "RE_ERROR_READ_ONLY_DOWNGRADE": "Cette course est en lecture seule car elle contient des paramètres d'une version plus récente. Dupliquez-la pour créer une copie modifiable.",
+  "RE_TOOLTIP_EDIT_DISABLED_DOWNGRADE": "Cette course ne peut pas être modifiée car elle a été configurée dans une version plus récente. Dupliquez-la pour créer une copie modifiable.",
+  "RD_BADGE_IGNORED_SETTINGS": "Paramètres ignorés",
+  "RD_BADGE_READ_ONLY": "Incompatible",
+  "RD_BTN_DUPLICATE_TO_RUN": "Dupliquer pour lancer",
+  "RD_MSG_CANNOT_RUN_INCOMPATIBLE": "Cette course ne peut pas être lancée car elle contient des paramètres d'une version plus récente. Dupliquez-la avec les paramètres de secours pour la lancer.",
+  "RDS_ERR_CANNOT_RUN_RACE": "Impossible de lancer la course"
 }

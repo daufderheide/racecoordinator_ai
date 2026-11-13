@@ -531,4 +531,48 @@ public class RaceControlHandlerTest {
     assertFalse(response.getSuccess());
     assertEquals("THEME_DELETED", response.getErrorCode());
   }
+
+  @Test
+  public void testHandleInitializeRace_IncompatibleRace_Returns400() throws Exception {
+    String raceId = "race-incompatible";
+    String driverId = "driver-1";
+
+    // Insert track and driver
+    Lane lane = new Lane("red", "black", 100);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .build();
+    Driver driver = new Driver("Test Driver", "TD", driverId, null);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+
+    // Insert incompatible race (raw JSON with points_scoring)
+    String rawJson =
+        "{\"entity_id\":\""
+            + raceId
+            + "\",\"name\":\"Incompatible Points Race\",\"track_entity_id\":\"track-1\","
+            + "\"points_scoring\":{\"enabled\":true},"
+            + "\"_compat_meta\":{\"features\":[{\"id\":\"points\",\"criticality\":\"REQUIRED\",\"description\":\"Points Scoring\"}]}}";
+    String sql = "INSERT INTO races (entity_id, json_data) VALUES (?, ?)";
+    try (java.sql.PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, raceId);
+      pstmt.setString(2, rawJson);
+      pstmt.executeUpdate();
+    }
+
+    InitializeRaceRequest req =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setIsDemoMode(true)
+            .build();
+
+    TaskResult result = handler.handleInitializeRace(req);
+    assertEquals(400, result.status);
+    assertNotNull(result.result);
+    org.junit.Assert.assertTrue(result.result.toString().contains("unsupported features"));
+  }
 }

@@ -3338,5 +3338,16 @@
   "UI_EDITOR_SCALE_MODE_FIT_WIDTH": "Ajustar à largura",
   "UI_EDITOR_SCALE_MODE_LETTERBOX": "Ajustar à tela",
   "UI_EDITOR_SCALE_MODE_STRETCH": "Esticar para preencher",
-  "UI_EDITOR_ZOOM_TITLE": "Zoom da tela"
+  "UI_EDITOR_ZOOM_TITLE": "Zoom da tela",
+  "RE_BANNER_READ_ONLY_TITLE": "Somente leitura (Versão anterior)",
+  "RE_BANNER_READ_ONLY_DESC": "Esta corrida foi configurada em uma versão mais recente e contém recursos incompatíveis. Não pode ser editada ou executada diretamente. Duplique-a para criar uma cópia executável com configurações alternativas.",
+  "RE_BANNER_DEGRADED_TITLE": "Configurações ignoradas (Versão anterior)",
+  "RE_BANNER_DEGRADED_DESC": "Esta corrida contém configurações avançadas salvas por uma versão mais recente que são ignoradas nesta versão. Suas configurações originais serão preservadas se você salvar as alterações.",
+  "RE_ERROR_READ_ONLY_DOWNGRADE": "Esta corrida é somente leitura porque contém configurações de uma versão mais recente. Duplique-a para criar uma cópia editável.",
+  "RE_TOOLTIP_EDIT_DISABLED_DOWNGRADE": "Esta corrida não pode ser editada porque foi configurada em uma versão mais recente. Duplique-a para criar uma cópia editável.",
+  "RD_BADGE_IGNORED_SETTINGS": "Configurações ignoradas",
+  "RD_BADGE_READ_ONLY": "Incompatível",
+  "RD_BTN_DUPLICATE_TO_RUN": "Duplicar para executar",
+  "RD_MSG_CANNOT_RUN_INCOMPATIBLE": "Esta corrida não pode ser executada porque contém configurações de uma versão mais recente. Duplique-a com configurações alternativas para executar.",
+  "RDS_ERR_CANNOT_RUN_RACE": "Não é possível executar a corrida"
 }

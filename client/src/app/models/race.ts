@@ -4,6 +4,7 @@ import { GroupOptions } from "./group_options";
 import { HeatScoring } from "./heat_scoring";
 import { Model } from "./model";
 import { OverallScoring } from "./overall_scoring";
+import { RaceCompatibility } from "./race-compatibility.model";
 import { SeasonScoring } from "./season";
 import { TeamOptions } from "./team_options";
 import { Track } from "./track";
@@ -41,6 +42,7 @@ export class Race implements Model {
   readonly adjust_drift_laps: boolean;
   readonly theme_id?: string;
   readonly start_time_millis?: number;
+  readonly compatibility?: RaceCompatibility;
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;

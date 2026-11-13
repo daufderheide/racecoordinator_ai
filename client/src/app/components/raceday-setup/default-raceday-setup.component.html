@@ -938,6 +938,21 @@
                           selectedRace?.entity_id === race.entity_id ? "✓" : ""
                         }}</span>
                         <span class="dropdown-item-label">{{ race.name }}</span>
+                        @if (race.compatibility?.is_read_only) {
+                          <span
+                            class="compat-status-badge badge-danger dropdown-badge"
+                            [title]="'RE_BANNER_READ_ONLY_DESC' | translate"
+                          >
+                            <span class="material-icons">lock</span>
+                          </span>
+                        } @else if (race.compatibility?.status === "DEGRADED") {
+                          <span
+                            class="compat-status-badge badge-warning dropdown-badge"
+                            [title]="'RE_BANNER_DEGRADED_DESC' | translate"
+                          >
+                            <span class="material-icons">warning_amber</span>
+                          </span>
+                        }
                       </div>
                     }
                     @if (filteredEvents.length > 0) {
@@ -1095,18 +1110,51 @@
                   <div class="event-detail-header">
                     <div class="event-detail-title">
                       {{ selectedRace.name }}
+                      @if (selectedRace?.compatibility?.is_read_only) {
+                        <span
+                          class="compat-status-badge badge-danger"
+                          [title]="'RE_BANNER_READ_ONLY_DESC' | translate"
+                        >
+                          <span class="material-icons">lock</span>
+                          {{ "RD_BADGE_READ_ONLY" | translate }}
+                        </span>
+                      } @else if (
+                        selectedRace?.compatibility?.status === "DEGRADED"
+                      ) {
+                        <span
+                          class="compat-status-badge badge-warning"
+                          [title]="'RE_BANNER_DEGRADED_DESC' | translate"
+                        >
+                          <span class="material-icons">warning_amber</span>
+                          {{ "RD_BADGE_IGNORED_SETTINGS" | translate }}
+                        </span>
+                      }
                     </div>
-                    <button
-                      type="button"
-                      class="action-btn edit-race-btn"
-                      id="edit-selected-race-btn"
-                      (click)="editSelectedRace()"
-                      (mousedown)="$event.preventDefault()"
-                      [title]="'RDS_TOOLTIP_EDIT_RACE' | translate"
-                      data-testid="edit-selected-race-btn"
-                    >
-                      <span class="material-icons">edit</span>
-                    </button>
+                    <div class="event-detail-actions">
+                      @if (selectedRace?.compatibility?.can_run === false) {
+                        <button
+                          type="button"
+                          class="action-btn duplicate-race-btn"
+                          id="duplicate-selected-race-btn"
+                          (click)="duplicateSelectedRace()"
+                          (mousedown)="$event.preventDefault()"
+                          [title]="'RD_BTN_DUPLICATE_TO_RUN' | translate"
+                        >
+                          <span class="material-icons">content_copy</span>
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="action-btn edit-race-btn"
+                        id="edit-selected-race-btn"
+                        (click)="editSelectedRace()"
+                        (mousedown)="$event.preventDefault()"
+                        [title]="'RDS_TOOLTIP_EDIT_RACE' | translate"
+                        data-testid="edit-selected-race-btn"
+                      >
+                        <span class="material-icons">edit</span>
+                      </button>
+                    </div>
                   </div>
                   <div class="summary-grid">
                     <div class="summary-item">
@@ -1250,11 +1298,33 @@
               <span>{{ "RDS_BTN_END_RACE" | translate }}</span>
             </button>
           } @else {
+            @if (
+              !isEventMode && selectedRace?.compatibility?.can_run === false
+            ) {
+              <button
+                class="btn-duplicate-to-run"
+                id="duplicate-to-run-btn"
+                (click)="duplicateSelectedRace()"
+                [title]="'RD_BTN_DUPLICATE_TO_RUN' | translate"
+              >
+                <span class="material-icons">content_copy</span>
+                <span>{{ "RD_BTN_DUPLICATE_TO_RUN" | translate }}</span>
+              </button>
+            }
             <button
               class="btn-start"
+              id="start-race-btn"
               (click)="startRace(false)"
-              [disabled]="selectedParticipants.length === 0"
-              [title]="'RDS_TOOLTIP_START_RACE' | translate"
+              [disabled]="
+                selectedParticipants.length === 0 ||
+                (!isEventMode && selectedRace?.compatibility?.can_run === false)
+              "
+              [title]="
+                (!isEventMode && selectedRace?.compatibility?.can_run === false
+                  ? 'RD_MSG_CANNOT_RUN_INCOMPATIBLE'
+                  : 'RDS_TOOLTIP_START_RACE'
+                ) | translate
+              "
             >
               <svg
                 width="24"
@@ -1268,9 +1338,18 @@
             </button>
             <button
               class="btn-demo"
+              id="demo-race-btn"
               (click)="startRace(true)"
-              [disabled]="selectedParticipants.length === 0"
-              [title]="'RDS_TOOLTIP_DEMO_RACE' | translate"
+              [disabled]="
+                selectedParticipants.length === 0 ||
+                (!isEventMode && selectedRace?.compatibility?.can_run === false)
+              "
+              [title]="
+                (!isEventMode && selectedRace?.compatibility?.can_run === false
+                  ? 'RD_MSG_CANNOT_RUN_INCOMPATIBLE'
+                  : 'RDS_TOOLTIP_DEMO_RACE'
+                ) | translate
+              "
             >
               <span>{{ "RDS_BTN_DEMO_RACE" | translate }}</span>
             </button>

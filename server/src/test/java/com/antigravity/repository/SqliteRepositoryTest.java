@@ -3,9 +3,12 @@ package com.antigravity.repository;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.Driver;
+import com.antigravity.models.FuelOptions.FuelUsageType;
 import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import java.io.File;
@@ -270,5 +273,85 @@ public class SqliteRepositoryTest {
     assertNull(driverRepository.findByEntityId("d1"));
     driverRepository.delete("d1");
     driverRepository.drop();
+  }
+
+  @Test
+  public void testPreserveUnmappedFieldsOnSave() throws Exception {
+    // 1. Initial record with known fields
+    Driver driver = new Driver("Carlos Sainz", "Smooth Operator", "d55", "d55");
+    driverRepository.save(driver);
+
+    // 2. Simulate newer version having injected new fields: "step_up", "_compat_meta", and a nested
+    // unmapped field
+    String existingJson = driverRepository.findRawJsonByEntityId("d55");
+    assertNotNull(existingJson);
+    String upgradedJson =
+        existingJson.substring(0, existingJson.length() - 1)
+            + ",\"step_up\":3,\"_compat_meta\":{\"version\":\"1.2.0\"},"
+            + "\"nested_opts\":{\"custom_flag\":true,\"extra_val\":42}}";
+    String sql = "UPDATE drivers SET json_data = ? WHERE entity_id = ?";
+    try (java.sql.PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, upgradedJson);
+      pstmt.setString(2, "d55");
+      pstmt.executeUpdate();
+    }
+
+    // 3. Current older version loads entity (only knows Driver fields)
+    Driver loaded = driverRepository.findByEntityId("d55");
+    assertNotNull(loaded);
+    assertEquals("Carlos Sainz", loaded.getName());
+
+    // 4. User edits nickname and saves back
+    Driver updated = new Driver("Carlos Sainz", "Chili", "d55", "d55");
+    driverRepository.save(updated);
+
+    // 5. Verify the raw json in SQLite has the updated nickname AND preserved unmapped fields
+    String preservedJson = driverRepository.findRawJsonByEntityId("d55");
+    assertNotNull(preservedJson);
+    com.fasterxml.jackson.databind.JsonNode rootNode =
+        new com.fasterxml.jackson.databind.ObjectMapper().readTree(preservedJson);
+
+    assertEquals("Chili", rootNode.get("nickname").asText());
+    assertEquals(3, rootNode.get("step_up").asInt());
+    assertNotNull(rootNode.get("_compat_meta"));
+    assertEquals("1.2.0", rootNode.get("_compat_meta").get("version").asText());
+    assertNotNull(rootNode.get("nested_opts"));
+    assertEquals(42, rootNode.get("nested_opts").get("extra_val").asInt());
+  }
+
+  @Test
+  public void testFindAllRawJson() {
+    Driver d1 = new Driver("Driver One", "D1", "d1", "d1");
+    Driver d2 = new Driver("Driver Two", "D2", "d2", "d2");
+    driverRepository.insert(d1);
+    driverRepository.insert(d2);
+
+    java.util.Map<String, String> map = driverRepository.findAllRawJson();
+    assertEquals(2, map.size());
+    assertTrue(map.containsKey("d1"));
+    assertTrue(map.containsKey("d2"));
+    assertTrue(map.get("d1").contains("Driver One"));
+  }
+
+  @Test
+  public void testUnknownEnumDeserializationAsNull() throws Exception {
+    SqliteRepository<com.antigravity.models.AnalogFuelOptions> fuelRepo =
+        new SqliteRepository<>(
+            databaseContext, "test_fuel", com.antigravity.models.AnalogFuelOptions.class);
+
+    String rawJsonWithUnknownEnum =
+        "{\"entity_id\":\"fuel_1\",\"usage_type\":\"QUANTUM_TELEPORTATION\",\"capacity\":100.0}";
+    String sql = "INSERT INTO test_fuel (entity_id, json_data) VALUES ('fuel_1', ?)";
+    try (java.sql.PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, rawJsonWithUnknownEnum);
+      pstmt.executeUpdate();
+    }
+
+    AnalogFuelOptions loaded = fuelRepo.findByEntityId("fuel_1");
+    assertNotNull(loaded);
+    // Jackson deserializes unknown enum as null instead of throwing an exception,
+    // allowing the domain model constructor to safely fall back to its default (LINEAR)
+    assertEquals(FuelUsageType.LINEAR, loaded.getUsageType());
+    assertEquals(100.0, loaded.getCapacity(), 0.001);
   }
 }

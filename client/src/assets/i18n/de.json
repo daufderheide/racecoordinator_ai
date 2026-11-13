@@ -3338,5 +3338,16 @@
   "RE_TOOLTIP_TRACK": "Die diesem Rennen zugeordnete physische Strecke, die die verfügbaren Kraftstoffsimulationsmodi bestimmt.",
   "RE_TOOLTIP_THEME": "Das visuelle UI-Design für die Anzeige am Renntag.",
   "RE_TOOLTIP_HEAT_RANKING": "Die Platzierungsmethode zur Bestimmung der Reihenfolge in einzelnen Läufen.",
-  "RE_TOOLTIP_OVERALL_RANKING": "Die Platzierungsmethode zur Bestimmung des Gesamtergebnisses über alle Läufe."
+  "RE_TOOLTIP_OVERALL_RANKING": "Die Platzierungsmethode zur Bestimmung des Gesamtergebnisses über alle Läufe.",
+  "RE_BANNER_READ_ONLY_TITLE": "Schreibgeschützt (Downgrade-Version)",
+  "RE_BANNER_READ_ONLY_DESC": "Dieses Rennen wurde in einer neueren Version konfiguriert und enthält inkompatible Funktionen. Es kann nicht direkt bearbeitet oder gestartet werden. Duplizieren Sie es, um eine ausführbare Kopie mit Fallback-Einstellungen zu erstellen.",
+  "RE_BANNER_DEGRADED_TITLE": "Einstellungen ignoriert (Downgrade-Version)",
+  "RE_BANNER_DEGRADED_DESC": "Dieses Rennen enthält erweiterte Einstellungen aus einer neueren Version, die in dieser Version ignoriert werden. Ihre ursprünglichen Einstellungen bleiben erhalten, wenn Sie Änderungen speichern.",
+  "RE_ERROR_READ_ONLY_DOWNGRADE": "Dieses Rennen ist schreibgeschützt, da es Einstellungen aus einer neueren Version enthält. Duplizieren Sie es, um eine bearbeitbare Kopie zu erstellen.",
+  "RE_TOOLTIP_EDIT_DISABLED_DOWNGRADE": "Dieses Rennen kann nicht bearbeitet werden, da es in einer neueren Version konfiguriert wurde. Duplizieren Sie es, um eine bearbeitbare Kopie zu erstellen.",
+  "RD_BADGE_IGNORED_SETTINGS": "Ignorierte Einstellungen",
+  "RD_BADGE_READ_ONLY": "Inkompatibel",
+  "RD_BTN_DUPLICATE_TO_RUN": "Zum Starten duplizieren",
+  "RD_MSG_CANNOT_RUN_INCOMPATIBLE": "Dieses Rennen kann nicht gestartet werden, da es Einstellungen aus einer neueren Version enthält. Duplizieren Sie es mit Fallback-Einstellungen, um zu starten.",
+  "RDS_ERR_CANNOT_RUN_RACE": "Rennen kann nicht gestartet werden"
 }

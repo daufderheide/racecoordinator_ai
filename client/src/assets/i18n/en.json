@@ -3338,5 +3338,16 @@
   "RE_TOOLTIP_TRACK": "The physical track associated with this race, determining available fuel simulation modes.",
   "RE_TOOLTIP_THEME": "The visual UI theme applied to the race display during raceday.",
   "RE_TOOLTIP_HEAT_RANKING": "The ranking method used to determine finishing order in individual heats.",
-  "RE_TOOLTIP_OVERALL_RANKING": "The ranking method used to determine overall race standings across all completed heats."
+  "RE_TOOLTIP_OVERALL_RANKING": "The ranking method used to determine overall race standings across all completed heats.",
+  "RE_BANNER_READ_ONLY_TITLE": "Read-Only (Downgraded Version)",
+  "RE_BANNER_READ_ONLY_DESC": "This race was configured in a newer version and contains incompatible features. It cannot be edited or run directly. Duplicate it to create a runnable copy with fallback settings.",
+  "RE_BANNER_DEGRADED_TITLE": "Settings Ignored (Downgraded Version)",
+  "RE_BANNER_DEGRADED_DESC": "This race contains advanced settings saved by a newer version that are ignored in this version. Your original settings will be preserved if you save changes.",
+  "RE_ERROR_READ_ONLY_DOWNGRADE": "This race is read-only because it contains settings from a newer version. Duplicate it to create an editable copy.",
+  "RE_TOOLTIP_EDIT_DISABLED_DOWNGRADE": "This race cannot be edited because it was configured in a newer version. Duplicate it to create an editable copy.",
+  "RD_BADGE_IGNORED_SETTINGS": "Ignored Settings",
+  "RD_BADGE_READ_ONLY": "Incompatible",
+  "RD_BTN_DUPLICATE_TO_RUN": "Duplicate to Run",
+  "RD_MSG_CANNOT_RUN_INCOMPATIBLE": "This race cannot be run because it contains settings from a newer version. Duplicate it with fallback settings to run.",
+  "RDS_ERR_CANNOT_RUN_RACE": "Cannot Run Race"
 }

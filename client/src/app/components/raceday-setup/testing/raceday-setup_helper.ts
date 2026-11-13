@@ -32,6 +32,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "getThemes",
     "getDriverLabels",
     "getTracks",
+    "copyRace",
   ]);
 
   mock.socketConnected$ = new BehaviorSubject(true);
@@ -44,6 +45,9 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
   mock.getThemes.and.returnValue(of([]));
   mock.getDriverLabels.and.returnValue(of([]));
   mock.getTracks.and.returnValue(of([]));
+  mock.copyRace.and.callFake((id: string) =>
+    of({ entity_id: `${id}_copy`, name: "Copied Race" }),
+  );
   mock.getSavedRaces.and.callFake(() => of(deepCopy(MOCK_AUTOSAVE_RACES)));
   mock.loadRace.and.returnValue(of("OK"));
   mock.deleteSavedRace.and.returnValue(of("OK"));

@@ -82,7 +82,10 @@ export class RaceEditorPersistenceHelper {
       host.loadHeats();
     }
     host.syncSequenceTextFromModel();
-    if (host.isPreservingEditModeOnNavigation) {
+    if (race?.compatibility?.is_read_only) {
+      host.isPreservingEditModeOnNavigation = false;
+      host.isEditMode = false;
+    } else if (host.isPreservingEditModeOnNavigation) {
       host.isPreservingEditModeOnNavigation = false;
       host.isEditMode = true;
       host.defaultRaceName = host.editingRace.name;
@@ -129,6 +132,9 @@ export class RaceEditorPersistenceHelper {
   }
 
   static canSaveAsNew(editingRace: any): boolean {
+    if (editingRace?.compatibility?.is_read_only) {
+      return true;
+    }
     if (!editingRace?.name || !editingRace?.theme_id) {
       return false;
     }
@@ -136,6 +142,12 @@ export class RaceEditorPersistenceHelper {
   }
 
   static canUpdate(host: RacePersistenceHost): boolean {
+    if (
+      host.selectedRace?.compatibility?.is_read_only ||
+      host.editingRace?.compatibility?.is_read_only
+    ) {
+      return false;
+    }
     if (!host.isDirtyState()) {
       return false;
     }
@@ -425,8 +437,71 @@ export class RaceEditorPersistenceHelper {
     host.cdr.detectChanges();
   }
 
+  private static applyCreatedRace(
+    host: RacePersistenceHost,
+    created: any,
+  ): void {
+    host.isSaving = false;
+    host.isEditMode = true;
+    host.isPreservingEditModeOnNavigation = true;
+    host.navigationService.setLastEditedId("race", created.entity_id);
+    host.editingRace = created;
+    host.originalRace = deepCopy(created);
+    host.selectedRace = created;
+    host.selectedRaceId = created.entity_id;
+    host.defaultRaceName = created.name;
+    host.undoManager.resetTracking(host.editingRace);
+    host.loadHeats();
+    const idx = host.allRaces.findIndex(
+      (r) => r.entity_id === created.entity_id,
+    );
+    if (idx >= 0) {
+      host.allRaces[idx] = deepCopy(created);
+    } else {
+      host.allRaces.push(deepCopy(created));
+    }
+    host.updateRaceSelectItems();
+    host.cdr.detectChanges();
+    host.focusNameInput();
+    host.router.navigate([], {
+      queryParams: {
+        id: created.entity_id,
+        driverCount: host.driverCount,
+      },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+  }
+
+  private static copyIncompatibleRace(host: RacePersistenceHost): void {
+    host.isSaving = true;
+    host.subscriptions.push(
+      host.dataService.copyRace(host.editingRace.entity_id).subscribe({
+        next: (created) => this.applyCreatedRace(host, created),
+        error: (error: any) => {
+          host.logger.error("Failed to copy incompatible race", error);
+          host.showError(
+            "Error Copying Race",
+            error.error || error.message || "Unknown error",
+          );
+          host.isSaving = false;
+          this.loadRaces(host);
+          host.cdr.detectChanges();
+        },
+      }),
+    );
+  }
+
   static saveAsNew(host: RacePersistenceHost): void {
     if (!host.editingRace || !this.canSaveAsNew(host.editingRace)) return;
+
+    if (
+      host.selectedRace?.compatibility?.is_read_only ||
+      host.editingRace?.compatibility?.is_read_only
+    ) {
+      this.copyIncompatibleRace(host);
+      return;
+    }
 
     host.isSaving = true;
     const newName = this.generateUniqueName(
@@ -447,38 +522,7 @@ export class RaceEditorPersistenceHelper {
 
     host.subscriptions.push(
       host.dataService.createRace(payload).subscribe({
-        next: (created) => {
-          host.isSaving = false;
-          host.isEditMode = true;
-          host.isPreservingEditModeOnNavigation = true;
-          host.navigationService.setLastEditedId("race", created.entity_id);
-          host.editingRace = created;
-          host.originalRace = deepCopy(created);
-          host.selectedRace = created;
-          host.selectedRaceId = created.entity_id;
-          host.defaultRaceName = created.name;
-          host.undoManager.resetTracking(host.editingRace);
-          host.loadHeats();
-          const idx = host.allRaces.findIndex(
-            (r) => r.entity_id === created.entity_id,
-          );
-          if (idx >= 0) {
-            host.allRaces[idx] = deepCopy(created);
-          } else {
-            host.allRaces.push(deepCopy(created));
-          }
-          host.updateRaceSelectItems();
-          host.cdr.detectChanges();
-          host.focusNameInput();
-          host.router.navigate([], {
-            queryParams: {
-              id: created.entity_id,
-              driverCount: host.driverCount,
-            },
-            queryParamsHandling: "merge",
-            replaceUrl: true,
-          });
-        },
+        next: (created) => this.applyCreatedRace(host, created),
         error: (error: any) => {
           host.logger.error("Failed to save as new race", error);
           host.showError(

@@ -3338,5 +3338,16 @@
   "UI_EDITOR_SCALE_MODE_FIT_WIDTH": "Adatta alla larghezza",
   "UI_EDITOR_SCALE_MODE_LETTERBOX": "Adatta allo schermo",
   "UI_EDITOR_SCALE_MODE_STRETCH": "Allarga per riempire",
-  "UI_EDITOR_ZOOM_TITLE": "Zoom della tela"
+  "UI_EDITOR_ZOOM_TITLE": "Zoom della tela",
+  "RE_BANNER_READ_ONLY_TITLE": "Sola lettura (Versione precedente)",
+  "RE_BANNER_READ_ONLY_DESC": "Questa gara è stata configurata in una versione più recente e contiene funzionalità incompatibili. Non può essere modificata o avviata direttamente. Duplicala per creare una copia eseguibile con impostazioni di fallback.",
+  "RE_BANNER_DEGRADED_TITLE": "Impostazioni ignorate (Versione precedente)",
+  "RE_BANNER_DEGRADED_DESC": "Questa gara contiene impostazioni avanzate salvate da una versione più recente che vengono ignorate in questa versione. Le impostazioni originali verranno preservate se salvi le modifiche.",
+  "RE_ERROR_READ_ONLY_DOWNGRADE": "Questa gara è di sola lettura perché contiene impostazioni di una versione più recente. Duplicala per creare una copia modificabile.",
+  "RE_TOOLTIP_EDIT_DISABLED_DOWNGRADE": "Questa gara non può essere modificata perché è stata configurata in una versione più recente. Duplicala per creare una copia modificabile.",
+  "RD_BADGE_IGNORED_SETTINGS": "Impostazioni ignorate",
+  "RD_BADGE_READ_ONLY": "Incompatibile",
+  "RD_BTN_DUPLICATE_TO_RUN": "Duplica per avviare",
+  "RD_MSG_CANNOT_RUN_INCOMPATIBLE": "Questa gara non può essere avviata perché contiene impostazioni di una versione più recente. Duplicala con impostazioni di fallback per avviarla.",
+  "RDS_ERR_CANNOT_RUN_RACE": "Impossibile avviare la gara"
 }

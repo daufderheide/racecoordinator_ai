@@ -153,6 +153,10 @@ export class DataEntityCrudHelper {
     return this.http.put<any>(`${this.racesUrl}/${id}`, race);
   }
 
+  copyRace(id: string): Observable<any> {
+    return this.http.post<any>(`${this.racesUrl}/${id}/copy`, {});
+  }
+
   deleteRace(id: string): Observable<any> {
     return this.http.delete<any>(`${this.racesUrl}/${id}`);
   }

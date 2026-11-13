@@ -280,6 +280,12 @@ export class RaceEditorComponent
 
   onToggleEditMode() {
     if (!this.isEditMode) {
+      if (this.selectedRace?.compatibility?.is_read_only) {
+        alert(
+          this.translationService.translate("RE_ERROR_READ_ONLY_DOWNGRADE"),
+        );
+        return;
+      }
       this.isEditMode = true;
       this.focusNameInput();
       return;

@@ -1,7 +1,9 @@
 package com.antigravity.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -38,6 +40,7 @@ public class RaceHeatTaskHandlerTest {
   public void testRouteRegistration() {
     verify(mockJavalin).get(eq("/api/races"), any(), eq(Role.VIEWER));
     verify(mockJavalin).post(eq("/api/races"), any(), eq(Role.DIRECTOR));
+    verify(mockJavalin).post(eq("/api/races/{id}/copy"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin).put(eq("/api/races/{id}"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin).delete(eq("/api/races/{id}"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin).post(eq("/api/races/{id}/reset-records"), any(), eq(Role.ADMIN));
@@ -398,6 +401,144 @@ public class RaceHeatTaskHandlerTest {
               .build();
 
       realHandler.validateRace(raceOrphaned);
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
+
+  @Test
+  public void testGetRaces_IncludesCompatibilityStatus() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_compat").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_compat_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      com.antigravity.repository.SqliteRepository<Race> raceRepo =
+          new com.antigravity.repository.SqliteRepository<>(dbCtx, "races", Race.class);
+
+      // Normal race
+      Race normalRace = new Race.Builder().withName("Normal GP").withEntityId("race_1").build();
+      raceRepo.save(normalRace);
+
+      // Degraded race (contains step_up in raw json)
+      String stepUpJson = "{\"entity_id\":\"race_2\",\"name\":\"StepUp GP\",\"step_up\":2}";
+      String sql = "INSERT INTO races (entity_id, json_data) VALUES ('race_2', ?)";
+      try (java.sql.PreparedStatement pstmt = dbCtx.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, stepUpJson);
+        pstmt.executeUpdate();
+      }
+
+      Context ctx = mock(Context.class);
+      org.mockito.ArgumentCaptor<List> captor = org.mockito.ArgumentCaptor.forClass(List.class);
+      realHandler.getRaces(ctx);
+      verify(ctx).json(captor.capture());
+
+      List<DatabaseTaskHandler.RaceResponse> list = captor.getValue();
+      assertEquals(2, list.size());
+
+      DatabaseTaskHandler.RaceResponse resp1 =
+          list.stream().filter(r -> "race_1".equals(r.race.getEntityId())).findFirst().orElse(null);
+      assertNotNull(resp1);
+      assertEquals(
+          com.antigravity.models.RaceCompatibility.Status.COMPATIBLE,
+          resp1.compatibility.getStatus());
+      assertTrue(resp1.compatibility.isCanRun());
+      assertFalse(resp1.compatibility.isReadOnly());
+
+      DatabaseTaskHandler.RaceResponse resp2 =
+          list.stream().filter(r -> "race_2".equals(r.race.getEntityId())).findFirst().orElse(null);
+      assertNotNull(resp2);
+      assertEquals(
+          com.antigravity.models.RaceCompatibility.Status.DEGRADED,
+          resp2.compatibility.getStatus());
+      assertTrue(resp2.compatibility.isCanRun());
+      assertFalse(resp2.compatibility.isReadOnly());
+      assertTrue(resp2.compatibility.getIgnoredFeatures().contains("step_up"));
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
+
+  @Test
+  public void testHandleUpdateRace_IncompatibleRace_Returns400ReadOnly() throws Exception {
+    String rootDir = tempFolder.newFolder("db_root_ro").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_ro_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      // Incompatible race with points_scoring
+      String incompatibleJson =
+          "{\"entity_id\":\"race_incompat\",\"name\":\"Points Race\",\"points_scoring\":{\"enabled\":true}}";
+      String sql = "INSERT INTO races (entity_id, json_data) VALUES ('race_incompat', ?)";
+      try (java.sql.PreparedStatement pstmt = dbCtx.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, incompatibleJson);
+        pstmt.executeUpdate();
+      }
+
+      Context ctx = mock(Context.class);
+      when(ctx.pathParam("id")).thenReturn("race_incompat");
+      when(ctx.status(400)).thenReturn(ctx);
+
+      realHandler.handleUpdateRace(ctx);
+      verify(ctx).status(400);
+      verify(ctx).result(org.mockito.ArgumentMatchers.contains("read-only"));
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
+
+  @Test
+  public void testHandleCopyRace_IncompatibleRaceWithFallbacks_CreatesRunnableCopy()
+      throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_copy").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_copy_db", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      String rawJson =
+          "{\"entity_id\":\"race_orig\",\"name\":\"Championship\","
+              + "\"points_scoring\":{\"enabled\":true},"
+              + "\"overall_scoring\":{\"ranking_method\":\"POINTS\"},"
+              + "\"_compat_meta\":{\"features\":["
+              + "{\"id\":\"points_overall\",\"criticality\":\"REQUIRED\",\"fallback\":{\"target_path\":\"overall_scoring.ranking_method\",\"value\":\"LAP_COUNT\"}}"
+              + "]}}";
+
+      String sql = "INSERT INTO races (entity_id, json_data) VALUES ('race_orig', ?)";
+      try (java.sql.PreparedStatement pstmt = dbCtx.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, rawJson);
+        pstmt.executeUpdate();
+      }
+
+      Context ctx = mock(Context.class);
+      when(ctx.pathParam("id")).thenReturn("race_orig");
+      when(ctx.status(201)).thenReturn(ctx);
+
+      org.mockito.ArgumentCaptor<DatabaseTaskHandler.RaceResponse> captor =
+          org.mockito.ArgumentCaptor.forClass(DatabaseTaskHandler.RaceResponse.class);
+
+      realHandler.handleCopyRace(ctx);
+      verify(ctx).status(201);
+      verify(ctx).json(captor.capture());
+
+      DatabaseTaskHandler.RaceResponse response = captor.getValue();
+      assertNotNull(response);
+      assertEquals("Championship (Copy)", response.race.getName());
+      assertEquals(
+          com.antigravity.models.RaceCompatibility.Status.COMPATIBLE,
+          response.compatibility.getStatus());
+      assertTrue(response.compatibility.isCanRun());
+      assertFalse(response.compatibility.isReadOnly());
     } finally {
       if (dbCtx.getConnection() != null) {
         dbCtx.getConnection().close();

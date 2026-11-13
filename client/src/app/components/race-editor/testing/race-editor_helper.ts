@@ -49,6 +49,7 @@ export function createRaceEditorDataServiceMock(): any {
     "getTracks",
     "getThemes",
     "createRace",
+    "copyRace",
     "updateRace",
     "deleteRace",
     "generateHeats",
@@ -91,6 +92,17 @@ export function createRaceEditorDataServiceMock(): any {
   mock.getTracks.and.callFake(() => of(deepCopy(MOCK_TRACKS)));
   mock.createRace.and.callFake((payload: any) =>
     of({ ...payload, entity_id: payload?.entity_id || "r-new" }),
+  );
+  mock.copyRace.and.callFake((id: string) =>
+    of({
+      entity_id: id + "-copy",
+      name: "Copied Race",
+      compatibility: {
+        status: "COMPATIBLE",
+        can_run: true,
+        is_read_only: false,
+      },
+    }),
   );
   mock.updateRace.and.returnValue(of({ entity_id: "r1" }));
   mock.deleteRace.and.returnValue(of({}));

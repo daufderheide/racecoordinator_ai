@@ -16,12 +16,16 @@
     [selectedId]="selectedRaceId"
     [isEditMode]="isEditMode"
     [showEdit]="true"
+    [disabledEdit]="selectedRace?.compatibility?.is_read_only"
     [showExpandCollapse]="true"
     [allExpanded]="areAllSectionsExpanded()"
     [showAdd]="true"
     [showCopy]="true"
     [showDelete]="true"
-    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledCopy]="
+      isSaving ||
+      (!selectedRace?.compatibility?.is_read_only && !isConfigValid())
+    "
     [disabledDelete]="!selectedRace || isSaving"
     [copyDisabledTooltipKey]="'RE_TOOLTIP_COPY_DISABLED'"
     [showHelp]="true"
@@ -47,6 +51,47 @@
         id="race-config-panel"
         [class.read-only]="!isEditMode"
       >
+        @if (selectedRace?.compatibility?.is_read_only) {
+          <div
+            class="compatibility-banner read-only-banner"
+            id="race-compat-read-only-banner"
+          >
+            <span class="material-icons banner-icon">lock</span>
+            <div class="banner-content">
+              <span class="banner-title">{{
+                "RE_BANNER_READ_ONLY_TITLE" | translate
+              }}</span>
+              <span class="banner-desc">{{
+                "RE_BANNER_READ_ONLY_DESC" | translate
+              }}</span>
+            </div>
+            <button
+              type="button"
+              class="banner-action-btn"
+              id="race-compat-copy-btn"
+              (click)="saveAsNew()"
+              [title]="'RD_BTN_DUPLICATE_TO_RUN' | translate"
+            >
+              <span class="material-icons">content_copy</span>
+              {{ "RD_BTN_DUPLICATE_TO_RUN" | translate }}
+            </button>
+          </div>
+        } @else if (selectedRace?.compatibility?.status === "DEGRADED") {
+          <div
+            class="compatibility-banner degraded-banner"
+            id="race-compat-degraded-banner"
+          >
+            <span class="material-icons banner-icon">warning_amber</span>
+            <div class="banner-content">
+              <span class="banner-title">{{
+                "RE_BANNER_DEGRADED_TITLE" | translate
+              }}</span>
+              <span class="banner-desc">{{
+                "RE_BANNER_DEGRADED_DESC" | translate
+              }}</span>
+            </div>
+          </div>
+        }
         <div
           id="race-name-section"
           class="editor-section fixed-header"

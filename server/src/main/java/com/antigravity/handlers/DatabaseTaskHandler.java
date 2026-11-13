@@ -5,6 +5,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Event;
 import com.antigravity.models.Race;
+import com.antigravity.models.RaceCompatibility;
 import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Season;
 import com.antigravity.models.SeasonStandingItem;
@@ -40,9 +41,17 @@ public class DatabaseTaskHandler {
     @com.fasterxml.jackson.annotation.JsonProperty("track")
     public Track track;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("compatibility")
+    public RaceCompatibility compatibility;
+
     public RaceResponse(Race race, Track track) {
+      this(race, track, RaceCompatibility.compatible());
+    }
+
+    public RaceResponse(Race race, Track track, RaceCompatibility compatibility) {
       this.race = race;
       this.track = track;
+      this.compatibility = compatibility != null ? compatibility : RaceCompatibility.compatible();
     }
   }
 
