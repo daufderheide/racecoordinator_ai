@@ -10,7 +10,7 @@ Les ressources sont des fichiers personnalisés utilisés pour enrichir l'expér
 - **Ensembles audio :** Collections regroupées de fichiers sonores ou de phrases de synthèse vocale (TTS) associées à des seuils précis (secondes restantes, tours restants ou niveau de carburant).
 - **Images :** Graphismes de véhicules, avatars de pilotes, drapeaux, logos de sponsors et arrière-plans.
 - **Ensembles d'images :** Séries d'images séquentielles (jauges de carburant ou feux de départ).
-- **Rotations personnalisées :** Schémas de rotation de voies définis par l'utilisateur pour des formats de course spécifiques.
+- **Ensembles de rotations personnalisées :** Schémas de rotation de voies définis par l'utilisateur pour des formats de course spécifiques.
 
 ---
 
@@ -23,7 +23,7 @@ Le panneau latéral gauche propose quatre commandes pour enrichir votre biblioth
    - Formats audio acceptés : `.wav`, `.mp3`, `.ogg`.
 2. **Nouvel ensemble d'images :** Ouvre l'éditeur d'ensembles d'images pour regrouper plusieurs images séquentielles en animations ou jauges d'état.
 3. **Nouvel ensemble audio :** Ouvre l'éditeur d'ensembles audio pour programmer des séquences sonores selon le temps, les tours restants ou le carburant.
-4. **Nouvelle rotation personnalisée :** Ouvre l'éditeur de rotation pour concevoir des alternances de voies personnalisées.
+4. **Nouvel ensemble de rotations personnalisées :** Ouvre l'éditeur de rotation pour concevoir des alternances de voies personnalisées.
 
 ---
 
@@ -45,13 +45,13 @@ Vous pouvez aussi cliquer sur les ressources pour les sélectionner. Avec des é
 
 Le Gestionnaire de Ressources met à disposition des outils pour retrouver vos éléments facilement :
 
-- **Onglets de filtrage :** Filtrez la bibliothèque par type de ressource :
+- **Onglets de filtrage :** Filtrez la bibliothèque par type de ressource (votre sélection d'onglet est automatiquement mémorisée et restaurée lors de vos prochaines visites) :
   - **Tous :** Présente l'intégralité des ressources enregistrées.
   - **Images :** Fichiers images statiques (`.png`, `.jpg`, `.svg`, etc.).
   - **Ensembles d'images :** Animations et jauges composées de plusieurs images.
   - **Sons :** Fichiers audio individuels (`.wav`, `.mp3`, `.ogg`).
   - **Ensembles audio :** Collections sonores liées à des seuils numériques.
-  - **Rotations personnalisées :** Schémas de rotation de voies des manches.
+  - **Ensembles de rotations personnalisées :** Schémas de rotation de voies des manches.
 - **Disposition d'affichage :** Basculez entre **Vue en liste**, **Petites miniatures**, **Miniatures moyennes** et **Grandes miniatures**.
 - **Filtrer par nom :** Champ de recherche en temps réel filtrant instantanément la liste à la saisie.
 
@@ -80,4 +80,4 @@ Vos ressources créées ou téléversées sont exploitables dans tous les module
 - Sélectionnez des sons dans l'[Éditeur de thèmes](themes.fr.md) pour les tours rapides et signaux de départ/arrivée.
 - Associez des visuels dans l'[Éditeur de pilotes](driver-editor.fr.md) pour les photos de véhicules et avatars.
 - Configurez des widgets graphiques dans l'[Éditeur de mise en page](layout-editor.fr.md).
-- Liez des fichiers de rotation dans l'[Éditeur de courses](race-editor.fr.md).
+- Liez des ensembles de rotations personnalisées dans l'[Éditeur de courses](race-editor.fr.md).

@@ -10,7 +10,7 @@ Los recursos son elementos personalizables que enriquecen la experiencia de carr
 - **Conjuntos de audio:** Colecciones agrupadas de archivos de audio o frases de texto a voz (TTS) asignadas a umbrales específicos (segundos restantes, vueltas restantes o porcentaje de combustible).
 - **Imágenes:** Gráficos de coches, avatares de pilotos, banderas personalizadas, logotipos y fondos.
 - **Series de imágenes:** Colecciones de fotogramas secuenciales para animaciones (como indicadores de combustible o luces de salida).
-- **Rotaciones personalizadas:** Esquemas de rotación de mangas definidos por el usuario para formatos de carrera específicos.
+- **Conjuntos de rotaciones personalizadas:** Esquemas de rotación de mangas definidos por el usuario para formatos de carrera específicos.
 
 ---
 
@@ -23,7 +23,7 @@ El panel izquierdo del Gestor de Recursos proporciona cuatro controles para agre
    - Formatos de audio compatibles: `.wav`, `.mp3`, `.ogg`.
 2. **Nuevo conjunto de imágenes:** Abre el Editor de series de imágenes para agrupar fotogramas en animaciones e indicadores de estado.
 3. **Nuevo conjunto de audio:** Abre el Editor de conjuntos de audio para crear secuencias sonoras activadas por temporizadores, vueltas restantes o niveles de combustible.
-4. **Nueva rotación personalizada:** Abre el Editor de rotaciones personalizadas para diseñar esquemas avanzados de alternancia de carriles.
+4. **Nuevo conjunto de rotaciones personalizadas:** Abre el Editor de rotaciones personalizadas para diseñar esquemas avanzados de alternancia de carriles.
 
 ---
 
@@ -45,13 +45,13 @@ También puede hacer clic sobre los recursos para seleccionarlos. Con elementos 
 
 El Gestor de Recursos incluye controles superiores para localizar y organizar recursos fácilmente:
 
-- **Pestañas de filtro:** Filtre rápidamente la biblioteca por tipo de recurso:
+- **Pestañas de filtro:** Filtre rápidamente la biblioteca por tipo de recurso (la pestaña seleccionada se guarda y se restaura automáticamente al volver al Gestor de recursos):
   - **Todos:** Muestra cada uno de los recursos almacenados.
   - **Imágenes:** Archivos estáticos individuales (`.png`, `.jpg`, `.svg`, etc.).
   - **Conjuntos de imágenes:** Secuencias agrupadas de imágenes y medidores de combustible.
   - **Sonidos:** Clips de audio individuales (`.wav`, `.mp3`, `.ogg`).
   - **Conjuntos de audio:** Colecciones sonoras vinculadas a umbrales numéricos.
-  - **Rotaciones personalizadas:** Esquemas de rotación de pistas de mangas.
+  - **Conjuntos de rotaciones personalizadas:** Esquemas de rotación de pistas de mangas.
 - **Selector de diseño:** Alterne entre **Vista de lista**, **Miniaturas pequeñas**, **Miniaturas medianas** y **Miniaturas grandes**.
 - **Filtrar por nombre:** Campo de búsqueda en tiempo real que filtra la lista al instante mientras escribe.
 
@@ -80,4 +80,4 @@ Una vez subidos o creados, sus recursos quedan disponibles al instante en toda l
 - Seleccione efectos de sonido en el [Editor de temas](themes.es.md) para vueltas rápidas, cambios de líder y fanfarrias finales.
 - Asigne gráficos en el [Editor de pilotos](driver-editor.es.md) para fotos de coches y avatares.
 - Configure indicadores visuales en el [Editor de diseño](layout-editor.es.md).
-- Vincule archivos de rotación en el [Editor de carreras](race-editor.es.md).
+- Vincule conjuntos de rotaciones personalizadas en el [Editor de carreras](race-editor.es.md).

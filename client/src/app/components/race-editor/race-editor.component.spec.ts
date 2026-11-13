@@ -3450,11 +3450,28 @@ describe("RaceEditorComponent", () => {
 
       it("should toggle edit mode and focus name input when entering edit mode", () => {
         component.isEditMode = false;
+        component.selectedRace = { entity_id: "r1", name: "Normal Race" };
         spyOn(component, "focusNameInput");
 
         component.onToggleEditMode();
         expect(component.isEditMode).toBeTrue();
         expect(component.focusNameInput).toHaveBeenCalled();
+      });
+
+      it("should not enter edit mode and show alert if race is read-only due to downgrade", () => {
+        component.isEditMode = false;
+        component.selectedRace = {
+          entity_id: "r1",
+          name: "Incompatible Race",
+          compatibility: { is_read_only: true },
+        };
+        spyOn(window, "alert");
+        spyOn(component, "focusNameInput");
+
+        component.onToggleEditMode();
+        expect(component.isEditMode).toBeFalse();
+        expect(window.alert).toHaveBeenCalled();
+        expect(component.focusNameInput).not.toHaveBeenCalled();
       });
 
       it("should exit edit mode without updating if not dirty", () => {

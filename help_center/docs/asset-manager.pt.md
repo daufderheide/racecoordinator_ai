@@ -10,7 +10,7 @@ Os recursos são ficheiros personalizáveis que tornam as corridas únicas:
 - **Conjuntos de áudio:** Coleções agrupadas de ficheiros sonoros ou frases de conversão de texto em voz (TTS) associadas a limites específicos (segundos restantes, voltas restantes ou nível de combustível).
 - **Imagens:** Gráficos de carros, avatares de pilotos, bandeiras personalizadas, logótipos e fundos.
 - **Conjuntos de imagens:** Sequências de imagens relacionadas (como medidores de combustível ou luzes de partida).
-- **Rotações personalizadas:** Esquemas de rotação de pistas definidos pelo utilizador para formatos especiais de corrida.
+- **Conjuntos de rotações personalizadas:** Esquemas de rotação de pistas definidos pelo utilizador para formatos especiais de corrida.
 
 ---
 
@@ -23,7 +23,7 @@ O painel esquerdo do Gestor de Recursos disponibiliza quatro controlos para adic
    - Formatos de áudio suportados: `.wav`, `.mp3`, `.ogg`.
 2. **Novo conjunto de imagens:** Abre o Editor de conjuntos de imagens para combinar várias imagens em animações e medidores visuais de estado.
 3. **Novo conjunto de áudio:** Abre o Editor de conjuntos de áudio para programar sequências de sons acionadas por temporizadores, voltas restantes ou combustível.
-4. **Nova rotação personalizada:** Abre o Editor de rotação para desenhar esquemas especializados de alternância de pistas.
+4. **Novo conjunto de rotações personalizadas:** Abre o Editor de rotação para desenhar esquemas especializados de alternância de pistas.
 
 ---
 
@@ -45,13 +45,13 @@ Também pode clicar nos recursos para os selecionar. Com elementos selecionados,
 
 O Gestor de Recursos disponibiliza ferramentas superiores para encontrar e organizar os seus ficheiros com facilidade:
 
-- **Separadores de filtro:** Filtre a biblioteca por tipo de recurso:
+- **Separadores de filtro:** Filtre a biblioteca por tipo de recurso (o separador selecionado é gravado e restaurado automaticamente ao voltar ao Gestor de Recursos):
   - **Todos:** Apresenta todos os ficheiros armazenados na base de dados.
   - **Imagens:** Ficheiros de imagem estáticos (`.png`, `.jpg`, `.svg`, etc.).
   - **Conjuntos de imagens:** Animações e medidores formados por várias imagens.
   - **Sons:** Ficheiros de som individuais (`.wav`, `.mp3`, `.ogg`).
   - **Conjuntos de áudio:** Coleções sonoras vinculadas a valores numéricos.
-  - **Rotações personalizadas:** Esquemas de rotação de pistas das mangas.
+  - **Conjuntos de rotações personalizadas:** Esquemas de rotação de pistas das mangas.
 - **Modos de visualização:** Alterne entre **Vista de lista**, **Miniaturas pequenas**, **Miniaturas médias** e **Miniaturas grandes**.
 - **Filtrar por nome:** Campo de pesquisa em tempo real que filtra instantaneamente a lista à medida que escreve.
 
@@ -80,4 +80,4 @@ Assim que forem carregados ou criados, os seus ficheiros ficam imediatamente dis
 - Selecione efeitos sonoros no [Editor de Temas](themes.pt.md) para voltas rápidas e fanfarras de final de corrida.
 - Associe imagens no [Editor de Pilotos](driver-editor.pt.md) para carros e avatares.
 - Configure indicadores visuais no [Editor de Layout](layout-editor.pt.md).
-- Associe ficheiros de rotação no [Editor de Corridas](race-editor.pt.md).
+- Associe conjuntos de rotações personalizadas no [Editor de Corridas](race-editor.pt.md).

@@ -241,6 +241,9 @@ export class DataService {
   updateRace(id: string, race: any): Observable<any> {
     return this.crudHelper.updateRace(id, race);
   }
+  copyRace(id: string): Observable<any> {
+    return this.crudHelper.copyRace(id);
+  }
   deleteRace(id: string): Observable<any> {
     return this.crudHelper.deleteRace(id);
   }

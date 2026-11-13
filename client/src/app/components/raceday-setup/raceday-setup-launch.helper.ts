@@ -262,6 +262,18 @@ export class RacedaySetupLaunchHelper {
   }
 
   static startRace(host: any, isDemo: boolean): void {
+    if (
+      !host.isEventMode &&
+      host.selectedRace?.compatibility?.can_run === false
+    ) {
+      host.errorTitle = "RDS_ERR_CANNOT_RUN_RACE";
+      host.errorMessage = "RD_MSG_CANNOT_RUN_INCOMPATIBLE";
+      host.errorMessageParams = {};
+      host.showErrorModal = true;
+      host.cdr.detectChanges();
+      return;
+    }
+
     const hasSelection = host.isEventMode
       ? host.selectedEvent && host.selectedParticipants.length > 0
       : host.selectedRace && host.selectedParticipants.length > 0;

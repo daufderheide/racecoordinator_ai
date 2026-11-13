@@ -2,6 +2,7 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   areCustomRotationStatesEqual,
+  areRotationsSorted,
   assignCustomRotationStepNumbers,
   buildRotationsAssetExportJson,
   buildSingleRotationExportJson,
@@ -9,6 +10,8 @@ import {
   cloneCustomRotationState,
   downloadJsonFile,
   driverHasGroupConflict,
+  findNextAvailableDriverCount,
+  findSortedInsertionIndex,
   getDriverGroupConflicts,
   getRotationSignature,
   hasValidationErrors,
@@ -16,6 +19,7 @@ import {
   heatHasGroupConflict,
   heatHasStepUpInStepOne,
   rotationHasStepUps,
+  sortRotationsByDrivers,
 } from "./rotation-export.utils";
 
 describe("rotation-export.utils", () => {
@@ -82,11 +86,18 @@ describe("rotation-export.utils", () => {
       rotations: [{ numDrivers: 5, heats: [] }],
     };
     expect(areCustomRotationStatesEqual(state, diffDrivers)).toBeFalse();
+
+    const diffDesc = {
+      ...state,
+      rotations: [{ ...state.rotations[0], description: "Different" }],
+    };
+    expect(areCustomRotationStatesEqual(state, diffDesc)).toBeFalse();
   });
 
   it("should build single rotation export JSON", () => {
     const rot = {
       numDrivers: 4,
+      description: "My Custom Desc",
       heats: [{ group: 0, driverIndices: [1, 2, 3, 4] }],
     };
     const res = buildSingleRotationExportJson("MyRot", 4, rot);
@@ -94,6 +105,7 @@ describe("rotation-export.utils", () => {
     const parsed = JSON.parse(res.jsonContent);
     expect(parsed.NumDrivers).toBe(4);
     expect(parsed.NumLanes).toBe(4);
+    expect(parsed.Description).toBe("My Custom Desc");
     expect(parsed.Heats[0].Group).toBe(1);
   });
 
@@ -101,6 +113,7 @@ describe("rotation-export.utils", () => {
     const rots = [
       {
         numDrivers: 4,
+        description: "Group A",
         heats: [{ group: 1, driverIndices: [1, 2, 3, 4] }],
       },
     ];
@@ -110,6 +123,7 @@ describe("rotation-export.utils", () => {
     expect(parsed.IsAsset).toBeTrue();
     expect(parsed.AssetName).toBe("MyRot");
     expect(parsed.Rotations.length).toBe(1);
+    expect(parsed.Rotations[0].Description).toBe("Group A");
     expect(parsed.Rotations[0].Heats[0].Group).toBe(2);
   });
 
@@ -317,6 +331,77 @@ describe("rotation-export.utils", () => {
       const result = await downloadJsonFile("rot.json", '{"test":1}');
       expect(result).toBeTrue();
       expect(clickSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("Sorting and Insertion Utilities", () => {
+    it("should sort rotations ascending by driver count", () => {
+      const rotations = [
+        { numDrivers: 8 },
+        { numDrivers: 4 },
+        { numDrivers: 6 },
+        { numDrivers: 5 },
+      ];
+      sortRotationsByDrivers(rotations);
+      expect(rotations.map((r) => r.numDrivers)).toEqual([4, 5, 6, 8]);
+    });
+
+    it("should handle undefined or null driver counts when sorting", () => {
+      const rotations = [
+        { numDrivers: 6 },
+        { numDrivers: undefined },
+        { numDrivers: 4 },
+      ];
+      sortRotationsByDrivers(rotations);
+      expect(rotations.map((r) => r.numDrivers)).toEqual([undefined, 4, 6]);
+    });
+
+    it("should correctly detect if rotations are sorted", () => {
+      expect(areRotationsSorted([])).toBeTrue();
+      expect(areRotationsSorted([{ numDrivers: 4 }])).toBeTrue();
+      expect(
+        areRotationsSorted([
+          { numDrivers: 4 },
+          { numDrivers: 5 },
+          { numDrivers: 8 },
+        ]),
+      ).toBeTrue();
+      expect(
+        areRotationsSorted([
+          { numDrivers: 5 },
+          { numDrivers: 4 },
+          { numDrivers: 8 },
+        ]),
+      ).toBeFalse();
+    });
+
+    it("should find the next available driver count filling gaps or incrementing", () => {
+      // Empty -> minCount
+      expect(findNextAvailableDriverCount([], 4)).toBe(4);
+
+      // Has 4 -> 5
+      expect(findNextAvailableDriverCount([{ numDrivers: 4 }], 4)).toBe(5);
+
+      // Has 4, 6 -> fills gap with 5
+      expect(
+        findNextAvailableDriverCount([{ numDrivers: 4 }, { numDrivers: 6 }], 4),
+      ).toBe(5);
+
+      // Has 4, 5, 6 -> 7
+      expect(
+        findNextAvailableDriverCount(
+          [{ numDrivers: 4 }, { numDrivers: 5 }, { numDrivers: 6 }],
+          4,
+        ),
+      ).toBe(7);
+    });
+
+    it("should find sorted insertion index", () => {
+      const sorted = [{ numDrivers: 4 }, { numDrivers: 6 }, { numDrivers: 8 }];
+      expect(findSortedInsertionIndex(sorted, 3)).toBe(0);
+      expect(findSortedInsertionIndex(sorted, 5)).toBe(1);
+      expect(findSortedInsertionIndex(sorted, 7)).toBe(2);
+      expect(findSortedInsertionIndex(sorted, 9)).toBe(-1);
     });
   });
 });

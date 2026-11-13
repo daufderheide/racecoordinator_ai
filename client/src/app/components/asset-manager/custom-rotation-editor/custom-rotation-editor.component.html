@@ -20,9 +20,24 @@
     (copy)="saveAsNew()"
     (import)="fileInput.click()"
     (export)="exportRotations()"
+    (help)="openLearnMore()"
     [showZoom]="true"
     [(zoomLevel)]="zoomLevel"
   >
+    <div title-actions class="rotation-title-actions">
+      <button
+        id="sort-rotations-btn"
+        type="button"
+        class="rotation-title-btn"
+        [class.needs-sort]="!isRotationsSorted()"
+        (click)="sortRotations()"
+        [disabled]="isSaving || internalRotations.length <= 1"
+        [title]="'AM_BTN_SORT_ROTATIONS' | translate"
+        [attr.aria-label]="'AM_BTN_SORT_ROTATIONS' | translate"
+      >
+        <span class="material-icons">swap_vert</span>
+      </button>
+    </div>
   </app-editor-title>
 
   <div class="content-split">
@@ -230,13 +245,22 @@
               <div class="empty-state-text">
                 {{ "AM_HELP_EMPTY_ROTATIONS" | translate }}
               </div>
+              <a
+                id="custom-rotation-learn-more-link"
+                class="empty-state-help-link"
+                href="javascript:void(0)"
+                (click)="openLearnMore($event)"
+                [attr.aria-label]="'AM_LEARN_MORE_CUSTOM_ROTATIONS' | translate"
+              >
+                {{ "AM_LEARN_MORE_CUSTOM_ROTATIONS" | translate }}
+              </a>
             </div>
           </div>
         }
 
         @for (
           rotation of internalRotations;
-          track $index;
+          track rotation;
           let rotIdx = $index
         ) {
           <div
@@ -264,6 +288,34 @@
                     (change)="onNumDriversChange()"
                     min="1"
                     class="drivers-count-input"
+                  />
+                </div>
+                <div
+                  class="rotation-desc-inline"
+                  (click)="$event.stopPropagation()"
+                >
+                  <label
+                    [for]="'rotation-desc-input-' + rotIdx"
+                    class="expander-title rotation-desc-label"
+                  >
+                    {{ "AM_LABEL_ROTATION_DESCRIPTION" | translate }}:
+                  </label>
+                  <input
+                    [id]="'rotation-desc-input-' + rotIdx"
+                    type="text"
+                    [(ngModel)]="rotation.description"
+                    (ngModelChange)="onInputChange()"
+                    (focus)="onInputFocus()"
+                    (blur)="onInputBlur()"
+                    [placeholder]="
+                      'AM_ROTATION_DESCRIPTION_PLACEHOLDER' | translate
+                    "
+                    [title]="'AM_ROTATION_DESCRIPTION_TOOLTIP' | translate"
+                    [attr.aria-label]="
+                      'AM_ROTATION_DESCRIPTION_TOOLTIP' | translate
+                    "
+                    class="rotation-desc-input"
+                    maxlength="100"
                   />
                 </div>
               </div>

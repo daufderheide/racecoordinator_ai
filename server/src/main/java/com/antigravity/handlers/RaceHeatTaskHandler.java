@@ -11,6 +11,7 @@ import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
+import com.antigravity.models.RaceCompatibility;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -20,6 +21,7 @@ import com.antigravity.race.RaceParticipant;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.RaceCompatibilityEvaluator;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import java.nio.file.Paths;
@@ -38,14 +40,17 @@ public class RaceHeatTaskHandler {
   private final DatabaseContext databaseContext;
   private final SqliteRepository<Race> raceRepository;
   private final SqliteRepository<Track> trackRepository;
+  private final RaceCompatibilityEvaluator compatibilityEvaluator;
 
   public RaceHeatTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
     this.raceRepository = new SqliteRepository<>(databaseContext, "races", Race.class);
     this.trackRepository = new SqliteRepository<>(databaseContext, "tracks", Track.class);
+    this.compatibilityEvaluator = new RaceCompatibilityEvaluator();
 
     app.get("/api/races", this::getRaces, Role.VIEWER);
     app.post("/api/races", this::handleCreateRace, Role.DIRECTOR);
+    app.post("/api/races/{id}/copy", this::handleCopyRace, Role.DIRECTOR);
     app.put("/api/races/{id}", this::handleUpdateRace, Role.DIRECTOR);
     app.delete("/api/races/{id}", this::handleDeleteRace, Role.DIRECTOR);
     app.post("/api/races/{id}/reset-records", this::handleResetRace, Role.ADMIN);
@@ -55,11 +60,14 @@ public class RaceHeatTaskHandler {
 
   public void getRaces(Context ctx) {
     List<Race> races = raceRepository.findAll();
+    Map<String, String> rawJsons = raceRepository.findAllRawJson();
 
     List<DatabaseTaskHandler.RaceResponse> response = new ArrayList<>();
     for (Race race : races) {
       Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      response.add(new DatabaseTaskHandler.RaceResponse(race, track));
+      String rawJson = rawJsons.get(race.getEntityId());
+      RaceCompatibility compat = compatibilityEvaluator.evaluate(race, rawJson);
+      response.add(new DatabaseTaskHandler.RaceResponse(race, track, compat));
     }
     ctx.json(response);
   }
@@ -113,6 +121,17 @@ public class RaceHeatTaskHandler {
   public void handleUpdateRace(Context ctx) {
     try {
       String id = ctx.pathParam("id");
+      String existingRawJson = raceRepository.findRawJsonByEntityId(id);
+      if (existingRawJson != null) {
+        Race existingRace = raceRepository.findByEntityId(id);
+        RaceCompatibility compat = compatibilityEvaluator.evaluate(existingRace, existingRawJson);
+        if (compat.isReadOnly()) {
+          ctx.status(400)
+              .result(
+                  "Race is read-only because it contains features from a newer version. Please duplicate the race to make an editable copy.");
+          return;
+        }
+      }
       String body = ctx.body();
       Race race = DatabaseHandlerUtils.bodyAsClassWithId(body, Race.class);
       try {
@@ -130,6 +149,65 @@ public class RaceHeatTaskHandler {
       logger.error("Error updating race", e);
       ctx.status(500).result("Error updating race: " + e.getMessage());
     }
+  }
+
+  public void handleCopyRace(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      String rawJson = raceRepository.findRawJsonByEntityId(id);
+      if (rawJson == null) {
+        ctx.status(404).result("Race not found");
+        return;
+      }
+      Race origRace = raceRepository.findByEntityId(id);
+      String baseName = null;
+      if (origRace != null && origRace.getName() != null) {
+        baseName = origRace.getName();
+      } else {
+        try {
+          com.fasterxml.jackson.databind.JsonNode rawTree =
+              new com.fasterxml.jackson.databind.ObjectMapper().readTree(rawJson);
+          if (rawTree.has("name")) {
+            baseName = rawTree.get("name").asText();
+          }
+        } catch (Exception ignored) {
+        }
+      }
+      if (baseName == null || baseName.trim().isEmpty()) {
+        baseName = "Race";
+      }
+      String uniqueName = generateUniqueCopyName(baseName);
+      String nextId = raceRepository.getNextSequence();
+      String copyJson =
+          compatibilityEvaluator.createCompatibleCopyJson(rawJson, uniqueName, nextId);
+      Race created = DatabaseHandlerUtils.bodyAsClassWithId(copyJson, Race.class);
+      raceRepository.insert(created);
+      Track track = trackRepository.findByEntityId(created.getTrackEntityId());
+      RaceCompatibility copyCompat = compatibilityEvaluator.evaluate(created, copyJson);
+      ctx.status(201).json(new DatabaseTaskHandler.RaceResponse(created, track, copyCompat));
+    } catch (Exception e) {
+      logger.error("Error copying race", e);
+      ctx.status(500).result("Error copying race: " + e.getMessage());
+    }
+  }
+
+  private String generateUniqueCopyName(String baseName) {
+    String candidate = baseName + " (Copy)";
+    List<Race> existing = raceRepository.findAll();
+    Set<String> names = new HashSet<>();
+    for (Race r : existing) {
+      if (r.getName() != null) {
+        names.add(r.getName().trim().toLowerCase());
+      }
+    }
+    if (!names.contains(candidate.trim().toLowerCase())) {
+      return candidate;
+    }
+    int counter = 2;
+    while (names.contains((baseName + " (Copy " + counter + ")").trim().toLowerCase())) {
+      counter++;
+    }
+    return baseName + " (Copy " + counter + ")";
   }
 
   public Race updateRace(String id, Race race) {
@@ -726,7 +804,7 @@ public class RaceHeatTaskHandler {
                 protoHeat.getIsStepUpBoundary(),
                 protoHeat.getStep()));
       }
-      list.add(new CustomRotation(protoRot.getNumDrivers(), heats));
+      list.add(new CustomRotation(protoRot.getNumDrivers(), heats, protoRot.getDescription()));
     }
     return list;
   }
@@ -743,6 +821,8 @@ public class RaceHeatTaskHandler {
         numDriversObj = rotMap.get("num_drivers");
       }
       int numDrivers = numDriversObj instanceof Number ? ((Number) numDriversObj).intValue() : 0;
+      Object descObj = rotMap.get("description");
+      String description = descObj != null ? descObj.toString() : "";
       List<Map<String, Object>> heatsRaw = (List<Map<String, Object>>) rotMap.get("heats");
       List<CustomHeat> heats = new ArrayList<>();
       if (heatsRaw != null) {
@@ -770,7 +850,7 @@ public class RaceHeatTaskHandler {
           heats.add(new CustomHeat(driverIndices, group, isStepUpBoundary, step));
         }
       }
-      customRotations.add(new CustomRotation(numDrivers, heats));
+      customRotations.add(new CustomRotation(numDrivers, heats, description));
     }
     return customRotations;
   }

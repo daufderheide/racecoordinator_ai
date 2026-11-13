@@ -66,6 +66,13 @@
   flex-wrap: wrap;
   gap: 20px;
   padding: 0 10px;
+  position: relative;
+  z-index: 20;
+}
+
+.header-bar:has(.custom-select-container.open),
+.header-bar:has(app-custom-select.open) {
+  z-index: 2000000 !important;
 }
 
 .driver-profile-header {
@@ -155,6 +162,13 @@
   padding: 10px 24px;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 229, 255, 0.1);
+  position: relative;
+  z-index: 20;
+}
+
+.race-name-container:has(.custom-select-container.open),
+.race-name-container:has(app-custom-select.open) {
+  z-index: 2000000 !important;
 }
 
 .label-text {
@@ -366,6 +380,13 @@
   align-items: center;
   gap: 8px;
   margin-left: 16px;
+  position: relative;
+  z-index: 20;
+}
+
+.heat-select-wrapper:has(.custom-select-container.open),
+.heat-select-wrapper:has(app-custom-select.open) {
+  z-index: 2000000 !important;
 }
 
 .heat-select-label {

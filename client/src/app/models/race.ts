@@ -5,6 +5,7 @@ import { HeatScoring } from "./heat_scoring";
 import { Model } from "./model";
 import { OverallScoring } from "./overall_scoring";
 import { PointsScoring } from "./points_scoring";
+import { RaceCompatibility } from "./race-compatibility.model";
 import { SeasonScoring } from "./season";
 import { TeamOptions } from "./team_options";
 import { Track } from "./track";
@@ -44,6 +45,7 @@ export class Race implements Model {
   readonly theme_id?: string;
   readonly start_time_millis?: number;
   readonly step_up: number;
+  readonly compatibility?: RaceCompatibility;
 
   readonly heat_rotation_type: string;
   readonly solo_lane_index: number;
@@ -97,6 +99,7 @@ export class Race implements Model {
     custom_rotation_asset_name?: string,
     step_up: number = 0,
     points_scoring?: PointsScoring,
+    compatibility?: RaceCompatibility,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -141,6 +144,7 @@ export class Race implements Model {
     this.start_time_millis = start_time_millis;
     this.step_up = step_up;
     this.points_scoring = points_scoring;
+    this.compatibility = compatibility;
   }
 
   get objectId(): string {

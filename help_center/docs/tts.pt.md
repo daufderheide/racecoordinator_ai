@@ -39,3 +39,10 @@ Os avisos falados de TTS são geridos pelo [Sistema de Áudio](audio.md) central
 *   **Voz, Velocidade e Tom**: Configure a voz, velocidade (`0.1x`–`2.0x`), tom e volume no painel **Editor de Interface -> Definições de Áudio**.
 *   **Níveis de Prioridade**: Avisos urgentes (como bandeira amarela ou fim de manga) sobrepõem-se aos comentários de rotina, evitando sobreposição de vozes.
 *   **Relevância de Áudio**: Em postos de piloto e ecrãs secundários, os anúncios TTS são filtrados para que cada piloto ouça apenas o que diz respeito à sua calha.
+
+## Navegadores Móveis e Estações de Pilotos
+
+Ao visualizar uma estação de piloto ou tela de dia de corrida em um celular ou tablet (por exemplo, escaneando o código QR da estação de piloto com um iPhone ou dispositivo Android):
+
+*   **Ativação com o primeiro toque**: Os sistemas operacionais móveis (iOS e Android) exigem uma interação física com a tela antes de permitir a reprodução de áudio da web ou conversão de texto em fala. Toque na tela uma vez (ou toque no aviso **Toque na tela para ativar o áudio**) ao abrir a página. Uma vez ativado, o Race Coordinator AI mantém uma sessão de áudio ativa para que você só precise tocar uma vez para ouvir anúncios contínuos de TTS durante toda a corrida.
+*   **Interruptor de silêncio físico (iOS / iPhone)**: Os iPhones roteiam o Web Speech através do canal de áudio ambiente do dispositivo. Se o seu iPhone tiver um interruptor físico de Toque/Silencioso, certifique-se de que ele esteja desligado (não no modo silencioso), caso contrário a saída de voz será silenciada.

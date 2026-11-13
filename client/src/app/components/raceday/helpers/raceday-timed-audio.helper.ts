@@ -823,18 +823,61 @@ export class RacedayTimedAudioHelper {
         host.audioService.preload(item.playableUrl);
       }
     }
+
+    const preloadSlots = [
+      THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG,
+      THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      THEME_SLOT_KEYS.AUDIO_HEAT_OVER,
+      THEME_SLOT_KEYS.AUDIO_RACE_OVER,
+    ];
+    for (const slot of preloadSlots) {
+      const config = host.themeService?.resolveAudioConfig?.(slot);
+      if (config && config.type === "preset" && config.url) {
+        const url = RacedayTimedAudioHelper.resolveAssetPlayableUrl(
+          host,
+          config.url,
+        );
+        if (url) {
+          host.audioService.preload(url);
+        }
+      }
+    }
   }
 
   static updateAudioRelevance(host: any): void {
     const layout = "layout" in host ? host.layout : host.currentRacedayLayout;
     const widgets = layout?.widgets;
+
+    const isDriverStation = !!(
+      host.isDriverStation || host.isDriverStationLayout
+    );
+    const isDriverView = !!(host.isDriverView || host.isDriverViewHost);
+    const isDriverDevice = isDriverStation || isDriverView;
+    const isStation = isDriverDevice && host.activeLaneIndex !== undefined;
+
     if (!widgets || widgets.length === 0) {
-      host.audioService?.setRelevanceFilter({
-        driverAudioMode: "none",
-        allowCountdown: false,
-        allowTimer: false,
-        allowRaceState: false,
-      });
+      if (isDriverDevice) {
+        host.audioService?.setRelevanceFilter({
+          driverAudioMode: isStation ? "scoped" : "none",
+          allowedLanes: isStation
+            ? new Set([host.activeLaneIndex!])
+            : undefined,
+          allowedDriverIds:
+            isDriverView && host.routeDriverId
+              ? new Set([host.routeDriverId])
+              : undefined,
+          allowCountdown: true,
+          allowTimer: true,
+          allowRaceState: true,
+        });
+      } else {
+        host.audioService?.setRelevanceFilter({
+          driverAudioMode: "none",
+          allowCountdown: false,
+          allowTimer: false,
+          allowRaceState: false,
+        });
+      }
       return;
     }
 
@@ -843,17 +886,27 @@ export class RacedayTimedAudioHelper {
         w.widgetType === "lane-view" || w.widgetType === "lane-column",
     );
     const hasCountdown = widgets.some((w: any) => w.widgetType === "countdown");
-    const hasTimer = widgets.some((w: any) => w.widgetType === "timer");
+    const hasTimer = widgets.some(
+      (w: any) => w.widgetType === "timer" || w.widgetType === "progress-gauge",
+    );
     const hasFlag = widgets.some((w: any) => w.widgetType === "flag");
 
-    const isStation =
-      host.isDriverStation && host.activeLaneIndex !== undefined;
     host.audioService?.setRelevanceFilter({
-      driverAudioMode: hasLaneView ? (isStation ? "scoped" : "all") : "none",
+      driverAudioMode: hasLaneView
+        ? isStation
+          ? "scoped"
+          : "all"
+        : isDriverDevice
+          ? "scoped"
+          : "none",
       allowedLanes: isStation ? new Set([host.activeLaneIndex!]) : undefined,
-      allowCountdown: hasCountdown,
-      allowTimer: hasTimer,
-      allowRaceState: hasFlag,
+      allowedDriverIds:
+        isDriverView && host.routeDriverId
+          ? new Set([host.routeDriverId])
+          : undefined,
+      allowCountdown: isDriverDevice || hasCountdown,
+      allowTimer: isDriverDevice || hasTimer,
+      allowRaceState: isDriverDevice || hasFlag,
     });
   }
 

@@ -56,3 +56,10 @@ Text-to-Speech callouts are managed by Race Coordinator AI's centralized [Audio 
 *   **Priority Tiers**: Spoken callouts are prioritized so that urgent safety alerts (e.g. Yellow Flags, Heat Over) preempt routine commentary, while simultaneous announcements never talk over each other.
 *   **Audio Relevance**: In multi-screen and driver station setups, TTS announcements are automatically filtered so drivers only hear commentary relevant to their assigned car and lane.
 
+## Mobile Browsers & Driver Stations
+
+When viewing a driver station or race day display on a mobile phone or tablet (e.g. scanning the driver station QR code with an iPhone or Android device):
+
+*   **First-Tap Activation**: Mobile operating systems (iOS and Android) require a physical screen interaction before allowing web audio or text-to-speech to play. Tap the screen once (or tap the **Tap anywhere to enable audio** prompt) when opening the page. Race Coordinator AI maintains an active audio session once activated, so you only need to tap once for continuous TTS announcements throughout the race.
+*   **Hardware Silent Switch (iOS / iPhone)**: iPhones route Web Speech through the device ambient audio channel. If your iPhone has a physical Ring/Silent switch, ensure it is switched off (not in Silent mode), or speech output will be muted.
+

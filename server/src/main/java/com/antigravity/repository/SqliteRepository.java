@@ -2,12 +2,18 @@ package com.antigravity.repository;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Model;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +22,8 @@ public class SqliteRepository<T> {
   private static final Logger logger = LoggerFactory.getLogger(SqliteRepository.class);
   private static final ObjectMapper objectMapper =
       new ObjectMapper()
-          .configure(
-              com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-              false);
+          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+          .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
 
   private final DatabaseContext databaseContext;
   private final String tableName;
@@ -72,8 +77,10 @@ public class SqliteRepository<T> {
       while (rs.next()) {
         String json = rs.getString("json_data");
         if (json != null && !json.trim().isEmpty()) {
-          T entity = objectMapper.readValue(json, clazz);
-          list.add(entity);
+          T entity = deserialize(json);
+          if (entity != null) {
+            list.add(entity);
+          }
         }
       }
     } catch (Exception e) {
@@ -83,6 +90,32 @@ public class SqliteRepository<T> {
   }
 
   public T findByEntityId(String id) {
+    String json = findRawJsonByEntityId(id);
+    if (json != null && !json.trim().isEmpty()) {
+      try {
+        return deserialize(json);
+      } catch (Exception e) {
+        logger.error("Error executing findByEntityId on table {}", tableName, e);
+      }
+    }
+    return null;
+  }
+
+  private T deserialize(String json) throws Exception {
+    if (json == null || json.trim().isEmpty()) {
+      return null;
+    }
+    if (!json.contains("\"@id\"")) {
+      JsonNode node = objectMapper.readTree(json);
+      if (node != null && node.isObject() && !node.has("@id")) {
+        ((ObjectNode) node).put("@id", 1);
+        return objectMapper.treeToValue(node, clazz);
+      }
+    }
+    return objectMapper.readValue(json, clazz);
+  }
+
+  public String findRawJsonByEntityId(String id) {
     if (id == null || id.trim().isEmpty()) {
       return null;
     }
@@ -95,16 +128,35 @@ public class SqliteRepository<T> {
       pstmt.setString(1, id);
       try (ResultSet rs = pstmt.executeQuery()) {
         if (rs.next()) {
-          String json = rs.getString("json_data");
-          if (json != null && !json.trim().isEmpty()) {
-            return objectMapper.readValue(json, clazz);
-          }
+          return rs.getString("json_data");
         }
       }
     } catch (Exception e) {
-      logger.error("Error executing findByEntityId on table {}", tableName, e);
+      logger.error("Error executing findRawJsonByEntityId on table {}", tableName, e);
     }
     return null;
+  }
+
+  public Map<String, String> findAllRawJson() {
+    ensureTableExists();
+    Map<String, String> map = new HashMap<>();
+    if (databaseContext == null || databaseContext.getConnection() == null) {
+      return map;
+    }
+    String sql = "SELECT entity_id, json_data FROM " + tableName;
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String entityId = rs.getString("entity_id");
+        String json = rs.getString("json_data");
+        if (entityId != null && json != null) {
+          map.put(entityId, json);
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error executing findAllRawJson on table {}", tableName, e);
+    }
+    return map;
   }
 
   public void insert(T entity) {
@@ -121,7 +173,9 @@ public class SqliteRepository<T> {
     }
     String entityId = extractEntityId(entity);
     try {
-      String json = objectMapper.writeValueAsString(entity);
+      String newJson = objectMapper.writeValueAsString(entity);
+      String existingJson = findRawJsonByEntityId(entityId);
+      String json = mergeUnmappedProperties(existingJson, newJson);
       String sql =
           "INSERT INTO "
               + tableName
@@ -135,6 +189,42 @@ public class SqliteRepository<T> {
       }
     } catch (Exception e) {
       logger.error("Error saving entity to table {}", tableName, e);
+    }
+  }
+
+  private String mergeUnmappedProperties(String existingJson, String newJson) {
+    if (existingJson == null || existingJson.trim().isEmpty()) {
+      return newJson;
+    }
+    try {
+      JsonNode existingTree = objectMapper.readTree(existingJson);
+      JsonNode newTree = objectMapper.readTree(newJson);
+      if (existingTree.isObject() && newTree.isObject()) {
+        preserveUnmappedFields((ObjectNode) newTree, (ObjectNode) existingTree);
+        return objectMapper.writeValueAsString(newTree);
+      }
+    } catch (Exception e) {
+      logger.warn(
+          "Could not merge unmapped properties for table {}, using updated JSON", tableName, e);
+    }
+    return newJson;
+  }
+
+  private static void preserveUnmappedFields(ObjectNode target, ObjectNode source) {
+    Iterator<Map.Entry<String, JsonNode>> fields = source.fields();
+    while (fields.hasNext()) {
+      Map.Entry<String, JsonNode> entry = fields.next();
+      String fieldName = entry.getKey();
+      JsonNode sourceVal = entry.getValue();
+
+      if (!target.has(fieldName)) {
+        target.set(fieldName, sourceVal);
+      } else {
+        JsonNode targetVal = target.get(fieldName);
+        if (targetVal.isObject() && sourceVal.isObject()) {
+          preserveUnmappedFields((ObjectNode) targetVal, (ObjectNode) sourceVal);
+        }
+      }
     }
   }
 

@@ -16,11 +16,18 @@ import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import {
   calculateTtsSafetyTimeout,
+  ensureAudioAwake,
   interpolate,
+  isGlobalAudioUnlocked,
+  isMobileDevice,
+  playWebAudioSfx,
+  preloadWebAudioBuffer,
   releaseUtterance,
   resolveAudioUrl,
   retainUtterance,
   setupTtsWatchdogs,
+  startWebAudioVoiceCallout,
+  unlockGlobalAudio,
 } from "@app/utils/audio";
 import {
   isAudioRelevant,
@@ -95,6 +102,14 @@ export class AudioService implements OnDestroy {
     return isAudioRelevant(this.relevanceFilter, association);
   }
 
+  isAudioUnlocked(): boolean {
+    return isGlobalAudioUnlocked();
+  }
+
+  unlockAudio(): void {
+    unlockGlobalAudio();
+  }
+
   ngOnDestroy(): void {
     this.reset();
   }
@@ -106,6 +121,7 @@ export class AudioService implements OnDestroy {
     if (!url) return;
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     if (!playableUrl) return;
+    preloadWebAudioBuffer(playableUrl);
     if (this.preloadedAudioMap.has(playableUrl)) {
       return this.preloadedAudioMap.get(playableUrl);
     }
@@ -130,6 +146,7 @@ export class AudioService implements OnDestroy {
     url: string | undefined,
     association?: AudioAssociation,
   ): HTMLAudioElement | void {
+    ensureAudioAwake();
     if (!url) return;
     if (!this.isSoundRelevant(association)) {
       this.logger.debug(
@@ -140,6 +157,14 @@ export class AudioService implements OnDestroy {
     }
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     this.logger.debug("Playing SFX from URL:", playableUrl);
+
+    if (
+      isMobileDevice() &&
+      typeof document !== "undefined" &&
+      document.visibilityState === "hidden"
+    ) {
+      return;
+    }
 
     let audio: HTMLAudioElement;
     const cached = this.preloadedAudioMap.get(playableUrl);
@@ -152,6 +177,7 @@ export class AudioService implements OnDestroy {
       }
     } else {
       audio = new Audio(playableUrl);
+      this.preloadedAudioMap.set(playableUrl, audio);
     }
 
     const settings = this.settingsService.getSettings();
@@ -164,9 +190,13 @@ export class AudioService implements OnDestroy {
       finalVolume *= 0.2;
     }
 
+    if (isMobileDevice() && playWebAudioSfx(playableUrl, finalVolume)) {
+      return audio;
+    }
+
     audio.volume = finalVolume;
     audio.play().catch((err: any) => {
-      if (err?.name === "AbortError") {
+      if (err?.name === "AbortError" || err?.name === "NotAllowedError") {
         this.logger.debug(
           "SFX playback aborted or paused",
           err?.message || err,
@@ -200,6 +230,15 @@ export class AudioService implements OnDestroy {
     }
 
     if (!config || config.type === "none") return false;
+
+    if (isMobileDevice()) {
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      )
+        return false;
+      if (config.type === "tts" && !isGlobalAudioUnlocked()) return false;
+    }
 
     if (config.type === "preset" && !(resolvedUrl || config.url?.trim())) {
       return false;
@@ -376,6 +415,15 @@ export class AudioService implements OnDestroy {
     }
 
     if (!config || config.type === "none") return false;
+
+    if (isMobileDevice()) {
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      )
+        return false;
+      if (config.type === "tts" && !isGlobalAudioUnlocked()) return false;
+    }
 
     if (config.type === "preset" && !(resolvedUrl || config.url?.trim())) {
       return false;
@@ -642,17 +690,36 @@ export class AudioService implements OnDestroy {
   }
 
   private playPresetVoice(url: string, priority: AudioPriority): void {
+    ensureAudioAwake();
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     this.logger.info(
       `[AUDIO] Playing preset voice: ${playableUrl} (priority: ${priority})`,
     );
-    const audio = this.getOrCreatePresetAudio(playableUrl);
-    this.activeAudioElement = audio;
+
     const settings = this.settingsService.getSettings();
-    audio.volume = Math.max(
+    const finalVolume = Math.max(
       0,
       Math.min(1, (settings.masterVolume ?? 100) / 100),
     );
+
+    if (isMobileDevice()) {
+      const voiceHandle = startWebAudioVoiceCallout(
+        playableUrl,
+        finalVolume,
+        () => {
+          if (this.activeVoice?.stop === voiceHandle?.stop)
+            this.onVoiceCalloutEnded();
+        },
+      );
+      if (voiceHandle) {
+        this.activeVoice = { priority, stop: voiceHandle.stop };
+        return;
+      }
+    }
+
+    const audio = this.getOrCreatePresetAudio(playableUrl);
+    this.activeAudioElement = audio;
+    audio.volume = finalVolume;
     let ended = false;
 
     const cleanup = () => {
@@ -716,7 +783,11 @@ export class AudioService implements OnDestroy {
     audio.play().catch((err: any) => {
       const wasEnded = ended;
       cleanup();
-      if (wasEnded || err?.name === "AbortError") {
+      if (
+        wasEnded ||
+        err?.name === "AbortError" ||
+        err?.name === "NotAllowedError"
+      ) {
         this.logger.debug(
           "Voice preset playback aborted or paused",
           err?.message || err,
@@ -791,6 +862,7 @@ export class AudioService implements OnDestroy {
     context?: any,
     isRetry = false,
   ): void {
+    ensureAudioAwake();
     let interpolatedText = text;
     if (context) {
       interpolatedText = interpolate(text, context);

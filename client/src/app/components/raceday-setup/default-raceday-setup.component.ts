@@ -930,6 +930,28 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.showTrackEditorPrompt = false;
   }
 
+  duplicateSelectedRace(): void {
+    if (!this.selectedRace?.entity_id) return;
+    this.dataService.copyRace(this.selectedRace.entity_id).subscribe({
+      next: (copied) => {
+        this.dataService.getRaces().subscribe((races) => {
+          this.races = races;
+          const found =
+            races.find((r) => r.entity_id === copied.entity_id) || copied;
+          this.selectRace(found);
+          this.cdr.detectChanges();
+        });
+      },
+      error: (err) => {
+        this.logger.error("Failed to copy incompatible race", err);
+        this.errorTitle = "RDS_ERR_CANNOT_RUN_RACE";
+        this.errorMessage = err.error || err.message || "Unknown error";
+        this.showErrorModal = true;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   editSelectedRace() {
     RacedaySetupNavigationHelper.editSelectedRace(this);
   }

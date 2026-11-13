@@ -106,5 +106,33 @@ describe("AudioVoiceManager", () => {
       expect(utterance.voice).toBe(mockVoice);
       expect(utterance.lang).toBe("en-US");
     });
+
+    it("should match voice by language code when ttsVoice is not set", () => {
+      const mockVoiceEs = {
+        name: "Monica",
+        lang: "es-ES",
+        default: false,
+        localService: true,
+        voiceURI: "monica",
+      } as SpeechSynthesisVoice;
+
+      spyOn(manager, "getVoices").and.returnValue([mockVoiceEs]);
+
+      const utterance = {
+        voice: null,
+        lang: "",
+        rate: 1,
+        pitch: 1,
+        volume: 1,
+      } as unknown as SpeechSynthesisUtterance;
+      const settings: Settings = {
+        language: "es",
+      } as Settings;
+
+      manager.applyTtsSettingsToUtterance(utterance, settings);
+
+      expect(utterance.voice).toBe(mockVoiceEs);
+      expect(utterance.lang).toBe("es-ES");
+    });
   });
 });

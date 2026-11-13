@@ -71,6 +71,11 @@ Download `RaceCoordinator_Mac_*.dmg` from the release page.
 
 ## 🐧 Linux, Raspberry Pi & Arduino Uno Q Installation
 
+For dedicated hardware appliances with automated systemd background services, kiosk display mode, and real-time track interfaces, consult our dedicated hardware setup guides:
+
+* **[Arduino UNO Q Setup Guide](arduino-uno-q.md)**: Turnkey single-board setup for the dual-core Arduino Uno Q appliance with integrated real-time STM32 microcontroller.
+* **[Raspberry Pi Setup Guide (Experimental)](raspberry-pi.md)**: Setup guide for Raspberry Pi 4 / 5 using a two-board architecture paired with an external USB Arduino timing microcontroller.
+
 ### 1. Download the Linux Package
 Download `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` from the release page.
 
@@ -107,7 +112,7 @@ Upgrading to a newer version of Race Coordinator AI is seamless:
 
 * **Your Data is Preserved**: Your database (`racecoordinator.db`), race statistics, custom driver profiles, track configurations, and custom themes are stored in your user application data folder and are **not** overwritten when updating the app.
 * **To Upgrade on Windows**: Simply run the downloaded installer over your existing installation, or click **Install Now** in the in-app update banner.
-* **To Upgrade on Linux / Arduino Uno Q**: Run `sudo /opt/racecoordinatorai/scripts/update_app.sh /path/to/RaceCoordinatorAI-Linux-ARM64*.tar.gz` or extract the archive and run `sudo ./install.sh`. See the [Arduino UNO Q Guide](arduino-uno-q.md#upgrading-an-existing-installation-manually-from-downloaded-archive) for step-by-step instructions.
+* **To Upgrade on Linux / Arduino Uno Q / Raspberry Pi**: Run `sudo /opt/racecoordinatorai/scripts/update_app.sh /path/to/RaceCoordinatorAI-Linux-ARM64*.tar.gz` or extract the archive and run `sudo ./install.sh`. See the [Arduino UNO Q Guide](arduino-uno-q.md#updating-an-existing-installation) or [Raspberry Pi Guide](raspberry-pi.md#updating-an-existing-installation) for step-by-step instructions.
 
 ---
 

@@ -890,6 +890,16 @@ public class DatabaseInitializerTest {
   }
 
   @Test
+  public void testBackfillDatabase_NewerVersionDowngradeGating() {
+    // Database was previously initialized/backfilled by a newer release (e.g. 1.2.0)
+    context.setSystemInfo("backfill_version", "1.2.0");
+
+    // Calling backfill on an older version should fast-exit and not overwrite or re-backfill
+    initializer.backfillDatabase(context);
+    assertEquals("1.2.0", context.getSystemInfo("backfill_version"));
+  }
+
+  @Test
   public void testBackfillDatabase_NullContextSafe() {
     initializer.backfillDatabase(null);
   }

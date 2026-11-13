@@ -121,13 +121,19 @@ public class AssetServiceTest {
             .build();
 
     com.antigravity.proto.CustomRotation rot =
-        com.antigravity.proto.CustomRotation.newBuilder().setNumDrivers(2).addHeats(heat).build();
+        com.antigravity.proto.CustomRotation.newBuilder()
+            .setNumDrivers(2)
+            .setDescription("2-Lane Sprint")
+            .addHeats(heat)
+            .build();
 
     AssetMessage rotAsset =
         assetService.saveCustomRotation(
             null, "Custom 2 Lane", 2, java.util.Collections.singletonList(rot));
     assertNotNull(rotAsset);
     org.junit.Assert.assertEquals("Custom 2 Lane", rotAsset.getName());
+    assertEquals(1, rotAsset.getCustomRotationsCount());
+    assertEquals("2-Lane Sprint", rotAsset.getCustomRotations(0).getDescription());
   }
 
   @Test

@@ -998,4 +998,59 @@ test.describe("Race Editor Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should display banner and disabled controls for race that cannot be edited", async ({
+    page,
+  }) => {
+    const incompatibleRace = {
+      ...MOCK_RACES[0],
+      entity_id: "r_incompat",
+      name: "Championship 2027",
+      compatibility: {
+        status: "INCOMPATIBLE",
+        can_run: false,
+        is_read_only: true,
+        blocking_features: ["points_scoring"],
+      },
+    };
+
+    await page.route("**/api/races", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([incompatibleRace, ...MOCK_RACES]),
+        });
+      } else {
+        await route.fallback();
+      }
+    });
+
+    await page.route("**/api/races/r_incompat", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(incompatibleRace),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r_incompat&driverCount=4"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    const banner = page.locator("#race-compat-read-only-banner");
+    await banner.waitFor({ state: "visible", timeout: 10000 });
+
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("race-editor-cannot-be-edited.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });

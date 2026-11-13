@@ -144,6 +144,7 @@ docker run --rm \
   -e HOME="/work/test-home" \
   -e PWTEST_WORKERS="${PWTEST_WORKERS:-100%}" \
   -e CI="${CI:-true}" \
+  -e PW_TEST_HTML_REPORT_OPEN=never \
   -e PW_REPORTER="${PW_REPORTER:-./scripts/screendiff-reporter.js}" \
   -e PW_VERBOSE="${PW_VERBOSE:-}" \
   mcr.microsoft.com/playwright:v1.61.1-jammy \

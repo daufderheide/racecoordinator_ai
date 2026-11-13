@@ -310,4 +310,13 @@ describe("AppComponent", () => {
       expect(mockDataService.disconnectAllSockets).toHaveBeenCalled();
     });
   });
+
+  describe("Audio Unlock Prompt Integration", () => {
+    it("should include app-audio-unlock-prompt in the root template", () => {
+      const promptElement = fixture.nativeElement.querySelector(
+        "app-audio-unlock-prompt",
+      );
+      expect(promptElement).toBeTruthy();
+    });
+  });
 });

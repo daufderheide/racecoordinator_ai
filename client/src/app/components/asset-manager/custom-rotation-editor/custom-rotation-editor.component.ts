@@ -36,6 +36,7 @@ import {
   ICustomRotation,
   ITrackModel,
 } from "@app/proto/antigravity";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -55,6 +56,7 @@ import {
 } from "./rotation-editor.utils";
 import {
   areCustomRotationStatesEqual,
+  areRotationsSorted,
   assignCustomRotationStepNumbers,
   buildRotationsAssetExportJson,
   buildSingleRotationExportJson,
@@ -63,6 +65,8 @@ import {
   CustomRotationState,
   downloadJsonFile,
   driverHasGroupConflict,
+  findNextAvailableDriverCount,
+  findSortedInsertionIndex,
   getDriverGroupConflicts,
   getRotationSignature,
   hasValidationErrors,
@@ -71,6 +75,7 @@ import {
   heatHasStepUpInStepOne,
   LocalRotation,
   rotationHasStepUps,
+  sortRotationsByDrivers,
 } from "./rotation-export.utils";
 import { parseAndValidateImportFile } from "./rotation-import.utils";
 
@@ -142,6 +147,7 @@ export class CustomRotationEditorComponent
   readonly saved = output<IAssetMessage>();
   readonly cancelled = output<void>();
   defaultRotationName: string = "";
+  isNew: boolean = false;
 
   focusNameInput() {
     setTimeout(() => {
@@ -223,6 +229,7 @@ export class CustomRotationEditorComponent
     private logger: LoggerService,
     private router: Router,
     private route: ActivatedRoute,
+    private helpLinkService: HelpLinkService,
   ) {
     this.undoManager = new UndoManager<CustomRotationState>(
       {
@@ -390,6 +397,7 @@ export class CustomRotationEditorComponent
               isExpanded: true,
             }),
           );
+          this.sortRotationsByDrivers();
         } else {
           this.fallbackToInputs();
           if (!idParam || idParam === "new") {
@@ -398,11 +406,11 @@ export class CustomRotationEditorComponent
         }
         this.isLoading = false;
         this.initEditorState();
-        const isNew =
+        this.isNew =
           this.route.snapshot.queryParamMap?.get("isNew") === "true" ||
           !idParam ||
           idParam === "new";
-        if (isNew) {
+        if (this.isNew) {
           this.defaultRotationName = this.internalAssetName;
           this.focusNameInput();
         }
@@ -425,9 +433,10 @@ export class CustomRotationEditorComponent
       ...r,
       isExpanded: true,
     }));
+    this.sortRotationsByDrivers();
   }
 
-  generateUniqueName(baseName: string = "New Custom Rotation"): string {
+  generateUniqueName(baseName: string = "New Custom Rotation Set"): string {
     return generateUniqueRotationAssetName(
       baseName,
       this.allAssets,
@@ -436,13 +445,22 @@ export class CustomRotationEditorComponent
   }
 
   saveAsNew() {
-    const base = this.internalAssetName || "New Custom Rotation";
+    const base = this.internalAssetName || "New Custom Rotation Set";
     const newName = this.generateUniqueName(base);
     this.internalAssetId = undefined;
     this.internalAssetName = newName;
     this.defaultRotationName = newName;
+    this.isNew = true;
     this.save();
     this.focusNameInput();
+  }
+
+  openLearnMore(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.helpLinkService.openHelp("custom-rotations");
   }
 
   isNameUnique(): boolean {
@@ -651,6 +669,24 @@ export class CustomRotationEditorComponent
     this.captureState();
   }
 
+  sortRotationsByDrivers() {
+    sortRotationsByDrivers(this.internalRotations);
+    this.updateDropListConnections();
+  }
+
+  isRotationsSorted(): boolean {
+    return areRotationsSorted(this.internalRotations);
+  }
+
+  sortRotations() {
+    if (this.internalRotations.length <= 1) {
+      return;
+    }
+    this.sortRotationsByDrivers();
+    this.validateAllRotationsLaneEquality();
+    this.captureState();
+  }
+
   onHeatGroupChange(
     rotation: ICustomRotation,
     heat: ICustomHeat,
@@ -668,12 +704,33 @@ export class CustomRotationEditorComponent
   }
 
   addRotation() {
-    const newRot: any = {
-      numDrivers: this.internalNumLanes,
+    const candidate = findNextAvailableDriverCount(
+      this.internalRotations,
+      this.internalNumLanes,
+    );
+
+    if (candidate > this.numVirtualDrivers) {
+      this.numVirtualDrivers = candidate;
+      this.updateVirtualDriversList();
+    }
+
+    const newRot: LocalRotation = {
+      numDrivers: candidate,
+      description: "",
       heats: [],
       isExpanded: true,
     };
-    this.internalRotations.push(newRot);
+
+    const insertIdx = findSortedInsertionIndex(
+      this.internalRotations,
+      candidate,
+    );
+    if (insertIdx === -1) {
+      this.internalRotations.push(newRot);
+    } else {
+      this.internalRotations.splice(insertIdx, 0, newRot);
+    }
+
     this.addHeat(newRot, false);
     this.updateDropListConnections();
     this.captureState();
@@ -771,6 +828,7 @@ export class CustomRotationEditorComponent
 
   save() {
     this.syncRotationDriverCounts();
+    this.sortRotationsByDrivers();
     this.validateAllRotationsLaneEquality();
     if (!this.isConfigValid()) {
       return;
@@ -1020,6 +1078,7 @@ export class CustomRotationEditorComponent
       });
     }
 
+    this.sortRotationsByDrivers();
     this.importSummary = results;
     input.value = "";
     this.updateDropListConnections();
@@ -1043,10 +1102,11 @@ export class CustomRotationEditorComponent
   }
 
   async exportRotations() {
+    const sortedRotations = sortRotationsByDrivers([...this.internalRotations]);
     const { fileName, jsonContent } = buildRotationsAssetExportJson(
       this.internalAssetName,
       this.internalNumLanes,
-      this.internalRotations,
+      sortedRotations,
     );
     await downloadJsonFile(fileName, jsonContent);
     this.logger.info("Export asset process completed");

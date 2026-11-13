@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { CustomSelectHarnessE2e } from "@app/components/shared/custom-select/testing/custom-select.harness.e2e";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { HeatResultsHarnessE2e } from "./testing/heat-results.harness.e2e";
@@ -291,5 +292,40 @@ test.describe("Heat Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
       maxDiffPixels: 8000,
     });
+  });
+
+  test("should render heat selector dropdown open on top of results with filtered heats and current tag", async ({
+    page,
+  }) => {
+    const mockData = HeatResultsHelper.createMultiHeatMockData();
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/heat-results"),
+    );
+
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page
+      .locator("app-heat-driver-expander")
+      .first()
+      .waitFor({ state: "visible" });
+
+    const selectHarness = new CustomSelectHarnessE2e(
+      page.locator(".heat-selector"),
+    );
+    await selectHarness.toggle();
+    await page.locator(".custom-select-dropdown").waitFor({ state: "visible" });
+
+    await page.mouse.move(0, 0);
+
+    await expect(page).toHaveScreenshot(
+      "heat-results-selector-dropdown-open.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 8000,
+      },
+    );
   });
 });

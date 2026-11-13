@@ -46,9 +46,12 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private final Map<String, Integer> lastPinState = new HashMap<>();
   private volatile long resetRecoveryUntilMs = 0;
   private static final long RESET_RECOVERY_WINDOW_MS = 250;
+  private volatile long connectedAtMs = 0;
+  private static final long CONNECTION_HANDSHAKE_GRACE_MS = 1500;
 
   // Data sent from PC to Arduino
   private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
+  private static final byte[] VERSION_COMMAND = {0x56, 0x3B};
   private static final byte[] TIME_RESET_COMMAND = {0x54, 0x3B};
 
   // Data sent from Arduino to PC
@@ -95,10 +98,14 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   @Override
   protected void onPortConnected() {
+    connectedAtMs = now();
     pinStateCache.clear();
     ledHelper.resetCache();
-    writeData(RESET_COMMAND);
-    logger.info("Connected to {}. Sent RESET command.", config.commPort);
+    // Query version from hardware. Do NOT send RESET_COMMAND here;
+    // opening serial connection already resets Arduino via DTR.
+    // Sending software RESET causes a double reboot and startup alert storm.
+    writeData(VERSION_COMMAND);
+    logger.info("Connected to {}. Sent VERSION query.", config.commPort);
 
     // Immediately refresh the race state to ensure LEDs turn on if supported
     ledHelper.refreshRaceState();
@@ -160,6 +167,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     lastSentValue = null;
     lastPinState.clear();
     resetRecoveryUntilMs = 0;
+    connectedAtMs = 0;
   }
 
   public void updateConfig(ArduinoConfig newConfig) {
@@ -395,7 +403,6 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         sendPinModeWrite();
         sendPinModeAnalogRead();
         sendDebounce();
-        sendTimeReset();
         initializeHardwareState();
       } else if (major == 1 && minor == 0 && patch == 0) {
         versionVerified = true;
@@ -411,13 +418,22 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         sendPinModeWrite();
         sendPinModeAnalogRead();
         sendDebounce();
-        sendTimeReset();
         initializeHardwareState();
       } else {
         logger.error(
             "Invalid firmware version: {}.{}.{}. Expected 2.1.0 or 1.0.0", major, minor, patch);
       }
     } else {
+      if (connectedAtMs > 0 && (now() - connectedAtMs) < CONNECTION_HANDSHAKE_GRACE_MS) {
+        logger.debug(
+            "Received additional VERSION ({}.{}.{}.{}) during connection handshake grace window on {}. Ignoring.",
+            major,
+            minor,
+            patch,
+            build,
+            getInterfaceName());
+        return;
+      }
       logger.warn(
           "[HARDWARE ALERT] Received VERSION ({}.{}.{}.{}) while already verified on {}. Microcontroller rebooted unexpectedly. Re-initializing pins.",
           major,
@@ -437,7 +453,6 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       sendPinModeWrite();
       sendPinModeAnalogRead();
       sendDebounce();
-      sendTimeReset();
       initializeHardwareState();
     }
   }
@@ -462,7 +477,6 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       sendPinModeWrite();
       sendPinModeAnalogRead();
       sendDebounce();
-      sendTimeReset();
     }
     super.handleHeartbeat(timeInUse, isReset);
   }

@@ -10,7 +10,7 @@ Assets are custom resources used across the application to personalize the race 
 - **Audio Sets:** Grouped collections of audio files or Text-to-Speech (TTS) callouts mapped to specific trigger values (time in seconds, remaining laps, or fuel percentage).
 - **Images:** Car graphics, driver avatars, custom flags, sponsor logos, and background images.
 - **Image Sets:** Collections of related images (such as fuel gauges or countdown sequences).
-- **Custom Rotations:** User-defined heat rotation assets for complex or custom rotation schemes.
+- **Custom Rotation Sets:** User-defined heat rotation set assets for complex or custom rotation schemes.
 
 ---
 
@@ -23,7 +23,7 @@ The left panel of the Asset Manager provides four controls to add new assets to 
    - Supported audio formats: `.wav`, `.mp3`, `.ogg`.
 2. **New Image Set:** Opens the Image Set Editor to create a grouped collection of image frames. Image sets are used for multi-frame animations and state indicators, such as progressive fuel gauges or countdown sequences.
 3. **New Audio Set:** Opens the Audio Set Editor to create multi-cue audio sequences triggered by countdown timers, remaining laps, or fuel percentage levels.
-4. **New Custom Rotation:** Opens the Custom Rotation Editor to design or import specialized lane rotation schemes for unique race formats.
+4. **New Custom Rotation Set:** Opens the Custom Rotation Set Editor to design or import specialized lane rotation schemes for unique race formats.
 
 ---
 
@@ -45,13 +45,13 @@ You can also click assets to select them. When assets are selected, the top tool
 
 The Asset Manager provides powerful controls along the top of the library to find and display assets:
 
-- **Filter Tabs:** Quickly filter the library by resource type:
+- **Filter Tabs:** Quickly filter the library by resource type (your selected filter tab is automatically saved and restored when returning to the Asset Manager):
   - **All:** Displays every asset in the database.
   - **Images:** Shows only individual static image files (`.png`, `.jpg`, `.svg`, etc.).
   - **Image Sets:** Shows only grouped multi-frame image animations and fuel gauge sequences.
   - **Sounds:** Shows only individual audio clips (`.wav`, `.mp3`, `.ogg`).
   - **Audio Sets:** Shows only multi-cue threshold-triggered audio collections.
-  - **Custom Rotations:** Shows only custom lane rotation schemes.
+  - **Custom Rotation Sets:** Shows only custom lane rotation set schemes.
 - **View Layout Switcher:** Switch between **List View**, **Small Thumbnails**, **Medium Thumbnails**, and **Large Thumbnails** to fit more assets on screen or inspect detailed image previews.
 - **Filter by Name:** Real-time search input that narrows the asset list instantly as you type.
 
@@ -93,4 +93,4 @@ Once uploaded or created, your assets become immediately available across the ap
 - Select custom sound effects in the [Theme Editor](themes.md) for lap callouts, leader changes, countdown cues, and finish fanfare.
 - Assign custom graphics in the [Driver Editor](driver-editor.md) for car images, driver avatars, and nicknames.
 - Configure visual widgets and gauge animations in the [Layout Editor](layout-editor.md).
-- Link custom rotation files within the [Race Editor](race-editor.md) for advanced heat rotations.
+- Link custom rotation set files within the [Race Editor](race-editor.md) for advanced heat rotations.

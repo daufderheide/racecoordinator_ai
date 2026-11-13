@@ -979,7 +979,7 @@ public class Race implements ProtocolListener {
                 protoHeat.getIsStepUpBoundary(),
                 protoHeat.getStep()));
       }
-      result.add(new CustomRotation(protoRot.getNumDrivers(), heats));
+      result.add(new CustomRotation(protoRot.getNumDrivers(), heats, protoRot.getDescription()));
     }
     return result;
   }

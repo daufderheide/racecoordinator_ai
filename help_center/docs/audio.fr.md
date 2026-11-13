@@ -142,6 +142,7 @@ Sur l'écran d'un poste de pilotage (`/driver-station/:lane`) :
 - Seuls les sons, records et alertes de carburant du **pilote de cette voie** sont diffusés.
 - Les sons des concurrents sont filtrés pour ne pas distraire le pilote.
 - Les annonces générales (compte à rebours, drapeau jaune, fin de manche) restent actives.
+- **Activation audio sur appareils mobiles** : Sur les téléphones mobiles et les tablettes (par exemple en scannant le code QR du poste de pilotage avec un iPhone ou un appareil Android), la sécurité du navigateur mobile exige un premier toucher sur l'écran pour activer l'audio et la synthèse vocale. Un message flottant (**Touchez l'écran pour activer l'audio**) apparaît jusqu'à ce qu'il soit touché. Ensuite, Race Coordinator AI maintient une session audio active afin que toutes les annonces de tours suivantes soient diffusées sans interaction supplémentaire. Sur iPhone, veillez à désactiver l'interrupteur physique de silence.
 
 ### 4. Isolation des Moteurs Audio par Page
 Chaque onglet ou fenêtre exécute une instance dédiée d'`AudioService` (`providers: [AudioService]`). Un son sur un poste pilote ne bloque jamais la régie de course.

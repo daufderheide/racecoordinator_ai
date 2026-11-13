@@ -252,6 +252,14 @@ export class RaceEditorUiHelper {
 
   static onToggleEditMode(component: any): void {
     if (!component.isEditMode) {
+      if (component.selectedRace?.compatibility?.is_read_only) {
+        alert(
+          component.translationService.translate(
+            "RE_ERROR_READ_ONLY_DOWNGRADE",
+          ),
+        );
+        return;
+      }
       component.isEditMode = true;
       component.focusNameInput();
       return;

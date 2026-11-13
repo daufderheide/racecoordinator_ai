@@ -12,6 +12,7 @@ import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ICustomHeat } from "@app/proto/antigravity";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_TRACK_INSTANCES } from "@app/testing/data/tracks_data";
@@ -28,8 +29,11 @@ import { CustomRotationEditorComponent } from "./custom-rotation-editor.componen
 describe("CustomRotationEditorComponent", () => {
   let component: CustomRotationEditorComponent;
   let fixture: ComponentFixture<CustomRotationEditorComponent>;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
 
   beforeEach(async () => {
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
+
     TestBed.configureTestingModule({
       imports: [FormsModule, CustomRotationEditorComponent, TranslatePipe],
       providers: [
@@ -37,6 +41,7 @@ describe("CustomRotationEditorComponent", () => {
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -75,7 +80,9 @@ describe("CustomRotationEditorComponent", () => {
     const titleEl = fixture.debugElement.query(By.css("app-editor-title"));
     expect(titleEl).toBeTruthy();
     expect(titleEl.componentInstance.titleKey()).toBe("AM_ROTATION_EDITOR");
-    expect(titleEl.componentInstance.itemName()).toBe("New Custom Rotation 1");
+    expect(titleEl.componentInstance.itemName()).toBe(
+      "New Custom Rotation Set 1",
+    );
     expect(titleEl.componentInstance.showZoom()).toBeTrue();
 
     const headerEl = titleEl.nativeElement.querySelector(".header");
@@ -99,6 +106,75 @@ describe("CustomRotationEditorComponent", () => {
     const emptyStateText = compiled.querySelector(".empty-state-text");
     expect(emptyStateText).toBeTruthy();
     expect(emptyStateText?.textContent).toContain("AM_HELP_EMPTY_ROTATIONS");
+
+    const learnMoreLink = compiled.querySelector(
+      "#custom-rotation-learn-more-link",
+    );
+    expect(learnMoreLink).toBeTruthy();
+    expect(learnMoreLink?.textContent).toContain(
+      "AM_LEARN_MORE_CUSTOM_ROTATIONS",
+    );
+  });
+
+  it("should render updated empty state message when AM_HELP_EMPTY_ROTATIONS is translated", () => {
+    mockTranslationService.translate.and.callFake((key: string) => {
+      if (key === "AM_HELP_EMPTY_ROTATIONS") {
+        return "Import rotation files or create one or more custom rotations for your new set.";
+      }
+      return key;
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const emptyStateText = compiled.querySelector(".empty-state-text");
+    expect(emptyStateText?.textContent).toContain(
+      "Import rotation files or create one or more custom rotations for your new set.",
+    );
+  });
+
+  it("should call helpLinkService.openHelp with custom-rotations when openLearnMore is called", () => {
+    component.openLearnMore();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith(
+      "custom-rotations",
+    );
+  });
+
+  it("should prevent default and stop propagation when openLearnMore is called with event", () => {
+    const mockEvent = jasmine.createSpyObj("Event", [
+      "preventDefault",
+      "stopPropagation",
+    ]);
+    component.openLearnMore(mockEvent);
+    expect(mockEvent.preventDefault).toHaveBeenCalled();
+    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith(
+      "custom-rotations",
+    );
+  });
+
+  it("should trigger openLearnMore when clicking the empty state learn more link", () => {
+    spyOn(component, "openLearnMore");
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const learnMoreLink = compiled.querySelector(
+      "#custom-rotation-learn-more-link",
+    ) as HTMLAnchorElement;
+    expect(learnMoreLink).toBeTruthy();
+    learnMoreLink.click();
+
+    expect(component.openLearnMore).toHaveBeenCalled();
+  });
+
+  it("should call openLearnMore when help event is emitted from app-editor-title", () => {
+    spyOn(component, "openLearnMore");
+    fixture.detectChanges();
+
+    const titleEl = fixture.debugElement.query(By.css("app-editor-title"));
+    expect(titleEl).toBeTruthy();
+    titleEl.triggerEventHandler("help", null);
+
+    expect(component.openLearnMore).toHaveBeenCalled();
   });
 
   it("should load tracks and select the first one by default", fakeAsync(() => {
@@ -132,6 +208,7 @@ describe("CustomRotationEditorComponent", () => {
 
     component.addRotation();
     expect(component.internalRotations.length).toBe(1);
+    expect(component.internalRotations[0].description).toBe("");
 
     component.removeRotation(0);
     expect(component.internalRotations.length).toBe(0);
@@ -590,6 +667,7 @@ describe("CustomRotationEditorComponent", () => {
 
       expect(component.internalRotations.length).toBe(1);
       expect(component.internalRotations[0].numDrivers).toBe(5);
+      expect(component.internalRotations[0].description).toBe("rotation5");
       expect(component.internalRotations[0].heats?.length).toBe(5);
       expect(component.importSummary?.[0].success).toBeTrue();
       expect(component.importSummary?.[0].key).toBe("AM_IMPORT_SUCCESS");
@@ -631,6 +709,7 @@ describe("CustomRotationEditorComponent", () => {
         4, 1, 2, 3,
       ]);
       expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+      expect(component.internalRotations[0].description).toBe("rc1");
     });
 
     it("should assume standard import and NOT convert 0-indexed drivers if there is a version field", async () => {
@@ -659,6 +738,31 @@ describe("CustomRotationEditorComponent", () => {
       ]);
       // Group should be converted 1 -> 0 (standard 1-based to internal 0-based)
       expect(component.internalRotations[0].heats?.[0].group).toBe(0);
+      expect(component.internalRotations[0].description).toBe(
+        "standard_versioned",
+      );
+    });
+
+    it("should retain explicit description when importing a file that includes Description", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      const jsonWithDesc = JSON.stringify({
+        Version: "1.0",
+        NumDrivers: 8,
+        NumLanes: 4,
+        Description: "EURO D18 G3-666 X>1",
+        Heats: [{ Drivers: [1, 2, 3, 4], Group: 1 }],
+      });
+
+      const file = createMockFile(jsonWithDesc, "custom_import_file.json");
+      const event = createImportEvent([file]);
+
+      component.internalRotations = [];
+      await component.onImportFiles(event);
+
+      expect(component.internalRotations[0].description).toBe(
+        "EURO D18 G3-666 X>1",
+      );
     });
 
     it("should correctly import the user's exact RC1 rotation file with 0-based drivers and groups", async () => {
@@ -717,7 +821,8 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
         4, 1, 2, 3,
       ]);
-      expect(component.internalRotations[0].heats?.[0].group).toBe(1); // 2 - 1 = 1 internal 0-based group
+      expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+      expect(component.internalRotations[0].description).toBe("standard"); // 2 - 1 = 1 internal 0-based group
     });
 
     it("should report error for invalid JSON", async () => {
@@ -823,7 +928,11 @@ describe("CustomRotationEditorComponent", () => {
         NumLanes: 4,
         Rotations: [
           { NumDrivers: 4, Heats: [{ Drivers: [1, 2, 3, 4], Group: 2 }] },
-          { NumDrivers: 5, Heats: [{ Drivers: [1, 2, 3, 4, 0], Group: 1 }] },
+          {
+            NumDrivers: 5,
+            Description: "5-Driver Heat Set",
+            Heats: [{ Drivers: [1, 2, 3, 4, 0], Group: 1 }],
+          },
         ],
       });
       const file = createMockFile(combinedAssetJson, "combined.json");
@@ -835,7 +944,11 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.internalRotations.length).toBe(2);
       expect(component.internalRotations[0].numDrivers).toBe(4);
       expect(component.internalRotations[0].heats?.[0].group).toBe(1);
+      expect(component.internalRotations[0].description).toBe("combined");
       expect(component.internalRotations[1].numDrivers).toBe(5);
+      expect(component.internalRotations[1].description).toBe(
+        "5-Driver Heat Set",
+      );
     });
 
     it("should report error if combined asset JSON has lane count mismatch", async () => {
@@ -949,6 +1062,7 @@ describe("CustomRotationEditorComponent", () => {
       expect(writtenJson.AssetName).toBe("FormatTest");
       expect(writtenJson.NumLanes).toBe(2);
       expect(writtenJson.Rotations[0].NumDrivers).toBe(2);
+      expect(writtenJson.Rotations[0].Description).toBe("");
       expect(writtenJson.Rotations[0].Heats[0].Drivers).toEqual([1, 2]);
       expect(writtenJson.Rotations[0].Heats[0].Group).toBe(2);
 
@@ -961,6 +1075,7 @@ describe("CustomRotationEditorComponent", () => {
           Rotations: [
             {
               NumDrivers: 2,
+              Description: "",
               Heats: [
                 {
                   Drivers: [1, 2],
@@ -997,6 +1112,7 @@ describe("CustomRotationEditorComponent", () => {
       expect(writtenJson.Version).toBe("1.0");
       expect(writtenJson.NumDrivers).toBe(2);
       expect(writtenJson.NumLanes).toBe(2);
+      expect(writtenJson.Description).toBe("");
       expect(writtenJson.Heats[0].Drivers).toEqual([1, 2]);
       expect(writtenJson.Heats[0].Group).toBe(2);
 
@@ -1005,6 +1121,7 @@ describe("CustomRotationEditorComponent", () => {
           Version: "1.0",
           NumDrivers: 2,
           NumLanes: 2,
+          Description: "",
           Heats: [
             {
               Drivers: [1, 2],
@@ -1232,6 +1349,15 @@ describe("CustomRotationEditorComponent", () => {
       expect(captureSpy).toHaveBeenCalled();
       expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
 
+      // Rotation Description Change
+      captureSpy.calls.reset();
+      mockDataService.saveCustomRotation.calls.reset();
+      component.internalRotations[0].description = "New Desc";
+      component.onInputChange();
+      component.onInputBlur();
+      expect(captureSpy).toHaveBeenCalled();
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalled();
+
       // Heat Group Change
       captureSpy.calls.reset();
       mockDataService.saveCustomRotation.calls.reset();
@@ -1388,33 +1514,33 @@ describe("CustomRotationEditorComponent", () => {
       component.allAssets = [
         {
           type: "custom_rotation",
-          name: "New Custom Rotation 1",
+          name: "New Custom Rotation Set 1",
           model: { entityId: "1" },
         },
         {
           type: "custom_rotation",
-          name: "New Custom Rotation 2",
+          name: "New Custom Rotation Set 2",
           model: { entityId: "2" },
         },
         {
           type: "other_asset",
-          name: "New Custom Rotation 3",
+          name: "New Custom Rotation Set 3",
           model: { entityId: "3" },
         }, // Different type
       ];
       component.internalAssetId = "new";
 
       const uniqueName = component.generateUniqueName();
-      // Should find "New Custom Rotation 3" since the existing asset with that name is of a different type
-      expect(uniqueName).toBe("New Custom Rotation 3");
+      // Should find "New Custom Rotation Set 3" since the existing asset with that name is of a different type
+      expect(uniqueName).toBe("New Custom Rotation Set 3");
 
       component.allAssets.push({
         type: "custom_rotation",
-        name: "New Custom Rotation 3",
+        name: "New Custom Rotation Set 3",
         model: { entityId: "4" },
       });
       const nextUniqueName = component.generateUniqueName();
-      expect(nextUniqueName).toBe("New Custom Rotation 4");
+      expect(nextUniqueName).toBe("New Custom Rotation Set 4");
     });
 
     it("should evaluate isConfigValid correctly based on name, rotations, and validation errors", () => {
@@ -1637,17 +1763,18 @@ describe("CustomRotationEditorComponent", () => {
         tick();
 
         expect(component.defaultRotationName).toBe(component.internalAssetName);
+        expect(component.isNew).toBeTrue();
         expect(component.focusNameInput).toHaveBeenCalled();
       }));
 
       it("should duplicate rotation via saveAsNew and focus input", fakeAsync(() => {
         spyOn(component, "focusNameInput").and.callThrough();
         spyOn(component, "save").and.stub();
-        component.internalAssetName = "Custom Rotation 1";
+        component.internalAssetName = "Custom Rotation Set 1";
         component.allAssets = [
           {
             type: "custom_rotation",
-            name: "Custom Rotation 1",
+            name: "Custom Rotation Set 1",
             model: { entityId: "cr1" },
           } as any,
         ];
@@ -1655,15 +1782,16 @@ describe("CustomRotationEditorComponent", () => {
         component.saveAsNew();
         tick();
 
-        expect(component.internalAssetName).toBe("Custom Rotation 2");
-        expect(component.defaultRotationName).toBe("Custom Rotation 2");
+        expect(component.internalAssetName).toBe("Custom Rotation Set 2");
+        expect(component.defaultRotationName).toBe("Custom Rotation Set 2");
+        expect(component.isNew).toBeTrue();
         expect(component.internalAssetId).toBeUndefined();
         expect(component.save).toHaveBeenCalled();
         expect(component.focusNameInput).toHaveBeenCalled();
       }));
 
       it("should bind appAutoSelectDefault to asset name input in template", () => {
-        component.defaultRotationName = "New Custom Rotation 1";
+        component.defaultRotationName = "New Custom Rotation Set 1";
         fixture.detectChanges();
 
         const inputEl = fixture.nativeElement.querySelector(
@@ -1815,6 +1943,189 @@ describe("CustomRotationEditorComponent", () => {
           undefined,
         );
       }));
+    });
+  });
+
+  describe("Sorting & Smart Insertion", () => {
+    it("should sort rotations ascending by driver count on initial load", fakeAsync(() => {
+      const mockAsset = {
+        name: "Unsorted Asset",
+        numLanes: 4,
+        customRotations: [
+          { numDrivers: 8, heats: [{ driverIndices: [1, 2, 3, 4] }] },
+          { numDrivers: 4, heats: [{ driverIndices: [1, 2, 3, 4] }] },
+          { numDrivers: 6, heats: [{ driverIndices: [1, 2, 3, 4] }] },
+        ],
+        model: { entityId: "unsorted-id" },
+      };
+
+      const activatedRoute = TestBed.inject(ActivatedRoute);
+      spyOn(activatedRoute.snapshot.queryParamMap, "get").and.callFake(
+        (key: string) => (key === "id" ? "unsorted-id" : null),
+      );
+
+      mockDataService.listAssets.and.returnValue(of([mockAsset as any]));
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6, 8,
+      ]);
+      expect(component.isRotationsSorted()).toBeTrue();
+    }));
+
+    it("should smart-insert rotations on addRotation filling gaps and sorting", () => {
+      fixture.detectChanges();
+      component.selectedTrackId = "t2";
+      component.onTrackChange();
+      expect(component.internalRotations.length).toBe(0);
+
+      // First rotation defaults to internalNumLanes (4)
+      component.addRotation();
+      expect(component.internalRotations[0].numDrivers).toBe(4);
+
+      // Second rotation fills next available (5)
+      component.addRotation();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 5,
+      ]);
+
+      // Manually adjust the second rotation to 7 drivers (leaves 5 and 6 missing)
+      component.internalRotations[1].numDrivers = 7;
+
+      // Third rotation should choose 5 and insert before 7
+      component.addRotation();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 5, 7,
+      ]);
+
+      // Fourth rotation should choose 6 and insert before 7
+      component.addRotation();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 5, 6, 7,
+      ]);
+    });
+
+    it("should expand numVirtualDrivers when adding a rotation with driver count exceeding current pool", () => {
+      fixture.detectChanges();
+      component.selectedTrackId = "t2";
+      component.onTrackChange();
+      component.numVirtualDrivers = 5;
+      component.updateVirtualDriversList();
+      component.internalRotations = [
+        { numDrivers: 4, heats: [], isExpanded: true },
+        { numDrivers: 5, heats: [], isExpanded: true },
+      ];
+
+      component.addRotation(); // candidate = 6 (exceeds 5)
+      expect(component.numVirtualDrivers).toBe(6);
+      expect(component.virtualDrivers.length).toBe(6);
+    });
+
+    it("should manually sort rotations and register undo state when sortRotations is called", () => {
+      fixture.detectChanges();
+      component.internalRotations = [
+        { numDrivers: 8, heats: [], isExpanded: true },
+        { numDrivers: 4, heats: [], isExpanded: true },
+        { numDrivers: 6, heats: [], isExpanded: true },
+      ];
+
+      expect(component.isRotationsSorted()).toBeFalse();
+
+      spyOn(component, "captureState").and.callThrough();
+      component.sortRotations();
+
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6, 8,
+      ]);
+      expect(component.isRotationsSorted()).toBeTrue();
+      expect(component.captureState).toHaveBeenCalled();
+    });
+
+    it("should do nothing in sortRotations when 1 or fewer rotations exist", () => {
+      fixture.detectChanges();
+      component.internalRotations = [{ numDrivers: 4 }];
+      spyOn(component, "captureState");
+
+      component.sortRotations();
+      expect(component.captureState).not.toHaveBeenCalled();
+    });
+
+    it("should render the sort button in title-actions and trigger sortRotations on click", () => {
+      fixture.detectChanges();
+      component.internalRotations = [
+        { numDrivers: 6, heats: [], isExpanded: true },
+        { numDrivers: 4, heats: [], isExpanded: true },
+      ];
+      fixture.detectChanges();
+
+      const sortBtn = fixture.nativeElement.querySelector(
+        "#sort-rotations-btn",
+      ) as HTMLButtonElement;
+      expect(sortBtn).toBeTruthy();
+      expect(
+        sortBtn.querySelector(".material-icons")?.textContent?.trim(),
+      ).toBe("swap_vert");
+      expect(sortBtn.disabled).toBeFalse();
+      expect(sortBtn.classList.contains("needs-sort")).toBeTrue();
+
+      spyOn(component, "sortRotations").and.callThrough();
+      sortBtn.click();
+      fixture.detectChanges();
+
+      expect(component.sortRotations).toHaveBeenCalled();
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6,
+      ]);
+    });
+
+    it("should disable sort button when saving or internalRotations length <= 1", () => {
+      fixture.detectChanges();
+      component.internalRotations = [{ numDrivers: 4 }];
+      fixture.detectChanges();
+
+      const sortBtn = fixture.nativeElement.querySelector(
+        "#sort-rotations-btn",
+      ) as HTMLButtonElement;
+      expect(sortBtn.disabled).toBeTrue();
+
+      component.internalRotations.push({ numDrivers: 5 });
+      component.savingCount = 1;
+      fixture.detectChanges();
+      expect(sortBtn.disabled).toBeTrue();
+    });
+
+    it("should sort rotations before saving in save()", () => {
+      fixture.detectChanges();
+      component.internalAssetName = "Test Asset";
+      component.internalRotations = [
+        {
+          numDrivers: 6,
+          heats: [{ driverIndices: [1, 2, 3, 4], group: 0 }],
+          isExpanded: true,
+        },
+        {
+          numDrivers: 4,
+          heats: [{ driverIndices: [1, 2, 3, 4], group: 0 }],
+          isExpanded: true,
+        },
+      ];
+
+      component.save();
+
+      expect(component.internalRotations.map((r) => r.numDrivers)).toEqual([
+        4, 6,
+      ]);
+      expect(mockDataService.saveCustomRotation).toHaveBeenCalledWith(
+        "Test Asset",
+        component.internalNumLanes,
+        jasmine.arrayContaining([
+          jasmine.objectContaining({ numDrivers: 4 }),
+          jasmine.objectContaining({ numDrivers: 6 }),
+        ]),
+        undefined,
+      );
     });
   });
 });

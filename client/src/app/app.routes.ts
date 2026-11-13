@@ -115,7 +115,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     canDeactivate: [DirtyCheckGuard],
     runGuardsAndResolvers: "always",
-    title: "Custom Rotation Editor",
+    title: "Custom Rotation Set Editor",
     data: { animation: "CustomRotationEditorPage" },
   },
   {

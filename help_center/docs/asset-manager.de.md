@@ -10,7 +10,7 @@ Assets sind anpassbare Ressourcen, mit denen das Rennerlebnis personalisiert wir
 - **Audiosets:** Gruppierte Sammlungen von Audiodateien oder Text-to-Speech (TTS)-Ansagen, die bestimmten Schwellenwerten zugeordnet sind (Zeit in Sekunden, verbleibende Runden oder Kraftstoffprozentsatz).
 - **Bilder:** Fahrzeuggrafiken, Fahrer-Avatare, Flaggen, Sponsorenlogos und Hintergrundbilder.
 - **Bilderserien:** Sammlungen aufeinanderfolgender Bilder (z. B. für Kraftstoffanzeigen oder Countdown-Sequenzen).
-- **Benutzerdefinierte Rotationen:** Benutzerdefinierte Heat-Rotationsschemata für spezielle Rennformate.
+- **Benutzerdefinierte Rotationssets:** Benutzerdefinierte Heat-Rotationssets für spezielle Rennformate.
 
 ---
 
@@ -23,7 +23,7 @@ Das linke Bedienfeld des Asset Managers bietet vier Steuerelemente, um neue Asse
    - Unterstützte Audioformate: `.wav`, `.mp3`, `.ogg`.
 2. **Neuer Bildersatz:** Öffnet den Bildersatz-Editor zum Erstellen einer zusammenhängenden Bilderserie für Animationen und Statusanzeigen wie Kraftstoffanzeigen oder Ampelsequenzen.
 3. **Neues Audioset:** Öffnet den Audiosatz-Editor zum Erstellen von mehrstufigen Audiosequenzen für Countdown-Timer, verbleibende Runden oder Kraftstoffwarnungen.
-4. **Neue benutzerdefinierte Rotation:** Öffnet den Rotationseditor zur Definition oder zum Import spezieller Spurwechsel- und Heat-Rotationsschemata.
+4. **Neues benutzerdefiniertes Rotationsset:** Öffnet den Rotationseditor zur Definition oder zum Import spezieller Spurwechsel- und Heat-Rotationsschemata.
 
 ---
 
@@ -45,13 +45,13 @@ Durch Klicken auf Assets können Sie diese auswählen. Bei ausgewählten Assets 
 
 Der Asset Manager bietet Filter- und Ansichtssteuerelemente am oberen Rand der Bibliothek:
 
-- **Filter-Reiter:** Schnelles Filtern nach Ressourcentyp:
+- **Filter-Reiter:** Schnelles Filtern nach Ressourcentyp (Ihre Registerkartenauswahl wird bei jedem Aufruf automatisch gespeichert und wiederhergestellt):
   - **Alle:** Zeigt jedes Asset in der Datenbank an.
   - **Bilder:** Zeigt nur einzelne statische Bilddateien an (`.png`, `.jpg`, `.svg` usw.).
   - **Bildersets:** Zeigt mehrstufige Bilderserien und Tankanzeigen an.
   - **Sounds:** Zeigt einzelne Sounddateien an (`.wav`, `.mp3`, `.ogg`).
   - **Audiosets:** Zeigt schwellenwertgesteuerte Audiosammlungen an.
-  - **Benutzerdefinierte Rotationen:** Zeigt benutzerdefinierte Rotationsschemata an.
+  - **Benutzerdefinierte Rotationssets:** Zeigt benutzerdefinierte Rotationsschemata an.
 - **Layout-Umschalter:** Wechseln Sie zwischen **Listenansicht**, **Kleinen Miniaturansichten**, **Mittleren Miniaturansichten** und **Großen Miniaturansichten**.
 - **Nach Namen filtern:** Echtzeit-Suchfeld zur sofortigen Eingrenzung der Asset-Liste bei der Eingabe.
 
@@ -81,4 +81,4 @@ Nach dem Erstellen oder Hochladen stehen Ihre Assets in der gesamten Anwendung z
 - Wählen Sie benutzerdefinierte Soundeffekte im [Theme-Editor](themes.de.md) für Rundenzeiten, Führungswechsel und Start/Ziel-Signale.
 - Weisen Sie Grafiken im [Fahrer-Editor](driver-editor.de.md) für Fahrzeugbilder und Avatare zu.
 - Konfigurieren Sie visuelle Widgets und Instrumente im [Layout-Editor](layout-editor.de.md).
-- Verknüpfen Sie Rotationsdateien im [Renn-Editor](race-editor.de.md).
+- Verknüpfen Sie benutzerdefinierte Rotationssets im [Renn-Editor](race-editor.de.md).

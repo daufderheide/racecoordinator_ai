@@ -7,13 +7,12 @@
   <app-manager-header
     title="AM_TITLE"
     [showActions]="true"
-    [showAdd]="true"
+    [showAdd]="false"
     [showEdit]="selectedAssets.length === 1"
     [showDelete]="selectedAssets.length > 0"
     [isSaving]="isUploading"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'assetManagerHelpShown'"
-    (add)="fileInput.click()"
     (edit)="onEditSelected()"
     (delete)="onDeleteSelected()"
   >

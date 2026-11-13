@@ -21,6 +21,7 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.repository.SqliteRepository;
+import com.antigravity.util.VersionUtils;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -46,10 +47,12 @@ public class DatabaseInitializer {
       return;
     }
     String currentVersion = context.getSystemInfo("backfill_version");
-    if (CURRENT_BACKFILL_VERSION.equals(currentVersion)) {
+    if (currentVersion != null
+        && VersionUtils.compare(currentVersion, CURRENT_BACKFILL_VERSION) >= 0) {
       logger.debug(
-          "Database {} is already backfilled for version {}",
+          "Database {} is already backfilled for version {} (current db version: {})",
           context.getCurrentDatabaseName(),
+          CURRENT_BACKFILL_VERSION,
           currentVersion);
       return;
     }

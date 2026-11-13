@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { MOCK_RACES } from "@app/testing/data/races_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { DefaultRacedaySetupHarnessE2e } from "./testing/default-raceday-setup.harness.e2e";
@@ -314,5 +315,121 @@ test.describe("Raceday Setup Functional - en", () => {
         timeout: 10000,
       },
     );
+  });
+});
+
+test.describe("Raceday Setup Downgraded Race Compatibility - en", () => {
+  test.use({ locale: "en" });
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+
+    const incompatibleRace = {
+      ...MOCK_RACES[0],
+      entity_id: "r_incompat",
+      name: "Championship 2027",
+      compatibility: {
+        status: "INCOMPATIBLE",
+        can_run: false,
+        is_read_only: true,
+        blocking_features: ["points_scoring"],
+      },
+    };
+
+    const degradedRace = {
+      ...MOCK_RACES[1],
+      entity_id: "r_degraded",
+      name: "Club Race 2027",
+      compatibility: {
+        status: "DEGRADED",
+        can_run: true,
+        is_read_only: false,
+        ignored_features: ["step_up"],
+      },
+    };
+
+    await page.route("**/api/races", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([incompatibleRace, degradedRace, ...MOCK_RACES]),
+        });
+      } else {
+        await route.fallback();
+      }
+    });
+
+    await page.route("**/api/races/r_incompat", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(incompatibleRace),
+      });
+    });
+
+    await TestSetupHelper.setupLocalStorage(page, {
+      recentRaceIds: ["r_incompat", "r1"],
+      selectedDriverIds: ["d1", "d2"],
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+
+    await expect(page.locator(".setup-container")).toBeVisible({
+      timeout: 15000,
+    });
+
+    const splashScreen = page.locator(".splash-screen");
+    if ((await splashScreen.count()) > 0) {
+      await expect(splashScreen).not.toBeVisible({ timeout: 10000 });
+    }
+
+    await Promise.race([
+      page.evaluate(() => document.fonts.ready),
+      new Promise<void>((resolve) => setTimeout(resolve, 2000)),
+    ]).catch((err) => {
+      console.warn(
+        "Raceday Setup compatibility visual test: font ready wait failed:",
+        err,
+      );
+    });
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.getByText("Alice")).toBeVisible();
+  });
+
+  test("Race selection dropdown showing unavailable races", async ({
+    page,
+  }) => {
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.clickRaceDropdown();
+    const dropdownMenu = page.locator(".dropdown-menu");
+    await expect(dropdownMenu).toBeVisible();
+
+    await expect(page).toHaveScreenshot(
+      "race-selector-open-with-unavailable-races-en.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+
+  test("Unavailable race selected showing duplicate button and disabled start", async ({
+    page,
+  }) => {
+    await expect(page.locator(".event-detail-header")).toBeVisible();
+    await expect(page.locator("#duplicate-to-run-btn")).toBeVisible();
+
+    await expect(page).toHaveScreenshot("unavailable-race-selected-en.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
   });
 });

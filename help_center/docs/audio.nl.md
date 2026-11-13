@@ -142,6 +142,7 @@ Op een rijdersstation (`/driver-station/:lane`):
 - Klinken alleen de signalen, records en brandstofmeldingen van de **toegewezen rijder**.
 - Geluiden van concurrenten worden gefilterd om de rijder niet af te leiden.
 - Algemene racegebeurtenissen (startsignaal, gele vlag, einde heat) blijven hoorbaar.
+- **Audio-activering op mobiele apparaten**: Op mobiele telefoons en tablets (zoals bij het scannen van de QR-code van het rijdersstation met een iPhone of Android-apparaat) vereist de browserbeveiliging een eerste tik op het scherm om audio en spraak in te schakelen. Er verschijnt een melding (**Tik op het scherm om audio in te schakelen**) totdat erop wordt getikt. Daarna houdt Race Coordinator AI een actieve audiosessie in stand zodat alle volgende ronde-aankondigingen zonder extra tikken worden afgespeeld. Zorg er bij iPhones voor dat de fysieke stilschakelaar is uitgeschakeld.
 
 ### 4. Gescheiden Audio-engines per Tabblad
 Elk venster gebruikt een eigen `AudioService`-instantie (`providers: [AudioService]`). Geluid op een rijdersstation interfereert nooit met de wedstrijdleiding.

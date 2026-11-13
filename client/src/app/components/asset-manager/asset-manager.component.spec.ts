@@ -6,6 +6,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
@@ -28,7 +29,12 @@ import {
   resetMocks,
 } from "@app/testing/unit-test-mocks";
 
-import { AssetManagerComponent, AssetView } from "./asset-manager.component";
+import {
+  ASSET_MANAGER_FILTER_STORAGE_KEY,
+  ASSET_MANAGER_LAYOUT_STORAGE_KEY,
+  AssetManagerComponent,
+  AssetView,
+} from "./asset-manager.component";
 
 @Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
@@ -105,9 +111,15 @@ describe("AssetManagerComponent", () => {
 
   afterEach(() => {
     resetMocks();
+    localStorage.removeItem(ASSET_MANAGER_FILTER_STORAGE_KEY);
+    localStorage.removeItem("am_filter_type");
+    localStorage.removeItem(ASSET_MANAGER_LAYOUT_STORAGE_KEY);
   });
 
   beforeEach(() => {
+    localStorage.removeItem(ASSET_MANAGER_FILTER_STORAGE_KEY);
+    localStorage.removeItem("am_filter_type");
+    localStorage.removeItem(ASSET_MANAGER_LAYOUT_STORAGE_KEY);
     fixture = TestBed.createComponent(AssetManagerComponent);
     component = fixture.componentInstance;
     _dataService = TestBed.inject(DataService);
@@ -122,6 +134,12 @@ describe("AssetManagerComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should configure manager header with showAdd false so create new button is not shown in toolbar", () => {
+    const headerEl = fixture.debugElement.query(By.css("app-manager-header"));
+    expect(headerEl).toBeTruthy();
+    expect(headerEl.componentInstance.showAdd()).toBeFalse();
   });
 
   it("should filter assets by type", () => {
@@ -1364,10 +1382,77 @@ describe("AssetManagerComponent", () => {
     });
 
     it("should load layoutMode from localStorage on ngOnInit", () => {
-      localStorage.setItem("am_layout_mode", "small");
+      localStorage.setItem(ASSET_MANAGER_LAYOUT_STORAGE_KEY, "small");
       component.ngOnInit();
       expect(component.layoutMode).toBe("small");
-      localStorage.removeItem("am_layout_mode");
+      localStorage.removeItem(ASSET_MANAGER_LAYOUT_STORAGE_KEY);
+    });
+
+    it("should save filterType to localStorage when setFilterType is called", () => {
+      component.setFilterType("image");
+      expect(localStorage.getItem(ASSET_MANAGER_FILTER_STORAGE_KEY)).toBe(
+        "image",
+      );
+
+      component.setFilterType("audio");
+      expect(localStorage.getItem(ASSET_MANAGER_FILTER_STORAGE_KEY)).toBe(
+        "audio",
+      );
+
+      component.setFilterType("image_set");
+      expect(localStorage.getItem(ASSET_MANAGER_FILTER_STORAGE_KEY)).toBe(
+        "image_set",
+      );
+
+      component.setFilterType("audio_set");
+      expect(localStorage.getItem(ASSET_MANAGER_FILTER_STORAGE_KEY)).toBe(
+        "audio_set",
+      );
+
+      component.setFilterType("custom_rotation");
+      expect(localStorage.getItem(ASSET_MANAGER_FILTER_STORAGE_KEY)).toBe(
+        "custom_rotation",
+      );
+
+      component.setFilterType("all");
+      expect(localStorage.getItem(ASSET_MANAGER_FILTER_STORAGE_KEY)).toBe(
+        "all",
+      );
+    });
+
+    it("should load filterType from localStorage on ngOnInit", () => {
+      localStorage.setItem(ASSET_MANAGER_FILTER_STORAGE_KEY, "image_set");
+      component.ngOnInit();
+      expect(component.filterType).toBe("image_set");
+    });
+
+    it("should fallback to am_filter_type if am_filter_tab is not present", () => {
+      localStorage.removeItem(ASSET_MANAGER_FILTER_STORAGE_KEY);
+      localStorage.setItem("am_filter_type", "sound");
+      component.ngOnInit();
+      expect(component.filterType).toBe("sound");
+    });
+
+    it("should default filterType to 'all' if localStorage value is invalid", () => {
+      localStorage.setItem(
+        ASSET_MANAGER_FILTER_STORAGE_KEY,
+        "invalid_filter" as any,
+      );
+      component.ngOnInit();
+      expect(component.filterType).toBe("all");
+    });
+
+    it("should handle localStorage errors gracefully when loading filterType", () => {
+      spyOn(localStorage, "getItem").and.throwError("Access denied");
+      component.filterType = "all";
+      expect(() => component.ngOnInit()).not.toThrow();
+      expect(component.filterType).toBe("all");
+    });
+
+    it("should handle localStorage errors gracefully when saving filterType", () => {
+      spyOn(localStorage, "setItem").and.throwError("QuotaExceeded");
+      expect(() => component.setFilterType("image")).not.toThrow();
+      expect(component.filterType).toBe("image");
     });
 
     it("should sort filteredAssets first by asset type then by asset name", () => {

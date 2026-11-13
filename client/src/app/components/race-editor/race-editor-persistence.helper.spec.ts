@@ -52,6 +52,9 @@ describe("RaceEditorPersistenceHelper", () => {
         createRace: jasmine
           .createSpy("createRace")
           .and.returnValue(of({ entity_id: "r3", name: "Created Race" })),
+        copyRace: jasmine
+          .createSpy("copyRace")
+          .and.returnValue(of({ entity_id: "r4", name: "Copied Race" })),
         updateRace: jasmine
           .createSpy("updateRace")
           .and.returnValue(of({ entity_id: "r1", name: "Updated Race" })),
@@ -263,6 +266,11 @@ describe("RaceEditorPersistenceHelper", () => {
       await RaceEditorPersistenceHelper.autoSaveRace(mockHost);
       expect(mockHost.lifecycle.scheduleAutoSave).toHaveBeenCalled();
     });
+
+    it("should return false for canUpdate if race is read-only", () => {
+      mockHost.editingRace.compatibility = { is_read_only: true } as any;
+      expect(RaceEditorPersistenceHelper.canUpdate(mockHost)).toBeFalse();
+    });
   });
 
   describe("saveAsNew", () => {
@@ -271,6 +279,14 @@ describe("RaceEditorPersistenceHelper", () => {
       expect(mockHost.dataService.createRace).toHaveBeenCalledWith(
         jasmine.objectContaining({ name: "GP Race_1" }),
       );
+    });
+
+    it("should invoke dataService.copyRace if editing race is read-only", () => {
+      mockHost.editingRace.compatibility = { is_read_only: true } as any;
+      RaceEditorPersistenceHelper.saveAsNew(mockHost);
+      expect(mockHost.dataService.copyRace).toHaveBeenCalledWith("r1");
+      expect(mockHost.editingRace.entity_id).toBe("r4");
+      expect(mockHost.isEditMode).toBeTrue();
     });
   });
 
@@ -305,6 +321,17 @@ describe("RaceEditorPersistenceHelper", () => {
       expect(mockHost.isEditMode).toBeTrue();
       expect(mockHost.focusNameInput).toHaveBeenCalled();
       expect(mockHost.cdr.detectChanges).toHaveBeenCalled();
+    });
+
+    it("should force isEditMode to false when selecting a read-only race", () => {
+      mockHost.isPreservingEditModeOnNavigation = true;
+      const race = {
+        entity_id: "r10",
+        name: "Read-Only Race",
+        compatibility: { is_read_only: true },
+      };
+      RaceEditorPersistenceHelper.selectRace(mockHost, race);
+      expect(mockHost.isEditMode).toBeFalse();
     });
   });
 });

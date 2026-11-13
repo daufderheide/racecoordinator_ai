@@ -142,6 +142,7 @@ Sullo schermo di una postazione pilota (`/driver-station/:lane`):
 - Vengono riprodotti solo i suoni, record e allarmi carburante del **pilota di quella specifica corsia**.
 - I suoni degli altri piloti vengono scartati per non deconcentrare chi guida.
 - Gli avvisi globali (partenza, bandiera gialla, fine manche) rimangono regolarmente attivi.
+- **Attivazione audio su dispositivi mobili**: Su smartphone e tablet (ad esempio scansionando il codice QR della postazione pilota con un iPhone o dispositivo Android), la sicurezza del browser mobile richiede un tocco iniziale sullo schermo per abilitare audio e voce. Viene visualizzato un avviso (**Tocca lo schermo per abilitare l'audio**) finché non viene toccato. Successivamente, Race Coordinator AI mantiene attiva una sessione audio in modo che tutti gli annunci successivi dei giri vengano riprodotti senza ulteriori tocchi. Su iPhone, assicurarsi che l'interruttore silenzioso hardware sia disattivato.
 
 ### 4. Motori Audio Indipendenti per Finestra
 Ciascuna schermata esegue un'istanza separata di `AudioService` (`providers: [AudioService]`). I suoni di una postazione pilota non ostacolano mai la postazione del direttore di gara.

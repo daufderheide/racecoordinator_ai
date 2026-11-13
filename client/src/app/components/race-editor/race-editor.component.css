@@ -48,6 +48,89 @@
   overscroll-behavior: contain;
 }
 
+/* Downgrade / Compatibility Banners */
+.compatibility-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.compatibility-banner .banner-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.compatibility-banner .banner-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.compatibility-banner .banner-title {
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.compatibility-banner .banner-desc {
+  color: #cbd5e1;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.compatibility-banner.read-only-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.compatibility-banner.read-only-banner .banner-icon,
+.compatibility-banner.read-only-banner .banner-title {
+  color: #ef4444;
+}
+
+.compatibility-banner.degraded-banner {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fde68a;
+}
+
+.compatibility-banner.degraded-banner .banner-icon,
+.compatibility-banner.degraded-banner .banner-title {
+  color: #f59e0b;
+}
+
+.compatibility-banner .banner-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.compatibility-banner .banner-action-btn:hover {
+  background: #ef4444;
+}
+
+.compatibility-banner .banner-action-btn .material-icons {
+  font-size: 16px;
+}
+
 .editor-row {
   display: flex;
   gap: 20px;

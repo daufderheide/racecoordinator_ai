@@ -4,6 +4,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.ClientCommandTaskHandler.TaskResult;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
+import com.antigravity.models.RaceCompatibility;
 import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
@@ -28,8 +29,10 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.RaceOver;
+import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AnalyticsService;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.RaceCompatibilityEvaluator;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.javalin.http.Context;
 import java.util.ArrayList;
@@ -95,6 +98,16 @@ public class RaceControlHandler {
     Race raceModel = dbService.getRace(databaseContext, request.getRaceId());
     if (raceModel == null) {
       return TaskResult.error(404, "Race not found");
+    }
+
+    String raceRawJson =
+        new SqliteRepository<>(databaseContext, "races", Race.class)
+            .findRawJsonByEntityId(request.getRaceId());
+    RaceCompatibility compat = new RaceCompatibilityEvaluator().evaluate(raceModel, raceRawJson);
+    if (!compat.isCanRun()) {
+      return TaskResult.error(
+          400,
+          "Cannot start race: contains unsupported features for this version. Please duplicate the race to run.");
     }
 
     if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()

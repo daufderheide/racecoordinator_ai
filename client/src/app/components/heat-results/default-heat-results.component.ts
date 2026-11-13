@@ -40,6 +40,7 @@ import { RaceParticipant } from "@app/models/race_participant";
 import { isAtLeast, Role } from "@app/models/role";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { RaceState } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
@@ -93,6 +94,61 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   get isReviewingPastRace(): boolean {
     return Boolean((this.race as any)?.historyRecordId);
+  }
+
+  get isRaceOver(): boolean {
+    if (this.raceHasEnded) {
+      return true;
+    }
+    const rs = this.raceTimeService?.raceState;
+    if (rs === RaceState.RACE_OVER) {
+      return true;
+    }
+    const raceAny = this.race as any;
+    return (
+      raceAny?.raceState === RaceState.RACE_OVER ||
+      raceAny?.state === RaceState.RACE_OVER
+    );
+  }
+
+  get selectableHeats(): Heat[] {
+    const allHeats = this.heats;
+    if (this.isReviewingPastRace || this.isRaceOver) {
+      return allHeats;
+    }
+    const currHeat = this.raceService.getCurrentHeat();
+    if (!currHeat) {
+      return allHeats;
+    }
+    const currIndex = allHeats.findIndex(
+      (h) =>
+        h.heatNumber === currHeat.heatNumber ||
+        h.objectId === currHeat.objectId,
+    );
+    if (currIndex >= 0) {
+      return allHeats.slice(0, currIndex + 1);
+    }
+    const filtered = allHeats.filter(
+      (h) => h.heatNumber <= currHeat.heatNumber,
+    );
+    return filtered.length > 0 ? filtered : allHeats;
+  }
+
+  isCurrentHeat(h: Heat): boolean {
+    if (this.isReviewingPastRace || this.isRaceOver) {
+      return false;
+    }
+    const currHeat = this.raceService.getCurrentHeat();
+    if (!currHeat) {
+      return false;
+    }
+    return (
+      h.heatNumber === currHeat.heatNumber || h.objectId === currHeat.objectId
+    );
+  }
+
+  getHeatIndex(h: Heat): number {
+    return this.heats.indexOf(h);
   }
 
   exitReview(): void {
@@ -345,6 +401,15 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
       }),
     );
 
+    if (this.raceTimeService?.raceState$) {
+      this.subscriptions.push(
+        this.raceTimeService.raceState$.subscribe(() => {
+          this.loadRaceData();
+          this.cdr.markForCheck();
+        }),
+      );
+    }
+
     this.loadRaceData();
     this.updateGraph();
     this.calculateHeatStandings();
@@ -584,6 +649,22 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
       this.heats.length > this.selectedHeatIndex
     ) {
       this.heat = this.heats[this.selectedHeatIndex];
+      if (
+        !this.isReviewingPastRace &&
+        !this.isRaceOver &&
+        this.selectableHeats.length > 0 &&
+        !this.selectableHeats.includes(this.heat)
+      ) {
+        const currHeat = this.raceService.getCurrentHeat();
+        const currIdx = currHeat ? this.heats.indexOf(currHeat) : -1;
+        this.selectedHeatIndex =
+          currIdx >= 0
+            ? currIdx
+            : this.heats.indexOf(
+                this.selectableHeats[this.selectableHeats.length - 1],
+              );
+        this.heat = this.heats[this.selectedHeatIndex];
+      }
     } else {
       this.heat = this.raceService.getCurrentHeat();
       if (this.heat && this.heats.length > 0) {

@@ -105,6 +105,11 @@ export function areCustomRotationStatesEqual(
     if (rot.numDrivers !== otherRot.numDrivers) {
       return false;
     }
+    const rotDesc = rot.description || "";
+    const otherRotDesc = otherRot.description || "";
+    if (rotDesc !== otherRotDesc) {
+      return false;
+    }
     const heats = rot.heats || [];
     const otherHeats = otherRot.heats || [];
     if (heats.length !== otherHeats.length) {
@@ -156,6 +161,7 @@ export function buildSingleRotationExportJson(
     Version: "1.0",
     NumDrivers: numDrivers,
     NumLanes: numLanes,
+    Description: rotation.description || "",
     Heats:
       rotation.heats?.map((h) => ({
         Drivers: h.driverIndices,
@@ -185,6 +191,7 @@ export function buildRotationsAssetExportJson(
     NumLanes: numLanes,
     Rotations: rotations.map((rotation) => ({
       NumDrivers: rotation.numDrivers || 0,
+      Description: rotation.description || "",
       Heats:
         rotation.heats?.map((h) => ({
           Drivers: h.driverIndices,
@@ -326,4 +333,45 @@ export function hasValidationErrors(rotations: ICustomRotation[]): boolean {
     const conflicts = getDriverGroupConflicts(rot);
     return conflicts.size > 0;
   });
+}
+
+export function sortRotationsByDrivers<T extends ICustomRotation>(
+  rotations: T[],
+): T[] {
+  return rotations.sort((a, b) => (a.numDrivers ?? 0) - (b.numDrivers ?? 0));
+}
+
+export function areRotationsSorted(rotations: ICustomRotation[]): boolean {
+  for (let i = 0; i < rotations.length - 1; i++) {
+    const current = rotations[i].numDrivers ?? 0;
+    const next = rotations[i + 1].numDrivers ?? 0;
+    if (current > next) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function findNextAvailableDriverCount(
+  rotations: ICustomRotation[],
+  minCount: number,
+): number {
+  const existingCounts = new Set(
+    rotations
+      .map((r) => r.numDrivers)
+      .filter((d): d is number => d !== undefined && d !== null),
+  );
+
+  let candidate = minCount;
+  while (existingCounts.has(candidate)) {
+    candidate++;
+  }
+  return candidate;
+}
+
+export function findSortedInsertionIndex(
+  rotations: ICustomRotation[],
+  driverCount: number,
+): number {
+  return rotations.findIndex((r) => (r.numDrivers ?? 0) > driverCount);
 }

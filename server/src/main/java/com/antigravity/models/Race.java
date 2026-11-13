@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Race extends Model {
 
@@ -28,6 +30,8 @@ public class Race extends Model {
 
   @JsonProperty("points_scoring")
   @JsonAlias("pointsScoring")
+  @com.fasterxml.jackson.annotation.JsonInclude(
+      com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
   private final PointsScoring pointsScoring;
 
   @JsonProperty("min_lap_time")
@@ -142,6 +146,12 @@ public class Race extends Model {
   @JsonAlias("stepUp")
   private final int stepUp;
 
+  @JsonProperty("_compat_meta")
+  @JsonAlias({"compatMeta", "_compatMeta"})
+  @com.fasterxml.jackson.annotation.JsonInclude(
+      com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+  private final Map<String, Object> compatMeta;
+
   @JsonCreator
   public Race(
       @JsonProperty("name") String name,
@@ -199,6 +209,8 @@ public class Race extends Model {
       @JsonProperty("adjust_drift_laps") @JsonAlias("adjustDriftLaps") Boolean adjustDriftLaps,
       @JsonProperty("theme_id") @JsonAlias("themeId") String themeId,
       @JsonProperty("step_up") @JsonAlias("stepUp") Integer stepUp,
+      @JsonProperty("_compat_meta") @JsonAlias({"compatMeta", "_compatMeta", "compat_meta"})
+          Map<String, Object> compatMeta,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -211,7 +223,12 @@ public class Race extends Model {
             : (oldHeatScoring != null ? oldHeatScoring : new HeatScoring());
     this.overallScoring = overallScoring != null ? overallScoring : new OverallScoring();
     this.seasonScoring = seasonScoring != null ? seasonScoring : new SeasonScoring();
-    this.pointsScoring = pointsScoring != null ? pointsScoring : new PointsScoring();
+    this.pointsScoring =
+        pointsScoring != null
+            ? pointsScoring
+            : ((this.overallScoring.getRankingMethod() == OverallScoring.OverallRanking.POINTS)
+                ? new PointsScoring()
+                : null);
     this.minLapTime = minLapTime != null ? minLapTime : 1.5;
     this.fuelOptions = fuelOptions != null ? fuelOptions : new AnalogFuelOptions();
     this.digitalFuelOptions =
@@ -251,6 +268,7 @@ public class Race extends Model {
     this.adjustDriftLaps = adjustDriftLaps != null ? adjustDriftLaps : false;
     this.themeId = themeId != null ? themeId : Theme.DEFAULT_THEME_ID;
     this.stepUp = stepUp != null ? stepUp : 0;
+    this.compatMeta = syncCompatMeta(compatMeta, this.stepUp, this.overallScoring);
   }
 
   public static class Builder {
@@ -261,7 +279,7 @@ public class Race extends Model {
     private HeatScoring heatScoring = new HeatScoring();
     private OverallScoring overallScoring = new OverallScoring();
     private SeasonScoring seasonScoring = new SeasonScoring();
-    private PointsScoring pointsScoring = new PointsScoring();
+    private PointsScoring pointsScoring;
     private double minLapTime = 1.5;
     private AnalogFuelOptions fuelOptions = new AnalogFuelOptions();
     private DigitalFuelOptions digitalFuelOptions = new DigitalFuelOptions();
@@ -293,6 +311,7 @@ public class Race extends Model {
     private boolean adjustDriftLaps = false;
     private String themeId = Theme.DEFAULT_THEME_ID;
     private int stepUp = 0;
+    private Map<String, Object> compatMeta;
     private String entityId;
     private String id;
 
@@ -335,6 +354,7 @@ public class Race extends Model {
       this.adjustDriftLaps = other.isAdjustDriftLaps();
       this.themeId = other.getThemeId();
       this.stepUp = other.getStepUp();
+      this.compatMeta = other.getCompatMeta();
       this.entityId = other.getEntityId();
       this.id = other.getId();
       return this;
@@ -530,6 +550,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCompatMeta(Map<String, Object> compatMeta) {
+      this.compatMeta = compatMeta;
+      return this;
+    }
+
     public Builder withEntityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -581,9 +606,63 @@ public class Race extends Model {
           adjustDriftLaps,
           themeId,
           stepUp,
+          compatMeta,
           entityId,
           id);
     }
+  }
+
+  public static Map<String, Object> syncCompatMeta(
+      Map<String, Object> existingMeta, int stepUp, OverallScoring overallScoring) {
+    List<Map<String, Object>> otherFeatures = new ArrayList<>();
+    if (existingMeta != null && existingMeta.get("features") instanceof List) {
+      List<?> list = (List<?>) existingMeta.get("features");
+      for (Object obj : list) {
+        if (obj instanceof Map) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> f = (Map<String, Object>) obj;
+          String id = (String) f.get("id");
+          if (!"step_up".equals(id)
+              && !"points_overall".equals(id)
+              && !"points_scoring".equals(id)) {
+            otherFeatures.add(f);
+          }
+        }
+      }
+    }
+
+    List<Map<String, Object>> features = new ArrayList<>(otherFeatures);
+    if (stepUp > 0) {
+      Map<String, Object> f = new LinkedHashMap<>();
+      f.put("id", "step_up");
+      f.put("criticality", "ADVISORY");
+      f.put("description", "Step-Up ladder progression");
+      features.add(f);
+    }
+    if (overallScoring != null
+        && overallScoring.getRankingMethod() == OverallScoring.OverallRanking.POINTS) {
+      Map<String, Object> f = new LinkedHashMap<>();
+      f.put("id", "points_overall");
+      f.put("criticality", "REQUIRED");
+      f.put("description", "Points overall ranking");
+      Map<String, Object> fallback = new LinkedHashMap<>();
+      fallback.put("target_path", "overall_scoring.ranking_method");
+      fallback.put("value", "LAP_COUNT");
+      f.put("fallback", fallback);
+      features.add(f);
+    }
+
+    if (features.isEmpty()) {
+      return null;
+    }
+    Map<String, Object> meta = new LinkedHashMap<>();
+    meta.put("min_version", "1.2.0");
+    meta.put("features", features);
+    return meta;
+  }
+
+  public Map<String, Object> getCompatMeta() {
+    return compatMeta;
   }
 
   public int getStepUp() {

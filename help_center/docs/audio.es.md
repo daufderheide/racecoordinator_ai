@@ -141,6 +141,7 @@ En la pantalla de un puesto de piloto (`/driver-station/:lane`), el filtro opera
 - Solo se reproducen los sonidos, récords y alertas de combustible del **piloto asignado**.
 - Los sonidos de los pilotos rivales se filtran en silencio para no desconcentrar al competidor.
 - Los avisos globales (cuenta atrás, banderas amarillas, fin de manga) se mantienen audibles.
+- **Activación de audio en dispositivos móviles**: En teléfonos móviles y tabletas (como al escanear el código QR de la estación de piloto con un iPhone o Android), la seguridad del navegador móvil requiere un toque inicial en la pantalla para activar el audio y la voz. Aparece un mensaje flotante (**Toca la pantalla para activar el audio**) hasta que se toca. Una vez activado, Race Coordinator AI mantiene una sesión de audio activa para que todos los anuncios de vueltas posteriores se reproduzcan sin necesidad de más toques. En iPhones, asegúrate de desactivar el interruptor físico de silencio.
 
 ### 4. Motores de Audio Independientes por Ventana
 Cada pestaña o ventana ejecuta una instancia aislada de `AudioService` (`providers: [AudioService]`), garantizando que los sonidos de un puesto de piloto nunca interfieran con la pantalla del director de carrera.

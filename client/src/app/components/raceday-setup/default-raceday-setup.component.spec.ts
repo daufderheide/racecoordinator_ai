@@ -461,6 +461,53 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
   }));
 
+  it("should not start race if selected race cannot run due to downgrade", fakeAsync(() => {
+    component.selectedRace = {
+      ...component.races[0],
+      compatibility: {
+        can_run: false,
+        is_read_only: true,
+        status: "INCOMPATIBLE",
+      },
+    } as any;
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+
+    component.startRace(false);
+    tick();
+    fixture.detectChanges();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorMessage).toBe("RD_MSG_CANNOT_RUN_INCOMPATIBLE");
+    expect(mockDataService.initializeRace).not.toHaveBeenCalled();
+  }));
+
+  it("should duplicate incompatible race and select the copy", fakeAsync(() => {
+    component.selectedRace = {
+      entity_id: "incompat_1",
+      name: "Incompatible Race",
+      compatibility: {
+        can_run: false,
+        is_read_only: true,
+        status: "INCOMPATIBLE",
+      },
+    } as any;
+    const copiedRace = {
+      entity_id: "incompat_1_copy",
+      name: "Incompatible Race (Copy)",
+    } as any;
+    mockDataService.copyRace.and.returnValue(of(copiedRace));
+    mockDataService.getRaces.and.returnValue(
+      of([...component.races, copiedRace]),
+    );
+
+    component.duplicateSelectedRace();
+    tick();
+    fixture.detectChanges();
+
+    expect(mockDataService.copyRace).toHaveBeenCalledWith("incompat_1");
+    expect(component.selectedRace?.entity_id).toBe("incompat_1_copy");
+  }));
+
   it("should prompt to load autosave and load it if confirmed", fakeAsync(() => {
     component.selectedRace = component.races.find((r) => r.entity_id === "r1");
     component.selectedParticipants = [component.unselectedParticipants[0]];

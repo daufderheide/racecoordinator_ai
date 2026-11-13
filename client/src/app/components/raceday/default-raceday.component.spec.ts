@@ -13293,6 +13293,27 @@ describe("DefaultRacedayComponent", () => {
       expect(filter?.allowRaceState).toBeTrue();
     });
 
+    it("should allow timer, countdown, and race state audio on driver station or driver view even with progress-gauge", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "progress-gauge" },
+          { widgetType: "lane-column" },
+        ],
+      } as any;
+      (component as any).routeLaneIndex = 1;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("scoped");
+      expect(filter?.allowedLanes?.has(1)).toBeTrue();
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeTrue();
+      expect(filter?.allowRaceState).toBeTrue();
+    });
+
     it("should silence all audio when widgets array is empty or undefined", () => {
       component.layout = { widgets: [] } as any;
 
