@@ -2720,6 +2720,9 @@ public class ArduinoProtocolTest {
 
     serialConnection.allWrittenData.clear();
 
+    // Advance time past the connection handshake grace window to simulate mid-race reboot
+    protocol.advanceTime(2000);
+
     // Inject version again (simulating Arduino reboot while port remained open)
     serialConnection.injectData(versionMsg);
 
@@ -2735,7 +2738,9 @@ public class ArduinoProtocolTest {
 
     assertTrue("Should re-send pinModeRead on unexpected version", hasPinModeRead);
     assertTrue("Should re-send pinModeWrite on unexpected version", hasPinModeWrite);
-    assertTrue("Should re-send time reset on unexpected version", hasTimeReset);
+    assertFalse(
+        "Should NOT re-send time reset on unexpected version (prevents recursive reset loop)",
+        hasTimeReset);
   }
 
   @Test
@@ -2767,7 +2772,77 @@ public class ArduinoProtocolTest {
 
     assertTrue("Should re-send pinModeRead on reset heartbeat", hasPinModeRead);
     assertTrue("Should re-send pinModeWrite on reset heartbeat", hasPinModeWrite);
-    assertTrue("Should re-send time reset on reset heartbeat", hasTimeReset);
+    assertFalse(
+        "Should NOT re-send time reset on reset heartbeat (prevents recursive reset loop)",
+        hasTimeReset);
+  }
+
+  @Test
+  public void testUnexpectedReset_DoesNotTriggerRecursiveLoop() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+
+    // Initial heartbeat
+    byte[] initialHeartbeat = {0x54, 0, 0, 1, 0, 1, 0x3B};
+    serialConnection.injectData(initialHeartbeat);
+    assertNull(listener.lastEvent);
+
+    serialConnection.allWrittenData.clear();
+
+    // Unexpected reset heartbeat arrives
+    byte[] resetHeartbeat = {0x54, 0, 0, 2, 0, 1, 0x3B};
+    serialConnection.injectData(resetHeartbeat);
+
+    assertNotNull(listener.lastEvent);
+    assertEquals(1, listener.lastEvent.getAlert().getOccurrenceCount());
+
+    // Verify TIME_RESET command (0x54, 0x3B) was NOT written
+    boolean hasTimeReset =
+        serialConnection.allWrittenData.stream()
+            .anyMatch(data -> data.length == 2 && data[0] == 0x54 && data[1] == 0x3B);
+    assertFalse("Must NOT send TIME_RESET on unexpected reset", hasTimeReset);
+
+    // Subsequent normal heartbeat arrives (isReset = 0)
+    byte[] normalHeartbeat = {0x54, 0, 0, 3, 0, 0, 0x3B};
+    serialConnection.injectData(normalHeartbeat);
+
+    // Alert count must remain 1
+    assertEquals(1, listener.lastEvent.getAlert().getOccurrenceCount());
+  }
+
+  @Test
+  public void testOnPortConnected_QueriesVersionWithoutSoftwareReset() {
+    MockSerialConnection mockSerial = new MockSerialConnection();
+    TestableArduinoProtocol p = new TestableArduinoProtocol(config, 2, scheduler, mockSerial);
+    p.open();
+
+    boolean hasVersionQuery =
+        mockSerial.allWrittenData.stream()
+            .anyMatch(data -> data.length == 2 && data[0] == 0x56 && data[1] == 0x3B);
+    boolean hasSoftwareReset =
+        mockSerial.allWrittenData.stream().anyMatch(data -> data.length == 6 && data[0] == 0x52);
+
+    assertTrue("Should send VERSION query on port connect", hasVersionQuery);
+    assertFalse(
+        "Should NOT send RESET command on port connect (avoids double reboot)", hasSoftwareReset);
+    p.close();
+  }
+
+  @Test
+  public void testVersionDuringConnectionGracePeriod_IgnoredWithoutAlert() {
+    protocol.open();
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    assertTrue(protocol.isOpen());
+
+    // Duplicate version arrives within handshake grace window (e.g. at 200ms)
+    protocol.advanceTime(200);
+    serialConnection.injectData(versionMsg);
+
+    assertNull(
+        "Duplicate version during connection settling window should not raise alert",
+        listener.lastEvent);
   }
 
   @Test
