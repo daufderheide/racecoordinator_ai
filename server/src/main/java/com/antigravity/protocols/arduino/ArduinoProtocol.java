@@ -50,7 +50,6 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private static final long CONNECTION_HANDSHAKE_GRACE_MS = 1500;
 
   // Data sent from PC to Arduino
-  private static final byte[] RESET_COMMAND = {0x52, 0x45, 0x53, 0x45, 0x54, 0x3B};
   private static final byte[] VERSION_COMMAND = {0x56, 0x3B};
   private static final byte[] TIME_RESET_COMMAND = {0x54, 0x3B};
 
