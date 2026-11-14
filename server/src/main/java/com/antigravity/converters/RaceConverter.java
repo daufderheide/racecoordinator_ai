@@ -256,9 +256,8 @@ public class RaceConverter {
         .build();
   }
 
-  private static com.antigravity.proto.CrashAndLearnOptions
-      buildCrashAndLearnOptions( // fqn-collision
-      CrashAndLearnOptions options) {
+  private static com.antigravity.proto.CrashAndLearnOptions // fqn-collision
+      buildCrashAndLearnOptions(CrashAndLearnOptions options) {
     return com.antigravity.proto.CrashAndLearnOptions.newBuilder() // fqn-collision
         .setEnabled(options.isEnabled())
         .setAutomatedCrashTime(options.getAutomatedCrashTime())

@@ -198,7 +198,7 @@
                       [imageUrl]="getFlagUrl(flag.slot)"
                       (imageUrlChange)="captureState()"
                       [assetId]="
-                        editingTheme?.slots
+                        editingTheme.slots
                           ? editingTheme.slots[flag.slot]
                           : undefined
                       "
@@ -240,7 +240,7 @@
                       [imageUrl]="getLampUrl(lamp.slot)"
                       (imageUrlChange)="captureState()"
                       [assetId]="
-                        editingTheme?.slots
+                        editingTheme.slots
                           ? editingTheme.slots[lamp.slot]
                           : undefined
                       "

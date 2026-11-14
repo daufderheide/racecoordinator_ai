@@ -1110,7 +1110,7 @@
                   <div class="event-detail-header">
                     <div class="event-detail-title">
                       {{ selectedRace.name }}
-                      @if (selectedRace?.compatibility?.is_read_only) {
+                      @if (selectedRace.compatibility?.is_read_only) {
                         <span
                           class="compat-status-badge badge-danger"
                           [title]="'RE_BANNER_READ_ONLY_DESC' | translate"
@@ -1119,7 +1119,7 @@
                           {{ "RD_BADGE_READ_ONLY" | translate }}
                         </span>
                       } @else if (
-                        selectedRace?.compatibility?.status === "DEGRADED"
+                        selectedRace.compatibility?.status === "DEGRADED"
                       ) {
                         <span
                           class="compat-status-badge badge-warning"
