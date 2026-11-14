@@ -168,6 +168,8 @@ Als u de voorkeur geeft aan handmatige controle of uw configuratie wilt aanpasse
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
    sudo usermod -a -G dialout,audio arduino
+   sudo loginctl enable-linger arduino
+   systemctl --user enable --now speech-dispatcher.socket
    ```
 
 3. **Systemd-services installeren en registreren**:
@@ -369,9 +371,10 @@ sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng 
 ```
 
 ### Browserparameters in kioskmodus en navigatie met meerdere tabbladen
-In de kioskmodus wordt Chromium gestart via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI gebruikt `--start-maximized` (in plaats van het restrictieve `--kiosk`) om ervoor te zorgen dat secundaire tabbladen —zoals Heatresultaten, Raceresultaten, themaweergaven en het offline Helpcentrum— zichtbaar en toegankelijk blijven via de tabbladenbalk bovenaan het tv-scherm. Chromium vereist ook specifieke parameters om Speech Dispatcher en automatisch afspelen van audio in te schakelen. Zorg ervoor dat uw script `start_kiosk.sh` het volgende bevat:
+In de kioskmodus wordt Chromium gestart via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI gebruikt `--start-maximized` (in plaats van het restrictieve `--kiosk`) om ervoor te zorgen dat secundaire tabbladen —zoals Heatresultaten, Raceresultaten, themaweergaven en het offline Helpcentrum— zichtbaar en toegankelijk blijven via de tabbladenbalk bovenaan het tv-scherm. Chromium vereist ook specifieke parameters om Speech Dispatcher en automatisch afspelen van audio in te schakelen, en `--test-type` om waarschuwingsbanners over niet-ondersteunde parameters te onderdrukken. Zorg ervoor dat uw script `start_kiosk.sh` het volgende bevat:
 ```bash
   --start-maximized \
+  --test-type \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```
@@ -397,6 +400,11 @@ In de kioskmodus wordt Chromium gestart via `/opt/racecoordinatorai/scripts/star
    spd-say "Testing speech dispatcher"
    ```
    Als `spd-say` een foutmelding geeft of blijft hangen, start de daemon dan opnieuw: `pkill -f speech-dispatcher && spd-say "Hello"`.
+   Zorg ervoor dat de Speech Dispatcher-socket en het aanhouden van de gebruikerssessie (linger) zijn ingeschakeld:
+   ```bash
+   systemctl --user enable --now speech-dispatcher.socket
+   sudo loginctl enable-linger arduino
+   ```
 4. **Testen in de webinterface**:
    Open in de Race Coordinator AI-webinterface **Interface aanpassen** (of **Thema-editor** $\rightarrow$ **Audio-instellingen**). Controleer het vervolgkeuzemenu **TTS-stem**: de beschikbare stemmen moeten worden weergegeven. Klik op **TTS-stem testen** om het afspelen te verifiëren.
 

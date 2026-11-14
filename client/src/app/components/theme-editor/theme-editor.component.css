@@ -225,12 +225,14 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+  contain: content;
 }
 
 .countdown-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+  contain: content;
 }
 
 .fuel-gauge-panel {

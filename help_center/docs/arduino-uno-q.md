@@ -168,6 +168,8 @@ If you prefer manual control or need to customize your configuration:
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
    sudo usermod -a -G dialout,audio arduino
+   sudo loginctl enable-linger arduino
+   systemctl --user enable --now speech-dispatcher.socket
    ```
 
 3. **Install and register systemd services**:
@@ -369,9 +371,10 @@ sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng 
 ```
 
 ### Kiosk Browser Flags & Multi-Tab Navigation
-In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI uses `--start-maximized` (rather than locked-down `--kiosk`) to ensure secondary tabs—such as Heat Results, Race Results, Theme views, and the offline Help Center—remain visible and switchable via the tab bar at the top of the TV screen. Chromium also requires explicit flags to enable Speech Dispatcher and unprompted audio autoplay. Ensure your `start_kiosk.sh` includes:
+In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI uses `--start-maximized` (rather than locked-down `--kiosk`) to ensure secondary tabs—such as Heat Results, Race Results, Theme views, and the offline Help Center—remain visible and switchable via the tab bar at the top of the TV screen. Chromium also requires explicit flags to enable Speech Dispatcher and unprompted audio autoplay, and `--test-type` to suppress unsupported flag banners. Ensure your `start_kiosk.sh` includes:
 ```bash
   --start-maximized \
+  --test-type \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```
@@ -397,6 +400,11 @@ In Kiosk Display Mode, Chromium launches via `/opt/racecoordinatorai/scripts/sta
    spd-say "Testing speech dispatcher"
    ```
    If `spd-say` errors or hangs, restart the daemon: `pkill -f speech-dispatcher && spd-say "Hello"`.
+   Ensure the Speech Dispatcher socket and user lingering are enabled:
+   ```bash
+   systemctl --user enable --now speech-dispatcher.socket
+   sudo loginctl enable-linger arduino
+   ```
 4. **Test in the Web UI**:
    In the Race Coordinator AI web UI, open **Customize UI** (or **Theme Editor** $\rightarrow$ **Audio Settings**). Check the **TTS Voice** dropdown—available voices should appear. Click **Test TTS Voice** to confirm playback.
 

@@ -47,8 +47,32 @@ export function getThemeAssetForSlot(
   }
 
   if (!assetId) return undefined;
+
+  if (assets && assets.length > 20) {
+    let map = (assets as any)._map;
+    if (!map) {
+      map = new Map<string, any>();
+      for (const a of assets) {
+        if (!a) continue;
+        const id1 = a.model?.entityId;
+        const id2 = a.entity_id;
+        const id3 = a.id;
+        if (id1) map.set(id1, a);
+        if (id2) map.set(id2, a);
+        if (id3) map.set(id3, a);
+      }
+      (assets as any)._map = map;
+    }
+    if (map.has(assetId)) {
+      return map.get(assetId);
+    }
+  }
+
   return (assets || []).find(
-    (a) => a.model?.entityId === assetId || a.entity_id === assetId,
+    (a) =>
+      a.model?.entityId === assetId ||
+      a.entity_id === assetId ||
+      a.id === assetId,
   );
 }
 

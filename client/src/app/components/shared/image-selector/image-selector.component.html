@@ -63,14 +63,16 @@
   }
 </div>
 
-<app-item-selector
-  [visible]="showSelector"
-  [title]="'UE_TITLE_SELECT_IMAGE' | translate"
-  [items]="allAvailableAssets()"
-  [itemType]="assetType()"
-  [allowBrowse]="!disabled()"
-  (select)="onAssetSelected($event)"
-  (filePicked)="onFilePicked($event)"
-  (close)="closeSelector()"
->
-</app-item-selector>
+@if (showSelector) {
+  <app-item-selector
+    [visible]="showSelector"
+    [title]="'UE_TITLE_SELECT_IMAGE' | translate"
+    [items]="allAvailableAssets()"
+    [itemType]="assetType()"
+    [allowBrowse]="!disabled()"
+    (select)="onAssetSelected($event)"
+    (filePicked)="onFilePicked($event)"
+    (close)="closeSelector()"
+  >
+  </app-item-selector>
+}
