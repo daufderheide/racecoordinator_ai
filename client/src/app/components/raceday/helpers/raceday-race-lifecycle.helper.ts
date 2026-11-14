@@ -127,11 +127,7 @@ export class RacedayRaceLifecycleHelper {
       RacedayRaceLifecycleHelper.setAllLampsGo(host);
     }
 
-    if (
-      previousState === RaceState.STARTING &&
-      host.showCountdownOverlay &&
-      !host.isRestarting
-    ) {
+    if (previousState === RaceState.STARTING && !host.isRestarting) {
       const scoring = host.race?.heat_scoring;
       if (scoring?.finishMethod === FinishMethod.Timed) {
         host.time = scoring.finishValue;

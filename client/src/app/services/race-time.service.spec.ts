@@ -1,4 +1,4 @@
-import { TestBed } from "@angular/core/testing";
+import { fakeAsync, TestBed, tick } from "@angular/core/testing";
 import { BehaviorSubject, Subject } from "rxjs";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { IRaceTime, RaceState } from "@app/proto/antigravity";
@@ -246,6 +246,66 @@ describe("RaceTimeService", () => {
       expect(service.formattedTime).toBe("3:00");
     });
 
+    it("should automatically set showCountdownOverlay to true and display total duration during STARTING for Timed races without manual overlay flag", () => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 180 },
+      });
+      service.raceState = RaceState.STARTING;
+      expect(service.showCountdownOverlay).toBeTrue();
+      expect(service.formattedTime).toBe("3:00");
+    });
+
+    it("should keep total duration displayed during STARTING for Timed races even when server sends time 0", () => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 120 },
+      });
+      raceStateSubject.next(RaceState.STARTING);
+      expect(service.showCountdownOverlay).toBeTrue();
+      expect(service.formattedTime).toBe("2:00");
+
+      raceTimeSubject.next({
+        time: 0,
+        autoStartRemaining: 5.0,
+      });
+
+      expect(service.time).toBe(0);
+      expect(service.formattedTime).toBe("2:00");
+    });
+
+    it("should initialize time and lastServerTime to finishValue and clear showCountdownOverlay after 1 second when transitioning to RACING", fakeAsync(() => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 180 },
+      });
+      service.raceState = RaceState.STARTING;
+      expect(service.showCountdownOverlay).toBeTrue();
+      expect(service.formattedTime).toBe("3:00");
+
+      service.raceState = RaceState.RACING;
+      expect(service.time).toBe(180);
+      expect((service as any).lastServerTime).toBe(180);
+      expect(service.showCountdownOverlay).toBeTrue();
+
+      tick(500);
+      expect(service.showCountdownOverlay).toBeTrue();
+
+      tick(500);
+      expect(service.showCountdownOverlay).toBeFalse();
+    }));
+
+    it("should clear pending countdownOverlayTimeout when state changes away from RACING", fakeAsync(() => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 180 },
+      });
+      service.raceState = RaceState.STARTING;
+      service.raceState = RaceState.RACING;
+      expect((service as any).countdownOverlayTimeout).not.toBeNull();
+
+      service.raceState = RaceState.PAUSED;
+      expect((service as any).countdownOverlayTimeout).toBeNull();
+
+      tick(1000);
+    }));
+
     it("should not display duration during STARTING when isRestarting is true", () => {
       selectedRaceSubject.next({
         heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 180 },
@@ -472,6 +532,19 @@ describe("RaceTimeService", () => {
       expect(service.showCountdownOverlay).toBeFalse();
       expect(service.formattedTime).toBe("--");
     });
+
+    it("should clear pending countdownOverlayTimeout on reset", fakeAsync(() => {
+      selectedRaceSubject.next({
+        heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 180 },
+      });
+      service.raceState = RaceState.STARTING;
+      service.raceState = RaceState.RACING;
+      expect((service as any).countdownOverlayTimeout).not.toBeNull();
+
+      service.reset();
+      expect((service as any).countdownOverlayTimeout).toBeNull();
+      tick(1000);
+    }));
   });
 
   describe("Subsecond Interpolation Loop", () => {

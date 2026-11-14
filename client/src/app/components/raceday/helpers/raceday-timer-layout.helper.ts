@@ -91,9 +91,7 @@ export class RacedayTimerLayoutHelper {
       ((s === RaceState.NOT_STARTED &&
         host.autoStartRemaining <= 0 &&
         host.autoAdvanceRemaining <= 0) ||
-        (s === RaceState.STARTING &&
-          host.showCountdownOverlay &&
-          !host.isRestarting));
+        (s === RaceState.STARTING && !host.isRestarting));
 
     if (showDurationOnly) {
       const duration = host.race?.heat_scoring?.finishValue || 0;

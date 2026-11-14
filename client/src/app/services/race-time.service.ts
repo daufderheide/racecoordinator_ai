@@ -21,6 +21,7 @@ export class RaceTimeService implements OnDestroy {
   private _isRestarting: boolean = false;
   private _showCountdownOverlay: boolean = false;
   private _timeFormat: string = "1.0-0";
+  private countdownOverlayTimeout: any = null;
 
   private animFrameId: number | null = null;
   private lastServerTime: number = 0;
@@ -120,6 +121,10 @@ export class RaceTimeService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.countdownOverlayTimeout) {
+      clearTimeout(this.countdownOverlayTimeout);
+      this.countdownOverlayTimeout = null;
+    }
     this.stopInterpolationLoop();
     this.subscriptions.unsubscribe();
   }
@@ -296,6 +301,11 @@ export class RaceTimeService implements OnDestroy {
     const previousState = this._raceState;
     this._raceState = state;
 
+    if (this.countdownOverlayTimeout) {
+      clearTimeout(this.countdownOverlayTimeout);
+      this.countdownOverlayTimeout = null;
+    }
+
     if (state === RaceState.RACE_OVER) {
       this._autoStartRemaining = 0;
       this._autoAdvanceRemaining = 0;
@@ -331,14 +341,11 @@ export class RaceTimeService implements OnDestroy {
       } else if (previousState !== RaceState.STARTING) {
         this._isRestarting = false;
       }
+      this._showCountdownOverlay = true;
     }
 
     if (state === RaceState.RACING) {
-      if (
-        previousState === RaceState.STARTING &&
-        this._showCountdownOverlay &&
-        !this._isRestarting
-      ) {
+      if (previousState === RaceState.STARTING && !this._isRestarting) {
         const race = this.raceService?.getRace();
         const scoring = race?.heat_scoring;
         if (scoring?.finishMethod === FinishMethod.Timed) {
@@ -346,17 +353,18 @@ export class RaceTimeService implements OnDestroy {
         }
       }
       this._isRestarting = false;
-      if (this.lastServerTimestamp === 0) {
-        this.lastServerTime = this._time;
-        this.lastServerTimestamp = performance.now();
-      }
+      this.lastServerTime = this._time;
+      this.lastServerTimestamp = performance.now();
+
+      this.countdownOverlayTimeout = setTimeout(() => {
+        if (this._raceState === RaceState.RACING) {
+          this._showCountdownOverlay = false;
+          this.notifySubscribers();
+        }
+      }, 1000);
     }
 
     if (this.shouldInterpolate) {
-      if (this.lastServerTimestamp === 0) {
-        this.lastServerTime = this._time;
-        this.lastServerTimestamp = performance.now();
-      }
       this.startInterpolationLoop();
     } else {
       this.stopInterpolationLoop();
@@ -618,9 +626,7 @@ export class RaceTimeService implements OnDestroy {
       ((s === RaceState.NOT_STARTED &&
         this._autoStartRemaining <= 0 &&
         this._autoAdvanceRemaining <= 0) ||
-        (s === RaceState.STARTING &&
-          this._showCountdownOverlay &&
-          !this._isRestarting));
+        (s === RaceState.STARTING && !this._isRestarting));
 
     if (showDurationOnly) {
       const duration = race?.heat_scoring?.finishValue || 0;
@@ -674,6 +680,10 @@ export class RaceTimeService implements OnDestroy {
   }
 
   reset(): void {
+    if (this.countdownOverlayTimeout) {
+      clearTimeout(this.countdownOverlayTimeout);
+      this.countdownOverlayTimeout = null;
+    }
     this.stopInterpolationLoop();
     this.lastServerTime = 0;
     this.lastServerTimestamp = 0;
