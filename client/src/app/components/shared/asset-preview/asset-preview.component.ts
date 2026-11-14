@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   computed,
@@ -16,6 +17,7 @@ import { AssetType, normalizeAssetType } from "@app/models/asset";
 @Component({
   standalone: true,
   selector: "app-asset-preview",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="preview-container">
       @if (normalizedType() === "image" || normalizedType() === "image_set") {
@@ -41,16 +43,23 @@ import { AssetType, normalizeAssetType } from "@app/models/asset";
         overflow: hidden;
         background: rgba(0, 0, 0, 0.2);
         border-radius: 4px;
+        pointer-events: none;
+        user-select: none;
       }
       .preview-img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
       }
       .preview-icon {
         width: 48px;
         height: 48px;
         opacity: 0.7;
+        pointer-events: none;
+        user-select: none;
       }
     `,
   ],

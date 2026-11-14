@@ -1,4 +1,5 @@
 import {
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   computed,
@@ -23,6 +24,7 @@ import { LoggerService } from "@app/services/logger.service";
   selector: "app-image-selector",
   templateUrl: "./image-selector.component.html",
   styleUrl: "./image-selector.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AssetPreviewComponent, ItemSelectorComponent, TranslatePipe],
 })
 export class ImageSelectorComponent implements OnChanges, OnDestroy {
@@ -119,6 +121,7 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
     event.stopPropagation();
     this.dragCounter++;
     this.isDragging = true;
+    this.cdr.markForCheck();
   }
 
   onDragOver(event: DragEvent) {
@@ -129,6 +132,7 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
       event.dataTransfer.dropEffect = "copy";
     }
     this.isDragging = true;
+    this.cdr.markForCheck();
   }
 
   onDragLeave(event: DragEvent) {
@@ -140,6 +144,7 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
       this.dragCounter = 0;
       this.isDragging = false;
     }
+    this.cdr.markForCheck();
   }
 
   onDrop(event: DragEvent) {
@@ -149,6 +154,7 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
     this.dragCounter = 0;
     this.isDragging = false;
     this.closeSelector();
+    this.cdr.markForCheck();
 
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
@@ -267,10 +273,12 @@ export class ImageSelectorComponent implements OnChanges, OnDestroy {
       this.dataService.listAssets().subscribe();
     }
     this.showSelector = true;
+    this.cdr.markForCheck();
   }
 
   closeSelector() {
     this.showSelector = false;
+    this.cdr.markForCheck();
   }
 
   onAssetSelected(asset: any) {

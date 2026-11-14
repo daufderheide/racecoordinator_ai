@@ -125,6 +125,27 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   mainAudioSlots = MAIN_AUDIO_SLOTS;
 
+  readonly flagSlots: readonly { slot: string; labelKey: string }[] = [
+    { slot: "flag.racing", labelKey: "UE_LABEL_FLAG_RACING" },
+    { slot: "flag.heat_paused", labelKey: "UE_LABEL_FLAG_HEAT_PAUSED" },
+    { slot: "flag.heat_over", labelKey: "UE_LABEL_FLAG_HEAT_OVER" },
+    { slot: "flag.race_over", labelKey: "UE_LABEL_FLAG_RACE_OVER" },
+    { slot: "flag.not_started", labelKey: "UE_LABEL_FLAG_NOT_STARTED" },
+    { slot: "flag.starting", labelKey: "UE_LABEL_FLAG_STARTING" },
+    { slot: "flag.restarting", labelKey: "UE_LABEL_FLAG_RESTARTING" },
+    { slot: "flag.one_lap_to_go", labelKey: "UE_LABEL_FLAG_ONE_LAP_TO_GO" },
+    { slot: "flag.heat_finishing", labelKey: "UE_LABEL_FLAG_HEAT_FINISHING" },
+    { slot: "flag.warmup", labelKey: "UE_LABEL_FLAG_WARMUP" },
+    { slot: "flag.driver_finished", labelKey: "UE_LABEL_FLAG_DRIVER_FINISHED" },
+    { slot: "flag.penalty", labelKey: "UE_LABEL_FLAG_PENALTY" },
+  ];
+
+  readonly lampSlots: readonly { slot: string; labelKey: string }[] = [
+    { slot: "lamp.red.dim", labelKey: "UE_LABEL_LAMP_RED_OFF" },
+    { slot: "lamp.red.on", labelKey: "UE_LABEL_LAMP_RED_ON" },
+    { slot: "lamp.green", labelKey: "UE_LABEL_LAMP_GREEN" },
+  ];
+
   undoManager!: UndoManager<Theme>;
   lifecycle!: EditorLifecycleHelper;
   expanderManager!: ExpanderStateManager<ThemeEditorSections>;

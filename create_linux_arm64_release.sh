@@ -91,10 +91,25 @@ until curl -s http://localhost:7070 >/dev/null 2>&1; do
   sleep 1
 done
 
+# Ensure user runtime directory and D-Bus session are configured for audio and Speech Dispatcher
+if [ -z "$XDG_RUNTIME_DIR" ]; then
+  CURRENT_UID=$(id -u)
+  export XDG_RUNTIME_DIR="/run/user/$CURRENT_UID"
+fi
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -e "$XDG_RUNTIME_DIR/bus" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+fi
+
+# Ensure Speech Dispatcher socket is running for text-to-speech in Chromium
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user start speech-dispatcher.socket 2>/dev/null || true
+fi
+
 # Launch Chromium in maximized window mode with Speech Dispatcher, unprompted autoplay, and multi-tab support
 BROWSER_BIN=$(command -v chromium || command -v chromium-browser || echo "chromium")
 "$BROWSER_BIN" \
   --start-maximized \
+  --test-type \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
   --no-first-run \
@@ -156,6 +171,13 @@ if [ "$EUID" -eq 0 ]; then
   fi
   if [ -n "$APP_USER" ] && [ "$APP_USER" != "root" ] && id "$APP_USER" &>/dev/null; then
     usermod -a -G dialout,audio "$APP_USER" 2>/dev/null || true
+    if command -v loginctl >/dev/null 2>&1; then
+      loginctl enable-linger "$APP_USER" 2>/dev/null || true
+    fi
+    if command -v systemctl >/dev/null 2>&1; then
+      systemctl -M "$APP_USER@" --user enable --now speech-dispatcher.socket 2>/dev/null || \
+      su - "$APP_USER" -c "systemctl --user enable --now speech-dispatcher.socket" 2>/dev/null || true
+    fi
   fi
 fi
 
@@ -172,6 +194,16 @@ fi
 chmod +x "$TARGET_DIR/scripts/"*.sh "$TARGET_DIR/"*.sh 2>/dev/null || true
 rm -rf /tmp/rc_update_extract
 rm -rf "$TARGET_DIR/RaceCoordinator_Linux_ARM64"
+
+# Update systemd kiosk service if present
+if [ -d "/etc/systemd/system" ] && [ -n "$APP_USER" ] && [ "$APP_USER" != "root" ]; then
+  APP_UID=$(id -u "$APP_USER" 2>/dev/null || echo "1000")
+  APP_HOME=$(eval echo "~$APP_USER")
+  sed -i "s|^User=.*|User=$APP_USER|" "$TARGET_DIR/systemd/racecoordinatorai-kiosk.service" 2>/dev/null || true
+  sed -i "s|XAUTHORITY=.*|XAUTHORITY=$APP_HOME/.Xauthority|" "$TARGET_DIR/systemd/racecoordinatorai-kiosk.service" 2>/dev/null || true
+  sed -i "s|/run/user/1000|/run/user/$APP_UID|g" "$TARGET_DIR/systemd/racecoordinatorai-kiosk.service" 2>/dev/null || true
+  (cp "$TARGET_DIR/systemd/racecoordinatorai-kiosk.service" /etc/systemd/system/ && systemctl daemon-reload) 2>/dev/null || true
+fi
 
 # Stop services early so frontend detects update progress immediately
 echo "Stopping services for firmware compilation and update installation..."
@@ -267,6 +299,8 @@ Type=simple
 User=arduino
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/arduino/.Xauthority
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 ExecStart=/bin/bash /opt/racecoordinatorai/scripts/start_kiosk.sh
 Restart=always
 RestartSec=3
@@ -537,6 +571,17 @@ if id "$TARGET_USER" &>/dev/null; then
   chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
   usermod -a -G dialout,audio "$TARGET_USER" 2>/dev/null || true
 
+  # Enable user linger so systemd user services and sockets initialize on boot
+  if command -v loginctl >/dev/null 2>&1; then
+    loginctl enable-linger "$TARGET_USER" 2>/dev/null || true
+  fi
+
+  # Enable Speech Dispatcher socket for user TTS
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl -M "$TARGET_USER@" --user enable --now speech-dispatcher.socket 2>/dev/null || \
+    su - "$TARGET_USER" -c "systemctl --user enable --now speech-dispatcher.socket" 2>/dev/null || true
+  fi
+
   # Allow user to restart racecoordinatorai services without password for in-app auto-updates
   if [ -d "/etc/sudoers.d" ]; then
     echo "Configuring sudoers permissions for $TARGET_USER auto-update service restart..."
@@ -549,9 +594,11 @@ fi
 
 # 4. Systemd service registration and boot auto-start
 echo "Registering systemd services for user: $TARGET_USER..."
+TARGET_UID=$(id -u "$TARGET_USER" 2>/dev/null || echo "1000")
 sed -i "s|^User=.*|User=$TARGET_USER|" "$INSTALL_DIR/systemd/racecoordinatorai.service"
 sed -i "s|^User=.*|User=$TARGET_USER|" "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service"
 sed -i "s|XAUTHORITY=.*|XAUTHORITY=$TARGET_HOME/.Xauthority|" "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service"
+sed -i "s|/run/user/1000|/run/user/$TARGET_UID|g" "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service"
 
 cp "$INSTALL_DIR/systemd/racecoordinatorai.service" /etc/systemd/system/
 cp "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service" /etc/systemd/system/
@@ -841,6 +888,15 @@ if id "$TARGET_USER" &>/dev/null; then
   chown -R "$TARGET_USER:$TARGET_USER" "$INSTALL_DIR"
   usermod -a -G dialout,audio "$TARGET_USER" 2>/dev/null || true
 
+  if command -v loginctl >/dev/null 2>&1; then
+    loginctl enable-linger "$TARGET_USER" 2>/dev/null || true
+  fi
+
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl -M "$TARGET_USER@" --user enable --now speech-dispatcher.socket 2>/dev/null || \
+    su - "$TARGET_USER" -c "systemctl --user enable --now speech-dispatcher.socket" 2>/dev/null || true
+  fi
+
   if [ -d "/etc/sudoers.d" ]; then
     cat << SUDO_EOF > /etc/sudoers.d/racecoordinatorai
 $TARGET_USER ALL=(ALL) NOPASSWD: /bin/systemctl restart racecoordinatorai, /bin/systemctl restart racecoordinatorai-kiosk, /usr/bin/systemctl restart racecoordinatorai, /usr/bin/systemctl restart racecoordinatorai-kiosk
@@ -849,9 +905,11 @@ SUDO_EOF
   fi
 fi
 
+TARGET_UID=$(id -u "$TARGET_USER" 2>/dev/null || echo "1000")
 sed -i "s|^User=.*|User=$TARGET_USER|" "$INSTALL_DIR/systemd/racecoordinatorai.service"
 sed -i "s|^User=.*|User=$TARGET_USER|" "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service"
 sed -i "s|XAUTHORITY=.*|XAUTHORITY=$TARGET_HOME/.Xauthority|" "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service"
+sed -i "s|/run/user/1000|/run/user/$TARGET_UID|g" "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service"
 
 cp "$INSTALL_DIR/systemd/racecoordinatorai.service" /etc/systemd/system/
 cp "$INSTALL_DIR/systemd/racecoordinatorai-kiosk.service" /etc/systemd/system/

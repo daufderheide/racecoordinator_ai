@@ -197,6 +197,35 @@ describe("ui-editor-theme-assets.helper", () => {
     ).toEqual({ entity_id: "asset_green" });
   });
 
+  it("should index large asset arrays (>20 items) into an O(1) map and resolve slots correctly", () => {
+    const themeServiceSpy = jasmine.createSpyObj("ThemeService", [
+      "resolveAssetId",
+    ]);
+    themeServiceSpy.resolveAssetId.and.returnValue("asset_25");
+
+    const largeAssets: any[] = [];
+    for (let i = 0; i < 30; i++) {
+      largeAssets.push({
+        entity_id: `asset_${i}`,
+        model: { entityId: `asset_${i}` },
+        name: `Asset ${i}`,
+      });
+    }
+
+    const resolved = getThemeAssetForSlot(
+      "flag.racing",
+      undefined,
+      undefined,
+      themeServiceSpy,
+      largeAssets,
+    );
+
+    expect(resolved).toBeDefined();
+    expect(resolved?.entity_id).toBe("asset_25");
+    expect((largeAssets as any)._map).toBeDefined();
+    expect((largeAssets as any)._map.get("asset_25")?.name).toBe("Asset 25");
+  });
+
   it("should clear custom template and capture state", () => {
     const comp = {
       editingSettings: {

@@ -168,6 +168,8 @@ Se preferisci il controllo manuale o hai bisogno di personalizzare la configuraz
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
    sudo usermod -a -G dialout,audio arduino
+   sudo loginctl enable-linger arduino
+   systemctl --user enable --now speech-dispatcher.socket
    ```
 
 3. **Installare e registrare i servizi systemd**:
@@ -369,9 +371,10 @@ sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng 
 ```
 
 ### Parametri del browser in modalità chiosco e navigazione a più schede
-In modalità chiosco, Chromium viene avviato tramite `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI utilizza `--start-maximized` (anziché la modalità restrittiva `--kiosk`) per garantire che le schede secondarie —come Risultati manche, Risultati gara, visualizzazioni dei temi e la Guida in linea offline— rimangano visibili e accessibili dalla barra delle schede nella parte superiore della TV. Chromium richiede inoltre flag specifici per abilitare Speech Dispatcher e la riproduzione automatica dell'audio. Assicurati che il tuo script `start_kiosk.sh` includa:
+In modalità chiosco, Chromium viene avviato tramite `/opt/racecoordinatorai/scripts/start_kiosk.sh`. Race Coordinator AI utilizza `--start-maximized` (anziché la modalità restrittiva `--kiosk`) per garantire che le schede secondarie —come Risultati manche, Risultati gara, visualizzazioni dei temi e la Guida in linea offline— rimangano visibili e accessibili dalla barra delle schede nella parte superiore della TV. Chromium richiede inoltre flag specifici per abilitare Speech Dispatcher e la riproduzione automatica dell'audio, oltre a `--test-type` per eliminare i banner di avviso relativi a flag non supportati. Assicurati che il tuo script `start_kiosk.sh` includa:
 ```bash
   --start-maximized \
+  --test-type \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```
@@ -397,6 +400,11 @@ In modalità chiosco, Chromium viene avviato tramite `/opt/racecoordinatorai/scr
    spd-say "Testing speech dispatcher"
    ```
    Se `spd-say` restituisce un errore o si blocca, riavvia il demone: `pkill -f speech-dispatcher && spd-say "Hello"`.
+   Assicurati che il socket di Speech Dispatcher e la persistenza dell'utente (linger) siano abilitati:
+   ```bash
+   systemctl --user enable --now speech-dispatcher.socket
+   sudo loginctl enable-linger arduino
+   ```
 4. **Testare nell'interfaccia web**:
    Nell'interfaccia web di Race Coordinator AI, apri **Personalizza interfaccia** (o **Editor dei temi** $\rightarrow$ **Impostazioni audio**). Controlla il menu a discesa **Voce TTS**: devono comparire le voci disponibili. Fai clic su **Prova voce TTS** per confermare la riproduzione.
 
