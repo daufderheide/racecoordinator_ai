@@ -202,6 +202,43 @@ describe("CustomRotationEditorComponent", () => {
     );
   }));
 
+  it("should open track pulldown and select a different track from the UI", fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+
+    expect(component.selectedTrackId).toBe("t1");
+    expect(component.internalNumLanes).toBe(2);
+
+    const trackSelectEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#custom-rotation-track-select",
+    );
+    expect(trackSelectEl).toBeTruthy();
+
+    const trigger: HTMLElement | null = trackSelectEl.querySelector(
+      ".custom-select-trigger",
+    );
+    expect(trigger).toBeTruthy();
+    trigger!.click();
+    fixture.detectChanges();
+    tick();
+
+    expect(trackSelectEl.classList.contains("open")).toBeTrue();
+    const dropdown = trackSelectEl.querySelector(".custom-select-dropdown");
+    expect(dropdown).toBeTruthy();
+
+    const optionT2: HTMLElement | null = trackSelectEl.querySelector(
+      ".custom-select-option[data-value='t2']",
+    );
+    expect(optionT2).toBeTruthy();
+    optionT2!.click();
+    fixture.detectChanges();
+    tick();
+
+    expect(trackSelectEl.classList.contains("open")).toBeFalse();
+    expect(component.selectedTrackId).toBe("t2");
+    expect(component.internalNumLanes).toBe(4);
+  }));
+
   it("should add and remove rotations", () => {
     fixture.detectChanges();
     expect(component.internalRotations.length).toBe(0);

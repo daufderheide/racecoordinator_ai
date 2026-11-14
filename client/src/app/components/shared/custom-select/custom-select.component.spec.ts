@@ -68,6 +68,23 @@ describe("CustomSelectComponent", () => {
     expect(component.isOpen).toBeFalse();
   });
 
+  it("should reflect open class and data-open attribute on host when open", () => {
+    expect(fixture.nativeElement.classList.contains("open")).toBeFalse();
+    expect(fixture.nativeElement.getAttribute("data-open")).toBe("false");
+
+    component.toggleOpen();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.classList.contains("open")).toBeTrue();
+    expect(fixture.nativeElement.getAttribute("data-open")).toBe("true");
+
+    component.toggleOpen();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.classList.contains("open")).toBeFalse();
+    expect(fixture.nativeElement.getAttribute("data-open")).toBe("false");
+  });
+
   it("should update value and attribute when value property is set", () => {
     fixture.componentRef.setInput("value", "test-val");
     fixture.detectChanges();

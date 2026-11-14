@@ -262,6 +262,12 @@
   box-sizing: border-box;
 }
 
+:host(.open):not(.teammate-select),
+:host([data-open="true"]):not(.teammate-select) {
+  position: relative;
+  z-index: 100000;
+}
+
 :host(.teammate-select.open),
 :host(.teammate-select[data-open="true"]) {
   z-index: 100000;
