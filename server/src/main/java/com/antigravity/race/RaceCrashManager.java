@@ -5,11 +5,8 @@ import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.Race;
 import com.antigravity.proto.RaceFlag;
 import java.util.HashSet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RaceCrashManager {
-  private static final Logger logger = LoggerFactory.getLogger(RaceCrashManager.class);
   private final com.antigravity.race.Race race; // fqn-collision
 
   public RaceCrashManager(com.antigravity.race.Race race) { // fqn-collision
