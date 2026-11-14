@@ -93,7 +93,9 @@ app-raceday-absolute-widget:has(.custom-select-container.open),
 .race-name-container:has(app-custom-select.open),
 .race-name-container:has(.custom-select-container.open),
 .heat-select-wrapper:has(app-custom-select.open),
-.heat-select-wrapper:has(.custom-select-container.open) {
+.heat-select-wrapper:has(.custom-select-container.open),
+.config-section:has(app-custom-select.open),
+.config-section:has(.custom-select-container.open) {
   overflow: visible !important;
   z-index: 2000000 !important;
 }

@@ -280,6 +280,41 @@ test.describe("Asset Manager Visuals", () => {
     );
   });
 
+  test("should display open track pulldown on top of racing drivers list in custom rotation editor", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await harness.clickNewCustomRotation();
+    await page
+      .locator("app-custom-rotation-editor .page-container")
+      .waitFor({ state: "visible" });
+
+    const trackSelect = page.locator(
+      "app-custom-rotation-editor app-custom-select",
+    );
+    await trackSelect.locator(".custom-select-trigger").click();
+    await trackSelect
+      .locator(".custom-select-dropdown")
+      .waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot(
+      "asset-manager-custom-rotation-track-dropdown-open.png",
+      {
+        maxDiffPixelRatio: 0.1,
+        threshold: 0.2,
+      },
+    );
+  });
+
   test("should add rotation and heats with groups in custom rotation editor", async ({
     page,
   }) => {

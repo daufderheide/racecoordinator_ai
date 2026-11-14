@@ -67,6 +67,7 @@
         <div class="input-group">
           <label>{{ "RM_COL_TRACK" | translate }}</label>
           <app-custom-select
+            id="custom-rotation-track-select"
             [(ngModel)]="selectedTrackId"
             (change)="onTrackChange()"
           >
