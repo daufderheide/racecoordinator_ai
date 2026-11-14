@@ -12,11 +12,14 @@ fi
 
 # Check if --changed or --changed=* was passed
 CHANGED_FLAG=""
+NO_REPORT_FLAG=false
 REMAINING_ARGS=()
 
 for arg in "$@"; do
     if [[ "$arg" == "--changed" ]] || [[ "$arg" == --changed=* ]]; then
         CHANGED_FLAG="$arg"
+    elif [[ "$arg" == "--no-report" ]]; then
+        NO_REPORT_FLAG=true
     else
         clean_arg="${arg#./client/}"
         clean_arg="${clean_arg#client/}"
@@ -40,13 +43,11 @@ if [ -n "$CHANGED_FLAG" ]; then
         ESCAPED_REMAINING+=" $(printf '%q' "$r_arg")"
     done
     PLAYWRIGHT_ARGS="$CHANGED_TESTS$ESCAPED_REMAINING"
-elif [ $# -gt 0 ]; then
+elif [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
     echo "Running screendiff tests with specified arguments..."
     PLAYWRIGHT_ARGS=""
-    for arg in "$@"; do
-        clean_arg="${arg#./client/}"
-        clean_arg="${clean_arg#client/}"
-        PLAYWRIGHT_ARGS+=" $(printf '%q' "$clean_arg")"
+    for arg in "${REMAINING_ARGS[@]}"; do
+        PLAYWRIGHT_ARGS+=" $(printf '%q' "$arg")"
     done
     PLAYWRIGHT_ARGS="${PLAYWRIGHT_ARGS# }"
 else
@@ -175,11 +176,14 @@ fi
 
 if [ $TEST_EXIT_CODE -ne 0 ]; then
     echo ""
-    echo "Tests failed. Opening report..."
     cd "$CLIENT_DIR" || exit
-    # Run the show-report command (this will block the terminal until you exit)
-    if [ -t 0 ] && [ -z "$CI" ]; then
+    # Run the show-report command if running in an interactive terminal, not in CI, not in an AI agent, and not disabled
+    if [ -t 0 ] && [ -z "$CI" ] && [ -z "$ANTIGRAVITY_AGENT" ] && [ "$TERM" != "dumb" ] && [ "$NO_REPORT_FLAG" != "true" ]; then
+        echo "Tests failed. Opening report..."
         npx playwright show-report "$ISOLATED_DIR/playwright-report"
+    else
+        echo "Tests failed. To view the HTML report, run:"
+        echo "  npx playwright show-report \"$ISOLATED_DIR/playwright-report\""
     fi
 fi
 

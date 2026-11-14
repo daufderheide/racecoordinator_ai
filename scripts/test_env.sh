@@ -24,6 +24,11 @@ export PLAYWRIGHT_TRANSFORM_CACHE_PATH="$BASE_TMP/playwright-cache"
 export NO_PROXY="127.0.0.1,localhost,::1,${NO_PROXY:-}"
 export no_proxy="127.0.0.1,localhost,::1,${no_proxy:-}"
 
+# In automated agent environments, prevent interactive blocks and prompts
+if [ -n "$ANTIGRAVITY_AGENT" ] || [ "$TERM" = "dumb" ]; then
+    export CI="${CI:-1}"
+fi
+
 mkdir -p "$TMPDIR" "$HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$PLAYWRIGHT_TRANSFORM_CACHE_PATH"
 
 # macOS Chrome requirements
