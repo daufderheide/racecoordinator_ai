@@ -1,5 +1,7 @@
 import { ICustomHeat, ICustomRotation } from "@app/proto/antigravity";
 
+import { assignCustomRotationStepNumbers } from "./rotation-export.utils";
+
 export interface LocalRotation extends ICustomRotation {
   isExpanded?: boolean;
 }
@@ -9,6 +11,21 @@ export interface ImportResult {
   key: string;
   params?: any;
   newRotations?: LocalRotation[];
+}
+
+export function isRc1Rotation(version: any): boolean {
+  if (version === undefined || version === null) {
+    return true;
+  }
+  const str = String(version).trim();
+  if (str === "") {
+    return true;
+  }
+  const parsed = parseFloat(str);
+  if (isNaN(parsed) || parsed < 1) {
+    return true;
+  }
+  return false;
 }
 
 export function parseImportHeats(
@@ -26,10 +43,16 @@ export function parseImportHeats(
       if (isNaN(val)) {
         return 0;
       }
-      if (val < 0) {
-        return val;
+      if (isRc1) {
+        // In RC1, driver indices are 0-based: 0, 1, 2, ... -> 1, 2, 3, ...
+        // -1 represents an empty lane (0). Custom step-up rotations from RC1 are not supported;
+        // all negative driver indices are treated as empty lanes (0).
+        if (val < 0) {
+          return 0;
+        }
+        return val + 1;
       }
-      return isRc1 ? val + 1 : val;
+      return val;
     });
 
     let group = 0;
@@ -44,12 +67,17 @@ export function parseImportHeats(
       group = 0;
     }
 
-    const isStepUpBoundary =
-      h.IsStepUpBoundary !== undefined
+    const isStepUpBoundary = isRc1
+      ? false
+      : h.IsStepUpBoundary !== undefined
         ? !!h.IsStepUpBoundary
         : !!(h.isStepUpBoundary || h.is_step_up_boundary);
 
-    const stepVal = h.Step !== undefined ? Number(h.Step) : Number(h.step);
+    const stepVal = isRc1
+      ? 1
+      : h.Step !== undefined
+        ? Number(h.Step)
+        : Number(h.step);
     const step = !isNaN(stepVal) && stepVal > 0 ? stepVal : 1;
 
     return {
@@ -111,13 +139,19 @@ function importWholeAsset(
         ? String(rotDescription).trim()
         : fileBaseName;
 
-    const heats = parseImportHeats(rotHeats, isRc1);
-    newRotations.push({
+    const rotVersion = rot.Version !== undefined ? rot.Version : rot.version;
+    const isRotRc1 =
+      rotVersion !== undefined ? isRc1Rotation(rotVersion) : isRc1;
+
+    const heats = parseImportHeats(rotHeats, isRotRc1);
+    const newRot: LocalRotation = {
       numDrivers: rotNumDrivers,
       description: description,
       heats: heats,
       isExpanded: true,
-    });
+    };
+    assignCustomRotationStepNumbers(newRot);
+    newRotations.push(newRot);
     batchDriverCounts.push(rotNumDrivers);
     importedCount++;
   }
@@ -183,7 +217,10 @@ function importSingleRotation(
     };
   }
 
-  const heats: ICustomHeat[] = parseImportHeats(jsonHeats, isRc1);
+  const rotVersion = json.Version !== undefined ? json.Version : json.version;
+  const isRotRc1 = rotVersion !== undefined ? isRc1Rotation(rotVersion) : isRc1;
+
+  const heats: ICustomHeat[] = parseImportHeats(jsonHeats, isRotRc1);
   const fileBaseName = fileName.replace(/\.[^/.]+$/, "");
   const jsonDescription =
     json.Description !== undefined ? json.Description : json.description;
@@ -194,18 +231,19 @@ function importSingleRotation(
       ? String(jsonDescription).trim()
       : fileBaseName;
 
+  const newRot: LocalRotation = {
+    numDrivers: jsonNumDrivers,
+    description: description,
+    heats: heats,
+    isExpanded: true,
+  };
+  assignCustomRotationStepNumbers(newRot);
+
   return {
     success: true,
     key: "AM_IMPORT_SUCCESS",
     params: { file: fileName },
-    newRotations: [
-      {
-        numDrivers: jsonNumDrivers,
-        description: description,
-        heats: heats,
-        isExpanded: true,
-      },
-    ],
+    newRotations: [newRot],
   };
 }
 
@@ -231,8 +269,9 @@ export async function parseAndValidateImportFile(
       }
     }
 
-    const hasVersion = json.Version !== undefined || json.version !== undefined;
-    const isRc1 = !hasVersion;
+    const rootVersion =
+      json.Version !== undefined ? json.Version : json.version;
+    const isRc1 = isRc1Rotation(rootVersion);
 
     const isAsset = json.IsAsset !== undefined ? json.IsAsset : json.isAsset;
     const assetName =

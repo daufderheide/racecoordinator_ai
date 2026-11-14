@@ -47,6 +47,7 @@ import { LaneEqualityResult } from "@app/utils/lane-equality";
 import {
   adjustHeatLanes,
   buildHeatDropListIds,
+  calculateMaxDriverAndStepUp,
   generateStepUpDrivers,
   generateUniqueRotationAssetName,
   generateVirtualDrivers,
@@ -538,29 +539,16 @@ export class CustomRotationEditorComponent
   }
 
   private initEditorState() {
-    let maxDriverId = 10;
-    let maxStepUpId = Math.max(1, (this.internalNumLanes || 4) - 1);
-    this.internalRotations.forEach((rot) => {
-      assignCustomRotationStepNumbers(rot);
-      if (rot.numDrivers && rot.numDrivers > maxDriverId) {
-        maxDriverId = rot.numDrivers;
-      }
-      rot.heats?.forEach((heat) => {
-        heat.driverIndices?.forEach((id) => {
-          if (id && id > maxDriverId) {
-            maxDriverId = id;
-          } else if (id && id < 0) {
-            const stepUpIdx = -id;
-            if (stepUpIdx > maxStepUpId) {
-              maxStepUpId = stepUpIdx;
-            }
-          }
-        });
-      });
-    });
-    this.numVirtualDrivers = maxDriverId;
+    this.internalRotations.forEach((rot) =>
+      assignCustomRotationStepNumbers(rot),
+    );
+    const limits = calculateMaxDriverAndStepUp(this.internalRotations);
+    this.numVirtualDrivers = Math.max(10, limits.maxDriverId);
     this.updateVirtualDriversList();
-    this.numStepUpDrivers = maxStepUpId;
+    this.numStepUpDrivers = Math.max(
+      Math.max(1, (this.internalNumLanes || 4) - 1),
+      limits.maxStepUpId,
+    );
     this.updateStepUpDriversList();
 
     this.updateScale();
@@ -1079,6 +1067,15 @@ export class CustomRotationEditorComponent
     }
 
     this.sortRotationsByDrivers();
+    const limits = calculateMaxDriverAndStepUp(this.internalRotations);
+    if (limits.maxDriverId > this.numVirtualDrivers) {
+      this.numVirtualDrivers = limits.maxDriverId;
+      this.updateVirtualDriversList();
+    }
+    if (limits.maxStepUpId > this.numStepUpDrivers) {
+      this.numStepUpDrivers = limits.maxStepUpId;
+      this.updateStepUpDriversList();
+    }
     this.importSummary = results;
     input.value = "";
     this.updateDropListConnections();

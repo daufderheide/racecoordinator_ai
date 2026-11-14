@@ -25,6 +25,7 @@ import {
 } from "@app/testing/unit-test-mocks";
 
 import { CustomRotationEditorComponent } from "./custom-rotation-editor.component";
+import { buildSingleRotationExportJson } from "./rotation-export.utils";
 
 describe("CustomRotationEditorComponent", () => {
   let component: CustomRotationEditorComponent;
@@ -749,6 +750,57 @@ describe("CustomRotationEditorComponent", () => {
       expect(component.internalRotations[0].description).toBe("rc1");
     });
 
+    it("should treat -1 and negative driver indices as empty lanes (0) when importing RC1 rotation without version", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      const rc1Json = JSON.stringify({
+        NumDrivers: 4,
+        NumLanes: 4,
+        Heats: [{ Drivers: [-1, 0, 1, 2], Group: 0 }],
+      });
+
+      const file = createMockFile(rc1Json, "rc1_empty.json");
+      const event = createImportEvent([file]);
+
+      component.internalRotations = [];
+
+      await component.onImportFiles(event);
+
+      expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
+        0, 1, 2, 3,
+      ]);
+      expect(
+        component.internalRotations[0].heats?.[0].isStepUpBoundary,
+      ).toBeFalse();
+      expect(component.internalRotations[0].heats?.[0].step).toBe(1);
+    });
+
+    it("should treat negative driver indices as empty lanes (0) when importing RC1 rotation with version < 1", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      const rc1Json = JSON.stringify({
+        Version: "0.9",
+        NumDrivers: 4,
+        NumLanes: 4,
+        Heats: [{ Drivers: [-2, -1, 0, 1], Group: 1 }],
+      });
+
+      const file = createMockFile(rc1Json, "rc1_v09.json");
+      const event = createImportEvent([file]);
+
+      component.internalRotations = [];
+
+      await component.onImportFiles(event);
+
+      expect(component.internalRotations[0].heats?.[0].driverIndices).toEqual([
+        0, 0, 1, 2,
+      ]);
+      expect(
+        component.internalRotations[0].heats?.[0].isStepUpBoundary,
+      ).toBeFalse();
+      expect(component.internalRotations[0].heats?.[0].step).toBe(1);
+    });
+
     it("should assume standard import and NOT convert 0-indexed drivers if there is a version field", async () => {
       fixture.detectChanges();
       component.internalNumLanes = 4;
@@ -1005,6 +1057,60 @@ describe("CustomRotationEditorComponent", () => {
 
       expect(component.importSummary?.[0].success).toBeFalse();
       expect(component.importSummary?.[0].key).toBe("AM_IMPORT_ERR_LANES");
+    });
+
+    it("should export and import step-up rotation files with full fidelity", async () => {
+      fixture.detectChanges();
+      component.internalNumLanes = 4;
+      component.internalAssetName = "Championship Step Up";
+      component.internalRotations = [
+        {
+          numDrivers: 6,
+          description: "Championship Step Up",
+          heats: [
+            {
+              driverIndices: [1, 2, 3, 4],
+              group: 0,
+              isStepUpBoundary: true,
+              step: 1,
+            },
+            {
+              driverIndices: [-1, -2, 5, 6],
+              group: 0,
+              isStepUpBoundary: false,
+              step: 2,
+            },
+          ],
+        },
+      ];
+
+      // Export single rotation
+      const { fileName, jsonContent } = buildSingleRotationExportJson(
+        component.internalAssetName,
+        component.internalNumLanes,
+        component.internalRotations[0],
+      );
+      const parsedExport = JSON.parse(jsonContent);
+      expect(parsedExport.Version).toBe("1.0");
+      expect(parsedExport.Heats[0].IsStepUpBoundary).toBeTrue();
+      expect(parsedExport.Heats[0].Step).toBe(1);
+      expect(parsedExport.Heats[1].Drivers).toEqual([-1, -2, 5, 6]);
+
+      // Re-import
+      component.internalRotations = [];
+      const file = createMockFile(jsonContent, fileName);
+      const event = createImportEvent([file]);
+      await component.onImportFiles(event);
+
+      expect(component.internalRotations.length).toBe(1);
+      const imported = component.internalRotations[0];
+      expect(imported.numDrivers).toBe(6);
+      expect(imported.heats?.length).toBe(2);
+      expect(imported.heats?.[0].isStepUpBoundary).toBeTrue();
+      expect(imported.heats?.[0].step).toBe(1);
+      expect(imported.heats?.[1].driverIndices).toEqual([-1, -2, 5, 6]);
+      expect(imported.heats?.[1].step).toBe(2);
+      expect(component.numStepUpDrivers).toBeGreaterThanOrEqual(2);
     });
   });
 

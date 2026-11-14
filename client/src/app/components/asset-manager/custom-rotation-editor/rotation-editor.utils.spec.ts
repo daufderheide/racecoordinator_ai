@@ -3,6 +3,7 @@ import { CdkDragDrop } from "@angular/cdk/drag-drop";
 import {
   adjustHeatLanes,
   buildHeatDropListIds,
+  calculateMaxDriverAndStepUp,
   generateStepUpDrivers,
   generateUniqueRotationAssetName,
   generateVirtualDrivers,
@@ -127,6 +128,26 @@ describe("rotation-editor.utils", () => {
       const changed = handleRotationDrop(event, rotations);
       expect(changed).toBeTrue();
       expect(rotations[0].heats?.[0]?.driverIndices?.[0]).toBe(0);
+    });
+
+    it("should calculate maximum virtual driver and step-up IDs across rotations and heats", () => {
+      const rotations: LocalRotation[] = [
+        {
+          numDrivers: 6,
+          heats: [
+            { driverIndices: [1, 2, 3, 4] },
+            { driverIndices: [-1, -3, 7, 0] },
+          ],
+        },
+        {
+          numDrivers: 8,
+          heats: [{ driverIndices: [5, 6, 9, 8] }],
+        },
+      ];
+
+      const result = calculateMaxDriverAndStepUp(rotations);
+      expect(result.maxDriverId).toBe(9);
+      expect(result.maxStepUpId).toBe(3);
     });
   });
 });

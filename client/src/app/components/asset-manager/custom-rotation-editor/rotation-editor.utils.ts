@@ -34,6 +34,32 @@ export function generateStepUpDrivers(count: number): StepUpDriver[] {
   return list;
 }
 
+export function calculateMaxDriverAndStepUp(rotations: LocalRotation[]): {
+  maxDriverId: number;
+  maxStepUpId: number;
+} {
+  let maxDriverId = 0;
+  let maxStepUpId = 0;
+  rotations.forEach((rot) => {
+    if (rot.numDrivers && rot.numDrivers > maxDriverId) {
+      maxDriverId = rot.numDrivers;
+    }
+    rot.heats?.forEach((heat) => {
+      heat.driverIndices?.forEach((id) => {
+        if (id && id > maxDriverId) {
+          maxDriverId = id;
+        } else if (id && id < 0) {
+          const stepUpIdx = -id;
+          if (stepUpIdx > maxStepUpId) {
+            maxStepUpId = stepUpIdx;
+          }
+        }
+      });
+    });
+  });
+  return { maxDriverId, maxStepUpId };
+}
+
 export function buildHeatDropListIds(
   rotations: LocalRotation[],
   numLanes: number,
