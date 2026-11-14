@@ -115,6 +115,10 @@ public class DriverHeatData extends ServerToClientObject
   private ArrayList<Double> segments = new ArrayList<>();
   private CarLocation currentLocation;
   private double penaltyLaps = 0;
+  private double penaltyTime = 0.0;
+  private int crashes = 0;
+  private boolean disqualified = false;
+  private double dqScorePercentage = 100.0;
   private double userLaps = 0;
   private double userTime = 0.0;
   private double autoCalculatedLaps = 0;
@@ -262,14 +266,22 @@ public class DriverHeatData extends ServerToClientObject
   }
 
   public double getAdjustedLapCount() {
-    return (double) getLapCount() - penaltyLaps + userLaps + autoCalculatedLaps;
+    double base = (double) getLapCount() - penaltyLaps + userLaps + autoCalculatedLaps;
+    if (isDisqualified()) {
+      return base * (dqScorePercentage / 100.0);
+    }
+    return base;
   }
 
   public double getScoredLapCount() {
     if (isFinished) {
       return getAdjustedLapCount();
     }
-    return (double) getLapCount() - penaltyLaps + userLaps;
+    double base = (double) getLapCount() - penaltyLaps + userLaps;
+    if (isDisqualified()) {
+      return base * (dqScorePercentage / 100.0);
+    }
+    return base;
   }
 
   public List<LapData> getLaps() {
@@ -349,7 +361,7 @@ public class DriverHeatData extends ServerToClientObject
   }
 
   public double getTotalTime() {
-    return getPhysicalTotalTime() + userTime;
+    return getPhysicalTotalTime() + userTime + penaltyTime;
   }
 
   public List<Double> getValidLapTimes() {
@@ -451,6 +463,10 @@ public class DriverHeatData extends ServerToClientObject
     falseStarts = 0;
     remainingFalseStartTimePenalty = 0.0;
     penaltyLaps = 0.0;
+    penaltyTime = 0.0;
+    crashes = 0;
+    disqualified = false;
+    dqScorePercentage = 100.0;
     userLaps = 0.0;
     userTime = 0.0;
     hasDriftTime = false;
@@ -468,12 +484,20 @@ public class DriverHeatData extends ServerToClientObject
     int savedFalseStarts = falseStarts;
     double savedRemainingPenalty = remainingFalseStartTimePenalty;
     double savedPenaltyLaps = penaltyLaps;
+    double savedPenaltyTime = penaltyTime;
+    int savedCrashes = crashes;
+    boolean savedDisqualified = disqualified;
+    double savedDqScorePercentage = dqScorePercentage;
     double savedUserLaps = userLaps;
     double savedUserTime = userTime;
     reset();
     falseStarts = savedFalseStarts;
     remainingFalseStartTimePenalty = savedRemainingPenalty;
     penaltyLaps = savedPenaltyLaps;
+    penaltyTime = savedPenaltyTime;
+    crashes = savedCrashes;
+    disqualified = savedDisqualified;
+    dqScorePercentage = savedDqScorePercentage;
     userLaps = savedUserLaps;
     userTime = savedUserTime;
   }
@@ -570,7 +594,7 @@ public class DriverHeatData extends ServerToClientObject
   @Override
   public double getEffectiveLapCount() {
     double base = getAdjustedLapCount();
-    if (isFinished || autoCalculatedLaps > 0) {
+    if (isFinished || autoCalculatedLaps > 0 || isDisqualified()) {
       return base;
     }
     double median = getMedianLapTime();
@@ -742,5 +766,42 @@ public class DriverHeatData extends ServerToClientObject
   @com.fasterxml.jackson.annotation.JsonIgnore
   public int getSeed() {
     return driver != null ? driver.getSeed() : 0;
+  }
+
+  public int getCrashes() {
+    return crashes;
+  }
+
+  public void setCrashes(int crashes) {
+    this.crashes = Math.max(0, crashes);
+  }
+
+  public void incrementCrashes() {
+    this.crashes++;
+  }
+
+  @Override
+  public boolean isDisqualified() {
+    return disqualified;
+  }
+
+  public void setDisqualified(boolean disqualified) {
+    this.disqualified = disqualified;
+  }
+
+  public double getPenaltyTime() {
+    return penaltyTime;
+  }
+
+  public void setPenaltyTime(double penaltyTime) {
+    this.penaltyTime = Math.max(0.0, penaltyTime);
+  }
+
+  public double getDqScorePercentage() {
+    return dqScorePercentage;
+  }
+
+  public void setDqScorePercentage(double dqScorePercentage) {
+    this.dqScorePercentage = dqScorePercentage;
   }
 }

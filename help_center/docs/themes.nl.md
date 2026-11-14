@@ -40,6 +40,7 @@ In de sectie Vlagafbeeldingen kunt u de afbeeldingen aanpassen die op het raceca
 - **Opwarming (`flag.warmup`):** Weergegeven tijdens oefensessies en opwarmrondes van coureurs voorafgaand aan de race.
 - **Coureur gefinisht (`flag.driver_finished`):** Baanspecifieke of individuele indicator die wordt weergegeven voor coureurs die hun vereiste ronden hebben voltooid.
 - **Straf (`flag.penalty`):** Zwarte vlagindicator die wordt weergegeven wanneer een coureur een valse start veroorzaakt of een rondeovertreding begaat.
+- **Gediskwalificeerd (`flag.disqualified`):** Zwarte vlag die wordt weergegeven wanneer een rijder is gediskwalificeerd in Crash and Learn of door de wedstrijdleiding.
 
 Voor elke vlag kunt u kiezen uit ingebouwde voorinstellingen of aangepaste SVG-, PNG-, WebP- of JPG-afbeeldingen uploaden vanuit uw bibliotheek via het [Assetbeheer](asset-manager.md).
 

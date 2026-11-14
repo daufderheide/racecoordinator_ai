@@ -4,6 +4,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.RaceParticipantConverter;
+import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
@@ -85,6 +86,7 @@ public class Race implements ProtocolListener {
   private final RaceHardwareManager hardwareManager;
   private final RaceRecords recordsManager;
   private final RaceHeatManager heatManager;
+  private final RaceCrashManager crashManager;
 
   private boolean isDemoMode;
   private DemoConfig demoConfig;
@@ -163,6 +165,7 @@ public class Race implements ProtocolListener {
 
     this.heatManager = new RaceHeatManager(this);
     this.hardwareManager = new RaceHardwareManager(this);
+    this.crashManager = new RaceCrashManager(this);
 
     initCustomRotations();
     initializeHeats(builder);
@@ -1281,7 +1284,11 @@ public class Race implements ProtocolListener {
           currentHeat != null
               && i < currentHeat.getDrivers().size()
               && currentHeat.getDrivers().get(i).getRemainingFalseStartTimePenalty() > 0;
-      setLanePower(!finishedLanes.contains(i) && !hasPenalty, i);
+      boolean isDq =
+          currentHeat != null
+              && i < currentHeat.getDrivers().size()
+              && currentHeat.getDrivers().get(i).isDisqualified();
+      setLanePower(!finishedLanes.contains(i) && !hasPenalty && !isDq, i);
     }
   }
 
@@ -1410,7 +1417,8 @@ public class Race implements ProtocolListener {
         }
       }
     }
-    setLanePower(true, -1);
+    crashManager.initializeHeatDrivers(currentHeat);
+    syncLanePowerWithState(true);
   }
 
   public void resetCurrentHeat() {
@@ -1418,6 +1426,7 @@ public class Race implements ProtocolListener {
       this.hasRacedInCurrentHeat = false;
       statistics.incrementRestartCount();
       for (DriverHeatData driverData : currentHeat.getDrivers()) driverData.reset();
+      crashManager.resetCurrentHeat(currentHeat);
       currentHeat.resetTrackCalls();
       currentHeat.getHeatStandings().reset();
       currentHeat.setStarted(false);
@@ -1651,6 +1660,26 @@ public class Race implements ProtocolListener {
                 .build());
   }
 
+  public CrashAndLearnOptions getCrashAndLearnOptions() {
+    return crashManager.getCrashAndLearnOptions();
+  }
+
+  public boolean isCnlEnabled() {
+    return crashManager.isCnlEnabled();
+  }
+
+  public synchronized void recordCrash(int lane) {
+    crashManager.recordCrash(lane);
+  }
+
+  public synchronized void updateDriverCrashes(Heat heat, DriverHeatData dhd, int newCrashes) {
+    crashManager.updateDriverCrashes(heat, dhd, newCrashes);
+  }
+
+  public void calculateDqAutoSegments(DriverHeatData dhd, int lane) {
+    crashManager.calculateDqAutoSegments(dhd, lane);
+  }
+
   @Override
   public void onInterfaceStatus(InterfaceStatus s, int idx) {
     if (this.stopped) {
@@ -1827,6 +1856,10 @@ public class Race implements ProtocolListener {
 
   public RaceHeatManager getHeatManager() {
     return heatManager;
+  }
+
+  public RaceCrashManager getCrashManager() {
+    return crashManager;
   }
 
   public synchronized ModifyHeatsResponse modifyHeats(ModifyHeatsRequest request) {

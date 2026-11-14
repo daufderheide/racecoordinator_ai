@@ -1,4 +1,5 @@
 import { AnalogFuelOptions } from "../../models/analog_fuel_options";
+import { CrashAndLearnOptions } from "../../models/crash_and_learn_options";
 import { DigitalFuelOptions } from "../../models/digital_fuel_options";
 import { FuelUsageType, OutOfFuelAction } from "../../models/fuel_options";
 import {
@@ -235,6 +236,20 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     df.pit_stop_delay,
   );
 
+  const cnl = (r as any).crash_and_learn_options || {};
+  const crashAndLearnOptions = new CrashAndLearnOptions(
+    cnl.enabled ?? false,
+    cnl.automated_crash_time ?? 0.0,
+    cnl.max_crashes ?? 3,
+    cnl.pause_heat_on_crash ?? true,
+    cnl.allow_multiple_crashes_per_lap ?? true,
+    cnl.reset_crashes_each_heat ?? true,
+    cnl.reset_dq_each_heat ?? true,
+    cnl.heat_crash_lap_penalty ?? 0.0,
+    cnl.heat_time_penalty ?? 0.0,
+    cnl.dq_heat_score_percentage ?? 100.0,
+  );
+
   return new Race(
     r.entity_id,
     r.name,
@@ -280,6 +295,7 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
       force_multiple_of_max: false,
       rotate_group_heats: false,
     },
+    crashAndLearnOptions,
     r.practice || false,
     r.adjust_drift_laps || false,
     r.theme_id || "default_classic_rc_ai",

@@ -826,6 +826,101 @@ describe("RaceEditorComponent", () => {
     });
   });
 
+  describe("Crash and Learn Options", () => {
+    it("should initialize with default crash and learn options if not present", fakeAsync(() => {
+      const raceWithoutCnl: any = deepCopy(MOCK_RACES[0]);
+      delete raceWithoutCnl.crash_and_learn_options;
+
+      dataService.getRaces.and.returnValue(of([raceWithoutCnl]));
+
+      component.ngOnInit();
+      tick();
+      component.originalRace = JSON.parse(
+        JSON.stringify(component.editingRace),
+      );
+      component.undoManager.initialize(component.editingRace!);
+
+      expect(component.editingRace.crash_and_learn_options).toBeDefined();
+      expect(
+        component.editingRace.crash_and_learn_options?.enabled,
+      ).toBeFalse();
+      expect(
+        component.editingRace.crash_and_learn_options?.automated_crash_time,
+      ).toBe(0.0);
+      expect(component.editingRace.crash_and_learn_options?.max_crashes).toBe(
+        3,
+      );
+      expect(
+        component.editingRace.crash_and_learn_options?.pause_heat_on_crash,
+      ).toBeTrue();
+      expect(
+        component.editingRace.crash_and_learn_options
+          ?.allow_multiple_crashes_per_lap,
+      ).toBeTrue();
+      expect(
+        component.editingRace.crash_and_learn_options?.reset_crashes_each_heat,
+      ).toBeTrue();
+      expect(
+        component.editingRace.crash_and_learn_options?.reset_dq_each_heat,
+      ).toBeTrue();
+      expect(
+        component.editingRace.crash_and_learn_options?.heat_crash_lap_penalty,
+      ).toBe(0.0);
+      expect(
+        component.editingRace.crash_and_learn_options?.heat_time_penalty,
+      ).toBe(0.0);
+      expect(
+        component.editingRace.crash_and_learn_options?.dq_heat_score_percentage,
+      ).toBe(100.0);
+    }));
+
+    it("should detect changes when crash and learn settings modify", () => {
+      component.originalRace = deepCopy(component.editingRace);
+      component.undoManager.initialize(component.editingRace!);
+
+      component.editingRace.crash_and_learn_options!.enabled = true;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.enabled = false;
+      expect(component.isDirtyState()).toBeFalse();
+
+      component.editingRace.crash_and_learn_options!.automated_crash_time = 15.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.automated_crash_time = 0.0;
+      component.editingRace.crash_and_learn_options!.max_crashes = 5;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.max_crashes = 3;
+      component.editingRace.crash_and_learn_options!.pause_heat_on_crash = false;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.pause_heat_on_crash = true;
+      component.editingRace.crash_and_learn_options!.allow_multiple_crashes_per_lap = false;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.allow_multiple_crashes_per_lap = true;
+      component.editingRace.crash_and_learn_options!.reset_crashes_each_heat = false;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.reset_crashes_each_heat = true;
+      component.editingRace.crash_and_learn_options!.reset_dq_each_heat = false;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.reset_dq_each_heat = true;
+      component.editingRace.crash_and_learn_options!.heat_crash_lap_penalty = 1.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.heat_crash_lap_penalty = 0.0;
+      component.editingRace.crash_and_learn_options!.heat_time_penalty = 3.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.crash_and_learn_options!.heat_time_penalty = 0.0;
+      component.editingRace.crash_and_learn_options!.dq_heat_score_percentage = 50.0;
+      expect(component.isDirtyState()).toBeTrue();
+    });
+  });
+
   describe("Custom Fuel Curve Options", () => {
     beforeEach(() => {
       component.editingRace.fuel_options = {
@@ -2472,7 +2567,7 @@ describe("RaceEditorComponent", () => {
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(15);
+      expect(steps.length).toBe(16);
       expect(steps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(steps[1].selector).toBe("#editor-object-nav");
       expect(steps[2].selector).toBe("#edit-track-btn");
@@ -2487,9 +2582,10 @@ describe("RaceEditorComponent", () => {
       expect(steps[9].selector).toBe("#group-section");
       expect(steps[10].selector).toBe("#start-method-section");
       expect(steps[11].selector).toBe("#team-options-section");
-      expect(steps[12].selector).toBe("#analog-fuel-section");
-      expect(steps[13].selector).toBe("#digital-fuel-outer-section");
-      expect(steps[14].selector).toBe("#season-points-section");
+      expect(steps[12].selector).toBe("#crash-and-learn-section");
+      expect(steps[13].selector).toBe("#analog-fuel-section");
+      expect(steps[14].selector).toBe("#digital-fuel-outer-section");
+      expect(steps[15].selector).toBe("#season-points-section");
     });
 
     it("should expand corresponding sections when executing onEnter hooks", () => {
@@ -2503,6 +2599,7 @@ describe("RaceEditorComponent", () => {
       component.sectionsExpanded.fuel_analog = false;
       component.sectionsExpanded.fuel_digital = false;
       component.sectionsExpanded.team = false;
+      component.sectionsExpanded.crash_and_learn = false;
 
       const steps = component.getHelpSteps();
       steps[5].onEnter!();
@@ -2527,12 +2624,15 @@ describe("RaceEditorComponent", () => {
       expect(component.sectionsExpanded.team).toBeTrue();
 
       steps[12].onEnter!();
-      expect(component.sectionsExpanded.fuel_analog).toBeTrue();
+      expect(component.sectionsExpanded.crash_and_learn).toBeTrue();
 
       steps[13].onEnter!();
-      expect(component.sectionsExpanded.fuel_digital).toBeTrue();
+      expect(component.sectionsExpanded.fuel_analog).toBeTrue();
 
       steps[14].onEnter!();
+      expect(component.sectionsExpanded.fuel_digital).toBeTrue();
+
+      steps[15].onEnter!();
       expect(component.sectionsExpanded.season_points).toBeTrue();
     });
 
@@ -2543,7 +2643,7 @@ describe("RaceEditorComponent", () => {
       const calledSteps = (
         helpService.startGuide as jasmine.Spy
       ).calls.mostRecent().args[0];
-      expect(calledSteps.length).toBe(15);
+      expect(calledSteps.length).toBe(16);
       expect(calledSteps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(calledSteps[1].selector).toBe("#editor-object-nav");
       expect(calledSteps[2].selector).toBe("#edit-track-btn");
@@ -2551,7 +2651,8 @@ describe("RaceEditorComponent", () => {
       expect(calledSteps[4].selector).toBe("#race-editor-tabs");
       expect(calledSteps[5].selector).toBe("#general-section");
       expect(calledSteps[8].selector).toBe("#points-scoring-section");
-      expect(calledSteps[14].selector).toBe("#season-points-section");
+      expect(calledSteps[12].selector).toBe("#crash-and-learn-section");
+      expect(calledSteps[15].selector).toBe("#season-points-section");
     });
 
     it("should verify that all guide step DOM targets exist in the component DOM", () => {
@@ -3105,9 +3206,9 @@ describe("RaceEditorComponent", () => {
   });
 
   describe("Editor Tabs and Section Navigation", () => {
-    it("should return the 10 configuration tabs with IDs and labels", () => {
+    it("should return the 11 configuration tabs with IDs and labels", () => {
       const tabs = component.raceTabs;
-      expect(tabs.length).toBe(10);
+      expect(tabs.length).toBe(11);
       expect(tabs.map((t) => t.id)).toEqual([
         "general-section",
         "heats-section",
@@ -3116,6 +3217,7 @@ describe("RaceEditorComponent", () => {
         "group-section",
         "start-method-section",
         "team-options-section",
+        "crash-and-learn-section",
         "analog-fuel-section",
         "digital-fuel-outer-section",
         "season-points-section",

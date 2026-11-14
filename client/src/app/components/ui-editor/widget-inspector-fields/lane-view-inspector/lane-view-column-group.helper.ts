@@ -44,6 +44,8 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "physicalLapCount",
       "lapsLed",
       "trackCalls",
+      "crashes",
+      "crashPenalty",
       "rankHeat",
     ],
   },

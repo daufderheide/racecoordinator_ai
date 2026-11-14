@@ -138,6 +138,7 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { slot: "flag.warmup", labelKey: "UE_LABEL_FLAG_WARMUP" },
     { slot: "flag.driver_finished", labelKey: "UE_LABEL_FLAG_DRIVER_FINISHED" },
     { slot: "flag.penalty", labelKey: "UE_LABEL_FLAG_PENALTY" },
+    { slot: "flag.disqualified", labelKey: "UE_LABEL_FLAG_DISQUALIFIED" },
   ];
 
   readonly lampSlots: readonly { slot: string; labelKey: string }[] = [

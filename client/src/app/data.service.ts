@@ -882,21 +882,33 @@ export class DataService {
     lane: number,
     userLaps?: number,
     userTime?: number,
+    crashes?: number,
   ): Observable<any> {
-    return this.raceControlHelper.updateUserLaps(lane, userLaps, userTime);
+    return crashes !== undefined
+      ? this.raceControlHelper.updateUserLaps(lane, userLaps, userTime, crashes)
+      : this.raceControlHelper.updateUserLaps(lane, userLaps, userTime);
   }
   updateHeatUserLaps(
     heatNumber: number,
     lane: number,
     userLaps?: number,
     userTime?: number,
+    crashes?: number,
   ): Observable<any> {
-    return this.raceControlHelper.updateHeatUserLaps(
-      heatNumber,
-      lane,
-      userLaps,
-      userTime,
-    );
+    return crashes !== undefined
+      ? this.raceControlHelper.updateHeatUserLaps(
+          heatNumber,
+          lane,
+          userLaps,
+          userTime,
+          crashes,
+        )
+      : this.raceControlHelper.updateHeatUserLaps(
+          heatNumber,
+          lane,
+          userLaps,
+          userTime,
+        );
   }
   updateBatchUserLaps(
     updates: {
@@ -904,9 +916,25 @@ export class DataService {
       laneIndex: number;
       userLaps?: number;
       userTime?: number;
+      crashes?: number;
     }[],
   ): Observable<any> {
     return this.raceControlHelper.updateBatchUserLaps(updates);
+  }
+  updateCrashes(lane: number, crashes: number): Observable<any> {
+    return this.raceControlHelper.updateCrashes(lane, crashes);
+  }
+  updateHeatCrashes(
+    heatNumber: number,
+    lane: number,
+    crashes: number,
+  ): Observable<any> {
+    return this.raceControlHelper.updateHeatCrashes(heatNumber, lane, crashes);
+  }
+  updateBatchCrashes(
+    updates: { heatNumber: number; laneIndex: number; crashes: number }[],
+  ): Observable<any> {
+    return this.raceControlHelper.updateBatchCrashes(updates);
   }
   updateUserTime(lane: number, userTime: number): Observable<any> {
     return this.raceControlHelper.updateUserTime(lane, userTime);

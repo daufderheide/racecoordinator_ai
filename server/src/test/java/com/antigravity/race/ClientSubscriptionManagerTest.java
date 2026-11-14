@@ -175,7 +175,11 @@ public class ClientSubscriptionManagerTest {
     IRaceState mockState = mock(IRaceState.class);
     when(mockRace.getState()).thenReturn(mockState);
 
-    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    DatabaseContext dc =
+        new DatabaseContext(
+            "test_db_autosave_" + System.currentTimeMillis(),
+            null,
+            System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
     manager.setShuttingDown(false);
     manager.autoSave(mockRace);
@@ -184,7 +188,11 @@ public class ClientSubscriptionManagerTest {
 
   @Test
   public void testDeleteAutoSaveRemovesFile() throws Exception {
-    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    DatabaseContext dc =
+        new DatabaseContext(
+            "test_db_autosave_" + System.currentTimeMillis(),
+            null,
+            System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
     manager.deleteAutoSave("testRaceId", false);
     manager.deleteAutoSave("testRaceId", true);
@@ -205,7 +213,11 @@ public class ClientSubscriptionManagerTest {
     IRaceState mockState = mock(IRaceState.class);
     when(mockRace.getState()).thenReturn(mockState);
 
-    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    DatabaseContext dc =
+        new DatabaseContext(
+            "test_db_autosave_" + System.currentTimeMillis(),
+            null,
+            System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
     manager.setShuttingDown(false);
 
@@ -894,7 +906,11 @@ public class ClientSubscriptionManagerTest {
     Paused paused = new Paused();
     when(mockRace.getState()).thenReturn(paused);
 
-    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    DatabaseContext dc =
+        new DatabaseContext(
+            "test_db_autosave_" + System.currentTimeMillis(),
+            null,
+            System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
     manager.setShuttingDown(false);
 
@@ -940,7 +956,11 @@ public class ClientSubscriptionManagerTest {
     when(mockRace.getHeats()).thenReturn(Collections.emptyList());
     when(mockRace.getState()).thenReturn(new Paused());
 
-    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    DatabaseContext dc =
+        new DatabaseContext(
+            "test_db_autosave_" + System.currentTimeMillis(),
+            null,
+            System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
     manager.setShuttingDown(false);
 
@@ -1075,7 +1095,11 @@ public class ClientSubscriptionManagerTest {
 
   @Test
   public void testAutoSaveAndDeleteOnSchedulerThreadDoesNotDeadlock() throws Exception {
-    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    DatabaseContext dc =
+        new DatabaseContext(
+            "test_db_autosave_" + System.currentTimeMillis(),
+            null,
+            System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
 
     Race mockRace = mock(Race.class);

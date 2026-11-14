@@ -451,6 +451,7 @@ public class Theme extends Model {
     resolveFlag("flag.one_lap_to_go", RaceFlag.WHITE, dbCtx);
     resolveFlag("flag.race_over", RaceFlag.CHECKERED, dbCtx);
     resolveFlag("flag.penalty", RaceFlag.BLACK, dbCtx);
+    resolveFlag("flag.disqualified", RaceFlag.BLACK, dbCtx);
   }
 
   private RaceFlag findSlotFlag(String slotKey, DatabaseContext dbCtx) {

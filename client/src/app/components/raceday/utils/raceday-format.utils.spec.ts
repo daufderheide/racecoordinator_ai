@@ -3588,5 +3588,112 @@ describe("RacedayFormatUtils", () => {
       );
       expect(emptyFormatted).toBe("--");
     });
+
+    it("should format crashes and crashPenalty columns correctly", () => {
+      const driver = {
+        driver: { name: "Test Driver" },
+        isEmpty: false,
+        crashes: 3,
+        penaltyLaps: 0,
+        penaltyTime: 0,
+      } as any;
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashes",
+          undefined,
+          driver,
+          undefined,
+          ctx,
+        ),
+      ).toBe("3");
+
+      // Empty driver
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashes",
+          undefined,
+          { isEmpty: true } as any,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+
+      // No penalties configured
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashPenalty",
+          undefined,
+          driver,
+          undefined,
+          ctx,
+        ),
+      ).toBe("0");
+
+      // Lap penalty only
+      const driverLap = {
+        driver: { name: "Test Driver" },
+        isEmpty: false,
+        crashes: 3,
+        penaltyLaps: 4,
+        penaltyTime: 0,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashPenalty",
+          undefined,
+          driverLap,
+          undefined,
+          ctx,
+        ),
+      ).toBe("-4L");
+
+      // Time penalty only
+      const driverTime = {
+        driver: { name: "Test Driver" },
+        isEmpty: false,
+        crashes: 3,
+        penaltyLaps: 0,
+        penaltyTime: 6.0,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashPenalty",
+          undefined,
+          driverTime,
+          undefined,
+          ctx,
+        ),
+      ).toBe("-6.0s");
+
+      // Both lap and time penalty
+      const driverBoth = {
+        driver: { name: "Test Driver" },
+        isEmpty: false,
+        crashes: 3,
+        penaltyLaps: 3,
+        penaltyTime: 7.5,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashPenalty",
+          undefined,
+          driverBoth,
+          undefined,
+          ctx,
+        ),
+      ).toBe("-3L / -7.5s");
+
+      // Empty driver for crashPenalty
+      expect(
+        RacedayFormatUtils.formatValue(
+          "crashPenalty",
+          undefined,
+          { isEmpty: true } as any,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+    });
   });
 });

@@ -116,6 +116,10 @@ public class HeatConverter {
         .setTop3Consecutive(data.getTop3Consecutive())
         .setUserTime(data.getUserTime())
         .setTotalTime(data.getTotalTime())
+        .setCrashes(data.getCrashes())
+        .setIsDisqualified(data.isDisqualified())
+        .setPenaltyTime(data.getPenaltyTime())
+        .setDqScorePercentage(data.getDqScorePercentage())
         .build();
   }
 }

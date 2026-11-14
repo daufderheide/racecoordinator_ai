@@ -45,3 +45,30 @@ Bij het klikken op een interactieve rondecel:
 - **Aangepaste Ronden**: Verandert direct de positie in **Meeste Ronden**-klassementen en werkt de rondeverschillen (`gapLeader`, `gapPosition`) bij. Fysieke sensorronden, de snelste ronde, de mediaan-rondetijd en de fysieke gemiddelde pace blijven onveranderd.
 - **Aangepaste Totale Tijd**: Verandert de positie in **Snelste Totale Tijd**-klassementen, fungeert als primaire tiebreaker bij een gelijk aantal ronden, en werkt de **Gemiddelde Rondetijd** ($\text{Aangepaste Totale Tijd} / \text{Fysieke Ronden}$) en tijdsverschillen bij.
 - **Beschermde Statistieken**: De **Snelste Ronde** en de **Mediaan-Rondetijd** blijven strikt behouden op basis van echte sensordoorkomsten en worden nooit gewijzigd door tijdaanpassingen.
+
+---
+
+## Crash and Learn-Operaties {: #crash-and-learn-operations }
+
+Wanneer een race wordt verreden met **Crash and Learn (CNL)** ingeschakeld, registreert Race Coordinator AI baanafgangen (crashes) in realtime, handhaaft crashlimieten, kent straffen toe en regelt diskwalificaties.
+
+### Crashdetectie & Baanoproepknoppen
+- **Automatische Crashdetectie**: Indien geconfigureerd en de rondetijd de drempelwaarde voor **Automatische Crashtijd** overschrijdt, detecteert het systeem een baanafgang en telt een crash voor die coureur.
+- **Automatische Gele Vlaggen**: Indien **Heat pauzeren bij crash** is ingeschakeld, activeert een automatische crash onmiddellijk een baangele vlag en schakelt de baanvoeding uit.
+- **Meerdere Crashes per Ronde**: Indien **Meerdere crashes per ronde toestaan** is ingeschakeld, verzamelt een gestrande auto telkens een extra crash wanneer de crashtijd opnieuw verstrijkt zonder de finishlijn te passeren.
+- **Baanoproepknoppen per Baanvak**: Op banen met knoppen per spoor pauzeert het indrukken van een knop de heat en rekent een crash aan dat spoor toe. Het indrukken van andere knoppen tijdens de pauze kent geen extra crashes toe.
+
+### Diskwalificatiemechaniek (DQ)
+Overschrijdt een coureur de ingestelde limiet voor **Maximaal Aantal Crashes** (bijv. 4 crashes bij een limiet van 3):
+- **Zwarte Vlag**: De status van het spoor schakelt onmiddellijk over naar de zwarte vlag (`flag.disqualified`).
+- **Uitschakeling van Spoorvoeding**: Indien relais per spoor aanwezig zijn, wordt de stroom van dat spoor onmiddellijk uitgeschakeld.
+- **Ronden Tellen Gestopt**: Sensordoorkomsten en ronden worden voor gediskwalificeerde rijders voor de rest van de heat genegeerd.
+- **Directe Deelrondeberekening**: In races met automatische deelronden (`NoneAutoSegments` of `SingleLapAutoSegments`) worden de fracties van de gediskwalificeerde rijder berekend op het moment van diskwalificatie volgens de "niet toestaan te finishen"-methode ($\text{timeSinceLastLap} / \text{medianLapTime}$, gemaximeerd op $0,99$).
+- **Positie in het Klassement**: Een gediskwalificeerde coureur kan in de heatstand nooit boven een niet-gediskwalificeerde coureur eindigen. Meerdere gediskwalificeerde rijders worden gerangschikt op basis van hun score aangepast met het **Scorepercentage na Diskwalificatie**.
+
+### Crashes & Straffen Controleren en Aanpassen
+Wedstrijdleiders behouden volledige handmatige controle:
+- **Crash-Teller Widgets**: Spoor-kolommen tonen het actuele aantal crashes van de heat.
+- **Handmatige Crash-Aanpassingen**: Via de knoppen of het dialoogvenster **Baansecties / Tijd Aanpassen** kunnen crashes worden toegevoegd of afgetrokken.
+- **Diskwalificatie Terugdraaien**: Zakt het aantal crashes door aftrek weer tot of onder de limiet, dan wordt de diskwalificatie onmiddellijk opgeheven: de vlag wordt groen, de stroom wordt hersteld en straffen worden herberekend.
+- **Zichtbaarheid van Straffen**: Straf-ronden en straftijd worden weergegeven in het aanpassingsvenster naast de invoervelden.

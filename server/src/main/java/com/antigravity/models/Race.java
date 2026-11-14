@@ -46,6 +46,10 @@ public class Race extends Model {
   @JsonProperty("team_options")
   private final TeamOptions teamOptions;
 
+  @JsonProperty("crash_and_learn_options")
+  @JsonAlias({"crashAndLearnOptions", "cnl_options", "cnlOptions"})
+  private final CrashAndLearnOptions crashAndLearnOptions;
+
   @JsonProperty("auto_advance_time")
   private final double autoAdvanceTime;
 
@@ -168,6 +172,9 @@ public class Race extends Model {
       @JsonProperty("digital_fuel_options") @JsonAlias("digitalFuelOptions")
           DigitalFuelOptions digitalFuelOptions,
       @JsonProperty("team_options") @JsonAlias("teamOptions") TeamOptions teamOptions,
+      @JsonProperty("crash_and_learn_options")
+          @JsonAlias({"crashAndLearnOptions", "cnl_options", "cnlOptions"})
+          CrashAndLearnOptions crashAndLearnOptions,
       @JsonProperty("auto_advance_time") @JsonAlias("autoAdvanceTime") Double autoAdvanceTime,
       @JsonProperty("auto_start_time") @JsonAlias("autoStartTime") Double autoStartTime,
       @JsonProperty("auto_advance_warmup_time") @JsonAlias("autoAdvanceWarmupTime")
@@ -234,6 +241,8 @@ public class Race extends Model {
     this.digitalFuelOptions =
         digitalFuelOptions != null ? digitalFuelOptions : new DigitalFuelOptions();
     this.teamOptions = teamOptions != null ? teamOptions : new TeamOptions();
+    this.crashAndLearnOptions =
+        crashAndLearnOptions != null ? crashAndLearnOptions : new CrashAndLearnOptions();
     this.autoAdvanceTime = autoAdvanceTime != null ? autoAdvanceTime : 0.0;
     this.autoStartTime = autoStartTime != null ? autoStartTime : 0.0;
     this.autoAdvanceWarmupTime = autoAdvanceWarmupTime != null ? autoAdvanceWarmupTime : 0.0;
@@ -284,6 +293,7 @@ public class Race extends Model {
     private AnalogFuelOptions fuelOptions = new AnalogFuelOptions();
     private DigitalFuelOptions digitalFuelOptions = new DigitalFuelOptions();
     private TeamOptions teamOptions = new TeamOptions();
+    private CrashAndLearnOptions crashAndLearnOptions = new CrashAndLearnOptions();
     private double autoAdvanceTime = 0.0;
     private double autoStartTime = 0.0;
     private double autoAdvanceWarmupTime = 0.0;
@@ -327,6 +337,7 @@ public class Race extends Model {
       this.fuelOptions = other.getFuelOptions();
       this.digitalFuelOptions = other.getDigitalFuelOptions();
       this.teamOptions = other.getTeamOptions();
+      this.crashAndLearnOptions = other.getCrashAndLearnOptions();
       this.autoAdvanceTime = other.getAutoAdvanceTime();
       this.autoStartTime = other.getAutoStartTime();
       this.autoAdvanceWarmupTime = other.getAutoAdvanceWarmupTime();
@@ -412,6 +423,11 @@ public class Race extends Model {
 
     public Builder withTeamOptions(TeamOptions teamOptions) {
       this.teamOptions = teamOptions;
+      return this;
+    }
+
+    public Builder withCrashAndLearnOptions(CrashAndLearnOptions crashAndLearnOptions) {
+      this.crashAndLearnOptions = crashAndLearnOptions;
       return this;
     }
 
@@ -579,6 +595,7 @@ public class Race extends Model {
           fuelOptions,
           digitalFuelOptions,
           teamOptions,
+          crashAndLearnOptions,
           autoAdvanceTime,
           autoStartTime,
           autoAdvanceWarmupTime,
@@ -711,6 +728,10 @@ public class Race extends Model {
 
   public TeamOptions getTeamOptions() {
     return teamOptions;
+  }
+
+  public CrashAndLearnOptions getCrashAndLearnOptions() {
+    return crashAndLearnOptions;
   }
 
   public double getAutoAdvanceTime() {

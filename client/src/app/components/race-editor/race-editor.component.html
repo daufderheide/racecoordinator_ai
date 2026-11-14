@@ -1587,6 +1587,302 @@
               </div>
             </app-editor-section>
 
+            <!-- Crash and Learn Section -->
+            <app-editor-section
+              sectionId="crash-and-learn-section"
+              titleKey="RE_CNL_HEADER"
+              [bordered]="true"
+              headingLevel="h1"
+              [(expanded)]="sectionsExpanded.crash_and_learn"
+              (toggle)="toggleSection('crash_and_learn', $event)"
+            >
+              @if (editingRace.crash_and_learn_options) {
+                <div class="cnl-config-section">
+                  <div class="config-row cnl-enabled-row">
+                    <div
+                      class="config-section checkbox-section cnl-checkbox-wrapper"
+                    >
+                      <label
+                        id="cnl-enabled-input"
+                        class="checkbox-container"
+                        [class.disabled]="!isEditMode"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="
+                            editingRace.crash_and_learn_options.enabled
+                          "
+                          (ngModelChange)="captureState()"
+                          class="cnl-enabled-input"
+                          data-testid="cnl-enabled-input"
+                          [disabled]="!isEditMode"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">{{
+                          "RE_CNL_ENABLED" | translate
+                        }}</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div
+                    class="cnl-options-grid"
+                    [class.options-disabled]="
+                      !editingRace.crash_and_learn_options.enabled
+                    "
+                  >
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label for="cnl-auto-crash-time-input">
+                          {{ "RE_CNL_AUTO_CRASH_TIME" | translate }}
+                        </label>
+                        <input
+                          id="cnl-auto-crash-time-input"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          [(ngModel)]="
+                            editingRace.crash_and_learn_options
+                              .automated_crash_time
+                          "
+                          (ngModelChange)="captureState()"
+                          placeholder="0.0"
+                          class="cnl-auto-crash-time-input"
+                          data-testid="cnl-auto-crash-time-input"
+                          [disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        />
+                      </div>
+
+                      <div class="config-section">
+                        <label for="cnl-max-crashes-input">
+                          {{ "RE_CNL_MAX_CRASHES" | translate }}
+                        </label>
+                        <input
+                          id="cnl-max-crashes-input"
+                          type="number"
+                          step="1"
+                          min="0"
+                          [(ngModel)]="
+                            editingRace.crash_and_learn_options.max_crashes
+                          "
+                          (ngModelChange)="captureState()"
+                          placeholder="3"
+                          class="cnl-max-crashes-input"
+                          data-testid="cnl-max-crashes-input"
+                          [disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        />
+                      </div>
+                    </div>
+
+                    <div class="config-row">
+                      <div class="config-section checkbox-section">
+                        <label
+                          id="cnl-pause-on-crash-input"
+                          class="checkbox-container"
+                          [class.disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.crash_and_learn_options
+                                .pause_heat_on_crash
+                            "
+                            (ngModelChange)="captureState()"
+                            class="cnl-pause-on-crash-input"
+                            data-testid="cnl-pause-on-crash-input"
+                            [disabled]="
+                              !isEditMode ||
+                              !editingRace.crash_and_learn_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_CNL_PAUSE_ON_CRASH" | translate
+                          }}</span>
+                        </label>
+                      </div>
+
+                      <div class="config-section checkbox-section">
+                        <label
+                          id="cnl-allow-multiple-crashes-input"
+                          class="checkbox-container"
+                          [class.disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.crash_and_learn_options
+                                .allow_multiple_crashes_per_lap
+                            "
+                            (ngModelChange)="captureState()"
+                            class="cnl-allow-multiple-crashes-input"
+                            data-testid="cnl-allow-multiple-crashes-input"
+                            [disabled]="
+                              !isEditMode ||
+                              !editingRace.crash_and_learn_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_CNL_ALLOW_MULTIPLE_CRASHES_PER_LAP" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="config-row">
+                      <div class="config-section checkbox-section">
+                        <label
+                          id="cnl-reset-crashes-input"
+                          class="checkbox-container"
+                          [class.disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.crash_and_learn_options
+                                .reset_crashes_each_heat
+                            "
+                            (ngModelChange)="captureState()"
+                            class="cnl-reset-crashes-input"
+                            data-testid="cnl-reset-crashes-input"
+                            [disabled]="
+                              !isEditMode ||
+                              !editingRace.crash_and_learn_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_CNL_RESET_CRASHES_EACH_HEAT" | translate
+                          }}</span>
+                        </label>
+                      </div>
+
+                      <div class="config-section checkbox-section">
+                        <label
+                          id="cnl-reset-dq-input"
+                          class="checkbox-container"
+                          [class.disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.crash_and_learn_options
+                                .reset_dq_each_heat
+                            "
+                            (ngModelChange)="captureState()"
+                            class="cnl-reset-dq-input"
+                            data-testid="cnl-reset-dq-input"
+                            [disabled]="
+                              !isEditMode ||
+                              !editingRace.crash_and_learn_options.enabled
+                            "
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_CNL_RESET_DQ_EACH_HEAT" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div class="config-row">
+                      <div class="config-section">
+                        <label for="cnl-heat-crash-lap-penalty-input">
+                          {{ "RE_CNL_HEAT_CRASH_LAP_PENALTY" | translate }}
+                        </label>
+                        <input
+                          id="cnl-heat-crash-lap-penalty-input"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          [(ngModel)]="
+                            editingRace.crash_and_learn_options
+                              .heat_crash_lap_penalty
+                          "
+                          (ngModelChange)="captureState()"
+                          placeholder="0.0"
+                          class="cnl-heat-crash-lap-penalty-input"
+                          data-testid="cnl-heat-crash-lap-penalty-input"
+                          [disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        />
+                      </div>
+
+                      <div class="config-section">
+                        <label for="cnl-heat-time-penalty-input">
+                          {{ "RE_CNL_HEAT_TIME_PENALTY" | translate }}
+                        </label>
+                        <input
+                          id="cnl-heat-time-penalty-input"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          [(ngModel)]="
+                            editingRace.crash_and_learn_options
+                              .heat_time_penalty
+                          "
+                          (ngModelChange)="captureState()"
+                          placeholder="0.0"
+                          class="cnl-heat-time-penalty-input"
+                          data-testid="cnl-heat-time-penalty-input"
+                          [disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        />
+                      </div>
+
+                      <div class="config-section">
+                        <label for="cnl-dq-score-pct-input">
+                          {{ "RE_CNL_DQ_SCORE_PCT" | translate }}
+                        </label>
+                        <input
+                          id="cnl-dq-score-pct-input"
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="100"
+                          [(ngModel)]="
+                            editingRace.crash_and_learn_options
+                              .dq_heat_score_percentage
+                          "
+                          (ngModelChange)="captureState()"
+                          placeholder="100"
+                          class="cnl-dq-score-pct-input"
+                          data-testid="cnl-dq-score-pct-input"
+                          [disabled]="
+                            !isEditMode ||
+                            !editingRace.crash_and_learn_options.enabled
+                          "
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </app-editor-section>
+
             <!-- Analog Fuel Section -->
             <app-editor-section
               sectionId="analog-fuel-section"

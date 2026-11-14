@@ -217,6 +217,7 @@ export class RaceEditorComponent
     fuel_digital: true,
     team: true,
     groups: true,
+    crash_and_learn: true,
   };
 
   isConfigValid(): boolean {

@@ -218,6 +218,14 @@ public class Racing implements IRaceState {
     syncRefuelingState();
     syncFuelLevels();
 
+    boolean autoCrashDetected = executionManager.checkAutomatedCrashes(delta);
+    if (autoCrashDetected
+        && race.isCnlEnabled()
+        && race.getCrashAndLearnOptions().isPauseHeatOnCrash()) {
+      pause(race);
+      return;
+    }
+
     AllowFinish allowFinish = scoring != null ? scoring.getAllowFinish() : AllowFinish.None;
     boolean allFinished =
         checkFinishConditions(scoring, isTimed, isInfiniteTimed, allowFinish, limit);
@@ -283,10 +291,21 @@ public class Racing implements IRaceState {
 
     if (allowFinish == AllowFinish.None || allowFinish == AllowFinish.NoneAutoSegments) {
       if (race.getCurrentHeat().getDrivers() != null) {
+        boolean allDq = true;
+        int activeCount = 0;
         for (DriverHeatData driver : race.getCurrentHeat().getDrivers()) {
-          if (driver.getLapCount() >= limit) {
-            return true;
+          if (driver != null && !driver.isEmptyParticipant()) {
+            activeCount++;
+            if (!driver.isDisqualified()) {
+              allDq = false;
+            }
+            if (driver.getLapCount() >= limit) {
+              return true;
+            }
           }
+        }
+        if (activeCount > 0 && allDq) {
+          return true;
         }
       }
       return false;
@@ -515,6 +534,9 @@ public class Racing implements IRaceState {
   public void onCallbutton(Race race, int lane) {
     logger.info("Racing.onCallbutton() called. Pausing race.");
     race.recordTrackCall(lane);
+    if (race.isCnlEnabled() && lane >= 0) {
+      race.recordCrash(lane);
+    }
     pause(race);
   }
 

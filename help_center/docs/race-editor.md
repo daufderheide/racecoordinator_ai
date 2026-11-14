@@ -430,3 +430,20 @@ The Season Scoring expander defines championship points distributions for series
     - *Pole Position*: Bonus points awarded for the top qualifying position.
     - *Most Laps Led*: Bonus points for leading the highest number of laps.
 - **Championship Aggregation**: Season standings automatically aggregate scored points across races with support for dropped rounds.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+The **Crash and Learn (CNL)** expander configures rules and penalties governing driver deslots (crashes) during a race:
+
+- **Enable Crash and Learn**: Toggles crash and learn tracking. When disabled, all subordinate CNL settings are inactive.
+- **Automated Crash Time (seconds)**: Defines the lap time threshold in seconds that triggers an automatic crash detection if a driver takes longer to complete a lap. Set to `0` to disable automatic deslot detection.
+- **Maximum Crashes**: The maximum number of crashes a driver is permitted before disqualification (DQ). For example, if set to `3`, a driver is disqualified on their 4th crash.
+- **Pause Heat on Crash**: When enabled, automatically triggers a track call (yellow flag pause) upon detecting an automatic deslot or when a driver presses a per-lane call button.
+- **Allow Multiple Crashes Per Lap**: If enabled, permits multiple consecutive crashes to be credited to a driver on the same lap if the automated crash time elapses multiple times before completing a lap.
+- **Reset Crashes Each Heat**: When enabled, resets each driver's accumulated crash count to `0` at the start of each heat.
+- **Reset Disqualification Each Heat**: When enabled, clears a driver's disqualified state at the start of the next heat. Resetting a DQ state also resets the driver's crash count to `0` regardless of the heat crash reset setting.
+- **Heat Crash Lap Penalty**: The number of laps deducted from a driver's heat score for each detected crash.
+- **Heat Time Penalty (seconds)**: The amount of penalty time in seconds added to a driver's total heat time for each detected crash.
+- **Disqualification Heat Score Percentage**: Specifies the percentage of accumulated heat score credited to a disqualified driver (defaults to `100%`). A value of `100%` counts all laps completed prior to disqualification, while `0%` invalidates the driver's entire heat score. Disqualified drivers are ranked below all non-disqualified drivers in heat standings.

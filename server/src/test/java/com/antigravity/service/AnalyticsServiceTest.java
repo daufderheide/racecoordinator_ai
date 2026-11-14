@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.App;
+import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.Event;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.GroupOptions;
@@ -737,5 +738,162 @@ public class AnalyticsServiceTest {
     assertEquals(false, params.get("has_points_scoring"));
     assertEquals(false, params.get("points_scoring_enabled"));
     assertEquals(false, params.get("points_system_enabled"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_CnLEnabled() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    CrashAndLearnOptions cnl =
+        new CrashAndLearnOptions.Builder()
+            .withEnabled(true)
+            .withMaxCrashes(4)
+            .withAutomatedCrashTime(12.5)
+            .withPauseHeatOnCrash(true)
+            .withAllowMultipleCrashesPerLap(true)
+            .withResetCrashesEachHeat(true)
+            .withResetDqEachHeat(false)
+            .withHeatCrashLapPenalty(0.5)
+            .withHeatTimePenalty(1.0)
+            .withDqHeatScorePercentage(50.0)
+            .build();
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockModel.getCrashAndLearnOptions()).thenReturn(cnl);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(true, params.get("has_crash_and_learn"));
+    assertEquals(true, params.get("crash_and_learn_enabled"));
+    assertEquals(true, params.get("cnl_enabled"));
+    assertEquals(4, params.get("cnl_max_crashes"));
+    assertEquals(12.5, (Double) params.get("cnl_auto_crash_time"), 0.001);
+    assertEquals(true, params.get("cnl_pause_on_crash"));
+    assertEquals(true, params.get("cnl_allow_multiple_crashes_per_lap"));
+    assertEquals(true, params.get("cnl_reset_crashes_each_heat"));
+    assertEquals(false, params.get("cnl_reset_dq_each_heat"));
+    assertEquals(0.5, (Double) params.get("cnl_heat_crash_lap_penalty"), 0.001);
+    assertEquals(1.0, (Double) params.get("cnl_heat_time_penalty"), 0.001);
+    assertEquals(50.0, (Double) params.get("cnl_dq_heat_score_percentage"), 0.001);
+  }
+
+  @Test
+  public void testBuildRaceStartParams_CnLDisabled() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    CrashAndLearnOptions cnl = new CrashAndLearnOptions.Builder().withEnabled(false).build();
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockModel.getCrashAndLearnOptions()).thenReturn(cnl);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(false, params.get("has_crash_and_learn"));
+    assertEquals(false, params.get("crash_and_learn_enabled"));
+    assertEquals(false, params.get("cnl_enabled"));
+    assertFalse(params.containsKey("cnl_max_crashes"));
+  }
+
+  @Test
+  public void testBuildCnlParams() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+
+    CrashAndLearnOptions cnl =
+        new CrashAndLearnOptions.Builder()
+            .withEnabled(true)
+            .withMaxCrashes(2)
+            .withAutomatedCrashTime(8.0)
+            .withPauseHeatOnCrash(true)
+            .withAllowMultipleCrashesPerLap(false)
+            .withResetCrashesEachHeat(true)
+            .withResetDqEachHeat(true)
+            .withHeatCrashLapPenalty(1.0)
+            .withHeatTimePenalty(2.0)
+            .withDqHeatScorePercentage(0.0)
+            .build();
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.isDemoMode()).thenReturn(false);
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getCrashAndLearnOptions()).thenReturn(cnl);
+
+    Map<String, Object> params = service.buildCnlParams(mockRace);
+
+    assertEquals(true, params.get("cnl_enabled"));
+    assertEquals(true, params.get("crash_and_learn_enabled"));
+    assertEquals(2, params.get("max_crashes"));
+    assertEquals(8.0, (Double) params.get("auto_crash_time"), 0.001);
+    assertEquals(true, params.get("pause_on_crash"));
+    assertEquals(false, params.get("allow_multiple_crashes_per_lap"));
+    assertEquals(true, params.get("reset_crashes_each_heat"));
+    assertEquals(true, params.get("reset_dq_each_heat"));
+    assertEquals(1.0, (Double) params.get("heat_crash_lap_penalty"), 0.001);
+    assertEquals(2.0, (Double) params.get("heat_time_penalty"), 0.001);
+    assertEquals(0.0, (Double) params.get("dq_heat_score_percentage"), 0.001);
+    assertEquals(0, params.get("driver_count"));
+    assertEquals(0, params.get("number_of_lanes"));
+    assertEquals(false, params.get("is_demo"));
+  }
+
+  @Test
+  public void testTrackRaceStart_WithCnLEnabled_DoesNotThrow() throws Exception {
+    Field enabledField = AnalyticsService.class.getDeclaredField("enabled");
+    enabledField.setAccessible(true);
+    boolean originalEnabled = (boolean) enabledField.get(service);
+
+    enabledField.set(service, true);
+
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    CrashAndLearnOptions cnl =
+        new CrashAndLearnOptions.Builder().withEnabled(true).withMaxCrashes(3).build();
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockModel.getCrashAndLearnOptions()).thenReturn(cnl);
+
+    service.trackRaceStart(mockRace);
+
+    Thread.sleep(100);
+
+    enabledField.set(service, originalEnabled);
   }
 }

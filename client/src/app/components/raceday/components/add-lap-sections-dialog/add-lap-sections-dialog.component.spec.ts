@@ -625,4 +625,110 @@ describe("AddLapSectionsDialogComponent", () => {
 
     expect(component.timeAdjustmentInput()).toBe(0);
   });
+
+  describe("Crash and Learn in AddLapSectionsDialog", () => {
+    const mockRace = {
+      crash_and_learn_options: {
+        enabled: true,
+        max_crashes: 3,
+        heat_crash_lap_penalty: 1.0,
+        heat_time_penalty: 2.5,
+        dq_heat_score_percentage: 100.0,
+      },
+    };
+
+    it("should display crashes stepper and penalties when CNL is enabled", () => {
+      const participant = {
+        driver: { name: "Crash Driver", entity_id: "driver-c" },
+      } as any;
+      const hd = new DriverHeatData("hd-c", participant, 1);
+      hd.crashes = 2;
+
+      fixture.componentRef.setInput("race", mockRace);
+      fixture.componentRef.setInput("driverHeatData", hd);
+      fixture.componentRef.setInput("numTrackSections", 100);
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      expect(component.isCnlEnabled()).toBeTrue();
+      expect(component.crashesInput()).toBe(2);
+      expect(component.calculatedPenaltyLaps()).toBe(2.0); // 2 * 1.0
+      expect(component.calculatedPenaltyTime()).toBe(5.0); // 2 * 2.5
+      expect(component.isDisqualifiedPreview()).toBeFalse(); // 2 <= 3
+
+      // Verify penalty labels rendered
+      const penaltyLapsEl = fixture.nativeElement.querySelector(
+        ".result-preview .penalty-value",
+      );
+      expect(penaltyLapsEl).not.toBeNull();
+      expect(penaltyLapsEl.textContent).toContain("-2.00");
+
+      const penaltyTimeEl = fixture.nativeElement.querySelector(
+        ".time-preview .penalty-value",
+      );
+      expect(penaltyTimeEl).not.toBeNull();
+      expect(penaltyTimeEl.textContent).toContain("+5.000s");
+    });
+
+    it("should trigger disqualification preview on 4th crash when max is 3 and clear on decrement", () => {
+      const participant = {
+        driver: { name: "DQ Driver", entity_id: "driver-dq" },
+      } as any;
+      const hd = new DriverHeatData("hd-dq", participant, 0);
+      hd.crashes = 3;
+
+      fixture.componentRef.setInput("race", mockRace);
+      fixture.componentRef.setInput("driverHeatData", hd);
+      fixture.componentRef.setInput("numTrackSections", 100);
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      expect(component.isDisqualifiedPreview()).toBeFalse(); // 3 <= 3
+      let dqBanner = fixture.nativeElement.querySelector(".dq-warning-banner");
+      expect(dqBanner).toBeNull();
+
+      // Increment to 4
+      component.incrementCrashes();
+      fixture.detectChanges();
+
+      expect(component.crashesInput()).toBe(4);
+      expect(component.isDisqualifiedPreview()).toBeTrue(); // 4 > 3
+      dqBanner = fixture.nativeElement.querySelector(".dq-warning-banner");
+      expect(dqBanner).not.toBeNull();
+      expect(dqBanner.textContent).toContain("RD_DISQUALIFIED");
+
+      // Decrement back to 3
+      component.decrementCrashes();
+      fixture.detectChanges();
+
+      expect(component.crashesInput()).toBe(3);
+      expect(component.isDisqualifiedPreview()).toBeFalse();
+      dqBanner = fixture.nativeElement.querySelector(".dq-warning-banner");
+      expect(dqBanner).toBeNull();
+    });
+
+    it("should include crashes in confirm emit", () => {
+      spyOn(component.confirm, "emit");
+      const participant = {
+        driver: { name: "Emit Driver", entity_id: "driver-e" },
+      } as any;
+      const hd = new DriverHeatData("hd-e", participant, 0);
+      hd.crashes = 1;
+
+      fixture.componentRef.setInput("race", mockRace);
+      fixture.componentRef.setInput("driverHeatData", hd);
+      fixture.componentRef.setInput("numTrackSections", 100);
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      component.incrementCrashes(); // now 2
+      component.onConfirm();
+
+      expect(component.confirm.emit).toHaveBeenCalledWith({
+        userLaps: 0,
+        userTime: 0,
+        crashes: 2,
+      });
+    });
+  });
 });

@@ -70,6 +70,63 @@ export class RaceEditorNormalizationHelper {
     };
   }
 
+  static normalizeCrashAndLearnOptions(cnl: any): any {
+    if (!cnl) {
+      return {
+        enabled: false,
+        automated_crash_time: 0.0,
+        max_crashes: 3,
+        pause_heat_on_crash: true,
+        allow_multiple_crashes_per_lap: true,
+        reset_crashes_each_heat: true,
+        reset_dq_each_heat: true,
+        heat_crash_lap_penalty: 0.0,
+        heat_time_penalty: 0.0,
+        dq_heat_score_percentage: 100.0,
+      };
+    }
+    return {
+      enabled: Boolean(cnl.enabled),
+      automated_crash_time: Number(
+        cnl.automated_crash_time ?? cnl.automatedCrashTime ?? 0.0,
+      ),
+      max_crashes: Number(cnl.max_crashes ?? cnl.maxCrashes ?? 3),
+      pause_heat_on_crash:
+        cnl.pause_heat_on_crash !== undefined
+          ? Boolean(cnl.pause_heat_on_crash)
+          : cnl.pauseHeatOnCrash !== undefined
+            ? Boolean(cnl.pauseHeatOnCrash)
+            : true,
+      allow_multiple_crashes_per_lap:
+        cnl.allow_multiple_crashes_per_lap !== undefined
+          ? Boolean(cnl.allow_multiple_crashes_per_lap)
+          : cnl.allowMultipleCrashesPerLap !== undefined
+            ? Boolean(cnl.allowMultipleCrashesPerLap)
+            : true,
+      reset_crashes_each_heat:
+        cnl.reset_crashes_each_heat !== undefined
+          ? Boolean(cnl.reset_crashes_each_heat)
+          : cnl.resetCrashesEachHeat !== undefined
+            ? Boolean(cnl.resetCrashesEachHeat)
+            : true,
+      reset_dq_each_heat:
+        cnl.reset_dq_each_heat !== undefined
+          ? Boolean(cnl.reset_dq_each_heat)
+          : cnl.resetDqEachHeat !== undefined
+            ? Boolean(cnl.resetDqEachHeat)
+            : true,
+      heat_crash_lap_penalty: Number(
+        cnl.heat_crash_lap_penalty ?? cnl.heatCrashLapPenalty ?? 0.0,
+      ),
+      heat_time_penalty: Number(
+        cnl.heat_time_penalty ?? cnl.heatTimePenalty ?? 0.0,
+      ),
+      dq_heat_score_percentage: Number(
+        cnl.dq_heat_score_percentage ?? cnl.dqHeatScorePercentage ?? 100.0,
+      ),
+    };
+  }
+
   static normalizeHeatScoring(heatScoring: any): any {
     if (!heatScoring) {
       return {
@@ -138,6 +195,9 @@ export class RaceEditorNormalizationHelper {
       fuel_options: this.normalizeFuelOptions(race.fuel_options),
       digital_fuel_options: this.normalizeDigitalFuelOptions(
         race.digital_fuel_options,
+      ),
+      crash_and_learn_options: this.normalizeCrashAndLearnOptions(
+        race.crash_and_learn_options || race.crashAndLearnOptions,
       ),
       team_options: race.team_options || {
         heat_lap_limit: 0,
@@ -232,6 +292,7 @@ export class RaceEditorNormalizationHelper {
         capacity: 100,
         custom_curve: [],
       },
+      crash_and_learn_options: this.normalizeCrashAndLearnOptions(null),
       min_lap_time: 1.5,
       drift_time: 0.5,
       start_time: 5.0,

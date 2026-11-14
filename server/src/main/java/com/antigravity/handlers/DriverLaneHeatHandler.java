@@ -333,15 +333,20 @@ public class DriverLaneHeatHandler {
       List<DriverHeatData> drivers = currentHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
-        if (applyAdjustment(dhd, body)) {
+        if (applyAdjustment(race, currentHeat, dhd, body)) {
           recalculateAndBroadcast(race, currentHeat);
           Map<String, Object> resp = new HashMap<>();
           resp.put("adjustedLapCount", dhd.getAdjustedLapCount());
           resp.put("totalTime", dhd.getTotalTime());
           resp.put("userTime", dhd.getUserTime());
+          resp.put("crashes", dhd.getCrashes());
+          resp.put("disqualified", dhd.isDisqualified());
+          resp.put("penaltyLaps", dhd.getPenaltyLaps());
+          resp.put("penaltyTime", dhd.getPenaltyTime());
+          resp.put("autoCalculatedLaps", dhd.getAutoCalculatedLaps());
           ctx.status(200).json(resp);
         } else {
-          ctx.status(400).result("Missing userLaps or userTime in body");
+          ctx.status(400).result("Missing userLaps, userTime, or crashes in body");
         }
       } else {
         ctx.status(400).result("Invalid lane index: " + lane);
@@ -386,15 +391,20 @@ public class DriverLaneHeatHandler {
       List<DriverHeatData> drivers = targetHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
-        if (applyAdjustment(dhd, body)) {
+        if (applyAdjustment(race, targetHeat, dhd, body)) {
           recalculateAndBroadcast(race, targetHeat);
           Map<String, Object> resp = new HashMap<>();
           resp.put("adjustedLapCount", dhd.getAdjustedLapCount());
           resp.put("totalTime", dhd.getTotalTime());
           resp.put("userTime", dhd.getUserTime());
+          resp.put("crashes", dhd.getCrashes());
+          resp.put("disqualified", dhd.isDisqualified());
+          resp.put("penaltyLaps", dhd.getPenaltyLaps());
+          resp.put("penaltyTime", dhd.getPenaltyTime());
+          resp.put("autoCalculatedLaps", dhd.getAutoCalculatedLaps());
           ctx.status(200).json(resp);
         } else {
-          ctx.status(400).result("Missing userLaps or userTime in body");
+          ctx.status(400).result("Missing userLaps, userTime, or crashes in body");
         }
       } else {
         ctx.status(400).result("Invalid lane index: " + lane);
@@ -413,6 +423,28 @@ public class DriverLaneHeatHandler {
   @SuppressWarnings("unchecked")
   public void updateBatchUserTime(Context ctx) {
     logger.info("ClientCommand received: update-batch-user-time");
+    handleBatchAdjustment(ctx);
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateCrashes(Context ctx) {
+    logger.info("ClientCommand received: update-crashes");
+    try {
+      updateUserLaps(ctx, ctx.pathParamMap(), ctx.bodyAsClass(HashMap.class));
+    } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateHeatCrashes(Context ctx) {
+    logger.info("ClientCommand received: update-heat-crashes");
+    handleHeatAdjustment(ctx, ctx.bodyAsClass(HashMap.class));
+  }
+
+  @SuppressWarnings("unchecked")
+  public void updateBatchCrashes(Context ctx) {
+    logger.info("ClientCommand received: update-batch-crashes");
     handleBatchAdjustment(ctx);
   }
 
@@ -441,7 +473,7 @@ public class DriverLaneHeatHandler {
         List<DriverHeatData> drivers = targetHeat.getDrivers();
         if (lane >= 0 && lane < drivers.size()) {
           DriverHeatData dhd = drivers.get(lane);
-          if (applyAdjustment(dhd, update)) {
+          if (applyAdjustment(race, targetHeat, dhd, update)) {
             heatsToRecalculate.add(targetHeat);
           }
         } else {
@@ -470,7 +502,8 @@ public class DriverLaneHeatHandler {
     }
   }
 
-  private boolean applyAdjustment(DriverHeatData dhd, Map<String, Object> body) {
+  private boolean applyAdjustment(
+      Race race, Heat heat, DriverHeatData dhd, Map<String, Object> body) {
     boolean updated = false;
     if (body.containsKey("userLaps")) {
       double value = ((Number) body.get("userLaps")).doubleValue();
@@ -480,6 +513,11 @@ public class DriverLaneHeatHandler {
     if (body.containsKey("userTime")) {
       double value = ((Number) body.get("userTime")).doubleValue();
       dhd.setUserTime(value);
+      updated = true;
+    }
+    if (body.containsKey("crashes")) {
+      int value = ((Number) body.get("crashes")).intValue();
+      race.updateDriverCrashes(heat, dhd, value);
       updated = true;
     }
     return updated;

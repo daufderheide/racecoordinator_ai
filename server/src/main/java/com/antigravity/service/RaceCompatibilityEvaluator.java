@@ -110,6 +110,8 @@ public class RaceCompatibilityEvaluator {
                   "falseStartTimePenalty",
                   "group_options",
                   "groupOptions",
+                  "crash_and_learn_options",
+                  "crashAndLearnOptions",
                   "practice",
                   "adjust_drift_laps",
                   "adjustDriftLaps",

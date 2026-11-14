@@ -110,4 +110,18 @@ describe("RacedayFlagFormatUtils", () => {
     );
     expect(result).toBe(`url-for-${RaceFlag.GREEN}`);
   });
+
+  it("should return disqualified flag when driver is disqualified", () => {
+    const hd = {
+      isDisqualified: true,
+    } as any as DriverHeatData;
+
+    const result = RacedayFlagFormatUtils.formatFlagValue(
+      RaceFlag.GREEN,
+      hd,
+      undefined,
+      ctx,
+    );
+    expect(result).toBe("url-for-flag.disqualified");
+  });
 });

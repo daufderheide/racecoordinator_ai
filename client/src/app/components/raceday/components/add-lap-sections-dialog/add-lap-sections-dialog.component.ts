@@ -170,6 +170,17 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                   {{ "RD_ADD_LAP_SECTIONS_LAPS_REPRESENT" | translate }})</span
                 >
               </div>
+              @if (isCnlEnabled() && calculatedPenaltyLaps() > 0) {
+                <div class="preview-line penalty-line">
+                  <span class="preview-label"
+                    >{{ "RD_ADD_LAP_SECTIONS_PENALTY_LAPS" | translate }}:</span
+                  >
+                  <span class="preview-value penalty-value"
+                    >-{{ calculatedPenaltyLaps() | number: "1.2-2" }}
+                    {{ "RD_ADD_LAP_SECTIONS_LAPS_REPRESENT" | translate }}</span
+                  >
+                </div>
+              }
               @if (isAutoSegments()) {
                 <div class="preview-line">
                   <span class="preview-label"
@@ -226,6 +237,16 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                   }}s</span
                 >
               </div>
+              @if (isCnlEnabled() && calculatedPenaltyTime() > 0) {
+                <div class="preview-line penalty-line">
+                  <span class="preview-label"
+                    >{{ "RD_ADD_LAP_SECTIONS_PENALTY_TIME" | translate }}:</span
+                  >
+                  <span class="preview-value penalty-value"
+                    >+{{ calculatedPenaltyTime() | number: "1.3-3" }}s</span
+                  >
+                </div>
+              }
               <div class="preview-line">
                 <span class="preview-label"
                   >{{
@@ -237,6 +258,60 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                 >
               </div>
             </div>
+
+            @if (isCnlEnabled()) {
+              <div class="input-row cnl-crashes-row">
+                <label for="crashesInput" class="input-label">
+                  {{ "RD_ADD_LAP_SECTIONS_CRASHES" | translate }}:
+                </label>
+                <div class="crashes-stepper-wrapper">
+                  <button
+                    type="button"
+                    class="btn-stepper"
+                    id="decrementCrashesBtn"
+                    (click)="decrementCrashes()"
+                    [disabled]="crashesInput() <= 0"
+                  >
+                    -
+                  </button>
+                  <input
+                    #crashesInputRef
+                    id="crashesInput"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="selector-input crashes-input"
+                    [value]="crashesInput()"
+                    (input)="onCrashesInputChange($event)"
+                    (keyup.enter)="onConfirm()"
+                    placeholder="0"
+                    autocomplete="off"
+                    data-dashlane-ignore="true"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
+                  />
+                  <button
+                    type="button"
+                    class="btn-stepper"
+                    id="incrementCrashesBtn"
+                    (click)="incrementCrashes()"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              @if (isDisqualifiedPreview()) {
+                <div class="dq-warning-banner">
+                  <span class="material-icons dq-icon">gavel</span>
+                  <span class="dq-text">{{
+                    "RD_DISQUALIFIED" | translate
+                  }}</span>
+                </div>
+              }
+            }
           }
 
           <div class="modal-actions">
@@ -479,6 +554,68 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
         transform: translateY(0);
       }
 
+      .penalty-line {
+        color: #f87171;
+      }
+      .penalty-value {
+        color: #f87171 !important;
+        font-weight: 600;
+      }
+      .cnl-crashes-row {
+        margin-top: 0.5rem;
+      }
+      .crashes-stepper-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn-stepper {
+        width: 32px;
+        height: 36px;
+        border-radius: 8px;
+        background: #090d16;
+        border: 1.5px solid #334155;
+        color: #f1f5f9;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .btn-stepper:hover:not(:disabled) {
+        border-color: #38bdf8;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+      }
+      .btn-stepper:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .crashes-input {
+        width: 70px !important;
+        text-align: center;
+      }
+      .dq-warning-banner {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: center;
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid #ef4444;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.875rem;
+        color: #ef4444;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 0.875rem;
+      }
+      .dq-icon {
+        font-size: 1.1rem;
+      }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
@@ -511,6 +648,7 @@ export class AddLapSectionsDialogComponent {
   heats = input<any[] | null>(null);
   track = input<any | null>(null);
   currentHeatNumber = input<number>(0);
+  race = input<any | null>(null);
 
   confirm = output<any>();
   cancel = output<void>();
@@ -519,15 +657,19 @@ export class AddLapSectionsDialogComponent {
   sectionsInputRef?: ElementRef<HTMLInputElement>;
   @ViewChild("timeAdjustmentInputRef")
   timeAdjustmentInputRef?: ElementRef<HTMLInputElement>;
+  @ViewChild("crashesInputRef")
+  crashesInputRef?: ElementRef<HTMLInputElement>;
 
   selectedHeatIndex = signal<number>(0);
   selectedLaneIndex = signal<number>(0);
 
   sectionsInput = signal<number>(0);
   timeAdjustmentInput = signal<number>(0);
+  crashesInput = signal<number>(0);
 
   private editedSectionsMap = new Map<string, number>();
   private editedTimeMap = new Map<string, number>();
+  private editedCrashesMap = new Map<string, number>();
 
   activeHeats = computed(() => {
     return this.heats() || [];
@@ -589,6 +731,45 @@ export class AddLapSectionsDialogComponent {
     return "#38bdf8";
   });
 
+  isCnlEnabled = computed(() => {
+    const r = this.race();
+    return !!(
+      r?.crash_and_learn_options?.enabled ?? r?.crashAndLearnOptions?.enabled
+    );
+  });
+
+  maxCrashes = computed(() => {
+    const r = this.race();
+    const cnl = r?.crash_and_learn_options || r?.crashAndLearnOptions;
+    return cnl?.max_crashes ?? cnl?.maxCrashes ?? 3;
+  });
+
+  heatCrashLapPenalty = computed(() => {
+    const r = this.race();
+    const cnl = r?.crash_and_learn_options || r?.crashAndLearnOptions;
+    return cnl?.heat_crash_lap_penalty ?? cnl?.heatCrashLapPenalty ?? 0;
+  });
+
+  heatTimePenalty = computed(() => {
+    const r = this.race();
+    const cnl = r?.crash_and_learn_options || r?.crashAndLearnOptions;
+    return cnl?.heat_time_penalty ?? cnl?.heatTimePenalty ?? 0;
+  });
+
+  calculatedPenaltyLaps = computed(() => {
+    return this.crashesInput() * this.heatCrashLapPenalty();
+  });
+
+  calculatedPenaltyTime = computed(() => {
+    return this.crashesInput() * this.heatTimePenalty();
+  });
+
+  isDisqualifiedPreview = computed(() => {
+    if (!this.isCnlEnabled()) return false;
+    const max = this.maxCrashes();
+    return max > 0 && this.crashesInput() > max;
+  });
+
   autoSegments = computed(() => {
     const hd = this.activeDriverHeatData();
     if (!hd) return 0;
@@ -612,9 +793,18 @@ export class AddLapSectionsDialogComponent {
       baseTime = (hd as any).getPhysicalTotalTime();
     }
     if (baseTime === 0 && (hd.totalTime ?? 0) > 0) {
-      baseTime = Math.max(0, (hd.totalTime ?? 0) - (hd.userTime || 0));
+      baseTime = Math.max(
+        0,
+        (hd.totalTime ?? 0) - (hd.userTime || 0) - (hd.penaltyTime || 0),
+      );
     }
-    return Math.max(0, baseTime + (this.timeAdjustmentInput() || 0));
+    const penaltyTime = this.isCnlEnabled()
+      ? this.calculatedPenaltyTime()
+      : hd.penaltyTime || 0;
+    return Math.max(
+      0,
+      baseTime + (this.timeAdjustmentInput() || 0) + penaltyTime,
+    );
   });
 
   constructor() {
@@ -623,6 +813,7 @@ export class AddLapSectionsDialogComponent {
         untracked(() => {
           this.editedSectionsMap.clear();
           this.editedTimeMap.clear();
+          this.editedCrashesMap.clear();
           if (this.isMenuMode()) {
             const allHeats = this.activeHeats();
             if (allHeats.length > 0) {
@@ -648,6 +839,7 @@ export class AddLapSectionsDialogComponent {
     if (!hd) {
       this.sectionsInput.set(0);
       this.timeAdjustmentInput.set(0);
+      this.crashesInput.set(0);
       return;
     }
     const heatsList = this.activeHeats();
@@ -665,6 +857,11 @@ export class AddLapSectionsDialogComponent {
       this.timeAdjustmentInput.set(this.editedTimeMap.get(key)!);
     } else {
       this.timeAdjustmentInput.set(hd.userTime || 0);
+    }
+    if (this.editedCrashesMap.has(key)) {
+      this.crashesInput.set(this.editedCrashesMap.get(key)!);
+    } else {
+      this.crashesInput.set(hd.crashes || 0);
     }
   }
 
@@ -744,7 +941,36 @@ export class AddLapSectionsDialogComponent {
     );
   }
 
+  incrementCrashes() {
+    this.setCrashes(this.crashesInput() + 1);
+  }
+
+  decrementCrashes() {
+    this.setCrashes(Math.max(0, this.crashesInput() - 1));
+  }
+
+  private setCrashes(crashes: number) {
+    this.crashesInput.set(crashes);
+    const hd = this.activeDriverHeatData();
+    if (hd) {
+      const heatsList = this.activeHeats();
+      const heatNum = this.isMenuMode()
+        ? (heatsList[this.selectedHeatIndex()]?.heatNumber ?? 0)
+        : this.currentHeatNumber();
+      const key = `${heatNum}_${hd.laneIndex}`;
+      this.editedCrashesMap.set(key, crashes);
+    }
+  }
+
+  onCrashesInputChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const val = parseInt(target.value, 10);
+    const crashes = isNaN(val) ? 0 : Math.max(0, val);
+    this.setCrashes(crashes);
+  }
+
   onConfirm() {
+    const isCnl = this.isCnlEnabled();
     if (this.isMenuMode()) {
       const heatsList = this.activeHeats();
       if (heatsList && heatsList.length > 0) {
@@ -752,6 +978,7 @@ export class AddLapSectionsDialogComponent {
         const allKeys = new Set([
           ...this.editedSectionsMap.keys(),
           ...this.editedTimeMap.keys(),
+          ...(isCnl ? this.editedCrashesMap.keys() : []),
         ]);
         const updates = Array.from(allKeys).map((key) => {
           const [heatNumber, laneIndex] = key.split("_").map(Number);
@@ -762,12 +989,18 @@ export class AddLapSectionsDialogComponent {
           const userTime = this.editedTimeMap.has(key)
             ? this.editedTimeMap.get(key)!
             : driver?.userTime || 0;
-          return {
+          const updateObj: any = {
             heatNumber,
             laneIndex,
             userLaps: sections / divisor,
             userTime,
           };
+          if (isCnl) {
+            updateObj.crashes = this.editedCrashesMap.has(key)
+              ? this.editedCrashesMap.get(key)!
+              : driver?.crashes || 0;
+          }
+          return updateObj;
         });
 
         if (updates.length === 0) {
@@ -775,12 +1008,16 @@ export class AddLapSectionsDialogComponent {
           if (hd) {
             const heatNum =
               heatsList[this.selectedHeatIndex()]?.heatNumber ?? 0;
-            updates.push({
+            const singleUpdate: any = {
               heatNumber: heatNum,
               laneIndex: hd.laneIndex,
               userLaps: this.sectionsInput() / divisor,
               userTime: this.timeAdjustmentInput(),
-            });
+            };
+            if (isCnl) {
+              singleUpdate.crashes = this.crashesInput();
+            }
+            updates.push(singleUpdate);
           }
         }
 
@@ -793,10 +1030,14 @@ export class AddLapSectionsDialogComponent {
       }
       return;
     }
-    this.confirm.emit({
+    const result: any = {
       userLaps: this.calculatedLaps(),
       userTime: this.timeAdjustmentInput(),
-    });
+    };
+    if (isCnl) {
+      result.crashes = this.crashesInput();
+    }
+    this.confirm.emit(result);
   }
 
   onCancel() {

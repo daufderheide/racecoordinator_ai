@@ -19,18 +19,19 @@ describe("RaceEditorHelpHelper", () => {
       groups: false,
       start_method: false,
       team: false,
+      crash_and_learn: false,
       fuel_analog: false,
       fuel_digital: false,
       season_points: false,
     };
   });
 
-  it("should generate all 15 help steps in the expected order with targets, positions, and onEnter callbacks", () => {
+  it("should generate all 16 help steps in the expected order with targets, positions, and onEnter callbacks", () => {
     const steps = RaceEditorHelpHelper.getHelpSteps(
       mockTranslationService,
       sectionsExpanded,
     );
-    expect(steps.length).toBe(15);
+    expect(steps.length).toBe(16);
 
     // Step 0: Overview (General info)
     expect(steps[0].title).toBe("translated_RE_HELP_WELCOME_TITLE");
@@ -112,29 +113,37 @@ describe("RaceEditorHelpHelper", () => {
     );
     expect(steps[11].position).toBe("left");
 
-    // Step 12: Analog fuel section
-    expect(steps[12].targetId).toBe("analog-fuel-section");
-    expect(steps[12].selector).toBe("#analog-fuel-section");
+    // Step 12: Crash and learn section
+    expect(steps[12].targetId).toBe("crash-and-learn-section");
+    expect(steps[12].selector).toBe("#crash-and-learn-section");
     expect(steps[12].title).toBe(
-      "translated_RE_HELP_EXPANDER_ANALOG_FUEL_TITLE",
+      "translated_RE_HELP_EXPANDER_CRASH_AND_LEARN_TITLE",
     );
     expect(steps[12].position).toBe("left");
 
-    // Step 13: Digital fuel outer section
-    expect(steps[13].targetId).toBe("digital-fuel-outer-section");
-    expect(steps[13].selector).toBe("#digital-fuel-outer-section");
+    // Step 13: Analog fuel section
+    expect(steps[13].targetId).toBe("analog-fuel-section");
+    expect(steps[13].selector).toBe("#analog-fuel-section");
     expect(steps[13].title).toBe(
-      "translated_RE_HELP_EXPANDER_DIGITAL_FUEL_TITLE",
+      "translated_RE_HELP_EXPANDER_ANALOG_FUEL_TITLE",
     );
     expect(steps[13].position).toBe("left");
 
-    // Step 14: Season points section
-    expect(steps[14].targetId).toBe("season-points-section");
-    expect(steps[14].selector).toBe("#season-points-section");
+    // Step 14: Digital fuel outer section
+    expect(steps[14].targetId).toBe("digital-fuel-outer-section");
+    expect(steps[14].selector).toBe("#digital-fuel-outer-section");
     expect(steps[14].title).toBe(
-      "translated_RE_HELP_EXPANDER_SEASON_POINTS_TITLE",
+      "translated_RE_HELP_EXPANDER_DIGITAL_FUEL_TITLE",
     );
     expect(steps[14].position).toBe("left");
+
+    // Step 15: Season points section
+    expect(steps[15].targetId).toBe("season-points-section");
+    expect(steps[15].selector).toBe("#season-points-section");
+    expect(steps[15].title).toBe(
+      "translated_RE_HELP_EXPANDER_SEASON_POINTS_TITLE",
+    );
+    expect(steps[15].position).toBe("left");
 
     // Verify onEnter callbacks expand corresponding sections
     expect(sectionsExpanded.general).toBeFalse();
@@ -165,16 +174,20 @@ describe("RaceEditorHelpHelper", () => {
     steps[11].onEnter?.();
     expect(sectionsExpanded.team).toBeTrue();
 
-    expect(sectionsExpanded.fuel_analog).toBeFalse();
+    expect(sectionsExpanded.crash_and_learn).toBeFalse();
     steps[12].onEnter?.();
+    expect(sectionsExpanded.crash_and_learn).toBeTrue();
+
+    expect(sectionsExpanded.fuel_analog).toBeFalse();
+    steps[13].onEnter?.();
     expect(sectionsExpanded.fuel_analog).toBeTrue();
 
     expect(sectionsExpanded.fuel_digital).toBeFalse();
-    steps[13].onEnter?.();
+    steps[14].onEnter?.();
     expect(sectionsExpanded.fuel_digital).toBeTrue();
 
     expect(sectionsExpanded.season_points).toBeFalse();
-    steps[14].onEnter?.();
+    steps[15].onEnter?.();
     expect(sectionsExpanded.season_points).toBeTrue();
   });
 
@@ -210,7 +223,7 @@ describe("RaceEditorHelpHelper", () => {
       sectionsExpanded,
     );
 
-    expect(steps.length).toBe(15);
+    expect(steps.length).toBe(16);
 
     for (const step of steps) {
       expect(step.title).not.toBe("");
@@ -246,10 +259,12 @@ describe("RaceEditorHelpHelper", () => {
     expect(steps[11].content).toContain("help-article-race-editor");
     expect(steps[11].content).toContain("help-section-team-racing");
     expect(steps[12].content).toContain("help-article-race-editor");
-    expect(steps[12].content).toContain("help-section-analog-fuel-simulation");
+    expect(steps[12].content).toContain("help-section-crash-and-learn");
     expect(steps[13].content).toContain("help-article-race-editor");
-    expect(steps[13].content).toContain("help-section-digital-fuel-simulation");
+    expect(steps[13].content).toContain("help-section-analog-fuel-simulation");
     expect(steps[14].content).toContain("help-article-race-editor");
-    expect(steps[14].content).toContain("help-section-season-scoring");
+    expect(steps[14].content).toContain("help-section-digital-fuel-simulation");
+    expect(steps[15].content).toContain("help-article-race-editor");
+    expect(steps[15].content).toContain("help-section-season-scoring");
   });
 });

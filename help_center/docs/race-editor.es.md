@@ -379,3 +379,20 @@ El expansor de Puntuación de temporada define la distribución de puntos para c
     - *Pole position*: Puntos de bonificación por la mejor posición de clasificación.
     - *Más vueltas lideradas*: Puntos por liderar la mayor cantidad de vueltas.
 - **Agregación del campeonato**: Suma automática de puntos de temporada con soporte para descartar los peores resultados.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+El desplegable **Crash and Learn (CNL)** configura reglas y penalizaciones para salidas de pista (accidentes) durante una carrera:
+
+- **Habilitar Crash and Learn**: Activa o desactiva el seguimiento. Cuando está desactivado, todos los ajustes subordinados permanecen inactivos.
+- **Tiempo de descalce automático (segundos)**: Umbral de tiempo por vuelta en segundos que activa la detección automática de accidente. Establezca en `0` para desactivar.
+- **Accidentes máximos**: Número de accidentes permitidos antes de la descalificación (DQ). Por ejemplo, si se establece en `3`, el piloto queda descalificado en el 4.º accidente.
+- **Pausar manga en accidente**: Activa automáticamente una bandera amarilla (pausa) al detectar un accidente o pulsar un botón de llamada por carril.
+- **Permitir múltiples accidentes por vuelta**: Permite acumular más de un accidente en la misma vuelta si transcurre nuevamente el tiempo automático.
+- **Restablecer accidentes cada manga**: Restablece el contador de accidentes de cada piloto a `0` al inicio de cada manga.
+- **Restablecer descalificación cada manga**: Restablece el estado de descalificación al inicio de la siguiente manga y reinicia sus accidentes a `0`.
+- **Penalización de vueltas por accidente**: Vueltas deducidas de la puntuación de la manga por cada accidente.
+- **Penalización de tiempo por accidente (segundos)**: Tiempo añadido al tiempo total de la manga por cada accidente.
+- **Porcentaje de puntuación en descalificación**: Porcentaje de vueltas acreditadas al piloto descalificado (predeterminado `100%`). Los pilotos descalificados se clasifican por debajo de los no descalificados.

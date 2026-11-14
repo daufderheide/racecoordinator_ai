@@ -534,4 +534,31 @@ describe("HeatConverter", () => {
     expect(heat.step).toBe(2);
     expect(heat.isStepUpBoundary).toBeTrue();
   });
+
+  it("should map crashes, isDisqualified, penaltyTime, and dqScorePercentage from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat_cnl",
+      heatNumber: 2,
+      heatDrivers: [
+        {
+          objectId: "hd_cnl",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          crashes: 4,
+          isDisqualified: true,
+          penaltyTime: 8.5,
+          dqScorePercentage: 50.0,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const hd = heat.heatDrivers[0]!;
+    expect(hd.crashes).toBe(4);
+    expect(hd.isDisqualified).toBeTrue();
+    expect(hd.penaltyTime).toBe(8.5);
+    expect(hd.dqScorePercentage).toBe(50.0);
+  });
 });

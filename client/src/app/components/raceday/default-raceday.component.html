@@ -1033,6 +1033,7 @@
     [heats]="heats"
     [track]="track || race.track"
     [currentHeatNumber]="heat?.heatNumber ?? 0"
+    [race]="race"
     (confirm)="onAddLapSectionsConfirm($event)"
     (cancel)="showAddLapSectionsDialog = false"
   ></app-add-lap-sections-dialog>

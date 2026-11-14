@@ -356,3 +356,20 @@ Het uitklapgedeelte Seizoensscore definieert de toekenning van kampioenschapspun
     - *Pole position*: Bonuspunten voor de beste kwalificatiepositie.
     - *Meeste ronden aan de leiding*: Bonuspunten voor de coureur die de meeste ronden aan kop lag.
 - **Kampioenschapsaggregatie**: Automatische puntentelling over het hele seizoen met ondersteuning voor schrapresultaten.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+Het uitvouwbare paneel **Crash and Learn (CNL)** configureert regels en straffen voor deslots (crashes) tijdens een race:
+
+- **Crash and Learn inschakelen**: Schakelt crash-detectie in of uit. Indien uitgeschakeld zijn alle onderliggende opties inactief.
+- **Automatische crashtijd (seconden)**: Rondetijddrempel in seconden die een automatische crashdetectie activeert. Stel in op `0` om uit te schakelen.
+- **Maximaal aantal crashes**: Toegestaan aantal crashes vóór diskwalificatie (DQ). Bijvoorbeeld bij `3` wordt een rijder bij de 4e crash gediskwalificeerd.
+- **Heat pauzeren bij crash**: Activeert automatisch een gele vlag (pauze) bij een automatische crash of bij gebruik van een baancallknop.
+- **Meerdere crashes per ronde toestaan**: Staat meerdere crashes in dezelfde ronde toe als de crashtijd opnieuw verstrijkt.
+- **Crashes elke heat resetten**: Zet het crashaantal van elke rijder bij aanvang van elke heat op `0`.
+- **Diskwalificatie elke heat resetten**: Heft de diskwalificatie op bij de volgende heat en zet de crashes weer op `0`.
+- **Rondestraf per crash**: Aantal ronden dat per crash in mindering wordt gebracht.
+- **Tijdstraf per crash (seconden)**: Straftijd in seconden die aan de totale heattijd wordt toegevoegd per crash.
+- **Scorepercentage bij diskwalificatie**: Percentage van de score dat behouden blijft bij diskwalificatie (standaard `100%`). Gediskwalificeerde rijders eindigen onder niet-gediskwalificeerde rijders.

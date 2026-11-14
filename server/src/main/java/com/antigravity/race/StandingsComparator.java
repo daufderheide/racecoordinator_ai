@@ -40,6 +40,13 @@ public class StandingsComparator<T extends StandingsParticipant> implements Comp
       return 0;
     }
 
+    // 1b. Disqualified participants sort below non-disqualified participants
+    boolean aDq = a.isDisqualified();
+    boolean bDq = b.isDisqualified();
+    if (aDq != bDq) {
+      return aDq ? 1 : -1;
+    }
+
     // 2. Primary ranking comparison
     int cmp = comparePrimary(a, b, rankingMethod);
     if (cmp != 0) {

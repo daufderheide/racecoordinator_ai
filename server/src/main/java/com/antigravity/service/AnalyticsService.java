@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import com.antigravity.App;
+import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
@@ -121,6 +122,14 @@ public class AnalyticsService {
     }
 
     sendPayload(createPayload("backend_race_started", buildRaceStartParams(race)));
+
+    boolean hasCrashAndLearn =
+        race.getRaceModel() != null
+            && race.getRaceModel().getCrashAndLearnOptions() != null
+            && race.getRaceModel().getCrashAndLearnOptions().isEnabled();
+    if (hasCrashAndLearn) {
+      sendPayload(createPayload("cnl_race_started", buildCnlParams(race)));
+    }
   }
 
   /* package */ Map<String, Object> buildRaceStartParams(Race race) {
@@ -195,6 +204,56 @@ public class AnalyticsService {
     params.put("points_scoring_enabled", hasPointsScoring);
     params.put("points_system_enabled", hasPointsScoring);
 
+    boolean hasCrashAndLearn =
+        race.getRaceModel() != null
+            && race.getRaceModel().getCrashAndLearnOptions() != null
+            && race.getRaceModel().getCrashAndLearnOptions().isEnabled();
+    params.put("has_crash_and_learn", hasCrashAndLearn);
+    params.put("crash_and_learn_enabled", hasCrashAndLearn);
+    params.put("cnl_enabled", hasCrashAndLearn);
+    if (hasCrashAndLearn) {
+      CrashAndLearnOptions cnl = race.getRaceModel().getCrashAndLearnOptions();
+      params.put("cnl_max_crashes", cnl.getMaxCrashes());
+      params.put("cnl_auto_crash_time", cnl.getAutomatedCrashTime());
+      params.put("cnl_pause_on_crash", cnl.isPauseHeatOnCrash());
+      params.put("cnl_allow_multiple_crashes_per_lap", cnl.isAllowMultipleCrashesPerLap());
+      params.put("cnl_reset_crashes_each_heat", cnl.isResetCrashesEachHeat());
+      params.put("cnl_reset_dq_each_heat", cnl.isResetDqEachHeat());
+      params.put("cnl_heat_crash_lap_penalty", cnl.getHeatCrashLapPenalty());
+      params.put("cnl_heat_time_penalty", cnl.getHeatTimePenalty());
+      params.put("cnl_dq_heat_score_percentage", cnl.getDqHeatScorePercentage());
+    }
+
+    params.put("engagement_time_msec", 1L);
+    params.put("session_id", System.currentTimeMillis());
+    return params;
+  }
+
+  /* package */ Map<String, Object> buildCnlParams(Race race) {
+    Map<String, Object> params = new HashMap<>();
+    CrashAndLearnOptions cnl =
+        race.getRaceModel() != null && race.getRaceModel().getCrashAndLearnOptions() != null
+            ? race.getRaceModel().getCrashAndLearnOptions()
+            : new CrashAndLearnOptions.Builder().build();
+
+    params.put("cnl_enabled", cnl.isEnabled());
+    params.put("crash_and_learn_enabled", cnl.isEnabled());
+    params.put("max_crashes", cnl.getMaxCrashes());
+    params.put("auto_crash_time", cnl.getAutomatedCrashTime());
+    params.put("pause_on_crash", cnl.isPauseHeatOnCrash());
+    params.put("allow_multiple_crashes_per_lap", cnl.isAllowMultipleCrashesPerLap());
+    params.put("reset_crashes_each_heat", cnl.isResetCrashesEachHeat());
+    params.put("reset_dq_each_heat", cnl.isResetDqEachHeat());
+    params.put("heat_crash_lap_penalty", cnl.getHeatCrashLapPenalty());
+    params.put("heat_time_penalty", cnl.getHeatTimePenalty());
+    params.put("dq_heat_score_percentage", cnl.getDqHeatScorePercentage());
+    params.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
+    params.put(
+        "number_of_lanes",
+        race.getTrack() != null && race.getTrack().getLanes() != null
+            ? race.getTrack().getLanes().size()
+            : 0);
+    params.put("is_demo", race.isDemoMode());
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());
     return params;

@@ -18,6 +18,7 @@ public class StandingsComparatorTest {
     private final double avgLap;
     private final double medianLap;
     private final boolean empty;
+    private final boolean disqualified;
     private final int seed;
     private final List<Double> sortedLaps;
     private final double bestLapRecordedTime;
@@ -39,6 +40,31 @@ public class StandingsComparatorTest {
           avgLap,
           medianLap,
           empty,
+          false,
+          seed,
+          java.util.Collections.emptyList(),
+          Double.MAX_VALUE);
+    }
+
+    public MockParticipant(
+        String id,
+        double laps,
+        double totalTime,
+        double bestLap,
+        double avgLap,
+        double medianLap,
+        boolean empty,
+        boolean disqualified,
+        int seed) {
+      this(
+          id,
+          laps,
+          totalTime,
+          bestLap,
+          avgLap,
+          medianLap,
+          empty,
+          disqualified,
           seed,
           java.util.Collections.emptyList(),
           Double.MAX_VALUE);
@@ -55,6 +81,32 @@ public class StandingsComparatorTest {
         int seed,
         List<Double> sortedLaps,
         double bestLapRecordedTime) {
+      this(
+          id,
+          laps,
+          totalTime,
+          bestLap,
+          avgLap,
+          medianLap,
+          empty,
+          false,
+          seed,
+          sortedLaps,
+          bestLapRecordedTime);
+    }
+
+    public MockParticipant(
+        String id,
+        double laps,
+        double totalTime,
+        double bestLap,
+        double avgLap,
+        double medianLap,
+        boolean empty,
+        boolean disqualified,
+        int seed,
+        List<Double> sortedLaps,
+        double bestLapRecordedTime) {
       this.id = id;
       this.laps = laps;
       this.totalTime = totalTime;
@@ -62,9 +114,15 @@ public class StandingsComparatorTest {
       this.avgLap = avgLap;
       this.medianLap = medianLap;
       this.empty = empty;
+      this.disqualified = disqualified;
       this.seed = seed;
       this.sortedLaps = sortedLaps != null ? sortedLaps : java.util.Collections.emptyList();
       this.bestLapRecordedTime = bestLapRecordedTime;
+    }
+
+    @Override
+    public boolean isDisqualified() {
+      return disqualified;
     }
 
     @Override
@@ -495,6 +553,43 @@ public class StandingsComparatorTest {
     list.sort(comparator);
 
     Assert.assertEquals("p1 has a 2nd lap while p2 does not", "p1", list.get(0).getParticipantId());
+    Assert.assertEquals("p2", list.get(1).getParticipantId());
+  }
+
+  @Test
+  public void testDisqualifiedParticipantSortsBelowNonDisqualified() {
+    // p1 has 20 laps but is DQ'd; p2 has 5 laps and is NOT DQ'd
+    MockParticipant p1 = new MockParticipant("p1", 20.0, 100.0, 5.0, 5.0, 5.0, false, true, 1);
+    MockParticipant p2 = new MockParticipant("p2", 5.0, 30.0, 6.0, 6.0, 6.0, false, false, 2);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.LAP_COUNT, TiebreakerMethod.AVERAGE_LAP_TIME);
+
+    Assert.assertTrue("DQ participant must rank lower than non-DQ", comparator.compare(p1, p2) > 0);
+    Assert.assertTrue(
+        "Non-DQ participant must rank higher than DQ", comparator.compare(p2, p1) < 0);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p1, p2));
+    list.sort(comparator);
+    Assert.assertEquals("p2", list.get(0).getParticipantId());
+    Assert.assertEquals("p1", list.get(1).getParticipantId());
+  }
+
+  @Test
+  public void testMultipleDisqualifiedParticipantsComparedByScore() {
+    // Both p1 and p2 are DQ'd; p1 has 15 laps, p2 has 10 laps
+    MockParticipant p1 = new MockParticipant("p1", 15.0, 75.0, 5.0, 5.0, 5.0, false, true, 1);
+    MockParticipant p2 = new MockParticipant("p2", 10.0, 50.0, 5.0, 5.0, 5.0, false, true, 2);
+
+    StandingsComparator<StandingsParticipant> comparator =
+        new StandingsComparator<>(RankingMethod.LAP_COUNT, TiebreakerMethod.AVERAGE_LAP_TIME);
+
+    Assert.assertTrue("Higher scoring DQ participant ranks higher", comparator.compare(p1, p2) < 0);
+    Assert.assertTrue("Lower scoring DQ participant ranks lower", comparator.compare(p2, p1) > 0);
+
+    List<StandingsParticipant> list = new ArrayList<>(Arrays.asList(p2, p1));
+    list.sort(comparator);
+    Assert.assertEquals("p1", list.get(0).getParticipantId());
     Assert.assertEquals("p2", list.get(1).getParticipantId());
   }
 }

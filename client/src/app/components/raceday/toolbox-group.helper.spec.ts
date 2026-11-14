@@ -48,7 +48,7 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(129);
+    expect(rcAiGroup.totalCount).toBe(131);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -87,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(129);
+    expect(rcAiGroup.totalCount).toBe(131);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
@@ -485,6 +485,18 @@ describe("ToolboxGroupHelper", () => {
     expect(analysisSg).toBeDefined();
     expect(
       analysisSg!.widgets.find((w) => w.type === "lane-col:averageScore"),
+    ).toBeDefined();
+
+    // Verify crashes and crashPenalty are present in laps-standings subgroup of Heat Data
+    const standingsSg = heatDataSubgroup!.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-laps-standings",
+    );
+    expect(standingsSg).toBeDefined();
+    expect(
+      standingsSg!.widgets.find((w) => w.type === "lane-col:crashes"),
+    ).toBeDefined();
+    expect(
+      standingsSg!.widgets.find((w) => w.type === "lane-col:crashPenalty"),
     ).toBeDefined();
   });
 

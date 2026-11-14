@@ -356,3 +356,20 @@ Der Bereich Saisonwertung definiert die Verteilung von Meisterschaftspunkten fü
     - *Pole Position*: Bonuspunkte für die beste Qualifikationsplatzierung.
     - *Meiste Führungsrunden*: Bonuspunkte für die meisten Runden in Führung.
 - **Meisterschafts-Aggregation**: Automatische Zusammenrechnung der Punkte über Rennen hinweg inklusive Streichergebnissen.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+Der Expander **Crash and Learn (CNL)** konfiguriert Regeln und Strafen für Deslots (Crashes) während eines Rennens:
+
+- **Crash and Learn aktivieren**: Schaltet die Crash-and-Learn-Erfassung ein oder aus. Wenn deaktiviert, sind alle untergeordneten Einstellungen inaktiv.
+- **Automatische Crash-Erkennungszeit (Sekunden)**: Schwellenwert der Rundenzeit in Sekunden, bei dessen Überschreitung ein automatischer Crash erkannt wird. Auf `0` setzen, um die automatische Erkennung zu deaktivieren.
+- **Maximale Crashes**: Erlaubte Anzahl von Crashes vor einer Disqualifikation (DQ). Bei `3` wird ein Fahrer beim 4. Crash disqualifiziert.
+- **Lauf bei Crash pausieren**: Löst bei automatischem Deslot oder Drücken eines spurbezogenen Call-Buttons automatisch eine Gelbphase (Pause) aus.
+- **Mehrere Crashes pro Runde zulassen**: Ermöglicht mehrere aufeinanderfolgende Crashes in derselben Runde, wenn die automatische Crash-Zeit mehrfach abläuft.
+- **Crashes bei jedem Lauf zurücksetzen**: Setzt den Crash-Zähler jedes Fahrers zu Beginn jedes Laufs auf `0` zurück.
+- **Disqualifikation bei jedem Lauf zurücksetzen**: Hebt den DQ-Status eines Fahrers zu Beginn des nächsten Laufs auf und setzt die Crashes auf `0` zurück.
+- **Rundenstrafe pro Crash**: Anzahl der Runden, die dem Fahrer pro Crash abgezogen werden.
+- **Zeitstrafe pro Crash (Sekunden)**: Strafzeit in Sekunden, die der Gesamtlaufzeit des Fahrers pro Crash hinzugefügt wird.
+- **Lauf-Punkteanteil bei Disqualifikation**: Prozentsatz der gewerteten Laufleistung für disqualifizierte Fahrer (Standard `100%`). Disqualifizierte Fahrer werden hinter allen nicht disqualifizierten Fahrern platziert.

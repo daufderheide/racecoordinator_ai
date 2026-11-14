@@ -647,7 +647,9 @@ export class RacedayDriverStandingsHelper {
       col.propertyName === "lapCount" ||
       col.propertyName === "physicalLapCount" ||
       col.propertyName === "totalTime" ||
-      col.propertyName === "overallTotalTime"
+      col.propertyName === "overallTotalTime" ||
+      col.propertyName === "crashes" ||
+      col.propertyName === "crashPenalty"
     ) {
       if (
         (col.propertyName === "lapCount" ||
@@ -671,6 +673,12 @@ export class RacedayDriverStandingsHelper {
           hd,
           -host.LAP_ADJUSTMENT_AMOUNT,
         );
+      } else if (col.propertyName === "crashes" && event.shiftKey) {
+        event.preventDefault();
+        RacedayDriverStandingsHelper.updateCrashes(host, hd, 1);
+      } else if (col.propertyName === "crashes" && event.altKey) {
+        event.preventDefault();
+        RacedayDriverStandingsHelper.updateCrashes(host, hd, -1);
       } else {
         if (!host.track) {
           host.track = host.race?.track || host.raceService?.getRace()?.track;
@@ -681,6 +689,36 @@ export class RacedayDriverStandingsHelper {
         host.cdr?.markForCheck();
       }
     }
+  }
+
+  static updateCrashes(host: any, hd: DriverHeatData, amount: number): void {
+    const currentCrashes = hd.crashes || 0;
+    const newCrashes = Math.max(0, currentCrashes + amount);
+    host.dataService?.updateCrashes(hd.laneIndex, newCrashes).subscribe({
+      next: (response: any) => {
+        if (response) {
+          if (response.crashes !== undefined) {
+            hd.crashes = response.crashes;
+          }
+          if (response.disqualified !== undefined) {
+            hd.isDisqualified = response.disqualified;
+          }
+          if (response.penaltyTime !== undefined) {
+            hd.penaltyTime = response.penaltyTime;
+          }
+          if (response.adjustedLapCount !== undefined) {
+            hd.adjustedLapCount = response.adjustedLapCount;
+          }
+          if (response.totalTime !== undefined) {
+            hd.totalTime = response.totalTime;
+          }
+          host.cdr?.markForCheck();
+        }
+      },
+      error: (error: any) => {
+        host.logger?.error("Error updating crashes:", error);
+      },
+    });
   }
 
   static updateUserLaps(host: any, hd: DriverHeatData, amount: number): void {
@@ -732,6 +770,9 @@ export class RacedayDriverStandingsHelper {
               if (u.userTime !== undefined) {
                 hd.userTime = u.userTime;
               }
+              if (u.crashes !== undefined) {
+                hd.crashes = u.crashes;
+              }
               host.cdr?.markForCheck();
             }
           }
@@ -751,57 +792,93 @@ export class RacedayDriverStandingsHelper {
     const hd = host.selectedHeatDriver;
     const userLaps = event.userLaps;
     const userTime = event.userTime ?? 0;
-    host.dataService
-      ?.updateUserLaps(hd.laneIndex, userLaps, userTime)
-      .subscribe({
-        next: (response: any) => {
-          if (response && response.adjustedLapCount !== undefined) {
-            hd.adjustedLapCount = response.adjustedLapCount;
-            hd.userLaps = userLaps;
-            hd.userTime = userTime;
-            if (response.totalTime !== undefined) {
-              hd.totalTime = response.totalTime;
-            }
-            host.cdr?.markForCheck();
+    const crashes = event.crashes;
+    const request$ =
+      crashes !== undefined
+        ? host.dataService?.updateUserLaps(
+            hd.laneIndex,
+            userLaps,
+            userTime,
+            crashes,
+          )
+        : host.dataService?.updateUserLaps(hd.laneIndex, userLaps, userTime);
+    request$?.subscribe({
+      next: (response: any) => {
+        if (response && response.adjustedLapCount !== undefined) {
+          hd.adjustedLapCount = response.adjustedLapCount;
+          hd.userLaps = userLaps;
+          hd.userTime = userTime;
+          if (response.totalTime !== undefined) {
+            hd.totalTime = response.totalTime;
           }
-        },
-        error: (error: any) => {
-          host.logger?.error("Error updating user laps from dialog:", error);
-        },
-      });
+          if (response.crashes !== undefined) {
+            hd.crashes = response.crashes;
+          }
+          if (response.disqualified !== undefined) {
+            hd.isDisqualified = response.disqualified;
+          }
+          if (response.penaltyTime !== undefined) {
+            hd.penaltyTime = response.penaltyTime;
+          }
+          host.cdr?.markForCheck();
+        }
+      },
+      error: (error: any) => {
+        host.logger?.error("Error updating user laps from dialog:", error);
+      },
+    });
   }
 
   static handleHeatDriverLapSections(host: any, event: any): void {
-    const { heatNumber, laneIndex, userLaps, userTime } = event;
-    host.dataService
-      ?.updateHeatUserLaps(heatNumber, laneIndex, userLaps, userTime ?? 0)
-      .subscribe({
-        next: (response: any) => {
-          const targetHeat = host.heats?.find(
-            (h: any) => h.heatNumber === heatNumber,
+    const { heatNumber, laneIndex, userLaps, userTime, crashes } = event;
+    const request$ =
+      crashes !== undefined
+        ? host.dataService?.updateHeatUserLaps(
+            heatNumber,
+            laneIndex,
+            userLaps,
+            userTime ?? 0,
+            crashes,
+          )
+        : host.dataService?.updateHeatUserLaps(
+            heatNumber,
+            laneIndex,
+            userLaps,
+            userTime ?? 0,
           );
-          if (targetHeat && targetHeat.heatDrivers) {
-            const hd = targetHeat.heatDrivers[laneIndex];
-            if (hd && response && response.adjustedLapCount !== undefined) {
-              hd.adjustedLapCount = response.adjustedLapCount;
-              hd.userLaps = userLaps;
-              if (userTime !== undefined) {
-                hd.userTime = userTime;
-              }
-              if (response.totalTime !== undefined) {
-                hd.totalTime = response.totalTime;
-              }
-              host.cdr?.markForCheck();
+    request$?.subscribe({
+      next: (response: any) => {
+        const targetHeat = host.heats?.find(
+          (h: any) => h.heatNumber === heatNumber,
+        );
+        if (targetHeat && targetHeat.heatDrivers) {
+          const hd = targetHeat.heatDrivers[laneIndex];
+          if (hd && response && response.adjustedLapCount !== undefined) {
+            hd.adjustedLapCount = response.adjustedLapCount;
+            hd.userLaps = userLaps;
+            if (userTime !== undefined) {
+              hd.userTime = userTime;
             }
+            if (response.totalTime !== undefined) {
+              hd.totalTime = response.totalTime;
+            }
+            if (response.crashes !== undefined) {
+              hd.crashes = response.crashes;
+            }
+            if (response.disqualified !== undefined) {
+              hd.isDisqualified = response.disqualified;
+            }
+            if (response.penaltyTime !== undefined) {
+              hd.penaltyTime = response.penaltyTime;
+            }
+            host.cdr?.markForCheck();
           }
-        },
-        error: (error: any) => {
-          host.logger?.error(
-            "Error updating heat user laps from dialog:",
-            error,
-          );
-        },
-      });
+        }
+      },
+      error: (error: any) => {
+        host.logger?.error("Error updating heat user laps from dialog:", error);
+      },
+    });
   }
 
   static onAddLapSectionsConfirm(host: any, event: any): void {

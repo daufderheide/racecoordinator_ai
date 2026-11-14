@@ -45,3 +45,30 @@ Beim Klick auf eine anklickbare Rundenzelle:
 - **Angepasste Runden**: Verändert direkt die Position in **Meiste Runden**-Wertungen und aktualisiert Rundenabstände (`gapLeader`, `gapPosition`). Physische Runden, beste Rundenzeit, Median-Rundenzeit und durchschnittliche Pace bleiben unberührt.
 - **Angepasste Gesamtzeit**: Verändert die Position in **Schnellste Gesamtzeit**-Wertungen, dient als primärer Tiebreaker bei Rundengleichstand und aktualisiert die **Durchschnittliche Rundenzeit** ($\text{Bereinigte Gesamtzeit} / \text{Physische Runden}$) sowie Zeitabstände.
 - **Geschützte Metriken**: **Beste Rundenzeit** und **Median-Rundenzeit** basieren strikt auf tatsächlichen physischen Sensorrunden und werden durch Zeitanpassungen niemals verändert.
+
+---
+
+## Crash-and-Learn-Betrieb {: #crash-and-learn-operations }
+
+Wenn ein Rennen mit aktiviertem **Crash and Learn (CNL)** durchgeführt wird, erfasst Race Coordinator AI Deslots (Crashes) der Fahrer in Echtzeit, setzt Crash-Limits durch, vergibt Strafen und verwaltet Disqualifikationen.
+
+### Deslot-Erkennung & Chaosschalter
+- **Automatische Crash-Erkennung**: Wenn im Rennprofil konfiguriert und die Rundenzeit eines Fahrzeugs die **Automatische Crash-Zeit** überschreitet, erkennt das System automatisch einen Deslot und rechnet dem Fahrer einen Crash an.
+- **Automatische Gelbphasen**: Wenn **Lauf bei Crash pausieren** aktiviert ist, löst ein automatischer Crash sofort eine Rennunterbrechung (Gelbe Flagge) aus und schaltet den Bahnstrom ab.
+- **Mehrere Crashes pro Runde**: Wenn **Mehrere Crashes pro Runde erlauben** aktiviert ist, sammelt ein Fahrzeug, das neben der Spur verbleibt, für jedes erneute Verstreichen der Crash-Zeit einen weiteren Crash an.
+- **Spurbezogene Chaosschalter**: Bei Bahnen mit spurbezogenen Chaosschaltern löst das Drücken des Schalters eine Gelbphase aus und verbucht einen Crash für diese Spur. Ein Drücken anderer Chaosschalter während einer bestehenden Pause rechnet keinen weiteren Crash an.
+
+### Disqualifikations-Mechanik (DQ)
+Überschreitet ein Fahrer die eingestellte **Maximale Crash-Anzahl** (z. B. 4 Crashes bei einem Limit von 3):
+- **Schwarze Flagge**: Der Spurstatus des Fahrers wechselt sofort zur Schwarzen Flagge (`flag.disqualified`).
+- **Spurstrombabschaltung**: Sind spurbezogene Relais vorhanden, wird der Bahnstrom dieser Spur sofort abgeschaltet.
+- **Rundenzählung gestoppt**: Sensorimpulse und Runden werden für disqualifizierte Fahrer im restlichen Lauf ignoriert.
+- **Sofortige Teilrundenberechnung**: In Teilrunden-Rennen (`NoneAutoSegments` oder `SingleLapAutoSegments`) werden die Segmente des disqualifizierten Fahrers im Moment der Disqualifikation nach dem Prinzip „Fertigfahren nicht erlauben“ berechnet ($\text{timeSinceLastLap} / \text{medianLapTime}$, maximal $0.99$). Dadurch wird verhindert, dass der Fahrer fälschlicherweise auf 0.99 Teilrunden anwächst, während er auf das Laufende wartet.
+- **Wertungsrangfolge**: Disqualifizierte Fahrer können in der Laufwertung nicht vor nicht-disqualifizierten Fahrern platziert werden. Bei mehreren DQ-Fahrern entscheidet deren relatives Laufergebnis (skaliert nach dem eingestellten **DQ-Laufwertungsprozentsatz**).
+
+### Crashes & Strafen prüfen und anpassen
+Die Rennleitung hat jederzeit volle manuelle Kontrolle:
+- **Crash-Zähler-Widgets**: Die Spurenspalten zeigen den aktuellen Crash-Zähler des Laufs an.
+- **Manuelle Crash-Anpassung**: Über die Schaltflächen oder den Dialog **Rundensektoren / Zeit anpassen** können Crashes hinzugefügt oder abgezogen werden.
+- **Aufhebung einer Disqualifikation**: Sinkt die Crash-Zahl durch Abzug wieder auf oder unter das Limit, wird die Disqualifikation sofort aufgehoben: Die Flagge schaltet zurück auf Grün, der Bahnstrom wird wiederhergestellt und die Strafen werden neu berechnet.
+- **Transparenz der Strafen**: Strafrunden und Strafzeiten werden im Anpassungsdialog neben den Runden- und Zeiteingaben angezeigt.

@@ -405,6 +405,8 @@ export class RacedayFormatUtils {
       baseKey === "rankGroup" ||
       baseKey === "lapsLed" ||
       baseKey === "trackCalls" ||
+      baseKey === "crashes" ||
+      baseKey === "crashPenalty" ||
       baseKey === "physicalLapCount" ||
       baseKey === "recordLapTime" ||
       baseKey === "bestRaceLapTime" ||
@@ -738,6 +740,23 @@ export class RacedayFormatUtils {
     if (baseKey === "trackCalls") {
       if (this.isEmptyDriver(hd)) return "--";
       return String(value ?? hd?.trackCalls ?? (hd as any)?.track_calls ?? 0);
+    }
+    if (baseKey === "crashes") {
+      if (this.isEmptyDriver(hd)) return "--";
+      return String(value ?? hd?.crashes ?? 0);
+    }
+    if (baseKey === "crashPenalty") {
+      if (this.isEmptyDriver(hd)) return "--";
+      const penaltyLaps = hd?.penaltyLaps ?? 0;
+      const penaltyTime = hd?.penaltyTime ?? 0;
+      if (penaltyLaps > 0 && penaltyTime > 0) {
+        return `-${penaltyLaps}L / -${penaltyTime.toFixed(1)}s`;
+      } else if (penaltyLaps > 0) {
+        return `-${penaltyLaps}L`;
+      } else if (penaltyTime > 0) {
+        return `-${penaltyTime.toFixed(1)}s`;
+      }
+      return "0";
     }
     if (baseKey === "laneNumber") return String((hd?.laneIndex ?? 0) + 1);
     if (baseKey.startsWith("ghostPacing"))

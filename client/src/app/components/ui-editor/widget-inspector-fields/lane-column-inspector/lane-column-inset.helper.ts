@@ -637,6 +637,7 @@ export class LaneColumnInsetHelper {
       "averageSpeed",
       "physicalLapCount",
       "overallPhysicalLapCount",
+      "crashes",
     ].includes(key.split("_")[0]);
   }
 

@@ -48,7 +48,7 @@ The top toolbar provides standardized theme management actions:
 
 ### Flag Images
 
-Configure visual flag assets for all 12 behavioral race control flag states:
+Configure visual flag assets for all 13 behavioral race control flag states:
 
 - **Racing** (`flag.racing`): Active green-flag racing status.
 - **Heat Paused** (`flag.heat_paused`): Yellow flag / caution period.
@@ -62,6 +62,7 @@ Configure visual flag assets for all 12 behavioral race control flag states:
 - **Warmup** (`flag.warmup`): Practice or track warmup mode.
 - **Driver Finished** (`flag.driver_finished`): Displayed for drivers who have completed their heat distance.
 - **Penalty** (`flag.penalty`): Disqualification or track penalty indicator.
+- **Disqualified** (`flag.disqualified`): Black flag indicator displayed when a driver is disqualified in Crash and Learn mode or by race director action.
 
 ### Countdown Images
 

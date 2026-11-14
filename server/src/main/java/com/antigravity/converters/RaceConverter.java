@@ -1,6 +1,7 @@
 package com.antigravity.converters;
 
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatScoring;
@@ -66,6 +67,10 @@ public class RaceConverter {
 
       if (race.getTeamOptions() != null) {
         builder.setTeamOptions(buildTeamOptions(race.getTeamOptions()));
+      }
+
+      if (race.getCrashAndLearnOptions() != null) {
+        builder.setCrashAndLearnOptions(buildCrashAndLearnOptions(race.getCrashAndLearnOptions()));
       }
       builder.setAutoAdvanceTime(race.getAutoAdvanceTime());
       builder.setAutoStartTime(race.getAutoStartTime());
@@ -248,6 +253,23 @@ public class RaceConverter {
         .setOverallLapLimit(options.getOverallLapLimit())
         .setOverallTimeLimit(options.getOverallTimeLimit())
         .setRequirePitStopChangeDriver(options.isRequirePitStopChangeDriver())
+        .build();
+  }
+
+  private static com.antigravity.proto.CrashAndLearnOptions
+      buildCrashAndLearnOptions( // fqn-collision
+      CrashAndLearnOptions options) {
+    return com.antigravity.proto.CrashAndLearnOptions.newBuilder() // fqn-collision
+        .setEnabled(options.isEnabled())
+        .setAutomatedCrashTime(options.getAutomatedCrashTime())
+        .setMaxCrashes(options.getMaxCrashes())
+        .setPauseHeatOnCrash(options.isPauseHeatOnCrash())
+        .setAllowMultipleCrashesPerLap(options.isAllowMultipleCrashesPerLap())
+        .setResetCrashesEachHeat(options.isResetCrashesEachHeat())
+        .setResetDqEachHeat(options.isResetDqEachHeat())
+        .setHeatCrashLapPenalty(options.getHeatCrashLapPenalty())
+        .setHeatTimePenalty(options.getHeatTimePenalty())
+        .setDqHeatScorePercentage(options.getDqHeatScorePercentage())
         .build();
   }
 

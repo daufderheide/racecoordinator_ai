@@ -314,6 +314,7 @@ export class Settings {
   flagWarmup?: string;
   flagDriverFinished?: string;
   flagPenalty?: string;
+  flagDisqualified?: string;
 
   customExportTemplateBase64?: string;
   customExportTemplateName?: string;

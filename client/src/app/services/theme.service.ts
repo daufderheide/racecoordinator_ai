@@ -361,6 +361,7 @@ export class ThemeService {
     settings.flagWarmup = resolveUrl("flag.warmup");
     settings.flagDriverFinished = resolveUrl("flag.driver_finished");
     settings.flagPenalty = resolveUrl("flag.penalty");
+    settings.flagDisqualified = resolveUrl("flag.disqualified");
     settings.lampRedOn = resolveUrl("lamp.red.on");
     settings.lampRedDim = resolveUrl("lamp.red.dim");
     settings.lampGreen = resolveUrl("lamp.green");

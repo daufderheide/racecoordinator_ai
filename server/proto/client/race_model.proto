@@ -151,6 +151,20 @@ message RaceModel {
   reserved 36;
   int32 step_up = 37;
   PointsScoring points_scoring = 38;
+  CrashAndLearnOptions crash_and_learn_options = 39;
+}
+
+message CrashAndLearnOptions {
+  bool enabled = 1;
+  double automated_crash_time = 2;
+  int32 max_crashes = 3;
+  bool pause_heat_on_crash = 4;
+  bool allow_multiple_crashes_per_lap = 5;
+  bool reset_crashes_each_heat = 6;
+  bool reset_dq_each_heat = 7;
+  double heat_crash_lap_penalty = 8;
+  double heat_time_penalty = 9;
+  double dq_heat_score_percentage = 10;
 }
 
 // CustomRotation and CustomHeat moved to rotation_model.proto

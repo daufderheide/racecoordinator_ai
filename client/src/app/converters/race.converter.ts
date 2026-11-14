@@ -1,3 +1,4 @@
+import { CrashAndLearnOptions } from "@app/models/crash_and_learn_options";
 import { GroupOptions } from "@app/models/group_options";
 import {
   AllowFinish,
@@ -85,6 +86,9 @@ export class RaceConverter {
     const groupOptions = this.parseGroupOptions(
       p.groupOptions || p.group_options,
     );
+    const crashAndLearnOptions = this.parseCrashAndLearnOptions(
+      p.crashAndLearnOptions || p.crash_and_learn_options,
+    );
 
     return new Race(
       objectId || "",
@@ -148,6 +152,7 @@ export class RaceConverter {
       p.falseStartLapPenalty || p.false_start_lap_penalty || 0,
       p.falseStartTimePenalty || p.false_start_time_penalty || 0,
       groupOptions,
+      crashAndLearnOptions,
       p.practice || false,
       p.adjustDriftLaps ?? p.adjust_drift_laps ?? false,
       p.themeId || p.theme_id || undefined,
@@ -334,6 +339,24 @@ export class RaceConverter {
       Boolean(rawGroup.rotateGroupHeats ?? rawGroup.rotate_group_heats ?? true),
       rawGroup.minAdvancing || rawGroup.min_advancing || 0,
       rawGroup.names || [],
+    );
+  }
+
+  private static parseCrashAndLearnOptions(rawCnl: any): CrashAndLearnOptions {
+    if (!rawCnl) return new CrashAndLearnOptions();
+    return new CrashAndLearnOptions(
+      Boolean(rawCnl.enabled),
+      rawCnl.automatedCrashTime ?? rawCnl.automated_crash_time ?? 0.0,
+      rawCnl.maxCrashes ?? rawCnl.max_crashes ?? 3,
+      rawCnl.pauseHeatOnCrash ?? rawCnl.pause_heat_on_crash ?? true,
+      rawCnl.allowMultipleCrashesPerLap ??
+        rawCnl.allow_multiple_crashes_per_lap ??
+        true,
+      rawCnl.resetCrashesEachHeat ?? rawCnl.reset_crashes_each_heat ?? true,
+      rawCnl.resetDqEachHeat ?? rawCnl.reset_dq_each_heat ?? true,
+      rawCnl.heatCrashLapPenalty ?? rawCnl.heat_crash_lap_penalty ?? 0.0,
+      rawCnl.heatTimePenalty ?? rawCnl.heat_time_penalty ?? 0.0,
+      rawCnl.dqHeatScorePercentage ?? rawCnl.dq_heat_score_percentage ?? 100.0,
     );
   }
 }

@@ -76,4 +76,24 @@ public class RaceTest {
     Race customMinLapRace = new Race.Builder().withName("Custom").withMinLapTime(2.5).build();
     assertEquals(2.5, customMinLapRace.getMinLapTime(), 0.001);
   }
+
+  @Test
+  public void testRaceCloneWithCrashAndLearnOptions() {
+    CrashAndLearnOptions cnl =
+        new CrashAndLearnOptions.Builder()
+            .withEnabled(true)
+            .withAutomatedCrashTime(6.0)
+            .withMaxCrashes(4)
+            .withHeatCrashLapPenalty(2.0)
+            .build();
+    Race original = new Race.Builder().withName("Original").withCrashAndLearnOptions(cnl).build();
+
+    Race cloned = new Race.Builder().from(original).build();
+
+    assertNotNull(cloned.getCrashAndLearnOptions());
+    assertTrue(cloned.getCrashAndLearnOptions().isEnabled());
+    assertEquals(6.0, cloned.getCrashAndLearnOptions().getAutomatedCrashTime(), 0.001);
+    assertEquals(4, cloned.getCrashAndLearnOptions().getMaxCrashes());
+    assertEquals(2.0, cloned.getCrashAndLearnOptions().getHeatCrashLapPenalty(), 0.001);
+  }
 }

@@ -153,4 +153,25 @@ public class HeatConverterTest {
     assertEquals(2, proto.getStep());
     assertTrue(proto.getIsStepUpBoundary());
   }
+
+  @Test
+  public void testToProto_CnlFields() {
+    com.antigravity.models.Team team =
+        new com.antigravity.models.Team("Team", null, new ArrayList<>(), "t1", null);
+    com.antigravity.race.RaceParticipant participant =
+        new com.antigravity.race.RaceParticipant(team);
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData(participant);
+    dhd.setCrashes(4);
+    dhd.setDisqualified(true);
+    dhd.setPenaltyTime(5.5);
+    dhd.setDqScorePercentage(80.0);
+
+    Set<String> sentObjectIds = new HashSet<>();
+    com.antigravity.proto.DriverHeatData proto = HeatConverter.toProto(dhd, sentObjectIds);
+
+    assertEquals(4, proto.getCrashes());
+    assertTrue(proto.getIsDisqualified());
+    assertEquals(5.5, proto.getPenaltyTime(), 0.001);
+    assertEquals(80.0, proto.getDqScorePercentage(), 0.001);
+  }
 }

@@ -40,6 +40,7 @@ A secção Imagens de Bandeiras permite personalizar os gráficos exibidos no ca
 - **Aquecimento (`flag.warmup`):** Exibida durante os treinos e sessões de aquecimento dos pilotos antes da corrida.
 - **Piloto Terminou (`flag.driver_finished`):** Indicador por pista ou individual exibido para os pilotos que completaram as suas voltas obrigatórias.
 - **Penalidade (`flag.penalty`):** Indicador de bandeira preta exibido quando um piloto comete uma falsa partida ou infração de volta.
+- **Desqualificado (`flag.disqualified`):** Indicador de bandeira preta exibido quando um piloto é desqualificado no Crash and Learn ou pela direção de prova.
 
 Para cada bandeira, pode escolher entre predefinições integradas ou carregar imagens personalizadas em SVG, PNG, WebP ou JPG da sua biblioteca através do [Gestor de Recursos](asset-manager.md).
 

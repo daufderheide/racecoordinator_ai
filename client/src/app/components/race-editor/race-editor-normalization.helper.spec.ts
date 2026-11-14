@@ -65,6 +65,50 @@ describe("RaceEditorNormalizationHelper", () => {
     });
   });
 
+  describe("normalizeCrashAndLearnOptions", () => {
+    it("should return defaults when null or undefined", () => {
+      const result =
+        RaceEditorNormalizationHelper.normalizeCrashAndLearnOptions(null);
+      expect(result.enabled).toBeFalse();
+      expect(result.automated_crash_time).toBe(0.0);
+      expect(result.max_crashes).toBe(3);
+      expect(result.pause_heat_on_crash).toBeTrue();
+      expect(result.allow_multiple_crashes_per_lap).toBeTrue();
+      expect(result.reset_crashes_each_heat).toBeTrue();
+      expect(result.reset_dq_each_heat).toBeTrue();
+      expect(result.heat_crash_lap_penalty).toBe(0.0);
+      expect(result.heat_time_penalty).toBe(0.0);
+      expect(result.dq_heat_score_percentage).toBe(100.0);
+    });
+
+    it("should bridge snake_case and camelCase and parse numbers", () => {
+      const cnl = {
+        enabled: true,
+        automatedCrashTime: "8.5",
+        maxCrashes: "5",
+        pauseHeatOnCrash: false,
+        allowMultipleCrashesPerLap: false,
+        resetCrashesEachHeat: false,
+        resetDqEachHeat: false,
+        heatCrashLapPenalty: "2.0",
+        heatTimePenalty: "10.0",
+        dqHeatScorePercentage: "50.0",
+      };
+      const result =
+        RaceEditorNormalizationHelper.normalizeCrashAndLearnOptions(cnl);
+      expect(result.enabled).toBeTrue();
+      expect(result.automated_crash_time).toBe(8.5);
+      expect(result.max_crashes).toBe(5);
+      expect(result.pause_heat_on_crash).toBeFalse();
+      expect(result.allow_multiple_crashes_per_lap).toBeFalse();
+      expect(result.reset_crashes_each_heat).toBeFalse();
+      expect(result.reset_dq_each_heat).toBeFalse();
+      expect(result.heat_crash_lap_penalty).toBe(2.0);
+      expect(result.heat_time_penalty).toBe(10.0);
+      expect(result.dq_heat_score_percentage).toBe(50.0);
+    });
+  });
+
   describe("normalizeHeatScoring", () => {
     it("should return defaults when null or undefined", () => {
       const result = RaceEditorNormalizationHelper.normalizeHeatScoring(null);
@@ -108,6 +152,7 @@ describe("RaceEditorNormalizationHelper", () => {
       expect(result.group_options).toBeDefined();
       expect(result.fuel_options).toBeDefined();
       expect(result.digital_fuel_options).toBeDefined();
+      expect(result.crash_and_learn_options).toBeDefined();
       expect(result.team_options).toBeDefined();
       expect(result.heat_scoring).toBeDefined();
       expect(result.overall_scoring).toBeDefined();
@@ -128,6 +173,8 @@ describe("RaceEditorNormalizationHelper", () => {
       expect(template.min_lap_time).toBe(1.5);
       expect(template.heat_times_through).toBe(1);
       expect(template.season_scoring.position_points.length).toBe(10);
+      expect(template.crash_and_learn_options).toBeDefined();
+      expect(template.crash_and_learn_options.enabled).toBeFalse();
     });
   });
 

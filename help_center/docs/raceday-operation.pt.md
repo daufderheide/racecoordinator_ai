@@ -45,3 +45,30 @@ Ao clicar sobre uma célula interativa de voltas:
 - **Voltas Ajustadas**: Altera diretamente a posição em classificações por **Maior Número de Voltas** e atualiza as diferenças de volta (`gapLeader`, `gapPosition`). Não altera as voltas físicas dos sensores, a melhor volta, a volta mediana ou o ritmo médio físico.
 - **Tempo Total Ajustado**: Altera a posição em classificações por **Tempo Total Mais Rápido**, serve como critério de desempate principal para pilotos empatados em voltas, e atualiza o **Tempo Médio de Volta** ($\text{Tempo Total Ajustado} / \text{Voltas Físicas}$) e as diferenças de tempo.
 - **Métricas Protegidas**: A **Melhor Volta** e a **Volta Mediana** são rigorosamente preservadas a partir das voltas físicas registradas pelos sensores e nunca são alteradas por ajustes de tempo.
+
+---
+
+## Operações de Crash and Learn {: #crash-and-learn-operations }
+
+Quando uma corrida é disputada com o **Crash and Learn (CNL)** ativado, o Race Coordinator AI monitora as saídas de pista (batidas) em tempo real, aplica limites de batidas, atribui penalidades automáticas e gerencia desqualificações.
+
+### Detecção de Batidas e Botões de Chamada
+- **Detecção Automática de Batidas**: Se configurada e o tempo de volta exceder o limite de **Tempo de Batida Automático**, o sistema detecta uma saída de pista e atribui uma batida ao piloto.
+- **Bandeiras Amarelas Automáticas**: Se **Pausar bateria em batida** estiver ativado, uma batida automática aciona imediatamente uma bandeira amarela e corta a energia da pista.
+- **Múltiplas Batidas por Volta**: Se **Permitir múltiplas batidas por volta** estiver ativado, um carro fora da pista acumulará uma batida adicional a cada vez que o tempo limite transcorrer sem cruzar a linha.
+- **Botões de Chamada por Fita**: Em pistas equipadas com botões de chamada por fita, pressionar o botão pausa a bateria e credita uma batida à fita correspondente. Pressionar outros botões durante a pausa não credita batidas adicionais.
+
+### Mecânica de Desqualificação (DQ)
+Quando um piloto ultrapassa o limite de **Máximo de Batidas** (por exemplo, 4 batidas com limite de 3):
+- **Bandeira Preta**: O status da fita muda imediatamente para a bandeira preta (`flag.disqualified`).
+- **Corte de Energia da Fita**: Se houver relés por fita instalados, a alimentação daquela fita é desligada instantaneamente.
+- **Contagem de Voltas Bloqueada**: Leituras do sensor e voltas são ignoradas para pilotos desqualificados durante o restante da bateria.
+- **Cálculo Imediato de Segmentos Automáticos**: Em corridas com cálculo automático de segmentos (`NoneAutoSegments` ou `SingleLapAutoSegments`), as frações de volta do piloto desqualificado são calculadas no exato instante da desqualificação pelo método "não permitir terminar" ($\text{timeSinceLastLap} / \text{medianLapTime}$, limitado a $0.99$).
+- **Posição na Classificação**: Um piloto desqualificado não pode ser classificado à frente de um competidor não desqualificado na bateria. Havendo múltiplos desqualificados, a ordem é definida pela pontuação ajustada pela **Porcentagem de Pontuação na Bateria após Desqualificação**.
+
+### Revisão e Ajuste de Batidas e Penalidades
+Os diretores de prova mantêm controle manual completo:
+- **Widgets de Contador de Batidas**: As colunas de fita exibem a contagem de batidas da bateria atual.
+- **Ajustes Manuais**: Por meio dos controles ou do diálogo **Ajustar Seções de Volta / Tempo**, é possível adicionar ou subtrair batidas.
+- **Reversão da Desqualificação**: Reduzir as batidas para o limite ou abaixo reverte a desqualificação de imediato: a bandeira volta a ser verde, a energia é restaurada e as penalidades são recalculadas.
+- **Visibilidade de Penalidades**: Voltas e tempo de penalidade acumulados são exibidos no diálogo de ajuste ao lado dos campos de edição.

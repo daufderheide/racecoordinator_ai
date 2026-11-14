@@ -40,6 +40,7 @@ Im Bereich Flaggenbilder können Sie die Grafiken anpassen, die auf der Rennanze
 - **Aufwärmen (`flag.warmup`):** Flagge während Trainings- und Aufwärmphasen vor dem Rennen.
 - **Fahrer fertig (`flag.driver_finished`):** Spurspezifische oder individuelle Anzeige für Fahrer, die alle Runden absolviert haben.
 - **Strafe (`flag.penalty`):** Schwarze Flagge / Strafanzeige bei Frühstarts oder Rundenzeit-Unterschreitungen.
+- **Disqualifiziert (`flag.disqualified`):** Schwarze Flagge, die angezeigt wird, wenn ein Fahrer bei Crash and Learn oder durch die Rennleitung disqualifiziert wird.
 
 Für jede Flagge können Sie integrierte Vorlagen wählen oder benutzerdefinierte SVG-, PNG-, WebP- oder JPG-Grafiken über den [Asset-Manager](asset-manager.de.md) hochladen.
 
