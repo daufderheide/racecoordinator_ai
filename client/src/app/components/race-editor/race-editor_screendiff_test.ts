@@ -1053,4 +1053,84 @@ test.describe("Race Editor Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should display Crash and Learn section when disabled", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+    await ensureSectionState(page, "Groups", false);
+    await ensureSectionState(page, "Season Points", false);
+    await ensureSectionState(page, "Crash and Learn", true);
+
+    const cnlSection = page.locator("#crash-and-learn-section");
+    await cnlSection.waitFor({ state: "visible", timeout: 10000 });
+    await cnlSection.scrollIntoViewIfNeeded();
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(cnlSection).toHaveScreenshot("race-editor-cnl-disabled.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display Crash and Learn section when enabled", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    await enterEditMode(page);
+
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+    await ensureSectionState(page, "Groups", false);
+    await ensureSectionState(page, "Season Points", false);
+    await ensureSectionState(page, "Crash and Learn", true);
+
+    const cnlSection = page.locator("#crash-and-learn-section");
+    await cnlSection.waitFor({ state: "visible", timeout: 10000 });
+
+    const cnlToggle = page
+      .locator('.cnl-config-section label:has-text("Enable Crash and Learn")')
+      .first();
+    await cnlToggle.scrollIntoViewIfNeeded();
+    await cnlToggle.click();
+
+    await page
+      .locator("#cnl-auto-crash-time-input")
+      .waitFor({ state: "visible", timeout: 5000 });
+    await cnlSection.scrollIntoViewIfNeeded();
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(cnlSection).toHaveScreenshot("race-editor-cnl-enabled.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });

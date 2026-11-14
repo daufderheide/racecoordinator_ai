@@ -374,3 +374,20 @@ O acordeão de Pontuação da temporada define a distribuição de pontos para c
     - *Pole position*: Pontos de bônus pela melhor posição na qualificação.
     - *Mais voltas na liderança*: Pontos de bônus por liderar o maior número de voltas.
 - **Totalização do campeonato**: Totalização automática de pontos da temporada com suporte ao descarte de piores resultados.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+O painel **Crash and Learn (CNL)** configura regras e penalidades para saídas de pista (batidas) durante uma corrida:
+
+- **Ativar Crash and Learn**: Ativa ou desativa o rastreamento. Quando desativado, todas as opções subordinadas ficam inativas.
+- **Tempo de batida automático (segundos)**: Limiar de tempo de volta em segundos que aciona a detecção automática de batida. Defina como `0` para desativar.
+- **Máximo de batidas**: Número de batidas permitidas antes da desqualificação (DQ). Por exemplo, se definido como `3`, o piloto é desqualificado na 4ª batida.
+- **Pausar bateria ao bater**: Aciona automaticamente bandeira amarela (pausa) ao detectar batida automática ou acionar o botão de chamada de pista.
+- **Permitir várias batidas por volta**: Permite registrar várias batidas na mesma volta se o tempo limite expirar novamente.
+- **Redefinir batidas a cada bateria**: Redefine o contador de batidas para `0` no início de cada bateria.
+- **Redefinir desqualificação a cada bateria**: Limpa o status de DQ na bateria seguinte e zera as batidas.
+- **Penalidade de voltas por batida**: Voltas deduzidas da pontuação da bateria por cada batida.
+- **Penalidade de tempo por batida (segundos)**: Tempo em segundos adicionado ao tempo total da bateria por cada batida.
+- **Porcentagem de pontuação na desqualificação**: Porcentagem da pontuação creditada ao piloto desqualificado (padrão `100%`). Pilotos desqualificados ficam atrás dos não desqualificados na classificação.

@@ -40,6 +40,7 @@ La sezione Immagini delle bandiere consente di personalizzare le grafiche visual
 - **Riscaldamento (`flag.warmup`):** Visualizzata durante le prove e le sessioni di riscaldamento dei piloti pre-gara.
 - **Pilota arrivato (`flag.driver_finished`):** Indicatore per corsia o individuale visualizzato per i piloti che hanno completato i giri richiesti.
 - **Penalità (`flag.penalty`):** Indicatore a bandiera nera visualizzato quando un pilota compie una falsa partenza o un'infrazione sul giro.
+- **Squalificato (`flag.disqualified`):** Bandiera nera visualizzata quando un pilota è squalificato in Crash and Learn o dalla direzione gara.
 
 Per ogni bandiera, puoi selezionare tra i preset integrati o caricare risorse immagine personalizzate in formato SVG, PNG, WebP o JPG dalla tua libreria tramite la [Gestione risorse](asset-manager.md).
 

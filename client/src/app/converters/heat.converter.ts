@@ -74,6 +74,13 @@ export class HeatConverter {
     hd.lapsDownLeader = dProto.lapsDownLeader || 0;
     hd.lapsDownPosition = dProto.lapsDownPosition || 0;
     hd.penaltyLaps = dProto.penaltyLaps || 0;
+    hd.penaltyTime = dProto.penaltyTime ?? (dProto as any).penalty_time ?? 0;
+    hd.crashes = dProto.crashes ?? 0;
+    hd.isDisqualified = !!(
+      dProto.isDisqualified ?? (dProto as any).is_disqualified
+    );
+    hd.dqScorePercentage =
+      dProto.dqScorePercentage ?? (dProto as any).dq_score_percentage ?? 100.0;
     hd.userLaps = dProto.userLaps || 0;
     hd.userTime = dProto.userTime ?? (dProto as any).user_time ?? 0;
     hd.autoCalculatedLaps = dProto.autoCalculatedLaps || 0;

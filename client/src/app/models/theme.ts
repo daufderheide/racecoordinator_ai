@@ -36,6 +36,7 @@ export const THEME_SLOT_KEYS = {
   FLAG_WARMUP: "flag.warmup",
   FLAG_DRIVER_FINISHED: "flag.driver_finished",
   FLAG_PENALTY: "flag.penalty",
+  FLAG_DISQUALIFIED: "flag.disqualified",
 
   // Start lamps
   LAMP_RED_ON: "lamp.red.on",

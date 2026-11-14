@@ -410,4 +410,59 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.points_scoring).toBeUndefined();
   });
+
+  it("should map crash and learn options from proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r24" },
+      name: "CNL Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      crashAndLearnOptions: {
+        enabled: true,
+        automatedCrashTime: 12.5,
+        maxCrashes: 4,
+        pauseHeatOnCrash: true,
+        allowMultipleCrashesPerLap: false,
+        resetCrashesEachHeat: true,
+        resetDqEachHeat: false,
+        heatCrashLapPenalty: 1.0,
+        heatTimePenalty: 5.0,
+        dqHeatScorePercentage: 75.0,
+      },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.crash_and_learn_options).toBeDefined();
+    expect(result.crash_and_learn_options.enabled).toBeTrue();
+    expect(result.crash_and_learn_options.automated_crash_time).toBe(12.5);
+    expect(result.crash_and_learn_options.max_crashes).toBe(4);
+    expect(result.crash_and_learn_options.pause_heat_on_crash).toBeTrue();
+    expect(
+      result.crash_and_learn_options.allow_multiple_crashes_per_lap,
+    ).toBeFalse();
+    expect(result.crash_and_learn_options.reset_crashes_each_heat).toBeTrue();
+    expect(result.crash_and_learn_options.reset_dq_each_heat).toBeFalse();
+    expect(result.crash_and_learn_options.heat_crash_lap_penalty).toBe(1.0);
+    expect(result.crash_and_learn_options.heat_time_penalty).toBe(5.0);
+    expect(result.crash_and_learn_options.dq_heat_score_percentage).toBe(75.0);
+  });
+
+  it("should provide default crash and learn options when missing in proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r25" },
+      name: "Default CNL Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.crash_and_learn_options).toBeDefined();
+    expect(result.crash_and_learn_options.enabled).toBeFalse();
+    expect(result.crash_and_learn_options.max_crashes).toBe(3);
+    expect(result.crash_and_learn_options.pause_heat_on_crash).toBeTrue();
+    expect(
+      result.crash_and_learn_options.allow_multiple_crashes_per_lap,
+    ).toBeTrue();
+    expect(result.crash_and_learn_options.reset_crashes_each_heat).toBeTrue();
+    expect(result.crash_and_learn_options.reset_dq_each_heat).toBeTrue();
+    expect(result.crash_and_learn_options.dq_heat_score_percentage).toBe(100.0);
+  });
 });

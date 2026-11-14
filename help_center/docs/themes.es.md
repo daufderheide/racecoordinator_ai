@@ -40,6 +40,7 @@ La sección Imágenes de Banderas le permite personalizar los gráficos mostrado
 - **Calentamiento (`flag.warmup`):** Se muestra durante sesiones de práctica y calentamiento previo a la carrera.
 - **Piloto Terminado (`flag.driver_finished`):** Indicador por carril para pilotos que han completado todas sus vueltas.
 - **Penalización (`flag.penalty`):** Bandera negra / indicador de penalización por salida en falso o infracción de tiempo por vuelta.
+- **Descalificado (`flag.disqualified`):** Bandera negra mostrada cuando un piloto es descalificado en Crash and Learn o por dirección de carrera.
 
 Para cada bandera puede elegir preajustes integrados o subir imágenes personalizadas en formato SVG, PNG, WebP o JPG a través del [Gestor de Recursos](asset-manager.es.md).
 

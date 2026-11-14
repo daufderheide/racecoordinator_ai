@@ -35,7 +35,9 @@ export function isLaneColumnLapCountClickable(
     columnKey === "lapCount" ||
     columnKey === "physicalLapCount" ||
     columnKey === "totalTime" ||
-    columnKey === "overallTotalTime"
+    columnKey === "overallTotalTime" ||
+    columnKey === "crashes" ||
+    columnKey === "crashPenalty"
   );
 }
 
@@ -119,7 +121,9 @@ export function isLaneColumnInsetLapCount(
     key === "lapCount" ||
     key === "physicalLapCount" ||
     key === "totalTime" ||
-    key === "overallTotalTime"
+    key === "overallTotalTime" ||
+    key === "crashes" ||
+    key === "crashPenalty"
   );
 }
 

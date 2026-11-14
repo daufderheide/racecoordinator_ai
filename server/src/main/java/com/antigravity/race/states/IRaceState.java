@@ -23,6 +23,14 @@ public interface IRaceState {
     DriverHeatData dhd = drivers.get(lane);
     if (dhd == null) return baseFlag;
 
+    // 0) Disqualified
+    if (dhd.isDisqualified()) {
+      return race.getTheme() != null
+          ? race.getTheme()
+              .resolveFlag("flag.disqualified", RaceFlag.BLACK, race.getDatabaseContext())
+          : RaceFlag.BLACK;
+    }
+
     // 1) Out of fuel
     if (dhd.getDriver() != null && dhd.getDriver().getFuelLevel() <= 0) {
       // Only if fuel is enabled

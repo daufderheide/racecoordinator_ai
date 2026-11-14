@@ -356,4 +356,48 @@ public class DriverHeatDataTest {
     assertEquals(4.9, dhd.getScoredLapCount(), 0.001);
     assertEquals(4.9, dhd.getAdjustedLapCount(), 0.001);
   }
+
+  @Test
+  public void testCnlFieldsAndDqScoreModification() {
+    Driver driverModel = new Driver("Test Driver", "Nickname");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    for (int i = 0; i < 10; i++) {
+      dhd.addLap(5.0, false, true);
+    }
+    // 10 laps of 5.0s = totalTime 50.0
+    assertEquals(10.0, dhd.getAdjustedLapCount(), 0.001);
+    assertEquals(10.0, dhd.getScoredLapCount(), 0.001);
+    assertEquals(50.0, dhd.getTotalTime(), 0.001);
+
+    dhd.setCrashes(4);
+    assertEquals(4, dhd.getCrashes());
+    dhd.incrementCrashes();
+    assertEquals(5, dhd.getCrashes());
+
+    dhd.setPenaltyTime(3.5);
+    assertEquals(3.5, dhd.getPenaltyTime(), 0.001);
+    assertEquals(53.5, dhd.getTotalTime(), 0.001);
+
+    // Disqualification with 50% score
+    dhd.setDisqualified(true);
+    dhd.setDqScorePercentage(50.0);
+    org.junit.Assert.assertTrue(dhd.isDisqualified());
+    assertEquals(50.0, dhd.getDqScorePercentage(), 0.001);
+    assertEquals(5.0, dhd.getAdjustedLapCount(), 0.001); // 10 * 0.5 = 5.0
+    assertEquals(5.0, dhd.getScoredLapCount(), 0.001);
+
+    // Disqualification with 0% score
+    dhd.setDqScorePercentage(0.0);
+    assertEquals(0.0, dhd.getAdjustedLapCount(), 0.001);
+    assertEquals(0.0, dhd.getScoredLapCount(), 0.001);
+
+    // Reset clears DQ and crashes
+    dhd.reset();
+    assertEquals(0, dhd.getCrashes());
+    org.junit.Assert.assertFalse(dhd.isDisqualified());
+    assertEquals(100.0, dhd.getDqScorePercentage(), 0.001);
+    assertEquals(0.0, dhd.getPenaltyTime(), 0.001);
+  }
 }

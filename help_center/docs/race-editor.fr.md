@@ -364,3 +364,20 @@ L'accordéon Pointage de la saison définit l'attribution des points pour les ch
     - *Pole position* : Points bonus pour la première place aux qualifications.
     - *Plus de tours en tête* : Points bonus pour le pilote ayant mené le plus grand nombre de tours.
 - **Cumul du championnat** : Cumul automatique des points de la saison avec prise en compte des manches décomptées.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+La section **Crash and Learn (CNL)** configure les règles et pénalités relatives aux sorties de piste (crashs) pendant une course :
+
+- **Activer Crash and Learn**: Active ou désactive le suivi. Lorsqu'il est désactivé, tous les paramètres subordonnés sont inactifs.
+- **Temps de crash automatique (secondes)**: Seuil de temps au tour en secondes déclenchant une détection automatique de crash. Définir sur `0` pour désactiver.
+- **Crashs maximum**: Nombre de crashs autorisés avant disqualification (DQ). Par exemple, réglé sur `3`, le pilote est disqualifié au 4e crash.
+- **Mettre en pause lors d'un crash**: Déclenche automatiquement un drapeau jaune (pause) lors d'un crash automatique ou d'un appui sur le bouton d'appel de voie.
+- **Autoriser plusieurs crashs par tour**: Permet de comptabiliser plusieurs crashs sur le même tour si le temps automatique s'écoule à nouveau.
+- **Réinitialiser les crashs à chaque manche**: Réinitialise le compteur de crashs de chaque pilote à `0` au début de chaque manche.
+- **Réinitialiser la disqualification à chaque manche**: Supprime la disqualification au début de la manche suivante et réinitialise les crashs à `0`.
+- **Pénalité de tours par crash**: Nombre de tours déduits du score de la manche pour chaque crash.
+- **Pénalité de temps par crash (secondes)**: Temps de pénalité en secondes ajouté au temps total de la manche.
+- **Pourcentage du score en disqualification**: Pourcentage du score attribué au pilote disqualifié (par défaut `100%`). Les pilotes disqualifiés sont classés derrière les pilotes non disqualifiés.

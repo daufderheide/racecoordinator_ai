@@ -12,6 +12,10 @@ export class RacedayFlagFormatUtils {
     _column: ColumnDefinition | undefined,
     ctx: FormatContext,
   ): string {
+    if (hd?.isDisqualified) {
+      return ctx.getFlagUrl("flag.disqualified");
+    }
+
     if (this.isDriverPenalized(hd, ctx)) {
       return ctx.getFlagUrl("flag.penalty");
     }
@@ -51,6 +55,9 @@ export class RacedayFlagFormatUtils {
       return ctx.getFlagUrl("flag.warmup");
     }
     if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
+      if (hd?.isDisqualified) {
+        return ctx.getFlagUrl("flag.disqualified");
+      }
       return ctx.getFlagUrl("flag.penalty");
     }
 

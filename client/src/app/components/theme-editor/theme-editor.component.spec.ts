@@ -639,9 +639,12 @@ describe("ThemeEditorComponent", () => {
         type: "preset",
       });
       expect(component.getAssetForSlot("flag.racing")).toBeDefined();
-      expect(component.flagSlots.length).toBe(12);
+      expect(component.flagSlots.length).toBe(13);
       expect(component.lampSlots.length).toBe(3);
       expect(component.flagSlots.map((f) => f.slot)).toContain("flag.racing");
+      expect(component.flagSlots.map((f) => f.slot)).toContain(
+        "flag.disqualified",
+      );
       expect(component.lampSlots.map((l) => l.slot)).toContain("lamp.green");
     });
   });

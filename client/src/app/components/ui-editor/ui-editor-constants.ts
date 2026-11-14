@@ -37,6 +37,8 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
   { key: "top3Consecutive", label: "UI_EDITOR_COL_HEAT_TOP_3_CONSECUTIVE" },
   { key: "totalTime", label: "UI_EDITOR_COL_HEAT_TOTAL_TIME" },
   { key: "gap", label: "UI_EDITOR_COL_HEAT_GAP" },
+  { key: "crashes", label: "UI_EDITOR_COL_HEAT_CRASHES" },
+  { key: "crashPenalty", label: "UI_EDITOR_COL_HEAT_CRASH_PENALTY" },
   { key: "seed", label: "RD_COL_SEED" },
   { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
   { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },

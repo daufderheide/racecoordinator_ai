@@ -19,6 +19,11 @@ public interface StandingsParticipant {
   /** Returns true if this participant is considered empty (e.g., an empty lane). */
   boolean isEmptyParticipant();
 
+  /** Returns true if this participant is disqualified. */
+  default boolean isDisqualified() {
+    return false;
+  }
+
   /** Gets the seed index for tiebreaking. */
   default int getSeed() {
     return 0;

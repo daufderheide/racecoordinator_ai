@@ -45,3 +45,30 @@ Al hacer clic sobre una celda interactiva de vueltas:
 - **Vueltas Ajustadas**: Modifica directamente la posición en clasificaciones por **Mayor Número de Vueltas** y actualiza las diferencias de vuelta (`gapLeader`, `gapPosition`). No modifica las vueltas físicas reales, la mejor vuelta, la vuelta mediana ni el ritmo promedio de vueltas físicas.
 - **Tiempo Total Ajustado**: Modifica la posición en clasificaciones por **Tiempo Total Más Rápido**, actúa como desempate principal entre pilotos con las mismas vueltas, y actualiza el **Tiempo Promedio de Vuelta** ($\text{Tiempo Total Ajustado} / \text{Vueltas Físicas}$) y los márgenes de tiempo.
 - **Métricas Protegidas**: La **Mejor Vuelta** y la **Vuelta Mediana** se preservan estrictamente en función de las vueltas físicas reales y nunca son modificadas por ajustes de tiempo.
+
+---
+
+## Operaciones de Crash and Learn {: #crash-and-learn-operations }
+
+Cuando una carrera se disputa con **Crash and Learn (CNL)** habilitado, Race Coordinator AI rastrea las salidas de pista (accidentes), aplica límites de accidentes, asigna penalizaciones automáticas y gestiona descalificaciones en tiempo real.
+
+### Detección de Accidentes y Botones de Pausa
+- **Detección Automática de Accidentes**: Si está configurado y el tiempo de vuelta supera el umbral de **Tiempo de Accidente Automático**, el sistema detecta una salida de pista y anota un accidente al piloto.
+- **Banderas Amarillas Automáticas**: Si **Pausar manga tras accidente** está activado, un accidente automático provoca una bandera amarilla inmediata y corta la corriente de la pista.
+- **Múltiples Accidentes por Vuelta**: Si **Permitir múltiples accidentes por vuelta** está habilitado, un coche fuera de pista sumará un accidente adicional cada vez que transcurra el tiempo configurado sin cruzar la meta.
+- **Botones de Pausa por Carril**: En pistas con botones de llamada por carril, pulsarlo pausa la manga y asigna un accidente al carril correspondiente. Pulsar otros botones durante la pausa no suma accidentes adicionales.
+
+### Mecánica de Descalificación (DQ)
+Cuando un piloto supera el **Límite Máximo de Accidentes** (por ejemplo, 4 accidentes cuando el límite es 3):
+- **Bandera Negra**: El estado del carril cambia inmediatamente a bandera negra (`flag.disqualified`).
+- **Corte de Corriente del Carril**: Si la pista dispone de relés por carril, la corriente de ese carril se desconecta al instante.
+- **Detención de Vueltas**: Las lecturas del sensor y las vueltas se ignoran para los pilotos descalificados durante el resto de la manga.
+- **Cero segmentos automáticos**: En carreras con segmentos automáticos (`NoneAutoSegments` o `SingleLapAutoSegments`), un piloto descalificado recibe $0$ segmentos automáticos. Debido a que una colisión o detección automática de salida detiene al piloto en la pista, asignar segmentos automáticos recompensaría artificialmente a un piloto descalificado con hasta $0.99$ vueltas.
+- **Posición en la Clasificación**: Un piloto descalificado nunca puede quedar por delante de un piloto no descalificado en la manga. Si varios pilotos son descalificados, se ordenan según su puntuación ajustada por el **Porcentaje de Puntuación tras Descalificación**.
+
+### Revisión y Ajuste de Accidentes y Penalizaciones
+Los directores de carrera tienen control manual total:
+- **Widgets de Contador de Accidentes**: Las columnas de carril muestran el número de accidentes de la manga actual.
+- **Ajustes Manuales**: Mediante los controles o el diálogo **Ajustar Secciones de Vuelta / Tiempo**, es posible añadir o restar accidentes.
+- **Reversión de Descalificación**: Si se reducen los accidentes al límite o por debajo, la descalificación se revierte de inmediato: la bandera vuelve a verde, se restaura la corriente y se recalculan las penalizaciones.
+- **Visibilidad de Penalizaciones**: Las vueltas y tiempo de penalización se muestran en el diálogo junto a los campos de ajuste.

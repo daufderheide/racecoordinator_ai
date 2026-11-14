@@ -13,6 +13,7 @@ export interface RaceEditorSections {
   fuel_analog: boolean;
   fuel_digital: boolean;
   team: boolean;
+  crash_and_learn: boolean;
 }
 
 export class RaceEditorUiHelper {
@@ -55,6 +56,11 @@ export class RaceEditorUiHelper {
         id: "team-options-section",
         label: translationService.translate("RE_TEAM_OPTIONS_HEADER"),
         active: sectionsExpanded ? !!sectionsExpanded.team : false,
+      },
+      {
+        id: "crash-and-learn-section",
+        label: translationService.translate("RE_CNL_HEADER"),
+        active: sectionsExpanded ? !!sectionsExpanded.crash_and_learn : false,
       },
       {
         id: "analog-fuel-section",
@@ -191,6 +197,7 @@ export class RaceEditorUiHelper {
       "analog-fuel-section": "fuel_analog",
       "digital-fuel-outer-section": "fuel_digital",
       "team-options-section": "team",
+      "crash-and-learn-section": "crash_and_learn",
     };
 
     const sectionKey = sectionMap[tabId];

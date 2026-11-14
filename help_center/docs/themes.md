@@ -40,6 +40,7 @@ The Flag Images section lets you customize the graphics displayed on the race ca
 - **Warmup (`flag.warmup`):** Displayed during practice and pre-race driver warmup sessions.
 - **Driver Finished (`flag.driver_finished`):** Per-lane or individual indicator displayed for drivers who have completed their required laps.
 - **Penalty (`flag.penalty`):** Black flag indicator displayed when a driver triggers a false start or lap infraction penalty.
+- **Disqualified (`flag.disqualified`):** Black flag indicator displayed when a driver is disqualified in a Crash and Learn event or by race control.
 
 For each flag, you can select from built-in presets or upload custom SVG, PNG, WebP, or JPG image assets from your library via the [Asset Manager](asset-manager.md).
 

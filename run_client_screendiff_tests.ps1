@@ -37,11 +37,14 @@ if ($args -contains "--sync-only") {
 
 # Check if --changed or --changed=* was passed
 $ChangedFlag = $null
+$NoReportFlag = $false
 $RemainingArgs = @()
 
 foreach ($arg in $args) {
     if ($arg -eq "--changed" -or $arg -like "--changed=*") {
         $ChangedFlag = $arg
+    } elseif ($arg -eq "--no-report") {
+        $NoReportFlag = $true
     } else {
         $RemainingArgs += $arg
     }
@@ -63,9 +66,9 @@ if ($ChangedFlag) {
         if ($_ -match '\s') { "'$_'" } else { $_ }
     }) -join " "
     $PlaywrightArgs = "$ChangedTests $EscapedRemaining"
-} elseif ($args.Count -gt 0) {
+} elseif ($RemainingArgs.Count -gt 0) {
     Write-Host "Running screendiff tests with specified arguments..." -ForegroundColor Green
-    $PlaywrightArgs = ($args | ForEach-Object {
+    $PlaywrightArgs = ($RemainingArgs | ForEach-Object {
         $clean = $_ -replace '^[.]?[/\\]?client[/\\]', ''
         if ($clean -match '\s') { "'$clean'" } else { $clean }
     }) -join " "
@@ -168,10 +171,13 @@ if ($TestExitCode -eq 0 -and $isUpdatingSnapshots) {
 }
 
 if ($TestExitCode -ne 0) {
-    Write-Host "`nTests failed. Opening report..." -ForegroundColor Yellow
     Set-Location $ClientDir
-    if ([Environment]::UserInteractive -and -not $env:CI) {
+    if ([Environment]::UserInteractive -and -not $env:CI -and -not $env:ANTIGRAVITY_AGENT -and -not $NoReportFlag) {
+        Write-Host "`nTests failed. Opening report..." -ForegroundColor Yellow
         npx playwright show-report (Join-Path $IsolatedDir "playwright-report")
+    } else {
+        Write-Host "`nTests failed. To view the HTML report, run:" -ForegroundColor Yellow
+        Write-Host "  npx playwright show-report `"$IsolatedDir\playwright-report`"" -ForegroundColor Gray
     }
 }
 

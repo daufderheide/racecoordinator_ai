@@ -22,7 +22,8 @@ export type BehavioralFlagKey =
   | "flag.heat_finishing"
   | "flag.warmup"
   | "flag.driver_finished"
-  | "flag.penalty";
+  | "flag.penalty"
+  | "flag.disqualified";
 
 export type FlagColor =
   | "red"
@@ -271,6 +272,8 @@ export class RaceFlagService implements OnDestroy {
           url = settings.flagDriverFinished;
         else if (slotKey === THEME_SLOT_KEYS.FLAG_PENALTY)
           url = settings.flagPenalty;
+        else if (slotKey === THEME_SLOT_KEYS.FLAG_DISQUALIFIED)
+          url = settings.flagDisqualified;
       }
 
       if (url) return this.getFullUrl(url);

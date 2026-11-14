@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
@@ -58,6 +59,8 @@ public class HeatExecutionManager {
   private boolean[] isRefueling;
   private double[] accumulatedRefuelTime;
   private double[] timeSinceLastLap;
+  private double[] timeSinceLastCrashOrLap;
+  private int[] crashesThisLap;
   private double[] excludedPendingLapTime;
   private double[] stutterAccumulatedTime;
   private double[] partialLapTimes;
@@ -91,6 +94,8 @@ public class HeatExecutionManager {
     this.isRefueling = new boolean[laneCount];
     this.accumulatedRefuelTime = new double[laneCount];
     this.timeSinceLastLap = new double[laneCount];
+    this.timeSinceLastCrashOrLap = new double[laneCount];
+    this.crashesThisLap = new int[laneCount];
     this.excludedPendingLapTime = new double[laneCount];
     this.stutterAccumulatedTime = new double[laneCount];
     this.partialLapTimes = new double[laneCount];
@@ -100,6 +105,8 @@ public class HeatExecutionManager {
       this.isRefueling[i] = false;
       this.accumulatedRefuelTime[i] = 0.0;
       this.timeSinceLastLap[i] = 0.0;
+      this.timeSinceLastCrashOrLap[i] = 0.0;
+      this.crashesThisLap[i] = 0;
       this.excludedPendingLapTime[i] = 0.0;
       this.stutterAccumulatedTime[i] = 0.0;
       this.partialLapTimes[i] = 0.0;
@@ -142,12 +149,64 @@ public class HeatExecutionManager {
     handleRefueling(delta);
     handlePowerStutter(delta);
     if (timeSinceLastLap != null) {
+      List<DriverHeatData> drivers =
+          (race != null && race.getCurrentHeat() != null)
+              ? race.getCurrentHeat().getDrivers()
+              : null;
       for (int i = 0; i < timeSinceLastLap.length; i++) {
-        if (!finishedLanes.contains(i)) {
+        DriverHeatData dhd = (drivers != null && i < drivers.size()) ? drivers.get(i) : null;
+        if (!finishedLanes.contains(i) && (dhd == null || !dhd.isDisqualified())) {
           timeSinceLastLap[i] += delta;
         }
       }
     }
+  }
+
+  public void recordCrash(int lane) {
+    if (timeSinceLastCrashOrLap != null && lane >= 0 && lane < timeSinceLastCrashOrLap.length) {
+      timeSinceLastCrashOrLap[lane] = 0.0;
+    }
+    if (crashesThisLap != null && lane >= 0 && lane < crashesThisLap.length) {
+      crashesThisLap[lane]++;
+    }
+  }
+
+  public boolean checkAutomatedCrashes(float delta) {
+    if (!race.isCnlEnabled() || race.getCurrentHeat() == null) {
+      return false;
+    }
+    CrashAndLearnOptions cnl = race.getCrashAndLearnOptions();
+    double autoCrashTime = cnl.getAutomatedCrashTime();
+    if (autoCrashTime <= 0) {
+      return false;
+    }
+
+    boolean anyCrash = false;
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+    if (drivers == null || timeSinceLastCrashOrLap == null) {
+      return false;
+    }
+
+    for (int i = 0; i < drivers.size() && i < timeSinceLastCrashOrLap.length; i++) {
+      DriverHeatData dhd = drivers.get(i);
+      if (finishedLanes.contains(i) || (dhd != null && dhd.isDisqualified())) {
+        continue;
+      }
+      if (dhd == null || dhd.isDisqualified() || dhd.isEmptyParticipant()) {
+        continue;
+      }
+
+      timeSinceLastCrashOrLap[i] += delta;
+      if (timeSinceLastCrashOrLap[i] >= autoCrashTime) {
+        if (crashesThisLap[i] == 0 || cnl.isAllowMultipleCrashesPerLap()) {
+          crashesThisLap[i]++;
+          timeSinceLastCrashOrLap[i] = 0.0;
+          race.recordCrash(i);
+          anyCrash = true;
+        }
+      }
+    }
+    return anyCrash;
   }
 
   private void handlePowerStutter(float delta) {
@@ -165,7 +224,8 @@ public class HeatExecutionManager {
 
     List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
     for (int i = 0; i < drivers.size(); i++) {
-      if (finishedLanes.contains(i)) {
+      DriverHeatData dhd = drivers.get(i);
+      if (finishedLanes.contains(i) || (dhd != null && dhd.isDisqualified())) {
         continue;
       }
       double fuelLevel = drivers.get(i).getDriver().getFuelLevel();
@@ -348,6 +408,12 @@ public class HeatExecutionManager {
 
     if (handleReactionTime(driverData, lapTime, lane, interfaceId)) {
       timeSinceLastLap[lane] = 0.0;
+      if (timeSinceLastCrashOrLap != null && lane < timeSinceLastCrashOrLap.length) {
+        timeSinceLastCrashOrLap[lane] = 0.0;
+      }
+      if (crashesThisLap != null && lane < crashesThisLap.length) {
+        crashesThisLap[lane] = 0;
+      }
       return false;
     }
 
@@ -387,6 +453,12 @@ public class HeatExecutionManager {
 
     if (lapCounted) {
       timeSinceLastLap[lane] = 0.0;
+      if (timeSinceLastCrashOrLap != null && lane < timeSinceLastCrashOrLap.length) {
+        timeSinceLastCrashOrLap[lane] = 0.0;
+      }
+      if (crashesThisLap != null && lane < crashesThisLap.length) {
+        crashesThisLap[lane] = 0;
+      }
       driverData.setCarryOverTime(0.0);
       if (isDrift) {
         driverData.setAutoCalculatedLaps(0.0);
@@ -461,7 +533,8 @@ public class HeatExecutionManager {
 
     List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
     for (int i = 0; i < drivers.size(); i++) {
-      if (finishedLanes.contains(i)) {
+      DriverHeatData dhd = drivers.get(i);
+      if (finishedLanes.contains(i) || (dhd != null && dhd.isDisqualified())) {
         continue;
       }
 
@@ -567,6 +640,18 @@ public class HeatExecutionManager {
     timeSinceLastLap[from] = timeSinceLastLap[to];
     timeSinceLastLap[to] = tempTimeSinceLastLap;
 
+    if (timeSinceLastCrashOrLap != null) {
+      double tempCrashTime = timeSinceLastCrashOrLap[from];
+      timeSinceLastCrashOrLap[from] = timeSinceLastCrashOrLap[to];
+      timeSinceLastCrashOrLap[to] = tempCrashTime;
+    }
+
+    if (crashesThisLap != null) {
+      int tempCrashes = crashesThisLap[from];
+      crashesThisLap[from] = crashesThisLap[to];
+      crashesThisLap[to] = tempCrashes;
+    }
+
     double tempExcludedPending = excludedPendingLapTime[from];
     excludedPendingLapTime[from] = excludedPendingLapTime[to];
     excludedPendingLapTime[to] = tempExcludedPending;
@@ -597,6 +682,12 @@ public class HeatExecutionManager {
       }
       if (timeSinceLastLap != null && lane < timeSinceLastLap.length) {
         timeSinceLastLap[lane] = 0.0;
+      }
+      if (timeSinceLastCrashOrLap != null && lane < timeSinceLastCrashOrLap.length) {
+        timeSinceLastCrashOrLap[lane] = 0.0;
+      }
+      if (crashesThisLap != null && lane < crashesThisLap.length) {
+        crashesThisLap[lane] = 0;
       }
       if (excludedPendingLapTime != null && lane < excludedPendingLapTime.length) {
         excludedPendingLapTime[lane] = 0.0;
@@ -764,6 +855,10 @@ public class HeatExecutionManager {
         || driverData.getDriver().getDriver().getEntityId() == null
         || driverData.getDriver().getDriver().isEmpty()) {
       logger.debug("Ignored onLap/onSegment - Invalid/Empty driver");
+      return null;
+    }
+    if (driverData.isDisqualified()) {
+      logger.debug("Ignored onLap/onSegment - Driver on lane {} is disqualified", lane);
       return null;
     }
     return driverData;
@@ -1241,7 +1336,8 @@ public class HeatExecutionManager {
                 ? drivers.get(i).getDriver().getDriver().getName()
                 : "Lane " + (i + 1);
 
-        if (!finishedLanes.contains(i)) {
+        DriverHeatData dhd = (drivers != null && i < drivers.size()) ? drivers.get(i) : null;
+        if (!finishedLanes.contains(i) && (dhd == null || !dhd.isDisqualified())) {
           partialLapTimes[i] = Math.max(0.0, timeSinceLastLap[i] - overshoot);
           logger.info(
               "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, overshoot={}s, capturedPartialLapTime={}s",
@@ -1253,7 +1349,7 @@ public class HeatExecutionManager {
               partialLapTimes[i]);
         } else {
           logger.info(
-              "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): already finished, skipped partial lap time capture",
+              "AutoSegments (SingleLapAutoSegments) Heat {} Lane {} ({}): already finished/DQ, skipped partial lap time capture",
               heatNum,
               i,
               driverName);
@@ -1309,7 +1405,7 @@ public class HeatExecutionManager {
         continue;
       }
 
-      if (finishedLanes.contains(i)) {
+      if (finishedLanes.contains(i) || dhd.isDisqualified()) {
         continue;
       }
 
@@ -1367,6 +1463,26 @@ public class HeatExecutionManager {
 
   public void calculateAutoSegments() {
     calculateAutoSegments(race, this);
+  }
+
+  public void calculateDqAutoSegments(DriverHeatData dhd, int lane) {
+    if (dhd == null) {
+      return;
+    }
+    dhd.setAutoCalculatedLaps(0.0);
+    int heatNum =
+        (race != null && race.getCurrentHeat() != null)
+            ? race.getCurrentHeat().getHeatNumber()
+            : -1;
+    String driverName =
+        (dhd.getDriver() != null && dhd.getDriver().getDriver() != null)
+            ? dhd.getDriver().getDriver().getName()
+            : "Lane " + (lane + 1);
+    logger.info(
+        "AutoSegments DQ Heat {} Lane {} ({}): DQ driver assigned 0.0 auto segments",
+        heatNum,
+        lane,
+        driverName);
   }
 
   public static void applyEndHeatAutoSegments(Race race, HeatExecutionManager executionManager) {
@@ -1427,7 +1543,7 @@ public class HeatExecutionManager {
         continue;
       }
 
-      if (finishedLanes.contains(i)) {
+      if (finishedLanes.contains(i) || dhd.isDisqualified()) {
         continue;
       }
       dhd.setAutoCalculatedLaps(0.0);

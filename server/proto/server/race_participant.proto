@@ -46,4 +46,6 @@ message RaceParticipant {
   double gap_position_laps = 35;
   bool is_step_up = 36;
   int32 step_up_index = 37;
+  int32 crashes = 38;
+  bool is_disqualified = 39;
 }

@@ -45,3 +45,30 @@ Lors du clic sur une cellule de tours interactive :
 - **Tours Ajustés** : Modifie directement la position dans les classements au **Plus Grand Nombre de Tours** et met à jour les écarts en tours (`gapLeader`, `gapPosition`). Ne modifie pas les tours physiques réels, le meilleur tour, le tour médian ni le rythme moyen physique.
 - **Temps Total Ajusté** : Modifie la position dans les classements au **Temps Total le Plus Rapide**, sert de critère de départage pour les pilotes à égalité de tours, et met à jour le **Temps au Tour Moyen** ($\text{Temps Total Ajusté} / \text{Tours Physiques}$) ainsi que les écarts de temps.
 - **Métriques Protégées** : Le **Meilleur Tour** et le **Tour Médian** sont strictement préservés d'après les tours physiques réels et ne sont jamais modifiés par les ajustements de temps.
+
+---
+
+## Opérations Crash and Learn {: #crash-and-learn-operations }
+
+Lorsqu'une course est disputée avec **Crash and Learn (CNL)** activé, Race Coordinator AI suit en temps réel les sorties de piste (crashs), applique les limites d'accidents, affecte les pénalités et gère les disqualifications.
+
+### Détection des Sorties de Piste & Boutons d'Appel
+- **Détection Automatique des Crashs** : Si configurée, lorsque le temps au tour dépasse le seuil de **Temps Automatique de Crash**, le système détecte un incident et comptabilise un crash pour ce pilote.
+- **Drapeaux Jaunes Automatiques** : Si **Mettre la manche en pause lors d'un crash** est activé, un crash automatique déclenche immédiatement une interruption de course (drapeau jaune) et coupe l'alimentation de la piste.
+- **Crashs Multiples par Tour** : Si **Autoriser plusieurs crashs par tour** est activé, une voiture immobilisée hors-piste cumulera un crash supplémentaire chaque fois que le seuil de temps s'écoule sans franchir la ligne.
+- **Boutons d'Appel par Voie** : Sur les pistes équipées de boutons d'appel par voie, appuyer sur le bouton met la manche en pause et crédite un crash à la voie correspondante. Appuyer sur un autre bouton pendant la pause ne crédite aucun crash supplémentaire.
+
+### Mécanisme de Disqualification (DQ)
+Lorsqu'un pilote dépasse le nombre **Maximum de Crashs** configuré (ex. 4 crashs pour une limite fixée à 3) :
+- **Drapeau Noir** : Le statut de la voie bascule immédiatement au drapeau noir (`flag.disqualified`).
+- **Coupure d'Alimentation de la Voie** : Si des relais par voie sont installés, l'alimentation électrique de cette voie est coupée instantanément.
+- **Arrêt des Tours** : Les impulsions du capteur et les tours ne sont plus comptabilisés pour le pilote disqualifié pendant le reste de la manche.
+- **Zéro segment automatique** : Dans les courses à segments automatiques (`NoneAutoSegments` ou `SingleLapAutoSegments`), un pilote disqualifié reçoit $0$ segment automatique. Puisqu'un crash ou une sortie de piste automatique immobilise le pilote sur la piste, attribuer des segments automatiques récompenserait artificiellement un pilote disqualifié de jusqu'à $0,99$ tour.
+- **Position au Classement** : Un pilote disqualifié ne peut pas être classé devant un pilote non disqualifié dans la manche. Si plusieurs pilotes sont disqualifiés, ils sont ordonnés selon leur score ajusté du **Pourcentage de Score de Manche après Disqualification**.
+
+### Révision et Ajustement des Crashs et Pénalités
+Les directeurs de course conservent un contrôle manuel total :
+- **Widgets de Compteur de Crashs** : Les colonnes de voie affichent le nombre de crashs de la manche en cours.
+- **Ajustements Manuels** : À l'aide des commandes de crash ou du dialogue **Ajuster les sections de tour / temps**, il est possible d'ajouter ou de retirer des crashs.
+- **Annulation d'une Disqualification** : Réduire le nombre de crashs au niveau ou en dessous de la limite annule immédiatement la disqualification : le drapeau repasse au vert, l'alimentation est rétablie et les pénalités sont recalculées.
+- **Visibilité des Pénalités** : Les tours et le temps de pénalité sont affichés dans le dialogue d'ajustement à côté des champs de réglage.

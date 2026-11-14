@@ -62,7 +62,34 @@ All server-side events automatically include the following parameters:
    - `has_points_scoring` (true/false tracking)
    - `points_scoring_enabled` (true/false tracking, alias for `has_points_scoring`)
    - `points_system_enabled` (true/false tracking, alias for `has_points_scoring`)
-2. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
+   - `has_crash_and_learn` (true/false tracking)
+   - `crash_and_learn_enabled` (true/false tracking, alias for `has_crash_and_learn`)
+   - `cnl_enabled` (true/false tracking, alias for `has_crash_and_learn`)
+   - `cnl_max_crashes` (numeric count of maximum allowed crashes before DQ)
+   - `cnl_auto_crash_time` (numeric lap time threshold in seconds for auto crash detection)
+   - `cnl_pause_on_crash` (true/false tracking)
+   - `cnl_allow_multiple_crashes_per_lap` (true/false tracking)
+   - `cnl_reset_crashes_each_heat` (true/false tracking)
+   - `cnl_reset_dq_each_heat` (true/false tracking)
+   - `cnl_heat_crash_lap_penalty` (numeric lap deduction penalty per crash)
+   - `cnl_heat_time_penalty` (numeric seconds penalty per crash)
+   - `cnl_dq_heat_score_percentage` (numeric percentage of score retained on DQ)
+2. **`cnl_race_started`**: Triggers explicitly whenever a race is started with Crash and Learn (CnL) enabled. Parameters captured:
+   - `cnl_enabled` (true/false tracking)
+   - `crash_and_learn_enabled` (true/false tracking)
+   - `max_crashes` (numeric count of maximum allowed crashes before DQ)
+   - `auto_crash_time` (numeric lap time threshold in seconds for auto crash detection)
+   - `pause_on_crash` (true/false tracking)
+   - `allow_multiple_crashes_per_lap` (true/false tracking)
+   - `reset_crashes_each_heat` (true/false tracking)
+   - `reset_dq_each_heat` (true/false tracking)
+   - `heat_crash_lap_penalty` (numeric lap deduction penalty per crash)
+   - `heat_time_penalty` (numeric seconds penalty per crash)
+   - `dq_heat_score_percentage` (numeric percentage of score retained on DQ)
+   - `driver_count` (numeric)
+   - `number_of_lanes` (numeric)
+   - `is_demo` (true/false tracking)
+3. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
    - `analytics_enabled`: A boolean capturing whether they are actively enabling or disabling. 
    - *Note: This particular event intentionally bypasses the disabled check to reliably inform system metrics of uninstalls/opt-outs.*
 
@@ -164,6 +191,20 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `Is Demo`, Event parameter: `is_demo`
 - Dimension Name: `Driver Count`, Event parameter: `driver_count`
 - Dimension Name: `Number of Lanes`, Event parameter: `number_of_lanes`
+
+*For example, to map the Crash and Learn parameters:*
+- Dimension Name: `CnL Enabled`, Event parameter: `cnl_enabled`
+- Dimension Name: `Crash and Learn Enabled`, Event parameter: `crash_and_learn_enabled`
+- Dimension Name: `Has Crash and Learn`, Event parameter: `has_crash_and_learn`
+- Dimension Name: `CnL Max Crashes`, Event parameter: `cnl_max_crashes`
+- Dimension Name: `CnL Auto Crash Time`, Event parameter: `cnl_auto_crash_time`
+- Dimension Name: `CnL Pause on Crash`, Event parameter: `cnl_pause_on_crash`
+- Dimension Name: `CnL Allow Multiple Crashes Per Lap`, Event parameter: `cnl_allow_multiple_crashes_per_lap`
+- Dimension Name: `CnL Reset Crashes Each Heat`, Event parameter: `cnl_reset_crashes_each_heat`
+- Dimension Name: `CnL Reset DQ Each Heat`, Event parameter: `cnl_reset_dq_each_heat`
+- Dimension Name: `CnL Heat Crash Lap Penalty`, Event parameter: `cnl_heat_crash_lap_penalty`
+- Dimension Name: `CnL Heat Time Penalty`, Event parameter: `cnl_heat_time_penalty`
+- Dimension Name: `CnL DQ Heat Score Percentage`, Event parameter: `cnl_dq_heat_score_percentage`
 
 ### Step 3: Explore and Trend
 Once Dimensions are registered (they take ~24 hours to populate moving forward):

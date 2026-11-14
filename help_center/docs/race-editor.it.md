@@ -360,3 +360,20 @@ La sezione Punteggio di stagione stabilisce la distribuzione dei punti per i cam
     - *Pole position*: Punti bonus per il miglior tempo in qualifica.
     - *Più giri in testa*: Punti bonus per chi ha condotto il maggior numero di giri.
     - **Classifica campionato**: Somma automatica dei punti stagionali con supporto per le gare scartate.
+
+---
+
+## Crash and Learn {: #crash-and-learn }
+
+Il pannello **Crash and Learn (CNL)** configura regole e penalità per uscite di pista (crash) durante una gara:
+
+- **Abilita Crash and Learn**: Attiva o disattiva il tracciamento. Se disabilitato, tutte le impostazioni subordinate sono inattive.
+- **Tempo di crash automatico (secondi)**: Soglia di tempo sul giro in secondi che attiva il rilevamento automatico di crash. Impostare su `0` per disattivare.
+- **Crash massimi**: Numero di crash consentiti prima della squalifica (DQ). Se impostato su `3`, il pilota viene squalificato al 4° crash.
+- **Pausa manche in caso di crash**: Attiva automaticamente una bandiera gialla (pausa) al rilevamento di un crash o premendo il pulsante di corsia.
+- **Consenti più crash per giro**: Consente più crash consecutivi sullo stesso giro se il tempo limite scade più volte.
+- **Azzera crash ad ogni manche**: Azzera i crash di ogni pilota all'inizio di ciascuna manche.
+- **Azzera squalifica ad ogni manche**: Rimuove la squalifica all'inizio della manche successiva e azzera i crash a `0`.
+- **Penalità giri per crash**: Giri dedotti dal punteggio di manche per ciascun crash.
+- **Penalità tempo per crash (secondi)**: Tempo di penalità in secondi aggiunto al tempo totale della manche.
+- **Percentuale punteggio per squalifica**: Percentuale del punteggio accreditata al pilota squalificato (predefinito `100%`). I piloti squalificati sono classificati dietro ai non squalificati.

@@ -41,6 +41,8 @@ public class RaceParticipant extends ServerToClientObject
   private int totalHeats;
   private boolean isStepUp = false;
   private int stepUpIndex = 0;
+  private int crashes = 0;
+  private boolean isDisqualified = false;
 
   public RaceParticipant(Driver driver) {
     super();
@@ -661,5 +663,25 @@ public class RaceParticipant extends ServerToClientObject
 
   public void setTotalHeats(int totalHeats) {
     this.totalHeats = totalHeats;
+  }
+
+  public int getCrashes() {
+    return crashes;
+  }
+
+  public void setCrashes(int crashes) {
+    this.crashes = Math.max(0, crashes);
+  }
+
+  public void incrementCrashes() {
+    this.crashes++;
+  }
+
+  public boolean isDisqualified() {
+    return isDisqualified;
+  }
+
+  public void setDisqualified(boolean disqualified) {
+    this.isDisqualified = disqualified;
   }
 }

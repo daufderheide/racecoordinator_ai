@@ -86,4 +86,19 @@ public class RaceParticipantConverterTest {
     assertEquals(2, proto.getHeatsRemaining());
     assertEquals(5, proto.getTotalHeats());
   }
+
+  @Test
+  public void testToProto_CnlFields() {
+    Driver driver = new Driver("Charlie", "The Flash", "d3", "3");
+    com.antigravity.race.RaceParticipant participant =
+        new com.antigravity.race.RaceParticipant(driver, "p3");
+    participant.setCrashes(6);
+    participant.setDisqualified(true);
+
+    RaceParticipant proto = RaceParticipantConverter.toProto(participant, new HashSet<>());
+
+    assertNotNull(proto);
+    assertEquals(6, proto.getCrashes());
+    assertEquals(true, proto.getIsDisqualified());
+  }
 }

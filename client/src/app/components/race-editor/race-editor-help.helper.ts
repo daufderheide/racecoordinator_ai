@@ -55,6 +55,12 @@ const EXPANDER_HELP_DEFS: ExpanderHelpDef[] = [
     sectionKey: "team",
   },
   {
+    targetId: "crash-and-learn-section",
+    titleKey: "RE_HELP_EXPANDER_CRASH_AND_LEARN_TITLE",
+    contentKey: "RE_HELP_EXPANDER_CRASH_AND_LEARN_CONTENT",
+    sectionKey: "crash_and_learn",
+  },
+  {
     targetId: "analog-fuel-section",
     titleKey: "RE_HELP_EXPANDER_ANALOG_FUEL_TITLE",
     contentKey: "RE_HELP_EXPANDER_ANALOG_FUEL_CONTENT",

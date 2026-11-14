@@ -57,5 +57,9 @@ message DriverHeatData {
   double total_time = 37;
   double gap_leader_laps = 38;
   double gap_position_laps = 39;
+  int32 crashes = 40;
+  bool is_disqualified = 41;
+  double penalty_time = 42;
+  double dq_score_percentage = 43;
 }
 

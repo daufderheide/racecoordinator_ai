@@ -524,6 +524,7 @@ export class DataRaceControlHelper {
     lane: number,
     userLaps?: number,
     userTime?: number,
+    crashes?: number,
   ): Observable<any> {
     const body: Record<string, number> = {};
     if (userLaps !== undefined) {
@@ -531,6 +532,9 @@ export class DataRaceControlHelper {
     }
     if (userTime !== undefined) {
       body["userTime"] = userTime;
+    }
+    if (crashes !== undefined) {
+      body["crashes"] = crashes;
     }
     return this.http.post<any>(
       `${this.getBaseUrl()}/api/races/current-heat/drivers/${lane}/user-laps`,
@@ -543,6 +547,7 @@ export class DataRaceControlHelper {
     lane: number,
     userLaps?: number,
     userTime?: number,
+    crashes?: number,
   ): Observable<any> {
     const body: Record<string, number> = {};
     if (userLaps !== undefined) {
@@ -550,6 +555,9 @@ export class DataRaceControlHelper {
     }
     if (userTime !== undefined) {
       body["userTime"] = userTime;
+    }
+    if (crashes !== undefined) {
+      body["crashes"] = crashes;
     }
     return this.http.post<any>(
       `${this.getBaseUrl()}/api/races/heats/${heatNumber}/drivers/${lane}/user-laps`,
@@ -563,10 +571,38 @@ export class DataRaceControlHelper {
       laneIndex: number;
       userLaps?: number;
       userTime?: number;
+      crashes?: number;
     }[],
   ): Observable<any> {
     return this.http.post<any>(
       `${this.getBaseUrl()}/api/races/heats/user-laps/batch`,
+      updates,
+    );
+  }
+
+  updateCrashes(lane: number, crashes: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.getBaseUrl()}/api/races/current-heat/drivers/${lane}/crashes`,
+      { crashes },
+    );
+  }
+
+  updateHeatCrashes(
+    heatNumber: number,
+    lane: number,
+    crashes: number,
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.getBaseUrl()}/api/races/heats/${heatNumber}/drivers/${lane}/crashes`,
+      { crashes },
+    );
+  }
+
+  updateBatchCrashes(
+    updates: { heatNumber: number; laneIndex: number; crashes: number }[],
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.getBaseUrl()}/api/races/heats/crashes/batch`,
       updates,
     );
   }

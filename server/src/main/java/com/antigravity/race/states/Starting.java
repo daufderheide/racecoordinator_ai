@@ -315,6 +315,12 @@ public class Starting implements IRaceState {
         && race.getCurrentHeat() != null
         && lane < race.getCurrentHeat().getDrivers().size()) {
       DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(lane);
+      if (dhd.isDisqualified()) {
+        return race.getTheme() != null
+            ? race.getTheme()
+                .resolveFlag("flag.disqualified", RaceFlag.BLACK, race.getDatabaseContext())
+            : RaceFlag.BLACK;
+      }
       if (dhd.getRemainingFalseStartTimePenalty() > 0) {
         return race.getTheme() != null
             ? race.getTheme().resolveFlag("flag.penalty", RaceFlag.BLACK, race.getDatabaseContext())

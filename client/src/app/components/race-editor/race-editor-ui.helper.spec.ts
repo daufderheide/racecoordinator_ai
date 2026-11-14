@@ -18,6 +18,7 @@ describe("RaceEditorUiHelper", () => {
       fuel_analog: true,
       fuel_digital: true,
       team: true,
+      crash_and_learn: true,
     };
     localStorage.clear();
   });
@@ -138,6 +139,34 @@ describe("RaceEditorUiHelper", () => {
       expect(localStorage.getItem("race_editor_expanders")).toContain(
         '"general":true',
       );
+    });
+
+    it("should toggle crash-and-learn-section and save to localStorage", () => {
+      defaultSections.crash_and_learn = false;
+      RaceEditorUiHelper.scrollToAndExpandSection(
+        "crash-and-learn-section",
+        defaultSections,
+      );
+      expect(defaultSections.crash_and_learn).toBeTrue();
+      expect(localStorage.getItem("race_editor_expanders")).toContain(
+        '"crash_and_learn":true',
+      );
+    });
+  });
+
+  describe("getRaceTabs", () => {
+    it("should return all race editor tabs including crash-and-learn", () => {
+      const mockTranslationService = {
+        translate: (key: string) => `translated_${key}`,
+      } as any;
+      const tabs = RaceEditorUiHelper.getRaceTabs(
+        mockTranslationService,
+        defaultSections,
+      );
+      const cnlTab = tabs.find((t) => t.id === "crash-and-learn-section");
+      expect(cnlTab).toBeDefined();
+      expect(cnlTab?.label).toBe("translated_RE_CNL_HEADER");
+      expect(cnlTab?.active).toBeTrue();
     });
   });
 });

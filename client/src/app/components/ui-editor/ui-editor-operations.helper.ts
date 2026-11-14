@@ -38,6 +38,7 @@ export function getDefaultThemeFactoryData(): {
       "flag.warmup": "default_flag_green_yellow",
       "flag.driver_finished": "default_flag_red",
       "flag.penalty": "default_flag_black",
+      "flag.disqualified": "default_flag_black",
       "lamp.red.on": "default_start_red_on",
       "lamp.red.dim": "default_start_red_dim",
       "lamp.green": "default_start_green",

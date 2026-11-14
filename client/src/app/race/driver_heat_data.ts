@@ -39,6 +39,10 @@ export class DriverHeatData {
   private _lapsDownLeader: number = 0;
   private _lapsDownPosition: number = 0;
   public penaltyLaps: number = 0;
+  public penaltyTime: number = 0;
+  public crashes: number = 0;
+  public isDisqualified: boolean = false;
+  public dqScorePercentage: number = 100.0;
   public userLaps: number = 0;
   public userTime: number = 0;
   public autoCalculatedLaps: number = 0;
@@ -103,6 +107,10 @@ export class DriverHeatData {
     this._lapsDownPosition = 0;
     this._currentLapSegments = [];
     this.penaltyLaps = 0;
+    this.penaltyTime = 0;
+    this.crashes = 0;
+    this.isDisqualified = false;
+    this.dqScorePercentage = 100.0;
     this.userLaps = 0;
     this.userTime = 0;
     this.autoCalculatedLaps = 0;
@@ -246,7 +254,12 @@ export class DriverHeatData {
     }
     const penalty =
       this.penaltyLaps > 0 ? this.penaltyLaps : Math.abs(this.penaltyLaps);
-    return this.laps.length - penalty + this.userLaps + this.autoCalculatedLaps;
+    let base =
+      this.laps.length - penalty + this.userLaps + this.autoCalculatedLaps;
+    if (this.isDisqualified) {
+      base = base * ((this.dqScorePercentage ?? 100.0) / 100.0);
+    }
+    return base;
   }
 
   get physicalLapCount(): number {
@@ -270,7 +283,11 @@ export class DriverHeatData {
     if (this._totalTime !== null && this._totalTime !== undefined) {
       return this._totalTime;
     }
-    return this.getPhysicalTotalTime() + (this.userTime || 0);
+    return (
+      this.getPhysicalTotalTime() +
+      (this.userTime || 0) +
+      (this.penaltyTime || 0)
+    );
   }
 
   set totalTime(value: number | null | undefined) {

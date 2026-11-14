@@ -107,6 +107,16 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
         driverLaneHeatHandler::updateBatchUserTime,
         Role.DIRECTOR);
     app.post(
+        "/api/races/current-heat/drivers/{lane}/crashes",
+        driverLaneHeatHandler::updateCrashes,
+        Role.DIRECTOR);
+    app.post(
+        "/api/races/heats/{heatNumber}/drivers/{lane}/crashes",
+        driverLaneHeatHandler::updateHeatCrashes,
+        Role.DIRECTOR);
+    app.post(
+        "/api/races/heats/crashes/batch", driverLaneHeatHandler::updateBatchCrashes, Role.DIRECTOR);
+    app.post(
         "/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}",
         driverLaneHeatHandler::changeLane,
         Role.DIRECTOR);

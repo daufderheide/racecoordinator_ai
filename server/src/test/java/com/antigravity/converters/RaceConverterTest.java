@@ -801,6 +801,43 @@ public class RaceConverterTest {
     assertEquals(2, proto.getOverallScoring().getDroppedHeats());
   }
 
+  @Test
+  public void testToProto_CrashAndLearnOptions() {
+    com.antigravity.models.CrashAndLearnOptions cnl =
+        new com.antigravity.models.CrashAndLearnOptions.Builder()
+            .withEnabled(true)
+            .withAutomatedCrashTime(4.5)
+            .withMaxCrashes(5)
+            .withPauseHeatOnCrash(false)
+            .withAllowMultipleCrashesPerLap(false)
+            .withResetCrashesEachHeat(false)
+            .withResetDqEachHeat(false)
+            .withHeatCrashLapPenalty(1.5)
+            .withHeatTimePenalty(3.0)
+            .withDqHeatScorePercentage(50.0)
+            .build();
+    Race race =
+        new Race.Builder()
+            .withName("CNL Race")
+            .withTrackEntityId("track-cnl")
+            .withCrashAndLearnOptions(cnl)
+            .build();
+    Track track = new Track.Builder().entityId("track-cnl").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertNotNull(proto.getCrashAndLearnOptions());
+    org.junit.Assert.assertTrue(proto.getCrashAndLearnOptions().getEnabled());
+    assertEquals(4.5, proto.getCrashAndLearnOptions().getAutomatedCrashTime(), 0.001);
+    assertEquals(5, proto.getCrashAndLearnOptions().getMaxCrashes());
+    org.junit.Assert.assertFalse(proto.getCrashAndLearnOptions().getPauseHeatOnCrash());
+    org.junit.Assert.assertFalse(proto.getCrashAndLearnOptions().getAllowMultipleCrashesPerLap());
+    org.junit.Assert.assertFalse(proto.getCrashAndLearnOptions().getResetCrashesEachHeat());
+    org.junit.Assert.assertFalse(proto.getCrashAndLearnOptions().getResetDqEachHeat());
+    assertEquals(1.5, proto.getCrashAndLearnOptions().getHeatCrashLapPenalty(), 0.001);
+    assertEquals(3.0, proto.getCrashAndLearnOptions().getHeatTimePenalty(), 0.001);
+    assertEquals(50.0, proto.getCrashAndLearnOptions().getDqHeatScorePercentage(), 0.001);
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }

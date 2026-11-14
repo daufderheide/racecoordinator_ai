@@ -40,6 +40,7 @@ La section Images des Drapeaux vous permet de personnaliser les graphismes affic
 - **Échauffement (`flag.warmup`) :** Affiché pendant les séances d'entraînement et d'échauffement des pilotes.
 - **Pilote Terminé (`flag.driver_finished`) :** Témoin par voie affiché pour un pilote ayant bouclé tous ses tours.
 - **Pénalité (`flag.penalty`) :** Drapeau noir / avertissement lors d'un faux départ ou d'une infraction de temps au tour.
+- **Disqualifié (`flag.disqualified`):** Indicateur de drapeau noir affiché lorsqu'un pilote est disqualifié en Crash and Learn ou par la direction de course.
 
 Pour chaque drapeau, vous pouvez choisir des modèles intégrés ou téléverser vos propres images SVG, PNG, WebP ou JPG via le [Gestionnaire de Médias](asset-manager.fr.md).
 

@@ -1,4 +1,5 @@
 import { AnalogFuelOptions } from "./analog_fuel_options";
+import { CrashAndLearnOptions } from "./crash_and_learn_options";
 import { DigitalFuelOptions } from "./digital_fuel_options";
 import { GroupOptions } from "./group_options";
 import { HeatScoring } from "./heat_scoring";
@@ -40,6 +41,7 @@ export class Race implements Model {
   readonly false_start_lap_penalty: number;
   readonly false_start_time_penalty: number;
   readonly group_options: GroupOptions;
+  readonly crash_and_learn_options: CrashAndLearnOptions;
   readonly practice: boolean;
   readonly adjust_drift_laps: boolean;
   readonly theme_id?: string;
@@ -91,6 +93,7 @@ export class Race implements Model {
     false_start_lap_penalty: number = 0,
     false_start_time_penalty: number = 0,
     group_options: GroupOptions = new GroupOptions(),
+    crash_and_learn_options: CrashAndLearnOptions = new CrashAndLearnOptions(),
     practice: boolean = false,
     adjust_drift_laps: boolean = false,
     theme_id?: string,
@@ -137,6 +140,7 @@ export class Race implements Model {
     this.false_start_lap_penalty = false_start_lap_penalty;
     this.false_start_time_penalty = false_start_time_penalty;
     this.group_options = group_options;
+    this.crash_and_learn_options = crash_and_learn_options;
     this.practice = practice;
     this.adjust_drift_laps = adjust_drift_laps;
     this.theme_id = theme_id;

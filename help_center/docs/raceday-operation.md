@@ -57,3 +57,30 @@ When clicking on a clickable lap count cell:
 - **Adjusted Total Time**: Shifts the driver's position in **Fastest Total Time** standings, serves as the primary tiebreaker for drivers tied on laps, and updates the driver's **Average Lap Time** ($\text{Adjusted Total Time} / \text{Physical Laps}$) and time gaps.
 - **Untouched Metrics**: **Best Lap Time** and **Median Lap Time** are strictly preserved based on actual physical sensor lap times and are never altered by time adjustments.
 
+---
+
+## Crash and Learn Operations {: #crash-and-learn-operations }
+
+When a race is run with **Crash and Learn (CNL)** enabled, Race Coordinator AI actively tracks driver deslots (crashes), enforces crash limits, applies automated penalties, and manages driver disqualifications in real time.
+
+### Deslot Detection & Call Buttons
+- **Automated Crash Detection**: If configured in the race profile, when a car's lap time exceeds the **Automated Crash Time** threshold, the system automatically detects a deslot and credits a crash to that driver.
+- **Automated Yellow Flags**: If **Pause Heat on Crash** is enabled, an automated crash immediately triggers a track call (yellow flag pause) and de-energizes track power so marshals can retrieve the car.
+- **Multiple Crashes Per Lap**: If **Allow Multiple Crashes Per Lap** is enabled, a driver who remains off-track will accumulate an additional crash each time the automated crash time threshold elapses without completing a lap.
+- **Per-Lane Hardware Call Buttons**: On tracks equipped with per-lane call buttons, pressing a lane's call button triggers a yellow flag pause and credits a crash to the lane that pressed it. If another lane presses their call button while the heat is already paused, no additional crash is credited because track power is already off.
+
+### Disqualification (DQ) Mechanics
+When a driver exceeds the configured **Maximum Crashes** threshold (e.g. 4 crashes when the limit is 3):
+- **Black Flag Status**: The driver's lane status flag immediately switches to the black flag (`flag.disqualified`).
+- **Lane Power Cutoff**: If per-lane relays are installed on the track, power to the disqualified driver's lane is cut off immediately to prevent continued driving.
+- **Laps Stopped**: Sensor triggers and lap counts are ignored for disqualified drivers for the remainder of the heat.
+- **Zero Auto-Segments**: In auto-segment races (`NoneAutoSegments` or `SingleLapAutoSegments`), a disqualified driver receives $0$ auto-segments. Because a crash or automated deslot stops the driver on track, assigning auto-segments would artificially reward a disqualified driver with up to $0.99$ laps.
+- **Heat Standings Demotion**: A disqualified driver cannot be ranked higher than any non-disqualified driver in the heat. If multiple drivers are disqualified in the same heat, their relative heat scores (scaled by the configured **Disqualification Heat Score Percentage**) determine their order among the disqualified drivers.
+
+### Reviewing and Adjusting Crashes & Penalties
+Race directors have full manual control over crashes and penalties during or after heats:
+- **Crash Counter Widgets**: Lane columns display the current heat crash count and indicators.
+- **Manual Crash Adjustments**: Clicking the crash controls or using the **Adjust Lap Sections/Time** dialog allows race directors to add or remove crashes.
+- **Reversing Disqualification**: Removing crashes so the total falls at or below the maximum crashes limit immediately reverses the disqualification: the driver's flag returns to green, lane power is restored, and penalties are recomputed.
+- **Penalty Visibility**: Accumulated penalty laps and penalty time are displayed in the adjustment dialog beside the lap and time adjustment inputs, providing full transparency of penalties assigned to the heat.
+

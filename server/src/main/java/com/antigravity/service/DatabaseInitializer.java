@@ -580,6 +580,7 @@ public class DatabaseInitializer {
     slots.put("flag.warmup", "default_flag_green_yellow");
     slots.put("flag.driver_finished", "default_flag_red");
     slots.put("flag.penalty", "default_flag_black");
+    slots.put("flag.disqualified", "default_flag_black");
     slots.put("lamp.red.on", "default_start_red_on");
     slots.put("lamp.red.dim", "default_start_red_dim");
     slots.put("lamp.green", "default_start_green");
