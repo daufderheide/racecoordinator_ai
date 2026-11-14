@@ -33,7 +33,7 @@ Der **Arduino UNO Q** kombiniert einen 64-Bit-Linux-Einplatinencomputer (SBC) mi
 ### Schritt 1: Board vorbereiten & über Netzwerk verbinden
 
 1. **Board einschalten** *(Flashen ist normalerweise nicht erforderlich)*:
-   * Ihr Arduino Uno Q wird mit vorinstalliertem **Arduino Linux OS (Debian 12 arm64)** auf dem internen 32-GB-eMMC-Flash-Speicher geliefert. Schließen Sie das Board einfach an die Stromversorgung an, um das Betriebssystem zu starten.
+   * Ihr Arduino Uno Q wird mit vorinstalliertem **Arduino Linux OS (Debian 13 arm64)** auf dem internen 32-GB-eMMC-Flash-Speicher geliefert. Schließen Sie das Board einfach an die Stromversorgung an, um das Betriebssystem zu starten.
    * *(Hinweis: Das Flashen eines Betriebssystem-Images ist nur erforderlich, wenn Sie ein beschädigtes System wiederherstellen oder einen vollständigen Werksreset durchführen möchten).*
 
 2. **Netzwerkverbindung einrichten**:
@@ -168,8 +168,6 @@ Wenn Sie eine manuelle Steuerung bevorzugen oder Anpassungen vornehmen möchten:
    ```bash
    sudo chown -R arduino:arduino /opt/racecoordinatorai
    sudo usermod -a -G dialout,audio arduino
-   sudo loginctl enable-linger arduino
-   systemctl --user enable --now speech-dispatcher.socket
    ```
 
 3. **Systemd-Dienste installieren und registrieren**:
@@ -180,47 +178,50 @@ Wenn Sie eine manuelle Steuerung bevorzugen oder Anpassungen vornehmen möchten:
    sudo systemctl enable racecoordinatorai.service
    ```
 
-### Schritt 4: Mikrocontroller-Firmware flashen
-Kompilieren und laden Sie den Hardware-Sketch auf die integrierte MCU hoch:
-```bash
-# Erkannte Boards und Ports prüfen
-arduino-cli board list
+4. **Mikrocontroller-Firmware flashen**:
+   Kompilieren und laden Sie den Hardware-Sketch auf die integrierte MCU hoch:
 
-# Zephyr-Board-Core in arduino-cli installieren
-arduino-cli core update-index
-arduino-cli core install arduino:zephyr
+   ```bash
+   # Erkannte Boards und Ports prüfen
+   arduino-cli board list
 
-# Erforderliche Arduino-Bibliotheken installieren (Uno Q Router-Bridge)
-arduino-cli lib update-index
-arduino-cli lib install Arduino_RouterBridge
+   # Zephyr-Board-Core in arduino-cli installieren
+   arduino-cli core update-index
+   arduino-cli core install arduino:zephyr
 
-# racecoordinatorai_sketch für die Uno Q MCU kompilieren
-cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
-arduino-cli compile --fqbn arduino:zephyr:unoq .
+   # Erforderliche Arduino-Bibliotheken installieren (Uno Q Router-Bridge)
+   arduino-cli lib update-index
+   arduino-cli lib install Arduino_RouterBridge
 
-# Über die interne Netzwerkbrücke auf die integrierte MCU hochladen
-# (Board-Passwort 'arduino' eingeben oder --upload-field password=arduino übergeben)
-arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
-```
-*(Hinweis: Wie über `arduino-cli board list` verifiziert, läuft auf dem Uno Q Mikrocontroller Zephyr OS über die interne Netzwerkbrücke `172.17.0.1` mit der FQBN `arduino:zephyr:unoq`. Die Bibliothek `Arduino_RouterBridge` wird für die serielle Kommunikation über die SoC-Brücke benötigt. Beachten Sie, dass das Ausführen von `arduino-cli core install arduino:zephyr` ~500 MB+ herunterlädt und 5 bis 10+ Minuten für das Entpacken auf dem eMMC-Speicher benötigt (holen Sie sich einen Kaffee, während es entpackt; den Fortschritt können Sie mit `top -p $(pgrep arduino-cli)` in einem zweiten Terminal prüfen). FastLED-RGB-Lichtstreifen werden auf der STM32U5 / Zephyr Cortex-M33 Architektur aufgrund von Upstream-CMSIS-6-Registerdefinitionen derzeit nicht unterstützt, alle Kernfunktionen für die Rennstrecke—Rundensensoren, Sektorzeiten, Ruftasten und Bahnrelais—funktionieren jedoch einwandfrei).*
+   # racecoordinatorai_sketch für die Uno Q MCU kompilieren
+   cd /opt/racecoordinatorai/arduino/racecoordinatorai_sketch
+   arduino-cli compile --fqbn arduino:zephyr:unoq .
 
-### Schritt 5: Dienste starten & Kiosk-Display starten
-Starten Sie den Backend-Daemon und aktivieren Sie den Vollbild-TV-Kiosk:
-```bash
-# Backend-Server starten
-sudo systemctl start racecoordinatorai
+   # Über die interne Netzwerkbrücke auf die integrierte MCU hochladen
+   # (Board-Passwort 'arduino' eingeben oder --upload-field password=arduino übergeben)
+   arduino-cli upload -p 172.17.0.1 --fqbn arduino:zephyr:unoq --upload-field password=arduino .
+   ```
 
-# Sie haben den Backend-Daemon bereits zuvor aktiviert.
-# Aktivieren Sie nun den TV-Kiosk-Dienst für den grafischen Systemstart:
-sudo systemctl enable racecoordinatorai-kiosk.service
+   *(Hinweis: Wie über `arduino-cli board list` verifiziert, läuft auf dem Uno Q Mikrocontroller Zephyr OS über die interne Netzwerkbrücke `172.17.0.1` mit der FQBN `arduino:zephyr:unoq`. Die Bibliothek `Arduino_RouterBridge` wird für die serielle Kommunikation über die SoC-Brücke benötigt. Beachten Sie, dass das Ausführen von `arduino-cli core install arduino:zephyr` ~500 MB+ herunterlädt und 5 bis 10+ Minuten für das Entpacken auf dem eMMC-Speicher benötigt (holen Sie sich einen Kaffee, während es entpackt; den Fortschritt können Sie mit `top -p $(pgrep arduino-cli)` in einem zweiten Terminal prüfen). FastLED-RGB-Lichtstreifen werden auf der STM32U5 / Zephyr Cortex-M33 Architektur aufgrund von Upstream-CMSIS-6-Registerdefinitionen derzeit nicht unterstützt, alle Kernfunktionen für die Rennstrecke—Rundensensoren, Sektorzeiten, Ruftasten und Bahnrelais—funktionieren jedoch einwandfrei).*
 
-# Vollbild-TV-Kiosk sofort starten
-sudo systemctl start racecoordinatorai-kiosk.service
-```
+5. **Dienste starten & Kiosk-Display starten**:
+   Starten Sie den Backend-Daemon und aktivieren Sie den Vollbild-TV-Kiosk:
+
+   ```bash
+   # Backend-Server starten
+   sudo systemctl start racecoordinatorai
+
+   # Sie haben den Backend-Daemon bereits zuvor aktiviert.
+   # Aktivieren Sie nun den TV-Kiosk-Dienst für den grafischen Systemstart:
+   sudo systemctl enable racecoordinatorai-kiosk.service
+
+   # Vollbild-TV-Kiosk sofort starten
+   sudo systemctl start racecoordinatorai-kiosk.service
+   ```
 
 ---
 
-## Bestehende Installation aktualisieren { #updating-an-existing-installation }
+## Bestehende Installation aktualisieren { #aktualisierung-einer-bestehenden-installation }
 
 Sobald Race Coordinator AI auf Ihrem Arduino Uno Q eingerichtet ist und ausgeführt wird, können Sie die Software bei neuen Versionen, Fehlerbehebungen und Firmware-Verbesserungen problemlos aktualisieren. Wählen Sie je nachdem, ob Ihr Board mit dem Netzwerk verbunden ist oder komplett offline an der Rennbahn betrieben wird, die passende Aktualisierungsmethode:
 
@@ -361,37 +362,48 @@ Wenn Sie visuelle Beleuchtungsanzeigen auf einem Arduino Uno Q-Setup wünschen, 
 
 ## Text-to-Speech (TTS) & Audio-Fehlerbehebung
 
-Race Coordinator AI nutzt die Web Speech API des Browsers (`window.speechSynthesis`), um Rundenzeiten, Rennereignisse und Fahrerkommentare anzusagen. Im Gegensatz zu Windows oder macOS verfügt Linux (Debian 12 auf dem Uno Q) über keinen integrierten Sprachsynthesizer, sodass Chromium auf **Speech Dispatcher** und **eSpeak NG** angewiesen ist.
+Race Coordinator AI nutzt die Web Speech API des Browsers (`window.speechSynthesis`), um Rundenzeiten, Rennereignisse und Fahrerkommentare anzusagen. Im Gegensatz zu Windows oder macOS verfügt Linux (Debian 13 auf dem Uno Q) über keinen integrierten Sprachsynthesizer, sodass Chromium auf **Speech Dispatcher** und **eSpeak NG** angewiesen ist.
 
 ### Erforderliche Pakete
+
 Das automatisierte Installationsskript (`install.sh`) installiert diese Pakete automatisch. Wenn Sie eine manuelle Installation durchgeführt haben oder TTS keinen Ton ausgibt, stellen Sie sicher, dass die erforderlichen Sprach- und Audiopakete installiert sind:
+
 ```bash
 sudo apt-get update
 sudo apt-get install -y speech-dispatcher speech-dispatcher-espeak-ng espeak-ng alsa-utils
 ```
 
 ### Kiosk-Browser-Flags & Multi-Tab-Navigation
-Im Kiosk-Display-Modus wird Chromium über `/opt/racecoordinatorai/scripts/start_kiosk.sh` gestartet. Race Coordinator AI verwendet `--start-maximized` (anstelle des abgesperrten `--kiosk`), damit sekundäre Tabs – wie z. B. Laufergebnisse, Rennergebnisse, Design-Ansichten und das Offline-Hilfecenter – über die Tableiste am oberen Bildschirmrand sichtbar und umschaltbar bleiben. Chromium benötigt zudem spezifische Flags, um Speech Dispatcher und die unaufgeforderte Audiowiedergabe zu aktivieren, sowie `--test-type`, um Warnhinweise auf nicht unterstützte Flags zu unterdrücken. Stellen Sie sicher, dass Ihre `start_kiosk.sh` Folgendes enthält:
+
+Im Kiosk-Display-Modus wird Chromium über `/opt/racecoordinatorai/scripts/start_kiosk.sh` gestartet. Race Coordinator AI verwendet `--start-maximized` (anstelle des abgesperrten `--kiosk`), damit sekundäre Tabs – wie z. B. Laufergebnisse, Rennergebnisse, Design-Ansichten und das Offline-Hilfecenter – über die Tableiste am oberen Bildschirmrand sichtbar und umschaltbar bleiben. Chromium benötigt zudem spezifische Flags, um Speech Dispatcher und die unaufgeforderte Audiowiedergabe zu aktivieren. Stellen Sie sicher, dass Ihre `start_kiosk.sh` Folgendes enthält:
+
 ```bash
   --start-maximized \
-  --test-type \
   --enable-speech-dispatcher \
   --autoplay-policy=no-user-gesture-required \
 ```
+
 *(Wenn Sie `start_kiosk.sh` manuell anpassen, starten Sie den Kiosk-Dienst anschließend neu: `sudo systemctl restart racecoordinatorai-kiosk`).*
 
 ### Schritte zur Fehlerbehebung
+
 1. **Betriebsmodus & Audioausgabe überprüfen**:
+
    - **Kiosk-Display-Modus**: Die Audioausgabe erfolgt direkt vom Uno Q über die USB-C-DisplayPort/HDMI-Verbindung zu Ihrem Fernseher/Monitor oder über angeschlossene USB-Lautsprecher.
    - **Entfernter Netzwerk-Client**: Wenn Sie Race Coordinator AI von einem Laptop, Tablet oder Smartphone über das lokale Netzwerk (`http://<hostname>:7070`) aufrufen, werden Audio und TTS über **den Browser und die Lautsprecher dieses Geräts** wiedergegeben, nicht über das Uno Q-Board.
+
 2. **Hardware-Audioausgabe überprüfen**:
    Führen Sie im Uno Q-Terminal einen Tontest durch, um zu prüfen, ob die Audioausgabe aktiv und nicht stummgeschaltet ist:
+
    ```bash
    speaker-test -t wav -c 2 -l 1
    ```
+
    Falls kein Ton zu hören ist, öffnen Sie `alsamixer` im Terminal und stellen Sie sicher, dass die Schieberegler für Master/PCM/HDMI nicht stummgeschaltet (`[MM]`) sind (mit Taste `M` umschalten) und die Lautstärke angehoben ist.
+
 3. **Sprachsynthesizer über die Befehlszeile testen**:
    Prüfen Sie, ob eSpeak NG und Speech Dispatcher auf Betriebssystemebene funktionieren:
+
    ```bash
    # Reines eSpeak testen
    espeak-ng "Testing speech synthesis"
@@ -399,12 +411,9 @@ Im Kiosk-Display-Modus wird Chromium über `/opt/racecoordinatorai/scripts/start
    # Speech Dispatcher testen (Chromiums Schnittstelle)
    spd-say "Testing speech dispatcher"
    ```
+
    Falls `spd-say` einen Fehler ausgibt oder hängt, starten Sie den Daemon neu: `pkill -f speech-dispatcher && spd-say "Hello"`.
-   Stellen Sie sicher, dass der Speech Dispatcher-Socket und das Benutzer-Lingering aktiviert sind:
-   ```bash
-   systemctl --user enable --now speech-dispatcher.socket
-   sudo loginctl enable-linger arduino
-   ```
+
 4. **In der Weboberfläche testen**:
    Öffnen Sie in der Weboberfläche von Race Coordinator AI **Benutzeroberfläche anpassen** (oder **Design-Editor** $\rightarrow$ **Audio-Einstellungen**). Überprüfen Sie das Dropdown-Menü **TTS-Stimme** – dort sollten die installierten Stimmen aufgeführt sein. Klicken Sie auf **TTS-Stimme testen**, um die Wiedergabe zu bestätigen.
 
