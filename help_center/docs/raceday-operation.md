@@ -74,7 +74,7 @@ When a driver exceeds the configured **Maximum Crashes** threshold (e.g. 4 crash
 - **Black Flag Status**: The driver's lane status flag immediately switches to the black flag (`flag.disqualified`).
 - **Lane Power Cutoff**: If per-lane relays are installed on the track, power to the disqualified driver's lane is cut off immediately to prevent continued driving.
 - **Laps Stopped**: Sensor triggers and lap counts are ignored for disqualified drivers for the remainder of the heat.
-- **Immediate Auto-Segments**: In auto-segment races (`NoneAutoSegments` or `SingleLapAutoSegments`), the disqualified driver's partial lap segments are calculated immediately upon disqualification using the "do not allow finish" approach ($\text{timeSinceLastLap} / \text{medianLapTime}$, capped at $0.99$). This prevents the driver from artificially gaining $0.99$ auto-segments while sitting stopped during the rest of the heat.
+- **Zero Auto-Segments**: In auto-segment races (`NoneAutoSegments` or `SingleLapAutoSegments`), a disqualified driver receives $0$ auto-segments. Because a crash or automated deslot stops the driver on track, assigning auto-segments would artificially reward a disqualified driver with up to $0.99$ laps.
 - **Heat Standings Demotion**: A disqualified driver cannot be ranked higher than any non-disqualified driver in the heat. If multiple drivers are disqualified in the same heat, their relative heat scores (scaled by the configured **Disqualification Heat Score Percentage**) determine their order among the disqualified drivers.
 
 ### Reviewing and Adjusting Crashes & Penalties

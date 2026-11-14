@@ -63,7 +63,7 @@ Lorsqu'un pilote dépasse le nombre **Maximum de Crashs** configuré (ex. 4 cras
 - **Drapeau Noir** : Le statut de la voie bascule immédiatement au drapeau noir (`flag.disqualified`).
 - **Coupure d'Alimentation de la Voie** : Si des relais par voie sont installés, l'alimentation électrique de cette voie est coupée instantanément.
 - **Arrêt des Tours** : Les impulsions du capteur et les tours ne sont plus comptabilisés pour le pilote disqualifié pendant le reste de la manche.
-- **Calcul Immédiat des Segments Automatiques** : Dans les courses avec calcul automatique de segments (`NoneAutoSegments` ou `SingleLapAutoSegments`), les fractions de tour du pilote disqualifié sont calculées au moment précis de la disqualification selon l'approche « ne pas autoriser à terminer » ($\text{timeSinceLastLap} / \text{medianLapTime}$, plafonné à $0,99$).
+- **Zéro segment automatique** : Dans les courses à segments automatiques (`NoneAutoSegments` ou `SingleLapAutoSegments`), un pilote disqualifié reçoit $0$ segment automatique. Puisqu'un crash ou une sortie de piste automatique immobilise le pilote sur la piste, attribuer des segments automatiques récompenserait artificiellement un pilote disqualifié de jusqu'à $0,99$ tour.
 - **Position au Classement** : Un pilote disqualifié ne peut pas être classé devant un pilote non disqualifié dans la manche. Si plusieurs pilotes sont disqualifiés, ils sont ordonnés selon leur score ajusté du **Pourcentage de Score de Manche après Disqualification**.
 
 ### Révision et Ajustement des Crashs et Pénalités

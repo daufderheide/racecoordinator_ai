@@ -63,7 +63,7 @@ Quando um piloto ultrapassa o limite de **Máximo de Batidas** (por exemplo, 4 b
 - **Bandeira Preta**: O status da fita muda imediatamente para a bandeira preta (`flag.disqualified`).
 - **Corte de Energia da Fita**: Se houver relés por fita instalados, a alimentação daquela fita é desligada instantaneamente.
 - **Contagem de Voltas Bloqueada**: Leituras do sensor e voltas são ignoradas para pilotos desqualificados durante o restante da bateria.
-- **Cálculo Imediato de Segmentos Automáticos**: Em corridas com cálculo automático de segmentos (`NoneAutoSegments` ou `SingleLapAutoSegments`), as frações de volta do piloto desqualificado são calculadas no exato instante da desqualificação pelo método "não permitir terminar" ($\text{timeSinceLastLap} / \text{medianLapTime}$, limitado a $0.99$).
+- **Zero segmentos automáticos**: Em corridas com segmentos automáticos (`NoneAutoSegments` ou `SingleLapAutoSegments`), um piloto desqualificado recebe $0$ segmentos automáticos. Como uma colisão ou detecção automática de desengate para o piloto na pista, atribuir segmentos automáticos recompensaria artificialmente um piloto desqualificado com até $0.99$ voltas.
 - **Posição na Classificação**: Um piloto desqualificado não pode ser classificado à frente de um competidor não desqualificado na bateria. Havendo múltiplos desqualificados, a ordem é definida pela pontuação ajustada pela **Porcentagem de Pontuação na Bateria após Desqualificação**.
 
 ### Revisão e Ajuste de Batidas e Penalidades

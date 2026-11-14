@@ -63,7 +63,7 @@ Quando un pilota supera il limite di **Numero Massimo di Crash** (ad esempio 4 c
 - **Bandiera Nera**: Lo stato della corsia passa immediatamente a bandiera nera (`flag.disqualified`).
 - **Interruzione Corrente della Corsia**: Se sono installati relè per singola corsia, l'alimentazione di quella corsia viene interrotta istantaneamente.
 - **Giri Bloccati**: I rilevamenti dei sensori e i giri non vengono conteggiati per il pilota squalificato per il resto della manche.
-- **Calcolo Immediato Frazioni di Giro**: Nelle gare con calcolo delle frazioni di giro (`NoneAutoSegments` o `SingleLapAutoSegments`), i segmenti del pilota squalificato vengono calcolati al momento esatto della squalifica con il metodo "non consentire di finire" ($\text{timeSinceLastLap} / \text{medianLapTime}$, con limite massimo di $0.99$).
+- **Zero segmenti automatici**: Nelle gare con segmenti automatici (`NoneAutoSegments` o `SingleLapAutoSegments`), un pilota squalificato riceve $0$ segmenti automatici. Poiché un incidente o un'uscita di pista automatica ferma il pilota sul tracciato, assegnare segmenti automatici premierebbe artificialmente un pilota squalificato con un massimo di $0.99$ giri.
 - **Posizione in Classifica**: Un pilota squalificato non può essere classificato davanti a piloti non squalificati nella manche. In presenza di più piloti squalificati, l'ordine è stabilito dal punteggio ridimensionato in base alla **Percentuale di Punteggio Manche per Squalifica**.
 
 ### Revisione e Regolazione di Crash e Penalità

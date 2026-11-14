@@ -1469,20 +1469,7 @@ public class HeatExecutionManager {
     if (dhd == null) {
       return;
     }
-    HeatScoring scoring =
-        race != null && race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
-    if (scoring == null) {
-      return;
-    }
-    boolean isAutoSegments =
-        scoring.getAllowFinish() == AllowFinish.NoneAutoSegments
-            || scoring.getAllowFinish() == AllowFinish.SingleLapAutoSegments;
-    if (!isAutoSegments) {
-      return;
-    }
-
-    boolean isLapBased = scoring.getFinishMethod() == FinishMethod.Lap;
-    long limit = scoring.getFinishValue();
+    dhd.setAutoCalculatedLaps(0.0);
     int heatNum =
         (race != null && race.getCurrentHeat() != null)
             ? race.getCurrentHeat().getHeatNumber()
@@ -1491,60 +1478,11 @@ public class HeatExecutionManager {
         (dhd.getDriver() != null && dhd.getDriver().getDriver() != null)
             ? dhd.getDriver().getDriver().getName()
             : "Lane " + (lane + 1);
-
-    if (isLapBased && limit > 0 && dhd.getLapCount() >= limit) {
-      dhd.setAutoCalculatedLaps(0.0);
-      logger.info(
-          "AutoSegments DQ (NoneAutoSegments) Heat {} Lane {} ({}): reached lap limit {}, autoCalculatedLaps=0.0",
-          heatNum,
-          lane,
-          driverName,
-          limit);
-      return;
-    }
-
-    double median = dhd.getMedianLapTime();
-    if (median <= 0) {
-      dhd.setAutoCalculatedLaps(0.0);
-      logger.info(
-          "AutoSegments DQ (NoneAutoSegments) Heat {} Lane {} ({}): median lap time <= 0 ({}), autoCalculatedLaps=0.0",
-          heatNum,
-          lane,
-          driverName,
-          median);
-    } else {
-      double time = 0.0;
-      if (timeSinceLastLap != null
-          && lane >= 0
-          && lane < timeSinceLastLap.length
-          && timeSinceLastLap[lane] > 0.0) {
-        time = timeSinceLastLap[lane];
-      } else {
-        time = dhd.getTimeSinceLastLap();
-      }
-      double rawSegments = time / median;
-      double segments = rawSegments;
-      boolean capped = false;
-      if (segments >= 1.0) {
-        segments = 0.99;
-        capped = true;
-      } else if (segments < 0.0) {
-        segments = 0.0;
-      }
-      dhd.setAutoCalculatedLaps(segments);
-      dhd.setTimeSinceLastLap(time);
-      logger.info(
-          "AutoSegments DQ (NoneAutoSegments) Heat {} Lane {} ({}): timeSinceLastLap={}s, medianLapTime={}s, rawRatio={}, autoCalculatedLaps={}{}, totalAdjustedLaps={}",
-          heatNum,
-          lane,
-          driverName,
-          time,
-          median,
-          rawSegments,
-          segments,
-          capped ? " (capped at 0.99)" : "",
-          dhd.getAdjustedLapCount());
-    }
+    logger.info(
+        "AutoSegments DQ Heat {} Lane {} ({}): DQ driver assigned 0.0 auto segments",
+        heatNum,
+        lane,
+        driverName);
   }
 
   public static void applyEndHeatAutoSegments(Race race, HeatExecutionManager executionManager) {

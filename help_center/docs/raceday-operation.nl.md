@@ -63,7 +63,7 @@ Overschrijdt een coureur de ingestelde limiet voor **Maximaal Aantal Crashes** (
 - **Zwarte Vlag**: De status van het spoor schakelt onmiddellijk over naar de zwarte vlag (`flag.disqualified`).
 - **Uitschakeling van Spoorvoeding**: Indien relais per spoor aanwezig zijn, wordt de stroom van dat spoor onmiddellijk uitgeschakeld.
 - **Ronden Tellen Gestopt**: Sensordoorkomsten en ronden worden voor gediskwalificeerde rijders voor de rest van de heat genegeerd.
-- **Directe Deelrondeberekening**: In races met automatische deelronden (`NoneAutoSegments` of `SingleLapAutoSegments`) worden de fracties van de gediskwalificeerde rijder berekend op het moment van diskwalificatie volgens de "niet toestaan te finishen"-methode ($\text{timeSinceLastLap} / \text{medianLapTime}$, gemaximeerd op $0,99$).
+- **Nul automatische segmenten**: In races met automatische segmenten (`NoneAutoSegments` of `SingleLapAutoSegments`) ontvangt een gediskwalificeerde rijder $0$ automatische segmenten. Omdat een crash of automatische baandetectie de rijder op de baan stopt, zou het toekennen van automatische segmenten een gediskwalificeerde rijder kunstmatig belonen met maximaal $0,99$ ronden.
 - **Positie in het Klassement**: Een gediskwalificeerde coureur kan in de heatstand nooit boven een niet-gediskwalificeerde coureur eindigen. Meerdere gediskwalificeerde rijders worden gerangschikt op basis van hun score aangepast met het **Scorepercentage na Diskwalificatie**.
 
 ### Crashes & Straffen Controleren en Aanpassen

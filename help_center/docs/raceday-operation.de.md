@@ -63,7 +63,7 @@ Wenn ein Rennen mit aktiviertem **Crash and Learn (CNL)** durchgeführt wird, er
 - **Schwarze Flagge**: Der Spurstatus des Fahrers wechselt sofort zur Schwarzen Flagge (`flag.disqualified`).
 - **Spurstrombabschaltung**: Sind spurbezogene Relais vorhanden, wird der Bahnstrom dieser Spur sofort abgeschaltet.
 - **Rundenzählung gestoppt**: Sensorimpulse und Runden werden für disqualifizierte Fahrer im restlichen Lauf ignoriert.
-- **Sofortige Teilrundenberechnung**: In Teilrunden-Rennen (`NoneAutoSegments` oder `SingleLapAutoSegments`) werden die Segmente des disqualifizierten Fahrers im Moment der Disqualifikation nach dem Prinzip „Fertigfahren nicht erlauben“ berechnet ($\text{timeSinceLastLap} / \text{medianLapTime}$, maximal $0.99$). Dadurch wird verhindert, dass der Fahrer fälschlicherweise auf 0.99 Teilrunden anwächst, während er auf das Laufende wartet.
+- **Keine Teilrunden (0 Auto-Segments)**: In Teilrunden-Rennen (`NoneAutoSegments` oder `SingleLapAutoSegments`) erhält ein disqualifizierter Fahrer $0$ Teilrunden. Da ein Crash oder ein automatisches Deslot den Fahrer auf der Strecke stoppt, würde eine Teilrundenvergabe den disqualifizierten Fahrer fälschlicherweise mit bis zu $0.99$ Runden belohnen.
 - **Wertungsrangfolge**: Disqualifizierte Fahrer können in der Laufwertung nicht vor nicht-disqualifizierten Fahrern platziert werden. Bei mehreren DQ-Fahrern entscheidet deren relatives Laufergebnis (skaliert nach dem eingestellten **DQ-Laufwertungsprozentsatz**).
 
 ### Crashes & Strafen prüfen und anpassen

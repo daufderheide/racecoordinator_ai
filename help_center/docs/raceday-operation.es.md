@@ -63,7 +63,7 @@ Cuando un piloto supera el **Límite Máximo de Accidentes** (por ejemplo, 4 acc
 - **Bandera Negra**: El estado del carril cambia inmediatamente a bandera negra (`flag.disqualified`).
 - **Corte de Corriente del Carril**: Si la pista dispone de relés por carril, la corriente de ese carril se desconecta al instante.
 - **Detención de Vueltas**: Las lecturas del sensor y las vueltas se ignoran para los pilotos descalificados durante el resto de la manga.
-- **Cálculo Inmediato de Segmentos Automáticos**: En carreras con cálculo de segmentos (`NoneAutoSegments` o `SingleLapAutoSegments`), los segmentos del piloto descalificado se calculan en el momento exacto de la descalificación con el método de "no permitir terminar" ($\text{timeSinceLastLap} / \text{medianLapTime}$, con límite de $0.99$).
+- **Cero segmentos automáticos**: En carreras con segmentos automáticos (`NoneAutoSegments` o `SingleLapAutoSegments`), un piloto descalificado recibe $0$ segmentos automáticos. Debido a que una colisión o detección automática de salida detiene al piloto en la pista, asignar segmentos automáticos recompensaría artificialmente a un piloto descalificado con hasta $0.99$ vueltas.
 - **Posición en la Clasificación**: Un piloto descalificado nunca puede quedar por delante de un piloto no descalificado en la manga. Si varios pilotos son descalificados, se ordenan según su puntuación ajustada por el **Porcentaje de Puntuación tras Descalificación**.
 
 ### Revisión y Ajuste de Accidentes y Penalizaciones

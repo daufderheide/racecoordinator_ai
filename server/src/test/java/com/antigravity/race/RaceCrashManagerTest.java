@@ -124,7 +124,7 @@ public class RaceCrashManagerTest {
 
     crashManager.calculateDqAutoSegments(dhd, 0);
 
-    assertEquals(0.5, dhd.getAutoCalculatedLaps(), 0.001);
+    assertEquals(0.0, dhd.getAutoCalculatedLaps(), 0.001);
   }
 
   @Test
@@ -558,27 +558,24 @@ public class RaceCrashManagerTest {
     // 3rd crash triggers DQ
     autoRace.recordCrash(0);
     assertTrue(d0.isDisqualified());
-    // Auto-segments should be calculated immediately as 2.0s / 5.0s = 0.4
+    // In a CnL race with auto-segments, a DQ driver gets 0 auto segments
     assertEquals(
-        "DQ driver should immediately calculate 2.0 / 5.0 = 0.4 auto segments",
-        0.4,
-        d0.getAutoCalculatedLaps(),
-        0.001);
+        "DQ driver should receive 0.0 auto segments", 0.0, d0.getAutoCalculatedLaps(), 0.001);
 
     // Simulate 30 seconds passing during the rest of the heat
     exec.processTicker(30.0f);
-    // Auto-segments must remain 0.4, not 0.99
+    // Auto-segments must remain 0.0, not 0.99
     assertEquals(
         "Time passing after DQ must not inflate auto-segments to 0.99",
-        0.4,
+        0.0,
         d0.getAutoCalculatedLaps(),
         0.001);
 
     // End the heat (applyEndHeatAutoSegments)
     exec.applyEndHeatAutoSegments();
     assertEquals(
-        "End of heat must preserve the 0.4 auto-segments calculated at DQ",
-        0.4,
+        "End of heat must preserve 0.0 auto-segments for DQ driver",
+        0.0,
         d0.getAutoCalculatedLaps(),
         0.001);
   }
@@ -641,11 +638,10 @@ public class RaceCrashManagerTest {
     // 2nd crash: triggers DQ
     autoRace.recordCrash(0);
     assertTrue(d0.isDisqualified());
-    // Auto-segments should be calculated immediately using "do not allow finish" approach (3.5 /
-    // 10.0 = 0.35)
+    // Auto-segments should be 0.0 on DQ
     assertEquals(
-        "Should calculate 3.5 / 10.0 = 0.35 auto segments on DQ",
-        0.35,
+        "Should assign 0.0 auto segments on DQ in SingleLapAutoSegments",
+        0.0,
         d0.getAutoCalculatedLaps(),
         0.001);
   }
@@ -696,10 +692,10 @@ public class RaceCrashManagerTest {
 
     DriverHeatData d0 = autoRace.getCurrentHeat().getDrivers().get(0);
 
-    // Give 3 crashes -> DQ -> auto segments = 3.0 / 6.0 = 0.5
+    // Give 3 crashes -> DQ -> auto segments = 0.0
     autoRace.updateDriverCrashes(autoRace.getCurrentHeat(), d0, 3);
     assertTrue(d0.isDisqualified());
-    assertEquals(0.5, d0.getAutoCalculatedLaps(), 0.001);
+    assertEquals(0.0, d0.getAutoCalculatedLaps(), 0.001);
     assertTrue(d0.isFinished());
     assertTrue(exec.getFinishedLanes().contains(0));
 
