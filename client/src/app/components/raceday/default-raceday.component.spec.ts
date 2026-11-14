@@ -8656,19 +8656,40 @@ describe("DefaultRacedayComponent", () => {
       } as any;
 
       const audioService = component["audioService"];
-      // Simulate an active high priority milestone voice currently speaking
-      const activeHighCallout: AudioConfig = {
-        type: "tts",
-        text: "New Race Leader Driver 11",
-      };
-      audioService.playCallout(activeHighCallout, "high");
-      expect(audioService.getActiveVoice()?.priority).toBe("high");
+      audioService.reset();
 
-      // Crossing 3s remaining: previous time 3.5, current time 2.8
-      (component as any).checkAudioCallouts(2.8, 3.5);
+      const originalSpeechSynthesis = window.speechSynthesis;
+      const mockSpeechSynthesis = jasmine.createSpyObj("SpeechSynthesis", [
+        "cancel",
+        "speak",
+      ]);
+      Object.defineProperty(window, "speechSynthesis", {
+        value: mockSpeechSynthesis,
+        writable: true,
+        configurable: true,
+      });
 
-      // Active voice should have been preempted immediately by urgent White Flag
-      expect(audioService.getActiveVoice()?.priority).toBe("urgent");
+      try {
+        // Simulate an active high priority milestone voice currently speaking
+        const activeHighCallout: AudioConfig = {
+          type: "tts",
+          text: "New Race Leader Driver 11",
+        };
+        audioService.playCallout(activeHighCallout, "high");
+        expect(audioService.getActiveVoice()?.priority).toBe("high");
+
+        // Crossing 3s remaining: previous time 3.5, current time 2.8
+        (component as any).checkAudioCallouts(2.8, 3.5);
+
+        // Active voice should have been preempted immediately by urgent White Flag
+        expect(audioService.getActiveVoice()?.priority).toBe("urgent");
+      } finally {
+        Object.defineProperty(window, "speechSynthesis", {
+          value: originalSpeechSynthesis,
+          writable: true,
+          configurable: true,
+        });
+      }
     });
 
     it("should win arbitration with urgent priority when heat leader reaches 1 lap to go on a milestone lap", () => {

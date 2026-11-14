@@ -1,18 +1,21 @@
 import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   ElementRef,
   inject,
   input,
+  NgZone,
   OnDestroy,
+  untracked,
   viewChild,
   ViewEncapsulation,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { of } from "rxjs";
+import { of, Subscription } from "rxjs";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceTimeService } from "@app/services/race-time.service";
@@ -23,6 +26,7 @@ import { RaceTimeService } from "@app/services/race-time.service";
   templateUrl: "./raceday-timer.component.html",
   styleUrls: ["./raceday-timer.component.css"],
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
@@ -30,6 +34,8 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
   showCountdownOverlay = input<boolean>(false);
 
   private raceTimeService = inject(RaceTimeService, { optional: true });
+  private ngZone = inject(NgZone);
+  private timeSub?: Subscription;
 
   private serviceFormattedTime = toSignal(
     this.raceTimeService?.formattedTime$ ?? of(""),
@@ -57,6 +63,10 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     const custom = this.formattedTime();
     if (custom) return custom;
     return this.serviceFormattedTime() || "";
+  });
+
+  protected formattedTimeLength = computed(() => {
+    return this.displayFormattedTime().length;
   });
 
   protected displayAutoStatusLabel = computed(() => {
@@ -88,31 +98,58 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      // Trigger whenever inputs change
-      this.displayFormattedTime();
+      // Trigger fit only when text character count, labels, or widget configuration change.
+      // Crucial: We depend on formattedTimeLength (computed), NOT displayFormattedTime directly,
+      // so high-frequency subsecond ticks with identical string lengths do NOT trigger reflows.
+      this.formattedTimeLength();
       this.displayAutoStatusLabel();
       this.displayIsWarmup();
       this.displayIsCooldown();
       this.widget();
 
-      // Schedule fit on next microtask
-      setTimeout(() => this.fitText(), 0);
+      // Schedule layout and font fitting outside Angular zone without Zone.js macrotasks.
+      this.ngZone.runOutsideAngular(() => {
+        queueMicrotask(() => this.fitText());
+      });
     });
+
+    // Subscribe to high-frequency timer ticks outside Angular zone to update textContent
+    // directly without triggering Angular change detection passes.
+    if (this.raceTimeService?.formattedTime$) {
+      this.ngZone.runOutsideAngular(() => {
+        this.timeSub = this.raceTimeService!.formattedTime$.subscribe(
+          (time) => {
+            const textEl = this.timerText()?.nativeElement;
+            if (textEl && !this.formattedTime()) {
+              textEl.textContent = time;
+            }
+          },
+        );
+      });
+    }
   }
 
   ngAfterViewInit() {
     const panelEl = this.timerPanel()?.nativeElement;
     if (panelEl && typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => {
-        this.fitText();
+        this.ngZone.runOutsideAngular(() => {
+          this.fitText();
+        });
       });
       this.resizeObserver.observe(panelEl);
     }
+    this.ngZone.runOutsideAngular(() => {
+      this.fitText();
+    });
   }
 
   ngOnDestroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
+    }
+    if (this.timeSub) {
+      this.timeSub.unsubscribe();
     }
   }
 
@@ -129,7 +166,10 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const textString = textEl.textContent?.trim() || "00:00";
+    const textString =
+      textEl.textContent?.trim() ||
+      untracked(() => this.displayFormattedTime().trim()) ||
+      "00:00";
     const panelWidth = panelEl.clientWidth;
     const panelHeight = panelEl.clientHeight;
     const scaleMode = widgetData?.scaleMode || "auto";

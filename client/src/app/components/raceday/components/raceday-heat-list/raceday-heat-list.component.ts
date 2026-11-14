@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   computed,
   effect,
@@ -70,6 +71,7 @@ export interface ProcessedHeat {
   templateUrl: "./raceday-heat-list.component.html",
   styleUrls: ["./raceday-heat-list.component.css"],
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, TranslatePipe],
 })
 export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {

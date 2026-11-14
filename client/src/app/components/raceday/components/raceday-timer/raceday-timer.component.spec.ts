@@ -1,6 +1,6 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -306,5 +306,81 @@ describe("RacedayTimerComponent", () => {
     (component as any).fitText();
 
     expect(setPropertySpy.calls.count()).toBeGreaterThan(firstCallCount);
+  });
+
+  it("should directly update timer textContent without angular change detection when raceTimeService emits", () => {
+    const formattedSubject = new BehaviorSubject<string>("01:00.00");
+    const mockService = {
+      formattedTime: "01:00.00",
+      formattedTime$: formattedSubject.asObservable(),
+      autoStatusLabel: "",
+      autoStatusLabel$: of(""),
+      isWarmup: false,
+      isWarmup$: of(false),
+      isCooldown: false,
+      isCooldown$: of(false),
+    };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [RacedayTimerComponent, TranslatePipe],
+      providers: [
+        { provide: TranslationService, useValue: mockTranslationService },
+        { provide: RaceTimeService, useValue: mockService },
+      ],
+    });
+
+    const localFixture = TestBed.createComponent(RacedayTimerComponent);
+    localFixture.detectChanges();
+
+    const timerTextEl = localFixture.nativeElement.querySelector(".timer-text");
+    expect(timerTextEl.textContent.trim()).toBe("01:00.00");
+
+    // Emit new time outside Angular
+    formattedSubject.next("01:00.01");
+    // Verify direct DOM update occurred without calling fixture.detectChanges()
+    expect(timerTextEl.textContent.trim()).toBe("01:00.01");
+  });
+
+  it("should not re-trigger font fitting effect when time ticks with identical character length", async () => {
+    const fitSpy = spyOn<any>(component, "fitText").and.callThrough();
+    fitSpy.calls.reset();
+
+    fixture.componentRef.setInput("formattedTime", "00:01.23");
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const fitCallsAfterFirst = fitSpy.calls.count();
+
+    // Change time with same length ("00:01.24" -> 8 chars)
+    fixture.componentRef.setInput("formattedTime", "00:01.24");
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fitSpy.calls.count()).toBe(fitCallsAfterFirst);
+
+    // Change time with different length ("0:01.24" -> 7 chars)
+    fixture.componentRef.setInput("formattedTime", "0:01.24");
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fitSpy.calls.count()).toBeGreaterThan(fitCallsAfterFirst);
+  });
+
+  it("should clean up timeSub and resizeObserver on destroy", () => {
+    const timeSub = (component as any).timeSub;
+    const observer = (component as any).resizeObserver;
+    if (timeSub) {
+      spyOn(timeSub, "unsubscribe").and.callThrough();
+    }
+    if (observer) {
+      spyOn(observer, "disconnect").and.callThrough();
+    }
+
+    component.ngOnDestroy();
+
+    if (timeSub) {
+      expect(timeSub.unsubscribe).toHaveBeenCalled();
+    }
   });
 });
