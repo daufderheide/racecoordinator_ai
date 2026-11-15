@@ -506,32 +506,31 @@ export function resolveEffectiveHeaderFontSize(
   cardEl?: HTMLElement | null,
   cachedHeight?: number,
 ): number {
-  const custom = settings.headerFontSize;
-  if (widget?.scaleMode === "auto" || (!widget && settings)) {
-    const isGrid = Boolean(
-      settings.gridId || widget?.customSettings?.["gridId"],
-    );
-    const isHeaderWidget = Boolean(
-      settings.isHeaderWidget ||
-      (widget?.customSettings as any)?.["isHeaderWidget"] ||
-      cardEl?.classList?.contains("header-widget-card"),
-    );
-    const cardH =
-      cachedHeight && cachedHeight > 0
-        ? cachedHeight
-        : cardEl?.clientHeight ||
-          (widget?.height && widget.height > 0 ? widget.height : 0);
-    if (cardH > 0) {
-      if (isHeaderWidget) {
-        return Math.max(12, Math.min(24, Math.round(cardH * 0.55)));
-      }
-      if (isGrid) {
-        return Math.max(10, Math.min(24, Math.round(cardH * 0.18)));
-      }
-      return Math.max(12, Math.min(38, Math.round(cardH * 0.18)));
-    }
+  const custom = Number(settings.headerFontSize);
+  if (custom && custom > 0) {
+    return custom;
   }
-  return custom && custom > 0 ? custom : 14;
+  const isGrid = Boolean(settings.gridId || widget?.customSettings?.["gridId"]);
+  const isHeaderWidget = Boolean(
+    settings.isHeaderWidget ||
+    (widget?.customSettings as any)?.["isHeaderWidget"] ||
+    cardEl?.classList?.contains("header-widget-card"),
+  );
+  const cardH =
+    cachedHeight && cachedHeight > 0
+      ? cachedHeight
+      : cardEl?.clientHeight ||
+        (widget?.height && widget.height > 0 ? widget.height : 0);
+  if (cardH > 0) {
+    if (isHeaderWidget) {
+      return Math.max(12, Math.min(24, Math.round(cardH * 0.55)));
+    }
+    if (isGrid) {
+      return Math.max(10, Math.min(24, Math.round(cardH * 0.18)));
+    }
+    return Math.max(12, Math.min(38, Math.round(cardH * 0.18)));
+  }
+  return isGrid ? 24 : 14;
 }
 
 function calculateBaseDimensions(

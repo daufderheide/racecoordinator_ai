@@ -656,6 +656,50 @@ describe("ui-editor-widget.helper", () => {
     expect(siblingGridWidget.customSettings.insetFontSize).toBe(24);
   });
 
+  it("should preserve custom headerFontSize and other font sizes when widget is already in auto scaleMode", () => {
+    const targetWidget = {
+      id: "w1",
+      widgetType: "lane-column",
+      scaleMode: "auto",
+      customSettings: {
+        gridId: "grid-test",
+        valueFontSize: 32,
+        headerFontSize: 18,
+        insetFontSize: 16,
+      },
+    };
+    const siblingGridWidget = {
+      id: "w2",
+      widgetType: "lane-column",
+      scaleMode: "auto",
+      customSettings: {
+        gridId: "grid-test",
+        valueFontSize: 32,
+        headerFontSize: 18,
+        insetFontSize: 16,
+      },
+    };
+    const layout = { widgets: [targetWidget, siblingGridWidget] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(targetWidget.customSettings.headerFontSize).toBe(18);
+    expect(targetWidget.customSettings.valueFontSize).toBe(32);
+    expect(targetWidget.customSettings.insetFontSize).toBe(16);
+  });
+
   it("should handle removing selected widget", () => {
     const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
     const layout = {

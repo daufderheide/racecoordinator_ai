@@ -421,9 +421,22 @@ export function handleWidgetInspectorChange(
   const targetWidget = widget || comp.currentSelectedWidget;
   const layout = comp.getLayout(targetUi);
   if (layout && targetWidget && layout.widgets) {
-    if (targetWidget.scaleMode === "auto") {
+    const existingWidget = layout.widgets.find(
+      (w: any) => w.id === targetWidget.id,
+    );
+    const targetGridId = targetWidget.customSettings?.["gridId"];
+    const isTransitioningToAuto =
+      targetWidget.scaleMode === "auto" &&
+      ((existingWidget && existingWidget.scaleMode !== "auto") ||
+        (targetGridId &&
+          layout.widgets.some(
+            (w: any) =>
+              w.customSettings?.["gridId"] === targetGridId &&
+              w.scaleMode !== "auto",
+          )));
+
+    if (isTransitioningToAuto) {
       resetCustomScalingOverrides(targetWidget);
-      const targetGridId = targetWidget.customSettings?.["gridId"];
       if (targetGridId) {
         for (const w of layout.widgets) {
           if (w.customSettings?.["gridId"] === targetGridId) {

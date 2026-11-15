@@ -178,11 +178,7 @@ export class RacedayLaneColumnComponent
   }
 
   ngAfterViewChecked(): void {
-    if (
-      this.isHeaderWidget ||
-      this.isImageProperty() ||
-      this.isPacingProperty()
-    ) {
+    if (this.isImageProperty() || this.isPacingProperty()) {
       return;
     }
     this.fitContent(false);

@@ -3819,6 +3819,42 @@ describe("RacedayLaneColumnComponent", () => {
       expect(headerEl.style.fontSize).toBe("20px");
     });
 
+    it("should apply custom header font size and family to isHeaderWidget on update", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      const hw = createWidget({
+        columnKey: "lastLapTime",
+        isHeaderWidget: true,
+        showHeader: true,
+        headerFontFamily: "Arial",
+        headerFontSize: 26,
+      });
+      hw.width = 150;
+      hw.height = 50;
+      fixture.componentRef.setInput("widget", hw);
+      fixture.detectChanges();
+
+      const headerEl = fixture.nativeElement.querySelector(
+        ".lane-col-header",
+      ) as HTMLElement;
+      expect(headerEl.style.fontFamily).toContain("Arial");
+      expect(headerEl.style.fontSize).toBe("26px");
+
+      const updatedHw = createWidget({
+        columnKey: "lastLapTime",
+        isHeaderWidget: true,
+        showHeader: true,
+        headerFontFamily: "Courier New",
+        headerFontSize: 30,
+      });
+      updatedHw.width = 150;
+      updatedHw.height = 50;
+      fixture.componentRef.setInput("widget", updatedHw);
+      fixture.detectChanges();
+
+      expect(headerEl.style.fontFamily).toContain("Courier New");
+      expect(headerEl.style.fontSize).toBe("30px");
+    });
+
     it("should apply custom value font family to standard lane-col-value", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput(

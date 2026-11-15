@@ -1250,6 +1250,26 @@ describe("LaneColumnInspectorComponent", () => {
       component.onHeaderStyleChange();
       expect(component.currentSettings["_syncAction"]).toBe("header");
     });
+
+    it("should set _forceAllColumns and _syncAction = 'header' on applyHeaderStyleToAll", () => {
+      spyOn(component.change, "emit");
+      component.applyHeaderStyleToAll();
+      expect(component.currentSettings["_forceAllColumns"]).toBeTrue();
+      expect(component.currentSettings["_syncAction"]).toBe("header");
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should display header styling controls in Column tab for grids with top header placement", () => {
+      component.currentSettings["gridId"] = "grid-test";
+      component.currentSettings["headerPlacement"] = "top";
+      component.currentSettings["showHeader"] = true;
+      fixture.detectChanges();
+
+      const headerFamilySelect = fixture.debugElement.query(
+        By.css(".select-container app-custom-select"),
+      );
+      expect(headerFamilySelect).toBeTruthy();
+    });
   });
 
   describe("isLapColumn", () => {

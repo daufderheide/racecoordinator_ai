@@ -100,6 +100,10 @@ export function fitLaneColumnHeaderText(
 
   const { baseFontSize, family, availWidth, availHeight, textWidth } = fontInfo;
 
+  if (settings.headerFontFamily) {
+    headerEl.style.fontFamily = settings.headerFontFamily;
+  }
+
   if (widget?.scaleMode !== undefined && widget?.scaleMode !== "auto") {
     headerEl.style.fontSize = `${baseFontSize}px`;
     cardEl.style.setProperty(
