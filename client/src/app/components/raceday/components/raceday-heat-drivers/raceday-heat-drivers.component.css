@@ -1,3 +1,11 @@
+app-raceday-next-heat,
+app-raceday-on-deck,
+app-raceday-heat-drivers {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .next-heat-panel, .on-deck-panel {
   display: flex;
   flex-direction: column;
@@ -9,12 +17,14 @@
   color: #38bdf8;
   font-size: var(--heat-drivers-title-size, 18px);
   font-weight: bold;
+  line-height: 1.2;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: var(--heat-drivers-gap, 0px);
   margin-bottom: var(--heat-drivers-title-margin, 12px);
   text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  flex-shrink: 0;
 }
 
 .next-heat-list, .on-deck-list {
@@ -23,6 +33,7 @@
   gap: var(--heat-drivers-gap, 4px);
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
   padding-right: 4px;
 }
 
@@ -70,6 +81,7 @@
   border-radius: 4px;
   transition: background 0.2s ease;
   font-size: var(--heat-drivers-font-size, 16px);
+  flex-shrink: 0;
 }
 
 .next-heat-item:hover, .on-deck-item:hover {

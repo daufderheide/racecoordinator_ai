@@ -52,6 +52,7 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       // Trigger whenever inputs change
+      this.track();
       this.drivers();
       this.type();
       this.widget();
@@ -135,14 +136,15 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     const trackLaneCount = this.track()?.lanes?.length || 0;
     const N = Math.max(trackLaneCount, this.drivers().length, 1);
 
-    let heightFactor = 0;
     const hasTeams = this.drivers().some((hd) => this.isTeam(hd));
-    // normal item = 1.0 + 1.0 padding = 2.0
-    // stacked item = 1.0 + 0.7 + 1.0 padding = 2.7
-    const itemHeightMultiplier = hasTeams ? 2.7 : 2.0;
-    // padding-y * 2 = 1.5, title margin = 0.75, title size = 1.125
-    // 1.5 + 0.75 + 1.125 = 3.375. minus 0.5 for gap adjustment: 2.875
-    heightFactor = 2.875 + itemHeightMultiplier * N;
+    // Each item has: vertical padding (1.0 * S), line-height/badge content (~1.15 * S normal, ~1.87 * S stacked),
+    // and flex gap (0.5 * S) between adjacent items:
+    // - normal item: ~2.15 content+padding + 0.5 gap = 2.65 ~ 2.7
+    // - stacked item: ~2.87 content+padding + 0.5 gap = 3.37 ~ 3.4
+    const itemHeightMultiplier = hasTeams ? 3.4 : 2.7;
+    // Title occupies: margin-top (0.5 * S) + line-height (1.2 * 1.125 = 1.35 * S) + margin-bottom (0.75 * S) = 2.6 * S.
+    // Since there are N - 1 gaps among N items, we subtract 1 gap (0.5 * S): 2.6 - 0.5 = 2.1 * S.
+    const heightFactor = 2.1 + itemHeightMultiplier * N;
 
     const limitHeight = availableHeight / heightFactor;
 
