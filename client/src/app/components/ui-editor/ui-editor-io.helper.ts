@@ -95,6 +95,8 @@ export function buildLayoutExport(
 export interface LayoutImportResult {
   success: boolean;
   errorKey?: string;
+  reasonKey?: string;
+  errorDetail?: string;
   data?: {
     layout: LayoutConfig;
     columns: string[];
@@ -105,24 +107,77 @@ export interface LayoutImportResult {
   };
 }
 
-function extractImportedLayout(layoutData: any): LayoutConfig | null {
+export function formatImportErrorMessage(
+  translationService: any,
+  errorKey: string,
+  reasonKey?: string,
+  errorDetail?: string,
+): string {
+  const baseMessage =
+    translationService?.translate(errorKey) ||
+    "Failed to import layout: The selected file does not contain a valid layout configuration.";
+
+  const reasonContent = reasonKey
+    ? translationService?.translate(reasonKey) || reasonKey
+    : errorDetail;
+
+  if (reasonContent) {
+    const translatedReasonTemplate = translationService?.translate(
+      "UE_ERROR_IMPORT_REASON",
+      {
+        reason: reasonContent,
+      },
+    );
+    const formattedReason =
+      translatedReasonTemplate &&
+      translatedReasonTemplate !== "UE_ERROR_IMPORT_REASON"
+        ? translatedReasonTemplate
+        : `Reason: ${reasonContent}`;
+    return `${baseMessage}\n\n${formattedReason}`;
+  }
+
+  return baseMessage;
+}
+
+function extractImportedLayoutDetailed(layoutData: any): {
+  layout: LayoutConfig | null;
+  reasonKey?: string;
+} {
+  const target =
+    layoutData?.layoutExport && typeof layoutData.layoutExport === "object"
+      ? layoutData.layoutExport
+      : layoutData;
+
   let rawLayout =
-    layoutData.layout ??
-    layoutData.racedayLayout ??
-    layoutData.practiceRacedayLayout ??
-    layoutData.layoutJson ??
-    (layoutData.widgets ? layoutData : null);
+    target.layout ??
+    target.racedayLayout ??
+    target.practiceRacedayLayout ??
+    target.layoutJson ??
+    (target.widgets ? target : null);
 
   if (typeof rawLayout === "string") {
     try {
       rawLayout = JSON.parse(rawLayout);
     } catch {
-      return null;
+      return {
+        layout: null,
+        reasonKey: "UE_ERROR_IMPORT_REASON_INVALID_LAYOUT",
+      };
     }
   }
 
-  if (!rawLayout || typeof rawLayout !== "object" || Array.isArray(rawLayout)) {
-    return null;
+  if (!rawLayout) {
+    return {
+      layout: null,
+      reasonKey: "UE_ERROR_IMPORT_REASON_MISSING_LAYOUT",
+    };
+  }
+
+  if (typeof rawLayout !== "object" || Array.isArray(rawLayout)) {
+    return {
+      layout: null,
+      reasonKey: "UE_ERROR_IMPORT_REASON_INVALID_LAYOUT",
+    };
   }
 
   if (!Array.isArray(rawLayout.widgets)) {
@@ -132,21 +187,29 @@ function extractImportedLayout(layoutData: any): LayoutConfig | null {
     ) {
       rawLayout.widgets = [];
     } else {
-      return null;
+      return {
+        layout: null,
+        reasonKey: "UE_ERROR_IMPORT_REASON_INVALID_WIDGETS",
+      };
     }
   }
-  return rawLayout;
+  return { layout: rawLayout };
 }
 
 function extractImportedColumns(
   layoutData: any,
   isPractice: boolean,
 ): string[] {
+  const target =
+    layoutData?.layoutExport && typeof layoutData.layoutExport === "object"
+      ? layoutData.layoutExport
+      : layoutData;
+
   let rawColumns =
-    layoutData.columns ??
-    layoutData.racedayColumns ??
-    layoutData.practiceRacedayColumns ??
-    layoutData.columnsJson;
+    target.columns ??
+    target.racedayColumns ??
+    target.practiceRacedayColumns ??
+    target.columnsJson;
   if (typeof rawColumns === "string") {
     try {
       rawColumns = JSON.parse(rawColumns);
@@ -165,8 +228,13 @@ function extractImportedRecordMap(
   data: any,
   ...keys: string[]
 ): Record<string, any> {
+  const target =
+    data?.layoutExport && typeof data.layoutExport === "object"
+      ? data.layoutExport
+      : data;
+
   for (const key of keys) {
-    let val = data[key];
+    let val = target[key];
     if (val !== undefined && val !== null) {
       if (typeof val === "string") {
         try {
@@ -188,19 +256,31 @@ export function parseLayoutImportDetailed(
   isPractice: boolean,
 ): LayoutImportResult {
   if (!jsonContent || typeof jsonContent !== "string") {
-    return { success: false, errorKey: "UE_ERROR_IMPORT_INVALID_JSON" };
+    return {
+      success: false,
+      errorKey: "UE_ERROR_IMPORT_INVALID_JSON",
+      reasonKey: "UE_ERROR_IMPORT_REASON_EMPTY",
+    };
   }
 
   const trimmed = jsonContent.trim().replace(/^\uFEFF/, "");
   if (!trimmed) {
-    return { success: false, errorKey: "UE_ERROR_IMPORT_INVALID_JSON" };
+    return {
+      success: false,
+      errorKey: "UE_ERROR_IMPORT_INVALID_JSON",
+      reasonKey: "UE_ERROR_IMPORT_REASON_EMPTY",
+    };
   }
 
   let layoutData: any;
   try {
     layoutData = JSON.parse(trimmed);
-  } catch {
-    return { success: false, errorKey: "UE_ERROR_IMPORT_INVALID_JSON" };
+  } catch (parseErr: any) {
+    return {
+      success: false,
+      errorKey: "UE_ERROR_IMPORT_INVALID_JSON",
+      errorDetail: parseErr?.message,
+    };
   }
 
   if (
@@ -208,12 +288,21 @@ export function parseLayoutImportDetailed(
     typeof layoutData !== "object" ||
     Array.isArray(layoutData)
   ) {
-    return { success: false, errorKey: "UE_ERROR_IMPORT_NO_LAYOUT" };
+    return {
+      success: false,
+      errorKey: "UE_ERROR_IMPORT_NO_LAYOUT",
+      reasonKey: "UE_ERROR_IMPORT_REASON_NOT_OBJECT",
+    };
   }
 
-  const rawLayout = extractImportedLayout(layoutData);
+  const { layout: rawLayout, reasonKey } =
+    extractImportedLayoutDetailed(layoutData);
   if (!rawLayout) {
-    return { success: false, errorKey: "UE_ERROR_IMPORT_NO_LAYOUT" };
+    return {
+      success: false,
+      errorKey: "UE_ERROR_IMPORT_NO_LAYOUT",
+      reasonKey,
+    };
   }
 
   const columns = extractImportedColumns(layoutData, isPractice);

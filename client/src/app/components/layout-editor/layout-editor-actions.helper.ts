@@ -15,6 +15,7 @@ import {
   buildLayoutExport,
   downloadJsonFile,
   exportMigrationDiagnostics,
+  formatImportErrorMessage,
   preMigrationLayoutCache,
   restorePreMigrationLayout,
   upgradePreservedHeatViewLayout,
@@ -559,6 +560,29 @@ export function clearLayout(
   comp.cdr?.markForCheck();
 }
 
+function showImportError(
+  comp: any,
+  errorKey: string,
+  reasonKey?: string,
+  errorDetail?: string,
+): void {
+  const msg = formatImportErrorMessage(
+    comp?.translationService,
+    errorKey,
+    reasonKey,
+    errorDetail,
+  );
+  if (comp && "showImportErrorModal" in comp) {
+    comp.importErrorTitle = "UE_ERROR_IMPORT_TITLE";
+    comp.importErrorMessage = msg;
+    comp.importErrorParams = {};
+    comp.showImportErrorModal = true;
+    comp.cdr?.markForCheck?.();
+  } else {
+    alert(msg);
+  }
+}
+
 export async function onImportLayout(
   event: Event,
   ui: CustomUI,
@@ -572,12 +596,14 @@ export async function onImportLayout(
     let rawJson: string;
     try {
       rawJson = await readJsonFile(file);
-    } catch (readErr) {
+    } catch (readErr: any) {
       comp.logger?.error("Failed to read layout file", readErr);
-      const msg =
-        comp.translationService?.translate("UE_ERROR_IMPORT_READ_FAILED") ||
-        "Failed to import layout: Could not read the selected file.";
-      alert(msg);
+      showImportError(
+        comp,
+        "UE_ERROR_IMPORT_READ_FAILED",
+        undefined,
+        readErr?.message,
+      );
       return;
     }
 
@@ -590,27 +616,25 @@ export async function onImportLayout(
       comp.captureState?.();
       comp.cdr?.markForCheck();
     } else {
-      const errorKey = result.errorKey || "UE_ERROR_IMPORT_FAILED";
-      const msg =
-        comp.translationService?.translate(errorKey) ||
-        "Failed to import layout.";
-      alert(msg);
+      showImportError(
+        comp,
+        result.errorKey || "UE_ERROR_IMPORT_FAILED",
+        result.reasonKey,
+        result.errorDetail,
+      );
     }
-  } catch (err) {
+  } catch (err: any) {
     comp.logger?.error("Failed to import layout", err);
-    const msg =
-      comp.translationService?.translate("UE_ERROR_IMPORT_FAILED") ||
-      "Failed to import layout.";
-    alert(msg);
+    showImportError(comp, "UE_ERROR_IMPORT_FAILED", undefined, err?.message);
   } finally {
     input.value = "";
   }
 }
 
 export function exportLayout(ui: CustomUI): void {
-  const exportData = buildLayoutExport(ui);
+  const { layoutExport, fileName: defaultFileName } = buildLayoutExport(ui);
   const fileName = `${(ui.name || "layout").replace(/[^a-z0-9_-]/gi, "_")}_layout.json`;
-  downloadJsonFile(exportData, fileName);
+  downloadJsonFile(layoutExport, fileName || defaultFileName);
 }
 
 export function hasStackedColumns(

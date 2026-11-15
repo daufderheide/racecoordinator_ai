@@ -99,6 +99,10 @@ export abstract class LayoutEditorBase {
 
   showResetConfirm = false;
   showClearConfirm = false;
+  showImportErrorModal = false;
+  importErrorTitle = "UE_ERROR_IMPORT_TITLE";
+  importErrorMessage = "";
+  importErrorParams: Record<string, any> = {};
   showReplicateModal = false;
   showReviewStackedColumnsModal = false;
   stackedColumnsToReview: any = null;
@@ -550,6 +554,10 @@ export abstract class LayoutEditorBase {
 
   onCancelClearLayout(): void {
     this.showClearConfirm = false;
+  }
+
+  onDismissImportError(): void {
+    this.showImportErrorModal = false;
   }
 
   // --- Import & Export ---

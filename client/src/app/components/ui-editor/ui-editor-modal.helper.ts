@@ -100,3 +100,18 @@ export function confirmReplicateLanesHelper(comp: any, options: any): void {
   comp.showReplicateLaneModal = false;
   comp.onReplicateLanes(options, comp.replicateTargetUi);
 }
+
+export function dismissImportErrorModal(comp: any): void {
+  comp.showImportErrorModal = false;
+  comp.cdr?.markForCheck?.();
+}
+
+export function navigateToEditorHelper(
+  router: any,
+  target: "layout-editor" | "theme-editor",
+): void {
+  const returnUrl = router?.url ? router.url.split("?")[0] : "/ui-editor";
+  router?.navigate([`/${target}`], {
+    queryParams: { returnUrl },
+  });
+}

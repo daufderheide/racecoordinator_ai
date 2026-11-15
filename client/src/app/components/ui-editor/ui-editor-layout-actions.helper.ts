@@ -8,6 +8,7 @@ import {
   buildLayoutExport,
   downloadJsonFile,
   exportMigrationDiagnostics,
+  formatImportErrorMessage,
   getDefaultLayoutResetData,
   parseLayoutImportDetailed,
   preMigrationLayoutCache,
@@ -58,6 +59,8 @@ export function applyResetLayout(
 export interface ApplyImportLayoutResult {
   success: boolean;
   errorKey?: string;
+  reasonKey?: string;
+  errorDetail?: string;
 }
 
 export function applyImportLayoutDetailed(
@@ -71,6 +74,8 @@ export function applyImportLayoutDetailed(
     return {
       success: false,
       errorKey: result.errorKey || "UE_ERROR_IMPORT_FAILED",
+      reasonKey: result.reasonKey,
+      errorDetail: result.errorDetail,
     };
   }
 
@@ -179,9 +184,33 @@ export function executeImportLayout(
   onSuccess: () => void,
   stackedColumnsController?: any,
   translationService?: any,
+  comp?: any,
 ): void {
   const input = event?.target as HTMLInputElement;
   if (!input?.files || input.files.length === 0) return;
+
+  const triggerError = (
+    errorKey: string,
+    reasonKey?: string,
+    errorDetail?: string,
+  ) => {
+    const msg = formatImportErrorMessage(
+      translationService,
+      errorKey,
+      reasonKey,
+      errorDetail,
+    );
+    if (comp && "showImportErrorModal" in comp) {
+      comp.importErrorTitle = "UE_ERROR_IMPORT_TITLE";
+      comp.importErrorMessage = msg;
+      comp.importErrorParams = {};
+      comp.showImportErrorModal = true;
+      comp.cdr?.markForCheck?.();
+    } else {
+      alert(msg);
+    }
+  };
+
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
@@ -199,25 +228,20 @@ export function executeImportLayout(
       if (result.success) {
         onSuccess();
       } else {
-        const errorKey = result.errorKey || "UE_ERROR_IMPORT_FAILED";
-        const msg =
-          translationService?.translate(errorKey) || "Failed to import layout.";
-        alert(msg);
+        triggerError(
+          result.errorKey || "UE_ERROR_IMPORT_FAILED",
+          result.reasonKey,
+          result.errorDetail,
+        );
       }
-    } catch (err) {
+    } catch (err: any) {
       logger?.error("Failed to parse layout file", err);
-      const msg =
-        translationService?.translate("UE_ERROR_IMPORT_FAILED") ||
-        "Failed to import layout.";
-      alert(msg);
+      triggerError("UE_ERROR_IMPORT_FAILED", undefined, err?.message);
     }
   };
-  reader.onerror = (err) => {
+  reader.onerror = (err: any) => {
     logger?.error("Failed to read layout file", err);
-    const msg =
-      translationService?.translate("UE_ERROR_IMPORT_READ_FAILED") ||
-      "Failed to import layout: Could not read the selected file.";
-    alert(msg);
+    triggerError("UE_ERROR_IMPORT_READ_FAILED", undefined, err?.message);
   };
   reader.readAsText(input.files[0]);
   input.value = "";
@@ -358,6 +382,7 @@ export function handleImportLayout(
     },
     comp.stackedColumnsController,
     comp.translationService,
+    comp,
   );
 }
 

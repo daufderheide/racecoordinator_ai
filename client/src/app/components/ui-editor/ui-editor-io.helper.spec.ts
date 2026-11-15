@@ -9,6 +9,7 @@ import {
   executeSelectWidgetFolder,
   executeTemplateFileSelected,
   exportMigrationDiagnostics,
+  formatImportErrorMessage,
   getDefaultLayoutResetData,
   parseLayoutImport,
   parseLayoutImportDetailed,
@@ -138,10 +139,12 @@ describe("ui-editor-io.helper", () => {
     const res1 = parseLayoutImportDetailed("not-json", false);
     expect(res1.success).toBeFalse();
     expect(res1.errorKey).toBe("UE_ERROR_IMPORT_INVALID_JSON");
+    expect(res1.errorDetail).toBeDefined();
 
     const res2 = parseLayoutImportDetailed("", false);
     expect(res2.success).toBeFalse();
     expect(res2.errorKey).toBe("UE_ERROR_IMPORT_INVALID_JSON");
+    expect(res2.reasonKey).toBe("UE_ERROR_IMPORT_REASON_EMPTY");
   });
 
   it("should report UE_ERROR_IMPORT_NO_LAYOUT when JSON has no layout configuration", () => {
@@ -152,6 +155,124 @@ describe("ui-editor-io.helper", () => {
     const res = parseLayoutImportDetailed(noLayoutJson, false);
     expect(res.success).toBeFalse();
     expect(res.errorKey).toBe("UE_ERROR_IMPORT_NO_LAYOUT");
+    expect(res.reasonKey).toBe("UE_ERROR_IMPORT_REASON_MISSING_LAYOUT");
+  });
+
+  it("should report UE_ERROR_IMPORT_NO_LAYOUT when root is not a JSON object", () => {
+    const arrayJson = JSON.stringify([1, 2, 3]);
+    const res = parseLayoutImportDetailed(arrayJson, false);
+    expect(res.success).toBeFalse();
+    expect(res.errorKey).toBe("UE_ERROR_IMPORT_NO_LAYOUT");
+    expect(res.reasonKey).toBe("UE_ERROR_IMPORT_REASON_NOT_OBJECT");
+  });
+
+  it("should report invalid layout reason when layout is not valid object", () => {
+    const badLayoutJson = JSON.stringify({
+      layout: "not-an-object",
+    });
+    const res = parseLayoutImportDetailed(badLayoutJson, false);
+    expect(res.success).toBeFalse();
+    expect(res.errorKey).toBe("UE_ERROR_IMPORT_NO_LAYOUT");
+    expect(res.reasonKey).toBe("UE_ERROR_IMPORT_REASON_INVALID_LAYOUT");
+  });
+
+  it("should report invalid widgets reason when widgets is not an array", () => {
+    const badWidgetsJson = JSON.stringify({
+      layout: {
+        widgets: "not-an-array",
+      },
+    });
+    const res = parseLayoutImportDetailed(badWidgetsJson, false);
+    expect(res.success).toBeFalse();
+    expect(res.errorKey).toBe("UE_ERROR_IMPORT_NO_LAYOUT");
+    expect(res.reasonKey).toBe("UE_ERROR_IMPORT_REASON_INVALID_WIDGETS");
+  });
+
+  it("should successfully import layout wrapped in layoutExport property (such as Fixed_Distance_layout.json)", () => {
+    const wrappedExport = JSON.stringify({
+      layoutExport: {
+        layout: {
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "w-menu",
+              widgetType: "menu-bar",
+              x: 0,
+              y: 0,
+              width: 1920,
+              height: 50,
+            },
+          ],
+        },
+        columns: ["driver.nickname", "lapCount"],
+        columnLayouts: { lapCount: { width: 100 } },
+        columnVisibility: { lapCount: true },
+        columnAnchors: {},
+        columnWidths: { lapCount: 100 },
+      },
+      fileName: "Fixed_Distance_layout.json",
+    });
+
+    const res = parseLayoutImportDetailed(wrappedExport, false);
+    expect(res.success).toBeTrue();
+    expect(res.data).toBeDefined();
+    expect(res.data?.layout.baseWidth).toBe(1920);
+    expect(res.data?.layout.widgets.length).toBe(1);
+    expect(res.data?.columns).toEqual(["driver.nickname", "lapCount"]);
+    expect(res.data?.columnWidths).toEqual({ lapCount: 100 });
+  });
+
+  describe("formatImportErrorMessage", () => {
+    const mockTranslationService = {
+      translate: (key: string, params?: any) => {
+        if (key === "UE_ERROR_IMPORT_REASON") {
+          return `Reason: ${params?.reason}`;
+        }
+        return `TRANS_${key}`;
+      },
+    };
+
+    it("should return base message when no reasonKey or errorDetail provided", () => {
+      const msg = formatImportErrorMessage(
+        mockTranslationService,
+        "UE_ERROR_IMPORT_FAILED",
+      );
+      expect(msg).toBe("TRANS_UE_ERROR_IMPORT_FAILED");
+    });
+
+    it("should append translated reason when reasonKey is provided", () => {
+      const msg = formatImportErrorMessage(
+        mockTranslationService,
+        "UE_ERROR_IMPORT_NO_LAYOUT",
+        "UE_ERROR_IMPORT_REASON_MISSING_LAYOUT",
+      );
+      expect(msg).toContain("TRANS_UE_ERROR_IMPORT_NO_LAYOUT");
+      expect(msg).toContain(
+        "Reason: TRANS_UE_ERROR_IMPORT_REASON_MISSING_LAYOUT",
+      );
+    });
+
+    it("should append errorDetail when provided without reasonKey", () => {
+      const msg = formatImportErrorMessage(
+        mockTranslationService,
+        "UE_ERROR_IMPORT_INVALID_JSON",
+        undefined,
+        "Unexpected token at position 12",
+      );
+      expect(msg).toContain("TRANS_UE_ERROR_IMPORT_INVALID_JSON");
+      expect(msg).toContain("Reason: Unexpected token at position 12");
+    });
+
+    it("should fallback to default strings if translationService is not provided", () => {
+      const msg = formatImportErrorMessage(
+        null,
+        "UE_ERROR_IMPORT_NO_LAYOUT",
+        "Missing layout",
+      );
+      expect(msg).toContain("Failed to import layout");
+      expect(msg).toContain("Reason: Missing layout");
+    });
   });
 
   describe("executeSelectFolder & executeClearFolder", () => {

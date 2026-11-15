@@ -74,12 +74,12 @@ import {
   buildUiEditorHelpContext,
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
-  computeWidgetDisplayName,
   confirmReplicateLanesHelper,
   createUiEditorLifecycle,
   createUiEditorUndoManager,
   DEFAULT_SECTIONS_EXPANDED,
   DirectoryController,
+  dismissImportErrorModal,
   downloadJsonFile,
   ensureWidgetSelectedHelper,
   executeCaptureState,
@@ -166,6 +166,7 @@ import {
   MAIN_AUDIO_SLOTS,
   MigrationController,
   MOCK_RACEDAY_PROPERTIES,
+  navigateToEditorHelper,
   openDeleteCustomUiModal,
   openDeleteThemeModal,
   openReplicateLaneModalHelper,
@@ -177,6 +178,7 @@ import {
   resolveThemeFlag,
   resolveThemeFuelGauge,
   resolveThemeLamp,
+  resolveWidgetDisplayName,
   restoreOpenLayoutOnEntry,
   saveExpanderStateToStorage,
   scrollToThemeElement,
@@ -382,6 +384,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showDeleteUiConfirm = false;
   uiToDelete: CustomUI | null = null;
   deleteUiParams: any = {};
+  showImportErrorModal = false;
+  importErrorTitle = "UE_ERROR_IMPORT_TITLE";
+  importErrorMessage = "";
+  importErrorParams: any = {};
   defaultThemeNames: { [id: string]: string } = {};
   defaultUiNames: { [id: string]: string } = {};
   lifecycle!: EditorLifecycleHelper;
@@ -569,37 +575,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return layout?.widgets || [];
   }
 
-  private widgetDisplayNameCache = new Map<
-    string,
-    { key: string; name: string }
-  >();
+  widgetDisplayNameCache = new Map<string, { key: string; name: string }>();
 
-  getWidgetDisplayName(widget: AbsoluteWidgetNode): string {
-    if (!widget) return "";
-    const s = widget.customSettings;
-    const currentLang =
-      this.translationService?.getCurrentLanguageValue?.() || "";
-    const colKey = s?.["columnKey"] || "";
-    const label = s?.["customLabel"] || "";
-    const mode = s?.["bindingMode"] || "";
-    const lane = s?.["gridLane"] ?? s?.["targetIndex"] ?? "";
-    const header = s?.["isHeaderWidget"] ? "1" : "0";
-    const inset = s?.["insets"]?.[this.selectedAnchor || ""] || "";
-    const cacheKey = `${widget.id}_${widget.widgetType}_${this.selectedAnchor || ""}_${currentLang}_${colKey}_${label}_${mode}_${lane}_${header}_${inset}`;
-    const cached = this.widgetDisplayNameCache.get(widget.id);
-    if (cached && cached.key === cacheKey) {
-      return cached.name;
-    }
-    const name = computeWidgetDisplayName(
-      widget,
-      this.translationService,
-      this.availableColumns,
-      (w) => this.getWidgetTypeLabelKey(w),
-      this.selectedAnchor,
-    );
-    this.widgetDisplayNameCache.set(widget.id, { key: cacheKey, name });
-    return name;
-  }
+  getWidgetDisplayName = (widget: AbsoluteWidgetNode): string =>
+    resolveWidgetDisplayName(this, widget);
 
   onWidgetDropdownSelect = (widgetId: string, ui?: CustomUI) =>
     this.onWidgetSelected(widgetId || null, ui);
@@ -822,23 +801,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     });
   }
 
-  navigateToLayoutEditor(): void {
-    const returnUrl = this.router.url
-      ? this.router.url.split("?")[0]
-      : "/ui-editor";
-    this.router.navigate(["/layout-editor"], {
-      queryParams: { returnUrl },
-    });
-  }
+  navigateToLayoutEditor = () =>
+    navigateToEditorHelper(this.router, "layout-editor");
 
-  navigateToThemeEditor(): void {
-    const returnUrl = this.router.url
-      ? this.router.url.split("?")[0]
-      : "/ui-editor";
-    this.router.navigate(["/theme-editor"], {
-      queryParams: { returnUrl },
-    });
-  }
+  navigateToThemeEditor = () =>
+    navigateToEditorHelper(this.router, "theme-editor");
 
   hasChanges() {
     return this.undoManager.hasChanges();
@@ -1010,6 +977,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   onDeleteCustomUi = (ui: CustomUI) => openDeleteCustomUiModal(this, ui);
   cancelDeleteCustomUi = () => cancelDeleteCustomUiModal(this);
   confirmDeleteCustomUi = () => handleConfirmDeleteCustomUi(this);
+  onDismissImportError = () => dismissImportErrorModal(this);
   onCustomUiNameChanged = (_ui: CustomUI) => this.onEntityNameChanged();
   isCustomUiNameInvalid = (ui: CustomUI) =>
     isCustomUiNameInvalid(ui, this.displayCustomUIs);
