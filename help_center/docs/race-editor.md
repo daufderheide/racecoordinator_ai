@@ -258,7 +258,7 @@ The Points Scoring expander configures points-based overall race scoring. When t
 > [!NOTE]
 > This expander is only enabled when **Overall Ranking Method** is set to **Points**. When any other ranking method is selected, the expander is disabled with a "Not a Points Race" indicator.
 
-- **Heat Position Points**: Assign points awarded for finishing positions (or per lane) in each individual heat (e.g., 3 points for 1st, 2 for 2nd, 1 for 3rd, 0 for 4th).
+- **Heat Position Points**: Assign points awarded for finishing positions in each individual heat (e.g., 3 points for 1st, 2 for 2nd, 1 for 3rd, 0 for 4th).
 - **Overall Bonuses**:
     - *Fastest Lap*: Bonus points awarded to the driver with the fastest single lap across the entire race.
     - *Fastest Lap Per Lane*: Bonus points awarded to the fastest driver on each individual track lane.

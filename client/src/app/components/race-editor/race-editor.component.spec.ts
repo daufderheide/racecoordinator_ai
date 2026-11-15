@@ -2562,6 +2562,54 @@ describe("RaceEditorComponent", () => {
       ]);
       expect(component.editingRace.points_scoring.heat_carry_over_pct).toBe(10);
     });
+
+    it("should render points scoring heat position points labels as #1, #2... up to lane count", fakeAsync(() => {
+      const pointsRace: any = deepCopy(MOCK_RACE_INSTANCES[0]);
+      pointsRace.overall_scoring.ranking_method = "POINTS";
+      pointsRace.points_scoring = {
+        position_points: [25, 18],
+        heat_position_points: [3, 2],
+      };
+      dataService.getRaces.and.returnValue(of([pointsRace]));
+
+      component.ngOnInit();
+      tick();
+
+      component.isEditMode = true;
+      component.sectionsExpanded.points_scoring = true;
+      fixture.detectChanges();
+      tick();
+
+      const pointsSection = fixture.debugElement.nativeElement.querySelector(
+        "#points-heat-position-points-section",
+      );
+      expect(pointsSection).toBeTruthy();
+      const labels = pointsSection.querySelectorAll(".season-pos-label");
+      expect(labels.length).toBe(2);
+      expect(labels[0].textContent.trim()).toBe("#1:");
+      expect(labels[1].textContent.trim()).toBe("#2:");
+    }));
+
+    it("should render season heat position points labels as #1, #2... up to lane count", fakeAsync(() => {
+      component.ngOnInit();
+      tick();
+
+      component.isEditMode = true;
+      component.sectionsExpanded.season_points = true;
+      component.syncHeatPositionPoints();
+      fixture.detectChanges();
+      tick();
+
+      const seasonHeatSection =
+        fixture.debugElement.nativeElement.querySelector(
+          "#season-heat-position-points-section",
+        );
+      expect(seasonHeatSection).toBeTruthy();
+      const labels = seasonHeatSection.querySelectorAll(".season-pos-label");
+      expect(labels.length).toBe(2);
+      expect(labels[0].textContent.trim()).toBe("#1:");
+      expect(labels[1].textContent.trim()).toBe("#2:");
+    }));
   });
 
   describe("Guided Help", () => {
