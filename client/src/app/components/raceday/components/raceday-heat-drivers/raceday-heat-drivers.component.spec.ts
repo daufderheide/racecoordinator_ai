@@ -330,4 +330,206 @@ describe("RacedayHeatDriversComponent", () => {
       expect(badgeEl.textContent.trim()).toBe("B1");
     });
   });
+
+  it("should calculate correct font size so all 4 lanes fit without overflow in auto scale mode", (done) => {
+    const hostEl = fixture.nativeElement as HTMLElement;
+    hostEl.style.display = "block";
+    hostEl.style.width = "384px";
+    hostEl.style.height = "239px";
+
+    const mockTrack = {
+      entity_id: "t1",
+      name: "Southwater",
+      lanes: [
+        {
+          lane_number: 1,
+          background_color: "#ffff00",
+          foreground_color: "#000000",
+        },
+        {
+          lane_number: 2,
+          background_color: "#00ffff",
+          foreground_color: "#000000",
+        },
+        {
+          lane_number: 3,
+          background_color: "#ff69b4",
+          foreground_color: "#000000",
+        },
+        {
+          lane_number: 4,
+          background_color: "#00ff00",
+          foreground_color: "#000000",
+        },
+      ],
+    };
+
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("track", mockTrack as any);
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          {
+            driver: { name: "Peter", nickname: "Peter", isEmpty: () => false },
+            laneIndex: 0,
+          },
+          {
+            driver: { name: "Nick", nickname: "Nick", isEmpty: () => false },
+            laneIndex: 1,
+          },
+          {
+            driver: { name: "Ben", nickname: "Ben", isEmpty: () => false },
+            laneIndex: 2,
+          },
+          {
+            driver: { name: "Oscar", nickname: "Oscar", isEmpty: () => false },
+            laneIndex: 3,
+          },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "auto",
+      textScaleFactor: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+
+    setTimeout(() => {
+      const panelEl = fixture.nativeElement.querySelector(
+        ".panel-card",
+      ) as HTMLElement;
+      expect(panelEl).toBeTruthy();
+      const listEl = panelEl.querySelector(".next-heat-list") as HTMLElement;
+      expect(listEl).toBeTruthy();
+
+      const items = panelEl.querySelectorAll(".next-heat-item");
+      expect(items.length).toBe(4);
+
+      expect(listEl.scrollHeight).toBeLessThanOrEqual(listEl.clientHeight + 1);
+      done();
+    }, 50);
+  });
+
+  it("should calculate correct font size so stacked team lanes fit without overflow in auto scale mode", (done) => {
+    const hostEl = fixture.nativeElement as HTMLElement;
+    hostEl.style.display = "block";
+    hostEl.style.width = "384px";
+    hostEl.style.height = "239px";
+
+    const mockTrack = {
+      entity_id: "t1",
+      name: "4-Lane Track",
+      lanes: [
+        {
+          lane_number: 1,
+          background_color: "#ffff00",
+          foreground_color: "#000000",
+        },
+        {
+          lane_number: 2,
+          background_color: "#00ffff",
+          foreground_color: "#000000",
+        },
+        {
+          lane_number: 3,
+          background_color: "#ff69b4",
+          foreground_color: "#000000",
+        },
+        {
+          lane_number: 4,
+          background_color: "#00ff00",
+          foreground_color: "#000000",
+        },
+      ],
+    };
+
+    const mockParent = {
+      isEmptyDriver: (_hd: any) => false,
+      isTeam: (_hd: any) => true,
+      authService: { currentRole: "VIEWER" },
+      Role: { VIEWER: "VIEWER" },
+      getTeammates: (_hd: any) => [],
+      getDropdownIcon: () => "",
+      getDriverStats: () => "",
+      onNextHeatTeammateChange: jasmine.createSpy("onNextHeatTeammateChange"),
+    };
+
+    componentRef.setInput("parent", mockParent as any);
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("track", mockTrack as any);
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          {
+            driver: {
+              name: "Mario",
+              nickname: "Mario",
+              team: { name: "Mushroom Kingdom" },
+              isEmpty: () => false,
+            },
+            participant: { team: { name: "Mushroom Kingdom" } },
+            laneIndex: 0,
+          },
+          {
+            driver: {
+              name: "Luigi",
+              nickname: "Luigi",
+              team: { name: "Mushroom Kingdom" },
+              isEmpty: () => false,
+            },
+            participant: { team: { name: "Mushroom Kingdom" } },
+            laneIndex: 1,
+          },
+          {
+            driver: {
+              name: "Bowser",
+              nickname: "Bowser",
+              team: { name: "Koopa Troop" },
+              isEmpty: () => false,
+            },
+            participant: { team: { name: "Koopa Troop" } },
+            laneIndex: 2,
+          },
+          {
+            driver: {
+              name: "Peach",
+              nickname: "Peach",
+              team: { name: "Mushroom Kingdom" },
+              isEmpty: () => false,
+            },
+            participant: { team: { name: "Mushroom Kingdom" } },
+            laneIndex: 3,
+          },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "auto",
+      textScaleFactor: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+
+    setTimeout(() => {
+      const panelEl = fixture.nativeElement.querySelector(
+        ".panel-card",
+      ) as HTMLElement;
+      expect(panelEl).toBeTruthy();
+      const listEl = panelEl.querySelector(".next-heat-list") as HTMLElement;
+      expect(listEl).toBeTruthy();
+
+      const items = panelEl.querySelectorAll(".next-heat-item");
+      expect(items.length).toBe(4);
+
+      expect(listEl.scrollHeight).toBeLessThanOrEqual(listEl.clientHeight + 1);
+      done();
+    }, 50);
+  });
 });

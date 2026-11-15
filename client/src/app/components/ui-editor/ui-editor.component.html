@@ -547,6 +547,20 @@
   >
   </app-acknowledgement-modal>
 
+  <!-- Import Error Confirmation Modal -->
+  @if (showImportErrorModal) {
+    <app-confirmation-modal
+      [visible]="showImportErrorModal"
+      [title]="importErrorTitle"
+      [message]="importErrorMessage"
+      [messageParams]="importErrorParams"
+      confirmText="GEN_OK"
+      [showCancel]="false"
+      (confirm)="onDismissImportError()"
+    >
+    </app-confirmation-modal>
+  }
+
   <!-- Theme Template Selection Modal -->
   <app-theme-template-modal
     [visible]="showThemeTemplateModal"

@@ -596,6 +596,20 @@
   >
   </app-confirmation-modal>
 
+  <!-- Import Error Confirmation Modal -->
+  @if (showImportErrorModal) {
+    <app-confirmation-modal
+      [visible]="showImportErrorModal"
+      [title]="importErrorTitle"
+      [message]="importErrorMessage"
+      [messageParams]="importErrorParams"
+      confirmText="GEN_OK"
+      [showCancel]="false"
+      (confirm)="onDismissImportError()"
+    >
+    </app-confirmation-modal>
+  }
+
   <!-- Replicate Lane Dialog -->
   <app-replicate-lane-dialog
     [visible]="showReplicateModal"

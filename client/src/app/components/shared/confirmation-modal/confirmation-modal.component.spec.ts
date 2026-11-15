@@ -73,4 +73,28 @@ describe("ConfirmationModalComponent", () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.getAttribute("title")).toBeNull();
   });
+
+  it("should render cancel button by default", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const cancelBtn = fixture.nativeElement.querySelector(".btn-cancel");
+    expect(cancelBtn).not.toBeNull();
+
+    const confirmBtn = fixture.nativeElement.querySelector(".btn-confirm");
+    expect(confirmBtn.classList.contains("btn-primary")).toBeFalse();
+  });
+
+  it("should hide cancel button and style confirm button as primary when showCancel is false", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("showCancel", false);
+    fixture.detectChanges();
+
+    const cancelBtn = fixture.nativeElement.querySelector(".btn-cancel");
+    expect(cancelBtn).toBeNull();
+
+    const confirmBtn = fixture.nativeElement.querySelector(".btn-confirm");
+    expect(confirmBtn).not.toBeNull();
+    expect(confirmBtn.classList.contains("btn-primary")).toBeTrue();
+  });
 });

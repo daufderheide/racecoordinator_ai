@@ -824,6 +824,66 @@ describe("RacedayLayoutUtils", () => {
       expect(countdown?.customSettings?.["glowRedOverlap"]).toBe(45);
       expect(countdown?.customSettings?.["glowGreenOverlap"]).toBe(55);
     });
+
+    it("should migrate legacy custom scale to container-relative scale and set scaleVersion 2", () => {
+      const layout: LayoutConfig = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            width: 1920,
+            height: 1080,
+            customSettings: {
+              orientation: "horizontal",
+              lampSizingMode: "custom",
+              lampScale: 3.0,
+              maxLamps: 3,
+              glowEffect: true,
+              glowIntensity: 100,
+              glowRedOverlap: 30,
+              glowGreenOverlap: 25,
+            },
+          } as any,
+        ],
+      };
+      // For 1920x1080 with 3 lamps, baseFit is 564px.
+      // Legacy pixel size: 120 * 3.0 = 360px.
+      // Migrated lampScale: 360 / 564 = 0.638.
+      const result = RacedayLayoutUtils.ensureCountdownWidget(layout);
+      const countdown = result?.widgets.find(
+        (w) => w.widgetType === "countdown",
+      );
+      expect(countdown?.customSettings?.["scaleVersion"]).toBe(2);
+      expect(countdown?.customSettings?.["lampScale"]).toBeCloseTo(0.638, 2);
+    });
+
+    it("should not re-migrate when scaleVersion is already 2", () => {
+      const layout: LayoutConfig = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            width: 1920,
+            height: 1080,
+            customSettings: {
+              scaleVersion: 2,
+              lampSizingMode: "custom",
+              lampScale: 1.5,
+            },
+          } as any,
+        ],
+      };
+      const result = RacedayLayoutUtils.ensureCountdownWidget(layout);
+      const countdown = result?.widgets.find(
+        (w) => w.widgetType === "countdown",
+      );
+      expect(countdown?.customSettings?.["scaleVersion"]).toBe(2);
+      expect(countdown?.customSettings?.["lampScale"]).toBe(1.5);
+    });
   });
 
   describe("Column Type Identification (Time and Lap columns)", () => {

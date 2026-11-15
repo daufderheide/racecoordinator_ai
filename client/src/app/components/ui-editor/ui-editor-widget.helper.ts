@@ -109,6 +109,33 @@ export function computeWidgetDisplayName(
   return translatedType;
 }
 
+export function resolveWidgetDisplayName(comp: any, widget: any): string {
+  if (!widget) return "";
+  const s = widget.customSettings;
+  const currentLang =
+    comp.translationService?.getCurrentLanguageValue?.() || "";
+  const colKey = s?.["columnKey"] || "";
+  const label = s?.["customLabel"] || "";
+  const mode = s?.["bindingMode"] || "";
+  const lane = s?.["gridLane"] ?? s?.["targetIndex"] ?? "";
+  const header = s?.["isHeaderWidget"] ? "1" : "0";
+  const inset = s?.["insets"]?.[comp.selectedAnchor || ""] || "";
+  const cacheKey = `${widget.id}_${widget.widgetType}_${comp.selectedAnchor || ""}_${currentLang}_${colKey}_${label}_${mode}_${lane}_${header}_${inset}`;
+  const cached = comp.widgetDisplayNameCache?.get(widget.id);
+  if (cached && cached.key === cacheKey) {
+    return cached.name;
+  }
+  const name = computeWidgetDisplayName(
+    widget,
+    comp.translationService,
+    comp.availableColumns,
+    (w: string) => comp.getWidgetTypeLabelKey(w),
+    comp.selectedAnchor,
+  );
+  comp.widgetDisplayNameCache?.set(widget.id, { key: cacheKey, name });
+  return name;
+}
+
 export function ensureWidgetSelectedHelper(comp: any, ui?: CustomUI): void {
   const layout = comp.getLayout(ui || comp.activeCustomUi);
   const widgets = layout?.widgets || [];
@@ -394,9 +421,22 @@ export function handleWidgetInspectorChange(
   const targetWidget = widget || comp.currentSelectedWidget;
   const layout = comp.getLayout(targetUi);
   if (layout && targetWidget && layout.widgets) {
-    if (targetWidget.scaleMode === "auto") {
+    const existingWidget = layout.widgets.find(
+      (w: any) => w.id === targetWidget.id,
+    );
+    const targetGridId = targetWidget.customSettings?.["gridId"];
+    const isTransitioningToAuto =
+      targetWidget.scaleMode === "auto" &&
+      ((existingWidget && existingWidget.scaleMode !== "auto") ||
+        (targetGridId &&
+          layout.widgets.some(
+            (w: any) =>
+              w.customSettings?.["gridId"] === targetGridId &&
+              w.scaleMode !== "auto",
+          )));
+
+    if (isTransitioningToAuto) {
       resetCustomScalingOverrides(targetWidget);
-      const targetGridId = targetWidget.customSettings?.["gridId"];
       if (targetGridId) {
         for (const w of layout.widgets) {
           if (w.customSettings?.["gridId"] === targetGridId) {

@@ -20,12 +20,18 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
             {{ message() | translate: $any(messageParams() || {}) }}
           </p>
           <div class="modal-actions">
-            <button class="btn-confirm" (click)="onConfirm()">
+            <button
+              class="btn-confirm"
+              [class.btn-primary]="!showCancel()"
+              (click)="onConfirm()"
+            >
               {{ confirmText() | translate }}
             </button>
-            <button class="btn-cancel" (click)="onCancel()">
-              {{ cancelText() | translate }}
-            </button>
+            @if (showCancel()) {
+              <button class="btn-cancel" (click)="onCancel()">
+                {{ cancelText() | translate }}
+              </button>
+            }
           </div>
         </div>
       </div>
@@ -87,6 +93,13 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
       .btn-confirm:hover {
         background: #555;
       }
+      .btn-confirm.btn-primary {
+        background: #ffa500;
+        color: #000;
+      }
+      .btn-confirm.btn-primary:hover {
+        background: #ffb733;
+      }
       .btn-cancel {
         background: #ffa500;
         color: #000;
@@ -106,6 +119,7 @@ export class ConfirmationModalComponent {
   cancelText = input("NO");
   confirmText = input("YES");
   className = input("");
+  showCancel = input(true);
 
   cancel = output<void>();
   confirm = output<void>();

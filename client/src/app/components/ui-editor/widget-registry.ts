@@ -111,6 +111,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
     defaultSettings: () => ({
       orientation: "horizontal",
       lampScale: 1.0,
+      scaleVersion: 2,
       blurArea: "fullscreen",
       blurAmount: 50,
       blurCustomX: 0,

@@ -2581,6 +2581,16 @@ describe("UIEditorComponent", () => {
       expect(component.successModalParams).toEqual({});
     });
 
+    it("should hide import error modal on dismiss", () => {
+      component.showImportErrorModal = true;
+      component.importErrorTitle = "UE_ERROR_IMPORT_TITLE";
+      component.importErrorMessage = "Failed";
+
+      component.onDismissImportError();
+
+      expect(component.showImportErrorModal).toBeFalse();
+    });
+
     it("should render acknowledgement modal component when success modal is shown", fakeAsync(() => {
       const theme = {
         entity_id: "t1",

@@ -127,11 +127,35 @@ describe("RacedayCountdownComponent", () => {
     expect(lampsContainer.classList.contains("vertical")).toBeTrue();
   });
 
-  it("should apply lamp scale to lamp elements", () => {
+  it("should support legacy unmigrated scaleVersion 1 (based on 120px) for backward compatibility", () => {
+    // When scaleVersion is missing or 1, scale multiplies 120px
+    const legacyWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        lampScale: 1.5,
+      },
+    };
+    fixture.componentRef.setInput("widget", legacyWidget);
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    expect(component.scaleVersion).toBe(1);
+    expect(component.startLampStyles).toEqual({
+      width: "180px",
+      height: "180px",
+      "max-width": "none",
+      "max-height": "none",
+    });
+  });
+
+  it("should apply lamp scale relative to container fit size when scaleVersion is 2", () => {
+    // When lampScale is 1.5 (> 1.0) with scaleVersion 2, it scales 150% of base fit size (155px * 1.5 = 233px)
     const scaledWidget: AbsoluteWidgetNode = {
       ...defaultWidget,
       customSettings: {
         ...defaultWidget.customSettings,
+        scaleVersion: 2,
         lampScale: 1.5,
       },
     };
@@ -139,9 +163,29 @@ describe("RacedayCountdownComponent", () => {
     fixture.componentRef.setInput("isCustomizing", true);
     fixture.detectChanges();
 
+    expect(component.scaleVersion).toBe(2);
     expect(component.startLampStyles).toEqual({
-      width: "180px",
-      height: "180px",
+      width: "233px",
+      height: "233px",
+      "max-width": "none",
+      "max-height": "none",
+    });
+
+    // When lampScale is 0.5 (<= 1.0), it scales to 50% (155px * 0.5 = 78px) and maintains max-width/height at 100%
+    const smallWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        scaleVersion: 2,
+        lampScale: 0.5,
+      },
+    };
+    fixture.componentRef.setInput("widget", smallWidget);
+    fixture.detectChanges();
+
+    expect(component.startLampStyles).toEqual({
+      width: "78px",
+      height: "78px",
       "max-width": "100%",
       "max-height": "100%",
     });
@@ -421,6 +465,19 @@ describe("RacedayCountdownComponent", () => {
     expect(parseInt(containerStylesCustom["gap"], 10)).toBeGreaterThan(0);
     expect(containerStylesCustom["padding"]).toBe("30px"); // 20px glow radius + 10px
 
+    // Custom mode with lampScale > 1.0 removes container max-width/height clamping
+    const scaledCustomWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        lampScale: 1.5,
+      },
+    };
+    fixture.componentRef.setInput("widget", scaledCustomWidget);
+    fixture.detectChanges();
+    expect(component.lampsContainerStyles["max-width"]).toBe("none");
+    expect(component.lampsContainerStyles["max-height"]).toBe("none");
+
     // Fit mode with glow
     const fitWidget: AbsoluteWidgetNode = {
       ...defaultWidget,
@@ -438,6 +495,7 @@ describe("RacedayCountdownComponent", () => {
     expect(containerStylesFit["gap"]).toBeDefined();
     expect(parseInt(containerStylesFit["gap"], 10)).toBeGreaterThan(0);
     expect(containerStylesFit["padding"]).toBeDefined();
+    expect(containerStylesFit["max-width"]).toBeUndefined();
   });
 
   it("should maintain consistent gap and revert to standard padding when glowEffect is false", () => {

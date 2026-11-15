@@ -288,4 +288,88 @@ describe("RacedayNextHeatComponent", () => {
       done();
     }, 50);
   });
+
+  it("should render and fit all 4 lanes for a 4-lane track without overflow in auto scale mode", (done) => {
+    const hostEl = fixture.nativeElement as HTMLElement;
+    hostEl.style.display = "block";
+    hostEl.style.width = "384px";
+    hostEl.style.height = "239px";
+
+    const mockTrack = new Track({
+      entity_id: "t4",
+      name: "4-Lane Track",
+      lanes: [
+        new Lane("l1", "white", "red", 50),
+        new Lane("l2", "white", "blue", 50),
+        new Lane("l3", "white", "green", 50),
+        new Lane("l4", "white", "yellow", 50),
+      ],
+    });
+
+    const currentHeat: Heat = {
+      objectId: "h1",
+      heatNumber: 1,
+      heatDrivers: [],
+      standings: [],
+      started: false,
+      group: 0,
+    };
+    const nextHeat: Heat = {
+      objectId: "h2",
+      heatNumber: 2,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          laneIndex: 0,
+          driver: new Driver("d1", "Peter", "Peter"),
+          reset: () => {},
+        } as any,
+        {
+          objectId: "hd2",
+          laneIndex: 1,
+          driver: new Driver("d2", "Nick", "Nick"),
+          reset: () => {},
+        } as any,
+        {
+          objectId: "hd3",
+          laneIndex: 2,
+          driver: new Driver("d3", "Ben", "Ben"),
+          reset: () => {},
+        } as any,
+        {
+          objectId: "hd4",
+          laneIndex: 3,
+          driver: new Driver("d4", "Oscar", "Oscar"),
+          reset: () => {},
+        } as any,
+      ],
+      standings: [],
+      started: false,
+      group: 0,
+    };
+
+    fixture.componentRef.setInput("track", mockTrack);
+    fixture.componentRef.setInput("currentHeat", currentHeat);
+    fixture.componentRef.setInput("heats", [currentHeat, nextHeat]);
+    fixture.componentRef.setInput("widget", {
+      scaleMode: "auto",
+      textScaleFactor: 1,
+      customSettings: {},
+    });
+
+    fixture.detectChanges();
+
+    setTimeout(() => {
+      const panel = fixture.nativeElement.querySelector(
+        ".panel-card",
+      ) as HTMLElement;
+      expect(panel).toBeTruthy();
+      const listEl = panel.querySelector(".next-heat-list") as HTMLElement;
+      expect(listEl).toBeTruthy();
+      const items = panel.querySelectorAll(".next-heat-item");
+      expect(items.length).toBe(4);
+      expect(listEl.scrollHeight).toBeLessThanOrEqual(listEl.clientHeight + 1);
+      done();
+    }, 50);
+  });
 });

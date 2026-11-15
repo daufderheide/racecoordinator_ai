@@ -172,15 +172,21 @@ describe("LayoutEditorComponent", () => {
     };
 
     mockTranslationService = {
-      translate: jasmine.createSpy("translate").and.callFake((key: string) => {
-        if (key === "UE_LABEL_DEFAULT_RACEDAY_UI") return "Default Raceday UI";
-        if (key === "UE_LABEL_DEFAULT_PRACTICE_UI")
-          return "Default Practice UI";
-        if (key === "LE_TITLE") return "Layout Editor";
-        if (key === "LE_ERROR_NAME_INVALID") return "Name invalid";
-        if (key === "UE_DEFAULT_CUSTOM_UI_NAME") return "New UI Layout";
-        return key;
-      }),
+      translate: jasmine
+        .createSpy("translate")
+        .and.callFake((key: string, params?: any) => {
+          if (key === "UE_LABEL_DEFAULT_RACEDAY_UI")
+            return "Default Raceday UI";
+          if (key === "UE_LABEL_DEFAULT_PRACTICE_UI")
+            return "Default Practice UI";
+          if (key === "LE_TITLE") return "Layout Editor";
+          if (key === "LE_ERROR_NAME_INVALID") return "Name invalid";
+          if (key === "UE_DEFAULT_CUSTOM_UI_NAME") return "New UI Layout";
+          if (key === "UE_ERROR_IMPORT_REASON" && params?.reason) {
+            return `Reason: ${params.reason}`;
+          }
+          return key;
+        }),
     };
 
     mockLogger = {
@@ -1337,15 +1343,20 @@ describe("LayoutEditorComponent", () => {
 
         await component.onImportLayout(event);
 
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(component.showImportErrorModal).toBeTrue();
+        expect(component.importErrorTitle).toBe("UE_ERROR_IMPORT_TITLE");
+        expect(component.importErrorMessage).toContain(
           mockTranslationService.translate("UE_ERROR_IMPORT_INVALID_JSON"),
         );
+        expect(component.importErrorMessage).toContain("Reason:");
         expect(input.value).toBe("");
+
+        component.onDismissImportError();
+        expect(component.showImportErrorModal).toBeFalse();
       });
 
-      it("should alert user with translated error when file has no layout configuration", async () => {
+      it("should show confirmation modal with translated error and reason when file has no layout configuration", async () => {
         component.isEditMode = true;
-        spyOn(window, "alert");
 
         const emptyJson = JSON.stringify({ hello: "world" });
         const dummyFileReader = {
@@ -1371,15 +1382,24 @@ describe("LayoutEditorComponent", () => {
 
         await component.onImportLayout(event);
 
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(component.showImportErrorModal).toBeTrue();
+        expect(component.importErrorTitle).toBe("UE_ERROR_IMPORT_TITLE");
+        expect(component.importErrorMessage).toContain(
           mockTranslationService.translate("UE_ERROR_IMPORT_NO_LAYOUT"),
         );
+        expect(component.importErrorMessage).toContain(
+          mockTranslationService.translate(
+            "UE_ERROR_IMPORT_REASON_MISSING_LAYOUT",
+          ),
+        );
         expect(input.value).toBe("");
+
+        component.onDismissImportError();
+        expect(component.showImportErrorModal).toBeFalse();
       });
 
-      it("should alert user with translated error when file read fails", async () => {
+      it("should show confirmation modal with translated error when file read fails", async () => {
         component.isEditMode = true;
-        spyOn(window, "alert");
 
         const dummyFileReader = {
           error: new Error("File unreadable"),
@@ -1404,10 +1424,73 @@ describe("LayoutEditorComponent", () => {
 
         await component.onImportLayout(event);
 
-        expect(window.alert).toHaveBeenCalledWith(
+        expect(component.showImportErrorModal).toBeTrue();
+        expect(component.importErrorTitle).toBe("UE_ERROR_IMPORT_TITLE");
+        expect(component.importErrorMessage).toContain(
           mockTranslationService.translate("UE_ERROR_IMPORT_READ_FAILED"),
         );
         expect(mockLogger.error).toHaveBeenCalled();
+        expect(input.value).toBe("");
+
+        component.onDismissImportError();
+        expect(component.showImportErrorModal).toBeFalse();
+      });
+
+      it("should successfully import a layout wrapped in layoutExport property", async () => {
+        component.isEditMode = true;
+        spyOn(component, "syncRacedayPreview");
+
+        const wrappedExport = JSON.stringify({
+          layoutExport: {
+            layout: {
+              baseWidth: 1920,
+              baseHeight: 1080,
+              widgets: [
+                {
+                  id: "w-menu",
+                  widgetType: "menu-bar",
+                  x: 0,
+                  y: 0,
+                  width: 1920,
+                  height: 50,
+                },
+              ],
+            },
+            columns: ["driver.nickname", "lapCount"],
+            columnLayouts: {},
+            columnVisibility: {},
+            columnAnchors: {},
+            columnWidths: {},
+          },
+          fileName: "Fixed_Distance_layout.json",
+        });
+
+        const dummyFileReader = {
+          result: wrappedExport,
+          readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+            this: any,
+          ) {
+            this.onload?.();
+          }),
+        };
+        spyOn(window as any, "FileReader").and.returnValue(
+          dummyFileReader as any,
+        );
+
+        const file = new File([wrappedExport], "Fixed_Distance_layout.json", {
+          type: "application/json",
+        });
+        const input = {
+          files: [file],
+          value: "Fixed_Distance_layout.json",
+        } as unknown as HTMLInputElement;
+        const event = { target: input } as unknown as Event;
+
+        await component.onImportLayout(event);
+
+        expect(component.showImportErrorModal).toBeFalse();
+        expect(component.syncRacedayPreview).toHaveBeenCalled();
+        expect(component.editingLayout?.layoutJson).toContain("w-menu");
         expect(input.value).toBe("");
       });
     });

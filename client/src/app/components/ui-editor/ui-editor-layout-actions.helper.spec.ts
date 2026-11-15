@@ -444,10 +444,68 @@ describe("ui-editor-layout-actions.helper", () => {
       );
 
       expect(window.alert).toHaveBeenCalledWith(
-        "Translated:UE_ERROR_IMPORT_NO_LAYOUT",
+        jasmine.stringMatching(/Translated:UE_ERROR_IMPORT_NO_LAYOUT/),
       );
       expect(onSuccess).not.toHaveBeenCalled();
       expect(input.value).toBe("");
+    });
+
+    it("should display modal instead of alert when comp has showImportErrorModal", () => {
+      spyOn(window, "alert");
+      const mockTranslation = {
+        translate: jasmine
+          .createSpy("translate")
+          .and.callFake((key: string) => `Translated:${key}`),
+      };
+      const mockLogger = {
+        error: jasmine.createSpy("error"),
+      };
+      const onSuccess = jasmine.createSpy("onSuccess");
+      const compTarget: any = {
+        showImportErrorModal: false,
+        importErrorTitle: "",
+        importErrorMessage: "",
+        cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+      };
+
+      const file = new File([JSON.stringify({ empty: true })], "test.json", {
+        type: "application/json",
+      });
+      const input = {
+        files: [file],
+        value: "test.json",
+      } as unknown as HTMLInputElement;
+      const event = { target: input } as unknown as Event;
+
+      const dummyFileReader = {
+        readAsText: jasmine.createSpy("readAsText").and.callFake(function (
+          this: any,
+        ) {
+          this.onload({ target: { result: JSON.stringify({ empty: true }) } });
+        }),
+      };
+      spyOn(window as any, "FileReader").and.returnValue(
+        dummyFileReader as any,
+      );
+
+      executeImportLayout(
+        event,
+        ui,
+        settings,
+        mockLogger,
+        onSuccess,
+        null,
+        mockTranslation,
+        compTarget,
+      );
+
+      expect(window.alert).not.toHaveBeenCalled();
+      expect(compTarget.showImportErrorModal).toBeTrue();
+      expect(compTarget.importErrorTitle).toBe("UE_ERROR_IMPORT_TITLE");
+      expect(compTarget.importErrorMessage).toContain(
+        "Translated:UE_ERROR_IMPORT_NO_LAYOUT",
+      );
+      expect(compTarget.cdr.markForCheck).toHaveBeenCalled();
     });
 
     it("should alert when executeImportLayout encounters file read error", () => {
@@ -493,7 +551,7 @@ describe("ui-editor-layout-actions.helper", () => {
       );
 
       expect(window.alert).toHaveBeenCalledWith(
-        "Translated:UE_ERROR_IMPORT_READ_FAILED",
+        jasmine.stringMatching(/Translated:UE_ERROR_IMPORT_READ_FAILED/),
       );
       expect(mockLogger.error).toHaveBeenCalled();
       expect(onSuccess).not.toHaveBeenCalled();

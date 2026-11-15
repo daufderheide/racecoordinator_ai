@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, effect, input, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
@@ -89,6 +90,28 @@ export class CountdownInspectorComponent {
     }
     if (s.glowGreenOverlap === undefined || s.glowGreenOverlap === null) {
       s.glowGreenOverlap = 25;
+      modified = true;
+    }
+    if (s.scaleVersion !== 2) {
+      if (s.lampSizingMode === "custom" && typeof s.lampScale === "number") {
+        const ww = this.widget()?.width || 1000;
+        const wh = this.widget()?.height || 250;
+        const baseFit = RacedayLayoutUtils.calculateCountdownFitSize({
+          width: ww,
+          height: wh,
+          count: s.maxLamps || 5,
+          isVertical: s.orientation === "vertical",
+          glowEffect: s.glowEffect,
+          glowIntensity: s.glowIntensity,
+          glowRedOverlap: s.glowRedOverlap,
+          glowGreenOverlap: s.glowGreenOverlap,
+        });
+        if (baseFit > 0) {
+          const legacyPixelSize = 120 * s.lampScale;
+          s.lampScale = Math.round((legacyPixelSize / baseFit) * 1000) / 1000;
+        }
+      }
+      s.scaleVersion = 2;
       modified = true;
     }
     if (modified) {

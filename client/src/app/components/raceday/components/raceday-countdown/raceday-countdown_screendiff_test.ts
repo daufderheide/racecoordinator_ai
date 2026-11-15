@@ -40,6 +40,7 @@ test.describe("Raceday Countdown Widget Visuals", () => {
             customSettings: {
               orientation: "vertical",
               lampScale: 1.0,
+              scaleVersion: 2,
               glowEffect: true,
             },
           },

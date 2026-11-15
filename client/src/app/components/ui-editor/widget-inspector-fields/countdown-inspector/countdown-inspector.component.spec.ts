@@ -33,6 +33,7 @@ describe("CountdownInspectorComponent", () => {
     fixture.componentRef.setInput("settings", {
       orientation: "horizontal",
       lampScale: 1.0,
+      scaleVersion: 2,
       blurArea: "fullscreen",
       blurAmount: 50,
       blurCustomX: 0,
@@ -51,6 +52,18 @@ describe("CountdownInspectorComponent", () => {
     expect(component.getLampScalePercent()).toBe(100);
     component.settings().lampScale = 1.5;
     expect(component.getLampScalePercent()).toBe(150);
+  });
+
+  it("should auto-migrate legacy lampScale to container-relative scale and set scaleVersion 2", () => {
+    const legacySettings: any = {
+      orientation: "horizontal",
+      lampScale: 1.0,
+      lampSizingMode: "custom",
+    };
+    fixture.componentRef.setInput("settings", legacySettings);
+    component.ensureDefaults();
+    expect(legacySettings.scaleVersion).toBe(2);
+    expect(legacySettings.lampScale).toBeCloseTo(0.774, 2);
   });
 
   it("should emit change on settings change", () => {
@@ -83,6 +96,7 @@ describe("CountdownInspectorComponent", () => {
     fixture.detectChanges();
     let slider = fixture.nativeElement.querySelector("input[max='3.0']");
     expect(slider).not.toBeNull();
+    expect(parseFloat(slider.getAttribute("min"))).toBeCloseTo(0.1, 2);
 
     component.setLampSizingMode("fit");
     fixture.detectChanges();
@@ -98,6 +112,7 @@ describe("CountdownInspectorComponent", () => {
     expect(component.settings().lampSizingMode).toBe("custom");
     expect(component.settings().maxLamps).toBe(5);
     expect(component.settings().fadeIn).toBeTrue();
+    expect(component.settings().scaleVersion).toBe(2);
 
     // Verify custom selects have these values set
     const selects = fixture.nativeElement.querySelectorAll("app-custom-select");
