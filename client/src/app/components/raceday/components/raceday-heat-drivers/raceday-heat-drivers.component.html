@@ -97,7 +97,7 @@
               </span>
               @if (
                 isTeam(hd) &&
-                (hd.participant?.team?.name || $any(hd.driver)?.team?.name)
+                (hd.participant.team?.name || $any(hd.driver)?.team?.name)
               ) {
                 <span
                   style="
@@ -109,9 +109,7 @@
                     max-width: 100%;
                   "
                 >
-                  {{
-                    hd.participant?.team?.name || $any(hd.driver)?.team?.name
-                  }}
+                  {{ hd.participant.team?.name || $any(hd.driver)?.team?.name }}
                 </span>
               }
             </div>
@@ -157,7 +155,7 @@
             </span>
             @if (
               isTeam(hd) &&
-              (hd.participant?.team?.name || $any(hd.driver)?.team?.name)
+              (hd.participant.team?.name || $any(hd.driver)?.team?.name)
             ) {
               <span
                 style="
@@ -169,7 +167,7 @@
                   max-width: 100%;
                 "
               >
-                {{ hd.participant?.team?.name || $any(hd.driver)?.team?.name }}
+                {{ hd.participant.team?.name || $any(hd.driver)?.team?.name }}
               </span>
             }
           </div>

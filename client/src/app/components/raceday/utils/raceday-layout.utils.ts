@@ -751,14 +751,82 @@ export class RacedayLayoutUtils {
 
     for (const w of layout.widgets) {
       if (w.widgetType === "countdown") {
-        w.customSettings = this.backfillCountdownSettings(w.customSettings);
+        w.customSettings = this.backfillCountdownSettings(
+          w.customSettings,
+          w.width,
+          w.height,
+        );
       }
     }
     return layout;
   }
 
+  static calculateCountdownFitSize(params: {
+    width?: number;
+    height?: number;
+    count?: number;
+    isVertical?: boolean;
+    glowEffect?: boolean;
+    glowIntensity?: number;
+    glowRedOverlap?: number;
+    glowGreenOverlap?: number;
+  }): number {
+    const count =
+      typeof params.count === "number" && params.count > 0 ? params.count : 5;
+    const isVert = !!params.isVertical;
+    const ww =
+      typeof params.width === "number" && params.width > 0
+        ? params.width
+        : 1000;
+    const wh =
+      typeof params.height === "number" && params.height > 0
+        ? params.height
+        : 250;
+    const glow = params.glowEffect !== false;
+    const glowIntensity =
+      typeof params.glowIntensity === "number" ? params.glowIntensity : 100;
+    const glowRedOverlap =
+      typeof params.glowRedOverlap === "number" ? params.glowRedOverlap : 30;
+    const glowGreenOverlap =
+      typeof params.glowGreenOverlap === "number"
+        ? params.glowGreenOverlap
+        : 25;
+
+    const primaryDim = isVert ? wh : ww;
+    const crossDim = isVert ? ww : wh;
+    const pad = Math.max(10, Math.min(40, Math.round(primaryDim * 0.04)));
+
+    if (glow) {
+      const redScale = 1.0 + 0.25 * (glowRedOverlap / 100);
+      const greenScale = 1.0 + 0.4 * (glowGreenOverlap / 100);
+      const maxScale = Math.max(redScale, greenScale);
+      const glowRadius = Math.round(20 * (glowIntensity / 100));
+      const extraPad = Math.max(pad, glowRadius + 10);
+
+      const availablePrimary = Math.max(20, primaryDim - extraPad * 2);
+      const availableCross = Math.max(20, crossDim - extraPad * 2);
+
+      const effPrimaryUnits = count + (count - 1) * 0.08 + (maxScale - 1);
+      const maxPrimary = availablePrimary / effPrimaryUnits;
+      const maxCross = availableCross / maxScale;
+
+      return Math.max(20, Math.round(Math.min(maxPrimary, maxCross)));
+    } else {
+      const availablePrimary = Math.max(20, primaryDim - pad * 2);
+      const availableCross = Math.max(20, crossDim - pad * 2);
+
+      const effPrimaryUnits = count + (count - 1) * 0.08;
+      const maxPrimary = availablePrimary / effPrimaryUnits;
+      const maxCross = availableCross;
+
+      return Math.max(20, Math.round(Math.min(maxPrimary, maxCross)));
+    }
+  }
+
   private static backfillCountdownSettings(
     customSettings?: Record<string, any>,
+    widgetWidth?: number,
+    widgetHeight?: number,
   ): Record<string, any> {
     const s: Record<string, any> = {
       orientation: "horizontal",
@@ -801,6 +869,35 @@ export class RacedayLayoutUtils {
     if (s["glowGreenOverlap"] === undefined || s["glowGreenOverlap"] === 100) {
       s["glowGreenOverlap"] = 25;
     }
+
+    // Auto-migration: if scaleVersion is not 2, migrate legacy lampScale (multiplier of 120px)
+    // to container-relative scale while preserving the exact rendered pixel size.
+    if (s["scaleVersion"] !== 2) {
+      if (
+        s["lampSizingMode"] === "custom" &&
+        typeof s["lampScale"] === "number"
+      ) {
+        const ww = widgetWidth || 1000;
+        const wh = widgetHeight || 250;
+        const baseFit = this.calculateCountdownFitSize({
+          width: ww,
+          height: wh,
+          count: s["maxLamps"] || 5,
+          isVertical: s["orientation"] === "vertical",
+          glowEffect: s["glowEffect"],
+          glowIntensity: s["glowIntensity"],
+          glowRedOverlap: s["glowRedOverlap"],
+          glowGreenOverlap: s["glowGreenOverlap"],
+        });
+        if (baseFit > 0) {
+          const legacyPixelSize = 120 * s["lampScale"];
+          s["lampScale"] =
+            Math.round((legacyPixelSize / baseFit) * 1000) / 1000;
+        }
+      }
+      s["scaleVersion"] = 2;
+    }
+
     return s;
   }
 

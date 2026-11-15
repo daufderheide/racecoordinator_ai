@@ -1,5 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { Component, inject, input, ViewEncapsulation } from "@angular/core";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { ThemeService } from "@app/services/theme.service";
@@ -49,6 +50,10 @@ export class RacedayCountdownComponent {
 
   get isVertical(): boolean {
     return this.orientation === "vertical";
+  }
+
+  get scaleVersion(): number {
+    return this.widget()?.customSettings?.["scaleVersion"] || 1;
   }
 
   get lampScale(): number {
@@ -191,53 +196,41 @@ export class RacedayCountdownComponent {
     return Math.max(6, Math.min(24, Math.round(size * 0.08)));
   }
 
-  private get fitLampSize(): number {
-    if (this.lampSizingMode !== "fit") {
-      const scale = this.lampScale;
-      return Math.round(120 * scale);
-    }
-
+  private get baseFitLampSize(): number {
     const lamps = this.displayLamps;
-    const count = lamps && lamps.length > 0 ? lamps.length : 5;
-    const isVert = this.isVertical;
-
+    const count = lamps && lamps.length > 0 ? lamps.length : this.maxLamps;
     const ww = this.widget()?.width || 1000;
     const wh = this.widget()?.height || 250;
+    return RacedayLayoutUtils.calculateCountdownFitSize({
+      width: ww,
+      height: wh,
+      count,
+      isVertical: this.isVertical,
+      glowEffect: this.glowEffect,
+      glowIntensity: this.glowIntensity,
+      glowRedOverlap: this.glowRedOverlap,
+      glowGreenOverlap: this.glowGreenOverlap,
+    });
+  }
 
-    const primaryDim = isVert ? wh : ww;
-    const crossDim = isVert ? ww : wh;
-    const pad = Math.max(10, Math.min(40, Math.round(primaryDim * 0.04)));
-
-    if (this.glowEffect) {
-      const redScale = 1.0 + 0.25 * (this.glowRedOverlap / 100);
-      const greenScale = 1.0 + 0.4 * (this.glowGreenOverlap / 100);
-      const maxScale = Math.max(redScale, greenScale);
-      const glowRadius = Math.round(20 * (this.glowIntensity / 100));
-      const extraPad = Math.max(pad, glowRadius + 10);
-
-      const availablePrimary = Math.max(20, primaryDim - extraPad * 2);
-      const availableCross = Math.max(20, crossDim - extraPad * 2);
-
-      const effPrimaryUnits = count + (count - 1) * 0.08 + (maxScale - 1);
-      const maxPrimary = availablePrimary / effPrimaryUnits;
-      const maxCross = availableCross / maxScale;
-
-      return Math.max(20, Math.round(Math.min(maxPrimary, maxCross)));
-    } else {
-      const availablePrimary = Math.max(20, primaryDim - pad * 2);
-      const availableCross = Math.max(20, crossDim - pad * 2);
-
-      const effPrimaryUnits = count + (count - 1) * 0.08;
-      const maxPrimary = availablePrimary / effPrimaryUnits;
-      const maxCross = availableCross;
-
-      return Math.max(20, Math.round(Math.min(maxPrimary, maxCross)));
+  private get fitLampSize(): number {
+    const base = this.baseFitLampSize;
+    if (this.lampSizingMode === "fit") {
+      return base;
     }
+    const scale = this.lampScale;
+    if (this.scaleVersion !== 2) {
+      // Legacy unmigrated scale (multiplier of 120px)
+      return Math.round(120 * scale);
+    }
+    return Math.max(16, Math.round(base * scale));
   }
 
   get startLampStyles(): Record<string, string> {
     const size = this.fitLampSize;
-    const key = `${size}`;
+    const mode = this.lampSizingMode;
+    const scale = this.lampScale;
+    const key = `${size}_${mode}_${scale}`;
     if (this.cachedStartLampStyles?.key === key) {
       return this.cachedStartLampStyles.styles;
     }
@@ -247,6 +240,10 @@ export class RacedayCountdownComponent {
       "max-width": "100%",
       "max-height": "100%",
     };
+    if (mode === "custom" && scale > 1.0) {
+      styles["max-width"] = "none";
+      styles["max-height"] = "none";
+    }
     this.cachedStartLampStyles = { key, styles };
     return styles;
   }
@@ -257,9 +254,10 @@ export class RacedayCountdownComponent {
     const glow = this.glowEffect;
     const intensity = this.glowIntensity;
     const isVert = this.isVertical;
+    const scale = this.lampScale;
     const ww = this.widget()?.width || 1000;
     const wh = this.widget()?.height || 250;
-    const key = `${size}_${mode}_${glow}_${intensity}_${isVert}_${ww}_${wh}`;
+    const key = `${size}_${mode}_${scale}_${glow}_${intensity}_${isVert}_${ww}_${wh}`;
     if (this.cachedContainerStyles?.key === key) {
       return this.cachedContainerStyles.styles;
     }
@@ -294,6 +292,11 @@ export class RacedayCountdownComponent {
         gap: `${gap}px`,
         padding: "10px",
       };
+    }
+
+    if (mode === "custom" && scale > 1.0) {
+      styles["max-width"] = "none";
+      styles["max-height"] = "none";
     }
 
     this.cachedContainerStyles = { key, styles };

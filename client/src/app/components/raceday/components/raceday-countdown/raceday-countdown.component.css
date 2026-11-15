@@ -83,7 +83,7 @@
   width: 120px;
   height: 120px;
   object-fit: contain;
-  flex-shrink: 1;
+  flex-shrink: 0;
   min-width: 0;
   min-height: 0;
   transition:
