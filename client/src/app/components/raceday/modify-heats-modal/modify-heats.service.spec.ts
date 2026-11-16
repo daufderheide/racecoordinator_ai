@@ -302,6 +302,92 @@ describe("ModifyHeatsService", () => {
       expect(result.updatedHeats[1].heatDrivers[0].participant).toBe(p1);
     });
 
+    it("should reject dropping a step-up driver into a step 1 heat", () => {
+      const suDriver = new Driver("Step-Up 1", "Step-Up 1", "STEP_UP_0");
+      const suPart = new RaceParticipant(
+        "STEP_UP_0",
+        suDriver,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      suPart.isStepUp = true;
+
+      const heat0 = new Heat("h0", 1, [], [], false);
+      heat0.step = 1;
+
+      const event: any = {
+        previousContainer: { id: "step-up-pool" },
+        container: { id: "heat-0-lane-0" },
+        item: { data: suPart },
+      };
+
+      const context: DropContext = {
+        localHeats: [heat0],
+        localParticipants: [],
+        allDrivers: [],
+        allTeams: [],
+        isHeatStarted: () => false,
+        isParticipantInStartedHeat: () => false,
+      };
+
+      const result = service.handleDrop(event, context);
+      expect(result.actionTaken).toBeFalse();
+      expect(result.error).toEqual({
+        title: "RDS_ERR_VALIDATION_TITLE",
+        message: "RD_ERR_STEP_UP_IN_STEP_ONE",
+      });
+    });
+
+    it("should allow dropping a step-up driver into a step 2 heat", () => {
+      const suDriver = new Driver("Step-Up 1", "Step-Up 1", "STEP_UP_0");
+      const suPart = new RaceParticipant(
+        "STEP_UP_0",
+        suDriver,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      suPart.isStepUp = true;
+
+      const heat1 = new Heat("h1", 2, [], [], false);
+      heat1.step = 2;
+
+      const event: any = {
+        previousContainer: { id: "step-up-pool" },
+        container: { id: "heat-0-lane-0" },
+        item: { data: suPart },
+      };
+
+      const context: DropContext = {
+        localHeats: [heat1],
+        localParticipants: [],
+        allDrivers: [],
+        allTeams: [],
+        isHeatStarted: () => false,
+        isParticipantInStartedHeat: () => false,
+      };
+
+      const result = service.handleDrop(event, context);
+      expect(result.actionTaken).toBeTrue();
+      expect(result.updatedHeats[0].heatDrivers.length).toBe(1);
+      expect(result.updatedHeats[0].heatDrivers[0].participant.objectId).toBe(
+        "STEP_UP_0",
+      );
+    });
+
     it("should reject moving driver to heat they are already in", () => {
       const p1 = createTestParticipant(createTestDriver("d1", "Dave"));
       const p2 = createTestParticipant(createTestDriver("d2", "Alice"));
@@ -535,6 +621,63 @@ describe("ModifyHeatsService", () => {
       const result = service.handleAddFromAvailable(driver, context);
       expect(result.actionTaken).toBeFalse();
       expect(result.error).toBeTruthy();
+    });
+  });
+
+  describe("container resolution and drop coordinates", () => {
+    it("should resolve container id from element, data, or fallback", () => {
+      const elContainer = {
+        element: { nativeElement: { id: "heat-2-lane-3" } },
+        id: "cdk-drop-list-42",
+      } as any;
+      expect(service.getContainerId(elContainer)).toBe("heat-2-lane-3");
+
+      const dataContainer = {
+        data: { heatIndex: 1, laneIndex: 0 },
+        id: "cdk-drop-list-10",
+      } as any;
+      expect(service.getContainerId(dataContainer)).toBe("heat-1-lane-0");
+
+      const poolData = [{ objectId: "p1" }];
+      const context = { localParticipants: poolData } as any;
+      const poolContainer = {
+        data: poolData,
+        id: "cdk-drop-list-99",
+      } as any;
+      expect(service.getContainerId(poolContainer, context)).toBe(
+        "driver-pool",
+      );
+
+      const fallbackContainer = {
+        id: "driver-pool",
+      } as any;
+      expect(service.getContainerId(fallbackContainer)).toBe("driver-pool");
+    });
+
+    it("should identify heat lanes and extract coords from data and id", () => {
+      const laneFromData = {
+        data: { heatIndex: 3, laneIndex: 2 },
+      } as any;
+      expect(service.isHeatLane(laneFromData)).toBeTrue();
+      expect(service.getHeatLaneCoords(laneFromData)).toEqual({
+        heatIndex: 3,
+        laneIndex: 2,
+      });
+
+      const laneFromId = {
+        element: { nativeElement: { id: "heat-0-lane-1" } },
+      } as any;
+      expect(service.isHeatLane(laneFromId)).toBeTrue();
+      expect(service.getHeatLaneCoords(laneFromId)).toEqual({
+        heatIndex: 0,
+        laneIndex: 1,
+      });
+
+      const poolContainer = {
+        element: { nativeElement: { id: "driver-pool" } },
+      } as any;
+      expect(service.isHeatLane(poolContainer)).toBeFalse();
+      expect(service.getHeatLaneCoords(poolContainer)).toBeNull();
     });
   });
 });

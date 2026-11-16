@@ -581,7 +581,10 @@ public class RaceHeatManager {
   }
 
   private String validateGroupStepUp( // fqn-collision
-      List<com.antigravity.proto.Heat> groupHeats, int stepUp, boolean isCustom) { // fqn-collision
+      ModifyHeatsRequest request,
+      List<com.antigravity.proto.Heat> groupHeats, // fqn-collision
+      int stepUp,
+      boolean isCustom) {
     boolean inHigherStep = false;
     Set<String> step1Drivers = new HashSet<>();
 
@@ -593,11 +596,22 @@ public class RaceHeatManager {
         com.antigravity.proto.RaceParticipant protoP = protoDhd.getDriver(); // fqn-collision
         if (isStepUpParticipantProto(protoP)) {
           stepUpCount++;
-        } else if (protoP != null
-            && !protoP.getObjectId().isEmpty()
-            && !Driver.isEmptyId(protoP.getDriver().getModel().getEntityId())) {
-          if (!inHigherStep) {
-            step1Drivers.add(protoP.getObjectId());
+        } else if (protoP != null && !protoP.getObjectId().isEmpty()) {
+          RaceParticipant resolvedP = findParticipantByObjectId(protoP.getObjectId());
+          if (resolvedP == null) {
+            resolvedP = findParticipantInProtoRequest(request, protoP.getObjectId());
+          }
+          if (resolvedP != null && resolvedP.isStepUpParticipant()) {
+            stepUpCount++;
+          } else {
+            boolean isEmpty =
+                (resolvedP != null)
+                    ? resolvedP.isEmptyParticipant()
+                    : (protoP.hasDriver()
+                        && Driver.isEmptyId(protoP.getDriver().getModel().getEntityId()));
+            if (!isEmpty && !inHigherStep) {
+              step1Drivers.add(protoP.getObjectId());
+            }
           }
         }
       }
@@ -668,7 +682,7 @@ public class RaceHeatManager {
 
     for (List<com.antigravity.proto.Heat> groupHeats : heatsByGroup.values()) { // fqn-collision
       if (groupHeats.isEmpty()) continue;
-      String groupError = validateGroupStepUp(groupHeats, stepUp, isCustom);
+      String groupError = validateGroupStepUp(request, groupHeats, stepUp, isCustom);
       if (groupError != null) {
         return groupError;
       }

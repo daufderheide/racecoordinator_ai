@@ -1,4 +1,8 @@
-import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
+import {
+  CdkDragDrop,
+  CdkDropList,
+  moveItemInArray,
+} from "@angular/cdk/drag-drop";
 import { inject, Injectable } from "@angular/core";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
@@ -63,9 +67,67 @@ export class ModifyHeatsService {
     return state;
   }
 
+  getContainerId(container: CdkDropList, context?: DropContext): string {
+    if (!container) return "";
+    const elementId = container.element?.nativeElement?.id;
+    if (elementId) return elementId;
+    if (
+      container.data &&
+      typeof container.data === "object" &&
+      typeof container.data.heatIndex === "number" &&
+      typeof container.data.laneIndex === "number"
+    ) {
+      return `heat-${container.data.heatIndex}-lane-${container.data.laneIndex}`;
+    }
+    if (context) {
+      if (container.data === context.localParticipants) return "driver-pool";
+      if (container.data === context.allDrivers) return "database-drivers";
+    }
+    return container.id || "";
+  }
+
+  isHeatLane(container: CdkDropList): boolean {
+    if (
+      container?.data &&
+      typeof container.data === "object" &&
+      typeof container.data.heatIndex === "number" &&
+      typeof container.data.laneIndex === "number"
+    ) {
+      return true;
+    }
+    const id = this.getContainerId(container);
+    return id.startsWith("heat-");
+  }
+
+  getHeatLaneCoords(
+    container: CdkDropList,
+  ): { heatIndex: number; laneIndex: number } | null {
+    if (
+      container?.data &&
+      typeof container.data === "object" &&
+      typeof container.data.heatIndex === "number" &&
+      typeof container.data.laneIndex === "number"
+    ) {
+      return {
+        heatIndex: container.data.heatIndex,
+        laneIndex: container.data.laneIndex,
+      };
+    }
+    const id = this.getContainerId(container);
+    if (id.startsWith("heat-")) {
+      const parts = id.split("-");
+      const hIdx = parseInt(parts[1], 10);
+      const lIdx = parseInt(parts[3], 10);
+      if (!isNaN(hIdx) && !isNaN(lIdx)) {
+        return { heatIndex: hIdx, laneIndex: lIdx };
+      }
+    }
+    return null;
+  }
+
   handleDrop(event: CdkDragDrop<any>, context: DropContext): DropResult {
-    const fromId = event.previousContainer.id;
-    const toId = event.container.id;
+    const fromId = this.getContainerId(event.previousContainer, context);
+    const toId = this.getContainerId(event.container, context);
     let updatedHeats = [...context.localHeats];
     let updatedParticipants = [...context.localParticipants];
 
@@ -162,7 +224,7 @@ export class ModifyHeatsService {
     participant?: RaceParticipant;
     error?: { title: string; message: string };
   } {
-    const fromId = event.previousContainer.id;
+    const fromId = this.getContainerId(event.previousContainer, context);
     const data = event.item.data;
 
     if (fromId === "database-drivers") {
@@ -236,10 +298,59 @@ export class ModifyHeatsService {
       }
     }
 
+    // Step-up in Step 1 Validation
+    if (isStepUpParticipant(participant) && (heats[toHIdx].step || 1) === 1) {
+      return {
+        updatedHeats: heats,
+        updatedParticipants: participants,
+        actionTaken: false,
+        error: {
+          title: "RDS_ERR_VALIDATION_TITLE",
+          message: this.translationService.translate(
+            "RD_ERR_STEP_UP_IN_STEP_ONE",
+          ),
+        },
+      };
+    }
+
     if (fromId === "database-drivers") {
       participants.push(participant);
     }
 
+    const placed = this.applyHeatDropPlacement(
+      heats,
+      toHIdx,
+      toLIdx,
+      fromHIdx,
+      fromId,
+      participant,
+      existingOccupant,
+    );
+
+    if (!placed) {
+      return {
+        updatedHeats: heats,
+        updatedParticipants: participants,
+        actionTaken: false,
+      };
+    }
+
+    return {
+      updatedHeats: heats,
+      updatedParticipants: participants,
+      actionTaken: true,
+    };
+  }
+
+  private applyHeatDropPlacement(
+    heats: Heat[],
+    toHIdx: number,
+    toLIdx: number,
+    fromHIdx: number,
+    fromId: string,
+    participant: RaceParticipant,
+    existingOccupant: RaceParticipant | null,
+  ): boolean {
     if (fromHIdx !== -1) {
       const fromLIdx = parseInt(fromId.split("-")[3], 10);
       const isAlreadyInHeat = heats[toHIdx].heatDrivers.some(
@@ -248,42 +359,30 @@ export class ModifyHeatsService {
           dhd.participant.objectId === participant.objectId,
       );
       if (isAlreadyInHeat && fromHIdx !== toHIdx) {
-        return {
-          updatedHeats: heats,
-          updatedParticipants: participants,
-          actionTaken: false,
-        };
+        return false;
       }
 
+      this.removeDriverFromHeat(heats, fromHIdx, fromLIdx);
+      this.removeDriverFromHeat(heats, toHIdx, toLIdx);
+      this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
       if (existingOccupant) {
-        this.removeDriverFromHeat(heats, fromHIdx, fromLIdx);
-        this.removeDriverFromHeat(heats, toHIdx, toLIdx);
-        this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
         this.addDriverToHeat(heats, fromHIdx, fromLIdx, existingOccupant);
-      } else {
-        this.removeDriverFromHeat(heats, fromHIdx, fromLIdx);
-        this.removeDriverFromHeat(heats, toHIdx, toLIdx);
-        this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
       }
-    } else {
-      if (
-        !heats[toHIdx].heatDrivers.some(
-          (dhd) =>
-            !isPlaceholderParticipant(dhd.participant) &&
-            dhd.participant.objectId === participant.objectId,
-        )
-      ) {
-        if (existingOccupant) this.removeDriverFromHeat(heats, toHIdx, toLIdx);
-        this.removeDriverFromHeat(heats, toHIdx, toLIdx);
-        this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
-      }
+      return true;
     }
 
-    return {
-      updatedHeats: heats,
-      updatedParticipants: participants,
-      actionTaken: true,
-    };
+    if (
+      !heats[toHIdx].heatDrivers.some(
+        (dhd) =>
+          !isPlaceholderParticipant(dhd.participant) &&
+          dhd.participant.objectId === participant.objectId,
+      )
+    ) {
+      this.removeDriverFromHeat(heats, toHIdx, toLIdx);
+      this.addDriverToHeat(heats, toHIdx, toLIdx, participant);
+      return true;
+    }
+    return false;
   }
 
   private validateGroups(

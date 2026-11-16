@@ -24,6 +24,7 @@ import {
   getParticipantName,
   HeatCardBounds,
   inferBoundariesFromDrivers,
+  isHardValidationError,
   isPlaceholderParticipant,
   isStepUpParticipant,
 } from "./modify-heats-modal.utils";
@@ -864,6 +865,68 @@ describe("modify-heats-modal.utils", () => {
         mockTranslationService,
       );
       expect(error).toBe("RD_ERR_STEP_UP_IN_STEP_ONE");
+    });
+  });
+
+  describe("isHardValidationError", () => {
+    const mockTranslationService: any = {
+      translate: (key: string) => key,
+    };
+
+    it("should return false for null, undefined, or empty error", () => {
+      expect(isHardValidationError(null, mockTranslationService)).toBeFalse();
+      expect(
+        isHardValidationError(undefined as any, mockTranslationService),
+      ).toBeFalse();
+      expect(isHardValidationError("", mockTranslationService)).toBeFalse();
+    });
+
+    it("should return true for started heat modified and started participant removed", () => {
+      expect(
+        isHardValidationError(
+          "RD_ERR_STARTED_HEAT_MODIFIED",
+          mockTranslationService,
+        ),
+      ).toBeTrue();
+      expect(
+        isHardValidationError(
+          "RD_ERR_STARTED_PARTICIPANT_REMOVED",
+          mockTranslationService,
+        ),
+      ).toBeTrue();
+    });
+
+    it("should return false for intermediate step-up or group configuration errors", () => {
+      expect(
+        isHardValidationError(
+          "RD_ERR_STEP_UP_COUNT_MISMATCH",
+          mockTranslationService,
+        ),
+      ).toBeFalse();
+      expect(
+        isHardValidationError(
+          "RD_ERR_STEP_UP_BOTTOM_STEP_MIN_DRIVERS",
+          mockTranslationService,
+        ),
+      ).toBeFalse();
+      expect(
+        isHardValidationError(
+          "RD_ERR_STEP_UP_IN_STEP_ONE",
+          mockTranslationService,
+        ),
+      ).toBeFalse();
+      expect(
+        isHardValidationError(
+          "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS",
+          mockTranslationService,
+        ),
+      ).toBeFalse();
+      expect(
+        isHardValidationError(
+          "RD_ERR_GROUP_NON_SEQUENTIAL",
+          mockTranslationService,
+        ),
+      ).toBeFalse();
     });
   });
 

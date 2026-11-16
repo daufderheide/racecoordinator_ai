@@ -17,6 +17,25 @@ export function validateGroupSequence(_heats: Heat[]): {
   return { isValid: true };
 }
 
+export function isHardValidationError(
+  error: string | null,
+  translationService: TranslationService,
+): boolean {
+  if (!error) return false;
+  const startedHeatMod = translationService.translate(
+    "RD_ERR_STARTED_HEAT_MODIFIED",
+  );
+  const startedPartRemoved = translationService.translate(
+    "RD_ERR_STARTED_PARTICIPANT_REMOVED",
+  );
+  return (
+    error === startedHeatMod ||
+    error === startedPartRemoved ||
+    error === "RD_ERR_STARTED_HEAT_MODIFIED" ||
+    error === "RD_ERR_STARTED_PARTICIPANT_REMOVED"
+  );
+}
+
 export function validateStartedHeatsNotModified(
   localHeats: Heat[],
   originalHeats: Heat[],

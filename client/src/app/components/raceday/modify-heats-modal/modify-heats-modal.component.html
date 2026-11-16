@@ -19,7 +19,7 @@
   >
   </app-editor-title>
 
-  <div class="content-split">
+  <div class="content-split" cdkDropListGroup>
     <!-- Left Panel: Drivers Pool -->
     <div class="editor-panel">
       <!-- Racing Drivers -->
@@ -33,6 +33,7 @@
           cdkDropList
           [cdkDropListData]="driverPool"
           [cdkDropListConnectedTo]="heatDropListIds"
+          [cdkDropListEnterPredicate]="canEnterDriverDropList"
           class="driver-pool"
           (cdkDropListDropped)="onDrop($event)"
         >
@@ -118,6 +119,7 @@
             cdkDropList
             [cdkDropListData]="stepUpPool"
             [cdkDropListConnectedTo]="heatDropListIds"
+            [cdkDropListEnterPredicate]="canEnterDriverDropList"
             class="driver-pool"
             (cdkDropListDropped)="onDrop($event)"
           >
@@ -351,6 +353,7 @@
           cdkDropList
           [cdkDropListData]="databaseParticipants"
           [cdkDropListConnectedTo]="connectedTo"
+          [cdkDropListEnterPredicate]="canEnterDriverDropList"
           class="driver-pool"
           (cdkDropListDropped)="onDrop($event)"
         >
@@ -393,6 +396,7 @@
         [cdkDropListData]="localHeats"
         [cdkDropListAutoScrollDisabled]="true"
         [cdkDropListSortingDisabled]="true"
+        [cdkDropListEnterPredicate]="canEnterHeatsGrid"
         (cdkDropListDropped)="onHeatDrop($event)"
         (mousemove)="onGridMouseMove($event)"
         [style.zoom]="zoomLevel / 100"
@@ -569,6 +573,7 @@
                     cdkDropList
                     [cdkDropListData]="{ heatIndex: hIdx, laneIndex: lIdx }"
                     [cdkDropListConnectedTo]="connectedTo"
+                    [cdkDropListEnterPredicate]="canEnterDriverDropList"
                     [cdkDropListDisabled]="isHeatStarted(heat)"
                     (cdkDropListDropped)="onDrop($event)"
                     style="flex: 1; min-height: 40px"

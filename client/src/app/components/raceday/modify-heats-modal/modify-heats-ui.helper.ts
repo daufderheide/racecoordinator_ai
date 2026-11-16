@@ -1,6 +1,8 @@
+import { CdkDrag, CdkDropList } from "@angular/cdk/drag-drop";
 import { ChangeDetectorRef } from "@angular/core";
 import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import { Driver } from "@app/models/driver";
+import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
@@ -12,6 +14,7 @@ import {
   calculateHeatDropAction,
   collectHeatCardBounds,
   createParticipantFromDriver,
+  executeHeatReorder,
   getHeatHighlightColors as extractHeatHighlightColors,
   getParticipantKey,
   getParticipantMeta,
@@ -271,4 +274,90 @@ export function handleHeatHoverAction(
     };
   }
   return { action: null, hoveredHeatIdx: -1 };
+}
+
+export function getCustomGroupName(
+  race: Race | undefined,
+  groupIdx: number,
+): string {
+  if (!race || !race.group_options?.enabled) return "";
+  const names = race.group_options.names;
+  if (
+    groupIdx !== undefined &&
+    groupIdx !== null &&
+    names &&
+    names[groupIdx] &&
+    names[groupIdx].trim() !== ""
+  ) {
+    return names[groupIdx].trim();
+  }
+  return "";
+}
+
+export function isStepUpEnabledHelper(
+  race: Race | undefined,
+  localHeats: Heat[],
+): boolean {
+  if (race?.step_up && race.step_up > 0) return true;
+  if (race?.heat_rotation_type === "Custom") return true;
+  return localHeats.some(
+    (h) =>
+      h.isStepUpBoundary ||
+      (h.step && h.step > 1) ||
+      h.heatDrivers?.some((d) => isStepUpParticipant(d.participant)),
+  );
+}
+
+export function resolveHeatDropReorder(
+  draggedHeat: Heat | undefined,
+  dropPoint: { x: number; y: number } | undefined,
+  currentAction: HeatDropAction,
+  localHeats: Heat[],
+  lastStartedIdx: number,
+  isHeatStarted: (h: Heat) => boolean,
+): { reordered: boolean; newHeats: Heat[] } {
+  let action = currentAction;
+  if (!action && dropPoint) {
+    const cards = collectHeatCardBounds(localHeats, isHeatStarted);
+    action = calculateHeatDropAction(
+      dropPoint.x,
+      dropPoint.y,
+      cards,
+      lastStartedIdx,
+    );
+  }
+  if (!action || !draggedHeat) {
+    return { reordered: false, newHeats: localHeats };
+  }
+
+  const fromIdx = localHeats.findIndex(
+    (h) => h.objectId === draggedHeat.objectId,
+  );
+  if (fromIdx === -1) {
+    return { reordered: false, newHeats: localHeats };
+  }
+
+  return executeHeatReorder(localHeats, fromIdx, action, lastStartedIdx);
+}
+
+export function canEnterHeatsGridPredicate(
+  drag: CdkDrag<any>,
+  _drop?: CdkDropList<any>,
+): boolean {
+  return !!(
+    drag.data &&
+    typeof drag.data === "object" &&
+    "heatDrivers" in drag.data
+  );
+}
+
+export function canEnterDriverDropListPredicate(
+  drag: CdkDrag<any>,
+  _drop?: CdkDropList<any>,
+): boolean {
+  return !(
+    drag.data &&
+    typeof drag.data === "object" &&
+    "heatDrivers" in drag.data
+  );
 }

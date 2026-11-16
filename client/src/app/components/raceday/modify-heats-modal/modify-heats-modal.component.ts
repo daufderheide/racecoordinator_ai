@@ -79,6 +79,7 @@ import {
   HeatDropAction,
   inferBoundariesFromDrivers,
   isDriver,
+  isHardValidationError,
   isHeatStarted as isHeatStartedHelper,
   isParticipantInStartedHeat,
   isPlaceholderParticipant,
@@ -92,11 +93,15 @@ import {
 import {
   applyTeammateChange,
   calculateStepUpPool,
+  canEnterDriverDropListPredicate,
+  canEnterHeatsGridPredicate,
   DriverHighlightManager,
+  getCustomGroupName,
   getDropdownArrowBg as createDropdownArrowBg,
   getHeatDriverMeta as extractHeatDriverMeta,
   handleHeatHoverAction,
   handleUndoRedoKey,
+  isStepUpEnabledHelper,
   resolveHeatCardHover,
   resolveHeatDropFromPoint,
 } from "./modify-heats-ui.helper";
@@ -221,8 +226,20 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   // For drag and drop connection
-  protected heatDropListIds: string[] = ["driver-pool", "database-drivers"];
-  protected connectedTo: string[] = ["driver-pool", "database-drivers"];
+  protected heatDropListIds: string[] = [
+    "driver-pool",
+    "database-drivers",
+    "step-up-pool",
+  ];
+  protected connectedTo: string[] = [
+    "driver-pool",
+    "database-drivers",
+    "step-up-pool",
+  ];
+
+  // Drag and drop predicates
+  protected canEnterHeatsGrid = canEnterHeatsGridPredicate;
+  protected canEnterDriverDropList = canEnterDriverDropListPredicate;
 
   private modifyHeatsService = inject(ModifyHeatsService);
 
@@ -322,6 +339,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
         } else {
           this.updateDatabaseParticipants();
           this.updateDriverPool();
+          this.updateDropListConnections();
           this.onLaneCheck(false);
         }
         this.isLoading = false;
@@ -390,6 +408,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     });
     this.updateDatabaseParticipants();
     this.updateDriverPool();
+    this.updateDropListConnections();
     this.onLaneCheck(false);
   }
 
@@ -457,31 +476,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getCustomGroupName(groupIdx: number): string {
-    const r = this.race();
-    if (!r || !r.group_options?.enabled) return "";
-    const names = r.group_options.names;
-    if (
-      groupIdx !== undefined &&
-      groupIdx !== null &&
-      names &&
-      names[groupIdx] &&
-      names[groupIdx].trim() !== ""
-    ) {
-      return names[groupIdx].trim();
-    }
-    return "";
+    return getCustomGroupName(this.race(), groupIdx);
   }
 
   protected get isStepUpEnabled(): boolean {
-    const r = this.race();
-    if (r?.step_up && r.step_up > 0) return true;
-    if (r?.heat_rotation_type === "Custom") return true;
-    return this.localHeats.some(
-      (h) =>
-        h.isStepUpBoundary ||
-        (h.step && h.step > 1) ||
-        h.heatDrivers?.some((d) => isStepUpParticipant(d.participant)),
-    );
+    return isStepUpEnabledHelper(this.race(), this.localHeats);
   }
 
   private updateDriverPool() {
@@ -533,7 +532,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   private updateDropListConnections() {
     this.heatDropListIds = buildDropListConnections(
       this.localHeats.length,
-      this.track().lanes.length,
+      this.track()?.lanes?.length || 0,
     );
     this.connectedTo = [...this.heatDropListIds];
   }
@@ -637,6 +636,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.updateSeeds();
       this.updateDriverPool();
       this.updateDatabaseParticipants();
+      this.updateDropListConnections();
       this.undoManager.captureState();
       this.autoSave();
     }
@@ -668,6 +668,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.updateSeeds();
       this.updateDriverPool();
       this.updateDatabaseParticipants();
+      this.updateDropListConnections();
       this.undoManager.captureState();
       this.autoSave();
     }
@@ -697,6 +698,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.updateSeeds();
       this.updateDriverPool();
       this.updateDatabaseParticipants();
+      this.updateDropListConnections();
       this.undoManager.captureState();
       this.autoSave();
     }
@@ -1020,8 +1022,12 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     if (validationError) {
       this.errorMessage.set(validationError);
 
-      if (triggeredBy === "push" && !isGroupChange) {
-        // Revert invalid non-group change
+      if (
+        triggeredBy === "push" &&
+        !isGroupChange &&
+        isHardValidationError(validationError, this.translationService)
+      ) {
+        // Revert invalid started heat / started participant change
         this.undoManager.undo();
         this.undoManager.clearRedo();
       } else {

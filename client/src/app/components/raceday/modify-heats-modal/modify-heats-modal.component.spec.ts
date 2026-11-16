@@ -1,4 +1,4 @@
-import { DragDropModule } from "@angular/cdk/drag-drop";
+import { CdkDropList, DragDropModule } from "@angular/cdk/drag-drop";
 import {
   ComponentFixture,
   fakeAsync,
@@ -239,6 +239,48 @@ describe("ModifyHeatsModalComponent", () => {
     fixture.detectChanges();
 
     expect(component["driverPool"].length).toBe(0);
+  });
+
+  it("should configure CdkDropList id and enter predicates", () => {
+    const track = createMockTrack();
+    fixture.componentRef.setInput("raceInput", createMockRace(track));
+    fixture.componentRef.setInput("trackInput", track);
+    fixture.componentRef.setInput("heatsInput", [new Heat("h1", 1, [])]);
+    fixture.detectChanges();
+
+    const laneEl = fixture.debugElement.query(By.css('[id="heat-0-lane-0"]'));
+    expect(laneEl).toBeTruthy();
+    const dropListDir = laneEl.injector.get(CdkDropList);
+    const poolEl = fixture.debugElement.query(By.css("#driver-pool"));
+    const poolDropListDir = poolEl.injector.get(CdkDropList);
+    expect(dropListDir.id).toBe("heat-0-lane-0");
+    expect(poolDropListDir.id).toBe("driver-pool");
+
+    const heatDrag = { data: new Heat("h1", 1, []) } as any;
+    const driverDrag = {
+      data: new RaceParticipant(
+        "rp1",
+        new Driver("d1", "Driver 1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      ),
+    } as any;
+
+    expect(component["canEnterHeatsGrid"](heatDrag, dropListDir)).toBeTrue();
+    expect(component["canEnterHeatsGrid"](driverDrag, dropListDir)).toBeFalse();
+    expect(
+      component["canEnterDriverDropList"](driverDrag, dropListDir),
+    ).toBeTrue();
+    expect(
+      component["canEnterDriverDropList"](heatDrag, dropListDir),
+    ).toBeFalse();
   });
 
   describe("database participant filtering", () => {
@@ -2534,6 +2576,346 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["localHeats"].length).toBe(2);
       expect(component["localHeats"][0].step).toBe(1);
       expect(component["localHeats"][1].step).toBe(2);
+    });
+  });
+
+  describe("Driver Drag and Drop (Lane Swap, Add to Lane, Remove to Pool)", () => {
+    let p1: RaceParticipant;
+    let p2: RaceParticipant;
+    let p3: RaceParticipant;
+    let heat1: Heat;
+    let track: Track;
+    let race: any;
+
+    beforeEach(() => {
+      p1 = new RaceParticipant(
+        "p1",
+        new Driver("d1", "Dave", "D1"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      p2 = new RaceParticipant(
+        "p2",
+        new Driver("d2", "Alice", "D2"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      p3 = new RaceParticipant(
+        "p3",
+        new Driver("d3", "Bob", "D3"),
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+
+      track = createMockTrack();
+      race = createMockRace(track);
+
+      heat1 = new Heat("h1", 1, [
+        new DriverHeatData("dhd1", p1, 0),
+        new DriverHeatData("dhd2", p2, 1),
+      ]);
+
+      fixture.componentRef.setInput("raceInput", race);
+      fixture.componentRef.setInput("trackInput", track);
+      fixture.componentRef.setInput("participantsInput", [p1, p2, p3]);
+      fixture.componentRef.setInput("heatsInput", [heat1]);
+      fixture.detectChanges();
+    });
+
+    it("should include all lane drop lists in connectedTo and heatDropListIds", () => {
+      expect(component["heatDropListIds"]).toContain("driver-pool");
+      expect(component["heatDropListIds"]).toContain("database-drivers");
+      expect(component["heatDropListIds"]).toContain("heat-0-lane-0");
+      expect(component["heatDropListIds"]).toContain("heat-0-lane-1");
+
+      expect(component["connectedTo"]).toContain("driver-pool");
+      expect(component["connectedTo"]).toContain("database-drivers");
+      expect(component["connectedTo"]).toContain("heat-0-lane-0");
+      expect(component["connectedTo"]).toContain("heat-0-lane-1");
+    });
+
+    it("should update heatDropListIds and connectedTo when initializeState is called", () => {
+      component["localHeats"] = [];
+      component["heatDropListIds"] = [
+        "driver-pool",
+        "database-drivers",
+        "step-up-pool",
+      ];
+      component["connectedTo"] = [
+        "driver-pool",
+        "database-drivers",
+        "step-up-pool",
+      ];
+
+      // Simulate state re-initialization when heats are populated
+      component["initializeState"]();
+
+      expect(component["heatDropListIds"]).toContain("heat-0-lane-0");
+      expect(component["heatDropListIds"]).toContain("heat-0-lane-1");
+      expect(component["connectedTo"]).toContain("heat-0-lane-0");
+      expect(component["connectedTo"]).toContain("heat-0-lane-1");
+    });
+
+    it("should swap drivers between lanes within the same heat", () => {
+      const event: any = {
+        previousContainer: { id: "heat-0-lane-0" },
+        container: { id: "heat-0-lane-1" },
+        item: { data: p1 },
+      };
+
+      component["onDrop"](event);
+
+      const driversInHeat = component["localHeats"][0].heatDrivers;
+      const lane0 = driversInHeat.find((d) => d.laneIndex === 0);
+      const lane1 = driversInHeat.find((d) => d.laneIndex === 1);
+
+      expect(lane0?.participant.objectId).toBe("p2");
+      expect(lane1?.participant.objectId).toBe("p1");
+      expect(mockDataService.modifyHeats).toHaveBeenCalled();
+    });
+
+    it("should move driver to empty lane within the same heat", () => {
+      const event: any = {
+        previousContainer: { id: "heat-0-lane-0" },
+        container: { id: "heat-0-lane-2" },
+        item: { data: p1 },
+      };
+
+      component["onDrop"](event);
+
+      const driversInHeat = component["localHeats"][0].heatDrivers;
+      const lane0 = driversInHeat.find((d) => d.laneIndex === 0);
+      const lane2 = driversInHeat.find((d) => d.laneIndex === 2);
+
+      expect(lane0).toBeUndefined();
+      expect(lane2?.participant.objectId).toBe("p1");
+    });
+
+    it("should remove driver from heat when dragged to driver pool", () => {
+      const event: any = {
+        previousContainer: { id: "heat-0-lane-0" },
+        container: { id: "driver-pool" },
+        item: { data: p1 },
+      };
+
+      component["onDrop"](event);
+
+      const driversInHeat = component["localHeats"][0].heatDrivers;
+      expect(driversInHeat.find((d) => d.laneIndex === 0)).toBeUndefined();
+      expect(driversInHeat.length).toBe(1);
+      expect(mockDataService.modifyHeats).toHaveBeenCalled();
+    });
+
+    it("should add driver from driver pool to a heat lane", () => {
+      const event: any = {
+        previousContainer: { id: "driver-pool" },
+        container: { id: "heat-0-lane-2" },
+        item: { data: p3 },
+      };
+
+      component["onDrop"](event);
+
+      const driversInHeat = component["localHeats"][0].heatDrivers;
+      const lane2 = driversInHeat.find((d) => d.laneIndex === 2);
+      expect(lane2?.participant.objectId).toBe("p3");
+      expect(mockDataService.modifyHeats).toHaveBeenCalled();
+    });
+
+    describe("Step-Up Race Drag and Drop", () => {
+      let suHeat1: Heat;
+      let suHeat2: Heat;
+      let suParticipant: RaceParticipant;
+
+      beforeEach(() => {
+        const suRace = {
+          entity_id: "race-su",
+          name: "Step-Up Race",
+          track: track,
+          step_up: 1,
+          heat_rotation_type: "Standard",
+          group_options: { enabled: false },
+          clone: function () {
+            return { ...this };
+          },
+        };
+
+        suParticipant = new RaceParticipant(
+          "STEP_UP_0",
+          new Driver("Step-Up 1", "Step-Up 1", "STEP_UP_0"),
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          100,
+        );
+        suParticipant.isStepUp = true;
+        suParticipant.stepUpIndex = 1;
+
+        // Step 1: heat 1 with 2 regular drivers
+        suHeat1 = new Heat("h1", 1, [
+          new DriverHeatData("dhd1", p1, 0),
+          new DriverHeatData("dhd2", p2, 1),
+        ]);
+        suHeat1.isStepUpBoundary = true;
+        suHeat1.step = 1;
+
+        // Step 2: heat 2 with 1 step-up driver and 1 regular driver
+        suHeat2 = new Heat("h2", 2, [
+          new DriverHeatData("dhd3", suParticipant, 0),
+          new DriverHeatData("dhd4", p3, 1),
+        ]);
+        suHeat2.step = 2;
+
+        fixture.componentRef.setInput("raceInput", suRace);
+        fixture.componentRef.setInput("trackInput", track);
+        fixture.componentRef.setInput("participantsInput", [p1, p2, p3]);
+        fixture.componentRef.setInput("heatsInput", [suHeat1, suHeat2]);
+        component["initializeState"]();
+        fixture.detectChanges();
+      });
+
+      it("should swap driver lanes within a step 1 heat in a step-up race", () => {
+        const event: any = {
+          previousContainer: { id: "heat-0-lane-0" },
+          container: { id: "heat-0-lane-1" },
+          item: { data: p1 },
+        };
+
+        component["onDrop"](event);
+
+        const driversInHeat = component["localHeats"][0].heatDrivers;
+        const lane0 = driversInHeat.find((d) => d.laneIndex === 0);
+        const lane1 = driversInHeat.find((d) => d.laneIndex === 1);
+
+        expect(lane0?.participant.objectId).toBe("p2");
+        expect(lane1?.participant.objectId).toBe("p1");
+        expect(component["errorMessage"]()).toBeUndefined();
+      });
+
+      it("should swap driver lanes within a step 2 heat in a step-up race", () => {
+        const event: any = {
+          previousContainer: { id: "heat-1-lane-0" },
+          container: { id: "heat-1-lane-1" },
+          item: { data: suParticipant },
+        };
+
+        component["onDrop"](event);
+
+        const driversInHeat = component["localHeats"][1].heatDrivers;
+        const lane0 = driversInHeat.find((d) => d.laneIndex === 0);
+        const lane1 = driversInHeat.find((d) => d.laneIndex === 1);
+
+        expect(lane0?.participant.objectId).toBe("p3");
+        expect(lane1?.participant.objectId).toBe("STEP_UP_0");
+        expect(component["errorMessage"]()).toBeUndefined();
+      });
+
+      it("should remove regular driver from step 2 heat to pool", () => {
+        const event: any = {
+          previousContainer: { id: "heat-1-lane-1" },
+          container: { id: "driver-pool" },
+          item: { data: p3 },
+        };
+
+        component["onDrop"](event);
+
+        const driversInHeat = component["localHeats"][1].heatDrivers;
+        expect(driversInHeat.find((d) => d.laneIndex === 1)).toBeUndefined();
+        expect(component["errorMessage"]()).toBeUndefined();
+      });
+
+      it("should bring regular driver from pool into step 2 heat empty lane", () => {
+        const event: any = {
+          previousContainer: { id: "driver-pool" },
+          container: { id: "heat-1-lane-2" },
+          item: { data: p2 },
+        };
+
+        component["onDrop"](event);
+
+        const driversInHeat = component["localHeats"][1].heatDrivers;
+        const lane2 = driversInHeat.find((d) => d.laneIndex === 2);
+        expect(lane2?.participant.objectId).toBe("p2");
+        expect(component["errorMessage"]()).toBeUndefined();
+      });
+
+      it("should remove step-up driver from step 2 heat to step-up pool without reverting", () => {
+        const event: any = {
+          previousContainer: { id: "heat-1-lane-0" },
+          container: { id: "step-up-pool" },
+          item: { data: suParticipant },
+        };
+
+        component["onDrop"](event);
+
+        const driversInHeat = component["localHeats"][1].heatDrivers;
+        expect(driversInHeat.find((d) => d.laneIndex === 0)).toBeUndefined();
+        expect(component["errorMessage"]()).toBe(
+          "RD_ERR_STEP_UP_COUNT_MISMATCH",
+        );
+        expect(component["hasUnsavedChanges"]).toBeTrue();
+      });
+
+      it("should not allow dropping a step-up driver into a step 1 heat", () => {
+        const event: any = {
+          previousContainer: { id: "step-up-pool" },
+          container: { id: "heat-0-lane-2" },
+          item: { data: suParticipant },
+        };
+
+        component["onDrop"](event);
+
+        expect(component["showAckModal"]).toBeTrue();
+        expect(component["ackModalMessage"]).toBe("RD_ERR_STEP_UP_IN_STEP_ONE");
+        const driversInHeat = component["localHeats"][0].heatDrivers;
+        expect(driversInHeat.find((d) => d.laneIndex === 2)).toBeUndefined();
+      });
+
+      it("should bring step-up driver from step-up pool into step 2 heat empty lane", () => {
+        // First remove suParticipant so heat 1 lane 0 is empty
+        component["localHeats"][1].heatDrivers = component[
+          "localHeats"
+        ][1].heatDrivers.filter((d) => d.laneIndex !== 0);
+        component["undoManager"].captureState();
+
+        const event: any = {
+          previousContainer: { id: "step-up-pool" },
+          container: { id: "heat-1-lane-0" },
+          item: { data: suParticipant },
+        };
+
+        component["onDrop"](event);
+
+        const driversInHeat = component["localHeats"][1].heatDrivers;
+        const lane0 = driversInHeat.find((d) => d.laneIndex === 0);
+        expect(lane0?.participant.objectId).toBe("STEP_UP_0");
+        expect(component["errorMessage"]()).toBeUndefined();
+      });
     });
   });
 });

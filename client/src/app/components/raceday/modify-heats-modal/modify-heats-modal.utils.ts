@@ -324,6 +324,7 @@ export function getParticipantAvatar(
 
 export {
   getModifyHeatsValidationError,
+  isHardValidationError,
   validateGroupSequence,
 } from "./modify-heats-validation.helper";
 
@@ -339,13 +340,33 @@ export function convertHeatsToProto(
       const dhd = h.heatDrivers.find((d) => d.laneIndex === i);
       if (dhd && !isPlaceholderParticipant(dhd.participant)) {
         const isStepUp = isStepUpParticipant(dhd.participant);
+        const driverProto: any = {
+          objectId: dhd.participant.objectId,
+          isStepUp,
+          stepUpIndex: dhd.participant.stepUpIndex || 0,
+        };
+        if (dhd.participant.driver) {
+          driverProto.driver = {
+            name: dhd.participant.driver.name,
+            nickname: dhd.participant.driver.nickname,
+            avatarUrl: dhd.participant.driver.avatarUrl,
+            model: { entityId: dhd.participant.driver.entity_id },
+          };
+        }
+        if (dhd.participant.team) {
+          driverProto.team = {
+            name: dhd.participant.team.name,
+            avatarUrl: dhd.participant.team.avatarUrl,
+            model: {
+              entityId:
+                dhd.participant.team.entity_id || dhd.participant.team.objectId,
+            },
+            driverIds: dhd.participant.team.driverIds,
+          };
+        }
         heatDrivers.push({
           objectId: dhd.objectId,
-          driver: {
-            objectId: dhd.participant.objectId,
-            isStepUp,
-            stepUpIndex: dhd.participant.stepUpIndex || 0,
-          } as any,
+          driver: driverProto,
         });
       } else {
         heatDrivers.push({
