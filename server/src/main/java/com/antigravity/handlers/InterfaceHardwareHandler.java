@@ -167,32 +167,32 @@ public class InterfaceHardwareHandler {
   private List<IProtocol> createProtocolsFromRequest(InitializeInterfaceRequest request) {
     List<IProtocol> protocols = new ArrayList<>();
     int interfaceIndex = 0;
-    for (com.antigravity.proto.ArduinoConfig protoConfig :
-        request.getConfigsList()) { // fqn-collision
+    for (com.antigravity.proto.ArduinoConfig protoConfig // fqn-collision
+        : request.getConfigsList()) {
       ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
       ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
       arduino.setInterfaceIndex(interfaceIndex++);
       arduino.setListener(new TestInterfaceListener());
       protocols.add(arduino);
     }
-    for (com.antigravity.proto.TrackmateConfig protoConfig :
-        request.getTrackmateConfigsList()) { // fqn-collision
+    for (com.antigravity.proto.TrackmateConfig protoConfig // fqn-collision
+        : request.getTrackmateConfigsList()) {
       TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
       TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
       trackmate.setInterfaceIndex(interfaceIndex++);
       trackmate.setListener(new TestInterfaceListener());
       protocols.add(trackmate);
     }
-    for (com.antigravity.proto.PhidgetConfig protoConfig :
-        request.getPhidgetConfigsList()) { // fqn-collision
+    for (com.antigravity.proto.PhidgetConfig protoConfig // fqn-collision
+        : request.getPhidgetConfigsList()) {
       PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
       PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
       phidget.setInterfaceIndex(interfaceIndex++);
       phidget.setListener(new TestInterfaceListener());
       protocols.add(phidget);
     }
-    for (com.antigravity.proto.BartConfig protoConfig :
-        request.getBartConfigsList()) { // fqn-collision
+    for (com.antigravity.proto.BartConfig protoConfig // fqn-collision
+        : request.getBartConfigsList()) {
       BartConfig config = BartConfigConverter.fromProto(protoConfig);
       BartProtocol bart = new BartProtocol(config, request.getLaneCount());
       bart.setInterfaceIndex(interfaceIndex++);

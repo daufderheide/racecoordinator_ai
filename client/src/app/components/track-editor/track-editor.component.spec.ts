@@ -1005,23 +1005,23 @@ describe("TrackEditorComponent", () => {
       const interfaceHeaders = fixture.nativeElement.querySelectorAll(
         ".config-section .section-content .editor-section .section-header",
       );
-      expect(interfaceHeaders.length).toBe(5);
+      expect(interfaceHeaders.length).toBe(4);
 
       const names = Array.from(interfaceHeaders).map((header: any) =>
         header.querySelector("span")?.textContent?.trim(),
       );
-      expect(names).toEqual(["Arduino", "BART", "DS", "Phidget", "Trackmate"]);
+      expect(names).toEqual(["Arduino", "DS", "Phidget", "Trackmate"]);
 
-      const dsBadge = interfaceHeaders[2].querySelector(".interface-badge");
+      const dsBadge = interfaceHeaders[1].querySelector(".interface-badge");
       expect(dsBadge).toBeTruthy();
       expect(dsBadge.textContent.trim()).toBe("TE_UNDER_DEVELOPMENT");
 
       const phidgetBadge =
-        interfaceHeaders[3].querySelector(".interface-badge");
+        interfaceHeaders[2].querySelector(".interface-badge");
       expect(phidgetBadge).toBeNull();
 
       const trakmateBadge =
-        interfaceHeaders[4].querySelector(".interface-badge");
+        interfaceHeaders[3].querySelector(".interface-badge");
       expect(trakmateBadge).toBeNull();
     }));
   });
