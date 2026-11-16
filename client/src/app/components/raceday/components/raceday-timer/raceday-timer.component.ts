@@ -115,16 +115,22 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
 
     // Subscribe to high-frequency timer ticks outside Angular zone to update textContent
     // directly without triggering Angular change detection passes.
-    if (this.raceTimeService?.formattedTime$) {
+    const timeStream$ =
+      this.raceTimeService?.interpolatedFormattedTime$ ??
+      this.raceTimeService?.formattedTime$;
+
+    if (timeStream$) {
       this.ngZone.runOutsideAngular(() => {
-        this.timeSub = this.raceTimeService!.formattedTime$.subscribe(
-          (time) => {
-            const textEl = this.timerText()?.nativeElement;
-            if (textEl && !this.formattedTime()) {
-              textEl.textContent = time;
+        this.timeSub = timeStream$.subscribe((time) => {
+          const textEl = this.timerText()?.nativeElement;
+          if (textEl && !this.formattedTime()) {
+            const prevLen = textEl.textContent?.length ?? 0;
+            textEl.textContent = time;
+            if (time.length !== prevLen) {
+              this.fitText();
             }
-          },
-        );
+          }
+        });
       });
     }
   }

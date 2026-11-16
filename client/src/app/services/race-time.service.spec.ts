@@ -679,7 +679,7 @@ describe("RaceTimeService", () => {
       expect(service.time).toBeCloseTo(10.5, 2);
     });
 
-    it("should update formattedTimeSubject only when formatted text changes", () => {
+    it("should update interpolatedFormattedTime$ during tickInterpolation and keep formattedTime$ steady", () => {
       selectedRaceSubject.next({
         heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 60 },
       });
@@ -692,20 +692,31 @@ describe("RaceTimeService", () => {
       service.handleRaceTimeUpdate({ time: 8.0 });
       expect(service.formattedTime).toBe("8.00");
 
-      const emitted: string[] = [];
-      const sub = service.formattedTime$.subscribe((val) => emitted.push(val));
+      const interpolatedEmitted: string[] = [];
+      const authoritativeEmitted: string[] = [];
+      const sub1 = service.interpolatedFormattedTime$.subscribe((val) =>
+        interpolatedEmitted.push(val),
+      );
+      const sub2 = service.formattedTime$.subscribe((val) =>
+        authoritativeEmitted.push(val),
+      );
 
       // Advance 1ms: 8.0 - 0.001 = 7.999 -> rounds to 8.00
       perfNow = 1001;
       (service as any).tickInterpolation();
-      expect(emitted[emitted.length - 1]).toBe("8.00");
+      expect(interpolatedEmitted[interpolatedEmitted.length - 1]).toBe("8.00");
+      // Authoritative stream must not emit on tickInterpolation
+      expect(authoritativeEmitted.length).toBe(1);
 
       // Advance 21ms: 8.0 - 0.021 = 7.979 -> rounds to 7.98
       perfNow = 1021;
       (service as any).tickInterpolation();
-      expect(emitted[emitted.length - 1]).toBe("7.98");
+      expect(interpolatedEmitted[interpolatedEmitted.length - 1]).toBe("7.98");
+      // Authoritative stream must remain steady to prevent change detection storm
+      expect(authoritativeEmitted.length).toBe(1);
 
-      sub.unsubscribe();
+      sub1.unsubscribe();
+      sub2.unsubscribe();
     });
 
     it("should not perform tickInterpolation if shouldInterpolate is false", () => {

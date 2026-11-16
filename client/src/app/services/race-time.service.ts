@@ -44,6 +44,10 @@ export class RaceTimeService implements OnDestroy {
   public formattedTime$: Observable<string> =
     this.formattedTimeSubject.asObservable();
 
+  private interpolatedFormattedTimeSubject = new BehaviorSubject<string>("--");
+  public interpolatedFormattedTime$: Observable<string> =
+    this.interpolatedFormattedTimeSubject.asObservable();
+
   private autoStatusLabelSubject = new BehaviorSubject<string>("");
   public autoStatusLabel$: Observable<string> =
     this.autoStatusLabelSubject.asObservable();
@@ -523,8 +527,8 @@ export class RaceTimeService implements OnDestroy {
     this.updateTimeFormat(currentTime);
 
     const newFormatted = this.formattedTime;
-    if (newFormatted !== this.formattedTimeSubject.value) {
-      this.formattedTimeSubject.next(newFormatted);
+    if (newFormatted !== this.interpolatedFormattedTimeSubject.value) {
+      this.interpolatedFormattedTimeSubject.next(newFormatted);
     }
 
     const newIsWarmup = this.isWarmup;
@@ -701,7 +705,13 @@ export class RaceTimeService implements OnDestroy {
   private notifySubscribers(): void {
     this.timeSubject.next(this._time);
     this.raceStateSubject.next(this._raceState);
-    this.formattedTimeSubject.next(this.formattedTime);
+    const formatted = this.formattedTime;
+    if (formatted !== this.formattedTimeSubject.value) {
+      this.formattedTimeSubject.next(formatted);
+    }
+    if (formatted !== this.interpolatedFormattedTimeSubject.value) {
+      this.interpolatedFormattedTimeSubject.next(formatted);
+    }
     this.autoStatusLabelSubject.next(this.autoStatusLabel);
     this.isWarmupSubject.next(this.isWarmup);
     this.isCooldownSubject.next(this.isCooldown);

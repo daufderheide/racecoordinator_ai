@@ -342,6 +342,41 @@ describe("RacedayTimerComponent", () => {
     expect(timerTextEl.textContent.trim()).toBe("01:00.01");
   });
 
+  it("should directly update timer textContent via interpolatedFormattedTime$ without angular change detection", () => {
+    const formattedSubject = new BehaviorSubject<string>("01:00.00");
+    const interpolatedSubject = new BehaviorSubject<string>("01:00.00");
+    const mockService = {
+      formattedTime: "01:00.00",
+      formattedTime$: formattedSubject.asObservable(),
+      interpolatedFormattedTime$: interpolatedSubject.asObservable(),
+      autoStatusLabel: "",
+      autoStatusLabel$: of(""),
+      isWarmup: false,
+      isWarmup$: of(false),
+      isCooldown: false,
+      isCooldown$: of(false),
+    };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [RacedayTimerComponent, TranslatePipe],
+      providers: [
+        { provide: TranslationService, useValue: mockTranslationService },
+        { provide: RaceTimeService, useValue: mockService },
+      ],
+    });
+
+    const localFixture = TestBed.createComponent(RacedayTimerComponent);
+    localFixture.detectChanges();
+
+    const timerTextEl = localFixture.nativeElement.querySelector(".timer-text");
+    expect(timerTextEl.textContent.trim()).toBe("01:00.00");
+
+    // Emit high-frequency interpolated tick
+    interpolatedSubject.next("01:00.01");
+    expect(timerTextEl.textContent.trim()).toBe("01:00.01");
+  });
+
   it("should not re-trigger font fitting effect when time ticks with identical character length", async () => {
     const fitSpy = spyOn<any>(component, "fitText").and.callThrough();
     fitSpy.calls.reset();
