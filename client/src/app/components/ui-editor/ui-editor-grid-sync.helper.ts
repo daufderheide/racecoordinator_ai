@@ -64,6 +64,12 @@ export function handleGridHeaderStructureChanges(
       comp.activeGridSession.headerPlacement = newPlacement;
       comp.activeGridSession.headerHeight = headerH;
       comp.activeGridSession.headerWidth = headerW;
+      if (comp.activeGridSession.bounds) {
+        layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+          comp.activeGridSession,
+          layout.widgets,
+        );
+      }
     }
   }
 
@@ -77,6 +83,12 @@ export function handleGridHeaderStructureChanges(
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.headerHeight = newH;
+      if (comp.activeGridSession.bounds) {
+        layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+          comp.activeGridSession,
+          layout.widgets,
+        );
+      }
     }
   }
 
@@ -90,6 +102,12 @@ export function handleGridHeaderStructureChanges(
     );
     if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
       comp.activeGridSession.headerWidth = newW;
+      if (comp.activeGridSession.bounds) {
+        layout.widgets = LaneGridReplicationHelper.syncAllMasterWidgetsToLanes(
+          comp.activeGridSession,
+          layout.widgets,
+        );
+      }
     }
   }
 }

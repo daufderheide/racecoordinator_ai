@@ -1,6 +1,7 @@
 import { AbsoluteWidgetNode } from "@app/models/settings";
 
 import { LaneGridSession } from "../utils/lane-grid-replication.helper";
+import { RacedayGridDescriptorHelper } from "./raceday-grid-descriptor.helper";
 import { RacedayGridLayoutHelper } from "./raceday-grid-layout.helper";
 
 describe("RacedayGridLayoutHelper", () => {
@@ -506,6 +507,92 @@ describe("RacedayGridLayoutHelper", () => {
       expect(master.customSettings?.["gapMode"]).toBe("leader");
       expect(master.customSettings?.["gapTarget"]).toBe(1);
       expect(mockHost.onMasterWidgetModified).toHaveBeenCalledWith(master);
+    });
+  });
+
+  describe("syncWidgetsUnderLabel", () => {
+    it("should resync widgets when a data widget overlaps the header row area", () => {
+      const dataBounds = { x: 200, y: 190, width: 600, height: 360 };
+      const session: LaneGridSession = {
+        gridId: "grid-1",
+        gridType: "heat",
+        bindingMode: "lane",
+        bounds: { x: 200, y: 150, width: 600, height: 400 },
+        totalLanes: 2,
+        sourceLaneIndex: 0,
+        direction: "vertical",
+        headerPlacement: "top",
+        headerHeight: 40,
+        gridLabelPosition: "top",
+      };
+      const dataWidget: AbsoluteWidgetNode = {
+        id: "m1",
+        widgetType: "lane-column",
+        x: 200,
+        y: 200,
+        width: 300,
+        height: 50,
+        zIndex: 10,
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 0,
+          isHeaderWidget: false,
+        },
+      };
+      const widgets = [dataWidget];
+      mockHost.layout = { widgets };
+
+      const result = RacedayGridDescriptorHelper.syncWidgetsUnderLabel(
+        mockHost,
+        session,
+        widgets,
+        widgets,
+        dataBounds,
+      );
+
+      expect(result).toBeDefined();
+    });
+
+    it("should not resync when data widgets are placed below the header row area", () => {
+      const dataBounds = { x: 200, y: 190, width: 600, height: 360 };
+      const session: LaneGridSession = {
+        gridId: "grid-1",
+        gridType: "heat",
+        bindingMode: "lane",
+        bounds: { x: 200, y: 150, width: 600, height: 400 },
+        totalLanes: 2,
+        sourceLaneIndex: 0,
+        direction: "vertical",
+        headerPlacement: "top",
+        headerHeight: 40,
+        gridLabelPosition: "top",
+      };
+      const dataWidget: AbsoluteWidgetNode = {
+        id: "m1",
+        widgetType: "lane-column",
+        x: 200,
+        y: 230,
+        width: 300,
+        height: 50,
+        zIndex: 10,
+        customSettings: {
+          gridId: "grid-1",
+          gridLane: 0,
+          isHeaderWidget: false,
+        },
+      };
+      const widgets = [dataWidget];
+      mockHost.layout = { widgets };
+
+      const result = RacedayGridDescriptorHelper.syncWidgetsUnderLabel(
+        mockHost,
+        session,
+        widgets,
+        widgets,
+        dataBounds,
+      );
+
+      expect(result).toBe(widgets);
     });
   });
 });

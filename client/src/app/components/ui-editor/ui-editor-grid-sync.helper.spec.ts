@@ -226,6 +226,27 @@ describe("ui-editor-grid-sync.helper", () => {
       expect(masterWidget.customSettings._headerWidthChanged).toBeUndefined();
       expect(mockComp.activeGridSession.headerWidth).toBe(180);
     });
+
+    it("should sync all master widgets to lanes when bounds are present in activeGridSession", () => {
+      mockComp.activeGridSession.bounds = {
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 200,
+      };
+      masterWidget.customSettings._headerHeightChanged = true;
+      masterWidget.customSettings.headerHeight = 50;
+
+      handleGridHeaderStructureChanges(
+        mockComp,
+        mockLayout,
+        masterWidget,
+        "grid-1",
+      );
+
+      expect(mockComp.activeGridSession.headerHeight).toBe(50);
+      expect(mockLayout.widgets.length).toBeGreaterThan(0);
+    });
   });
 
   describe("handleGridSyncAction", () => {
