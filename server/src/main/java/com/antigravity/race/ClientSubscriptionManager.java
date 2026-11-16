@@ -352,14 +352,7 @@ public class ClientSubscriptionManager {
   private void sendInitialSnapshot(WsContext ctx) {
     try {
       if (currentRace != null) {
-        boolean isReplay =
-            DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
-        com.antigravity.proto.SystemState sysState = // fqn-collision
-            com.antigravity.proto.SystemState.newBuilder() // fqn-collision
-                .setResourceLockState("RACE_RUNNING")
-                .setOwnerId("SYSTEM")
-                .setIsReplayMode(isReplay)
-                .build();
+        SystemState sysState = buildSystemState("RACE_RUNNING", "SYSTEM");
         RaceData snapshot =
             currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
         if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
@@ -371,15 +364,8 @@ public class ClientSubscriptionManager {
         }
         ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
       } else {
-        boolean isReplay =
-            DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
-        com.antigravity.proto.SystemState sysState = // fqn-collision
-            com.antigravity.proto.SystemState.newBuilder() // fqn-collision
-                .setResourceLockState("IDLE")
-                .setOwnerId("")
-                .setIsReplayMode(isReplay)
-                .build();
-        RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build(); // fqn-collision
+        SystemState sysState = buildSystemState("IDLE", "");
+        RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build();
         ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
       }
     } catch (Exception e) {
@@ -894,7 +880,7 @@ public class ClientSubscriptionManager {
         currentRace != null ? "RACE_RUNNING" : "IDLE", currentRace != null ? "SYSTEM" : "");
   }
 
-  public void broadcastSystemState(String resourceLockState, String ownerId) {
+  public SystemState buildSystemState(String resourceLockState, String ownerId) {
     boolean isReplay =
         DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
     SystemState.Builder stateBuilder =
@@ -910,17 +896,33 @@ public class ClientSubscriptionManager {
       }
     }
 
+    boolean canManualStart = true;
+    boolean canManualPause = true;
+    boolean canManualRestart = true;
+
     if (this.currentRace != null && this.currentRace.getHardwareManager() != null) {
       stateBuilder.setHasMainRelay(this.currentRace.getHardwareManager().hasMainRelay());
       stateBuilder.setHasPerLaneRelays(this.currentRace.getHardwareManager().hasPerLaneRelays());
+      canManualStart = this.currentRace.getHardwareManager().canManualStart();
+      canManualPause = this.currentRace.getHardwareManager().canManualPause();
+      canManualRestart = this.currentRace.getHardwareManager().canManualRestart();
     } else if (this.currentProtocol != null) {
       stateBuilder.setHasMainRelay(this.currentProtocol.hasMainRelay());
       stateBuilder.setHasPerLaneRelays(this.currentProtocol.hasPerLaneRelays());
+      canManualStart = this.currentProtocol.canManualStart();
+      canManualPause = this.currentProtocol.canManualPause();
+      canManualRestart = this.currentProtocol.canManualRestart();
     }
+    stateBuilder.setCanManualStart(canManualStart);
+    stateBuilder.setCanManualPause(canManualPause);
+    stateBuilder.setCanManualRestart(canManualRestart);
 
-    com.antigravity.proto.SystemState state = stateBuilder.build(); // fqn-collision
-    com.antigravity.proto.RaceData raceData = // fqn-collision
-        com.antigravity.proto.RaceData.newBuilder().setSystemState(state).build(); // fqn-collision
+    return stateBuilder.build();
+  }
+
+  public void broadcastSystemState(String resourceLockState, String ownerId) {
+    SystemState state = buildSystemState(resourceLockState, ownerId);
+    RaceData raceData = RaceData.newBuilder().setSystemState(state).build();
 
     // We can broadcast to all sessions, not just raceDataSubscribers, because system state is
     // global

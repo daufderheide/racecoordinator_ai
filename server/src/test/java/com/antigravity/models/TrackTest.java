@@ -382,4 +382,27 @@ public class TrackTest {
         new Track.Builder().name("2-Lane").lanes(Arrays.asList(lane1, lane2)).build();
     assertEquals(2, twoLaneTrack.getLaneCount());
   }
+
+  @Test
+  public void testTrackBuilder_WithDsConfig() {
+    com.antigravity.protocols.ds.DsConfig dsConfig = // fqn-collision
+        new com.antigravity.protocols.ds.DsConfig( // fqn-collision
+            "My DS-300", "COM7", com.antigravity.protocols.ds.DsType.DS_300); // fqn-collision
+
+    Track track =
+        new Track.Builder().name("DS Track").dsConfigs(Collections.singletonList(dsConfig)).build();
+
+    assertEquals("DS Track", track.getName());
+    assertEquals(1, track.getDsConfigs().size());
+    assertEquals("My DS-300", track.getDsConfigs().get(0).getName());
+    assertEquals("COM7", track.getDsConfigs().get(0).getCommPort());
+    assertEquals(
+        com.antigravity.protocols.ds.DsType.DS_300,
+        track.getDsConfigs().get(0).getType()); // fqn-collision
+
+    // Verify copy builder preserves dsConfigs
+    Track copy = Track.Builder.from(track).build();
+    assertEquals(1, copy.getDsConfigs().size());
+    assertEquals("My DS-300", copy.getDsConfigs().get(0).getName());
+  }
 }

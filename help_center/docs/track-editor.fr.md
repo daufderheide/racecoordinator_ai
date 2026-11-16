@@ -231,7 +231,30 @@ Liaison sans fil avec les ponts de détection et transpondeurs Policar BART Blue
 
 ---
 
-### 5. Interface Démo / Simulation
+### 5. Interface DS {: #ds-interface }
+
+L'interface **DS** assure l'intégration native des boîtiers de chronométrage commerciaux DS (DS-030, DS-200, DS-200B, DS-300 et DS-300RC) connectés via un port série COM ou un adaptateur USB-série.
+
+- **Modèles Pris en Charge** : Défini par défaut sur **DS-300**.
+  - **DS-030** : Communique à 4800 bauds à l'aide d'événements de commande compacts sur 1 octet et de paquets de temps sur 3 octets.
+  - **DS-200** : Communique à 4800 bauds via des paquets de télémétrie de 21 octets avec réattribution matérielle des voies.
+  - **DS-200B** : Communique à 57600 bauds via des paquets de télémétrie de 21 octets.
+  - **DS-300** : Communique à 57600 bauds avec déduplication des rafales triples de paquets.
+  - **DS-300RC** : Communique à 57600 bauds avec filtrage de paquets.
+- **Gestion de Course Contrôlée par le Matériel** : Contrairement aux interfaces pilotées par le logiciel, les boîtiers DS contrôlent le départ, la pause et la réinitialisation des manches directement depuis leurs boutons physiques. Lorsqu'une interface DS est active sur une piste, Race Coordinator AI verrouille les commandes manuelles de démarrage, pause et reprise et applique fidèlement les transitions d'état du boîtier DS.
+- **Indicateurs de Voie en Direct** : Une grille de capteurs à 8 voies offre une vérification en temps réel de l'activité des voies. Lorsqu'une voiture passe un détecteur sur une voie, le voyant d'état correspondant s'allume en vert fixe pendant 1 seconde avant de redevenir gris.
+- **Reconnexion Automatique lors du Changement de Vitesse** : La vitesse en bauds est gérée automatiquement pour le modèle DS sélectionné. Le passage entre les modèles à 4800 bauds (DS-030, DS-200) et les modèles à 57600 bauds (DS-200B, DS-300, DS-300RC) ferme et rouvre automatiquement la connexion série à la bonne vitesse.
+
+#### Configuration de Course Recommandée avec le Matériel DS
+Étant donné que les boîtiers de chronométrage DS fonctionnent comme des directeurs de course autonomes dotés de leurs propres compteurs à rebours physiques, feux de départ et avertisseurs sonores de fin de manche, la configuration recommandée dans Race Coordinator AI est :
+
+1. **Durée de Manche Infinie (Infinite Time)** : Dans l'Éditeur de Course, sous **Méthode de Fin**, configurez la manche en mode **Au Temps** avec un **Temps Infini** (ou sans limite de temps / durée 0). Cela évite que l'horloge logicielle de Race Coordinator AI n'arrête prématurément la manche, permettant au signal de fin de manche du boîtier DS (`END_HEAT`) de clôturer la manche de manière souveraine.
+2. **Progression de Manche par le Matériel** : Lorsque le boîtier DS termine une manche et émet le signal de fin de manche, Race Coordinator AI bascule vers l'état manche terminée. Une pression sur le bouton physique **START** de la console DS déclenche ensuite le passage à la manche suivante de la rotation.
+3. **Pauses et Interruptions par le Matériel** : Une pression sur le bouton physique **STOP** du boîtier DS met immédiatement la course en pause dans Race Coordinator AI. Une pression sur le bouton physique **RESET** réinitialise la manche actuelle ou annule une séquence de départ en cours.
+
+---
+
+### 6. Interface Démo / Simulation
 
 Permet de tester vos formats de course, rotations, thèmes visuels, annonces vocales et classements sans aucun matériel raccordé.
 

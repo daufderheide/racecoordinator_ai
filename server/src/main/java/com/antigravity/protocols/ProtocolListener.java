@@ -20,4 +20,12 @@ public interface ProtocolListener {
   default boolean isFuelRace() {
     return false;
   }
+
+  default void onStartTimer(int interfaceIndex) {}
+
+  default void onPauseTimer(int interfaceIndex) {}
+
+  default void onEndHeat(int interfaceIndex) {}
+
+  default void onAbort(int interfaceIndex) {}
 }

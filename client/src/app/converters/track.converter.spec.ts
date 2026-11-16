@@ -70,4 +70,26 @@ describe("TrackConverter", () => {
     const track = TrackConverter.fromProto(proto);
     expect(track.num_track_sections).toBe(100);
   });
+
+  it("should convert dsConfigs from proto", () => {
+    const proto: ITrackModel = {
+      model: { entityId: "track-4" },
+      name: "DS Track",
+      numTrackSections: 100,
+      lanes: [],
+      dsConfigs: [
+        {
+          name: "DS-300 Main",
+          commPort: "COM3",
+          type: 3,
+          baudRate: 57600,
+        },
+      ],
+    };
+
+    const track = TrackConverter.fromProto(proto);
+    expect(track.ds_configs.length).toBe(1);
+    expect(track.ds_configs[0].name).toBe("DS-300 Main");
+    expect(track.ds_configs[0].commPort).toBe("COM3");
+  });
 });

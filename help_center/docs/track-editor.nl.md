@@ -231,7 +231,30 @@ Draadloze verbinding met Policar BART Bluetooth Low Energy (BLE) sensorbruggen e
 
 ---
 
-### 5. Demo- / Simulatie-Interface
+### 5. DS-Interface {: #ds-interface }
+
+De **DS**-interface biedt native ondersteuning voor commerciële DS-tijdmeetunits (DS-030, DS-200, DS-200B, DS-300 en DS-300RC) aangesloten via een seriële COM-poort of USB-naar-serieel adapter.
+
+- **Ondersteunde Modellen**: Standaard ingesteld op **DS-300**.
+  - **DS-030**: Communiceert met 4800 baud via compacte 1-byte commando-events en 3-byte tijdmeetpakketten.
+  - **DS-200**: Communiceert met 4800 baud via 21-byte telemetriepakketten met automatische hardwarematige spoorhertoewijzing.
+  - **DS-200B**: Communiceert met 57600 baud via 21-byte telemetriepakketten.
+  - **DS-300**: Communiceert met 57600 baud met deduplicatie van driedubbele pakketreeksen.
+  - **DS-300RC**: Communiceert met 57600 baud met pakketfiltering.
+- **Hardwaregestuurd Racebeheer**: In tegenstelling tot softwaregestuurde interfaces regelen DS-boxen start, pauze en herstart van heats rechtstreeks via hun fysieke knoppen. Wanneer een DS-interface actief is, vergrendelt Race Coordinator AI de handmatige softwareknoppen voor start, pauze en herstart en volgt exact de statusovergangen van de DS-hardwarecontroller.
+- **Live Spoorindicatoren**: Een 8-sporen sensormatrix biedt directe controle over de spooractiviteit. Zodra een auto over de finish passeert, kleurt de corresponderende statusbadge gedurende 1 seconde groen voordat deze weer grijs wordt.
+- **Automatische Baudsnelheid-Herverbinding**: De baudsnelheid wordt automatisch beheerd voor het geselecteerde DS-model. Wisselen tussen 4800-baud modellen (DS-030, DS-200) en 57600-baud modellen (DS-200B, DS-300, DS-300RC) sluit en heropent de seriële verbinding automatisch met de juiste snelheid.
+
+#### Aanbevolen Raceconfiguratie met DS-Hardware
+Omdat DS-tijdmeetunits functioneren als autonome wedstrijdleiders met hun eigen fysieke afteltimers, startlichten en hitte-eindsignalen, is de aanbevolen configuratie in Race Coordinator AI:
+
+1. **Onbeperkte Heat-Duur (Infinite Time)**: Stel in de Race-Editor onder **Finishmethode** de heat in op **Tijdgestuurd** met **Onbeperkte Tijd** (of duur 0). Dit voorkomt dat de softwareklok van Race Coordinator AI de heat vroegtijdig beëindigt, zodat het hardwarematige heatsignaal van de DS-box (`END_HEAT`) de heat definitief en bindend afsluit.
+2. **Hardwarematige Heatvoortgang**: Wanneer de DS-eenheid een heat voltooit en het heat-eindsignaal geeft, schakelt Race Coordinator AI over naar de status «heat afgelopen». Door vervolgens op de fysieke **START**-knop op de DS-console te drukken, gaat de race door naar de volgende heat in het rotatieschema.
+3. **Hardwarematige Pauzes en Onderbrekingen**: Door op de fysieke **STOP**-knop op de DS-box te drukken, wordt het racen in Race Coordinator AI onmiddellijk gepauzeerd. Met de fysieke **RESET**-knop wordt de huidige heat herstart of een actieve startcountdown afgebroken.
+
+---
+
+### 6. Demo- / Simulatie-Interface
 
 Ideaal om raceformats, rotaties, thema's, audio-oproepen en schermen te testen zonder aangesloten hardware.
 

@@ -4,6 +4,8 @@ import { DataService } from "@app/data.service";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
+  DsType,
   PhidgetConfig,
   TrackmateConfig,
 } from "@app/models/track";
@@ -17,6 +19,7 @@ export interface InitializeInterfacesOptions {
   trackmateConfigs: TrackmateConfig[];
   phidgetConfigs: PhidgetConfig[];
   bartConfigs: BartConfig[];
+  dsConfigs: DsConfig[];
   numLanes: number;
 }
 
@@ -161,11 +164,34 @@ export class TrackInterfaceConfigsHelper {
     return copy;
   }
 
+  static createDefaultDsConfig(count: number): DsConfig {
+    return {
+      name: `DS ${count + 1}`,
+      commPort: "",
+      type: DsType.DS_300,
+      baudRate: 57600,
+    };
+  }
+
+  static addDsConfig(configs: DsConfig[]): DsConfig[] {
+    return [
+      ...configs,
+      TrackInterfaceConfigsHelper.createDefaultDsConfig(configs.length),
+    ];
+  }
+
+  static removeDsConfig(configs: DsConfig[], index: number): DsConfig[] {
+    const copy = [...configs];
+    copy.splice(index, 1);
+    return copy;
+  }
+
   static buildInterfaceTabs(
     arduinoConfigs: ArduinoConfig[] | undefined,
     trackmateConfigs: TrackmateConfig[] | undefined,
     phidgetConfigs: PhidgetConfig[] | undefined,
     bartConfigs: BartConfig[] | undefined,
+    dsConfigs?: DsConfig[] | undefined,
   ): EditorTab[] {
     const tabs: EditorTab[] = [];
 
@@ -185,6 +211,10 @@ export class TrackInterfaceConfigsHelper {
       tabs.push({ id: `interface-bart-${i}`, label: `BART ${i + 1}` });
     });
 
+    dsConfigs?.forEach((_, i) => {
+      tabs.push({ id: `interface-ds-${i}`, label: `DS ${i + 1}` });
+    });
+
     return tabs;
   }
 
@@ -194,7 +224,7 @@ export class TrackInterfaceConfigsHelper {
     cdr?: ChangeDetectorRef,
   ): void {
     const match = tabId.match(
-      /interface-(arduino|trackmate|phidget|bart)-(\d+)/,
+      /interface-(arduino|trackmate|phidget|bart|ds)-(\d+)/,
     );
     if (!match) return;
 
@@ -213,6 +243,9 @@ export class TrackInterfaceConfigsHelper {
         break;
       case "bart":
         editors.bartEditors?.get(index)?.ensureSectionsExpanded();
+        break;
+      case "ds":
+        editors.dsEditors?.get(index)?.ensureSectionsExpanded();
         break;
     }
 
@@ -248,7 +281,8 @@ export class TrackInterfaceConfigsHelper {
       options.arduinoConfigs.length > 0 ||
       options.trackmateConfigs.length > 0 ||
       options.phidgetConfigs.length > 0 ||
-      options.bartConfigs.length > 0
+      options.bartConfigs.length > 0 ||
+      (options.dsConfigs && options.dsConfigs.length > 0)
     ) {
       dataService
         .initializeInterface(
@@ -257,6 +291,7 @@ export class TrackInterfaceConfigsHelper {
           options.phidgetConfigs,
           options.numLanes,
           options.bartConfigs,
+          options.dsConfigs,
         )
         .subscribe({
           next: (response) => {

@@ -71,4 +71,28 @@ public class TrackConverterTest {
     assertEquals("Scale Track", proto.getName());
     assertEquals(0.03125, proto.getTrackScale(), 0.0001);
   }
+
+  @Test
+  public void testToProto_WithDsConfig() {
+    com.antigravity.protocols.ds.DsConfig dsConfig = // fqn-collision
+        new com.antigravity.protocols.ds.DsConfig( // fqn-collision
+            "My DS-200", "COM4", com.antigravity.protocols.ds.DsType.DS_200); // fqn-collision
+
+    Track track =
+        new Track.Builder()
+            .name("DS Track")
+            .lanes(new ArrayList<>())
+            .dsConfigs(Collections.singletonList(dsConfig))
+            .entityId("t4")
+            .build();
+
+    TrackModel proto = TrackConverter.toProto(track, new HashSet<>());
+
+    assertEquals("DS Track", proto.getName());
+    assertEquals(1, proto.getDsConfigsCount());
+    assertEquals("My DS-200", proto.getDsConfigs(0).getName());
+    assertEquals("COM4", proto.getDsConfigs(0).getCommPort());
+    assertEquals(com.antigravity.proto.DsType.DS_200, proto.getDsConfigs(0).getType());
+    assertEquals(4800, proto.getDsConfigs(0).getBaudRate());
+  }
 }

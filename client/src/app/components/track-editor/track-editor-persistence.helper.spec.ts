@@ -30,6 +30,7 @@ describe("TrackEditorPersistenceHelper", () => {
       trackmateConfigs: [],
       phidgetConfigs: [],
       bartConfigs: [],
+      dsConfigs: [],
       isEditMode: true,
       isPreservingEditModeOnNavigation: false,
       transitionToReadOnlyOnSave: false,

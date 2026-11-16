@@ -284,4 +284,34 @@ public class ProtocolDelegate implements IProtocol {
       protocol.setPitManager(this.pitManager);
     }
   }
+
+  @Override
+  public boolean canManualStart() {
+    for (IProtocol protocol : protocols) {
+      if (!protocol.canManualStart()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean canManualPause() {
+    for (IProtocol protocol : protocols) {
+      if (!protocol.canManualPause()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean canManualRestart() {
+    for (IProtocol protocol : protocols) {
+      if (!protocol.canManualRestart()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

@@ -373,6 +373,17 @@ public class RaceControlHandler {
         return;
       }
 
+      if (race.getHardwareManager() != null && !race.getHardwareManager().canManualStart()) {
+        logger.warn("startRace rejected: Manual start is not permitted for this track interface");
+        StartRaceResponse response =
+            StartRaceResponse.newBuilder()
+                .setSuccess(false)
+                .setMessage("Manual start is not permitted for this track interface")
+                .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
+        return;
+      }
+
       try {
         boolean success = race.startRace();
         if (!success) {
@@ -416,6 +427,17 @@ public class RaceControlHandler {
           ClientSubscriptionManager.getInstance().getRace(); // fqn-collision
       if (race == null) {
         ctx.status(404).result("No active race found");
+        return;
+      }
+
+      if (race.getHardwareManager() != null && !race.getHardwareManager().canManualPause()) {
+        logger.warn("pauseRace rejected: Manual pause is not permitted for this track interface");
+        PauseRaceResponse response =
+            PauseRaceResponse.newBuilder()
+                .setSuccess(false)
+                .setMessage("Manual pause is not permitted for this track interface")
+                .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
         return;
       }
 
@@ -530,6 +552,18 @@ public class RaceControlHandler {
           ClientSubscriptionManager.getInstance().getRace(); // fqn-collision
       if (race == null) {
         ctx.status(404).result("No active race found");
+        return;
+      }
+
+      if (race.getHardwareManager() != null && !race.getHardwareManager().canManualRestart()) {
+        logger.warn(
+            "restartHeat rejected: Manual restart is not permitted for this track interface");
+        RestartHeatResponse response =
+            RestartHeatResponse.newBuilder()
+                .setSuccess(false)
+                .setMessage("Manual restart is not permitted for this track interface")
+                .build();
+        ctx.contentType("application/octet-stream").result(response.toByteArray());
         return;
       }
 

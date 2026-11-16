@@ -1,6 +1,7 @@
 import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
+  DsType,
   LedString,
   PhidgetConfig,
   Track,
@@ -62,6 +63,14 @@ describe("TrackStateHelper", () => {
           minLapMs: 500,
         } as any,
       ],
+      ds_configs: [
+        {
+          name: "DS 1",
+          commPort: "COM5",
+          type: 3,
+          baudRate: 57600,
+        } as any,
+      ],
       ...overrides,
     });
   };
@@ -78,6 +87,8 @@ describe("TrackStateHelper", () => {
         original.arduino_configs?.length,
       );
       expect(cloned.arduino_configs![0]).not.toBe(original.arduino_configs![0]);
+      expect(cloned.ds_configs?.length).toBe(original.ds_configs?.length);
+      expect(cloned.ds_configs![0]).not.toBe(original.ds_configs![0]);
     });
 
     it("should handle track without interface configs", () => {
@@ -91,6 +102,7 @@ describe("TrackStateHelper", () => {
       expect(cloned.trackmate_configs).toEqual([]);
       expect(cloned.phidget_configs).toEqual([]);
       expect(cloned.bart_configs).toEqual([]);
+      expect(cloned.ds_configs).toEqual([]);
     });
   });
 
@@ -106,10 +118,12 @@ describe("TrackStateHelper", () => {
         trackmateConfigs: [],
         phidgetConfigs: [],
         bartConfigs: [],
+        dsConfigs: [],
       });
       expect(snapshot.entity_id).toBe("new");
       expect(snapshot.name).toBe("");
       expect(snapshot.lanes).toEqual([]);
+      expect(snapshot.ds_configs).toEqual([]);
     });
 
     it("should create populated snapshot from options", () => {
@@ -124,6 +138,7 @@ describe("TrackStateHelper", () => {
         trackmateConfigs: [{ name: "TM1" } as any],
         phidgetConfigs: [{ name: "P1" } as any],
         bartConfigs: [{ name: "B1" } as any],
+        dsConfigs: [{ name: "DS 1" } as any],
       });
 
       expect(snapshot.name).toBe("Custom Name");
@@ -131,6 +146,7 @@ describe("TrackStateHelper", () => {
       expect(snapshot.track_scale).toBe(0.03125);
       expect(snapshot.lanes.length).toBe(1);
       expect(snapshot.arduino_configs?.length).toBe(1);
+      expect(snapshot.ds_configs?.length).toBe(1);
     });
   });
 
@@ -216,6 +232,69 @@ describe("TrackStateHelper", () => {
       });
       expect(TrackStateHelper.areTracksEqual(base, diffBart)).toBeFalse();
     });
+
+    it("should detect ds configs difference", () => {
+      const base = createMockTrack();
+      const diffDs = createMockTrack({
+        ds_configs: [{ name: "Different" } as any],
+      });
+      expect(TrackStateHelper.areTracksEqual(base, diffDs)).toBeFalse();
+    });
+
+    it("should consider ds configs equal when values match even with string types", () => {
+      const t1 = createMockTrack({
+        ds_configs: [
+          { name: "DS 1", commPort: "COM1", type: 0, baudRate: 4800 } as any,
+        ],
+      });
+      const t2 = createMockTrack({
+        ds_configs: [
+          {
+            name: "DS 1",
+            commPort: "COM1",
+            type: "DS_030",
+            baudRate: 4800,
+          } as any,
+        ],
+      });
+      expect(TrackStateHelper.areTracksEqual(t1, t2)).toBeTrue();
+    });
+  });
+
+  describe("areDsConfigsEqual and parseDsType", () => {
+    it("should parse numeric and string ds types correctly", () => {
+      expect(TrackStateHelper.parseDsType(0)).toBe(DsType.DS_030);
+      expect(TrackStateHelper.parseDsType(1)).toBe(DsType.DS_200);
+      expect(TrackStateHelper.parseDsType(2)).toBe(DsType.DS_200B);
+      expect(TrackStateHelper.parseDsType(3)).toBe(DsType.DS_300);
+      expect(TrackStateHelper.parseDsType(4)).toBe(DsType.DS_300RC);
+      expect(TrackStateHelper.parseDsType("DS_030")).toBe(DsType.DS_030);
+      expect(TrackStateHelper.parseDsType("DS_200")).toBe(DsType.DS_200);
+      expect(TrackStateHelper.parseDsType("DS_200B")).toBe(DsType.DS_200B);
+      expect(TrackStateHelper.parseDsType("DS_300")).toBe(DsType.DS_300);
+      expect(TrackStateHelper.parseDsType("DS_300RC")).toBe(DsType.DS_300RC);
+      expect(TrackStateHelper.parseDsType("2")).toBe(DsType.DS_200B);
+      expect(TrackStateHelper.parseDsType("invalid")).toBe(DsType.DS_300);
+      expect(TrackStateHelper.parseDsType(null)).toBe(DsType.DS_300);
+    });
+
+    it("should return false when lengths differ", () => {
+      expect(
+        TrackStateHelper.areDsConfigsEqual([], [{ name: "DS 1" } as any]),
+      ).toBeFalse();
+    });
+
+    it("should detect name, commPort, and type differences", () => {
+      const c1: any = { name: "DS 1", commPort: "COM1", type: DsType.DS_300 };
+      const c2: any = { name: "DS 2", commPort: "COM1", type: DsType.DS_300 };
+      expect(TrackStateHelper.areDsConfigsEqual([c1], [c2])).toBeFalse();
+
+      const c3: any = { name: "DS 1", commPort: "COM2", type: DsType.DS_300 };
+      expect(TrackStateHelper.areDsConfigsEqual([c1], [c3])).toBeFalse();
+
+      const c4: any = { name: "DS 1", commPort: "COM1", type: DsType.DS_030 };
+      expect(TrackStateHelper.areDsConfigsEqual([c1], [c4])).toBeFalse();
+    });
   });
 
   describe("areArduinoConfigsEqual & isLedStringsEqual", () => {
@@ -282,6 +361,7 @@ describe("TrackStateHelper", () => {
         trackmateConfigs: [],
         phidgetConfigs: [],
         bartConfigs: [],
+        dsConfigs: [],
       };
       const synced = TrackStateHelper.syncInterfaceConfigsFromTrack(
         track,
@@ -292,6 +372,7 @@ describe("TrackStateHelper", () => {
       expect(synced.trackmateConfigs.length).toBe(1);
       expect(synced.phidgetConfigs.length).toBe(1);
       expect(synced.bartConfigs.length).toBe(1);
+      expect(synced.dsConfigs.length).toBe(1);
     });
 
     it("should clear current configs when track has none", () => {
@@ -301,6 +382,7 @@ describe("TrackStateHelper", () => {
         trackmateConfigs: [{ name: "TM" } as any],
         phidgetConfigs: [{ name: "P" } as any],
         bartConfigs: [{ name: "B" } as any],
+        dsConfigs: [{ name: "DS" } as any],
       };
       const synced = TrackStateHelper.syncInterfaceConfigsFromTrack(
         track,
@@ -311,6 +393,7 @@ describe("TrackStateHelper", () => {
       expect(synced.trackmateConfigs).toEqual([]);
       expect(synced.phidgetConfigs).toEqual([]);
       expect(synced.bartConfigs).toEqual([]);
+      expect(synced.dsConfigs).toEqual([]);
     });
   });
 

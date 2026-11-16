@@ -231,7 +231,30 @@ Conexión inalámbrica a puentes de cronometraje y transpondedores Policar BART 
 
 ---
 
-### 5. Interfaz Demo / Simulación
+### 5. Interfaz DS {: #ds-interface }
+
+La interfaz **DS** proporciona integración nativa para cajas de cronometraje comerciales DS (DS-030, DS-200, DS-200B, DS-300 y DS-300RC) conectadas a través de un puerto serie COM o adaptador USB a serie.
+
+- **Modelos Compatibles**: Predeterminado a **DS-300**.
+  - **DS-030**: Se comunica a 4800 baudios usando eventos de comando compactos de 1 byte y paquetes de tiempo de 3 bytes.
+  - **DS-200**: Se comunica a 4800 baudios usando paquetes de telemetría de 21 bytes con reasignación automática de carriles de hardware.
+  - **DS-200B**: Se comunica a 57600 baudios usando paquetes de telemetría de 21 bytes.
+  - **DS-300**: Se comunica a 57600 baudios con deduplicación de ráfagas de paquetes triples.
+  - **DS-300RC**: Se comunica a 57600 baudios con filtrado de paquetes.
+- **Gestión de Carrera Controlada por Hardware**: A diferencia de las interfaces controladas por software, las cajas DS controlan el inicio, la pausa y el reinicio de las mangas directamente desde sus botones físicos de hardware. Cuando una interfaz DS está activa en una pista, Race Coordinator AI bloquea los controles manuales de inicio, pausa y reinicio por software y sigue con precisión las transiciones de estado del controlador DS.
+- **Indicadores de Carril en Vivo**: Una cuadrícula de sensores de 8 carriles proporciona verificación en tiempo real de la actividad de los carriles. Cuando un coche pasa por un detector en cualquier carril, la insignia de estado correspondiente se ilumina en verde fijo durante 1 segundo antes de volver a gris.
+- **Reconexión Automática por Velocidad en Baudios**: La velocidad en baudios se gestiona automáticamente para el modelo DS elegido. Al cambiar entre modelos de 4800 baudios (DS-030, DS-200) y modelos de 57600 baudios (DS-200B, DS-300, DS-300RC), la conexión serie se cierra y se vuelve a abrir automáticamente a la velocidad correcta.
+
+#### Configuración de Carrera Recomendada con Hardware DS
+Dado que las cajas de cronometraje DS funcionan como directores de carrera autónomos con sus propios temporizadores físicos, semáforos de salida y sirenas de fin de manga, la configuración recomendada en Race Coordinator AI es:
+
+1. **Duración de Manga Infinita (Infinite Time)**: En el Editor de Carreras, bajo **Método de Llegada**, configure la manga como **Por Tiempo** con **Tiempo Infinito** (o sin límite de tiempo / duración 0). Esto evita que el reloj por software de Race Coordinator AI finalice la manga prematuramente, permitiendo que la señal de fin de manga del hardware DS (`END_HEAT`) concluya la manga con total autoridad.
+2. **Avance de Manga por Hardware**: Cuando la unidad DS finaliza la manga y emite la señal de manga terminada, Race Coordinator AI pasa al estado de manga finalizada. Al pulsar el botón físico **START** en la consola DS, se avanzará a la siguiente manga de la rotación.
+3. **Pausas e Interrupciones por Hardware**: Al pulsar el botón físico **STOP** en la caja DS, se pausa inmediatamente la carrera en Race Coordinator AI. Al pulsar el botón físico **RESET**, se reinicia la manga actual o se cancela una cuenta atrás de salida en curso.
+
+---
+
+### 6. Interfaz Demo / Simulación
 
 Permite probar formatos de carrera, rotaciones, temas, anuncios de audio y marcadores sin hardware físico conectado.
 

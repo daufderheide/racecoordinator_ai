@@ -6,11 +6,13 @@ import { BartConfigConverter } from "@app/converters/bart_config.converter";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
   PhidgetConfig,
   TrackmateConfig,
 } from "@app/models/track";
 import {
   ArduinoConfig as ProtoArduinoConfig,
+  DsConfig as ProtoDsConfig,
   GetPhidgetDevicesResponse,
   InitializeInterfaceRequest,
   InitializeInterfaceResponse,
@@ -123,6 +125,17 @@ export class DataInterfaceHelper {
     return (configs || []).map((c) => BartConfigConverter.toProto(c));
   }
 
+  mapDsConfigsToProto(configs: DsConfig[]) {
+    return (configs || []).map((config) =>
+      ProtoDsConfig.create({
+        name: config.name,
+        commPort: config.commPort,
+        type: config.type as unknown as any,
+        baudRate: config.baudRate,
+      }),
+    );
+  }
+
   getSerialPorts(): Observable<string[]> {
     return this.http.get<string[]>(`${this.getBaseUrl()}/api/serial-ports`);
   }
@@ -152,6 +165,7 @@ export class DataInterfaceHelper {
     phidgetConfigsOrLaneCount: any[] | number = [],
     laneCountParam?: number,
     bartConfigs: BartConfig[] = [],
+    dsConfigs: DsConfig[] = [],
   ): Observable<InitializeInterfaceResponse> {
     let phidgetConfigs: any[] = [];
     let laneCount = 0;
@@ -168,6 +182,7 @@ export class DataInterfaceHelper {
       trackmateConfigs: this.mapTrackmateConfigsToProto(trackmateConfigs),
       phidgetConfigs: this.mapPhidgetConfigsToProto(phidgetConfigs),
       bartConfigs: this.mapBartConfigsToProto(bartConfigs),
+      dsConfigs: this.mapDsConfigsToProto(dsConfigs),
       laneCount,
     });
     const buffer = InitializeInterfaceRequest.encode(request).finish();
@@ -199,6 +214,7 @@ export class DataInterfaceHelper {
     config: ArduinoConfig | null,
     interfaceIndex: number,
     phidgetConfig?: PhidgetConfig | null,
+    dsConfig?: DsConfig | null,
   ): Observable<UpdateInterfaceConfigResponse> {
     const request = UpdateInterfaceConfigRequest.create({
       config: config
@@ -259,6 +275,14 @@ export class DataInterfaceHelper {
                 maxVoltage: maxVoltage as number,
               }),
             ),
+          })
+        : undefined,
+      dsConfig: dsConfig
+        ? ProtoDsConfig.create({
+            name: dsConfig.name,
+            commPort: dsConfig.commPort,
+            type: dsConfig.type as unknown as any,
+            baudRate: dsConfig.baudRate,
           })
         : undefined,
       interfaceIndex,

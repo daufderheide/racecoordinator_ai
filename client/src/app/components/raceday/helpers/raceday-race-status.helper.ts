@@ -93,6 +93,10 @@ export class RacedayRaceStatusHelper {
     if (host.authService.currentRole === Role.VIEWER) {
       return true;
     }
+    const sysState = host.dataService?.getSystemStateValue?.();
+    if (sysState && sysState.canManualRestart === false) {
+      return true;
+    }
     const s = host.raceState;
     return (
       s === RaceState.STARTING ||
@@ -188,6 +192,10 @@ export class RacedayRaceStatusHelper {
     if (host.authService.currentRole === Role.VIEWER) {
       return true;
     }
+    const sysState = host.dataService?.getSystemStateValue?.();
+    if (sysState && sysState.canManualStart === false) {
+      return true;
+    }
     const s = host.raceState;
     return (
       (!host.isInterfaceConnected &&
@@ -202,6 +210,10 @@ export class RacedayRaceStatusHelper {
 
   static isPauseDisabled(host: any): boolean {
     if (host.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
+    const sysState = host.dataService?.getSystemStateValue?.();
+    if (sysState && sysState.canManualPause === false) {
       return true;
     }
     const s = host.raceState;

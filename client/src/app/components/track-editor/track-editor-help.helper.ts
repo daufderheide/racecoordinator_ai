@@ -2,11 +2,13 @@ import { QueryList } from "@angular/core";
 import { getEditorToolbarHelpStep } from "@app/components/shared/toolbar/toolbar.component";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
 import { BartEditorComponent } from "@app/components/track-editor/bart-editor/bart-editor.component";
+import { DsEditorComponent } from "@app/components/track-editor/ds-editor/ds-editor.component";
 import { PhidgetEditorComponent } from "@app/components/track-editor/phidget-editor/phidget-editor.component";
 import { TrakmateEditorComponent } from "@app/components/track-editor/trakmate-editor/trakmate-editor.component";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
   PhidgetConfig,
   TrackmateConfig,
 } from "@app/models/track";
@@ -18,6 +20,7 @@ export interface TrackEditorHelpEditors {
   bartEditors?: QueryList<BartEditorComponent>;
   phidgetEditors?: QueryList<PhidgetEditorComponent>;
   trakmateEditors?: QueryList<TrakmateEditorComponent>;
+  dsEditors?: QueryList<DsEditorComponent>;
 }
 
 export interface TrackEditorHelpConfigs {
@@ -25,6 +28,7 @@ export interface TrackEditorHelpConfigs {
   bartConfigs?: BartConfig[];
   phidgetConfigs?: PhidgetConfig[];
   trackmateConfigs?: TrackmateConfig[];
+  dsConfigs?: DsConfig[];
 }
 
 function scrollElementToTopOfPreview(targetId: string): void {
@@ -111,109 +115,152 @@ export class TrackEditorHelpHelper {
     editors: TrackEditorHelpEditors,
     configs: TrackEditorHelpConfigs,
   ): GuideStep[] {
-    const t = translationService;
     const steps: GuideStep[] = [];
 
-    // 7) For each type of interface configured on RHS:
-    // Arduino
     if (configs.arduinoConfigs && configs.arduinoConfigs.length > 0) {
-      steps.push({
-        targetId: "interface-arduino-0",
-        selector: "#interface-arduino-0",
-        title: t.translate("TE_HELP_ARDUINO_TITLE"),
-        content: t.translate("TE_HELP_ARDUINO_CONTENT"),
-        position: "left",
-        onEnter: () => {
-          const firstArduino = editors.arduinoEditors?.first;
-          if (firstArduino) {
-            firstArduino.sectionsExpanded = {
-              arduino: true,
-              main: false,
-              digital: false,
-              analog: false,
-              voltage: false,
-              leds: false,
-            };
-            firstArduino.ledStringExpanded = [];
-            (firstArduino as any).cdr?.detectChanges?.();
-          }
-          scrollElementToTopOfPreview("interface-arduino-0");
-        },
-      });
+      steps.push(this.buildArduinoHelpStep(translationService, editors));
     }
-
-    // Trackmate
     if (configs.trackmateConfigs && configs.trackmateConfigs.length > 0) {
-      steps.push({
-        targetId: "interface-trackmate-0",
-        selector: "#interface-trackmate-0",
-        title: t.translate("TE_HELP_TRAKMATE_TITLE"),
-        content: t.translate("TE_HELP_TRAKMATE_CONTENT"),
-        position: "left",
-        onEnter: () => {
-          const firstTrackmate = editors.trakmateEditors?.first;
-          if (firstTrackmate) {
-            firstTrackmate.sectionsExpanded = {
-              trakmate: true,
-              main: false,
-              rw: false,
-            };
-            (firstTrackmate as any).cdr?.detectChanges?.();
-          }
-          scrollElementToTopOfPreview("interface-trackmate-0");
-        },
-      });
+      steps.push(this.buildTrackmateHelpStep(translationService, editors));
     }
-
-    // Phidget
     if (configs.phidgetConfigs && configs.phidgetConfigs.length > 0) {
-      steps.push({
-        targetId: "interface-phidget-0",
-        selector: "#interface-phidget-0",
-        title: t.translate("TE_HELP_PHIDGET_TITLE"),
-        content: t.translate("TE_HELP_PHIDGET_CONTENT"),
-        position: "left",
-        onEnter: () => {
-          const firstPhidget = editors.phidgetEditors?.first;
-          if (firstPhidget) {
-            firstPhidget.sectionsExpanded = {
-              phidget: true,
-              main: false,
-              pins: false,
-              digitalIn: false,
-              digitalOut: false,
-            };
-            (firstPhidget as any).cdr?.detectChanges?.();
-          }
-          scrollElementToTopOfPreview("interface-phidget-0");
-        },
-      });
+      steps.push(this.buildPhidgetHelpStep(translationService, editors));
     }
-
-    // BART
     if (configs.bartConfigs && configs.bartConfigs.length > 0) {
-      steps.push({
-        targetId: "interface-bart-0",
-        selector: "#interface-bart-0",
-        title: t.translate("TE_HELP_BART_TITLE"),
-        content: t.translate("TE_HELP_BART_CONTENT"),
-        position: "left",
-        onEnter: () => {
-          const firstBart = editors.bartEditors?.first;
-          if (firstBart) {
-            firstBart.sectionsExpanded = {
-              bart: true,
-              main: false,
-              rw: false,
-            };
-            (firstBart as any).cdr?.detectChanges?.();
-          }
-          scrollElementToTopOfPreview("interface-bart-0");
-        },
-      });
+      steps.push(this.buildBartHelpStep(translationService, editors));
+    }
+    if (configs.dsConfigs && configs.dsConfigs.length > 0) {
+      steps.push(this.buildDsHelpStep(translationService, editors));
     }
 
     return steps;
+  }
+
+  private static buildArduinoHelpStep(
+    t: TranslationService,
+    editors: TrackEditorHelpEditors,
+  ): GuideStep {
+    return {
+      targetId: "interface-arduino-0",
+      selector: "#interface-arduino-0",
+      title: t.translate("TE_HELP_ARDUINO_TITLE"),
+      content: t.translate("TE_HELP_ARDUINO_CONTENT"),
+      position: "left",
+      onEnter: () => {
+        const firstArduino = editors.arduinoEditors?.first;
+        if (firstArduino) {
+          firstArduino.sectionsExpanded = {
+            arduino: true,
+            main: false,
+            digital: false,
+            analog: false,
+            voltage: false,
+            leds: false,
+          };
+          firstArduino.ledStringExpanded = [];
+          (firstArduino as any).cdr?.detectChanges?.();
+        }
+        scrollElementToTopOfPreview("interface-arduino-0");
+      },
+    };
+  }
+
+  private static buildTrackmateHelpStep(
+    t: TranslationService,
+    editors: TrackEditorHelpEditors,
+  ): GuideStep {
+    return {
+      targetId: "interface-trackmate-0",
+      selector: "#interface-trackmate-0",
+      title: t.translate("TE_HELP_TRAKMATE_TITLE"),
+      content: t.translate("TE_HELP_TRAKMATE_CONTENT"),
+      position: "left",
+      onEnter: () => {
+        const firstTrackmate = editors.trakmateEditors?.first;
+        if (firstTrackmate) {
+          firstTrackmate.sectionsExpanded = {
+            trakmate: true,
+            main: false,
+            rw: false,
+          };
+          (firstTrackmate as any).cdr?.detectChanges?.();
+        }
+        scrollElementToTopOfPreview("interface-trackmate-0");
+      },
+    };
+  }
+
+  private static buildPhidgetHelpStep(
+    t: TranslationService,
+    editors: TrackEditorHelpEditors,
+  ): GuideStep {
+    return {
+      targetId: "interface-phidget-0",
+      selector: "#interface-phidget-0",
+      title: t.translate("TE_HELP_PHIDGET_TITLE"),
+      content: t.translate("TE_HELP_PHIDGET_CONTENT"),
+      position: "left",
+      onEnter: () => {
+        const firstPhidget = editors.phidgetEditors?.first;
+        if (firstPhidget) {
+          firstPhidget.sectionsExpanded = {
+            phidget: true,
+            main: false,
+            pins: false,
+            digitalIn: false,
+            digitalOut: false,
+          };
+          (firstPhidget as any).cdr?.detectChanges?.();
+        }
+        scrollElementToTopOfPreview("interface-phidget-0");
+      },
+    };
+  }
+
+  private static buildBartHelpStep(
+    t: TranslationService,
+    editors: TrackEditorHelpEditors,
+  ): GuideStep {
+    return {
+      targetId: "interface-bart-0",
+      selector: "#interface-bart-0",
+      title: t.translate("TE_HELP_BART_TITLE"),
+      content: t.translate("TE_HELP_BART_CONTENT"),
+      position: "left",
+      onEnter: () => {
+        const firstBart = editors.bartEditors?.first;
+        if (firstBart) {
+          firstBart.sectionsExpanded = {
+            bart: true,
+            main: false,
+            rw: false,
+          };
+          (firstBart as any).cdr?.detectChanges?.();
+        }
+        scrollElementToTopOfPreview("interface-bart-0");
+      },
+    };
+  }
+
+  private static buildDsHelpStep(
+    t: TranslationService,
+    editors: TrackEditorHelpEditors,
+  ): GuideStep {
+    return {
+      targetId: "interface-ds-0",
+      selector: "#interface-ds-0",
+      title: t.translate("TE_HELP_DS_TITLE"),
+      content: t.translate("TE_HELP_DS_CONTENT"),
+      position: "left",
+      onEnter: () => {
+        const firstDs = editors.dsEditors?.first;
+        if (firstDs) {
+          firstDs.ensureSectionsExpanded();
+          (firstDs as any).cdr?.detectChanges?.();
+        }
+        scrollElementToTopOfPreview("interface-ds-0");
+      },
+    };
   }
 
   static getHelpSteps(

@@ -61,6 +61,7 @@ export class TrackEditorCrudHelper {
       trackmate_configs: factoryTrack.trackmate_configs,
       phidget_configs: factoryTrack.phidget_configs,
       bart_configs: factoryTrack.bart_configs,
+      ds_configs: factoryTrack.ds_configs,
     });
   }
 

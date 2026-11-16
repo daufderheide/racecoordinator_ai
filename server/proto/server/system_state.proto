@@ -12,6 +12,9 @@ message SystemState {
   bool has_per_lane_relays = 4;
   bool is_replay_mode = 5;
   LogReplayStatus log_replay_status = 6;
+  bool can_manual_start = 7;
+  bool can_manual_pause = 8;
+  bool can_manual_restart = 9;
 }
 
 message LogReplayStatus {
