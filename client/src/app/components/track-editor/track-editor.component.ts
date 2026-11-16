@@ -3,7 +3,6 @@ import {
   CdkDragDrop,
   CdkDragHandle,
   CdkDropList,
-  moveItemInArray,
 } from "@angular/cdk/drag-drop";
 import { Location } from "@angular/common";
 import {
@@ -35,9 +34,14 @@ import { InputDialogComponent } from "@app/components/shared/input-dialog/input-
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
 import { BartEditorComponent } from "@app/components/track-editor/bart-editor/bart-editor.component";
+import { DsEditorComponent } from "@app/components/track-editor/ds-editor/ds-editor.component";
 import { PhidgetEditorComponent } from "@app/components/track-editor/phidget-editor/phidget-editor.component";
 import { TrackEditorCrudHelper } from "@app/components/track-editor/track-editor-crud.helper";
-import { TrackEditorHelpHelper } from "@app/components/track-editor/track-editor-help.helper";
+import {
+  TrackEditorHelpConfigs,
+  TrackEditorHelpEditors,
+  TrackEditorHelpHelper,
+} from "@app/components/track-editor/track-editor-help.helper";
 import {
   TrackEditorPersistenceHelper,
   TrackPersistenceHost,
@@ -61,15 +65,13 @@ import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
   PhidgetConfig,
   Track,
   TrackmateConfig,
 } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import {
-  ConnectionMonitorService,
-  ConnectionState,
-} from "@app/services/connection-monitor.service";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -97,6 +99,7 @@ import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
     TrakmateEditorComponent,
     PhidgetEditorComponent,
     BartEditorComponent,
+    DsEditorComponent,
     InputDialogComponent,
     TranslatePipe,
     ConfirmationModalComponent,
@@ -140,15 +143,7 @@ export class TrackEditorComponent
   defaultTrackName: string = "";
 
   focusNameInput() {
-    setTimeout(() => {
-      const el = document.getElementById(
-        "track-name-input",
-      ) as HTMLInputElement;
-      if (el) {
-        el.focus();
-        el.select();
-      }
-    }, 0);
+    TrackEditorUiHelper.focusNameInput();
   }
   numTrackSections: number = 100;
   trackScale: number = 1.0;
@@ -166,6 +161,7 @@ export class TrackEditorComponent
   trackmateConfigs: TrackmateConfig[] = [];
   phidgetConfigs: PhidgetConfig[] = [];
   bartConfigs: BartConfig[] = [];
+  dsConfigs: DsConfig[] = [];
   helpSteps: GuideStep[] = [];
   driverMissingError = false;
 
@@ -187,6 +183,8 @@ export class TrackEditorComponent
   phidgetEditors!: QueryList<PhidgetEditorComponent>;
   @ViewChildren(TrakmateEditorComponent)
   trakmateEditors!: QueryList<TrakmateEditorComponent>;
+  @ViewChildren(DsEditorComponent)
+  dsEditors!: QueryList<DsEditorComponent>;
   sectionsExpanded: TrackEditorSections =
     TrackEditorUiHelper.loadSavedSections();
 
@@ -219,6 +217,7 @@ export class TrackEditorComponent
       this.bartEditors?.forEach((e) => e.ensureSectionsExpanded());
       this.phidgetEditors?.forEach((e) => e.ensureSectionsExpanded());
       this.trakmateEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.dsEditors?.forEach((e) => e.ensureSectionsExpanded());
     }
   }
 
@@ -228,18 +227,14 @@ export class TrackEditorComponent
       this.trackmateConfigs,
       this.phidgetConfigs,
       this.bartConfigs,
+      this.dsConfigs,
     );
   }
 
   scrollToAndExpandInterface(tabId: string) {
     TrackInterfaceConfigsHelper.scrollToAndExpandInterface(
       tabId,
-      {
-        arduinoEditors: this.arduinoEditors,
-        trakmateEditors: this.trakmateEditors,
-        phidgetEditors: this.phidgetEditors,
-        bartEditors: this.bartEditors,
-      },
+      this.getHelpEditors(),
       this.cdr,
     );
   }
@@ -362,29 +357,22 @@ export class TrackEditorComponent
   }
 
   monitorConnection() {
-    this.connectionSubscription =
-      this.connectionMonitor.connectionState$.subscribe((state) => {
-        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
-
-        if (this.isConnectionLost) {
+    this.connectionSubscription = TrackEditorUiHelper.monitorConnection(
+      this.connectionMonitor,
+      (isLost) => {
+        this.isConnectionLost = isLost;
+        if (isLost) {
           this.handleConnectionLoss();
         }
-      });
+      },
+    );
   }
 
   handleConnectionLoss() {
-    let startTime = Date.now();
-    const intervalId = setInterval(() => {
-      if (!this.isConnectionLost) {
-        clearInterval(intervalId);
-        return;
-      }
-
-      if (Date.now() - startTime > 5000) {
-        clearInterval(intervalId);
-        this.router.navigate(["/raceday-setup"]);
-      }
-    }, 1000);
+    TrackEditorUiHelper.handleConnectionLoss(
+      () => this.isConnectionLost,
+      () => this.router.navigate(["/raceday-setup"]),
+    );
   }
 
   onRequestLedStringDialog(index: number) {
@@ -394,12 +382,13 @@ export class TrackEditorComponent
 
   onLedStringDialogConfirm(numLeds: number) {
     this.showLedStringDialog = false;
-    if (this.requestingArduinoIndex >= 0) {
-      const editors = this.arduinoEditors.toArray();
-      if (editors[this.requestingArduinoIndex]) {
-        editors[this.requestingArduinoIndex].addLedString(numLeds);
-        this.captureState();
-      }
+    const changed = TrackEditorUiHelper.confirmLedStringDialog(
+      this.requestingArduinoIndex,
+      numLeds,
+      this.arduinoEditors?.toArray() || [],
+    );
+    if (changed) {
+      this.captureState();
     }
     this.requestingArduinoIndex = -1;
   }
@@ -483,11 +472,13 @@ export class TrackEditorComponent
       trackmateConfigs: this.trackmateConfigs,
       phidgetConfigs: this.phidgetConfigs,
       bartConfigs: this.bartConfigs,
+      dsConfigs: this.dsConfigs,
     });
     this.arduinoConfigs = res.arduinoConfigs;
     this.trackmateConfigs = res.trackmateConfigs;
     this.phidgetConfigs = res.phidgetConfigs;
     this.bartConfigs = res.bartConfigs;
+    this.dsConfigs = res.dsConfigs;
   }
 
   private ensureInterfaceConfigsValid() {
@@ -495,19 +486,17 @@ export class TrackEditorComponent
   }
 
   onSelectTrackById(id: string) {
-    if (this.isEditMode) return;
-    if (this.selectedTrackId === id) return;
+    if (this.isEditMode || this.selectedTrackId === id) return;
     const found = this.allTracks.find((t) => t.entity_id === id);
     if (found) {
       this.isSwitchingSelection = true;
       this.selectTrack(found);
-      this.navigationService.setLastEditedId("track", found.entity_id);
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { id: found.entity_id },
-        queryParamsHandling: "merge",
-        replaceUrl: true,
-      });
+      TrackEditorUiHelper.navigateToTrack(
+        this.router,
+        this.route,
+        this.navigationService,
+        found.entity_id,
+      );
     }
   }
 
@@ -573,6 +562,7 @@ export class TrackEditorComponent
         trackmateConfigs: this.trackmateConfigs,
         phidgetConfigs: this.phidgetConfigs,
         bartConfigs: this.bartConfigs,
+        dsConfigs: this.dsConfigs,
         numLanes: this.lanes.length,
       },
     );
@@ -597,6 +587,7 @@ export class TrackEditorComponent
       trackmateConfigs: this.trackmateConfigs,
       phidgetConfigs: this.phidgetConfigs,
       bartConfigs: this.bartConfigs,
+      dsConfigs: this.dsConfigs,
     });
   }
 
@@ -604,25 +595,19 @@ export class TrackEditorComponent
     return TrackStateHelper.areTracksEqual(t1, t2);
   }
 
-  areArduinoConfigsEqual(
-    acs1: ArduinoConfig[],
-    acs2: ArduinoConfig[],
-  ): boolean {
-    return TrackStateHelper.areArduinoConfigsEqual(acs1, acs2);
+  areArduinoConfigsEqual(a: ArduinoConfig[], b: ArduinoConfig[]): boolean {
+    return TrackStateHelper.areArduinoConfigsEqual(a, b);
   }
 
   areTrackmateConfigsEqual(
-    tcs1: TrackmateConfig[],
-    tcs2: TrackmateConfig[],
+    a: TrackmateConfig[],
+    b: TrackmateConfig[],
   ): boolean {
-    return TrackStateHelper.areTrackmateConfigsEqual(tcs1, tcs2);
+    return TrackStateHelper.areTrackmateConfigsEqual(a, b);
   }
 
-  arePhidgetConfigsEqual(
-    pcs1: PhidgetConfig[],
-    pcs2: PhidgetConfig[],
-  ): boolean {
-    return TrackStateHelper.arePhidgetConfigsEqual(pcs1, pcs2);
+  arePhidgetConfigsEqual(a: PhidgetConfig[], b: PhidgetConfig[]): boolean {
+    return TrackStateHelper.arePhidgetConfigsEqual(a, b);
   }
 
   undo() {
@@ -642,6 +627,18 @@ export class TrackEditorComponent
   isConfigValid(): boolean {
     return !this.isNameInvalid;
   }
+  hasChanges(): boolean {
+    return this.isDirtyState();
+  }
+  get discardMessage(): string {
+    return this.lifecycle.discardMessage;
+  }
+  confirmDiscard(): Promise<boolean> {
+    return this.lifecycle.confirmDiscard();
+  }
+  onCancelDiscard() {
+    this.lifecycle.onCancelDiscard();
+  }
 
   isDirtyState(): boolean {
     if (!this.undoManager) return false;
@@ -654,10 +651,6 @@ export class TrackEditorComponent
     return this.isDirty || umChanges || manualChanges;
   }
 
-  hasChanges(): boolean {
-    return this.isDirtyState();
-  }
-
   getUnsavedReasons(): string[] {
     return TrackEditorCrudHelper.getUnsavedTrackReasons(
       this.editingTrack,
@@ -666,14 +659,6 @@ export class TrackEditorComponent
       this.isSaving,
       this.isDirtyState(),
     );
-  }
-
-  get discardMessage(): string {
-    return this.lifecycle.discardMessage;
-  }
-
-  confirmDiscard(): Promise<boolean> {
-    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {
@@ -687,21 +672,33 @@ export class TrackEditorComponent
     });
   }
 
-  onCancelDiscard() {
-    this.lifecycle.onCancelDiscard();
-  }
-
   onBackClicked() {
-    if (this.isConfigValid()) {
-      if (this.isDirtyState()) {
-        this.navigateBackOnSave = true;
-        this.updateTrack();
-      } else {
-        this.onBack();
-      }
+    if (this.isConfigValid() && this.isDirtyState()) {
+      this.navigateBackOnSave = true;
+      this.updateTrack();
     } else {
       this.onBack();
     }
+  }
+
+  private getHelpEditors(): TrackEditorHelpEditors {
+    return {
+      arduinoEditors: this.arduinoEditors,
+      bartEditors: this.bartEditors,
+      phidgetEditors: this.phidgetEditors,
+      trakmateEditors: this.trakmateEditors,
+      dsEditors: this.dsEditors,
+    };
+  }
+
+  private getHelpConfigs(): TrackEditorHelpConfigs {
+    return {
+      arduinoConfigs: this.arduinoConfigs,
+      bartConfigs: this.bartConfigs,
+      phidgetConfigs: this.phidgetConfigs,
+      trackmateConfigs: this.trackmateConfigs,
+      dsConfigs: this.dsConfigs,
+    };
   }
 
   getBaseHelpSteps(): GuideStep[] {
@@ -714,18 +711,8 @@ export class TrackEditorComponent
   getHelpSteps(): GuideStep[] {
     return TrackEditorHelpHelper.getHelpSteps(
       this.translationService,
-      {
-        arduinoEditors: this.arduinoEditors,
-        bartEditors: this.bartEditors,
-        phidgetEditors: this.phidgetEditors,
-        trakmateEditors: this.trakmateEditors,
-      },
-      {
-        arduinoConfigs: this.arduinoConfigs,
-        bartConfigs: this.bartConfigs,
-        phidgetConfigs: this.phidgetConfigs,
-        trackmateConfigs: this.trackmateConfigs,
-      },
+      this.getHelpEditors(),
+      this.getHelpConfigs(),
       this.sectionsExpanded,
     );
   }
@@ -738,18 +725,8 @@ export class TrackEditorComponent
     const changed = TrackEditorHelpHelper.ensureSectionsExpandedForHelp(
       this.sectionsExpanded,
       this.lanes?.length > 0,
-      {
-        arduinoEditors: this.arduinoEditors,
-        bartEditors: this.bartEditors,
-        phidgetEditors: this.phidgetEditors,
-        trakmateEditors: this.trakmateEditors,
-      },
-      {
-        arduinoConfigs: this.arduinoConfigs,
-        bartConfigs: this.bartConfigs,
-        phidgetConfigs: this.phidgetConfigs,
-        trackmateConfigs: this.trackmateConfigs,
-      },
+      this.getHelpEditors(),
+      this.getHelpConfigs(),
     );
     if (changed && !this.isDestroyed) {
       this.cdr.detectChanges();
@@ -796,15 +773,17 @@ export class TrackEditorComponent
   }
 
   onLaneDropped(event: CdkDragDrop<Lane[]>) {
-    if (event.previousIndex !== event.currentIndex) {
-      moveItemInArray(this.lanes, event.previousIndex, event.currentIndex);
-      this.lanes = [...this.lanes];
-
+    const result = TrackLaneHelper.handleLaneDropped(
+      this.lanes,
+      event.previousIndex,
+      event.currentIndex,
+    );
+    if (result.changed) {
+      this.lanes = result.lanes;
       this.updateInterfaceConfigsOnLaneOrderChange(
         event.previousIndex,
         event.currentIndex,
       );
-
       this.captureState();
     }
   }
@@ -972,6 +951,30 @@ export class TrackEditorComponent
     return index;
   }
 
+  // --- DS Configuration ---
+
+  addDsConfig() {
+    this.dsConfigs = TrackInterfaceConfigsHelper.addDsConfig(this.dsConfigs);
+    this.onInterfaceListChanged();
+  }
+
+  removeDsConfig(index: number) {
+    this.dsConfigs = TrackInterfaceConfigsHelper.removeDsConfig(
+      this.dsConfigs,
+      index,
+    );
+    this.onInterfaceListChanged();
+  }
+
+  onDsConfigChange() {
+    this.dsConfigs = [...this.dsConfigs];
+    this.onInterfaceListChanged();
+  }
+
+  trackByDsConfig(index: number, _config: any): number {
+    return index;
+  }
+
   // --- Phidget Configuration ---
 
   addPhidgetConfig() {
@@ -1085,17 +1088,7 @@ export class TrackEditorComponent
 
   onBack() {
     this.isNavigationApproved = true;
-    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
-    const from = this.route.snapshot.queryParamMap.get("from");
-    if (returnUrl) {
-      this.router.navigateByUrl(returnUrl);
-    } else if (from === "modify-heats") {
-      this.router.navigate(["/default-raceday"], {
-        queryParams: { modifyHeats: "true" },
-      });
-    } else {
-      this.router.navigate(["/raceday-setup"]);
-    }
+    TrackEditorUiHelper.navigateBack(this.router, this.route);
   }
 
   trackByLane(index: number, lane: Lane): string {

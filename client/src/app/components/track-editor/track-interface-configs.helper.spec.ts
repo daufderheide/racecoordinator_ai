@@ -60,6 +60,19 @@ describe("TrackInterfaceConfigsHelper", () => {
       const removed = TrackInterfaceConfigsHelper.removePhidgetConfig(added, 0);
       expect(removed.length).toBe(0);
     });
+
+    it("should create, add and remove DsConfig", () => {
+      const config = TrackInterfaceConfigsHelper.createDefaultDsConfig(0);
+      expect(config.name).toBe("DS 1");
+      expect(config.baudRate).toBe(57600);
+
+      const added = TrackInterfaceConfigsHelper.addDsConfig([]);
+      expect(added.length).toBe(1);
+      expect(added[0].name).toBe("DS 1");
+
+      const removed = TrackInterfaceConfigsHelper.removeDsConfig(added, 0);
+      expect(removed.length).toBe(0);
+    });
   });
 
   describe("buildInterfaceTabs", () => {
@@ -69,9 +82,10 @@ describe("TrackInterfaceConfigsHelper", () => {
         [{ name: "TM1" } as any],
         [{ name: "P1" } as any],
         [{ name: "B1" } as any],
+        [{ name: "DS1" } as any],
       );
 
-      expect(tabs.length).toBe(4);
+      expect(tabs.length).toBe(5);
       expect(tabs[0]).toEqual({
         id: "interface-arduino-0",
         label: "Arduino 1",
@@ -88,11 +102,16 @@ describe("TrackInterfaceConfigsHelper", () => {
         id: "interface-bart-0",
         label: "BART 1",
       });
+      expect(tabs[4]).toEqual({
+        id: "interface-ds-0",
+        label: "DS 1",
+      });
     });
 
     it("should return empty list when no configs provided", () => {
       expect(
         TrackInterfaceConfigsHelper.buildInterfaceTabs(
+          undefined,
           undefined,
           undefined,
           undefined,
@@ -114,9 +133,13 @@ describe("TrackInterfaceConfigsHelper", () => {
 
     it("should expand correct editor on match", () => {
       const mockArduino = { ensureSectionsExpanded: jasmine.createSpy() };
+      const mockDs = { ensureSectionsExpanded: jasmine.createSpy() };
       const editors = {
         arduinoEditors: {
           get: (index: number) => (index === 0 ? mockArduino : undefined),
+        } as any,
+        dsEditors: {
+          get: (index: number) => (index === 0 ? mockDs : undefined),
         } as any,
       };
 
@@ -130,6 +153,13 @@ describe("TrackInterfaceConfigsHelper", () => {
 
       expect(mockArduino.ensureSectionsExpanded).toHaveBeenCalled();
       expect(cdr.detectChanges).toHaveBeenCalled();
+
+      TrackInterfaceConfigsHelper.scrollToAndExpandInterface(
+        "interface-ds-0",
+        editors,
+        cdr as any,
+      );
+      expect(mockDs.ensureSectionsExpanded).toHaveBeenCalled();
     });
   });
 
@@ -163,6 +193,24 @@ describe("TrackInterfaceConfigsHelper", () => {
           trackmateConfigs: [],
           phidgetConfigs: [],
           bartConfigs: [],
+          dsConfigs: [],
+          numLanes: 2,
+        },
+      );
+      expect(mockDataService.initializeInterface).toHaveBeenCalled();
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should call initializeInterface when only dsConfig exists", () => {
+      TrackInterfaceConfigsHelper.initializeInterfaces(
+        mockDataService,
+        mockLogger,
+        {
+          arduinoConfigs: [],
+          trackmateConfigs: [],
+          phidgetConfigs: [],
+          bartConfigs: [],
+          dsConfigs: [{ name: "DS 1" } as any],
           numLanes: 2,
         },
       );
@@ -182,6 +230,7 @@ describe("TrackInterfaceConfigsHelper", () => {
           trackmateConfigs: [],
           phidgetConfigs: [],
           bartConfigs: [],
+          dsConfigs: [],
           numLanes: 2,
         },
       );
@@ -200,6 +249,7 @@ describe("TrackInterfaceConfigsHelper", () => {
           trackmateConfigs: [],
           phidgetConfigs: [],
           bartConfigs: [],
+          dsConfigs: [],
           numLanes: 2,
         },
       );
@@ -215,6 +265,7 @@ describe("TrackInterfaceConfigsHelper", () => {
           trackmateConfigs: [],
           phidgetConfigs: [],
           bartConfigs: [],
+          dsConfigs: [],
           numLanes: 2,
         },
       );

@@ -1,5 +1,6 @@
 package com.antigravity.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -541,9 +542,17 @@ public class DatabaseTaskHandlerTest {
       when(ctxUpdate.pathParam("id")).thenReturn("1");
       when(ctxUpdate.body())
           .thenReturn(
-              "{\"name\":\"Silverstone Circuit\",\"num_track_sections\":6,\"lanes\":[],\"entity_id\":\"1\"}");
+              "{\"name\":\"Silverstone Circuit\",\"num_track_sections\":6,\"lanes\":[],\"entity_id\":\"1\","
+                  + "\"ds_configs\":[{\"name\":\"DS 1\",\"commPort\":\"COM5\",\"type\":0,\"baudRate\":4800}]}");
       invoke(handler, "updateTrack", ctxUpdate);
-      org.mockito.Mockito.verify(ctxUpdate).json(any());
+      org.mockito.ArgumentCaptor<Track> trackCaptor =
+          org.mockito.ArgumentCaptor.forClass(Track.class);
+      org.mockito.Mockito.verify(ctxUpdate).json(trackCaptor.capture());
+      assertEquals(1, trackCaptor.getValue().getDsConfigs().size());
+      assertEquals(
+          com.antigravity.protocols.ds.DsType.DS_030,
+          trackCaptor.getValue().getDsConfigs().get(0).getType());
+      assertEquals("COM5", trackCaptor.getValue().getDsConfigs().get(0).getCommPort());
 
       // 5. Delete Track
       io.javalin.http.Context ctxDelete = mock(io.javalin.http.Context.class);

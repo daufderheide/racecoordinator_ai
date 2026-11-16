@@ -44,6 +44,10 @@ public class TrackConverter {
               track.getBartConfigs().stream()
                   .map(BartConfigConverter::toProto)
                   .collect(Collectors.toList()))
+          .addAllDsConfigs(
+              track.getDsConfigs().stream()
+                  .map(DsConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
   }

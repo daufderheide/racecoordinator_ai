@@ -61,4 +61,16 @@ public interface IProtocol {
   default ScheduledExecutorService getScheduler() {
     return null;
   }
+
+  default boolean canManualStart() {
+    return true;
+  }
+
+  default boolean canManualPause() {
+    return true;
+  }
+
+  default boolean canManualRestart() {
+    return true;
+  }
 }

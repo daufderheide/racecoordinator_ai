@@ -678,6 +678,16 @@
   border: 1px solid rgba(59, 130, 246, 0.5);
 }
 
+.interface-badge.under-development-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}
+
 .interface-config-section .editor-section {
-  margin-bottom: 15px;
+  margin-bottom: 4px;
+}
+
+.interface-config-section .section-header {
+  padding: 4px 0;
 }

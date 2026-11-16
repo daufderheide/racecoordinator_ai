@@ -10,6 +10,7 @@ import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
   PhidgetConfig,
   Track,
   TrackmateConfig,
@@ -34,6 +35,7 @@ export interface TrackPersistenceHost {
   trackmateConfigs: TrackmateConfig[];
   phidgetConfigs: PhidgetConfig[];
   bartConfigs: BartConfig[];
+  dsConfigs: DsConfig[];
   isEditMode: boolean;
   isPreservingEditModeOnNavigation: boolean;
   transitionToReadOnlyOnSave: boolean;
@@ -144,6 +146,7 @@ export class TrackEditorPersistenceHelper {
       trackmate_configs: result.trackmate_configs || host.trackmateConfigs,
       phidget_configs: result.phidget_configs || host.phidgetConfigs,
       bart_configs: result.bart_configs || host.bartConfigs,
+      ds_configs: result.ds_configs || host.dsConfigs,
     });
 
     host.selectedTrack = host.cloneTrack(host.editingTrack);
@@ -223,12 +226,14 @@ export class TrackEditorPersistenceHelper {
         trackmateConfigs: host.trackmateConfigs,
         phidgetConfigs: host.phidgetConfigs,
         bartConfigs: host.bartConfigs,
+        dsConfigs: host.dsConfigs,
       },
     );
     host.arduinoConfigs = synced.arduinoConfigs;
     host.trackmateConfigs = synced.trackmateConfigs;
     host.phidgetConfigs = synced.phidgetConfigs;
     host.bartConfigs = synced.bartConfigs;
+    host.dsConfigs = synced.dsConfigs;
   }
 
   static handleSaveError(

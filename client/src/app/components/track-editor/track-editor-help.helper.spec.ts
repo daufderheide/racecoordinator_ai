@@ -126,6 +126,10 @@ describe("TrackEditorHelpHelper", () => {
         },
         cdr: { detectChanges: jasmine.createSpy("detectChanges") },
       };
+      const mockDsEditor = {
+        ensureSectionsExpanded: jasmine.createSpy("ensureSectionsExpanded"),
+        cdr: { detectChanges: jasmine.createSpy("detectChanges") },
+      };
 
       const editors = {
         arduinoEditors: {
@@ -138,6 +142,7 @@ describe("TrackEditorHelpHelper", () => {
           first: mockPhidgetEditor,
         } as unknown as QueryList<any>,
         bartEditors: { first: mockBartEditor } as unknown as QueryList<any>,
+        dsEditors: { first: mockDsEditor } as unknown as QueryList<any>,
       };
 
       const configs = {
@@ -145,6 +150,7 @@ describe("TrackEditorHelpHelper", () => {
         trackmateConfigs: [{ name: "TM1" } as any],
         phidgetConfigs: [{ name: "P1" } as any, { name: "P2" } as any],
         bartConfigs: [{ name: "B1" } as any],
+        dsConfigs: [{ name: "DS1" } as any],
       };
 
       const steps = TrackEditorHelpHelper.getInterfaceHelpSteps(
@@ -153,8 +159,8 @@ describe("TrackEditorHelpHelper", () => {
         configs,
       );
 
-      // Exactly 4 steps (deduplicated across duplicate Arduinos and Phidgets)
-      expect(steps.length).toBe(4);
+      // Exactly 5 steps (deduplicated across duplicate Arduinos and Phidgets)
+      expect(steps.length).toBe(5);
 
       // Arduino step
       expect(steps[0].targetId).toBe("interface-arduino-0");
@@ -209,6 +215,16 @@ describe("TrackEditorHelpHelper", () => {
       expect(mockBartEditor.sectionsExpanded.main).toBeFalse();
       expect(mockBartEditor.sectionsExpanded.rw).toBeFalse();
       expect(mockBartEditor.cdr.detectChanges).toHaveBeenCalled();
+
+      // DS step
+      expect(steps[4].targetId).toBe("interface-ds-0");
+      expect(steps[4].selector).toBe("#interface-ds-0");
+      expect(steps[4].title).toBe("translated_TE_HELP_DS_TITLE");
+      expect(steps[4].content).toBe("translated_TE_HELP_DS_CONTENT");
+      expect(steps[4].position).toBe("left");
+      steps[4].onEnter?.();
+      expect(mockDsEditor.ensureSectionsExpanded).toHaveBeenCalled();
+      expect(mockDsEditor.cdr.detectChanges).toHaveBeenCalled();
     });
   });
 
@@ -254,9 +270,10 @@ describe("TrackEditorHelpHelper", () => {
           trackmateConfigs: [{ name: "TM1" } as any],
           phidgetConfigs: [{ name: "P1" } as any],
           bartConfigs: [{ name: "B1" } as any],
+          dsConfigs: [{ name: "DS1" } as any],
         },
       );
-      expect(steps.length).toBe(10); // 6 base + 4 interfaces
+      expect(steps.length).toBe(11); // 6 base + 5 interfaces
 
       for (const step of steps) {
         expect(step.title).not.toBe("");
@@ -287,6 +304,8 @@ describe("TrackEditorHelpHelper", () => {
       expect(steps[8].content).toContain("help-section-phidget-interface");
       expect(steps[9].content).toContain("help-article-track-editor");
       expect(steps[9].content).toContain("help-section-bart-interface");
+      expect(steps[10].content).toContain("help-article-track-editor");
+      expect(steps[10].content).toContain("help-section-ds-interface");
     });
   });
 });

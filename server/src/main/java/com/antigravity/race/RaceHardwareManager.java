@@ -234,4 +234,16 @@ public class RaceHardwareManager {
   public boolean hasMainRelay() {
     return protocols != null && protocols.hasMainRelay();
   }
+
+  public boolean canManualStart() {
+    return protocols == null || protocols.canManualStart();
+  }
+
+  public boolean canManualPause() {
+    return protocols == null || protocols.canManualPause();
+  }
+
+  public boolean canManualRestart() {
+    return protocols == null || protocols.canManualRestart();
+  }
 }

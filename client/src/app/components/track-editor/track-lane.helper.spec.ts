@@ -96,4 +96,24 @@ describe("TrackLaneHelper", () => {
       expect(updated[0].foreground_color).toBe("#00ff00");
     });
   });
+
+  describe("handleLaneDropped", () => {
+    it("should reorder lanes when previousIndex and currentIndex differ", () => {
+      const l1 = new Lane("l1", "w", "b", 10);
+      const l2 = new Lane("l2", "y", "k", 20);
+      const lanes = [l1, l2];
+      const result = TrackLaneHelper.handleLaneDropped(lanes, 0, 1);
+      expect(result.changed).toBeTrue();
+      expect(result.lanes[0]).toBe(l2);
+      expect(result.lanes[1]).toBe(l1);
+    });
+
+    it("should not reorder lanes when previousIndex equals currentIndex", () => {
+      const l1 = new Lane("l1", "w", "b", 10);
+      const lanes = [l1];
+      const result = TrackLaneHelper.handleLaneDropped(lanes, 0, 0);
+      expect(result.changed).toBeFalse();
+      expect(result.lanes).toBe(lanes);
+    });
+  });
 });

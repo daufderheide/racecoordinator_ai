@@ -231,7 +231,30 @@ Connessione wireless a ponti di cronometraggio e transponder Policar BART Blueto
 
 ---
 
-### 5. Interfaccia Demo / Simulazione
+### 5. Interfaccia DS {: #ds-interface }
+
+L'interfaccia **DS** fornisce integrazione nativa per le unità commerciali di cronometraggio DS (DS-030, DS-200, DS-200B, DS-300 e DS-300RC) collegate tramite porta seriale COM o adattatore USB-seriale.
+
+- **Modelli Supportati**: Valore predefinito impostato su **DS-300**.
+  - **DS-030**: Comunica a 4800 baud utilizzando eventi di comando compatti a 1 byte e pacchetti temporali a 3 byte.
+  - **DS-200**: Comunica a 4800 baud tramite pacchetti telemetrici a 21 byte con rimappatura hardware delle corsie.
+  - **DS-200B**: Comunica a 57600 baud tramite pacchetti telemetrici a 21 byte.
+  - **DS-300**: Comunica a 57600 baud con deduplicazione delle trasmissioni a raffica tripla.
+  - **DS-300RC**: Comunica a 57600 baud con filtraggio dei pacchetti.
+- **Gestione della Corsa Controllata da Hardware**: A differenza delle interfacce guidate da software, le centraline DS controllano avvio, pausa e azzeramento delle manche direttamente dai propri pulsanti fisici. Quando un'interfaccia DS è attiva su una pista, Race Coordinator AI blocca i controlli manuali software di partenza, pausa e riavvio, seguendo fedelmente le transizioni di stato del controller DS.
+- **Indicatori Corsia dal Vivo**: Una griglia per 8 corsie offre la verifica in tempo reale dell'attività dei sensori. Al passaggio di un'auto sul traguardo, il badge di stato della corsia corrispondente si illumina in verde per 1 secondo per poi ritornare grigio.
+- **Riconnessione Automatica del Baud Rate**: La velocità seriale è gestita automaticamente per il modello DS selezionato. Il passaggio tra modelli a 4800 baud (DS-030, DS-200) e modelli a 57600 baud (DS-200B, DS-300, DS-300RC) chiude e riapre automaticamente la connessione seriale alla velocità appropriata.
+
+#### Configurazione di Gara Consigliata con Hardware DS
+Poiché le centraline di cronometraggio DS operano come direttori di gara autonomi dotati di propri timer a conto alla rovescia, semafori di partenza e sirene di fine manche, la configurazione raccomandata in Race Coordinator AI è:
+
+1. **Durata Manche Infinita (Infinite Time)**: Nell'Editor di Gara, sotto **Metodo di Arrivo**, impostare la manche su **A Tempo** con **Tempo Infinito** (o durata illimitata / 0). Questo impedisce al timer software di Race Coordinator AI di arrestare la manche prima del dovuto, consentendo al segnale hardware di fine manche della centralina DS (`END_HEAT`) di chiudere la sessione con piena autorità.
+2. **Avanzamento Manche via Hardware**: Quando l'unità DS conclude la manche ed emette il segnale di manche terminata, Race Coordinator AI passa allo stato di manche conclusa. La pressione del pulsante fisico **START** sulla console DS farà poi avanzare l'evento alla manche successiva della rotazione.
+3. **Pause e Interruzioni via Hardware**: Premendo il pulsante fisico **STOP** sulla centralina DS si mette immediatamente in pausa la corsa in Race Coordinator AI. Premendo il pulsante fisico **RESET** si reimposta la manche corrente o si annulla una sequenza di partenza in corso.
+
+---
+
+### 6. Interfaccia Demo / Simulazione
 
 Ideale per collaudare formati di gara, rotazioni, temi, annunci audio e tabelloni senza collegare alcun hardware fisico.
 

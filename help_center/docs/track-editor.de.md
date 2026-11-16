@@ -235,7 +235,30 @@ Drahtlose Anbindung an Policar BART Bluetooth Low Energy (BLE) Zeitmessbrücken 
 
 ---
 
-### 5. Demo- / Simulations-Schnittstelle
+### 5. DS-Schnittstelle {: #ds-interface }
+
+Die **DS**-Schnittstelle bietet native Unterstützung für kommerzielle DS-Zeitmessboxen (DS-030, DS-200, DS-200B, DS-300 und DS-300RC), die über einen seriellen COM-Anschluss oder USB-Seriell-Adapter angeschlossen sind.
+
+- **Unterstützte Modelle**: Standardmäßig **DS-300**.
+  - **DS-030**: Kommuniziert mit 4800 Baud über kompakte 1-Byte-Befehlsereignisse und 3-Byte-Zeitpakete.
+  - **DS-200**: Kommuniziert mit 4800 Baud über 21-Byte-Telemetriepakete mit automatischer Hardware-Spurzuordnung.
+  - **DS-200B**: Kommuniziert mit 57600 Baud über 21-Byte-Telemetriepakete.
+  - **DS-300**: Kommuniziert mit 57600 Baud mit Filterung von Paket-Mehrfachsendungen.
+  - **DS-300RC**: Kommuniziert mit 57600 Baud mit Paketfilterung.
+- **Hardware-gesteuerte Rennverwaltung**: Im Gegensatz zu softwaregesteuerten Schnittstellen steuern DS-Zeitmessboxen Rennstart, Pause und Lauf-Neustart direkt über ihre physischen Tasten. Wenn eine DS-Schnittstelle aktiv ist, sperrt Race Coordinator AI die manuellen Software-Bedienelemente für Start, Pause und Neustart und folgt exakt den Statusübergängen des DS-Hardwarecontrollers.
+- **Live-Spuranzeigen**: Ein 8-Spur-Sensorraster bietet eine Echtzeitüberprüfung der Spuraktivität. Wenn ein Fahrzeug einen Sensor auf einer beliebigen Spur passiert, leuchtet das entsprechende Status-Badge 1 Sekunde lang durchgehend grün, bevor es wieder grau wird.
+- **Automatische Baudraten-Anpassung**: Die Baudrate wird automatisch für das gewählte DS-Modell verwaltet. Der Wechsel zwischen 4800-Baud-Modellen (DS-030, DS-200) und 57600-Baud-Modellen (DS-200B, DS-300, DS-300RC) schließt und öffnet die serielle Verbindung automatisch mit der korrekten Geschwindigkeit.
+
+#### Empfohlene Rennkonfiguration mit DS-Hardware
+Da DS-Zeitmessboxen als autonome Rennleiter mit eigenen physischen Countdown-Timern, Startampeln und Lauf-Ende-Hupen fungieren, ist die empfohlene Konfiguration in Race Coordinator AI:
+
+1. **Unbegrenzte Laufzeit (Infinite Time)**: Konfigurieren Sie im Renn-Editor unter **Zielmethode** den Lauf auf **Zeitgesteuert** mit **Unbegrenzter Zeit** (oder Laufzeit 0). Dadurch wird verhindert, dass die Software-Uhr von Race Coordinator AI den Lauf vorzeitig beendet, sodass das Hardware-Signal der DS-Box (`END_HEAT`) den Lauf verbindlich abschließt.
+2. **Hardware-Lauffortschaltung**: Sobald die DS-Einheit den Lauf beendet und das Laufende meldet, wechselt Race Coordinator AI in den Zustand «Lauf beendet». Durch Drücken der physischen **START**-Taste auf der DS-Konsole wird dann der Wechsel zum nächsten Lauf in der Rotation ausgelöst.
+3. **Hardware-Pausen und Unterbrechungen**: Durch Drücken der physischen **STOP**-Taste auf der DS-Box wird das Rennen in Race Coordinator AI sofort angehalten. Durch Drücken der physischen **RESET**-Taste wird entweder der aktuelle Lauf zurückgesetzt oder eine laufende Startsequenz abgebrochen.
+
+---
+
+### 6. Demo- / Simulations-Schnittstelle
 
 Für Tests von Rennformaten, Rotationen, Themes, Audioansagen und Leaderboards ohne angeschlossene Hardware steht der **Demo-Modus** bereit.
 

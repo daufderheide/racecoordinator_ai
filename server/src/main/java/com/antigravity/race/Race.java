@@ -1706,6 +1706,26 @@ public class Race implements ProtocolListener {
   }
 
   @Override
+  public synchronized void onStartTimer(int interfaceIndex) {
+    RaceHardwareEventHandler.handleStartTimer(this, interfaceIndex);
+  }
+
+  @Override
+  public synchronized void onPauseTimer(int interfaceIndex) {
+    RaceHardwareEventHandler.handlePauseTimer(this, interfaceIndex);
+  }
+
+  @Override
+  public synchronized void onEndHeat(int interfaceIndex) {
+    RaceHardwareEventHandler.handleEndHeat(this, interfaceIndex);
+  }
+
+  @Override
+  public synchronized void onAbort(int interfaceIndex) {
+    RaceHardwareEventHandler.handleAbort(this, interfaceIndex);
+  }
+
+  @Override
   public void onInterfaceEvent(InterfaceEvent e) {
     if (this.stopped) {
       return;

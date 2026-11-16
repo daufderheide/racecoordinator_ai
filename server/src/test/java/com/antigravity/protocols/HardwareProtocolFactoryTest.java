@@ -188,4 +188,27 @@ public class HardwareProtocolFactoryTest {
     assertEquals(0, protocols.get(0).getInterfaceIndex());
     assertEquals(1, protocols.get(1).getInterfaceIndex());
   }
+
+  @Test
+  public void testCreateProtocolsForTrack_DsConfig() {
+    List<Lane> lanes = new ArrayList<>();
+    lanes.add(new Lane("Lane 1", "#FF0000", 0));
+    lanes.add(new Lane("Lane 2", "#00FF00", 1));
+
+    com.antigravity.protocols.ds.DsConfig ds = // fqn-collision
+        new com.antigravity.protocols.ds.DsConfig(
+            "DS Interface", "COM1", com.antigravity.protocols.ds.DsType.DS_300); // fqn-collision
+
+    Track track =
+        new Track.Builder()
+            .name("DS Track")
+            .lanes(lanes)
+            .dsConfigs(java.util.Collections.singletonList(ds))
+            .build();
+
+    List<IProtocol> protocols = HardwareProtocolFactory.createProtocolsForTrack(track, null);
+    assertEquals(1, protocols.size());
+    assertTrue(protocols.get(0) instanceof com.antigravity.protocols.ds.DsProtocol);
+    assertEquals(0, protocols.get(0).getInterfaceIndex());
+  }
 }

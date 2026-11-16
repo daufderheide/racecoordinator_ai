@@ -191,6 +191,37 @@ export const MOCK_TRACKS = [
       },
     ],
   },
+  {
+    entity_id: "t6",
+    name: "DS Track",
+    num_track_sections: 100,
+    lanes: [
+      {
+        entity_id: "l1",
+        length: 10,
+        background_color: "#ef4444",
+        foreground_color: "black",
+      },
+      {
+        entity_id: "l2",
+        length: 10,
+        background_color: "#ffffff",
+        foreground_color: "black",
+      },
+    ],
+    arduino_configs: [],
+    trackmate_configs: [],
+    bart_configs: [],
+    phidget_configs: [],
+    ds_configs: [
+      {
+        name: "DS-300",
+        commPort: "COM3",
+        type: 3,
+        baudRate: 57600,
+      },
+    ],
+  },
 ];
 
 export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
@@ -215,6 +246,7 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
       trackmate_configs: t.trackmate_configs,
       phidget_configs: t.phidget_configs,
       bart_configs: t.bart_configs,
+      ds_configs: t.ds_configs,
     }),
 );
 

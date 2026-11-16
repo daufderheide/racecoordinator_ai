@@ -385,4 +385,18 @@ public class RaceHardwareManagerTest {
     hardwareManager.close();
     verify(mockProtocols).close();
   }
+
+  @Test
+  public void testManualControlsDelegation() {
+    when(mockProtocols.canManualStart()).thenReturn(true);
+    when(mockProtocols.canManualPause()).thenReturn(false);
+    when(mockProtocols.canManualRestart()).thenReturn(true);
+
+    assertTrue(hardwareManager.canManualStart());
+    assertFalse(hardwareManager.canManualPause());
+    assertTrue(hardwareManager.canManualRestart());
+
+    when(mockProtocols.canManualStart()).thenReturn(false);
+    assertFalse(hardwareManager.canManualStart());
+  }
 }

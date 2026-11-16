@@ -250,7 +250,30 @@ The **BART** interface connects wirelessly to Policar BART Bluetooth Low Energy 
 
 ---
 
-### 5. Demo / Simulation Interface
+### 5. DS Interface {: #ds-interface }
+
+The **DS** interface provides native integration for commercial DS timing units (DS-030, DS-200, DS-200B, DS-300, and DS-300RC) connected via a serial COM port or USB-to-serial adapter.
+
+- **Supported Models**: Defaults to **DS-300**.
+  - **DS-030**: Communicates at 4800 baud using compact single-byte command events and 3-byte timing packets.
+  - **DS-200**: Communicates at 4800 baud using 21-byte telemetry packets with hardware lane remapping.
+  - **DS-200B**: Communicates at 57600 baud using 21-byte telemetry packets.
+  - **DS-300**: Communicates at 57600 baud with triple-packet burst deduplication.
+  - **DS-300RC**: Communicates at 57600 baud with packet burst filtering.
+- **Hardware-Controlled Race Management**: Unlike software-driven interfaces, DS timing boxes control race start, pause, and heat reset directly from their physical hardware buttons. When a DS interface is active on a track, Race Coordinator AI locks manual software start, pause, and restart controls and follows the DS hardware controller's state transitions.
+- **Live Lane Indicators**: An 8-lane sensor grid provides real-time verification of lane activity. When a car passes a detector on any lane, the corresponding status badge illuminates solid green for 1 second before reverting to grey.
+- **Baud Rate Auto-Reconnection**: The connection baud rate is managed automatically for your chosen DS model. Switching between 4800 baud models (DS-030, DS-200) and 57600 baud models (DS-200B, DS-300, DS-300RC) automatically closes and re-establishes the serial connection at the correct speed.
+
+#### Recommended Race Configuration with DS Hardware
+Because DS hardware timing units operate as autonomous race controllers with their own physical countdown timers, start lights, and end-of-heat sirens, the recommended Race Coordinator AI race configuration is:
+
+1. **Infinite Heat Duration**: In the Race Editor under **Finish Method**, configure the heat to **Timed** with **Infinite Time** (or untimed / duration 0). This prevents Race Coordinator AI's internal software clock from stopping the heat prematurely, allowing the DS box's hardware timer and end-of-heat signal (`END_HEAT`) to authoritatively conclude the heat.
+2. **Hardware Heat Advancement**: When the DS unit finishes a heat and signals heat over, Race Coordinator AI transitions to the heat over state. Pressing the physical **START** button on the DS console will then trigger the transition to the next heat in the rotation.
+3. **Hardware Pauses and Track Calls**: Pressing the physical **STOP** button on the DS box immediately pauses racing in Race Coordinator AI. Pressing the physical **RESET** button either resets the current heat or aborts a starting sequence in progress.
+
+---
+
+### 6. Demo / Simulation Interface
 
 When testing race formats, custom themes, rotation schedules, or Text-to-Speech audio callouts without physical track hardware attached, you can run races in **Demo Mode**.
 

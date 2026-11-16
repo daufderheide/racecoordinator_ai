@@ -659,6 +659,7 @@ describe("TrackEditorComponent", () => {
       component.phidgetConfigs,
       component.lanes.length,
       component.bartConfigs,
+      component.dsConfigs,
     );
   });
 
@@ -837,6 +838,10 @@ describe("TrackEditorComponent", () => {
         { deviceName: "B1", lapPinBehaviors: [] } as any,
         { deviceName: "B2", lapPinBehaviors: [] } as any,
       ];
+      component.dsConfigs = [
+        { name: "DS1", commPort: "COM1", type: 1 } as any,
+        { name: "DS2", commPort: "COM2", type: 2 } as any,
+      ];
       component.phidgetConfigs = [
         {
           name: "P1",
@@ -860,6 +865,8 @@ describe("TrackEditorComponent", () => {
       expect(selectors).toContain("#interface-phidget-0");
       expect(selectors).toContain("#interface-bart-0");
       expect(selectors).not.toContain("#interface-bart-1");
+      expect(selectors).toContain("#interface-ds-0");
+      expect(selectors).not.toContain("#interface-ds-1");
     });
 
     it("should provide base guide steps in correct order", () => {
@@ -867,6 +874,7 @@ describe("TrackEditorComponent", () => {
       component.trackmateConfigs = [];
       component.phidgetConfigs = [];
       component.bartConfigs = [];
+      component.dsConfigs = [];
       const steps = component.getHelpSteps();
       expect(steps.length).toBe(6);
 
@@ -926,9 +934,10 @@ describe("TrackEditorComponent", () => {
       component.bartConfigs = [
         { deviceName: "B1", lapPinBehaviors: [] } as any,
       ];
+      component.dsConfigs = [{ name: "DS1", commPort: "COM1", type: 1 } as any];
 
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(10);
+      expect(steps.length).toBe(11);
 
       const targetIds = steps.map((s) => s.targetId);
       expect(targetIds).toEqual([
@@ -942,6 +951,7 @@ describe("TrackEditorComponent", () => {
         "interface-trackmate-0",
         "interface-phidget-0",
         "interface-bart-0",
+        "interface-ds-0",
       ]);
 
       const selectors = steps.map((s) => s.selector);
@@ -956,6 +966,7 @@ describe("TrackEditorComponent", () => {
         "#interface-trackmate-0",
         "#interface-phidget-0",
         "#interface-bart-0",
+        "#interface-ds-0",
       ]);
     });
 
@@ -975,6 +986,7 @@ describe("TrackEditorComponent", () => {
       component.bartConfigs = [
         { deviceName: "B1", lapPinBehaviors: [] } as any,
       ];
+      component.dsConfigs = [{ name: "DS1", commPort: "COM1", type: 1 } as any];
       component.sectionsExpanded.lanes = true;
       component.sectionsExpanded.interfaces = true;
       fixture.detectChanges();
@@ -993,19 +1005,23 @@ describe("TrackEditorComponent", () => {
       const interfaceHeaders = fixture.nativeElement.querySelectorAll(
         ".config-section .section-content .editor-section .section-header",
       );
-      expect(interfaceHeaders.length).toBe(3);
+      expect(interfaceHeaders.length).toBe(4);
 
       const names = Array.from(interfaceHeaders).map((header: any) =>
         header.querySelector("span")?.textContent?.trim(),
       );
-      expect(names).toEqual(["Arduino", "Phidget", "Trackmate"]);
+      expect(names).toEqual(["Arduino", "DS", "Phidget", "Trackmate"]);
+
+      const dsBadge = interfaceHeaders[1].querySelector(".interface-badge");
+      expect(dsBadge).toBeTruthy();
+      expect(dsBadge.textContent.trim()).toBe("TE_UNDER_DEVELOPMENT");
 
       const phidgetBadge =
-        interfaceHeaders[1].querySelector(".interface-badge");
+        interfaceHeaders[2].querySelector(".interface-badge");
       expect(phidgetBadge).toBeNull();
 
       const trakmateBadge =
-        interfaceHeaders[2].querySelector(".interface-badge");
+        interfaceHeaders[3].querySelector(".interface-badge");
       expect(trakmateBadge).toBeNull();
     }));
   });
@@ -1227,6 +1243,9 @@ describe("TrackEditorComponent", () => {
         trackmate_configs: [{ name: "TM1", digitalIds: [2] }],
         phidget_configs: [{ name: "PH1", serialNumber: 999 }],
         bart_configs: [{ name: "B1", comPort: "COM1" }],
+        ds_configs: [
+          { name: "DS1", commPort: "COM5", type: 3, baudRate: 57600 },
+        ],
       };
       dataService.createTrack.and.returnValue(of(mockSavedTrack as any));
       dataService.getTracks.and.returnValue(of([mockSavedTrack as any]));
@@ -1249,6 +1268,7 @@ describe("TrackEditorComponent", () => {
       expect(component.trackmateConfigs.length).toBe(1);
       expect(component.phidgetConfigs.length).toBe(1);
       expect(component.bartConfigs.length).toBe(1);
+      expect(component.dsConfigs.length).toBe(1);
     }));
 
     it("should toggle sections correctly", () => {
@@ -1418,6 +1438,13 @@ describe("TrackEditorComponent", () => {
       expect(component.phidgetConfigs.length).toBe(1);
       component.removePhidgetConfig(0);
       expect(component.phidgetConfigs.length).toBe(0);
+
+      component.addDsConfig();
+      expect(component.dsConfigs.length).toBe(1);
+      component.onDsConfigChange();
+      expect(component.trackByDsConfig(0, component.dsConfigs[0])).toBe(0);
+      component.removeDsConfig(0);
+      expect(component.dsConfigs.length).toBe(0);
     });
 
     it("should handle onPhidgetConfigChange without calling initializeInterfaces", () => {

@@ -1,0 +1,181 @@
+@if (config()) {
+  <div class="arduino-config-container" [id]="'ds-editor-' + interfaceIndex()">
+    <div class="config-section">
+      <div class="section-header" (click)="toggleSection('ds')">
+        <span class="expander-icon" [class.collapsed]="!sectionsExpanded.ds"
+          >▼</span
+        >
+        <h1>
+          {{ "DSE_HEADER" | translate }}
+          <span class="interface-badge under-development-badge">{{
+            "TE_UNDER_DEVELOPMENT" | translate
+          }}</span>
+        </h1>
+        <div class="spacer"></div>
+        <button
+          class="action-btn danger small"
+          [disabled]="!isEditMode()"
+          (click)="onRemove($event)"
+          title="{{ 'DSE_REMOVE_INTERFACE' | translate }}"
+        >
+          <span class="material-icons">delete</span>
+        </button>
+      </div>
+
+      @if (sectionsExpanded.ds) {
+        <div class="section-content">
+          <div class="sections-wrapper">
+            <!-- Main Configuration Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('main')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.main"
+                  >▼</span
+                >
+                <h4>{{ "DSE_MAIN_HEADER" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.main) {
+                <div class="section-content">
+                  <div class="config-top-section">
+                    <div class="main-settings-group">
+                      <div class="board-controls">
+                        <!-- COM Port Row -->
+                        <div class="control-group">
+                          <label>{{ "DSE_COMM_PORT" | translate }}</label>
+                          <div class="com-port-row">
+                            <app-custom-select
+                              [id]="'commPort-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
+                              [ngModel]="config().commPort"
+                              (ngModelChange)="onPortChange($event)"
+                            >
+                              <app-custom-option value="" [disabled]="true">
+                                {{ "DSE_SELECT_PORT" | translate }}
+                              </app-custom-option>
+                              @for (port of serialPorts; track port) {
+                                <app-custom-option [value]="port">
+                                  {{ port }}
+                                </app-custom-option>
+                              }
+                              @if (
+                                config().commPort &&
+                                !serialPorts.includes(config().commPort)
+                              ) {
+                                <app-custom-option [value]="config().commPort">
+                                  {{ config().commPort }}
+                                </app-custom-option>
+                              }
+                            </app-custom-select>
+                            <button
+                              type="button"
+                              [id]="'ds-status-badge-' + interfaceIndex()"
+                              class="status-badge"
+                              [class.connected]="status === 'CONNECTED'"
+                              [title]="'DSE_STATUS_' + status | translate"
+                            >
+                              <div class="status-dot"></div>
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Type Selector Row -->
+                        <div class="control-group">
+                          <label>{{ "DSE_TYPE" | translate }}</label>
+                          <app-custom-select
+                            [id]="'dsType-' + interfaceIndex()"
+                            [disabled]="!isEditMode()"
+                            [ngModel]="config().type"
+                            (ngModelChange)="onTypeChange($event)"
+                          >
+                            @for (opt of dsTypeOptions; track opt.value) {
+                              <app-custom-option [value]="opt.value">
+                                {{ opt.label }}
+                              </app-custom-option>
+                            }
+                          </app-custom-select>
+                        </div>
+                      </div>
+
+                      <!-- Notice regarding hardware-controlled heat lifecycle -->
+                      <div class="hardware-notice-banner">
+                        <span class="material-icons info-icon">info</span>
+                        <div class="notice-content">
+                          <span class="notice-text">{{
+                            "DSE_HARDWARE_CONTROLLED_NOTICE" | translate
+                          }}</span>
+                          <a
+                            href="javascript:void(0)"
+                            class="learn-more-link"
+                            (click)="openHelpCenter($event)"
+                          >
+                            {{ "DSE_LEARN_MORE" | translate }}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="board-preview">
+                      <img
+                        src="assets/images/ds_logo.png"
+                        alt="DS Timing"
+                        class="board-image"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Lane Status Section -->
+            <div class="config-section" [id]="'ds-lanes-' + interfaceIndex()">
+              <div class="section-header" (click)="toggleSection('lanes')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.lanes"
+                  >▼</span
+                >
+                <h4>{{ "DSE_LANE_STATUS_HEADER" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.lanes) {
+                <div class="section-content">
+                  <div class="pins-section">
+                    <div class="pins-config">
+                      <div class="pin-grid">
+                        @for (lane of [0, 1, 2, 3, 4, 5, 6, 7]; track $index) {
+                          <div
+                            class="pin-item"
+                            [id]="'ds-lane-' + $index + '-' + interfaceIndex()"
+                          >
+                            <div class="pin-header">
+                              <label>{{
+                                "DSE_LANE_LABEL"
+                                  | translate: { lane: $index + 1 }
+                              }}</label>
+                              <span
+                                [id]="
+                                  'ds-lane-status-' +
+                                  $index +
+                                  '-' +
+                                  interfaceIndex()
+                                "
+                                class="status-badge small"
+                                [class.connected]="laneBadges[$index]"
+                              ></span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

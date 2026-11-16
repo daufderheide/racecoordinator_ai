@@ -1,3 +1,11 @@
+import { ActivatedRoute, Router } from "@angular/router";
+import { Subscription } from "rxjs";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "@app/services/connection-monitor.service";
+import { NavigationService } from "@app/services/navigation.service";
+
 export interface TrackEditorSections {
   general: boolean;
   interfaces: boolean;
@@ -83,5 +91,85 @@ export class TrackEditorUiHelper {
     };
     TrackEditorUiHelper.saveSections(updated);
     return { nextState, sections: updated };
+  }
+
+  static focusNameInput(elementId: string = "track-name-input"): void {
+    setTimeout(() => {
+      const el = document.getElementById(elementId) as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
+
+  static navigateBack(router: Router, route: ActivatedRoute): void {
+    const returnUrl = route.snapshot.queryParamMap.get("returnUrl");
+    const from = route.snapshot.queryParamMap.get("from");
+    if (returnUrl) {
+      router.navigateByUrl(returnUrl);
+    } else if (from === "modify-heats") {
+      router.navigate(["/default-raceday"], {
+        queryParams: { modifyHeats: "true" },
+      });
+    } else {
+      router.navigate(["/raceday-setup"]);
+    }
+  }
+
+  static navigateToTrack(
+    router: Router,
+    route: ActivatedRoute,
+    navigationService: NavigationService,
+    trackId: string,
+  ): void {
+    navigationService.setLastEditedId("track", trackId);
+    router.navigate([], {
+      relativeTo: route,
+      queryParams: { id: trackId },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+  }
+
+  static monitorConnection(
+    connectionMonitor: ConnectionMonitorService,
+    onStateChange: (isLost: boolean) => void,
+  ): Subscription {
+    return connectionMonitor.connectionState$.subscribe((state) => {
+      onStateChange(state === ConnectionState.DISCONNECTED);
+    });
+  }
+
+  static handleConnectionLoss(
+    isConnectionLost: () => boolean,
+    onTimeout: () => void,
+    timeoutMs: number = 5000,
+    checkIntervalMs: number = 1000,
+  ): any {
+    const startTime = Date.now();
+    const intervalId = setInterval(() => {
+      if (!isConnectionLost()) {
+        clearInterval(intervalId);
+        return;
+      }
+      if (Date.now() - startTime > timeoutMs) {
+        clearInterval(intervalId);
+        onTimeout();
+      }
+    }, checkIntervalMs);
+    return intervalId;
+  }
+
+  static confirmLedStringDialog(
+    requestingArduinoIndex: number,
+    numLeds: number,
+    editors: Array<{ addLedString: (num: number) => void }>,
+  ): boolean {
+    if (requestingArduinoIndex >= 0 && editors[requestingArduinoIndex]) {
+      editors[requestingArduinoIndex].addLedString(numLeds);
+      return true;
+    }
+    return false;
   }
 }

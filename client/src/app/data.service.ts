@@ -12,6 +12,7 @@ import { Season, SeasonStandingItem } from "@app/models/season";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
   PhidgetConfig,
   TrackmateConfig,
 } from "@app/models/track";
@@ -404,6 +405,7 @@ export class DataService {
     phidgetConfigsOrLaneCount: any[] | number = [],
     laneCountParam?: number,
     bartConfigs: BartConfig[] = [],
+    dsConfigs: DsConfig[] = [],
   ): Observable<InitializeInterfaceResponse> {
     return this.interfaceHelper.initializeInterface(
       configs,
@@ -411,6 +413,7 @@ export class DataService {
       phidgetConfigsOrLaneCount,
       laneCountParam,
       bartConfigs,
+      dsConfigs,
     );
   }
 
@@ -418,11 +421,13 @@ export class DataService {
     config: ArduinoConfig | null,
     interfaceIndex: number,
     phidgetConfig?: PhidgetConfig | null,
+    dsConfig?: DsConfig | null,
   ): Observable<UpdateInterfaceConfigResponse> {
     return this.interfaceHelper.updateInterfaceConfig(
       config,
       interfaceIndex,
       phidgetConfig,
+      dsConfig,
     );
   }
 

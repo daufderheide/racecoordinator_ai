@@ -226,6 +226,41 @@
                 </button>
               </div>
             </div>
+
+            <div class="editor-section">
+              <div
+                class="section-header"
+                style="
+                  cursor: default;
+                  background: transparent;
+                  padding-left: 0;
+                  min-height: auto;
+                  margin-bottom: 0;
+                "
+              >
+                <span
+                  style="
+                    font-size: 1.1rem;
+                    color: #94a3b8;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                  "
+                  >DS</span
+                >
+                <span class="interface-badge under-development-badge">{{
+                  "TE_UNDER_DEVELOPMENT" | translate
+                }}</span>
+                <div class="spacer"></div>
+                <button
+                  id="add-ds-btn"
+                  class="action-btn small add-list-btn"
+                  [disabled]="!isEditMode"
+                  (click)="addDsConfig(); $event.stopPropagation()"
+                >
+                  <span class="material-icons">add</span>
+                </button>
+              </div>
+            </div>
             <div class="editor-section">
               <div
                 class="section-header"
@@ -310,7 +345,8 @@
             arduinoConfigs.length +
               bartConfigs.length +
               phidgetConfigs.length +
-              trackmateConfigs.length >
+              trackmateConfigs.length +
+              dsConfigs.length >
             0
               ? 'auto'
               : 'hidden'
@@ -320,7 +356,8 @@
             arduinoConfigs.length === 0 &&
             bartConfigs.length === 0 &&
             phidgetConfigs.length === 0 &&
-            trackmateConfigs.length === 0
+            trackmateConfigs.length === 0 &&
+            dsConfigs.length === 0
           ) {
             <div class="empty-state">
               <h3>{{ "TE_NO_INTERFACES_ADDED" | translate }}</h3>
@@ -408,6 +445,29 @@
                 (remove)="removeBartConfig(i)"
               >
               </app-bart-editor>
+            </div>
+          }
+
+          @for (
+            config of dsConfigs;
+            track trackByDsConfig(i, config);
+            let i = $index
+          ) {
+            <div class="interface-container" [id]="'interface-ds-' + i">
+              <app-ds-editor
+                [config]="config"
+                [isEditMode]="isEditMode"
+                [interfaceIndex]="
+                  i +
+                  arduinoConfigs.length +
+                  trackmateConfigs.length +
+                  phidgetConfigs.length +
+                  bartConfigs.length
+                "
+                (change)="onDsConfigChange()"
+                (remove)="removeDsConfig(i)"
+              >
+              </app-ds-editor>
             </div>
           }
         </div>

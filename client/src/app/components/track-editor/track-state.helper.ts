@@ -2,6 +2,8 @@ import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
   BartConfig,
+  DsConfig,
+  DsType,
   LedString,
   MAX_ANALOG_PINS,
   MAX_DIGITAL_PINS,
@@ -21,6 +23,7 @@ export interface TrackSnapshotOptions {
   trackmateConfigs: TrackmateConfig[];
   phidgetConfigs: PhidgetConfig[];
   bartConfigs: BartConfig[];
+  dsConfigs: DsConfig[];
 }
 
 export interface InterfaceConfigSet {
@@ -28,6 +31,7 @@ export interface InterfaceConfigSet {
   trackmateConfigs: TrackmateConfig[];
   phidgetConfigs: PhidgetConfig[];
   bartConfigs: BartConfig[];
+  dsConfigs: DsConfig[];
 }
 
 export class TrackStateHelper {
@@ -48,6 +52,24 @@ export class TrackStateHelper {
     const bartCopy = track.bart_configs
       ? JSON.parse(JSON.stringify(track.bart_configs))
       : [];
+    const dsCopy = track.ds_configs
+      ? JSON.parse(JSON.stringify(track.ds_configs)).map((d: any) => ({
+          ...d,
+          type:
+            typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : (d.type ?? DsType.DS_300),
+          baudRate:
+            (typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : d.type) === DsType.DS_030 ||
+            (typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : d.type) === DsType.DS_200
+              ? 4800
+              : 57600,
+        }))
+      : [];
     return new Track({
       entity_id: track.entity_id,
       name: track.name,
@@ -61,6 +83,7 @@ export class TrackStateHelper {
       trackmate_configs: trackmateCopy,
       phidget_configs: phidgetCopy,
       bart_configs: bartCopy,
+      ds_configs: dsCopy,
     });
   }
 
@@ -85,6 +108,24 @@ export class TrackStateHelper {
       ? deepCopy(options.phidgetConfigs)
       : [];
     const bConfigs = options.bartConfigs ? deepCopy(options.bartConfigs) : [];
+    const dConfigs = options.dsConfigs
+      ? deepCopy(options.dsConfigs).map((d: any) => ({
+          ...d,
+          type:
+            typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : (d.type ?? DsType.DS_300),
+          baudRate:
+            (typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : d.type) === DsType.DS_030 ||
+            (typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : d.type) === DsType.DS_200
+              ? 4800
+              : 57600,
+        }))
+      : [];
     return new Track({
       entity_id: options.editingTrack.entity_id,
       name: options.trackName,
@@ -106,6 +147,7 @@ export class TrackStateHelper {
       trackmate_configs: tmConfigs,
       phidget_configs: phConfigs,
       bart_configs: bConfigs,
+      ds_configs: dConfigs,
     });
   }
 
@@ -154,6 +196,15 @@ export class TrackStateHelper {
     if (
       JSON.stringify(t1.bart_configs || []) !==
       JSON.stringify(t2.bart_configs || [])
+    ) {
+      return false;
+    }
+
+    if (
+      !TrackStateHelper.areDsConfigsEqual(
+        t1.ds_configs || [],
+        t2.ds_configs || [],
+      )
     ) {
       return false;
     }
@@ -328,12 +379,69 @@ export class TrackStateHelper {
     return true;
   }
 
+  static parseDsType(val: any): DsType {
+    if (typeof val === "number" && val >= 0 && val <= 4) {
+      return val as DsType;
+    }
+    if (typeof val === "string") {
+      switch (val) {
+        case "DS_030":
+          return DsType.DS_030;
+        case "DS_200":
+          return DsType.DS_200;
+        case "DS_200B":
+          return DsType.DS_200B;
+        case "DS_300":
+          return DsType.DS_300;
+        case "DS_300RC":
+          return DsType.DS_300RC;
+        default: {
+          const parsed = parseInt(val, 10);
+          if (!isNaN(parsed) && parsed >= 0 && parsed <= 4) {
+            return parsed as DsType;
+          }
+          break;
+        }
+      }
+    }
+    return DsType.DS_300;
+  }
+
+  static areDsConfigsEqual(ds1: DsConfig[], ds2: DsConfig[]): boolean {
+    if (ds1.length !== ds2.length) return false;
+
+    for (let c = 0; c < ds1.length; c++) {
+      const d1 = ds1[c];
+      const d2 = ds2[c];
+
+      if (d1.name !== d2.name) return false;
+      if ((d1.commPort || "") !== (d2.commPort || "")) return false;
+
+      const t1 =
+        typeof d1.type === "string"
+          ? TrackStateHelper.parseDsType(d1.type)
+          : (d1.type ?? DsType.DS_300);
+      const t2 =
+        typeof d2.type === "string"
+          ? TrackStateHelper.parseDsType(d2.type)
+          : (d2.type ?? DsType.DS_300);
+      if (t1 !== t2) return false;
+    }
+
+    return true;
+  }
+
   static syncInterfaceConfigsFromTrack(
     track: Track,
     current: InterfaceConfigSet,
   ): InterfaceConfigSet {
-    let { arduinoConfigs, trackmateConfigs, phidgetConfigs, bartConfigs } =
-      current;
+    let {
+      arduinoConfigs,
+      trackmateConfigs,
+      phidgetConfigs,
+      bartConfigs,
+      dsConfigs,
+    } = current;
 
     if (track.arduino_configs && track.arduino_configs.length > 0) {
       const newConfigsJson = JSON.stringify(track.arduino_configs);
@@ -371,7 +479,37 @@ export class TrackStateHelper {
       bartConfigs = [];
     }
 
-    return { arduinoConfigs, trackmateConfigs, phidgetConfigs, bartConfigs };
+    if (track.ds_configs && track.ds_configs.length > 0) {
+      const newDsConfigsJson = JSON.stringify(track.ds_configs);
+      if (newDsConfigsJson !== JSON.stringify(dsConfigs)) {
+        dsConfigs = JSON.parse(newDsConfigsJson).map((d: any) => ({
+          ...d,
+          type:
+            typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : (d.type ?? DsType.DS_300),
+          baudRate:
+            (typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : d.type) === DsType.DS_030 ||
+            (typeof d.type === "string"
+              ? TrackStateHelper.parseDsType(d.type)
+              : d.type) === DsType.DS_200
+              ? 4800
+              : 57600,
+        }));
+      }
+    } else if (dsConfigs && dsConfigs.length > 0) {
+      dsConfigs = [];
+    }
+
+    return {
+      arduinoConfigs,
+      trackmateConfigs,
+      phidgetConfigs,
+      bartConfigs,
+      dsConfigs: dsConfigs || [],
+    };
   }
 
   static ensureInterfaceConfigsValid(arduinoConfigs: ArduinoConfig[]): void {

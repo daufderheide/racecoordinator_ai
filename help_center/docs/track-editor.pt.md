@@ -231,7 +231,30 @@ Ligação sem fios a pontes de cronometragem e transponders Policar BART Bluetoo
 
 ---
 
-### 5. Interface Demonstração / Simulação
+### 5. Interface DS {: #ds-interface }
+
+A interface **DS** fornece integração nativa para caixas de cronometragem comerciais DS (DS-030, DS-200, DS-200B, DS-300 e DS-300RC) ligadas através de uma porta serial COM ou adaptador USB-serial.
+
+- **Modelos Suportados**: Valor predefinido definido como **DS-300**.
+  - **DS-030**: Comunica a 4800 baud utilizando eventos de comando compactos de 1 byte e pacotes de tempo de 3 bytes.
+  - **DS-200**: Comunica a 4800 baud através de pacotes telemétricos de 21 bytes com remapeamento automático de calhas por hardware.
+  - **DS-200B**: Comunica a 57600 baud através de pacotes telemétricos de 21 bytes.
+  - **DS-300**: Comunica a 57600 baud com eliminação de pacotes repetidos em rajadas triplas.
+  - **DS-300RC**: Comunica a 57600 baud com filtragem de pacotes.
+- **Gestão de Corrida Controlada por Hardware**: Ao contrário das interfaces controladas por software, as caixas de cronometragem DS controlam o início, a pausa e o reinício das baterias diretamente a partir dos seus botões físicos. Quando uma interface DS está ativa numa pista, o Race Coordinator AI bloqueia os controlos manuais de início, pausa e reinício por software e segue rigorosamente as transições de estado do controlador DS.
+- **Indicadores de Calha em Tempo Real**: Uma grelha para 8 calhas proporciona a verificação instantânea da atividade dos sensores. Ao passar um carro pela meta, o indicador da calha correspondente acende a verde durante 1 segundo antes de voltar a cinzento.
+- **Reconexão Automática por Taxa de Transmissão**: A taxa de transmissão é gerida automaticamente para o modelo DS selecionado. Mudar entre modelos de 4800 baud (DS-030, DS-200) e modelos de 57600 baud (DS-200B, DS-300, DS-300RC) fecha e volta a abrir automaticamente a ligação serial com a velocidade correta.
+
+#### Configuração de Prova Recomendada com Hardware DS
+Como as caixas de cronometragem DS funcionam como diretores de corrida autónomos, com os seus próprios temporizadores decrescentes, semáforos de partida e buzinas de fim de bateria, a configuração recomendada no Race Coordinator AI é:
+
+1. **Duração da Bateria Infinita (Infinite Time)**: No Editor de Provas, em **Método de Fim**, configure a bateria como **Por Tempo** com **Tempo Infinito** (ou duração ilimitada / 0). Isto impede que o temporizador por software do Race Coordinator AI finalize a bateria antes do tempo, permitindo que o sinal de fim de bateria do hardware DS (`END_HEAT`) termine a sessão com plena autoridade.
+2. **Avanço de Bateria por Hardware**: Quando a unidade DS conclui a bateria e emite o sinal de bateria terminada, o Race Coordinator AI passa para o estado de bateria concluída. Pressionar o botão físico **START** na consola DS avança então o evento para a bateria seguinte da rotação.
+3. **Pausas e Interrupções por Hardware**: Pressionar o botão físico **STOP** na caixa DS pausa imediatamente a corrida no Race Coordinator AI. Pressionar o botão físico **RESET** reinicia a bateria atual ou cancela uma contagem decrescente de partida em curso.
+
+---
+
+### 6. Interface Demonstração / Simulação
 
 Permite testar formatos de prova, rotações, temas visuais, mensagens de voz e classificações sem necessidade de ligar hardware.
 

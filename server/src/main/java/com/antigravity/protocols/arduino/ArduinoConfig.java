@@ -20,6 +20,8 @@ public class ArduinoConfig {
     READ_ANALOG
   }
 
+  // TODO(aufderheide): Need to move this out of the arduino config. It's used by
+  // all the protocols.
   public enum LapPinPitBehavior {
     NONE(0),
     PIT_IN(1),

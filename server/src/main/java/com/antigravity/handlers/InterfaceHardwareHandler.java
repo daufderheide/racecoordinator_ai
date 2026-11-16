@@ -2,6 +2,7 @@ package com.antigravity.handlers;
 
 import com.antigravity.converters.ArduinoConfigConverter;
 import com.antigravity.converters.BartConfigConverter;
+import com.antigravity.converters.DsConfigConverter;
 import com.antigravity.converters.PhidgetConfigConverter;
 import com.antigravity.converters.TrackmateConfigConverter;
 import com.antigravity.proto.GetPhidgetDevicesResponse;
@@ -21,6 +22,8 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.bart.BartConfig;
 import com.antigravity.protocols.bart.BartProtocol;
+import com.antigravity.protocols.ds.DsConfig;
+import com.antigravity.protocols.ds.DsProtocol;
 import com.antigravity.protocols.interfaces.BleConnection;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.protocols.phidget.PhidgetConfig;
@@ -55,6 +58,10 @@ public class InterfaceHardwareHandler {
       if (request.hasPhidgetConfig()) {
         phidgetConfig = PhidgetConfigConverter.fromProto(request.getPhidgetConfig());
       }
+      DsConfig dsConfig = null;
+      if (request.hasDsConfig()) {
+        dsConfig = DsConfigConverter.fromProto(request.getDsConfig());
+      }
       int interfaceIndex = request.getInterfaceIndex();
 
       ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
@@ -64,7 +71,9 @@ public class InterfaceHardwareHandler {
         List<IProtocol> protocols = current.getProtocols();
         if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
           IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol || p instanceof PhidgetProtocol) {
+          if (p instanceof ArduinoProtocol
+              || p instanceof PhidgetProtocol
+              || p instanceof DsProtocol) {
             target = p;
           }
         }
@@ -75,6 +84,8 @@ public class InterfaceHardwareHandler {
           ((ArduinoProtocol) target).updateConfig(config);
         } else if (target instanceof PhidgetProtocol && phidgetConfig != null) {
           ((PhidgetProtocol) target).updateConfig(phidgetConfig);
+        } else if (target instanceof DsProtocol && dsConfig != null) {
+          ((DsProtocol) target).updateConfig(dsConfig);
         }
 
         UpdateInterfaceConfigResponse response =
@@ -104,60 +115,12 @@ public class InterfaceHardwareHandler {
     try {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
 
-      List<IProtocol> protocols = new ArrayList<>();
-      List<com.antigravity.proto.ArduinoConfig> configsList = // fqn-collision
-          request.getConfigsList();
-      int interfaceIndex = 0;
-      for (int i = 0; i < configsList.size(); i++) {
-        com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i); // fqn-collision
-        ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
-        ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
-        arduino.setInterfaceIndex(interfaceIndex++);
-        arduino.setListener(new TestInterfaceListener());
-        protocols.add(arduino);
-      }
-
-      List<com.antigravity.proto.TrackmateConfig> tmConfigsList = // fqn-collision
-          request.getTrackmateConfigsList();
-      for (int i = 0; i < tmConfigsList.size(); i++) {
-        com.antigravity.proto.TrackmateConfig protoConfig = tmConfigsList.get(i); // fqn-collision
-        TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
-        TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
-        trackmate.setInterfaceIndex(interfaceIndex++);
-        trackmate.setListener(new TestInterfaceListener());
-        protocols.add(trackmate);
-      }
-
-      List<com.antigravity.proto.PhidgetConfig> phidgetConfigsList = // fqn-collision
-          request.getPhidgetConfigsList();
-      for (int i = 0; i < phidgetConfigsList.size(); i++) {
-        com.antigravity.proto.PhidgetConfig protoConfig = // fqn-collision
-            phidgetConfigsList.get(i);
-        PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
-        PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
-        phidget.setInterfaceIndex(interfaceIndex++);
-        phidget.setListener(new TestInterfaceListener());
-        protocols.add(phidget);
-      }
-
-      List<com.antigravity.proto.BartConfig> bartConfigsList = // fqn-collision
-          request.getBartConfigsList();
-      for (int i = 0; i < bartConfigsList.size(); i++) {
-        com.antigravity.proto.BartConfig protoConfig = bartConfigsList.get(i); // fqn-collision
-        BartConfig config = BartConfigConverter.fromProto(protoConfig);
-        BartProtocol bart = new BartProtocol(config, request.getLaneCount());
-        bart.setInterfaceIndex(interfaceIndex++);
-        bart.setListener(new TestInterfaceListener());
-        protocols.add(bart);
-      }
-
-      ProtocolDelegate finalProtocol;
-      if (protocols.size() >= 1) {
-        finalProtocol = new ProtocolDelegate(protocols);
-      } else {
+      List<IProtocol> protocols = createProtocolsFromRequest(request);
+      if (protocols.isEmpty()) {
         throw new IllegalArgumentException("No configurations provided for initialization");
       }
 
+      ProtocolDelegate finalProtocol = new ProtocolDelegate(protocols);
       ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
 
       boolean success = finalProtocol.open();
@@ -199,6 +162,51 @@ public class InterfaceHardwareHandler {
         ctx.status(500).result("Internal Server Error: " + e.toString());
       }
     }
+  }
+
+  private List<IProtocol> createProtocolsFromRequest(InitializeInterfaceRequest request) {
+    List<IProtocol> protocols = new ArrayList<>();
+    int interfaceIndex = 0;
+    for (com.antigravity.proto.ArduinoConfig protoConfig // fqn-collision
+        : request.getConfigsList()) {
+      ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
+      ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
+      arduino.setInterfaceIndex(interfaceIndex++);
+      arduino.setListener(new TestInterfaceListener());
+      protocols.add(arduino);
+    }
+    for (com.antigravity.proto.TrackmateConfig protoConfig // fqn-collision
+        : request.getTrackmateConfigsList()) {
+      TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
+      TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
+      trackmate.setInterfaceIndex(interfaceIndex++);
+      trackmate.setListener(new TestInterfaceListener());
+      protocols.add(trackmate);
+    }
+    for (com.antigravity.proto.PhidgetConfig protoConfig // fqn-collision
+        : request.getPhidgetConfigsList()) {
+      PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
+      PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
+      phidget.setInterfaceIndex(interfaceIndex++);
+      phidget.setListener(new TestInterfaceListener());
+      protocols.add(phidget);
+    }
+    for (com.antigravity.proto.BartConfig protoConfig // fqn-collision
+        : request.getBartConfigsList()) {
+      BartConfig config = BartConfigConverter.fromProto(protoConfig);
+      BartProtocol bart = new BartProtocol(config, request.getLaneCount());
+      bart.setInterfaceIndex(interfaceIndex++);
+      bart.setListener(new TestInterfaceListener());
+      protocols.add(bart);
+    }
+    for (com.antigravity.proto.DsConfig protoConfig : request.getDsConfigsList()) { // fqn-collision
+      DsConfig config = DsConfigConverter.fromProto(protoConfig);
+      DsProtocol ds = new DsProtocol(config, request.getLaneCount());
+      ds.setInterfaceIndex(interfaceIndex++);
+      ds.setListener(new TestInterfaceListener());
+      protocols.add(ds);
+    }
+    return protocols;
   }
 
   public void setMainPower(Context ctx) {
