@@ -1,3 +1,6 @@
+import { BehaviorSubject } from "rxjs";
+import { ConnectionState } from "@app/services/connection-monitor.service";
+
 import { TrackEditorUiHelper } from "./track-editor-ui.helper";
 
 describe("TrackEditorUiHelper", () => {
@@ -84,6 +87,171 @@ describe("TrackEditorUiHelper", () => {
       expect(res.sections.general).toBeFalse();
       expect(res.sections.lanes).toBeFalse();
       expect(res.sections.interfaces).toBeFalse();
+    });
+  });
+
+  describe("focusNameInput", () => {
+    it("should focus element if present", (done) => {
+      const input = document.createElement("input");
+      input.id = "test-track-name-input";
+      document.body.appendChild(input);
+      spyOn(input, "focus");
+      spyOn(input, "select");
+
+      TrackEditorUiHelper.focusNameInput("test-track-name-input");
+      setTimeout(() => {
+        expect(input.focus).toHaveBeenCalled();
+        expect(input.select).toHaveBeenCalled();
+        document.body.removeChild(input);
+        done();
+      }, 10);
+    });
+
+    it("should handle missing element safely", (done) => {
+      expect(() => {
+        TrackEditorUiHelper.focusNameInput("non-existent-input");
+      }).not.toThrow();
+      setTimeout(done, 10);
+    });
+  });
+
+  describe("navigation", () => {
+    let mockRouter: any;
+    let mockRoute: any;
+
+    beforeEach(() => {
+      mockRouter = {
+        navigate: jasmine.createSpy("navigate"),
+        navigateByUrl: jasmine.createSpy("navigateByUrl"),
+      };
+      mockRoute = {
+        snapshot: {
+          queryParamMap: {
+            get: jasmine.createSpy("get").and.returnValue(null),
+          },
+        },
+      };
+    });
+
+    it("should navigate to returnUrl if present", () => {
+      mockRoute.snapshot.queryParamMap.get.and.callFake((key: string) =>
+        key === "returnUrl" ? "/custom-return" : null,
+      );
+      TrackEditorUiHelper.navigateBack(mockRouter, mockRoute);
+      expect(mockRouter.navigateByUrl).toHaveBeenCalledWith("/custom-return");
+    });
+
+    it("should navigate to default-raceday if from=modify-heats", () => {
+      mockRoute.snapshot.queryParamMap.get.and.callFake((key: string) =>
+        key === "from" ? "modify-heats" : null,
+      );
+      TrackEditorUiHelper.navigateBack(mockRouter, mockRoute);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/default-raceday"], {
+        queryParams: { modifyHeats: "true" },
+      });
+    });
+
+    it("should navigate to /raceday-setup by default", () => {
+      TrackEditorUiHelper.navigateBack(mockRouter, mockRoute);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should navigateToTrack with proper params", () => {
+      const mockNavService = {
+        setLastEditedId: jasmine.createSpy("setLastEditedId"),
+      };
+      TrackEditorUiHelper.navigateToTrack(
+        mockRouter,
+        mockRoute,
+        mockNavService as any,
+        "track-123",
+      );
+      expect(mockNavService.setLastEditedId).toHaveBeenCalledWith(
+        "track",
+        "track-123",
+      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+        relativeTo: mockRoute,
+        queryParams: { id: "track-123" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    });
+  });
+
+  describe("connection monitoring and loss", () => {
+    it("should trigger callback when connection is lost", () => {
+      const connectionSubject = new BehaviorSubject<ConnectionState>(
+        ConnectionState.CONNECTED,
+      );
+      const mockMonitor = {
+        connectionState$: connectionSubject.asObservable(),
+      } as any;
+      let lost = false;
+      const sub = TrackEditorUiHelper.monitorConnection(
+        mockMonitor,
+        (isLost) => {
+          lost = isLost;
+        },
+      );
+
+      expect(lost).toBeFalse();
+      connectionSubject.next(ConnectionState.DISCONNECTED);
+      expect(lost).toBeTrue();
+      sub.unsubscribe();
+    });
+
+    it("should handleConnectionLoss interval and timeout", (done) => {
+      let isLost = true;
+      const onTimeout = jasmine.createSpy("onTimeout");
+      const intervalId = TrackEditorUiHelper.handleConnectionLoss(
+        () => isLost,
+        onTimeout,
+        50,
+        10,
+      );
+
+      setTimeout(() => {
+        clearInterval(intervalId);
+        expect(onTimeout).toHaveBeenCalled();
+        done();
+      }, 80);
+    });
+
+    it("should abort handleConnectionLoss if connection restored", (done) => {
+      let isLost = true;
+      const onTimeout = jasmine.createSpy("onTimeout");
+      const intervalId = TrackEditorUiHelper.handleConnectionLoss(
+        () => isLost,
+        onTimeout,
+        50,
+        10,
+      );
+
+      // restore connection quickly
+      setTimeout(() => {
+        isLost = false;
+      }, 20);
+
+      setTimeout(() => {
+        clearInterval(intervalId);
+        expect(onTimeout).not.toHaveBeenCalled();
+        done();
+      }, 80);
+    });
+  });
+
+  describe("confirmLedStringDialog", () => {
+    it("should call addLedString on target editor when valid index", () => {
+      const editor = { addLedString: jasmine.createSpy("addLedString") };
+      const res = TrackEditorUiHelper.confirmLedStringDialog(0, 10, [editor]);
+      expect(res).toBeTrue();
+      expect(editor.addLedString).toHaveBeenCalledWith(10);
+    });
+
+    it("should return false for invalid index", () => {
+      const res = TrackEditorUiHelper.confirmLedStringDialog(-1, 10, []);
+      expect(res).toBeFalse();
     });
   });
 });

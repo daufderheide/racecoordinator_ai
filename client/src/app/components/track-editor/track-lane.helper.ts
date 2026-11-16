@@ -1,3 +1,4 @@
+import { moveItemInArray } from "@angular/cdk/drag-drop";
 import { Lane } from "@app/models/lane";
 import { ArduinoConfig } from "@app/models/track";
 
@@ -99,5 +100,18 @@ export class TrackLaneHelper {
       );
     }
     return updated;
+  }
+
+  static handleLaneDropped(
+    lanes: Lane[],
+    previousIndex: number,
+    currentIndex: number,
+  ): { lanes: Lane[]; changed: boolean } {
+    if (previousIndex !== currentIndex) {
+      const updated = [...lanes];
+      moveItemInArray(updated, previousIndex, currentIndex);
+      return { lanes: updated, changed: true };
+    }
+    return { lanes, changed: false };
   }
 }

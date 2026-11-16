@@ -3,7 +3,6 @@ import {
   CdkDragDrop,
   CdkDragHandle,
   CdkDropList,
-  moveItemInArray,
 } from "@angular/cdk/drag-drop";
 import { Location } from "@angular/common";
 import {
@@ -72,10 +71,7 @@ import {
   TrackmateConfig,
 } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import {
-  ConnectionMonitorService,
-  ConnectionState,
-} from "@app/services/connection-monitor.service";
+import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -147,15 +143,7 @@ export class TrackEditorComponent
   defaultTrackName: string = "";
 
   focusNameInput() {
-    setTimeout(() => {
-      const el = document.getElementById(
-        "track-name-input",
-      ) as HTMLInputElement;
-      if (el) {
-        el.focus();
-        el.select();
-      }
-    }, 0);
+    TrackEditorUiHelper.focusNameInput();
   }
   numTrackSections: number = 100;
   trackScale: number = 1.0;
@@ -246,13 +234,7 @@ export class TrackEditorComponent
   scrollToAndExpandInterface(tabId: string) {
     TrackInterfaceConfigsHelper.scrollToAndExpandInterface(
       tabId,
-      {
-        arduinoEditors: this.arduinoEditors,
-        trakmateEditors: this.trakmateEditors,
-        phidgetEditors: this.phidgetEditors,
-        bartEditors: this.bartEditors,
-        dsEditors: this.dsEditors,
-      },
+      this.getHelpEditors(),
       this.cdr,
     );
   }
@@ -375,29 +357,22 @@ export class TrackEditorComponent
   }
 
   monitorConnection() {
-    this.connectionSubscription =
-      this.connectionMonitor.connectionState$.subscribe((state) => {
-        this.isConnectionLost = state === ConnectionState.DISCONNECTED;
-
-        if (this.isConnectionLost) {
+    this.connectionSubscription = TrackEditorUiHelper.monitorConnection(
+      this.connectionMonitor,
+      (isLost) => {
+        this.isConnectionLost = isLost;
+        if (isLost) {
           this.handleConnectionLoss();
         }
-      });
+      },
+    );
   }
 
   handleConnectionLoss() {
-    let startTime = Date.now();
-    const intervalId = setInterval(() => {
-      if (!this.isConnectionLost) {
-        clearInterval(intervalId);
-        return;
-      }
-
-      if (Date.now() - startTime > 5000) {
-        clearInterval(intervalId);
-        this.router.navigate(["/raceday-setup"]);
-      }
-    }, 1000);
+    TrackEditorUiHelper.handleConnectionLoss(
+      () => this.isConnectionLost,
+      () => this.router.navigate(["/raceday-setup"]),
+    );
   }
 
   onRequestLedStringDialog(index: number) {
@@ -407,12 +382,13 @@ export class TrackEditorComponent
 
   onLedStringDialogConfirm(numLeds: number) {
     this.showLedStringDialog = false;
-    if (this.requestingArduinoIndex >= 0) {
-      const editors = this.arduinoEditors.toArray();
-      if (editors[this.requestingArduinoIndex]) {
-        editors[this.requestingArduinoIndex].addLedString(numLeds);
-        this.captureState();
-      }
+    const changed = TrackEditorUiHelper.confirmLedStringDialog(
+      this.requestingArduinoIndex,
+      numLeds,
+      this.arduinoEditors?.toArray() || [],
+    );
+    if (changed) {
+      this.captureState();
     }
     this.requestingArduinoIndex = -1;
   }
@@ -510,19 +486,17 @@ export class TrackEditorComponent
   }
 
   onSelectTrackById(id: string) {
-    if (this.isEditMode) return;
-    if (this.selectedTrackId === id) return;
+    if (this.isEditMode || this.selectedTrackId === id) return;
     const found = this.allTracks.find((t) => t.entity_id === id);
     if (found) {
       this.isSwitchingSelection = true;
       this.selectTrack(found);
-      this.navigationService.setLastEditedId("track", found.entity_id);
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { id: found.entity_id },
-        queryParamsHandling: "merge",
-        replaceUrl: true,
-      });
+      TrackEditorUiHelper.navigateToTrack(
+        this.router,
+        this.route,
+        this.navigationService,
+        found.entity_id,
+      );
     }
   }
 
@@ -799,15 +773,17 @@ export class TrackEditorComponent
   }
 
   onLaneDropped(event: CdkDragDrop<Lane[]>) {
-    if (event.previousIndex !== event.currentIndex) {
-      moveItemInArray(this.lanes, event.previousIndex, event.currentIndex);
-      this.lanes = [...this.lanes];
-
+    const result = TrackLaneHelper.handleLaneDropped(
+      this.lanes,
+      event.previousIndex,
+      event.currentIndex,
+    );
+    if (result.changed) {
+      this.lanes = result.lanes;
       this.updateInterfaceConfigsOnLaneOrderChange(
         event.previousIndex,
         event.currentIndex,
       );
-
       this.captureState();
     }
   }
@@ -1112,17 +1088,7 @@ export class TrackEditorComponent
 
   onBack() {
     this.isNavigationApproved = true;
-    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
-    const from = this.route.snapshot.queryParamMap.get("from");
-    if (returnUrl) {
-      this.router.navigateByUrl(returnUrl);
-    } else if (from === "modify-heats") {
-      this.router.navigate(["/default-raceday"], {
-        queryParams: { modifyHeats: "true" },
-      });
-    } else {
-      this.router.navigate(["/raceday-setup"]);
-    }
+    TrackEditorUiHelper.navigateBack(this.router, this.route);
   }
 
   trackByLane(index: number, lane: Lane): string {
