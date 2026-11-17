@@ -15,6 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,6 +36,16 @@ public class BartProtocolTest {
     connection = new BleConnection(config.deviceName, config.deviceAddress);
     statusScheduler = Executors.newSingleThreadScheduledExecutor();
     protocol = new BartProtocol(config, 4, connection, statusScheduler);
+  }
+
+  @After
+  public void tearDown() {
+    if (protocol != null) {
+      protocol.close();
+    }
+    if (statusScheduler != null) {
+      statusScheduler.shutdownNow();
+    }
   }
 
   @Test
@@ -158,10 +169,7 @@ public class BartProtocolTest {
           @Override
           public void onInterfaceEvent(InterfaceEvent event) {
             if (event.hasStatus()) {
-              int channels = event.getStatus().getDetectedChannels();
-              if (channels > detectedChannels.get()) {
-                detectedChannels.set(channels);
-              }
+              detectedChannels.accumulateAndGet(event.getStatus().getDetectedChannels(), Math::max);
             }
           }
         });
@@ -410,10 +418,7 @@ public class BartProtocolTest {
           @Override
           public void onInterfaceEvent(InterfaceEvent event) {
             if (event.hasStatus()) {
-              int channels = event.getStatus().getDetectedChannels();
-              if (channels > detectedChannels.get()) {
-                detectedChannels.set(channels);
-              }
+              detectedChannels.accumulateAndGet(event.getStatus().getDetectedChannels(), Math::max);
             }
           }
         });
