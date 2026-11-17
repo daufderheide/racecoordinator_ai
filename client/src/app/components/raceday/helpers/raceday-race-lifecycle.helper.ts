@@ -79,8 +79,15 @@ export class RacedayRaceLifecycleHelper {
   }
 
   public static handleStartingState(host: any, previousState: RaceState): void {
+    if (host.countdownOverlayTimeout) {
+      clearTimeout(host.countdownOverlayTimeout);
+      host.countdownOverlayTimeout = null;
+    }
     host.audioService.stopVoice();
     host.showCountdownOverlay = true;
+    if (host.raceTimeService) {
+      host.raceTimeService.showCountdownOverlay = true;
+    }
     host.lastCountdownSoundTime = -1;
 
     if (previousState === RaceState.PAUSED) {
@@ -141,9 +148,20 @@ export class RacedayRaceLifecycleHelper {
         widgetType: "countdown",
       });
     }
-    setTimeout(() => {
+    if (host.countdownOverlayTimeout) {
+      clearTimeout(host.countdownOverlayTimeout);
+      host.countdownOverlayTimeout = null;
+    }
+    host.countdownOverlayTimeout = setTimeout(() => {
+      host.countdownOverlayTimeout = null;
       if (host.raceState === RaceState.RACING) {
         host.showCountdownOverlay = false;
+        if (host.raceTimeService) {
+          host.raceTimeService.showCountdownOverlay = false;
+        }
+        if (!host.isDestroyed && host.cdr) {
+          host.cdr.markForCheck();
+        }
       }
     }, 1000);
   }
@@ -192,7 +210,14 @@ export class RacedayRaceLifecycleHelper {
       state === RaceState.RACE_OVER ||
       state === RaceState.PAUSED
     ) {
+      if (host.countdownOverlayTimeout) {
+        clearTimeout(host.countdownOverlayTimeout);
+        host.countdownOverlayTimeout = null;
+      }
       host.showCountdownOverlay = false;
+      if (host.raceTimeService) {
+        host.raceTimeService.showCountdownOverlay = false;
+      }
       if (
         state === RaceState.NOT_STARTED ||
         state === RaceState.HEAT_OVER ||
@@ -408,7 +433,15 @@ export class RacedayRaceLifecycleHelper {
     const count =
       host.countdownTotalLamps > 0
         ? host.countdownTotalLamps
-        : host.countdownLamps.length || 0;
+        : host.countdownLamps?.length || 0;
+    if (
+      host.countdownLamps &&
+      host.countdownLamps.length === count &&
+      host.countdownText === "GO!" &&
+      host.countdownLamps.every((l: any) => l.state === "go" && l.url === url)
+    ) {
+      return;
+    }
     host.countdownLamps = Array.from({ length: count }).map(() => ({
       url: url,
       state: "go",

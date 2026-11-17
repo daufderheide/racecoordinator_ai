@@ -423,8 +423,14 @@
             [widget]="widget()"
             [parent]="parentComponent()"
             [isCustomizing]="isCustomizing() && isCountdownPreviewActive()"
-            [showCountdownOverlay]="parentComponent()?.showCountdownOverlay"
-            [countdownLamps]="parentComponent()?.countdownLamps"
+            [showCountdownOverlay]="
+              showCountdownOverlay() || parentComponent()?.showCountdownOverlay
+            "
+            [countdownLamps]="
+              countdownLamps().length > 0
+                ? countdownLamps()
+                : parentComponent()?.countdownLamps
+            "
           ></app-raceday-countdown>
         }
       }

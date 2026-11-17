@@ -96,6 +96,8 @@ export class RacedayAbsoluteWidgetComponent
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
   gridContentOffset = input<{ x: number; y: number } | null>(null);
+  showCountdownOverlay = input<boolean>(false);
+  countdownLamps = input<any[]>([]);
 
   wrapperRef = viewChild<ElementRef<HTMLElement>>("widgetWrapper");
   isGridAnimating = false;
@@ -122,7 +124,10 @@ export class RacedayAbsoluteWidgetComponent
     if (this.isCustomizing()) {
       return true;
     }
-    return !!this.parentComponent()?.showCountdownOverlay;
+    return (
+      this.showCountdownOverlay() ||
+      !!this.parentComponent()?.showCountdownOverlay
+    );
   }
 
   get isCountdownGhost(): boolean {

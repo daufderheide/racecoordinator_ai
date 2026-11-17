@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from "@angular/core";
+import { Injectable, NgZone, OnDestroy } from "@angular/core";
 import { DataService } from "@app/data.service";
 import {
   ActiveVoiceCallout,
@@ -29,6 +29,12 @@ import {
   startWebAudioVoiceCallout,
   unlockGlobalAudio,
 } from "@app/utils/audio";
+import {
+  describeAudioConfig,
+  findQueuedCalloutIndex,
+  getOrCreateCachedAudio,
+  sortCalloutQueue,
+} from "@app/utils/audio-callout-helper";
 import {
   isAudioRelevant,
   isVoiceCalloutSlot,
@@ -76,7 +82,15 @@ export class AudioService implements OnDestroy {
     private dataService: DataService,
     private settingsService: SettingsService,
     private logger: LoggerService,
+    private ngZone?: NgZone,
   ) {}
+
+  private runOutsideAngular<T>(fn: () => T): T {
+    if (this.ngZone) {
+      return this.ngZone.runOutsideAngular(fn);
+    }
+    return fn();
+  }
 
   /**
    * Determines whether an audio slot or configuration represents a verbal callout
@@ -119,23 +133,25 @@ export class AudioService implements OnDestroy {
    */
   preload(url: string | undefined): HTMLAudioElement | void {
     if (!url) return;
-    const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
-    if (!playableUrl) return;
-    preloadWebAudioBuffer(playableUrl);
-    if (this.preloadedAudioMap.has(playableUrl)) {
-      return this.preloadedAudioMap.get(playableUrl);
-    }
-    try {
-      const audio = new Audio(playableUrl);
-      audio.preload = "auto";
-      if (typeof audio.load === "function") {
-        audio.load();
+    return this.runOutsideAngular(() => {
+      const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
+      if (!playableUrl) return undefined;
+      preloadWebAudioBuffer(playableUrl);
+      if (this.preloadedAudioMap.has(playableUrl)) {
+        return this.preloadedAudioMap.get(playableUrl);
       }
-      this.preloadedAudioMap.set(playableUrl, audio);
-      return audio;
-    } catch {
-      // ignore
-    }
+      try {
+        const audio = new Audio(playableUrl);
+        audio.preload = "auto";
+        if (typeof audio.load === "function") {
+          audio.load();
+        }
+        this.preloadedAudioMap.set(playableUrl, audio);
+        return audio;
+      } catch {
+        return undefined;
+      }
+    });
   }
 
   /**
@@ -155,57 +171,47 @@ export class AudioService implements OnDestroy {
       );
       return;
     }
-    const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
-    this.logger.debug("Playing SFX from URL:", playableUrl);
+    return this.runOutsideAngular(() => {
+      const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
+      this.logger.debug("Playing SFX from URL:", playableUrl);
 
-    if (
-      isMobileDevice() &&
-      typeof document !== "undefined" &&
-      document.visibilityState === "hidden"
-    ) {
-      return;
-    }
-
-    let audio: HTMLAudioElement;
-    const cached = this.preloadedAudioMap.get(playableUrl);
-    if (cached && (cached.paused || cached.ended)) {
-      audio = cached;
-      try {
-        audio.currentTime = 0;
-      } catch {
-        // ignore
+      if (
+        isMobileDevice() &&
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      ) {
+        return undefined;
       }
-    } else {
-      audio = new Audio(playableUrl);
-      this.preloadedAudioMap.set(playableUrl, audio);
-    }
 
-    const settings = this.settingsService.getSettings();
-    let finalVolume = Math.max(
-      0,
-      Math.min(1, (settings.masterVolume ?? 100) / 100),
-    );
-    // Duck SFX volume to 20% if a voice callout is actively playing
-    if (this.activeVoice) {
-      finalVolume *= 0.2;
-    }
+      const audio = getOrCreateCachedAudio(this.preloadedAudioMap, playableUrl);
 
-    if (isMobileDevice() && playWebAudioSfx(playableUrl, finalVolume)) {
+      const settings = this.settingsService.getSettings();
+      let finalVolume = Math.max(
+        0,
+        Math.min(1, (settings.masterVolume ?? 100) / 100),
+      );
+      // Duck SFX volume to 20% if a voice callout is actively playing
+      if (this.activeVoice) {
+        finalVolume *= 0.2;
+      }
+
+      if (isMobileDevice() && playWebAudioSfx(playableUrl, finalVolume)) {
+        return audio;
+      }
+
+      audio.volume = finalVolume;
+      audio.play().catch((err: any) => {
+        if (err?.name === "AbortError" || err?.name === "NotAllowedError") {
+          this.logger.debug(
+            "SFX playback aborted or paused",
+            err?.message || err,
+          );
+        } else {
+          this.logger.error("Error playing SFX", err);
+        }
+      });
       return audio;
-    }
-
-    audio.volume = finalVolume;
-    audio.play().catch((err: any) => {
-      if (err?.name === "AbortError" || err?.name === "NotAllowedError") {
-        this.logger.debug(
-          "SFX playback aborted or paused",
-          err?.message || err,
-        );
-      } else {
-        this.logger.error("Error playing SFX", err);
-      }
     });
-    return audio;
   }
 
   /**
@@ -247,7 +253,7 @@ export class AudioService implements OnDestroy {
       return false;
     }
 
-    const desc = this.describeConfig(config, resolvedUrl);
+    const desc = describeAudioConfig(config, resolvedUrl);
 
     this.releaseStaleTtsVoiceIfIdle();
 
@@ -388,12 +394,6 @@ export class AudioService implements OnDestroy {
     return this.isSpacingCoolingDown;
   }
 
-  private describeConfig(config: AudioConfig, resolvedUrl?: string): string {
-    return config.type === "tts"
-      ? `TTS "${config.text}"`
-      : `preset "${resolvedUrl || config.url}"`;
-  }
-
   /**
    * Enqueues a callout to be played sequentially. If the channel is idle and not cooling down,
    * it plays immediately. If busy or cooling down, it is queued to play as soon as the active voice
@@ -432,7 +432,7 @@ export class AudioService implements OnDestroy {
       return false;
     }
 
-    const desc = this.describeConfig(config, resolvedUrl);
+    const desc = describeAudioConfig(config, resolvedUrl);
 
     this.releaseStaleTtsVoiceIfIdle();
 
@@ -502,26 +502,10 @@ export class AudioService implements OnDestroy {
     resolvedUrl?: string,
     association?: AudioAssociation,
   ): void {
-    const existingIndex = this.calloutQueue.findIndex((item) => {
-      if (
-        association?.laneIndex !== undefined &&
-        item.association?.laneIndex !== undefined
-      ) {
-        return item.association.laneIndex === association.laneIndex;
-      }
-      if (association?.driverId && item.association?.driverId) {
-        return item.association.driverId === association.driverId;
-      }
-      if (
-        (association?.widgetType === "timer" &&
-          item.association?.widgetType === "timer") ||
-        (association?.widgetType === "countdown" &&
-          item.association?.widgetType === "countdown")
-      ) {
-        return true;
-      }
-      return false;
-    });
+    const existingIndex = findQueuedCalloutIndex(
+      this.calloutQueue,
+      association,
+    );
 
     if (existingIndex !== -1) {
       this.logger.info(
@@ -549,13 +533,7 @@ export class AudioService implements OnDestroy {
       });
     }
 
-    // Maintain priority order: highest priority first, preserving arrival order for equal priorities
-    this.calloutQueue.sort((a, b) => {
-      const pDiff =
-        AUDIO_PRIORITY_WEIGHT[b.priority] - AUDIO_PRIORITY_WEIGHT[a.priority];
-      if (pDiff !== 0) return pDiff;
-      return a.enqueuedAt - b.enqueuedAt;
-    });
+    sortCalloutQueue(this.calloutQueue);
   }
 
   /** Stops any currently playing verbal callout and clears cooldown. */
@@ -591,30 +569,34 @@ export class AudioService implements OnDestroy {
   }
 
   private cancelSpeechSynthesis(): void {
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-        this.lastCancelTime = Date.now();
-        if (window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
+    this.runOutsideAngular(() => {
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+          this.lastCancelTime = Date.now();
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+        } catch (e) {
+          this.logger.debug("Speech synthesis cancel ignored:", e);
         }
-      } catch {
-        // ignore
       }
-    }
+    });
   }
 
   private speakUtterance(utterance: SpeechSynthesisUtterance): void {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    this.runOutsideAngular(() => {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
 
-    try {
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        this.logger.error("Error executing window.speechSynthesis.speak", err);
       }
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      this.logger.error("Error executing window.speechSynthesis.speak", err);
-    }
+    });
   }
 
   /** Resets the entire voice callout system and purges pending urgent calls. */
@@ -638,25 +620,6 @@ export class AudioService implements OnDestroy {
     } else {
       this.onVoiceCalloutEnded();
     }
-  }
-
-  private getOrCreatePresetAudio(playableUrl: string): HTMLAudioElement {
-    const cached = this.preloadedAudioMap.get(playableUrl);
-    if (
-      cached &&
-      cached !== this.activeAudioElement &&
-      (cached.paused || cached.ended)
-    ) {
-      try {
-        cached.currentTime = 0;
-      } catch {
-        // ignore
-      }
-      return cached;
-    }
-    const audio = new Audio(playableUrl);
-    this.preloadedAudioMap.set(playableUrl, audio);
-    return audio;
   }
 
   private setupAudioWatchdog(
@@ -689,76 +652,18 @@ export class AudioService implements OnDestroy {
     };
   }
 
-  private playPresetVoice(url: string, priority: AudioPriority): void {
-    ensureAudioAwake();
-    const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
-    this.logger.info(
-      `[AUDIO] Playing preset voice: ${playableUrl} (priority: ${priority})`,
-    );
-
-    const settings = this.settingsService.getSettings();
-    const finalVolume = Math.max(
-      0,
-      Math.min(1, (settings.masterVolume ?? 100) / 100),
-    );
-
-    if (isMobileDevice()) {
-      const voiceHandle = startWebAudioVoiceCallout(
-        playableUrl,
-        finalVolume,
-        () => {
-          if (this.activeVoice?.stop === voiceHandle?.stop)
-            this.onVoiceCalloutEnded();
-        },
-      );
-      if (voiceHandle) {
-        this.activeVoice = { priority, stop: voiceHandle.stop };
-        return;
-      }
-    }
-
-    const audio = this.getOrCreatePresetAudio(playableUrl);
-    this.activeAudioElement = audio;
-    audio.volume = finalVolume;
-    let ended = false;
-
-    const cleanup = () => {
-      if (ended) return;
-      ended = true;
-      audio.onended = null;
-      audio.onerror = null;
-      audio.onloadedmetadata = null;
-      if (this.safetyTimeout) {
-        clearTimeout(this.safetyTimeout);
-        this.safetyTimeout = null;
-      }
-      if (this.activeAudioElement === audio) {
-        this.activeAudioElement = null;
-      }
-    };
-
-    const stop = () => {
+  private attachPresetAudioListeners(
+    audio: HTMLAudioElement,
+    stop: () => void,
+    cleanup: () => void,
+    isEnded: () => boolean,
+  ): void {
+    this.setupAudioWatchdog(audio, isEnded, () => {
       cleanup();
-      try {
-        audio.pause();
-        audio.currentTime = 0;
-      } catch {
-        // ignore
+      if (this.activeVoice?.stop === stop) {
+        this.onVoiceCalloutEnded();
       }
-    };
-
-    this.activeVoice = { priority, stop };
-
-    this.setupAudioWatchdog(
-      audio,
-      () => ended,
-      () => {
-        cleanup();
-        if (this.activeVoice?.stop === stop) {
-          this.onVoiceCalloutEnded();
-        }
-      },
-    );
+    });
 
     audio.onended = () => {
       cleanup();
@@ -768,7 +673,7 @@ export class AudioService implements OnDestroy {
     };
 
     audio.onerror = (err) => {
-      const wasEnded = ended;
+      const wasEnded = isEnded();
       cleanup();
       if (wasEnded) {
         this.logger.debug("Voice preset playback interrupted", err);
@@ -781,7 +686,7 @@ export class AudioService implements OnDestroy {
     };
 
     audio.play().catch((err: any) => {
-      const wasEnded = ended;
+      const wasEnded = isEnded();
       cleanup();
       if (
         wasEnded ||
@@ -798,6 +703,74 @@ export class AudioService implements OnDestroy {
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
+    });
+  }
+
+  private playPresetVoice(url: string, priority: AudioPriority): void {
+    this.runOutsideAngular(() => {
+      ensureAudioAwake();
+      const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
+      this.logger.info(
+        `[AUDIO] Playing preset voice: ${playableUrl} (priority: ${priority})`,
+      );
+
+      const settings = this.settingsService.getSettings();
+      const finalVolume = Math.max(
+        0,
+        Math.min(1, (settings.masterVolume ?? 100) / 100),
+      );
+
+      if (isMobileDevice()) {
+        const voiceHandle = startWebAudioVoiceCallout(
+          playableUrl,
+          finalVolume,
+          () => {
+            if (this.activeVoice?.stop === voiceHandle?.stop)
+              this.onVoiceCalloutEnded();
+          },
+        );
+        if (voiceHandle) {
+          this.activeVoice = { priority, stop: voiceHandle.stop };
+          return;
+        }
+      }
+
+      const audio = getOrCreateCachedAudio(
+        this.preloadedAudioMap,
+        playableUrl,
+        this.activeAudioElement,
+      );
+      this.activeAudioElement = audio;
+      audio.volume = finalVolume;
+      let ended = false;
+
+      const cleanup = () => {
+        if (ended) return;
+        ended = true;
+        audio.onended = null;
+        audio.onerror = null;
+        audio.onloadedmetadata = null;
+        if (this.safetyTimeout) {
+          clearTimeout(this.safetyTimeout);
+          this.safetyTimeout = null;
+        }
+        if (this.activeAudioElement === audio) {
+          this.activeAudioElement = null;
+        }
+      };
+
+      const stop = () => {
+        cleanup();
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {
+          // ignore
+        }
+      };
+
+      this.activeVoice = { priority, stop };
+      this.attachPresetAudioListeners(audio, stop, cleanup, () => ended);
     });
   }
 
@@ -833,7 +806,9 @@ export class AudioService implements OnDestroy {
     isEnded: () => boolean,
     onComplete?: () => void,
   ): { clear: () => void } {
-    return setupTtsWatchdogs(utterance, isEnded, onComplete);
+    return this.runOutsideAngular(() =>
+      setupTtsWatchdogs(utterance, isEnded, onComplete),
+    );
   }
 
   private releaseStaleTtsVoiceIfIdle(): void {
@@ -862,104 +837,107 @@ export class AudioService implements OnDestroy {
     context?: any,
     isRetry = false,
   ): void {
-    ensureAudioAwake();
-    let interpolatedText = text;
-    if (context) {
-      interpolatedText = interpolate(text, context);
-    }
+    this.runOutsideAngular(() => {
+      ensureAudioAwake();
+      let interpolatedText = text;
+      if (context) {
+        interpolatedText = interpolate(text, context);
+      }
 
-    if (!interpolatedText || !interpolatedText.trim()) {
-      this.onVoiceCalloutEnded();
-      return;
-    }
+      if (!interpolatedText || !interpolatedText.trim()) {
+        this.onVoiceCalloutEnded();
+        return;
+      }
 
-    if (!window.speechSynthesis) {
-      this.logger.warn("Text-to-speech not supported in this browser.");
-      this.onVoiceCalloutEnded();
-      return;
-    }
+      if (!window.speechSynthesis) {
+        this.logger.warn("Text-to-speech not supported in this browser.");
+        this.onVoiceCalloutEnded();
+        return;
+      }
 
-    const utterance = this.prepareTtsUtterance(interpolatedText, isRetry);
-    this.activeUtteranceStartedAt = Date.now();
-    let ended = false;
-    const watchdogs = this.setupTtsWatchdogs(
-      utterance,
-      () => ended,
-      () => {
+      const utterance = this.prepareTtsUtterance(interpolatedText, isRetry);
+      this.activeUtteranceStartedAt = Date.now();
+      let ended = false;
+      const watchdogs = this.setupTtsWatchdogs(
+        utterance,
+        () => ended,
+        () => {
+          cleanup();
+          if (this.activeVoice?.stop === stop) {
+            this.onVoiceCalloutEnded();
+          }
+        },
+      );
+
+      const cleanup = () => {
+        if (ended) return;
+        ended = true;
+        watchdogs.clear();
+        releaseUtterance(utterance);
+        utterance.onstart = null;
+        utterance.onend = null;
+        utterance.onerror = null;
+        if (this.safetyTimeout) {
+          clearTimeout(this.safetyTimeout);
+          this.safetyTimeout = null;
+        }
+        if (this.activeUtterance === utterance) {
+          this.activeUtterance = null;
+          this.activeUtteranceStartedAt = 0;
+        }
+      };
+
+      const stop = () => {
+        cleanup();
+        this.cancelSpeechSynthesis();
+      };
+
+      this.activeVoice = { priority, stop };
+
+      const dynamicTimeout = calculateTtsSafetyTimeout(interpolatedText);
+
+      this.safetyTimeout = setTimeout(() => {
+        cleanup();
+        this.cancelSpeechSynthesis();
+        if (this.activeVoice?.stop === stop) {
+          this.onVoiceCalloutEnded();
+        }
+      }, dynamicTimeout);
+
+      utterance.onend = () => {
         cleanup();
         if (this.activeVoice?.stop === stop) {
           this.onVoiceCalloutEnded();
         }
-      },
-    );
+      };
 
-    const cleanup = () => {
-      if (ended) return;
-      ended = true;
-      watchdogs.clear();
-      releaseUtterance(utterance);
-      utterance.onstart = null;
-      utterance.onend = null;
-      utterance.onerror = null;
-      if (this.safetyTimeout) {
-        clearTimeout(this.safetyTimeout);
-        this.safetyTimeout = null;
-      }
-      if (this.activeUtterance === utterance) {
-        this.activeUtterance = null;
-        this.activeUtteranceStartedAt = 0;
-      }
-    };
-
-    const stop = () => {
-      cleanup();
-      this.cancelSpeechSynthesis();
-    };
-
-    this.activeVoice = { priority, stop };
-
-    const dynamicTimeout = calculateTtsSafetyTimeout(interpolatedText);
-
-    this.safetyTimeout = setTimeout(() => {
-      cleanup();
-      this.cancelSpeechSynthesis();
-      if (this.activeVoice?.stop === stop) {
-        this.onVoiceCalloutEnded();
-      }
-    }, dynamicTimeout);
-
-    utterance.onend = () => {
-      cleanup();
-      if (this.activeVoice?.stop === stop) {
-        this.onVoiceCalloutEnded();
-      }
-    };
-
-    utterance.onerror = (err: any) => {
-      const errType = err?.error;
-      const isInterrupted = errType === "interrupted" || errType === "canceled";
-      if (isInterrupted && this.activeVoice?.stop === stop && !isRetry) {
+      utterance.onerror = (err: any) => {
+        const errType = err?.error;
+        const isInterrupted =
+          errType === "interrupted" || errType === "canceled";
+        if (isInterrupted && this.activeVoice?.stop === stop && !isRetry) {
+          cleanup();
+          setTimeout(() => {
+            if (this.activeVoice?.stop === stop) {
+              this.playTtsVoice(text, priority, context, true);
+            }
+          }, 60);
+          return;
+        }
         cleanup();
-        setTimeout(() => {
-          if (this.activeVoice?.stop === stop) {
-            this.playTtsVoice(text, priority, context, true);
-          }
-        }, 60);
-        return;
-      }
-      cleanup();
-      if (!isInterrupted) {
-        this.logger.error("TTS playback error", err);
-      }
-      if (this.activeVoice?.stop === stop) {
-        this.onVoiceCalloutEnded();
-      }
-    };
+        if (!isInterrupted) {
+          this.logger.error("TTS playback error", err);
+        }
+        if (this.activeVoice?.stop === stop) {
+          this.onVoiceCalloutEnded();
+        }
+      };
 
-    this.logger.info(
-      `[AUDIO] Speaking TTS: "${interpolatedText}" (priority: ${priority})`,
-    );
-    this.speakUtterance(utterance);
+      this.logger.info(
+        `[AUDIO] Speaking TTS: "${interpolatedText}" (priority: ${priority})`,
+      );
+      this.speakUtterance(utterance);
+    });
   }
 
   previewTTS(
@@ -978,55 +956,57 @@ export class AudioService implements OnDestroy {
     ) {
       return;
     }
-    if (this.activeUtterance) {
-      releaseUtterance(this.activeUtterance);
-      this.activeUtterance.onend = null;
-      this.activeUtterance.onerror = null;
-      this.activeUtterance = null;
-    }
-    this.cancelSpeechSynthesis();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    retainUtterance(utterance);
-    this.activeUtterance = utterance;
-    let ended = false;
-    const watchdogs = this.setupTtsWatchdogs(utterance, () => ended);
-    const cleanup = () => {
-      if (ended) return;
-      ended = true;
-      watchdogs.clear();
-      releaseUtterance(utterance);
-      utterance.onstart = null;
-      utterance.onend = null;
-      utterance.onerror = null;
-      if (this.safetyTimeout) {
-        clearTimeout(this.safetyTimeout);
-        this.safetyTimeout = null;
-      }
-      if (this.activeUtterance === utterance) {
+    this.runOutsideAngular(() => {
+      if (this.activeUtterance) {
+        releaseUtterance(this.activeUtterance);
+        this.activeUtterance.onend = null;
+        this.activeUtterance.onerror = null;
         this.activeUtterance = null;
       }
-    };
-    utterance.onend = () => cleanup();
-    utterance.onerror = () => cleanup();
-
-    this.applyTtsSettingsToUtterance(
-      utterance,
-      voiceName,
-      rate,
-      pitch,
-      volume,
-      masterVolume,
-    );
-
-    const dynamicTimeout = calculateTtsSafetyTimeout(text);
-    this.safetyTimeout = setTimeout(() => {
-      cleanup();
       this.cancelSpeechSynthesis();
-    }, dynamicTimeout);
 
-    this.logger.info(`[AUDIO] Previewing TTS: "${text}"`);
-    this.speakUtterance(utterance);
+      const utterance = new SpeechSynthesisUtterance(text);
+      retainUtterance(utterance);
+      this.activeUtterance = utterance;
+      let ended = false;
+      const watchdogs = this.setupTtsWatchdogs(utterance, () => ended);
+      const cleanup = () => {
+        if (ended) return;
+        ended = true;
+        watchdogs.clear();
+        releaseUtterance(utterance);
+        utterance.onstart = null;
+        utterance.onend = null;
+        utterance.onerror = null;
+        if (this.safetyTimeout) {
+          clearTimeout(this.safetyTimeout);
+          this.safetyTimeout = null;
+        }
+        if (this.activeUtterance === utterance) {
+          this.activeUtterance = null;
+        }
+      };
+      utterance.onend = () => cleanup();
+      utterance.onerror = () => cleanup();
+
+      this.applyTtsSettingsToUtterance(
+        utterance,
+        voiceName,
+        rate,
+        pitch,
+        volume,
+        masterVolume,
+      );
+
+      const dynamicTimeout = calculateTtsSafetyTimeout(text);
+      this.safetyTimeout = setTimeout(() => {
+        cleanup();
+        this.cancelSpeechSynthesis();
+      }, dynamicTimeout);
+
+      this.logger.info(`[AUDIO] Previewing TTS: "${text}"`);
+      this.speakUtterance(utterance);
+    });
   }
 
   getMasterVolume(masterVolumeOverride?: number): number {
