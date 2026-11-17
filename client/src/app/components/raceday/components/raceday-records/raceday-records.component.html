@@ -1,4 +1,17 @@
-<div class="panel-card record-panel" #recordPanel>
+<div
+  class="panel-card record-panel"
+  #recordPanel
+  [style.--record-header-font-size]="
+    widget()?.customSettings?.['headerFontSize']
+      ? widget()?.customSettings?.['headerFontSize'] + 'px'
+      : null
+  "
+  [style.--record-value-font-size]="
+    widget()?.customSettings?.['valueFontSize']
+      ? widget()?.customSettings?.['valueFontSize'] + 'px'
+      : null
+  "
+>
   @if (showRaceRecordLap()) {
     <div class="record-group stripe">
       <div
@@ -8,9 +21,7 @@
           widget()?.customSettings?.['headerFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-            ? widget()?.customSettings?.['headerFontSize'] || null
-            : null
+          widget()?.customSettings?.['headerFontSize'] || null
         "
         [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
       >
@@ -24,9 +35,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{ raceRecordLapNickname() || "---" }}</span
@@ -38,9 +47,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{
@@ -62,9 +69,7 @@
           widget()?.customSettings?.['headerFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-            ? widget()?.customSettings?.['headerFontSize'] || null
-            : null
+          widget()?.customSettings?.['headerFontSize'] || null
         "
         [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
       >
@@ -78,9 +83,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{ raceRecordScoreNickname() || "---" }}</span
@@ -92,9 +95,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{
@@ -114,9 +115,7 @@
           widget()?.customSettings?.['headerFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-            ? widget()?.customSettings?.['headerFontSize'] || null
-            : null
+          widget()?.customSettings?.['headerFontSize'] || null
         "
         [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
       >
@@ -130,9 +129,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{ currentRaceBestNickname() || "---" }}</span
@@ -144,9 +141,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{
@@ -168,9 +163,7 @@
           widget()?.customSettings?.['headerFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-            ? widget()?.customSettings?.['headerFontSize'] || null
-            : null
+          widget()?.customSettings?.['headerFontSize'] || null
         "
         [style.color]="widget()?.customSettings?.['headerTextColor'] || null"
       >
@@ -184,9 +177,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{ heatBestNickname() || "---" }}</span
@@ -198,9 +189,7 @@
             widget()?.customSettings?.['valueFontFamily'] || null
           "
           [style.font-size.px]="
-            widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-              ? widget()?.customSettings?.['valueFontSize'] || null
-              : null
+            widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
           >{{

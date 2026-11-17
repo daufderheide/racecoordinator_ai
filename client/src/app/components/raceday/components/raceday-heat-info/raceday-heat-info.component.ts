@@ -10,6 +10,7 @@ import {
   viewChild,
   ViewEncapsulation,
 } from "@angular/core";
+import { TextInfoFitHelper } from "@app/components/raceday/utils/text-info-fit.helper";
 import { Race } from "@app/models/race";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -73,99 +74,6 @@ export class RacedayHeatInfoComponent implements AfterViewInit, OnDestroy {
   }
 
   private fitText() {
-    const panelEl = this.infoPanel()?.nativeElement;
-    const labelEl = this.labelText()?.nativeElement;
-    const valueEl = this.valueText()?.nativeElement;
-    const widgetData = this.widget();
-
-    if (!panelEl || !labelEl || !valueEl) return;
-
-    const customLabelFontSize = Number(
-      widgetData?.customSettings?.["labelFontSize"],
-    );
-    const customValueFontSize = Number(
-      widgetData?.customSettings?.["valueFontSize"],
-    );
-
-    if (
-      (customLabelFontSize && customLabelFontSize > 0) ||
-      (customValueFontSize && customValueFontSize > 0)
-    ) {
-      const labelRatio = 55 / 80;
-      const targetLabelSize =
-        customLabelFontSize && customLabelFontSize > 0
-          ? customLabelFontSize
-          : customValueFontSize && customValueFontSize > 0
-            ? Math.floor(customValueFontSize * labelRatio)
-            : 13;
-      const targetValueSize =
-        customValueFontSize && customValueFontSize > 0
-          ? customValueFontSize
-          : customLabelFontSize && customLabelFontSize > 0
-            ? Math.floor(customLabelFontSize / labelRatio)
-            : 18;
-
-      panelEl.style.setProperty(
-        "--header-label-font-size",
-        `${targetLabelSize}px`,
-      );
-      panelEl.style.setProperty(
-        "--header-value-font-size",
-        `${targetValueSize}px`,
-      );
-      return;
-    }
-
-    const isAuto = !widgetData || widgetData.scaleMode === "auto";
-    if (!isAuto) {
-      panelEl.style.removeProperty("--header-value-font-size");
-      panelEl.style.removeProperty("--header-label-font-size");
-      return;
-    }
-
-    const labelString = labelEl.textContent?.trim() || "";
-    const valueString = valueEl.textContent?.trim() || "";
-
-    const labelStyle = window.getComputedStyle(labelEl);
-    const valueStyle = window.getComputedStyle(valueEl);
-
-    const labelRatio = 55 / 80;
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    let totalTextWidth = 100;
-
-    if (context) {
-      context.font = `${labelStyle.fontWeight || "600"} ${100 * labelRatio}px ${labelStyle.fontFamily || "sans-serif"}`;
-      const labelWidth = context.measureText(labelString).width || 0;
-
-      context.font = `${valueStyle.fontWeight || "700"} 100px ${valueStyle.fontFamily || "sans-serif"}`;
-      const valueWidth = context.measureText(valueString).width || 0;
-
-      const marginWidth = (8 / 18) * 100;
-      totalTextWidth =
-        labelWidth + valueWidth + (labelWidth > 0 ? marginWidth : 0);
-    }
-
-    const textHeight = 100;
-    const containerWidth = panelEl.clientWidth * 0.9;
-    const containerHeight = panelEl.clientHeight * 0.8;
-
-    const scaleX = containerWidth / totalTextWidth;
-    const scaleY = containerHeight / textHeight;
-    const scale = Math.min(scaleX, scaleY);
-
-    const baseScaleFactor = widgetData?.textScaleFactor ?? 1;
-    const targetValueSize = Math.floor(100 * scale * baseScaleFactor);
-    const targetLabelSize = Math.floor(targetValueSize * labelRatio);
-
-    panelEl.style.setProperty(
-      "--header-value-font-size",
-      `${targetValueSize}px`,
-    );
-    panelEl.style.setProperty(
-      "--header-label-font-size",
-      `${targetLabelSize}px`,
-    );
+    TextInfoFitHelper.fitText(this.infoPanel()?.nativeElement, this.widget());
   }
 }

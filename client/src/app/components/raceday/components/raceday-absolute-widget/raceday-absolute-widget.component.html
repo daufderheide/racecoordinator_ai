@@ -51,6 +51,10 @@
   [style.color]="widget().textColor || null"
   [style.background-color]="widget().backgroundColor || null"
   [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
+  [style.--menu-font-size]="widget().fontSize ? widget().fontSize + 'px' : null"
+  [style.--menu-shortcut-font-size]="
+    widget().fontSize ? widget().fontSize! * 0.75 + 'px' : null
+  "
   [style.--widget-scale-factor]="widget().textScaleFactor || 1"
   (pointerdown)="
     isCustomizing() && !isCountdownGhost ? onWidgetPointerDown($event) : null

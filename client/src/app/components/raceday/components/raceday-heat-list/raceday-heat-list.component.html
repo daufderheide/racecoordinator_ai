@@ -21,11 +21,7 @@
       [style.font-family]="
         widget()?.customSettings?.['titleFontFamily'] || null
       "
-      [style.font-size.px]="
-        widget()?.scaleMode === 'auto'
-          ? null
-          : widget()?.customSettings?.['titleFontSize'] || null
-      "
+      [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
       [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
     >
       {{ "RM_HEADER_HEAT_LIST" | translate }}
@@ -56,7 +52,7 @@
               widget()?.customSettings?.['heatNumberFontFamily'] || null
             "
             [style.font-size.px]="
-              widget()?.scaleMode === 'auto' || scaleToWindow()
+              scaleToWindow()
                 ? null
                 : widget()?.customSettings?.['heatNumberFontSize'] || null
             "
@@ -121,7 +117,7 @@
                       null
                     "
                     [style.font-size.px]="
-                      widget()?.scaleMode === 'auto' || scaleToWindow()
+                      scaleToWindow()
                         ? null
                         : widget()?.customSettings?.['summaryHeaderFontSize'] ||
                           null
@@ -194,7 +190,7 @@
                         null
                       "
                       [style.font-size.px]="
-                        widget()?.scaleMode === 'auto' || scaleToWindow()
+                        scaleToWindow()
                           ? null
                           : widget()?.customSettings?.['summaryRowFontSize'] ||
                             null
@@ -287,7 +283,7 @@
                     widget()?.customSettings?.['laneFontFamily'] || null
                   "
                   [style.font-size.px]="
-                    widget()?.scaleMode === 'auto' || scaleToWindow()
+                    scaleToWindow()
                       ? null
                       : widget()?.customSettings?.['laneFontSize'] || null
                   "

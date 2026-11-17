@@ -87,7 +87,7 @@ describe("RacedayTrackNameComponent", () => {
     expect(valueEl.style.fontSize).toBe("18px");
   });
 
-  it("should not apply inline font size when scaleMode is auto", () => {
+  it("should apply custom font sizes even when scaleMode is auto", () => {
     fixture.componentRef.setInput("track", {
       name: "Grand Prix Circuit",
     } as Track);
@@ -99,6 +99,36 @@ describe("RacedayTrackNameComponent", () => {
         labelFontSize: 23,
         valueFontSize: 29,
       },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("23px");
+    expect(valueEl.style.fontSize).toBe("29px");
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      "23px",
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      "29px",
+    );
+  });
+
+  it("should not apply inline font size and auto-scale when scaleMode is auto and customSettings lacks font sizes", () => {
+    fixture.componentRef.setInput("track", {
+      name: "Grand Prix Circuit",
+    } as Track);
+    fixture.componentRef.setInput("widget", {
+      id: "w-track",
+      widgetType: "track-name",
+      scaleMode: "auto",
+      customSettings: {},
     } as any);
     fixture.detectChanges();
 
