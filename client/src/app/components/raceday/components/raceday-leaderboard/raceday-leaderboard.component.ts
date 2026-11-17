@@ -47,13 +47,7 @@ export class RacedayLeaderboardComponent {
   }
 
   getLeaderboardPosition(entry: any): number {
-    const sorted = [...this.leaderboardEntries()].sort((a, b) => {
-      const aRank = a.rank || 0;
-      const bRank = b.rank || 0;
-      if (aRank === 0) return 1;
-      if (bRank === 0) return -1;
-      return aRank - bRank;
-    });
+    const sorted = this.sortedLeaderboardEntries();
     const pos = sorted.findIndex((e) => e.entityId === entry.entityId);
     return pos >= 0 ? pos : 0;
   }

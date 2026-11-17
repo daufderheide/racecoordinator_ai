@@ -32,29 +32,34 @@ export class RacedayDriverStandingsHelper {
         isTime: isTime,
       }));
 
-    const existingIds = new Set(
-      host.leaderboardEntries.map((e: any) => e.entityId),
-    );
+    const incomingMap = new Map<string, any>();
+    for (const item of incoming) {
+      if (item.entityId) {
+        incomingMap.set(item.entityId, item);
+      }
+    }
 
-    for (let i = 0; i < host.leaderboardEntries.length; i++) {
-      const id = host.leaderboardEntries[i].entityId;
-      const updated = incoming.find((e: any) => e.entityId === id);
+    const existingIds = new Set<string>();
+    const currentList = host.leaderboardEntries || [];
+    const updatedList: any[] = [];
+
+    for (let i = 0; i < currentList.length; i++) {
+      const id = currentList[i].entityId;
+      const updated = incomingMap.get(id);
       if (updated) {
-        host.leaderboardEntries[i] = updated;
+        updatedList.push(updated);
+        existingIds.add(id);
       }
     }
 
     for (const entry of incoming) {
-      if (!existingIds.has(entry.entityId)) {
-        host.leaderboardEntries.push(entry);
+      if (entry.entityId && !existingIds.has(entry.entityId)) {
+        updatedList.push(entry);
         existingIds.add(entry.entityId);
       }
     }
 
-    const incomingIds = new Set(incoming.map((e: any) => e.entityId));
-    host.leaderboardEntries = host.leaderboardEntries.filter((e: any) =>
-      incomingIds.has(e.entityId),
-    );
+    host.leaderboardEntries = updatedList;
   }
 
   static updateGroupLeaderboardEntries(host: any): void {
@@ -72,59 +77,76 @@ export class RacedayDriverStandingsHelper {
         isTime: isTime,
       }));
 
-    const existingIds = new Set(
-      host.groupLeaderboardEntries.map((e: any) => e.entityId),
-    );
+    const incomingMap = new Map<string, any>();
+    for (const item of incoming) {
+      if (item.entityId) {
+        incomingMap.set(item.entityId, item);
+      }
+    }
 
-    for (let i = 0; i < host.groupLeaderboardEntries.length; i++) {
-      const id = host.groupLeaderboardEntries[i].entityId;
-      const updated = incoming.find((e: any) => e.entityId === id);
+    const existingIds = new Set<string>();
+    const currentList = host.groupLeaderboardEntries || [];
+    const updatedList: any[] = [];
+
+    for (let i = 0; i < currentList.length; i++) {
+      const id = currentList[i].entityId;
+      const updated = incomingMap.get(id);
       if (updated) {
-        host.groupLeaderboardEntries[i] = updated;
+        updatedList.push(updated);
+        existingIds.add(id);
       }
     }
 
     for (const entry of incoming) {
-      if (!existingIds.has(entry.entityId)) {
-        host.groupLeaderboardEntries.push(entry);
+      if (entry.entityId && !existingIds.has(entry.entityId)) {
+        updatedList.push(entry);
         existingIds.add(entry.entityId);
       }
     }
 
-    const incomingIds = new Set(incoming.map((e: any) => e.entityId));
-    host.groupLeaderboardEntries = host.groupLeaderboardEntries.filter(
-      (e: any) => incomingIds.has(e.entityId),
-    );
+    host.groupLeaderboardEntries = updatedList;
   }
 
   static syncHeatDriversWithParticipants(host: any): void {
-    if (!host.heat?.heatDrivers) return;
+    if (!host.heat?.heatDrivers || !host.participants) return;
+
+    const byObjectId = new Map<string, any>();
+    const byDriverId = new Map<string, any>();
+    const byTeamId = new Map<string, any>();
+
+    for (const p of host.participants) {
+      if (p.objectId) {
+        byObjectId.set(p.objectId, p);
+      }
+      if (p.driver?.entity_id) {
+        byDriverId.set(p.driver.entity_id, p);
+      }
+      if (p.driver?.name) {
+        byDriverId.set(p.driver.name, p);
+      }
+      if (p.team?.entity_id) {
+        byTeamId.set(p.team.entity_id, p);
+      }
+    }
+
     host.heat.heatDrivers.forEach((hd: any) => {
       const d = hd.actualDriver || hd.driver;
       const driverId = d?.entity_id || d?.name;
       const teamId = hd.participant?.team?.entity_id;
-      const match =
-        host.participants?.find((p: any) => {
-          if (
-            hd.participant?.objectId &&
-            p.objectId === hd.participant.objectId
-          ) {
-            return true;
-          }
-          if (hd.objectId && p.objectId === hd.objectId) {
-            return true;
-          }
-          if (
-            driverId &&
-            (p.driver?.entity_id === driverId || p.driver?.name === driverId)
-          ) {
-            return true;
-          }
-          return false;
-        }) ||
-        (teamId
-          ? host.participants?.find((p: any) => p.team?.entity_id === teamId)
-          : undefined);
+
+      let match: any = undefined;
+      if (hd.participant?.objectId) {
+        match = byObjectId.get(hd.participant.objectId);
+      }
+      if (!match && hd.objectId) {
+        match = byObjectId.get(hd.objectId);
+      }
+      if (!match && driverId) {
+        match = byDriverId.get(driverId);
+      }
+      if (!match && teamId) {
+        match = byTeamId.get(teamId);
+      }
       if (match) {
         if (match.rank) {
           hd.overallRank = match.rank;

@@ -171,6 +171,7 @@ export class DefaultRacedayComponent
 
   // Countdown Overlay state
   showCountdownOverlay: boolean = false;
+  countdownOverlayTimeout: any = null;
   countdownLamps: any[] = [];
   countdownText: string = "";
   protected showModifyHeatsModal: boolean = false;
@@ -721,6 +722,10 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    if (this.countdownOverlayTimeout) {
+      clearTimeout(this.countdownOverlayTimeout);
+      this.countdownOverlayTimeout = null;
+    }
     LaneGridAnimationHelper.reset();
     this.lapHighlightTimers.forEach((timer) => clearTimeout(timer));
     this.lapHighlightTimers.clear();
