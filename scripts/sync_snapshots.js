@@ -22,8 +22,22 @@ function findFailedSpecs(node) {
 
 function syncSnapshots(options = {}) {
     const projectRoot = options.projectRoot || process.env.CLIENT_DIR || path.resolve(__dirname, '..', 'client');
-    const reportPath = options.reportPath || process.env.PW_REPORT_PATH || path.join(projectRoot, 'pw-result.json');
     const isolatedDir = options.isolatedDir || process.env.ISOLATED_DIR || path.join(projectRoot, '.isolated-test');
+    let reportPath = options.reportPath;
+
+    if (!reportPath) {
+        if (process.env.PW_REPORT_PATH && fs.existsSync(process.env.PW_REPORT_PATH)) {
+            reportPath = process.env.PW_REPORT_PATH;
+        } else {
+            const candidates = [
+                path.join(isolatedDir, 'pw-result.json'),
+                path.join(isolatedDir, 'playwright-report', 'pw-result.json'),
+                path.join(projectRoot, 'playwright-report', 'pw-result.json'),
+                path.join(projectRoot, 'pw-result.json')
+            ];
+            reportPath = candidates.find(c => fs.existsSync(c)) || process.env.PW_REPORT_PATH || path.join(projectRoot, 'pw-result.json');
+        }
+    }
 
     if (!fs.existsSync(reportPath)) {
         console.error(`Error: Report file not found at ${reportPath}`);

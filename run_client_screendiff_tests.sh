@@ -10,13 +10,19 @@ if [[ "$*" == *"--sync-only"* ]]; then
     exit 0
 fi
 
-# Check if --changed or --changed=* was passed
+# Check if flags were passed
 CHANGED_FLAG=""
+NO_REPORT_FLAG=false
+NATIVE_FLAG=false
 REMAINING_ARGS=()
 
 for arg in "$@"; do
     if [[ "$arg" == "--changed" ]] || [[ "$arg" == --changed=* ]]; then
         CHANGED_FLAG="$arg"
+    elif [[ "$arg" == "--no-report" ]]; then
+        NO_REPORT_FLAG=true
+    elif [[ "$arg" == "--native" ]] || [[ "$arg" == "-Native" ]] || [[ "$arg" == "-native" ]]; then
+        NATIVE_FLAG=true
     else
         clean_arg="${arg#./client/}"
         clean_arg="${clean_arg#client/}"
@@ -40,13 +46,11 @@ if [ -n "$CHANGED_FLAG" ]; then
         ESCAPED_REMAINING+=" $(printf '%q' "$r_arg")"
     done
     PLAYWRIGHT_ARGS="$CHANGED_TESTS$ESCAPED_REMAINING"
-elif [ $# -gt 0 ]; then
+elif [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
     echo "Running screendiff tests with specified arguments..."
     PLAYWRIGHT_ARGS=""
-    for arg in "$@"; do
-        clean_arg="${arg#./client/}"
-        clean_arg="${clean_arg#client/}"
-        PLAYWRIGHT_ARGS+=" $(printf '%q' "$clean_arg")"
+    for arg in "${REMAINING_ARGS[@]}"; do
+        PLAYWRIGHT_ARGS+=" $(printf '%q' "$arg")"
     done
     PLAYWRIGHT_ARGS="${PLAYWRIGHT_ARGS# }"
 else
@@ -54,11 +58,65 @@ else
     PLAYWRIGHT_ARGS=""
 fi
 
+if [ "$NATIVE_FLAG" = true ]; then
+  echo ""
+  echo "--- 🔹 Running Client Visual Tests in Native Mode (Chromium) 🔹 ---"
+  cd "$CLIENT_DIR" || exit
+  npx playwright install chromium
+  export PW_REPORT_PATH="./playwright-report/pw-result.json"
+  export PW_TEST_HTML_REPORT_OPEN=never
+  export PW_REPORTER="${PW_REPORTER:-./scripts/screendiff-reporter.js}"
+
+  eval "npx playwright test $PLAYWRIGHT_ARGS"
+  TEST_EXIT_CODE=$?
+
+  if [ $TEST_EXIT_CODE -ne 0 ]; then
+      echo ""
+      if [ -t 0 ] && [ -z "$CI" ] && [ -z "$ANTIGRAVITY_AGENT" ] && [ "$TERM" != "dumb" ] && [ "$NO_REPORT_FLAG" != "true" ]; then
+          echo "Tests failed. Opening report..."
+          npx playwright show-report "$CLIENT_DIR/playwright-report"
+      else
+          echo "Tests failed. To view the HTML report, run:"
+          echo "  npx playwright show-report \"$CLIENT_DIR/playwright-report\""
+      fi
+  fi
+
+  exit $TEST_EXIT_CODE
+fi
+
 export PW_REPORT_PATH="./playwright-report/pw-result.json"
 
 echo ""
 echo "--- 🔹 Running Client Visual Tests 🔹 ---"
 cd "$CLIENT_DIR" || exit
+
+# Check for Docker
+if ! command -v docker &> /dev/null; then
+    echo -e "\n\033[1;31m*****************************************************************\033[0m"
+    echo -e "\033[1;31m* ERROR: Docker is not installed or not in PATH!                *\033[0m"
+    echo -e "\033[1;33m* Docker is required to run screendiffs against Linux baselines.*\033[0m"
+    echo -e "\033[1;33m*                                                               *\033[0m"
+    echo -e "\033[1;33m* To fix this:                                                  *\033[0m"
+    echo -e "\033[1;33m*   1. Start or install Docker Desktop, OR                      *\033[0m"
+    echo -e "\033[1;36m*   2. Run with --native to execute tests natively on host:     *\033[0m"
+    echo -e "\033[1;36m*        ./run_client_screendiff_tests.sh --native              *\033[0m"
+    echo -e "\033[1;31m*****************************************************************\033[0m\n"
+    exit 1
+fi
+
+# Make sure Docker daemon is running
+if ! docker info &> /dev/null; then
+    echo -e "\n\033[1;31m*****************************************************************\033[0m"
+    echo -e "\033[1;31m* ERROR: Docker daemon is not running!                          *\033[0m"
+    echo -e "\033[1;33m* Docker is required to run screendiffs against Linux baselines.*\033[0m"
+    echo -e "\033[1;33m*                                                               *\033[0m"
+    echo -e "\033[1;33m* To fix this:                                                  *\033[0m"
+    echo -e "\033[1;33m*   1. Start Docker Desktop and try again, OR                   *\033[0m"
+    echo -e "\033[1;36m*   2. Run with --native to execute tests natively on host:     *\033[0m"
+    echo -e "\033[1;36m*        ./run_client_screendiff_tests.sh --native              *\033[0m"
+    echo -e "\033[1;31m*****************************************************************\033[0m\n"
+    exit 1
+fi
 
 # Ensure isolated directory exists and is prepared
 ISOLATED_DIR="${CLIENT_DIR}/.isolated-test"
@@ -100,35 +158,6 @@ echo "Clearing stale build output and test results..."
 rm -rf "$ISOLATED_DIR/dist" "$ISOLATED_DIR/test-results"
 
 cd "$ISOLATED_DIR" || exit
-
-# Check for Docker
-if ! command -v docker &> /dev/null; then
-    echo "Docker is required but not installed."
-    echo "Attempting to install Docker via Homebrew..."
-    if command -v brew &> /dev/null; then
-        brew install --cask docker
-        echo -e "\n========================================================"
-        echo "IMPORTANT: Docker Desktop has been installed."
-        echo "You must manually open Docker Desktop from your Applications"
-        echo "folder at least once to grant permissions and start the daemon."
-        echo "Please do this, and then re-run this script."
-        echo "========================================================\n"
-        exit 1
-    else
-        echo "Homebrew not found. Please install Docker manually from https://www.docker.com/"
-        exit 1
-    fi
-fi
-
-# Make sure Docker daemon is running
-if ! docker info &> /dev/null; then
-    echo -e "\n\033[1;31m*****************************************************************\033[0m"
-    echo -e "\033[1;31m* ERROR: Docker daemon is not running!                          *\033[0m"
-    echo -e "\033[1;31m* The visual tests require Docker to ensure identical rendering.*\033[0m"
-    echo -e "\033[1;31m* Please start Docker Desktop and try again.                    *\033[0m"
-    echo -e "\033[1;31m*****************************************************************\033[0m\n"
-    exit 1
-fi
 
 echo "Running tests in Docker container..."
 mkdir -p "$ISOLATED_DIR/test-home"
