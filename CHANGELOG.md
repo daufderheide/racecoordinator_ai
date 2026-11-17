@@ -1,6 +1,6 @@
 # Changelog
 
-## [v1.1.0-beta.11] - 2026-11-17
+## [v1.1.0-beta.12] - 2026-11-17
 
 ### 🐛 Hotfix Notes
 
