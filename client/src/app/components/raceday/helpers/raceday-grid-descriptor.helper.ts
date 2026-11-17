@@ -469,11 +469,29 @@ export class RacedayGridDescriptorHelper {
     gridWidgets: AbsoluteWidgetNode[],
     dataBounds: any,
   ): AbsoluteWidgetNode[] {
+    const minDataY =
+      sessionLike.headerPlacement === "top" &&
+      sessionLike.direction === "vertical"
+        ? dataBounds.y + (sessionLike.headerHeight || 36)
+        : dataBounds.y;
+    const minDataX =
+      sessionLike.headerPlacement === "left" &&
+      sessionLike.direction === "horizontal"
+        ? dataBounds.x + (sessionLike.headerWidth || 200)
+        : dataBounds.x;
+
     const isAnyUnderLabel = gridWidgets.some((w: any) => {
-      if (w.customSettings?.["isHeaderWidget"]) return false;
+      if (w.customSettings?.["isHeaderWidget"]) {
+        return (
+          (sessionLike.gridLabelPosition === "top" && w.y < dataBounds.y) ||
+          (sessionLike.gridLabelPosition === "left" && w.x < dataBounds.x)
+        );
+      }
       return (
-        (sessionLike.gridLabelPosition === "top" && w.y < dataBounds.y) ||
-        (sessionLike.gridLabelPosition === "left" && w.x < dataBounds.x)
+        (sessionLike.gridLabelPosition === "top" && w.y < minDataY) ||
+        (sessionLike.gridLabelPosition === "left" && w.x < minDataX) ||
+        w.y < minDataY ||
+        w.x < minDataX
       );
     });
     const effectiveWidgets = isAnyUnderLabel

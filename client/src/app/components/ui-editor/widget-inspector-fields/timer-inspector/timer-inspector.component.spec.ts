@@ -89,7 +89,9 @@ describe("TimerInspectorComponent", () => {
   });
 
   it("should update timeSubsecondThreshold and emit change", async () => {
-    const inputEl = fixture.nativeElement.querySelector('input[type="number"]');
+    const inputEl = fixture.nativeElement.querySelector(
+      'input[type="number"][min="0"]',
+    );
     inputEl.value = "15";
     inputEl.dispatchEvent(new Event("input"));
     fixture.detectChanges();
@@ -145,14 +147,14 @@ describe("TimerInspectorComponent", () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(
-      fixture.nativeElement.querySelector('input[type="number"]'),
+      fixture.nativeElement.querySelector('input[type="number"][min="0"]'),
     ).toBeNull();
 
     component.settings().timeSubsecondMode = "never";
     fixture.detectChanges();
     await fixture.whenStable();
     expect(
-      fixture.nativeElement.querySelector('input[type="number"]'),
+      fixture.nativeElement.querySelector('input[type="number"][min="0"]'),
     ).toBeNull();
   });
 

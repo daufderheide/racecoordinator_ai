@@ -75,23 +75,38 @@
   </div>
 
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ settings().headerFontSize || 17 }}px</span
-      >
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="range"
+        min="10"
+        max="120"
+        step="1"
+        [ngModel]="settings().headerFontSize || 17"
+        (ngModelChange)="settings().headerFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+        style="flex: 1"
+      />
+      <input
+        type="number"
+        min="10"
+        max="120"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="settings().headerFontSize || 17"
+        (ngModelChange)="settings().headerFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-number-input"
+      />
     </div>
-    <input
-      type="range"
-      min="10"
-      max="120"
-      [(ngModel)]="settings().headerFontSize"
-      [disabled]="disableFontSizes()"
-      (change)="onSettingsChange()"
-      class="inspector-slider"
-    />
   </div>
 
   <div class="inspector-section">
@@ -152,23 +167,38 @@
   </div>
 
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ settings().valueFontSize || 19 }}px</span
-      >
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="range"
+        min="10"
+        max="120"
+        step="1"
+        [ngModel]="settings().valueFontSize || 19"
+        (ngModelChange)="settings().valueFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+        style="flex: 1"
+      />
+      <input
+        type="number"
+        min="10"
+        max="120"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="settings().valueFontSize || 19"
+        (ngModelChange)="settings().valueFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-number-input"
+      />
     </div>
-    <input
-      type="range"
-      min="10"
-      max="120"
-      [(ngModel)]="settings().valueFontSize"
-      [disabled]="disableFontSizes()"
-      (change)="onSettingsChange()"
-      class="inspector-slider"
-    />
   </div>
 
   <div class="inspector-section">

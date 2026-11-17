@@ -147,7 +147,7 @@ describe("RacedayHeatDriversComponent", () => {
     expect(itemEl.style.fontSize).toBe("25px");
   });
 
-  it("should NOT apply custom font sizes when in auto scale mode", () => {
+  it("should apply custom font sizes even when in auto scale mode", () => {
     componentRef.setInput("type", "next-heat");
     componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
     componentRef.setInput("heats", [
@@ -165,10 +165,59 @@ describe("RacedayHeatDriversComponent", () => {
       },
     });
     fixture.detectChanges();
+    (component as any).fitText();
+
+    const titleEl = fixture.nativeElement.querySelector(".next-heat-title");
+    expect(titleEl).toBeTruthy();
+    expect(titleEl.style.fontSize).toBe("30px");
 
     const itemEl = fixture.nativeElement.querySelector(".next-heat-item");
     expect(itemEl).toBeTruthy();
-    expect(itemEl.style.fontSize).toBeFalsy();
+    expect(itemEl.style.fontSize).toBe("25px");
+
+    const panelEl = fixture.nativeElement.querySelector(".panel-card");
+    expect(panelEl.style.getPropertyValue("--custom-lane-size")).toBe("25px");
+    expect(panelEl.style.getPropertyValue("--custom-title-size")).toBe("30px");
+    expect(panelEl.style.getPropertyValue("--heat-drivers-font-size")).toBe(
+      "25px",
+    );
+    expect(panelEl.style.getPropertyValue("--heat-drivers-title-size")).toBe(
+      "30px",
+    );
+  });
+
+  it("should apply custom font sizes for on-deck in auto scale mode", () => {
+    componentRef.setInput("type", "on-deck");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          {
+            driver: { name: "B", entity_id: "d2", isEmpty: () => false },
+            laneIndex: 0,
+          },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "auto",
+      customSettings: {
+        titleFontSize: 28,
+        laneFontSize: 22,
+      },
+    });
+    fixture.detectChanges();
+    (component as any).fitText();
+
+    const titleEl = fixture.nativeElement.querySelector(".on-deck-title");
+    expect(titleEl).toBeTruthy();
+    expect(titleEl.style.fontSize).toBe("28px");
+
+    const itemEl = fixture.nativeElement.querySelector(".on-deck-item");
+    expect(itemEl).toBeTruthy();
+    expect(itemEl.style.fontSize).toBe("22px");
   });
 
   it("should set custom lane size and title size custom properties when in fixed scale mode", () => {

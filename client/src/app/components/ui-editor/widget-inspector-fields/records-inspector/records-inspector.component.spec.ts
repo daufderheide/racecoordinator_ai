@@ -125,5 +125,12 @@ describe("RecordsInspectorComponent", () => {
     sliders.forEach((slider: HTMLInputElement) => {
       expect(slider.disabled).toBeTrue();
     });
+    const numberInputs = fixture.nativeElement.querySelectorAll(
+      "input.inspector-number-input",
+    );
+    expect(numberInputs.length).toBeGreaterThan(0);
+    numberInputs.forEach((numInput: HTMLInputElement) => {
+      expect(numInput.disabled).toBeTrue();
+    });
   });
 });

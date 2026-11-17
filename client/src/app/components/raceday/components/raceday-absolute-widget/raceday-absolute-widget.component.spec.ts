@@ -514,6 +514,17 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(wrapper.style.zIndex).toBe("120");
   });
 
+  it("should determine isEditorMode and render timer with editor mode when isCustomizing is true", () => {
+    mockWidget.widgetType = "timer";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    expect(component.isEditorMode).toBe(true);
+    const timerEl = fixture.nativeElement.querySelector("app-raceday-timer");
+    expect(timerEl).toBeTruthy();
+  });
+
   it("should always apply top zIndex (>= 100000) for countdown widget in both customizing and live modes", () => {
     mockWidget.widgetType = "countdown";
     mockWidget.zIndex = 105;
@@ -584,6 +595,24 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(nextHeat).toBeTruthy();
   });
 
+  it("should render next-heat widget with custom settings in auto scale mode", () => {
+    mockWidget.widgetType = "next-heat";
+    mockWidget.scaleMode = "auto";
+    mockWidget.customSettings = {
+      titleFontSize: 28,
+      laneFontSize: 18,
+    };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("scale-auto")).toBeTrue();
+    const nextHeat = fixture.nativeElement.querySelector(
+      "app-raceday-next-heat",
+    );
+    expect(nextHeat).toBeTruthy();
+  });
+
   it("should render on-deck widget with custom settings in fixed scale mode", () => {
     mockWidget.widgetType = "on-deck";
     mockWidget.scaleMode = "fixed";
@@ -596,6 +625,22 @@ describe("RacedayAbsoluteWidgetComponent", () => {
 
     const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
     expect(wrapper.classList.contains("scale-fixed")).toBeTrue();
+    const onDeck = fixture.nativeElement.querySelector("app-raceday-on-deck");
+    expect(onDeck).toBeTruthy();
+  });
+
+  it("should render on-deck widget with custom settings in auto scale mode", () => {
+    mockWidget.widgetType = "on-deck";
+    mockWidget.scaleMode = "auto";
+    mockWidget.customSettings = {
+      titleFontSize: 22,
+      laneFontSize: 14,
+    };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("scale-auto")).toBeTrue();
     const onDeck = fixture.nativeElement.querySelector("app-raceday-on-deck");
     expect(onDeck).toBeTruthy();
   });

@@ -13,6 +13,42 @@ export class LaneGridHeaderHelper {
     return `${masterId}_grid_header`;
   }
 
+  public static resolveDataBounds(
+    allWidgets: AbsoluteWidgetNode[],
+    gridId: string,
+    bounds: LaneGridBounds,
+  ): LaneGridBounds {
+    if (!allWidgets || !gridId || !bounds) return bounds;
+    const gridWidgets = allWidgets.filter(
+      (w) => w.customSettings?.["gridId"] === gridId,
+    );
+    if (gridWidgets.length === 0) return bounds;
+
+    const labelWidget =
+      gridWidgets.find(
+        (w) =>
+          w.customSettings?.["gridLabelPosition"] &&
+          w.customSettings?.["gridLabelPosition"] !== "none",
+      ) ||
+      gridWidgets.find(
+        (w) =>
+          w.customSettings?.["gridLabelText"] &&
+          String(w.customSettings["gridLabelText"]).trim() !== "",
+      ) ||
+      gridWidgets[0];
+
+    const labelPosition: any =
+      labelWidget?.customSettings?.["gridLabelPosition"] || "none";
+    const labelSize =
+      Number(labelWidget?.customSettings?.["gridLabelSize"]) || 40;
+
+    return LaneGridLabelHelper.computeGridDataBounds({
+      bounds,
+      gridLabelPosition: labelPosition,
+      gridLabelSize: labelSize,
+    } as any);
+  }
+
   public static updateGridHeaderHeight(
     allWidgets: AbsoluteWidgetNode[],
     gridId: string,
@@ -50,10 +86,11 @@ export class LaneGridHeaderHelper {
       });
     }
 
-    const availH = Math.max(0, bounds.height - height);
+    const dataBounds = this.resolveDataBounds(allWidgets, gridId, bounds);
+    const availH = Math.max(0, dataBounds.height - height);
     const pitch =
       direction === "horizontal"
-        ? bounds.width / totalLanes
+        ? dataBounds.width / totalLanes
         : availH / totalLanes;
 
     return allWidgets.map((w) => {
@@ -62,7 +99,7 @@ export class LaneGridHeaderHelper {
       if (w.customSettings?.["isHeaderWidget"]) {
         return {
           ...w,
-          y: bounds.y,
+          y: dataBounds.y,
           height,
           customSettings: {
             ...(w.customSettings || {}),
@@ -77,7 +114,7 @@ export class LaneGridHeaderHelper {
             w.customSettings?.["targetIndex"] ??
             0,
         );
-        const newY = Math.round(bounds.y + height + laneIndex * pitch);
+        const newY = Math.round(dataBounds.y + height + laneIndex * pitch);
         const newH = Math.round(pitch);
         return {
           ...w,
@@ -92,6 +129,8 @@ export class LaneGridHeaderHelper {
 
       return {
         ...w,
+        y: Math.round(dataBounds.y + height),
+        height: Math.round(availH),
         customSettings: {
           ...(w.customSettings || {}),
           headerHeight: height,
@@ -103,7 +142,7 @@ export class LaneGridHeaderHelper {
   public static createMissingGridTopHeaders(
     result: AbsoluteWidgetNode[],
     gridId: string,
-    bounds: LaneGridBounds,
+    dataBounds: LaneGridBounds,
     height: number,
     sourceLaneIndex: number,
   ): void {
@@ -146,7 +185,7 @@ export class LaneGridHeaderHelper {
           ...deepCopy(master),
           id: headerId,
           x: master.x,
-          y: bounds.y,
+          y: dataBounds.y,
           width: master.width,
           height,
           zIndex: (master.zIndex ?? 10) + 1,
@@ -166,18 +205,19 @@ export class LaneGridHeaderHelper {
     totalLanes: number,
     sourceLaneIndex: number,
   ): AbsoluteWidgetNode[] {
+    const dataBounds = this.resolveDataBounds(result, gridId, bounds);
     this.createMissingGridTopHeaders(
       result,
       gridId,
-      bounds,
+      dataBounds,
       height,
       sourceLaneIndex,
     );
 
-    const availH = Math.max(0, bounds.height - height);
+    const availH = Math.max(0, dataBounds.height - height);
     const pitch =
       direction === "horizontal"
-        ? bounds.width / totalLanes
+        ? dataBounds.width / totalLanes
         : availH / totalLanes;
 
     return result.map((w) => {
@@ -185,7 +225,7 @@ export class LaneGridHeaderHelper {
       if (w.customSettings?.["isHeaderWidget"]) {
         return {
           ...w,
-          y: bounds.y,
+          y: dataBounds.y,
           height,
           customSettings: {
             ...(w.customSettings || {}),
@@ -203,8 +243,8 @@ export class LaneGridHeaderHelper {
       );
       const newY =
         direction === "vertical"
-          ? Math.round(bounds.y + height + laneIndex * pitch)
-          : Math.round(bounds.y + height);
+          ? Math.round(dataBounds.y + height + laneIndex * pitch)
+          : Math.round(dataBounds.y + height);
       const newH =
         direction === "vertical" ? Math.round(pitch) : Math.round(availH);
 
@@ -230,11 +270,12 @@ export class LaneGridHeaderHelper {
     totalLanes: number,
     newPlacement: "individual" | "none",
   ): AbsoluteWidgetNode[] {
+    const dataBounds = this.resolveDataBounds(result, gridId, bounds);
     const showHeader = newPlacement === "individual";
     const pitch =
       direction === "horizontal"
-        ? bounds.width / totalLanes
-        : bounds.height / totalLanes;
+        ? dataBounds.width / totalLanes
+        : dataBounds.height / totalLanes;
 
     return result
       .filter(
@@ -254,18 +295,18 @@ export class LaneGridHeaderHelper {
         );
         const newX =
           direction === "horizontal"
-            ? Math.round(bounds.x + laneIndex * pitch)
+            ? Math.round(dataBounds.x + laneIndex * pitch)
             : w.x;
         const isLastLane = laneIndex === totalLanes - 1;
         const newW =
           direction === "horizontal"
             ? isLastLane
-              ? Math.max(10, bounds.x + bounds.width - newX)
+              ? Math.max(10, dataBounds.x + dataBounds.width - newX)
               : Math.round(pitch)
             : w.width;
         const newY =
           direction === "vertical"
-            ? Math.round(bounds.y + laneIndex * pitch)
+            ? Math.round(dataBounds.y + laneIndex * pitch)
             : w.y;
         const newH = direction === "vertical" ? Math.round(pitch) : w.height;
 
@@ -287,7 +328,7 @@ export class LaneGridHeaderHelper {
   public static createMissingGridLeftHeaders(
     result: AbsoluteWidgetNode[],
     gridId: string,
-    bounds: LaneGridBounds,
+    dataBounds: LaneGridBounds,
     width: number,
     sourceLaneIndex: number,
   ): void {
@@ -334,7 +375,7 @@ export class LaneGridHeaderHelper {
         const headerWidget: AbsoluteWidgetNode = {
           ...deepCopy(master),
           id: headerId,
-          x: bounds.x,
+          x: dataBounds.x,
           y: master.y,
           width,
           height: master.height,
@@ -355,26 +396,27 @@ export class LaneGridHeaderHelper {
     totalLanes: number,
     sourceLaneIndex: number,
   ): AbsoluteWidgetNode[] {
+    const dataBounds = this.resolveDataBounds(result, gridId, bounds);
     this.createMissingGridLeftHeaders(
       result,
       gridId,
-      bounds,
+      dataBounds,
       width,
       sourceLaneIndex,
     );
 
-    const availW = Math.max(0, bounds.width - width);
+    const availW = Math.max(0, dataBounds.width - width);
     const pitch =
       direction === "horizontal"
         ? availW / totalLanes
-        : bounds.width / totalLanes;
+        : dataBounds.width / totalLanes;
 
     return result.map((w) => {
       if (w.customSettings?.["gridId"] !== gridId) return w;
       if (w.customSettings?.["isHeaderWidget"]) {
         return {
           ...w,
-          x: bounds.x,
+          x: dataBounds.x,
           width,
           customSettings: {
             ...(w.customSettings || {}),
@@ -392,13 +434,13 @@ export class LaneGridHeaderHelper {
       );
       const newX =
         direction === "horizontal"
-          ? Math.round(bounds.x + width + laneIndex * pitch)
+          ? Math.round(dataBounds.x + width + laneIndex * pitch)
           : w.x;
       const isLastLane = laneIndex === totalLanes - 1;
       const newW =
         direction === "horizontal"
           ? isLastLane
-            ? Math.max(10, bounds.x + bounds.width - newX)
+            ? Math.max(10, dataBounds.x + dataBounds.width - newX)
             : Math.round(pitch)
           : w.width;
 
@@ -453,11 +495,12 @@ export class LaneGridHeaderHelper {
       });
     }
 
-    const availW = Math.max(0, bounds.width - width);
+    const dataBounds = this.resolveDataBounds(allWidgets, gridId, bounds);
+    const availW = Math.max(0, dataBounds.width - width);
     const pitch =
       direction === "horizontal"
         ? availW / totalLanes
-        : bounds.width / totalLanes;
+        : dataBounds.width / totalLanes;
 
     return allWidgets.map((w) => {
       if (w.customSettings?.["gridId"] !== gridId) return w;
@@ -465,7 +508,7 @@ export class LaneGridHeaderHelper {
       if (w.customSettings?.["isHeaderWidget"]) {
         return {
           ...w,
-          x: bounds.x,
+          x: dataBounds.x,
           width,
           customSettings: {
             ...(w.customSettings || {}),
@@ -480,10 +523,10 @@ export class LaneGridHeaderHelper {
             w.customSettings?.["targetIndex"] ??
             0,
         );
-        const newX = Math.round(bounds.x + width + laneIndex * pitch);
+        const newX = Math.round(dataBounds.x + width + laneIndex * pitch);
         const isLastLane = laneIndex === totalLanes - 1;
         const newW = isLastLane
-          ? Math.max(10, bounds.x + bounds.width - newX)
+          ? Math.max(10, dataBounds.x + dataBounds.width - newX)
           : Math.round(pitch);
         return {
           ...w,
@@ -498,6 +541,8 @@ export class LaneGridHeaderHelper {
 
       return {
         ...w,
+        x: Math.round(dataBounds.x + width),
+        width: Math.round(availW),
         customSettings: {
           ...(w.customSettings || {}),
           headerWidth: width,

@@ -102,6 +102,129 @@ describe("LaneGridHeaderHelper", () => {
       expect(updatedHeader?.height).toBe(60);
       expect(updatedHeader?.customSettings?.["headerHeight"]).toBe(60);
     });
+
+    it("should position top header and first row relative to dataBounds when a top grid label is present", () => {
+      let widgets = createTestWidgets("top", 36);
+      for (const w of widgets) {
+        w.customSettings = {
+          ...w.customSettings,
+          gridBounds: { x: 100, y: 100, width: 200, height: 400 },
+          gridLabelPosition: "top",
+          gridLabelSize: 40,
+          gridLabelText: "Leaderboard",
+        };
+      }
+      widgets.push({
+        id: "master-col_grid_header",
+        widgetType: "lane-column",
+        x: 100,
+        y: 140,
+        width: 200,
+        height: 36,
+        zIndex: 11,
+        customSettings: {
+          gridId: baseGridId,
+          gridMasterId: "master-col",
+          isHeaderWidget: true,
+          headerPlacement: "top",
+          headerHeight: 36,
+          gridBounds: { x: 100, y: 100, width: 200, height: 400 },
+          gridLabelPosition: "top",
+          gridLabelSize: 40,
+        },
+      });
+
+      const updated = LaneGridHeaderHelper.updateGridHeaderHeight(
+        widgets,
+        baseGridId,
+        89,
+      );
+
+      const header = updated.find((w) => w.customSettings?.["isHeaderWidget"]);
+      const row1 = updated.find(
+        (w) =>
+          !w.customSettings?.["isHeaderWidget"] &&
+          (w.customSettings?.["gridLane"] === 0 ||
+            w.customSettings?.["targetIndex"] === 0),
+      );
+      const row2 = updated.find(
+        (w) =>
+          !w.customSettings?.["isHeaderWidget"] &&
+          (w.customSettings?.["gridLane"] === 1 ||
+            w.customSettings?.["targetIndex"] === 1),
+      );
+
+      expect(header).toBeDefined();
+      expect(header?.y).toBe(140);
+      expect(header?.height).toBe(89);
+
+      expect(row1).toBeDefined();
+      expect(row1?.y).toBe(229);
+      expect(row1?.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+
+      expect(row2).toBeDefined();
+      expect(row2?.y).toBeGreaterThan(row1!.y);
+    });
+
+    it("should position left header and first column relative to dataBounds when a left grid label is present", () => {
+      const widgets: AbsoluteWidgetNode[] = [
+        {
+          id: "m-col",
+          widgetType: "lane-column",
+          x: 140,
+          y: 100,
+          width: 100,
+          height: 200,
+          zIndex: 10,
+          customSettings: {
+            gridId: baseGridId,
+            gridLane: 0,
+            gridTotalLanes: 2,
+            gridDirection: "horizontal",
+            headerPlacement: "left",
+            headerWidth: 150,
+            gridBounds: { x: 100, y: 100, width: 600, height: 200 },
+            gridLabelPosition: "left",
+            gridLabelSize: 40,
+          },
+        },
+        {
+          id: "m-col_grid_header",
+          widgetType: "lane-column",
+          x: 140,
+          y: 100,
+          width: 150,
+          height: 200,
+          zIndex: 11,
+          customSettings: {
+            gridId: baseGridId,
+            gridMasterId: "m-col",
+            isHeaderWidget: true,
+            headerPlacement: "left",
+            headerWidth: 150,
+            gridBounds: { x: 100, y: 100, width: 600, height: 200 },
+            gridLabelPosition: "left",
+            gridLabelSize: 40,
+          },
+        },
+      ];
+
+      const updated = LaneGridHeaderHelper.updateGridHeaderWidth(
+        widgets,
+        baseGridId,
+        180,
+      );
+
+      const header = updated.find((w) => w.customSettings?.["isHeaderWidget"]);
+      const col1 = updated.find((w) => !w.customSettings?.["isHeaderWidget"]);
+
+      expect(header).toBeDefined();
+      expect(header?.x).toBe(140);
+      expect(header?.width).toBe(180);
+
+      expect(col1).toBeDefined();
+      expect(col1?.x).toBe(320);
+    });
   });
 
   describe("updateGridHeaderPlacement", () => {

@@ -1626,6 +1626,47 @@ describe("LaneColumnInspectorComponent", () => {
       expect(mirrorSection.querySelector(".inspector-val-badge")).toBeNull();
     });
 
+    it("should render inspector-number-input controls for header font size without redundant badge on column tab", () => {
+      fixture.componentRef.setInput("settings", {
+        ...mockSettings,
+        gridId: "grid-12345",
+        gridLane: 0,
+        headerFontSize: 24,
+      });
+      component.setScope("column");
+      fixture.detectChanges();
+      const numberInputs = fixture.debugElement.queryAll(
+        By.css("input.inspector-number-input"),
+      );
+      const headerFontInput = numberInputs.find((el) => {
+        const sec = el.nativeElement.closest(".inspector-section");
+        return sec?.textContent?.includes("UE_INSPECTOR_HEADER_FONT_SIZE");
+      });
+      expect(headerFontInput).toBeTruthy();
+      expect(headerFontInput!.nativeElement.getAttribute("type")).toBe(
+        "number",
+      );
+      expect(headerFontInput!.nativeElement.getAttribute("min")).toBe("8");
+      expect(headerFontInput!.nativeElement.getAttribute("max")).toBe("72");
+
+      const headerFontSection =
+        headerFontInput!.nativeElement.closest(".inspector-section");
+      expect(
+        headerFontSection.querySelector(".inspector-val-badge"),
+      ).toBeNull();
+    });
+
+    it("should update headerFontSize and sync on gridHeaderFontSize change", () => {
+      mockSettings.gridId = "grid-12345";
+      delete (mockSettings as any).headerFontSize;
+      expect(component.gridHeaderFontSize).toBe(24);
+
+      component.gridHeaderFontSize = 28;
+      expect(mockSettings.headerFontSize).toBe(28);
+      expect(mockSettings._syncAction).toBe("header");
+      expect(component.gridHeaderFontSize).toBe(28);
+    });
+
     it("should handle gridLabel typography and style properties", () => {
       mockSettings.linkColumns = true;
 

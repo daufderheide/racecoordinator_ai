@@ -118,7 +118,7 @@ describe("RacedayTimerComponent", () => {
     expect(timerTextEl.style.color).toBe("rgb(255, 0, 0)");
   });
 
-  it("should NOT apply custom font sizes for timer text when scaleMode is auto", () => {
+  it("should apply custom font sizes for timer text even when scaleMode is auto", () => {
     const mockWidget: any = {
       widgetType: "timer",
       scaleMode: "auto",
@@ -130,9 +130,85 @@ describe("RacedayTimerComponent", () => {
     };
     fixture.componentRef.setInput("widget", mockWidget);
     fixture.detectChanges();
+    (component as any).fitText();
 
     const timerTextEl = fixture.nativeElement.querySelector(".timer-text");
-    expect(timerTextEl.style.fontSize).toBeFalsy();
+    const timerPanelEl = fixture.nativeElement.querySelector(".timer-panel");
+    expect(timerTextEl.style.fontSize).toBe("85px");
+    expect(timerPanelEl.style.getPropertyValue("--timer-font-size")).toBe(
+      "85px",
+    );
+  });
+
+  describe("editor mode mock time formatting", () => {
+    it("should display mock time according to timeDisplayFormat in editor mode", async () => {
+      fixture.componentRef.setInput("isEditor", true);
+
+      // Default dynamic format
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: { timeDisplayFormat: "dynamic" },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("2:03");
+
+      // mm_ss format
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: { timeDisplayFormat: "mm_ss" },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("02:03");
+
+      // m_ss format
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: { timeDisplayFormat: "m_ss" },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("2:03");
+
+      // hh_mm_ss format
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: { timeDisplayFormat: "hh_mm_ss" },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("00:02:03");
+
+      // seconds format
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: { timeDisplayFormat: "seconds" },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("123");
+    });
+
+    it("should display subseconds in editor mode when subsecondMode is always", async () => {
+      fixture.componentRef.setInput("isEditor", true);
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: {
+          timeDisplayFormat: "mm_ss",
+          timeSubsecondMode: "always",
+          timeSubsecondDecimals: 2,
+        },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("02:03.45");
+    });
+
+    it("should prioritize formattedTime input over mock time even in editor mode", async () => {
+      fixture.componentRef.setInput("isEditor", true);
+      fixture.componentRef.setInput("formattedTime", "99:99");
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        customSettings: { timeDisplayFormat: "hh_mm_ss" },
+      });
+      fixture.detectChanges();
+      expect(await harness.getTimeText()).toBe("99:99");
+    });
   });
 
   it("should render with timer-panel and timer-text classes for styling", () => {
