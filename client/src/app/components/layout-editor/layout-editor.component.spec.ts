@@ -476,6 +476,50 @@ describe("LayoutEditorComponent", () => {
       expect(component.isEditMode).toBeTrue();
     }));
 
+    it("should use factory default layout when default layout in allLayouts was modified by user", fakeAsync(() => {
+      const defaultLayout = component.allLayouts.find(
+        (u) => u.entity_id === "default_ui_layout_rc_ai",
+      );
+      if (defaultLayout) {
+        defaultLayout.layoutJson = JSON.stringify({
+          widgets: [{ id: "user-modified-widget" }],
+        });
+      }
+
+      component.onConfirmCreateLayout("default_ui_layout_rc_ai");
+      tick();
+
+      expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      const createdArg = mockDataService.createCustomUI.calls.mostRecent()
+        .args[0] as CustomUI;
+      expect(createdArg.layoutJson).not.toContain("user-modified-widget");
+      expect(createdArg.layoutJson).toContain("widget-menu-bar");
+      expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should use factory default layout when practice layout was modified by user", fakeAsync(() => {
+      const practiceLayout = component.allLayouts.find(
+        (u) => u.entity_id === "practice_ui_layout_rc_ai",
+      );
+      if (practiceLayout) {
+        practiceLayout.layoutJson = JSON.stringify({
+          widgets: [{ id: "user-modified-practice-widget" }],
+        });
+      }
+
+      component.onConfirmCreateLayout("practice_ui_layout_rc_ai");
+      tick();
+
+      expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      const createdArg = mockDataService.createCustomUI.calls.mostRecent()
+        .args[0] as CustomUI;
+      expect(createdArg.layoutJson).not.toContain(
+        "user-modified-practice-widget",
+      );
+      expect(createdArg.layoutJson).toContain("widget-menu-bar");
+      expect(component.isEditMode).toBeTrue();
+    }));
+
     it("should close template modal without creating on cancel", () => {
       mockDataService.createCustomUI.calls.reset();
       component.openNewLayoutModal();
