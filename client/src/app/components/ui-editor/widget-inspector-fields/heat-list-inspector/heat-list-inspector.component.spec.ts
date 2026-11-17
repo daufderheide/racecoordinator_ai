@@ -107,6 +107,13 @@ describe("HeatListInspectorComponent", () => {
     expect(sliders[0].disabled).toBeFalse();
     expect(sliders[1].disabled).toBeTrue();
     expect(sliders[2].disabled).toBeTrue();
+
+    const numberInputs = fixture.nativeElement.querySelectorAll(
+      ".inspector-number-input",
+    );
+    expect(numberInputs[0].disabled).toBeFalse();
+    expect(numberInputs[1].disabled).toBeTrue();
+    expect(numberInputs[2].disabled).toBeTrue();
   });
 
   it("should handle summary configuration toggles and color updates", () => {

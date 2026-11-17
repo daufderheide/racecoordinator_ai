@@ -295,21 +295,38 @@
 
   <!-- Font Size -->
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge">{{ settings().fontSize || 18 }}px</span>
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="range"
+        min="10"
+        max="100"
+        step="1"
+        [ngModel]="settings().fontSize || 18"
+        (ngModelChange)="settings().fontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+        style="flex: 1"
+      />
+      <input
+        type="number"
+        min="10"
+        max="100"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="settings().fontSize || 18"
+        (ngModelChange)="settings().fontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-number-input"
+      />
     </div>
-    <input
-      type="range"
-      min="10"
-      max="100"
-      [(ngModel)]="settings().fontSize"
-      [disabled]="disableFontSizes()"
-      (change)="onSettingsChange()"
-      class="inspector-slider"
-    />
   </div>
 
   <!-- Time / Progress Format Settings (for heat-progress mode) -->

@@ -308,7 +308,7 @@
   padding: 12px !important;
 }
 .widget-wrapper.scale-fixed .timer-text {
-  font-size: var(--widget-font-size);
+  font-size: var(--timer-font-size, var(--widget-font-size));
   line-height: 1 !important;
 }
 .widget-wrapper.scale-fixed app-raceday-race-name .value-text,
@@ -563,8 +563,11 @@
 .widget-wrapper.scale-auto .next-heat-title,
 .widget-wrapper.scale-auto .on-deck-title {
   font-size: var(
-    --heat-drivers-title-size,
-    calc(8cqh * var(--widget-scale-factor, 1))
+    --custom-title-size,
+    var(
+      --heat-drivers-title-size,
+      calc(8cqh * var(--widget-scale-factor, 1))
+    )
   ) !important;
   margin-bottom: var(
     --heat-drivers-title-margin,
@@ -598,8 +601,11 @@
 .widget-wrapper.scale-auto .next-heat-empty,
 .widget-wrapper.scale-auto .on-deck-empty {
   font-size: var(
-    --heat-drivers-font-size,
-    calc(6.5cqh * var(--widget-scale-factor, 1))
+    --custom-lane-size,
+    var(
+      --heat-drivers-font-size,
+      calc(6.5cqh * var(--widget-scale-factor, 1))
+    )
   ) !important;
 }
 
@@ -607,31 +613,46 @@
   font-size: calc(
     0.875 *
       var(
-        --heat-drivers-font-size,
-        calc(5.5cqh * var(--widget-scale-factor, 1))
+        --custom-lane-size,
+        var(
+          --heat-drivers-font-size,
+          calc(5.5cqh * var(--widget-scale-factor, 1))
+        )
       )
   ) !important;
   min-width: calc(
     1.75 *
-      var(--heat-drivers-font-size, calc(11cqh * var(--widget-scale-factor, 1)))
+      var(
+        --custom-lane-size,
+        var(--heat-drivers-font-size, calc(11cqh * var(--widget-scale-factor, 1)))
+      )
   ) !important;
   height: calc(
     1.5 *
-      var(--heat-drivers-font-size, calc(9cqh * var(--widget-scale-factor, 1)))
+      var(
+        --custom-lane-size,
+        var(--heat-drivers-font-size, calc(9cqh * var(--widget-scale-factor, 1)))
+      )
   ) !important;
   padding: 0
     calc(
       0.375 *
         var(
-          --heat-drivers-font-size,
-          calc(2.5cqh * var(--widget-scale-factor, 1))
+          --custom-lane-size,
+          var(
+            --heat-drivers-font-size,
+            calc(2.5cqh * var(--widget-scale-factor, 1))
+          )
         )
     ) !important;
   border-radius: calc(
     0.75 *
       var(
-        --heat-drivers-font-size,
-        calc(4.5cqh * var(--widget-scale-factor, 1))
+        --custom-lane-size,
+        var(
+          --heat-drivers-font-size,
+          calc(4.5cqh * var(--widget-scale-factor, 1))
+        )
       )
   ) !important;
 }

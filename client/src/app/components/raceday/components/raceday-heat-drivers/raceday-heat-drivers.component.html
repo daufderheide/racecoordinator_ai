@@ -3,28 +3,20 @@
   class="panel-card"
   [ngClass]="type() === 'on-deck' ? 'on-deck-panel' : 'next-heat-panel'"
   [style.--custom-title-size]="
-    widget()?.scaleMode === 'auto'
-      ? null
-      : widget()?.customSettings?.['titleFontSize']
-        ? widget()?.customSettings?.['titleFontSize'] + 'px'
-        : null
+    widget()?.customSettings?.['titleFontSize']
+      ? widget()?.customSettings?.['titleFontSize'] + 'px'
+      : null
   "
   [style.--custom-lane-size]="
-    widget()?.scaleMode === 'auto'
-      ? null
-      : widget()?.customSettings?.['laneFontSize']
-        ? widget()?.customSettings?.['laneFontSize'] + 'px'
-        : null
+    widget()?.customSettings?.['laneFontSize']
+      ? widget()?.customSettings?.['laneFontSize'] + 'px'
+      : null
   "
 >
   <div
     [ngClass]="type() === 'on-deck' ? 'on-deck-title' : 'next-heat-title'"
     [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
-    [style.font-size.px]="
-      widget()?.scaleMode === 'auto'
-        ? null
-        : widget()?.customSettings?.['titleFontSize'] || null
-    "
+    [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
   >
     {{
@@ -39,9 +31,7 @@
           widget()?.customSettings?.['laneFontFamily'] || null
         "
         [style.font-size.px]="
-          widget()?.scaleMode === 'auto'
-            ? null
-            : widget()?.customSettings?.['laneFontSize'] || null
+          widget()?.customSettings?.['laneFontSize'] || null
         "
         style="
           position: relative;
@@ -188,6 +178,12 @@
     } @empty {
       <div
         [ngClass]="type() === 'on-deck' ? 'on-deck-empty' : 'next-heat-empty'"
+        [style.font-family]="
+          widget()?.customSettings?.['laneFontFamily'] || null
+        "
+        [style.font-size.px]="
+          widget()?.customSettings?.['laneFontSize'] || null
+        "
       >
         {{ "GEN_NA" | translate }}
       </div>

@@ -19,6 +19,7 @@ import { of, Subscription } from "rxjs";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceTimeService } from "@app/services/race-time.service";
+import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -32,6 +33,7 @@ import { RaceTimeService } from "@app/services/race-time.service";
 export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
   widget = input<AbsoluteWidgetNode | null>(null);
   showCountdownOverlay = input<boolean>(false);
+  isEditor = input<boolean>(false);
 
   private raceTimeService = inject(RaceTimeService, { optional: true });
   private ngZone = inject(NgZone);
@@ -62,6 +64,15 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
   protected displayFormattedTime = computed(() => {
     const custom = this.formattedTime();
     if (custom) return custom;
+    if (this.isEditor()) {
+      const s = this.widget()?.customSettings;
+      return formatTimerDisplay(123.45, {
+        format: s?.["timeDisplayFormat"] || "dynamic",
+        subsecondMode: s?.["timeSubsecondMode"] || "threshold",
+        subsecondThreshold: s?.["timeSubsecondThreshold"] ?? 10,
+        subsecondDecimals: s?.["timeSubsecondDecimals"] ?? 2,
+      });
+    }
     return this.serviceFormattedTime() || "";
   });
 
@@ -123,7 +134,7 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
       this.ngZone.runOutsideAngular(() => {
         this.timeSub = timeStream$.subscribe((time) => {
           const textEl = this.timerText()?.nativeElement;
-          if (textEl && !this.formattedTime()) {
+          if (textEl && !this.formattedTime() && !this.isEditor()) {
             const prevLen = textEl.textContent?.length ?? 0;
             textEl.textContent = time;
             if (time.length !== prevLen) {
@@ -165,6 +176,14 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     const widgetData = this.widget();
 
     if (!textEl || !panelEl) return;
+
+    const customFontSize = Number(widgetData?.customSettings?.["timeFontSize"]);
+    if (customFontSize && customFontSize > 0) {
+      panelEl.style.setProperty("--timer-font-size", `${customFontSize}px`);
+      const textOffset = Math.max(0, Math.floor(customFontSize * 0.05));
+      panelEl.style.setProperty("--timer-text-offset", `-${textOffset}px`);
+      return;
+    }
 
     const isAuto = !widgetData || widgetData.scaleMode === "auto";
     if (!isAuto) {

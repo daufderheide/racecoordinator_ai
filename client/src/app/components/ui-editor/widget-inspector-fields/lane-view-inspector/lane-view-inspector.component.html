@@ -82,23 +82,38 @@
   </div>
 
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ settings().columnFontSize || 24 }}px</span
-      >
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="range"
+        min="10"
+        max="120"
+        step="1"
+        [ngModel]="settings().columnFontSize || 24"
+        (ngModelChange)="settings().columnFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+        style="flex: 1"
+      />
+      <input
+        type="number"
+        min="10"
+        max="120"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="settings().columnFontSize || 24"
+        (ngModelChange)="settings().columnFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-number-input"
+      />
     </div>
-    <input
-      type="range"
-      min="10"
-      max="120"
-      [(ngModel)]="settings().columnFontSize"
-      [disabled]="disableFontSizes()"
-      (change)="onSettingsChange()"
-      class="inspector-slider"
-    />
   </div>
 
   <div class="inspector-section">
@@ -159,23 +174,38 @@
   </div>
 
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ settings().dataFontSize || 54 }}px</span
-      >
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="range"
+        min="10"
+        max="120"
+        step="1"
+        [ngModel]="settings().dataFontSize || 54"
+        (ngModelChange)="settings().dataFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+        style="flex: 1"
+      />
+      <input
+        type="number"
+        min="10"
+        max="120"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="settings().dataFontSize || 54"
+        (ngModelChange)="settings().dataFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-number-input"
+      />
     </div>
-    <input
-      type="range"
-      min="10"
-      max="120"
-      [(ngModel)]="settings().dataFontSize"
-      [disabled]="disableFontSizes()"
-      (change)="onSettingsChange()"
-      class="inspector-slider"
-    />
   </div>
 
   <!-- Lane Inset Data Settings Section -->
@@ -243,23 +273,38 @@
 
   <!-- Inset Font Size -->
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <span class="inspector-val-badge"
-        >{{ settings().insetFontSize || 24 }}px</span
-      >
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <input
+        type="range"
+        min="10"
+        max="120"
+        step="1"
+        [ngModel]="settings().insetFontSize || 24"
+        (ngModelChange)="settings().insetFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-slider"
+        style="flex: 1"
+      />
+      <input
+        type="number"
+        min="10"
+        max="120"
+        step="1"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [ngModel]="settings().insetFontSize || 24"
+        (ngModelChange)="settings().insetFontSize = $event; onSettingsChange()"
+        [disabled]="disableFontSizes()"
+        class="inspector-number-input"
+      />
     </div>
-    <input
-      type="range"
-      min="10"
-      max="120"
-      [(ngModel)]="settings().insetFontSize"
-      [disabled]="disableFontSizes()"
-      (change)="onSettingsChange()"
-      class="inspector-slider"
-    />
   </div>
 
   <!-- Columns Management Section -->

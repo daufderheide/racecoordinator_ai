@@ -519,12 +519,9 @@
         </div>
 
         <div class="inspector-section" style="margin-bottom: 8px">
-          <div class="inspector-label-row">
-            <label class="inspector-label">{{
-              "UE_GRID_LABEL_SIZE" | translate
-            }}</label>
-            <span class="inspector-val-badge">{{ gridLabelSize }}px</span>
-          </div>
+          <label class="inspector-label">{{
+            "UE_GRID_LABEL_SIZE" | translate
+          }}</label>
           <div style="display: flex; gap: 8px; align-items: center">
             <input
               type="range"
@@ -575,12 +572,9 @@
         </div>
 
         <div class="inspector-section" style="margin-bottom: 8px">
-          <div class="inspector-label-row">
-            <label class="inspector-label">{{
-              "UE_INSPECTOR_FONT_SIZE" | translate
-            }}</label>
-            <span class="inspector-val-badge">{{ gridLabelFontSize }}px</span>
-          </div>
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_FONT_SIZE" | translate
+          }}</label>
           <div style="display: flex; gap: 8px; align-items: center">
             <input
               type="range"
@@ -817,14 +811,9 @@
       @if (gridHeaderPlacement !== "none") {
         @if (gridHeaderPlacement === "top") {
           <div class="inspector-section" style="margin-bottom: 8px">
-            <div class="inspector-label-row">
-              <label class="inspector-label">{{
-                "UE_GRID_HEADER_HEIGHT" | translate
-              }}</label>
-              <span class="inspector-val-badge"
-                >{{ currentGridHeaderHeight }}px</span
-              >
-            </div>
+            <label class="inspector-label">{{
+              "UE_GRID_HEADER_HEIGHT" | translate
+            }}</label>
             <div style="display: flex; gap: 8px; align-items: center">
               <input
                 type="range"
@@ -857,14 +846,9 @@
 
         @if (gridHeaderPlacement === "left") {
           <div class="inspector-section" style="margin-bottom: 8px">
-            <div class="inspector-label-row">
-              <label class="inspector-label">{{
-                "UE_REPLICATE_HEADER_WIDTH" | translate
-              }}</label>
-              <span class="inspector-val-badge"
-                >{{ currentGridHeaderWidth }}px</span
-              >
-            </div>
+            <label class="inspector-label">{{
+              "UE_REPLICATE_HEADER_WIDTH" | translate
+            }}</label>
             <div style="display: flex; gap: 8px; align-items: center">
               <input
                 type="range"
@@ -1313,14 +1297,9 @@
 
         <!-- Border Margin -->
         <div class="inspector-section">
-          <div class="inspector-label-row">
-            <label class="inspector-label">{{
-              "UE_INSPECTOR_BORDER_MARGIN" | translate
-            }}</label>
-            <span class="inspector-val-badge"
-              >{{ currentSettings["lastLapsBorderMargin"] ?? 0 }}px</span
-            >
-          </div>
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_BORDER_MARGIN" | translate
+          }}</label>
           <div style="display: flex; gap: 8px; align-items: center">
             <input
               type="range"
@@ -2123,26 +2102,17 @@
     </div>
 
     <div class="inspector-section">
-      <div class="inspector-label-row">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
-        }}</label>
-        <span class="inspector-val-badge"
-          >{{
-            currentSettings["headerFontSize"] ||
-              (currentSettings["gridId"] ? 24 : 14)
-          }}px</span
-        >
-      </div>
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
+      }}</label>
       <div style="display: flex; gap: 8px; align-items: center">
         <input
           type="range"
           min="8"
           max="72"
           step="1"
-          [(ngModel)]="currentSettings['headerFontSize']"
-          (input)="onHeaderStyleChange()"
-          (change)="onHeaderStyleChange()"
+          [ngModel]="gridHeaderFontSize"
+          (ngModelChange)="gridHeaderFontSize = $event"
           class="inspector-slider"
           style="flex: 1"
         />
@@ -2157,8 +2127,8 @@
           data-lpignore="true"
           data-bwignore="true"
           data-form-type="other"
-          [(ngModel)]="currentSettings['headerFontSize']"
-          (change)="onHeaderStyleChange()"
+          [ngModel]="gridHeaderFontSize"
+          (ngModelChange)="gridHeaderFontSize = $event"
           class="inspector-number-input"
         />
       </div>
@@ -2394,42 +2364,70 @@
 
       <!-- Min Font Size -->
       <div class="inspector-section">
-        <div class="inspector-label-row">
-          <label class="inspector-label">{{
-            "UE_INSPECTOR_MIN_FONT_SIZE" | translate
-          }}</label>
-          <span class="inspector-val-badge"
-            >{{ currentSettings["minFontSize"] ?? 0 }}px</span
-          >
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_MIN_FONT_SIZE" | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="0"
+            max="120"
+            step="1"
+            [ngModel]="currentSettings['minFontSize'] ?? 0"
+            (ngModelChange)="onMinFontSizeChange($event)"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="0"
+            max="120"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="currentSettings['minFontSize'] ?? 0"
+            (ngModelChange)="onMinFontSizeChange($event)"
+            class="inspector-number-input"
+          />
         </div>
-        <input
-          type="range"
-          min="0"
-          max="120"
-          [ngModel]="currentSettings['minFontSize'] ?? 0"
-          (ngModelChange)="onMinFontSizeChange($event)"
-          class="inspector-slider"
-        />
       </div>
 
       <!-- Max Font Size -->
       <div class="inspector-section">
-        <div class="inspector-label-row">
-          <label class="inspector-label">{{
-            "UE_INSPECTOR_MAX_FONT_SIZE" | translate
-          }}</label>
-          <span class="inspector-val-badge"
-            >{{ currentSettings["maxFontSize"] ?? 60 }}px</span
-          >
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_MAX_FONT_SIZE" | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="0"
+            max="120"
+            step="1"
+            [ngModel]="currentSettings['maxFontSize'] ?? 60"
+            (ngModelChange)="onMaxFontSizeChange($event)"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="0"
+            max="120"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="currentSettings['maxFontSize'] ?? 60"
+            (ngModelChange)="onMaxFontSizeChange($event)"
+            class="inspector-number-input"
+          />
         </div>
-        <input
-          type="range"
-          min="0"
-          max="120"
-          [ngModel]="currentSettings['maxFontSize'] ?? 60"
-          (ngModelChange)="onMaxFontSizeChange($event)"
-          class="inspector-slider"
-        />
       </div>
 
       <div class="inspector-section">
@@ -2900,23 +2898,42 @@
       </div>
 
       <div class="inspector-section">
-        <div class="inspector-label-row">
-          <label class="inspector-label">{{
-            "UE_INSPECTOR_FONT_SIZE" | translate
-          }}</label>
-          <span class="inspector-val-badge"
-            >{{ currentSettings["insetFontSize"] || 18 }}px</span
-          >
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="8"
+            max="36"
+            step="1"
+            [ngModel]="currentSettings['insetFontSize'] || 18"
+            (ngModelChange)="
+              currentSettings['insetFontSize'] = $event; onFieldChange()
+            "
+            [disabled]="disableFontSizes()"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="8"
+            max="36"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="currentSettings['insetFontSize'] || 18"
+            (ngModelChange)="
+              currentSettings['insetFontSize'] = $event; onFieldChange()
+            "
+            [disabled]="disableFontSizes()"
+            class="inspector-number-input"
+          />
         </div>
-        <input
-          type="range"
-          min="8"
-          max="36"
-          [(ngModel)]="currentSettings['insetFontSize']"
-          [disabled]="disableFontSizes()"
-          (change)="onFieldChange()"
-          class="inspector-slider"
-        />
       </div>
 
       <!-- Inset Text Color (override) -->
@@ -3441,23 +3458,38 @@
 
     <!-- Font Size -->
     <div class="inspector-section">
-      <div class="inspector-label-row">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_FONT_SIZE" | translate
-        }}</label>
-        <span class="inspector-val-badge">
-          {{ getInsetFontSize(effectiveSelectedAnchor) }}px
-        </span>
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="8"
+          max="36"
+          step="1"
+          [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
+          (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
+          [disabled]="disableFontSizes()"
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="8"
+          max="36"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
+          (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
+          [disabled]="disableFontSizes()"
+          class="inspector-number-input"
+        />
       </div>
-      <input
-        type="range"
-        min="8"
-        max="36"
-        [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
-        (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
-        [disabled]="disableFontSizes()"
-        class="inspector-slider"
-      />
     </div>
 
     <!-- Text Color -->

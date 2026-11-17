@@ -131,16 +131,20 @@ export class RacedayAbsoluteWidgetComponent
     return !this.isSelected && !this.isCountdownPreviewActive();
   }
 
-  get isFuelWidgetHidden(): boolean {
-    if (this.isCustomizing()) return false;
+  get isEditorMode(): boolean {
+    if (this.isCustomizing()) return true;
     const parent = this.parentComponent();
-    const isEditor = Boolean(
+    return Boolean(
       (typeof parent?.isUIEditorMode === "function"
         ? parent.isUIEditorMode()
         : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
     );
-    if (isEditor) return false;
+  }
 
+  get isFuelWidgetHidden(): boolean {
+    if (this.isEditorMode) return false;
+
+    const parent = this.parentComponent();
     const w = this.widget();
     if (
       w?.widgetType === "progress-gauge" &&
@@ -176,15 +180,9 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   get isOverallNoDataRow(): boolean {
-    if (this.isCustomizing()) return false;
-    const parent = this.parentComponent();
-    const isEditor = Boolean(
-      (typeof parent?.isUIEditorMode === "function"
-        ? parent.isUIEditorMode()
-        : parent?.isUIEditorMode) || parent?.isLayoutCustomizing,
-    );
-    if (isEditor) return false;
+    if (this.isEditorMode) return false;
 
+    const parent = this.parentComponent();
     const s = this.widget()?.customSettings;
     if (s?.["isHeaderWidget"]) return false;
 

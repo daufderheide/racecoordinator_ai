@@ -25,7 +25,10 @@ export class LaneColumnGridHelper {
   }
 
   public static getGridHeaderFontSize(currentSettings: any): number {
-    return Number(currentSettings["headerFontSize"]) || 14;
+    return (
+      Number(currentSettings["headerFontSize"]) ||
+      (currentSettings["gridId"] ? 24 : 14)
+    );
   }
 
   public static setGridHeaderFontSize(
@@ -33,9 +36,10 @@ export class LaneColumnGridHelper {
     val: number,
     onHeaderStyleChange: () => void,
   ): void {
+    const defaultVal = currentSettings["gridId"] ? 24 : 14;
     currentSettings["headerFontSize"] = Math.max(
       8,
-      Math.min(72, Number(val) || 14),
+      Math.min(72, Number(val) || defaultVal),
     );
     onHeaderStyleChange();
   }

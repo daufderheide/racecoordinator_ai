@@ -90,6 +90,31 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    const customLaneSize = Number(widgetData?.customSettings?.["laneFontSize"]);
+    const customTitleSize = Number(
+      widgetData?.customSettings?.["titleFontSize"],
+    );
+
+    if (
+      (customLaneSize && customLaneSize > 0) ||
+      (customTitleSize && customTitleSize > 0)
+    ) {
+      const targetLaneFontSize =
+        customLaneSize && customLaneSize > 0
+          ? customLaneSize
+          : customTitleSize && customTitleSize > 0
+            ? Math.floor(customTitleSize / 1.125)
+            : 16;
+      const targetTitleFontSize =
+        customTitleSize && customTitleSize > 0
+          ? customTitleSize
+          : customLaneSize && customLaneSize > 0
+            ? Math.floor(customLaneSize * 1.125)
+            : 18;
+      this.applyCSSProperties(panelEl, targetLaneFontSize, targetTitleFontSize);
+      return;
+    }
+
     const titleText = this.translationService.translate(
       this.type() === "on-deck" ? "RD_WIN_ON_DECK" : "RD_WIN_NEXT_HEAT",
     );

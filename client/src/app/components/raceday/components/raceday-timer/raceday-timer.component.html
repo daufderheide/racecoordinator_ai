@@ -21,11 +21,7 @@
         !displayIsCooldown()
       "
       [style.font-family]="widget()?.customSettings?.['timeFontFamily'] || null"
-      [style.font-size.px]="
-        widget()?.scaleMode === 'fixed' || !widget()?.scaleMode
-          ? widget()?.customSettings?.['timeFontSize'] || null
-          : null
-      "
+      [style.font-size.px]="widget()?.customSettings?.['timeFontSize'] || null"
       [style.color]="widget()?.customSettings?.['timeTextColor'] || null"
     >
       {{ displayFormattedTime() }}
