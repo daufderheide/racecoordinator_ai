@@ -102,6 +102,7 @@ describe("RacedayHeatInfoComponent", () => {
       },
     } as any);
     fixture.detectChanges();
+    (component as any).fitText();
 
     const labelEl: HTMLElement =
       fixture.nativeElement.querySelector(".label-text");
@@ -109,6 +110,15 @@ describe("RacedayHeatInfoComponent", () => {
       fixture.nativeElement.querySelector(".value-text");
     expect(labelEl.style.fontSize).toBe("19px");
     expect(valueEl.style.fontSize).toBe("25px");
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      "19px",
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      "25px",
+    );
 
     // Test fallback when customSettings lacks font sizes
     fixture.componentRef.setInput("widget", {
@@ -118,12 +128,13 @@ describe("RacedayHeatInfoComponent", () => {
       customSettings: {},
     } as any);
     fixture.detectChanges();
+    (component as any).fitText();
 
     expect(labelEl.style.fontSize).toBe("13px");
     expect(valueEl.style.fontSize).toBe("18px");
   });
 
-  it("should not apply inline font size when scaleMode is auto", () => {
+  it("should apply custom font sizes even when scaleMode is auto", () => {
     fixture.componentRef.setInput("heat", { heatNumber: 3, group: 0 } as Heat);
     fixture.componentRef.setInput("totalHeats", 6);
     fixture.componentRef.setInput("widget", {
@@ -136,6 +147,35 @@ describe("RacedayHeatInfoComponent", () => {
       },
     } as any);
     fixture.detectChanges();
+    (component as any).fitText();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("19px");
+    expect(valueEl.style.fontSize).toBe("25px");
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      "19px",
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      "25px",
+    );
+  });
+
+  it("should not apply inline font size and auto-scale when scaleMode is auto and customSettings lacks font sizes", () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 3, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "auto",
+      customSettings: {},
+    } as any);
+    fixture.detectChanges();
 
     const labelEl: HTMLElement =
       fixture.nativeElement.querySelector(".label-text");
@@ -143,5 +183,79 @@ describe("RacedayHeatInfoComponent", () => {
       fixture.nativeElement.querySelector(".value-text");
     expect(labelEl.style.fontSize).toBe("");
     expect(valueEl.style.fontSize).toBe("");
+  });
+
+  it("should calculate corresponding font size when only labelFontSize or valueFontSize is provided", () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 3, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "auto",
+      customSettings: {
+        labelFontSize: 20,
+      },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      "20px",
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      `${Math.floor(20 / (55 / 80))}px`,
+    );
+
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "auto",
+      customSettings: {
+        valueFontSize: 30,
+      },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      `${Math.floor(30 * (55 / 80))}px`,
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      "30px",
+    );
+  });
+
+  it("should apply custom font sizes when scaleMode is fixed", () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 3, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("widget", {
+      id: "w-heat",
+      widgetType: "heat-info",
+      scaleMode: "fixed",
+      customSettings: {
+        labelFontSize: 22,
+        valueFontSize: 28,
+      },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("22px");
+    expect(valueEl.style.fontSize).toBe("28px");
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      "22px",
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      "28px",
+    );
   });
 });

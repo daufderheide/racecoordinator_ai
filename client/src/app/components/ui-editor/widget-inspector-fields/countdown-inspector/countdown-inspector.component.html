@@ -289,4 +289,13 @@
       class="inspector-slider"
     />
   </div>
+
+  <app-widget-border-inspector
+    [settings]="settings()"
+    [defaultBorderRadius]="8"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#ffffff"
+    [defaultShowBorder]="false"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
 }

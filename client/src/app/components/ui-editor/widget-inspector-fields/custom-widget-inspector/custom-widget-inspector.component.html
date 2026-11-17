@@ -82,7 +82,9 @@
                     (click)="resetColor(field.key, field.default)"
                     [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
                   >
-                    ✕
+                    <span class="material-icons" style="font-size: 14px"
+                      >restart_alt</span
+                    >
                   </button>
                 }
               }
@@ -138,7 +140,9 @@
                       (click)="resetColor(field.colorKey, field.colorDefault)"
                       [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
                     >
-                      ✕
+                      <span class="material-icons" style="font-size: 14px"
+                        >restart_alt</span
+                      >
                     </button>
                   }
                 </div>
@@ -175,4 +179,13 @@
       <span>{{ "UE_INSPECTOR_NO_CUSTOM_PROPERTIES" | translate }}</span>
     </div>
   }
+
+  <app-widget-border-inspector
+    [settings]="settings"
+    [defaultBorderRadius]="4"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#ffffff"
+    [defaultShowBorder]="false"
+    (change)="onBorderChange()"
+  ></app-widget-border-inspector>
 </div>

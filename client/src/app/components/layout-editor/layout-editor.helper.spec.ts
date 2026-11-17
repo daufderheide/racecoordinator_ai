@@ -275,52 +275,73 @@ describe("layout-editor.helper", () => {
       expect(options[4].name).toBe("Empty Layout");
     });
 
-    it("should resolve template source for empty and specific IDs", () => {
+    it("should resolve template source for empty and specific IDs using factory defaults", () => {
       const allLayouts: CustomUI[] = [
         {
           entity_id: "default_ui_layout_rc_ai",
-          name: "RC AI",
+          name: "RC AI (Modified)",
           is_default: true,
+          layoutJson: JSON.stringify({ widgets: [{ id: "modified_w" }] }),
         },
         {
           entity_id: "practice_ui_layout_rc_ai",
-          name: "Practice",
+          name: "Practice (Modified)",
           is_default: true,
+          layoutJson: JSON.stringify({
+            widgets: [{ id: "modified_practice_w" }],
+          }),
+        },
+        {
+          entity_id: "custom_ui_123",
+          name: "Custom Template",
+          is_default: false,
+          layoutJson: JSON.stringify({ widgets: [{ id: "custom_w" }] }),
         },
       ];
       expect(resolveTemplateSource("empty", allLayouts)).toBe("empty");
-      expect(
-        resolveTemplateSource("practice_ui_layout_rc_ai", allLayouts),
-      ).toBe(allLayouts[1]);
-      expect(resolveTemplateSource(undefined, allLayouts)).toBe(allLayouts[0]);
 
-      // Fallbacks when not in allLayouts
-      const fallbackPractice = resolveTemplateSource(
+      // Default layout templates must use factory defaults, not the modified layouts in allLayouts
+      const practiceTemplate = resolveTemplateSource(
         "practice_ui_layout_rc_ai",
-        [],
-      );
-      expect(fallbackPractice).not.toBeNull();
-      expect((fallbackPractice as CustomUI).entity_id).toBe(
-        "practice_ui_layout_rc_ai",
-      );
+        allLayouts,
+      ) as CustomUI;
+      expect(practiceTemplate).not.toBeNull();
+      expect(practiceTemplate.entity_id).toBe("practice_ui_layout_rc_ai");
+      expect(practiceTemplate.layoutJson).not.toBe(allLayouts[1].layoutJson);
+      expect(practiceTemplate.layoutJson).toContain("widget");
 
-      const fallbackDs = resolveTemplateSource(
-        "driver_station_ui_layout_rc_ai",
-        [],
-      );
-      expect(fallbackDs).not.toBeNull();
-      expect((fallbackDs as CustomUI).entity_id).toBe(
-        "driver_station_ui_layout_rc_ai",
-      );
+      const defaultTemplate = resolveTemplateSource(
+        undefined,
+        allLayouts,
+      ) as CustomUI;
+      expect(defaultTemplate).not.toBeNull();
+      expect(defaultTemplate.entity_id).toBe("default_ui_layout_rc_ai");
+      expect(defaultTemplate.layoutJson).not.toBe(allLayouts[0].layoutJson);
 
-      const fallbackFuel = resolveTemplateSource(
+      const dsTemplate = resolveTemplateSource(
+        "driver_station_ui_layout_rc_ai",
+        allLayouts,
+      ) as CustomUI;
+      expect(dsTemplate).not.toBeNull();
+      expect(dsTemplate.entity_id).toBe("driver_station_ui_layout_rc_ai");
+
+      const fuelTemplate = resolveTemplateSource(
         "default_fuel_ui_layout_rc_ai",
-        [],
-      );
-      expect(fallbackFuel).not.toBeNull();
-      expect((fallbackFuel as CustomUI).entity_id).toBe(
-        "default_fuel_ui_layout_rc_ai",
-      );
+        allLayouts,
+      ) as CustomUI;
+      expect(fuelTemplate).not.toBeNull();
+      expect(fuelTemplate.entity_id).toBe("default_fuel_ui_layout_rc_ai");
+      expect(fuelTemplate.layoutJson).toContain("imageset_fuel-gauge-builtin");
+
+      // Custom non-factory templates fall back to allLayouts
+      const customTemplate = resolveTemplateSource(
+        "custom_ui_123",
+        allLayouts,
+      ) as CustomUI;
+      expect(customTemplate).toBe(allLayouts[2]);
+
+      // Unknown ID returns null
+      expect(resolveTemplateSource("unknown_id", allLayouts)).toBeNull();
     });
 
     it("should include 4 default layouts in createFallbackDefaultLayouts", () => {

@@ -1605,5 +1605,75 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       };
       expect(component.isFuelWidgetHidden).toBeTrue();
     });
+
+    it("should resolve border styles and set border css variables and classes", () => {
+      // Default timer widget has border enabled
+      expect(component.borderStyles.borderStyle).toBe("solid");
+      expect(component.borderStyles.borderColor).toBe("#dddddd");
+      expect(component.hasWidgetBorder).toBeTrue();
+
+      fixture.detectChanges();
+      const wrapperEl = fixture.nativeElement.querySelector(".widget-wrapper");
+      expect(wrapperEl.classList.contains("has-widget-border")).toBeTrue();
+      expect(wrapperEl.classList.contains("no-widget-border")).toBeFalse();
+      expect(wrapperEl.style.getPropertyValue("--widget-border-style")).toBe(
+        "solid",
+      );
+      expect(wrapperEl.style.getPropertyValue("--widget-border-color")).toBe(
+        "#dddddd",
+      );
+      expect(wrapperEl.style.getPropertyValue("--widget-border-width")).toBe(
+        "2px",
+      );
+      expect(wrapperEl.style.getPropertyValue("--widget-border-radius")).toBe(
+        "8px",
+      );
+
+      // Custom border settings disabling border
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          showBorder: false,
+          borderStyle: "dashed",
+          borderColor: "#ff0000",
+          borderWidth: 4,
+          borderRadius: 16,
+        },
+      });
+      fixture.detectChanges();
+      expect(component.hasWidgetBorder).toBeFalse();
+      expect(component.borderStyles.borderStyle).toBe("none");
+      expect(wrapperEl.classList.contains("no-widget-border")).toBeTrue();
+      expect(wrapperEl.classList.contains("has-widget-border")).toBeFalse();
+
+      // Custom border settings enabling border
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: {
+          showBorder: true,
+          borderStyle: "dashed",
+          borderColor: "#ff0000",
+          borderWidth: 4,
+          borderRadius: 16,
+        },
+      });
+      fixture.detectChanges();
+      expect(component.hasWidgetBorder).toBeTrue();
+      expect(component.borderStyles.borderStyle).toBe("dashed");
+      expect(component.borderStyles.borderColor).toBe("#ff0000");
+      expect(wrapperEl.classList.contains("has-widget-border")).toBeTrue();
+      expect(wrapperEl.style.getPropertyValue("--widget-border-style")).toBe(
+        "dashed",
+      );
+      expect(wrapperEl.style.getPropertyValue("--widget-border-color")).toBe(
+        "#ff0000",
+      );
+      expect(wrapperEl.style.getPropertyValue("--widget-border-width")).toBe(
+        "4px",
+      );
+      expect(wrapperEl.style.getPropertyValue("--widget-border-radius")).toBe(
+        "16px",
+      );
+    });
   });
 });

@@ -59,4 +59,22 @@ export class TimerInspectorHarness
       await buttons[0].click();
     }
   }
+
+  async getBackgroundColor(): Promise<string> {
+    const colorPickers = await this.getColorPickers();
+    return await colorPickers[1].getProperty("value");
+  }
+
+  async setBackgroundColor(val: string): Promise<void> {
+    const colorPickers = await this.getColorPickers();
+    await colorPickers[1].setInputValue(val);
+    await colorPickers[1].dispatchEvent("change");
+  }
+
+  async clickResetBackgroundColor(): Promise<void> {
+    const buttons = await this.getResetButtons();
+    if (buttons.length > 1) {
+      await buttons[1].click();
+    }
+  }
 }

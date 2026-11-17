@@ -6,6 +6,7 @@ import {
 } from "@app/utils/timer-format.utils";
 
 import {
+  DEFAULT_FUEL_LAYOUT,
   DEFAULT_LAYOUT,
   DEFAULT_PRACTICE_LAYOUT,
   LEGACY_DEFAULT_LAYOUT,
@@ -258,6 +259,14 @@ export class Settings {
     "lapCount",
   ];
 
+  static readonly DEFAULT_FUEL_COLUMNS = [
+    "driver.nickname",
+    "imageset_fuel-gauge-builtin",
+    "lapCount",
+    "lastLapTime",
+    "gap",
+  ];
+
   recentRaceIds: string[] = [];
   selectedRaceId: string = "";
   isEventMode: boolean = false;
@@ -412,6 +421,8 @@ export class Settings {
 
   static readonly DEFAULT_PRACTICE_LAYOUT: LayoutConfig =
     DEFAULT_PRACTICE_LAYOUT;
+
+  static readonly DEFAULT_FUEL_LAYOUT: LayoutConfig = DEFAULT_FUEL_LAYOUT;
 
   static readonly LEGACY_DEFAULT_LAYOUT: LayoutConfig = LEGACY_DEFAULT_LAYOUT;
 

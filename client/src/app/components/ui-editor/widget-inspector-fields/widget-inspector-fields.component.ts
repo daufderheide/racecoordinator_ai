@@ -7,6 +7,7 @@ import { AbsoluteWidgetNode, Settings } from "@app/models/settings";
 import { ActionButtonInspectorComponent } from "./action-button-inspector/action-button-inspector.component";
 import { CountdownInspectorComponent } from "./countdown-inspector/countdown-inspector.component";
 import { CustomWidgetInspectorComponent } from "./custom-widget-inspector/custom-widget-inspector.component";
+import { FlagInspectorComponent } from "./flag-inspector/flag-inspector.component";
 import { HeatListInspectorComponent } from "./heat-list-inspector/heat-list-inspector.component";
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
 import { LabelInspectorComponent } from "./label-inspector/label-inspector.component";
@@ -19,6 +20,7 @@ import { RecordsInspectorComponent } from "./records-inspector/records-inspector
 import { TextInfoInspectorComponent } from "./text-info-inspector/text-info-inspector.component";
 import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
 import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspector.component";
+import { WidgetBorderInspectorComponent } from "./widget-border-inspector/widget-border-inspector.component";
 
 @Component({
   standalone: true,
@@ -41,6 +43,8 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
     MenuInspectorComponent,
     ActionButtonInspectorComponent,
     CustomWidgetInspectorComponent,
+    FlagInspectorComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class WidgetInspectorFieldsComponent {
@@ -104,5 +108,14 @@ export class WidgetInspectorFieldsComponent {
 
   onSettingsChange(node?: AbsoluteWidgetNode) {
     this.change.emit(node || this.widget());
+  }
+
+  get widgetSettings(): Record<string, any> {
+    const w = this.widget();
+    if (!w) return {};
+    if (!w.customSettings) {
+      w.customSettings = {};
+    }
+    return w.customSettings;
   }
 }

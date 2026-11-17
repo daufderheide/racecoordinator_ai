@@ -2472,102 +2472,14 @@
   <hr class="inspector-divider" />
 
   <!-- Card & Border Styling -->
-  <div class="inspector-geometry-title">
-    <span class="material-icons">border_style</span>
-    {{ "UE_INSPECTOR_BORDER_SECTION" | translate }}
-  </div>
-
-  <div class="inspector-section">
-    <label class="form-check-label">
-      <input
-        type="checkbox"
-        class="form-checkbox"
-        [(ngModel)]="currentSettings['showBorder']"
-        (change)="onFieldChange()"
-      />
-      <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
-    </label>
-  </div>
-
-  @if (currentSettings["showBorder"]) {
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_BORDER_STYLE" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [ngModel]="currentSettings['borderStyle'] || 'solid'"
-          (ngModelChange)="
-            currentSettings['borderStyle'] = $event; onFieldChange()
-          "
-        >
-          <app-custom-option value="solid">
-            {{ "UE_INSPECTOR_BORDER_STYLE_SOLID" | translate }}
-          </app-custom-option>
-          <app-custom-option value="dashed">
-            {{ "UE_INSPECTOR_BORDER_STYLE_DASHED" | translate }}
-          </app-custom-option>
-          <app-custom-option value="dotted">
-            {{ "UE_INSPECTOR_BORDER_STYLE_DOTTED" | translate }}
-          </app-custom-option>
-          <app-custom-option value="double">
-            {{ "UE_INSPECTOR_BORDER_STYLE_DOUBLE" | translate }}
-          </app-custom-option>
-        </app-custom-select>
-      </div>
-    </div>
-
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_BORDER_COLOR" | translate
-      }}</label>
-      <input
-        type="color"
-        [value]="toValidHexColor(currentSettings['borderColor'], '#ffffff')"
-        (input)="onColorChange('borderColor', $event)"
-        (change)="onColorChange('borderColor', $event)"
-        class="inspector-color-input"
-      />
-    </div>
-
-    <div class="inspector-section">
-      <div class="inspector-label-row">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_BORDER_WIDTH" | translate
-        }}</label>
-        <span class="inspector-val-badge"
-          >{{ currentSettings["borderWidth"] ?? 1 }}px</span
-        >
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="10"
-        [(ngModel)]="currentSettings['borderWidth']"
-        (change)="onFieldChange()"
-        class="inspector-slider"
-      />
-    </div>
-
-    <div class="inspector-section">
-      <div class="inspector-label-row">
-        <label class="inspector-label">{{
-          "UE_INSPECTOR_BORDER_RADIUS" | translate
-        }}</label>
-        <span class="inspector-val-badge"
-          >{{ currentSettings["borderRadius"] ?? 8 }}px</span
-        >
-      </div>
-      <input
-        type="range"
-        min="0"
-        max="32"
-        [(ngModel)]="currentSettings['borderRadius']"
-        (change)="onFieldChange()"
-        class="inspector-slider"
-      />
-    </div>
-  }
+  <app-widget-border-inspector
+    [settings]="currentSettings"
+    [defaultBorderRadius]="8"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#ffffff"
+    [defaultShowBorder]="true"
+    (change)="onFieldChange()"
+  ></app-widget-border-inspector>
 
   @if (currentSettings["gridId"]) {
     <div class="inspector-section">

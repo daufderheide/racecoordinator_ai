@@ -112,12 +112,14 @@
     @case ("on-deck") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"
+        widgetType="on-deck"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
     }
     @case ("next-heat") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"
+        widgetType="next-heat"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
     }
@@ -305,6 +307,24 @@
         [widget]="widget()"
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
+    }
+    @case ("flag") {
+      <app-flag-inspector
+        [settings]="widgetSettings"
+        (change)="onSettingsChange()"
+      ></app-flag-inspector>
+    }
+    @case ("branding")
+    @case ("qr")
+    @default {
+      <app-widget-border-inspector
+        [settings]="widgetSettings"
+        [defaultBorderRadius]="6"
+        [defaultBorderWidth]="1"
+        defaultBorderColor="#ffffff"
+        [defaultShowBorder]="true"
+        (change)="onSettingsChange()"
+      ></app-widget-border-inspector>
     }
   }
 }

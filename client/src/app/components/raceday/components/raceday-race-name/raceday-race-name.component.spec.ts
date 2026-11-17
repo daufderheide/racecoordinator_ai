@@ -100,7 +100,7 @@ describe("RacedayRaceNameComponent", () => {
     expect(valueEl.style.fontSize).toBe("18px");
   });
 
-  it("should not apply inline font size when scaleMode is auto", () => {
+  it("should apply custom font sizes even when scaleMode is auto", () => {
     fixture.componentRef.setInput("race", { name: "Test Race" } as Race);
     fixture.componentRef.setInput("widget", {
       id: "w-race",
@@ -110,6 +110,34 @@ describe("RacedayRaceNameComponent", () => {
         labelFontSize: 22,
         valueFontSize: 28,
       },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+
+    const labelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".label-text");
+    const valueEl: HTMLElement =
+      fixture.nativeElement.querySelector(".value-text");
+    expect(labelEl.style.fontSize).toBe("22px");
+    expect(valueEl.style.fontSize).toBe("28px");
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.getPropertyValue("--header-label-font-size")).toBe(
+      "22px",
+    );
+    expect(panelEl.style.getPropertyValue("--header-value-font-size")).toBe(
+      "28px",
+    );
+  });
+
+  it("should not apply inline font size and auto-scale when scaleMode is auto and customSettings lacks font sizes", () => {
+    fixture.componentRef.setInput("race", { name: "Test Race" } as Race);
+    fixture.componentRef.setInput("widget", {
+      id: "w-race",
+      widgetType: "race-name",
+      scaleMode: "auto",
+      customSettings: {},
     } as any);
     fixture.detectChanges();
 

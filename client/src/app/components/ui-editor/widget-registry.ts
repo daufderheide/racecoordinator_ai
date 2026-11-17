@@ -1,3 +1,4 @@
+import { getDefaultBorderConfigForWidget } from "@app/utils/widget-border.utils";
 export interface WidgetRegistryEntry {
   defaultSettings?: () => Record<string, any>;
 }
@@ -71,6 +72,17 @@ function defaultLaneColumnSettings(): Record<string, any> {
   };
 }
 
+function defaultActionSettings(widgetType: string): Record<string, any> {
+  return {
+    fontFamily: "",
+    fontSize: 24,
+    textColor: "",
+    backgroundColor: "",
+    shortcut: "",
+    ...getDefaultBorderConfigForWidget(widgetType),
+  };
+}
+
 export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
   leaderboard: {
     defaultSettings: () => ({
@@ -84,6 +96,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restFontFamily: "",
       restFontSize: 16,
       restTextColor: "",
+      ...getDefaultBorderConfigForWidget("leaderboard"),
     }),
   },
   records: {
@@ -98,13 +111,16 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueFontFamily: "",
       valueFontSize: 19,
       valueTextColor: "",
+      ...getDefaultBorderConfigForWidget("records"),
     }),
   },
   timer: {
     defaultSettings: () => ({
       timeFontFamily: "",
-      timeFontSize: 100,
+      timeFontSize: 90,
       timeTextColor: "",
+      backgroundColor: "",
+      ...getDefaultBorderConfigForWidget("timer"),
     }),
   },
   countdown: {
@@ -127,16 +143,20 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       glowOverlap: 30,
       glowRedOverlap: 30,
       glowGreenOverlap: 25,
+      ...getDefaultBorderConfigForWidget("countdown"),
     }),
   },
   image: {
     defaultSettings: () => ({
       imageUrl: "",
+      ...getDefaultBorderConfigForWidget("image"),
     }),
   },
   flag: {
     defaultSettings: () => ({
       displayMode: "image",
+      backgroundColor: "",
+      ...getDefaultBorderConfigForWidget("flag"),
     }),
   },
   "progress-gauge": {
@@ -149,13 +169,13 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       showLabel: true,
       fillColor: "",
       backgroundColor: "",
-      borderColor: "",
       textColor: "",
       timeDisplayFormat: "dynamic",
       timeSubsecondMode: "threshold",
       timeSubsecondThreshold: 10,
       timeSubsecondDecimals: 2,
       lapDecimalPlaces: 0,
+      ...getDefaultBorderConfigForWidget("progress-gauge"),
     }),
   },
   grid: {
@@ -188,6 +208,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       columnTimeSubsecondMode: {},
       columnTimeSubsecondThreshold: {},
       columnTimeSubsecondDecimals: {},
+      ...getDefaultBorderConfigForWidget("lane-view"),
     }),
   },
   "lane-column": {
@@ -204,6 +225,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       fontItalic: false,
       alignment: "center",
       showBorder: false,
+      borderStyle: "solid",
       borderColor: "",
       borderWidth: 1,
       borderRadius: 4,
@@ -225,6 +247,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       laneFontFamily: "",
       laneFontSize: 16,
       laneTextColor: "",
+      ...getDefaultBorderConfigForWidget("on-deck"),
     }),
   },
   "next-heat": {
@@ -235,6 +258,9 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       laneFontFamily: "",
       laneFontSize: 16,
       laneTextColor: "",
+      backgroundColor: "",
+      alternatingRowContrast: 0,
+      ...getDefaultBorderConfigForWidget("next-heat"),
     }),
   },
   "heat-list": {
@@ -280,6 +306,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       summaryRowFontSize: 12,
       summaryRowTextColor: "",
       summaryUseLaneColors: true,
+      ...getDefaultBorderConfigForWidget("heat-list"),
     }),
   },
   "group-leaderboard": {
@@ -297,6 +324,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restFontFamily: "",
       restFontSize: 16,
       restTextColor: "",
+      ...getDefaultBorderConfigForWidget("group-leaderboard"),
     }),
   },
   "heat-info": {
@@ -307,6 +335,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueFontFamily: "",
       valueFontSize: 18,
       valueTextColor: "",
+      ...getDefaultBorderConfigForWidget("heat-info"),
     }),
   },
   "race-name": {
@@ -317,6 +346,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueFontFamily: "",
       valueFontSize: 18,
       valueTextColor: "",
+      ...getDefaultBorderConfigForWidget("race-name"),
     }),
   },
   "event-name": {
@@ -327,6 +357,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueFontFamily: "",
       valueFontSize: 18,
       valueTextColor: "",
+      ...getDefaultBorderConfigForWidget("event-name"),
     }),
   },
   "season-name": {
@@ -337,6 +368,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueFontFamily: "",
       valueFontSize: 18,
       valueTextColor: "",
+      ...getDefaultBorderConfigForWidget("season-name"),
     }),
   },
   "season-leaderboard": {
@@ -351,6 +383,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restFontFamily: "",
       restFontSize: 16,
       restTextColor: "",
+      ...getDefaultBorderConfigForWidget("season-leaderboard"),
     }),
   },
   "season-race-leaderboard": {
@@ -365,6 +398,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restFontFamily: "",
       restFontSize: 16,
       restTextColor: "",
+      ...getDefaultBorderConfigForWidget("season-race-leaderboard"),
     }),
   },
   "track-name": {
@@ -375,195 +409,71 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueFontFamily: "",
       valueFontSize: 18,
       valueTextColor: "",
+      ...getDefaultBorderConfigForWidget("track-name"),
     }),
   },
   "action-start-resume": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-start-resume"),
   },
   "action-pause": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-pause"),
   },
   "action-next-heat": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-next-heat"),
   },
   "action-restart-heat": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-restart-heat"),
   },
   "action-defer-heat": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-defer-heat"),
   },
   "action-skip-heat": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-skip-heat"),
   },
   "action-skip-race": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-skip-race"),
   },
   "action-add-lap": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-add-lap"),
   },
   "action-modify-heats": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-modify-heats"),
   },
   "action-export-pdf": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-export-pdf"),
   },
   "action-export-csv": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-export-csv"),
   },
   "action-export-xls": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-export-xls"),
   },
   "action-open-heat-results": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-open-heat-results"),
   },
   "action-open-race-results": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-open-race-results"),
   },
   "action-open-season-results": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-open-season-results"),
   },
   "action-open-prediction-results": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () =>
+      defaultActionSettings("action-open-prediction-results"),
   },
   "action-master-power-on": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-master-power-on"),
   },
   "action-master-power-off": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-master-power-off"),
   },
   "action-back": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-back"),
   },
   "action-forward": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-forward"),
   },
   "action-close": {
-    defaultSettings: () => ({
-      fontFamily: "",
-      fontSize: 24,
-      textColor: "",
-      backgroundColor: "",
-      shortcut: "",
-    }),
+    defaultSettings: () => defaultActionSettings("action-close"),
   },
 };

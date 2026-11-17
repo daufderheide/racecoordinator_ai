@@ -309,6 +309,9 @@ test.describe("Lane Grid Auto-Scale to Fit Visuals", () => {
               laneIndex: 0,
               lapCount: 15,
               lastLapTime: 11.234,
+              laps: Array.from({ length: 15 }, (_, i) => ({
+                lapTime: i === 14 ? 11.234 : 10.5,
+              })),
               driver: {
                 objectId: "rp1",
                 driver: {
@@ -322,6 +325,9 @@ test.describe("Lane Grid Auto-Scale to Fit Visuals", () => {
               laneIndex: 1,
               lapCount: 14,
               lastLapTime: 12.345,
+              laps: Array.from({ length: 14 }, (_, i) => ({
+                lapTime: i === 13 ? 12.345 : 11.0,
+              })),
               driver: {
                 objectId: "rp2",
                 driver: {

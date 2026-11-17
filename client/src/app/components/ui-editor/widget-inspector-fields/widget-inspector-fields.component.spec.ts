@@ -284,6 +284,23 @@ describe("WidgetInspectorFieldsComponent", () => {
     ).toBeTruthy();
   });
 
+  it("should render flag-inspector when widget is flag", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "w-flag",
+      widgetType: "flag",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector("app-flag-inspector"),
+    ).toBeTruthy();
+  });
+
   it("should identify lane column widgets including custom widgets in grids", () => {
     const standardCol: AbsoluteWidgetNode = {
       id: "w-std",

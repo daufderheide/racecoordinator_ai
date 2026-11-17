@@ -33,7 +33,9 @@
       : 4
   "
   [style.border-style]="
-    widget()?.customSettings?.['showBorder'] ? 'solid' : 'none'
+    widget()?.customSettings?.['showBorder']
+      ? widget()?.customSettings?.['borderStyle'] || 'solid'
+      : 'none'
   "
 >
   <span class="label-widget-text">{{

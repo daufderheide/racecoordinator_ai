@@ -19,7 +19,7 @@ import {
 } from "./ui-editor-io.helper";
 
 describe("ui-editor-io.helper", () => {
-  it("should get default layout reset data for raceday and practice", () => {
+  it("should get default layout reset data for raceday, practice, fuel, and driver station", () => {
     const racedayData = getDefaultLayoutResetData(false, 1920, 1080);
     expect(racedayData.defaultLayout).toBeDefined();
     expect(racedayData.columns).toBeDefined();
@@ -27,6 +27,14 @@ describe("ui-editor-io.helper", () => {
     const practiceData = getDefaultLayoutResetData(true, 1920, 1080);
     expect(practiceData.defaultLayout).toBeDefined();
     expect(practiceData.columns).toBeDefined();
+
+    const fuelData = getDefaultLayoutResetData(false, 1920, 1080, false, true);
+    expect(fuelData.defaultLayout).toBeDefined();
+    expect(fuelData.columns).toContain("imageset_fuel-gauge-builtin");
+
+    const dsData = getDefaultLayoutResetData(false, 1080, 1920, true);
+    expect(dsData.defaultLayout).toBeDefined();
+    expect(dsData.columns).toEqual([]);
   });
 
   it("should build layout export data and filename", () => {

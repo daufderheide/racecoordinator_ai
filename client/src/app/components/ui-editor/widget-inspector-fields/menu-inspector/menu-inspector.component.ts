@@ -5,6 +5,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
@@ -20,6 +21,7 @@ import { FontService } from "@app/services/font.service";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class MenuInspectorComponent {
@@ -27,6 +29,15 @@ export class MenuInspectorComponent {
   disableFontSizes = input<boolean>(false);
   change = output<void>();
   fontService = inject(FontService);
+
+  get settings(): any {
+    const w = this.widget();
+    if (!w) return {};
+    if (!w.customSettings) {
+      w.customSettings = {};
+    }
+    return w.customSettings;
+  }
 
   onSettingsChange() {
     this.change.emit();

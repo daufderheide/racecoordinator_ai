@@ -505,7 +505,7 @@ function ensurePracticeCustomUi(customUIs: CustomUI[], s: Settings): void {
   }
 }
 
-function ensureFuelCustomUi(customUIs: CustomUI[], s: Settings): void {
+function ensureFuelCustomUi(customUIs: CustomUI[], _s: Settings): void {
   const fuelUi = customUIs.find(
     (u: any) => u.entity_id === "default_fuel_ui_layout_rc_ai",
   );
@@ -513,18 +513,42 @@ function ensureFuelCustomUi(customUIs: CustomUI[], s: Settings): void {
     customUIs.push({
       name: "RC AI (Fuel)",
       is_default: true,
-      layoutJson: JSON.stringify(s.racedayLayout || Settings.DEFAULT_LAYOUT),
-      columnsJson: JSON.stringify(s.racedayColumns || Settings.DEFAULT_COLUMNS),
-      columnLayoutsJson: JSON.stringify(
-        s.columnLayouts || new Settings().columnLayouts,
-      ),
-      columnVisibilityJson: JSON.stringify(
-        s.columnVisibility || new Settings().columnVisibility,
-      ),
-      columnWidthsJson: JSON.stringify(
-        s.columnWidths || new Settings().columnWidths,
-      ),
-      columnAnchorsJson: JSON.stringify(s.columnAnchors || {}),
+      layoutJson: JSON.stringify(Settings.DEFAULT_FUEL_LAYOUT),
+      columnsJson: JSON.stringify(Settings.DEFAULT_FUEL_COLUMNS),
+      columnLayoutsJson: JSON.stringify({
+        laneNumber: { "center-center": "laneNumber" },
+        "driver.nickname": {
+          "center-center": "driver.nickname",
+          "bottom-right": "participant.team.name",
+          "bottom-left": "driverViewQrCode",
+        },
+        "imageset_fuel-gauge-builtin": {
+          "center-center": "imageset_fuel-gauge-builtin",
+        },
+        lapCount: {
+          "center-center": "lapCount",
+          "bottom-left": "flag",
+        },
+        lastLapTime: {
+          "center-center": "lastLapTime",
+          "top-right": "bestLapTime",
+          "bottom-right": "averageLapTime",
+        },
+        gap: {
+          "center-center": "gap",
+          "bottom-right": "gapPosition",
+        },
+      }),
+      columnVisibilityJson: JSON.stringify({
+        "imageset_fuel-gauge-builtin": "FuelRaceOnly",
+      }),
+      columnWidthsJson: JSON.stringify({
+        lapCount: 210,
+        "imageset_fuel-gauge-builtin": 210,
+        lastLapTime: 310,
+        gap: 310,
+      }),
+      columnAnchorsJson: JSON.stringify({}),
       entity_id: "default_fuel_ui_layout_rc_ai",
       _id: "default_fuel_ui_layout_rc_ai",
     });

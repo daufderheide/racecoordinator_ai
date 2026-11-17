@@ -1874,5 +1874,25 @@ describe("RacedayHeatListComponent", () => {
       expect(firstTag.textContent.trim()).toBe("B1");
       expect(secondTag.textContent.trim()).toBe("B2");
     });
+
+    it("should apply custom title and heat number font sizes in auto scaleMode when scaleToWindow is false", () => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        scaleMode: "auto",
+        customSettings: {
+          scaleToWindow: false,
+          titleFontSize: 28,
+          heatNumberFontSize: 20,
+        },
+      });
+      fixture.detectChanges();
+
+      const titleEl = fixture.nativeElement.querySelector(".heat-list-title");
+      expect(titleEl.style.fontSize).toBe("28px");
+
+      const heatHeader =
+        fixture.nativeElement.querySelector(".heat-card-header");
+      expect(heatHeader.style.fontSize).toBe("20px");
+    });
   });
 });

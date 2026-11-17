@@ -476,6 +476,50 @@ describe("LayoutEditorComponent", () => {
       expect(component.isEditMode).toBeTrue();
     }));
 
+    it("should use factory default layout when default layout in allLayouts was modified by user", fakeAsync(() => {
+      const defaultLayout = component.allLayouts.find(
+        (u) => u.entity_id === "default_ui_layout_rc_ai",
+      );
+      if (defaultLayout) {
+        defaultLayout.layoutJson = JSON.stringify({
+          widgets: [{ id: "user-modified-widget" }],
+        });
+      }
+
+      component.onConfirmCreateLayout("default_ui_layout_rc_ai");
+      tick();
+
+      expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      const createdArg = mockDataService.createCustomUI.calls.mostRecent()
+        .args[0] as CustomUI;
+      expect(createdArg.layoutJson).not.toContain("user-modified-widget");
+      expect(createdArg.layoutJson).toContain("widget-menu-bar");
+      expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should use factory default layout when practice layout was modified by user", fakeAsync(() => {
+      const practiceLayout = component.allLayouts.find(
+        (u) => u.entity_id === "practice_ui_layout_rc_ai",
+      );
+      if (practiceLayout) {
+        practiceLayout.layoutJson = JSON.stringify({
+          widgets: [{ id: "user-modified-practice-widget" }],
+        });
+      }
+
+      component.onConfirmCreateLayout("practice_ui_layout_rc_ai");
+      tick();
+
+      expect(mockDataService.createCustomUI).toHaveBeenCalled();
+      const createdArg = mockDataService.createCustomUI.calls.mostRecent()
+        .args[0] as CustomUI;
+      expect(createdArg.layoutJson).not.toContain(
+        "user-modified-practice-widget",
+      );
+      expect(createdArg.layoutJson).toContain("widget-menu-bar");
+      expect(component.isEditMode).toBeTrue();
+    }));
+
     it("should close template modal without creating on cancel", () => {
       mockDataService.createCustomUI.calls.reset();
       component.openNewLayoutModal();
@@ -998,6 +1042,52 @@ describe("LayoutEditorComponent", () => {
           component.currentSelectedWidget.customSettings?.valueFontSize,
         ).toBe(18);
       }
+    });
+
+    it("should update heat-info font sizes when inspector settings change", () => {
+      component.onSelectLayoutById("default_ui_layout_rc_ai");
+      component.onToggleEditMode();
+
+      const layout = component.getLayout(component.editingLayout);
+      let heatWidget = layout!.widgets.find(
+        (w) => w.widgetType === "heat-info",
+      );
+      if (!heatWidget) {
+        heatWidget = {
+          id: "heat-info-test",
+          widgetType: "heat-info",
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 18,
+          zIndex: 100,
+          scaleMode: "auto",
+          customSettings: {},
+        };
+        layout!.widgets.push(heatWidget);
+        component.editingLayout!.layoutJson = JSON.stringify(layout);
+      }
+      expect(heatWidget).toBeTruthy();
+
+      component.onWidgetDropdownSelect(heatWidget.id);
+      expect(component.currentSelectedWidget.id).toBe(heatWidget.id);
+
+      const updatedWidget = {
+        ...component.currentSelectedWidget,
+        customSettings: {
+          ...component.currentSelectedWidget.customSettings,
+          labelFontSize: 24,
+          valueFontSize: 32,
+        },
+      };
+
+      component.onWidgetInspectorChange(updatedWidget);
+
+      const savedWidget = component
+        .getLayout(component.editingLayout)!
+        .widgets.find((w) => w.id === heatWidget.id);
+      expect(savedWidget?.customSettings?.["labelFontSize"]).toBe(24);
+      expect(savedWidget?.customSettings?.["valueFontSize"]).toBe(32);
     });
 
     it("should handle grid and columns events", () => {

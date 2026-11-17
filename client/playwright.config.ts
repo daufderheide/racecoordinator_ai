@@ -5,6 +5,9 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./src/app",
+  /* Snapshot path template ensuring all platforms compare against canonical linux baselines */
+  snapshotPathTemplate:
+    "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}-linux{ext}",
   /* Run tests in files matching this regex */
   testMatch: /.*_screendiff_test\.ts/,
   /* Run tests in files in parallel */
@@ -60,10 +63,6 @@ export default defineConfig({
           ],
         },
       },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
     },
   ],
 

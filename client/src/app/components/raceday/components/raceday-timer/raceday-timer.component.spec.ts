@@ -58,6 +58,60 @@ describe("RacedayTimerComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should apply custom background color from customSettings", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "timer-1",
+      widgetType: "timer",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      zIndex: 1,
+      customSettings: {
+        backgroundColor: "#123456",
+      },
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".timer-panel");
+    expect(panelEl.style.backgroundColor).toBe("rgb(18, 52, 86)");
+  });
+
+  it("should apply custom background color from widget.backgroundColor as fallback", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "timer-2",
+      widgetType: "timer",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      zIndex: 1,
+      backgroundColor: "#223344",
+      customSettings: {},
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".timer-panel");
+    expect(panelEl.style.backgroundColor).toBe("rgb(34, 51, 68)");
+  });
+
+  it("should leave background-color empty when not set", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "timer-3",
+      widgetType: "timer",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      zIndex: 1,
+      customSettings: {},
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".timer-panel");
+    expect(panelEl.style.backgroundColor).toBe("");
+  });
+
   it("should render time string and handle conditional labels", async () => {
     fixture.componentRef.setInput("formattedTime", "02:30.000");
     fixture.componentRef.setInput("autoStatusLabel", "");

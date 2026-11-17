@@ -250,6 +250,143 @@ describe("RacedayHeatDriversComponent", () => {
     expect(badgeEl.textContent.trim()).toBe("L1");
   });
 
+  it("should apply custom widget background color to panel card", () => {
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          { driver: { name: "A", isEmpty: () => false }, laneIndex: 0 },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        backgroundColor: "#1e293b",
+      },
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".panel-card");
+    expect(panelEl.style.backgroundColor).toBe("rgb(30, 41, 59)");
+  });
+
+  it("should not set background-color style when backgroundColor is default/empty", () => {
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          { driver: { name: "A", isEmpty: () => false }, laneIndex: 0 },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        backgroundColor: "",
+        alternatingRowContrast: 0,
+      },
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".panel-card");
+    expect(panelEl.style.backgroundColor).toBeFalsy();
+    expect(panelEl.style.getPropertyValue("--row-odd-bg")).toBeFalsy();
+  });
+
+  it("should apply alternating row contrast CSS variable on dark background when contrast > 0", () => {
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          { driver: { name: "A", isEmpty: () => false }, laneIndex: 0 },
+          { driver: { name: "B", isEmpty: () => false }, laneIndex: 1 },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        backgroundColor: "#0f172a",
+        alternatingRowContrast: 50,
+      },
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".panel-card");
+    const rowOddBg = panelEl.style.getPropertyValue("--row-odd-bg");
+    expect(rowOddBg).toContain("rgba(255, 255, 255,");
+    expect(rowOddBg).toBe("rgba(255, 255, 255, 0.155)");
+
+    const items = panelEl.querySelectorAll(".next-heat-item");
+    expect(items.length).toBe(2);
+    expect(items[0].classList.contains("row-even")).toBeTrue();
+    expect(items[1].classList.contains("row-odd")).toBeTrue();
+  });
+
+  it("should apply alternating row contrast CSS variable on light background when contrast > 0", () => {
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          { driver: { name: "A", isEmpty: () => false }, laneIndex: 0 },
+          { driver: { name: "B", isEmpty: () => false }, laneIndex: 1 },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        backgroundColor: "#ffffff",
+        alternatingRowContrast: 80,
+      },
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".panel-card");
+    const rowOddBg = panelEl.style.getPropertyValue("--row-odd-bg");
+    expect(rowOddBg).toContain("rgba(0, 0, 0,");
+    expect(rowOddBg).toBe("rgba(0, 0, 0, 0.230)");
+  });
+
+  it("should not apply alternating row contrast when type is on-deck", () => {
+    componentRef.setInput("type", "on-deck");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      { heatNumber: 2, heatDrivers: [] },
+      {
+        heatNumber: 3,
+        heatDrivers: [
+          { driver: { name: "A", isEmpty: () => false }, laneIndex: 0 },
+          { driver: { name: "B", isEmpty: () => false }, laneIndex: 1 },
+        ],
+      },
+    ]);
+    componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        alternatingRowContrast: 60,
+      },
+    });
+    fixture.detectChanges();
+
+    const panelEl = fixture.nativeElement.querySelector(".panel-card");
+    expect(panelEl.style.getPropertyValue("--row-odd-bg")).toBeFalsy();
+  });
+
   it("should render teammate select and open dropdown with options when team is active", () => {
     const mockParent = {
       isEmptyDriver: (_hd: any) => false,

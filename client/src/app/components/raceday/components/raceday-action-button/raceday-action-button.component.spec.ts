@@ -75,6 +75,20 @@ describe("RacedayActionButtonComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should apply custom font size when customSettings has fontSize in auto mode", () => {
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      scaleMode: "auto",
+      customSettings: {
+        fontSize: 24,
+      },
+    });
+    fixture.detectChanges();
+
+    const btn = fixture.nativeElement.querySelector("button");
+    expect(btn.style.fontSize).toBe("24px");
+  });
+
   it("should be enabled in UI editor mode regardless of race state", () => {
     mockParent.isUIEditorMode = () => true;
     mockParent.isStartResumeDisabled = true;

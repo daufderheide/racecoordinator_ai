@@ -127,7 +127,7 @@ describe("RacedayRecordsComponent", () => {
     }
   });
 
-  it("should NOT apply custom widget styles to headers and values when scaleMode is auto", () => {
+  it("should apply custom widget styles to headers and values even when scaleMode is auto", () => {
     fixture.componentRef.setInput("widget", {
       id: "widget-records",
       widgetType: "records",
@@ -143,20 +143,31 @@ describe("RacedayRecordsComponent", () => {
     });
 
     fixture.detectChanges();
+    (component as any).fitText();
 
     const headers = fixture.nativeElement.querySelectorAll(".record-header");
     expect(headers.length).toBeGreaterThan(0);
     for (let i = 0; i < headers.length; i++) {
       const el = headers[i] as HTMLElement;
-      expect(el.style.fontSize).toBeFalsy();
+      expect(el.style.fontSize).toBe("22px");
     }
 
     const values = fixture.nativeElement.querySelectorAll(".record-val");
     expect(values.length).toBeGreaterThan(0);
     for (let i = 0; i < values.length; i++) {
       const el = values[i] as HTMLElement;
-      expect(el.style.fontSize).toBeFalsy();
+      expect(el.style.fontSize).toBe("25px");
     }
+
+    const panel = fixture.nativeElement.querySelector(
+      ".record-panel",
+    ) as HTMLElement;
+    expect(panel.style.getPropertyValue("--record-header-font-size")).toBe(
+      "22px",
+    );
+    expect(panel.style.getPropertyValue("--record-value-font-size")).toBe(
+      "25px",
+    );
   });
 
   it("should apply correct styling classes (stripe, no-stripe, first-row) on headers and rows", () => {

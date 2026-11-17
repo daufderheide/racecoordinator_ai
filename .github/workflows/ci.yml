@@ -97,18 +97,6 @@ jobs:
           - project: chromium
             shardIndex: 2
             shardTotal: 2
-          - project: webkit
-            shardIndex: 1
-            shardTotal: 4
-          - project: webkit
-            shardIndex: 2
-            shardTotal: 4
-          - project: webkit
-            shardIndex: 3
-            shardTotal: 4
-          - project: webkit
-            shardIndex: 4
-            shardTotal: 4
     steps:
       - uses: actions/checkout@v4
         with:

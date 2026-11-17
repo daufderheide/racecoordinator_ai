@@ -90,11 +90,57 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private applyCustomFontSizes(
+    panelEl: HTMLElement,
+    widgetData: AbsoluteWidgetNode | null,
+  ): boolean {
+    const customHeaderFontSize = Number(
+      widgetData?.customSettings?.["headerFontSize"],
+    );
+    const customValueFontSize = Number(
+      widgetData?.customSettings?.["valueFontSize"],
+    );
+
+    if (
+      (customHeaderFontSize && customHeaderFontSize > 0) ||
+      (customValueFontSize && customValueFontSize > 0)
+    ) {
+      const headerRatio = 0.8;
+      const targetHeaderSize =
+        customHeaderFontSize && customHeaderFontSize > 0
+          ? customHeaderFontSize
+          : customValueFontSize && customValueFontSize > 0
+            ? Math.floor(customValueFontSize * headerRatio)
+            : 17;
+      const targetValueSize =
+        customValueFontSize && customValueFontSize > 0
+          ? customValueFontSize
+          : customHeaderFontSize && customHeaderFontSize > 0
+            ? Math.floor(customHeaderFontSize / headerRatio)
+            : 19;
+
+      panelEl.style.setProperty(
+        "--record-header-font-size",
+        `${targetHeaderSize}px`,
+      );
+      panelEl.style.setProperty(
+        "--record-value-font-size",
+        `${targetValueSize}px`,
+      );
+      return true;
+    }
+    return false;
+  }
+
   private fitText() {
     const panelEl = this.recordPanel()?.nativeElement;
     const widgetData = this.widget();
 
     if (!panelEl) return;
+
+    if (this.applyCustomFontSizes(panelEl, widgetData)) {
+      return;
+    }
 
     const isAuto = !widgetData || widgetData.scaleMode === "auto";
     if (!isAuto) {
@@ -104,6 +150,13 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    this.measureAndAutoFit(panelEl, widgetData);
+  }
+
+  private measureAndAutoFit(
+    panelEl: HTMLElement,
+    widgetData: AbsoluteWidgetNode | null,
+  ) {
     const headerEls = this.recordHeaders();
     const nameEls = this.recordNames();
     const valueEls = this.recordValues();

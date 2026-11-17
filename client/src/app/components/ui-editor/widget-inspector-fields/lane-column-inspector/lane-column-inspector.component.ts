@@ -15,6 +15,7 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { CustomWidgetInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/custom-widget-inspector/custom-widget-inspector.component";
+import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -45,6 +46,7 @@ import { LaneColumnInspectorGridBase } from "./lane-column-inspector-grid.base";
     CustomSelectComponent,
     CustomOptionComponent,
     CustomWidgetInspectorComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {

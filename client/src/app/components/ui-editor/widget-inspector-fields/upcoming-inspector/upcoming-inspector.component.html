@@ -85,7 +85,9 @@
           (click)="resetColor('titleTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -177,9 +179,104 @@
           (click)="resetColor('laneTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
   </div>
+
+  @if (isNextHeat()) {
+    <!-- Appearance Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_APPEARANCE" | translate }}
+    </div>
+
+    <!-- Background Color -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().backgroundColor"
+      >
+        <input
+          type="color"
+          [value]="settings().backgroundColor || '#000019'"
+          (change)="onColorChange('backgroundColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().backgroundColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().backgroundColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('backgroundColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Alternating Row Contrast -->
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_ALTERNATING_ROW_CONTRAST" | translate
+        }}</label>
+        <span class="inspector-val-badge">
+          {{ settings().alternatingRowContrast || 0 }}%
+        </span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          [ngModel]="settings().alternatingRowContrast || 0"
+          (ngModelChange)="
+            settings().alternatingRowContrast = $event; onSettingsChange()
+          "
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="settings().alternatingRowContrast || 0"
+          (ngModelChange)="
+            settings().alternatingRowContrast = $event; onSettingsChange()
+          "
+          class="inspector-number-input"
+        />
+      </div>
+    </div>
+  }
 }
+
+<app-widget-border-inspector
+  [settings]="settings()"
+  [defaultBorderRadius]="6"
+  [defaultBorderWidth]="1"
+  defaultBorderColor="#ffffff"
+  [defaultShowBorder]="true"
+  (change)="onSettingsChange()"
+></app-widget-border-inspector>

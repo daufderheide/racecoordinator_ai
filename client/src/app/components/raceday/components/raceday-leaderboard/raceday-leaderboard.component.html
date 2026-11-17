@@ -1,12 +1,30 @@
-<div class="panel-card leaderboard-panel">
+<div
+  class="panel-card leaderboard-panel"
+  [style.--leaderboard-title-font-size]="
+    widget()?.customSettings?.['titleFontSize']
+      ? widget()?.customSettings?.['titleFontSize'] + 'px'
+      : null
+  "
+  [style.--leaderboard-subtitle-font-size]="
+    widget()?.customSettings?.['subtitleFontSize']
+      ? widget()?.customSettings?.['subtitleFontSize'] + 'px'
+      : null
+  "
+  [style.--leaderboard-overall-leader-font-size]="
+    widget()?.customSettings?.['overallLeaderFontSize']
+      ? widget()?.customSettings?.['overallLeaderFontSize'] + 'px'
+      : null
+  "
+  [style.--leaderboard-rest-font-size]="
+    widget()?.customSettings?.['restFontSize']
+      ? widget()?.customSettings?.['restFontSize'] + 'px'
+      : null
+  "
+>
   <div
     class="leaderboard-title"
     [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
-    [style.font-size.px]="
-      widget()?.scaleMode === 'auto'
-        ? null
-        : widget()?.customSettings?.['titleFontSize'] || null
-    "
+    [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
   >
     @if (isGroupBoard()) {
@@ -22,9 +40,7 @@
         widget()?.customSettings?.['subtitleFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.scaleMode === 'auto'
-          ? null
-          : widget()?.customSettings?.['subtitleFontSize'] || null
+        widget()?.customSettings?.['subtitleFontSize'] || null
       "
       [style.color]="widget()?.customSettings?.['subtitleTextColor'] || null"
     >
@@ -57,11 +73,9 @@
                 : widget()?.customSettings?.['restFontFamily'] || null
             "
             [style.font-size.px]="
-              widget()?.scaleMode === 'auto'
-                ? null
-                : i === 0
-                  ? widget()?.customSettings?.['overallLeaderFontSize'] || null
-                  : widget()?.customSettings?.['restFontSize'] || null
+              i === 0
+                ? widget()?.customSettings?.['overallLeaderFontSize'] || null
+                : widget()?.customSettings?.['restFontSize'] || null
             "
           >
             @if (isGroupBoard()) {

@@ -70,6 +70,87 @@ describe("RacedayFlagComponent", () => {
     expect(cardEl).toBeTruthy();
   });
 
+  it("should apply custom background color from customSettings", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "flag-1",
+      widgetType: "flag",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      customSettings: {
+        backgroundColor: "#112233",
+      },
+    });
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".panel-card.flag-panel",
+    );
+    expect(cardEl.style.backgroundColor).toBe("rgb(17, 34, 51)");
+  });
+
+  it("should apply custom background color from widget.backgroundColor as fallback", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "flag-2",
+      widgetType: "flag",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      backgroundColor: "#445566",
+      customSettings: {},
+    });
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".panel-card.flag-panel",
+    );
+    expect(cardEl.style.backgroundColor).toBe("rgb(68, 85, 102)");
+  });
+
+  it("should not apply custom background color when displayMode is color-bar only", () => {
+    fixture.componentRef.setInput("displayMode", "color-bar");
+    fixture.componentRef.setInput("widget", {
+      id: "flag-3",
+      widgetType: "flag",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      customSettings: {
+        backgroundColor: "#112233",
+      },
+    });
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".panel-card.flag-panel",
+    );
+    expect(cardEl.style.backgroundColor).toBe("");
+  });
+
+  it("should recognize light custom background color in isLightBackground", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "flag-4",
+      widgetType: "flag",
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+      zIndex: 1,
+      customSettings: {
+        backgroundColor: "#ffffff",
+      },
+    });
+    fixture.detectChanges();
+
+    expect(component.isLightBackground).toBeTrue();
+  });
+
   it("should render race state indicator when displayMode is color-bar", async () => {
     fixture.componentRef.setInput("displayMode", "color-bar");
     fixture.componentRef.setInput("raceStateColor", "green");

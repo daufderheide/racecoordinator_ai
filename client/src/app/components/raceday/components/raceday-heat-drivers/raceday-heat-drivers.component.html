@@ -2,6 +2,11 @@
   #driversPanel
   class="panel-card"
   [ngClass]="type() === 'on-deck' ? 'on-deck-panel' : 'next-heat-panel'"
+  [style.background-color]="panelBackgroundColor()"
+  [style.--row-bg]="rowBg()"
+  [style.--row-hover-bg]="rowHoverBg()"
+  [style.--row-odd-bg]="rowOddBg()"
+  [style.--row-odd-hover-bg]="rowOddHoverBg()"
   [style.--custom-title-size]="
     widget()?.customSettings?.['titleFontSize']
       ? widget()?.customSettings?.['titleFontSize'] + 'px'
@@ -27,6 +32,8 @@
     @for (hd of drivers(); track trackByDriver($index, hd)) {
       <div
         [ngClass]="type() === 'on-deck' ? 'on-deck-item' : 'next-heat-item'"
+        [class.row-odd]="$odd"
+        [class.row-even]="$even"
         [style.font-family]="
           widget()?.customSettings?.['laneFontFamily'] || null
         "
@@ -58,7 +65,8 @@
             <div
               class="driver-nickname teammate-display-name"
               [style.color]="
-                widget()?.customSettings?.['laneTextColor'] || null
+                widget()?.customSettings?.['laneTextColor'] ||
+                (isLightBackground() ? '#0f172a' : null)
               "
               [style.padding-right]="
                 widget()?.scaleMode === 'auto' ? '2.75em' : '28px'
@@ -123,7 +131,10 @@
         } @else {
           <div
             class="driver-nickname"
-            [style.color]="widget()?.customSettings?.['laneTextColor'] || null"
+            [style.color]="
+              widget()?.customSettings?.['laneTextColor'] ||
+              (isLightBackground() ? '#0f172a' : null)
+            "
             style="
               display: flex;
               flex-direction: column;

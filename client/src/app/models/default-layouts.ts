@@ -1,4 +1,5 @@
 import defaultLayoutJson from "@app/models/defaults/default_ui_layout.json";
+import fuelLayoutJson from "@app/models/defaults/fuel_ui_layout.json";
 import legacyDefaultLayoutJson from "@app/models/defaults/legacy_default_ui_layout.json";
 import legacyPracticeLayoutJson from "@app/models/defaults/legacy_practice_ui_layout.json";
 import practiceLayoutJson from "@app/models/defaults/practice_ui_layout.json";
@@ -10,6 +11,9 @@ export const DEFAULT_LAYOUT: LayoutConfig =
 
 export const DEFAULT_PRACTICE_LAYOUT: LayoutConfig =
   practiceLayoutJson as unknown as LayoutConfig;
+
+export const DEFAULT_FUEL_LAYOUT: LayoutConfig =
+  fuelLayoutJson as unknown as LayoutConfig;
 
 export const LEGACY_DEFAULT_LAYOUT: LayoutConfig =
   legacyDefaultLayoutJson as unknown as LayoutConfig;

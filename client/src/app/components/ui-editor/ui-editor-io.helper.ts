@@ -374,11 +374,98 @@ export function parseLayoutImport(
   return result.success && result.data ? result.data : null;
 }
 
+interface LayoutResetColumnConfig {
+  columns: string[];
+  columnLayouts: any;
+  columnVisibility: any;
+  columnWidths: any;
+  columnAnchors: any;
+}
+
+function getFuelDefaultColumnConfig(): LayoutResetColumnConfig {
+  return {
+    columns: [...Settings.DEFAULT_FUEL_COLUMNS],
+    columnLayouts: {
+      laneNumber: { "center-center": "laneNumber" },
+      "driver.nickname": {
+        "center-center": "driver.nickname",
+        "bottom-right": "participant.team.name",
+        "bottom-left": "driverViewQrCode",
+      },
+      "imageset_fuel-gauge-builtin": {
+        "center-center": "imageset_fuel-gauge-builtin",
+      },
+      lapCount: {
+        "center-center": "lapCount",
+        "bottom-left": "flag",
+      },
+      lastLapTime: {
+        "center-center": "lastLapTime",
+        "top-right": "bestLapTime",
+        "bottom-right": "averageLapTime",
+      },
+      gap: {
+        "center-center": "gap",
+        "bottom-right": "gapPosition",
+      },
+    },
+    columnVisibility: {
+      "imageset_fuel-gauge-builtin": "FuelRaceOnly",
+    },
+    columnWidths: {
+      lapCount: 210,
+      "imageset_fuel-gauge-builtin": 210,
+      lastLapTime: 310,
+      gap: 310,
+    },
+    columnAnchors: {},
+  };
+}
+
+function getStandardDefaultColumnConfig(
+  isPractice: boolean,
+): LayoutResetColumnConfig {
+  const defaultSettings = new Settings();
+  if (isPractice) {
+    return {
+      columns: [...Settings.DEFAULT_PRACTICE_COLUMNS],
+      columnLayouts: JSON.parse(
+        JSON.stringify(defaultSettings.practiceColumnLayouts || {}),
+      ),
+      columnVisibility: JSON.parse(
+        JSON.stringify(defaultSettings.practiceColumnVisibility || {}),
+      ),
+      columnWidths: JSON.parse(
+        JSON.stringify(defaultSettings.practiceColumnWidths || {}),
+      ),
+      columnAnchors: JSON.parse(
+        JSON.stringify(defaultSettings.practiceColumnAnchors || {}),
+      ),
+    };
+  }
+  return {
+    columns: [...Settings.DEFAULT_COLUMNS],
+    columnLayouts: JSON.parse(
+      JSON.stringify(defaultSettings.columnLayouts || {}),
+    ),
+    columnVisibility: JSON.parse(
+      JSON.stringify(defaultSettings.columnVisibility || {}),
+    ),
+    columnWidths: JSON.parse(
+      JSON.stringify(defaultSettings.columnWidths || {}),
+    ),
+    columnAnchors: JSON.parse(
+      JSON.stringify(defaultSettings.columnAnchors || {}),
+    ),
+  };
+}
+
 export function getDefaultLayoutResetData(
   isPractice: boolean,
   windowInnerWidth?: number,
   windowInnerHeight?: number,
   isDriverStation?: boolean,
+  isFuel?: boolean,
 ): {
   defaultLayout: LayoutConfig;
   columns: string[];
@@ -391,7 +478,9 @@ export function getDefaultLayoutResetData(
     ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
     : isPractice
       ? Settings.DEFAULT_PRACTICE_LAYOUT
-      : Settings.DEFAULT_LAYOUT;
+      : isFuel
+        ? Settings.DEFAULT_FUEL_LAYOUT
+        : Settings.DEFAULT_LAYOUT;
   const defaultLayout =
     windowInnerWidth && windowInnerHeight
       ? computeScaledLayout(baseLayout, windowInnerWidth, windowInnerHeight)
@@ -408,22 +497,16 @@ export function getDefaultLayoutResetData(
     };
   }
 
-  const defaultSettings = new Settings();
-  const columns = isPractice
-    ? [...Settings.DEFAULT_PRACTICE_COLUMNS]
-    : [...Settings.DEFAULT_COLUMNS];
-  const columnLayouts = isPractice
-    ? JSON.parse(JSON.stringify(defaultSettings.practiceColumnLayouts || {}))
-    : JSON.parse(JSON.stringify(defaultSettings.columnLayouts || {}));
-  const columnVisibility = isPractice
-    ? JSON.parse(JSON.stringify(defaultSettings.practiceColumnVisibility || {}))
-    : JSON.parse(JSON.stringify(defaultSettings.columnVisibility || {}));
-  const columnWidths = isPractice
-    ? JSON.parse(JSON.stringify(defaultSettings.practiceColumnWidths || {}))
-    : JSON.parse(JSON.stringify(defaultSettings.columnWidths || {}));
-  const columnAnchors = isPractice
-    ? JSON.parse(JSON.stringify(defaultSettings.practiceColumnAnchors || {}))
-    : JSON.parse(JSON.stringify(defaultSettings.columnAnchors || {}));
+  const colConfig = isFuel
+    ? getFuelDefaultColumnConfig()
+    : getStandardDefaultColumnConfig(isPractice);
+  const {
+    columns,
+    columnLayouts,
+    columnVisibility,
+    columnWidths,
+    columnAnchors,
+  } = colConfig;
 
   const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
     layout: defaultLayout,

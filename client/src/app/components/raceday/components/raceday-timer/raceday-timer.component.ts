@@ -98,6 +98,14 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     return this.serviceIsCooldown() ?? false;
   });
 
+  protected effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
+
   private timerText = viewChild<ElementRef<HTMLElement>>("timerText");
   private timerPanel = viewChild<ElementRef<HTMLElement>>("timerPanel");
   private resizeObserver?: ResizeObserver;

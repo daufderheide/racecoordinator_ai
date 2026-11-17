@@ -141,7 +141,9 @@
           (click)="resetColor('columnTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -716,4 +718,13 @@
       </div>
     </div>
   }
+
+  <app-widget-border-inspector
+    [settings]="settings()"
+    [defaultBorderRadius]="4"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#ffffff"
+    [defaultShowBorder]="false"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
 }

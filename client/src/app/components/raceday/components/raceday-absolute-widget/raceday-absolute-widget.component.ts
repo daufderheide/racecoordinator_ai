@@ -47,6 +47,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
+import { resolveWidgetBorderStyles } from "@app/utils/widget-border.utils";
 
 @Component({
   standalone: true,
@@ -131,6 +132,16 @@ export class RacedayAbsoluteWidgetComponent
     return !this.isSelected && !this.isCountdownPreviewActive();
   }
 
+  get borderStyles() {
+    return resolveWidgetBorderStyles(
+      this.widget()?.widgetType,
+      this.widget()?.customSettings,
+    );
+  }
+
+  get hasWidgetBorder(): boolean {
+    return this.borderStyles.hasBorder;
+  }
   get isEditorMode(): boolean {
     if (this.isCustomizing()) return true;
     const parent = this.parentComponent();

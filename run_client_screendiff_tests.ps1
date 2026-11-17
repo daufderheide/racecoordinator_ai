@@ -35,14 +35,17 @@ if ($args -contains "--sync-only") {
     exit 0
 }
 
-# Check if --changed or --changed=* was passed
+# Check if flags were passed
 $ChangedFlag = $null
+$NativeFlag = $false
 $NoReportFlag = $false
 $RemainingArgs = @()
 
 foreach ($arg in $args) {
     if ($arg -eq "--changed" -or $arg -like "--changed=*") {
         $ChangedFlag = $arg
+    } elseif ($arg -eq "-Native" -or $arg -eq "--native" -or $arg -eq "-native") {
+        $NativeFlag = $true
     } elseif ($arg -eq "--no-report") {
         $NoReportFlag = $true
     } else {
@@ -79,6 +82,35 @@ if ($ChangedFlag) {
 
 Write-Host "--- Running Client Visual Tests ---" -ForegroundColor Cyan
 
+if ($NativeFlag) {
+    Write-Host "Running tests in Native host mode (Chromium)..." -ForegroundColor Cyan
+    Set-Location $ClientDir
+
+    # Ensure Playwright Chromium browser is installed
+    npx playwright install chromium
+
+    $env:CI = "false"
+    $env:PW_TEST_HTML_REPORT_OPEN = "never"
+    $env:PW_REPORTER = if ($env:PW_REPORTER) { $env:PW_REPORTER } else { "./scripts/screendiff-reporter.js" }
+    $env:PW_REPORT_PATH = Join-Path $ClientDir "playwright-report\pw-result.json"
+
+    $NativeCmd = "npx playwright test $PlaywrightArgs"
+    Invoke-Expression $NativeCmd
+    $TestExitCode = $LASTEXITCODE
+
+    if ($TestExitCode -ne 0) {
+        Write-Host "`nTests failed. Opening report..." -ForegroundColor Yellow
+        if ([Environment]::UserInteractive -and -not $env:CI -and -not $NoReportFlag) {
+            npx playwright show-report (Join-Path $ClientDir "playwright-report")
+        } else {
+            Write-Host "To view the HTML report, run:" -ForegroundColor Gray
+            Write-Host "  npx playwright show-report `"$ClientDir\playwright-report`"" -ForegroundColor Gray
+        }
+    }
+
+    exit $TestExitCode
+}
+
 # Sync current source and configuration to isolated directory
 Write-Host "Syncing source to $IsolatedDir..." -ForegroundColor Gray
 
@@ -99,21 +131,16 @@ Set-Location $IsolatedDir
 
 # Check for Docker
 if (-not (Get-Command "docker" -ErrorAction SilentlyContinue)) {
-    Write-Host "Docker is required but not installed." -ForegroundColor Red
-    Write-Host "Attempting to install Docker via winget..." -ForegroundColor Yellow
-    if (Get-Command "winget" -ErrorAction SilentlyContinue) {
-        winget install Docker.DockerDesktop
-        Write-Host "`n========================================================" -ForegroundColor Magenta
-        Write-Host "IMPORTANT: Docker Desktop has been installed." -ForegroundColor Magenta
-        Write-Host "You must manually open Docker Desktop from your Start Menu" -ForegroundColor Magenta
-        Write-Host "and it may require a system reboot before it works properly." -ForegroundColor Magenta
-        Write-Host "Please do this, and then re-run this script." -ForegroundColor Magenta
-        Write-Host "========================================================`n" -ForegroundColor Magenta
-        exit 1
-    } else {
-        Write-Host "winget not found. Please install Docker manually from https://www.docker.com/" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "`n*****************************************************************" -ForegroundColor Red
+    Write-Host "* ERROR: Docker is not installed or not in PATH!                *" -ForegroundColor Red
+    Write-Host "* Docker is required to run screendiffs against Linux baselines.*" -ForegroundColor Yellow
+    Write-Host "*                                                               *" -ForegroundColor Yellow
+    Write-Host "* To fix this:                                                  *" -ForegroundColor Yellow
+    Write-Host "*   1. Start or install Docker Desktop, OR                      *" -ForegroundColor Yellow
+    Write-Host "*   2. Run with -Native to execute tests natively on Windows:   *" -ForegroundColor Cyan
+    Write-Host "*        .\run_client_screendiff_tests.ps1 -Native              *" -ForegroundColor Cyan
+    Write-Host "*****************************************************************`n" -ForegroundColor Red
+    exit 1
 }
 
 # Make sure Docker daemon is running
@@ -121,8 +148,12 @@ $dockerInfo = docker info 2>&1
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`n*****************************************************************" -ForegroundColor Red
     Write-Host "* ERROR: Docker daemon is not running!                          *" -ForegroundColor Red
-    Write-Host "* The visual tests require Docker to ensure identical rendering.*" -ForegroundColor Red
-    Write-Host "* Please start Docker Desktop and try again.                    *" -ForegroundColor Red
+    Write-Host "* Docker is required to run screendiffs against Linux baselines.*" -ForegroundColor Yellow
+    Write-Host "*                                                               *" -ForegroundColor Yellow
+    Write-Host "* To fix this:                                                  *" -ForegroundColor Yellow
+    Write-Host "*   1. Start Docker Desktop and try again, OR                   *" -ForegroundColor Yellow
+    Write-Host "*   2. Run with -Native to execute tests natively on Windows:   *" -ForegroundColor Cyan
+    Write-Host "*        .\run_client_screendiff_tests.ps1 -Native              *" -ForegroundColor Cyan
     Write-Host "*****************************************************************`n" -ForegroundColor Red
     exit 1
 }

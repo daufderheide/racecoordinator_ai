@@ -13,6 +13,8 @@
   [class.has-custom-bg]="!!widget().backgroundColor"
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
+  [class.has-widget-border]="hasWidgetBorder"
+  [class.no-widget-border]="!hasWidgetBorder"
   [class.grid-cell-unselected]="isWidgetInGrid && !isGridSelected"
   [style.display]="
     !isCountdownActive || isOverallNoDataRow || isFuelWidgetHidden
@@ -51,6 +53,14 @@
   [style.color]="widget().textColor || null"
   [style.background-color]="widget().backgroundColor || null"
   [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
+  [style.--widget-border-style]="borderStyles.borderStyle"
+  [style.--widget-border-color]="borderStyles.borderColor"
+  [style.--widget-border-width]="borderStyles.borderWidth"
+  [style.--widget-border-radius]="borderStyles.borderRadius"
+  [style.--menu-font-size]="widget().fontSize ? widget().fontSize + 'px' : null"
+  [style.--menu-shortcut-font-size]="
+    widget().fontSize ? widget().fontSize! * 0.75 + 'px' : null
+  "
   [style.--widget-scale-factor]="widget().textScaleFactor || 1"
   (pointerdown)="
     isCustomizing() && !isCountdownGhost ? onWidgetPointerDown($event) : null

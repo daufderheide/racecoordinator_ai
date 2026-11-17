@@ -58,12 +58,42 @@ export function createFallbackDefaultLayouts(
       entity_id: "default_fuel_ui_layout_rc_ai",
       name: "RC AI (Fuel)",
       is_default: true,
-      layoutJson: JSON.stringify(racedayLayout || Settings.DEFAULT_LAYOUT),
-      columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
-      columnLayoutsJson: JSON.stringify(defaultSettings.columnLayouts),
-      columnVisibilityJson: JSON.stringify(defaultSettings.columnVisibility),
-      columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
-      columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
+      layoutJson: JSON.stringify(Settings.DEFAULT_FUEL_LAYOUT),
+      columnsJson: JSON.stringify(Settings.DEFAULT_FUEL_COLUMNS),
+      columnLayoutsJson: JSON.stringify({
+        laneNumber: { "center-center": "laneNumber" },
+        "driver.nickname": {
+          "center-center": "driver.nickname",
+          "bottom-right": "participant.team.name",
+          "bottom-left": "driverViewQrCode",
+        },
+        "imageset_fuel-gauge-builtin": {
+          "center-center": "imageset_fuel-gauge-builtin",
+        },
+        lapCount: {
+          "center-center": "lapCount",
+          "bottom-left": "flag",
+        },
+        lastLapTime: {
+          "center-center": "lastLapTime",
+          "top-right": "bestLapTime",
+          "bottom-right": "averageLapTime",
+        },
+        gap: {
+          "center-center": "gap",
+          "bottom-right": "gapPosition",
+        },
+      }),
+      columnVisibilityJson: JSON.stringify({
+        "imageset_fuel-gauge-builtin": "FuelRaceOnly",
+      }),
+      columnWidthsJson: JSON.stringify({
+        lapCount: 210,
+        "imageset_fuel-gauge-builtin": 210,
+        lastLapTime: 310,
+        gap: 310,
+      }),
+      columnAnchorsJson: JSON.stringify({}),
     },
     {
       entity_id: "driver_station_ui_layout_rc_ai",
@@ -243,15 +273,25 @@ export function buildLayoutTemplateOptions(
 
 export function resolveTemplateSource(
   templateId: string | undefined,
-  allLayouts: CustomUI[],
+  allLayouts?: CustomUI[],
 ): CustomUI | "empty" | null {
   if (templateId === "empty") {
     return "empty";
   }
   const targetId = templateId || "default_ui_layout_rc_ai";
-  const found = allLayouts.find((u) => u.entity_id === targetId);
-  if (found) {
-    return found;
+  if (targetId === "default_ui_layout_rc_ai") {
+    const resetData = getDefaultLayoutResetData(false);
+    return {
+      entity_id: "default_ui_layout_rc_ai",
+      name: "RC AI",
+      is_default: true,
+      layoutJson: JSON.stringify(resetData.defaultLayout),
+      columnsJson: JSON.stringify(resetData.columns),
+      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+      columnWidthsJson: JSON.stringify(resetData.columnWidths),
+      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+    };
   }
   if (targetId === "practice_ui_layout_rc_ai") {
     const resetData = getDefaultLayoutResetData(true);
@@ -287,7 +327,13 @@ export function resolveTemplateSource(
     };
   }
   if (targetId === "default_fuel_ui_layout_rc_ai") {
-    const resetData = getDefaultLayoutResetData(false);
+    const resetData = getDefaultLayoutResetData(
+      false,
+      undefined,
+      undefined,
+      false,
+      true,
+    );
     return {
       entity_id: "default_fuel_ui_layout_rc_ai",
       name: "RC AI (Fuel)",
@@ -299,6 +345,12 @@ export function resolveTemplateSource(
       columnWidthsJson: JSON.stringify(resetData.columnWidths),
       columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
     };
+  }
+  if (allLayouts && allLayouts.length > 0) {
+    const found = allLayouts.find((u) => u.entity_id === targetId);
+    if (found) {
+      return found;
+    }
   }
   return null;
 }
