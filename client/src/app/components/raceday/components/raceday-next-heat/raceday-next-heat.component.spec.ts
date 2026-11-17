@@ -372,4 +372,76 @@ describe("RacedayNextHeatComponent", () => {
       done();
     }, 50);
   });
+
+  it("should support custom background color and alternating row contrast in next-heat", (done) => {
+    const mockTrack = new Track({
+      entity_id: "t1",
+      name: "Track 1",
+      num_track_sections: 100,
+      lanes: [
+        new Lane("l1", "white", "red", 50),
+        new Lane("l2", "white", "blue", 50),
+      ],
+    });
+
+    const currentHeat: Heat = {
+      objectId: "h1",
+      heatNumber: 1,
+      heatDrivers: [],
+      standings: [],
+      started: false,
+      group: 0,
+    };
+
+    const nextHeat: Heat = {
+      objectId: "h2",
+      heatNumber: 2,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          laneIndex: 0,
+          driver: new Driver("d1", "Alice", "Alice"),
+          reset: () => {},
+        } as any,
+        {
+          objectId: "hd2",
+          laneIndex: 1,
+          driver: new Driver("d2", "Bob", "Bob"),
+          reset: () => {},
+        } as any,
+      ],
+      standings: [],
+      started: false,
+      group: 0,
+    };
+
+    fixture.componentRef.setInput("track", mockTrack);
+    fixture.componentRef.setInput("currentHeat", currentHeat);
+    fixture.componentRef.setInput("heats", [currentHeat, nextHeat]);
+    fixture.componentRef.setInput("widget", {
+      scaleMode: "fixed",
+      customSettings: {
+        backgroundColor: "#1e293b",
+        alternatingRowContrast: 40,
+      },
+    });
+
+    fixture.detectChanges();
+
+    setTimeout(() => {
+      const panel = fixture.nativeElement.querySelector(
+        ".panel-card",
+      ) as HTMLElement;
+      expect(panel).toBeTruthy();
+      expect(panel.style.backgroundColor).toBe("rgb(30, 41, 59)");
+      expect(panel.style.getPropertyValue("--row-odd-bg")).toContain(
+        "rgba(255, 255, 255,",
+      );
+      const items = panel.querySelectorAll(".next-heat-item");
+      expect(items.length).toBe(2);
+      expect(items[0].classList.contains("row-even")).toBeTrue();
+      expect(items[1].classList.contains("row-odd")).toBeTrue();
+      done();
+    }, 50);
+  });
 });

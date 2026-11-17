@@ -112,12 +112,14 @@
     @case ("on-deck") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"
+        widgetType="on-deck"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
     }
     @case ("next-heat") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"
+        widgetType="next-heat"
         (change)="onSettingsChange()"
       ></app-upcoming-inspector>
     }

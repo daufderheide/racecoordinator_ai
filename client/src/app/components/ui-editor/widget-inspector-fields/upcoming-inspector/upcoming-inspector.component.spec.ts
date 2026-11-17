@@ -74,6 +74,7 @@ describe("UpcomingInspectorComponent", () => {
   });
 
   it("should disable font size inputs when disableFontSizes is true", async () => {
+    fixture.componentRef.setInput("widgetType", "on-deck");
     fixture.componentRef.setInput("disableFontSizes", true);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -84,5 +85,46 @@ describe("UpcomingInspectorComponent", () => {
     sliders.forEach((slider: HTMLInputElement) => {
       expect(slider.disabled).toBeTrue();
     });
+  });
+
+  it("should render appearance section with background color and alternating row contrast for next-heat", () => {
+    fixture.componentRef.setInput("widgetType", "next-heat");
+    fixture.detectChanges();
+
+    const colorPickers = fixture.nativeElement.querySelectorAll(
+      'input[type="color"]',
+    );
+    // Title text color, Lane text color, Background color
+    expect(colorPickers.length).toBe(3);
+
+    const event = { target: { value: "#1e293b" } } as any;
+    component.onColorChange("backgroundColor", event);
+    expect(component.settings().backgroundColor).toBe("#1e293b");
+    expect(changeSpy).toHaveBeenCalled();
+
+    component.resetColor("backgroundColor");
+    expect(component.settings().backgroundColor).toBe("");
+    expect(changeSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("should not render appearance section when widgetType is on-deck", () => {
+    fixture.componentRef.setInput("widgetType", "on-deck");
+    fixture.detectChanges();
+
+    const colorPickers = fixture.nativeElement.querySelectorAll(
+      'input[type="color"]',
+    );
+    // Only Title text color and Lane text color
+    expect(colorPickers.length).toBe(2);
+  });
+
+  it("should update alternatingRowContrast and emit change", () => {
+    fixture.componentRef.setInput("widgetType", "next-heat");
+    fixture.detectChanges();
+
+    component.settings().alternatingRowContrast = 45;
+    component.onSettingsChange();
+    expect(component.settings().alternatingRowContrast).toBe(45);
+    expect(changeSpy).toHaveBeenCalled();
   });
 });

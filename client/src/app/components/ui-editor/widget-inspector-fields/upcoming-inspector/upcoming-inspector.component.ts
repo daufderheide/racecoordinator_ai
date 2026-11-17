@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, input, output } from "@angular/core";
+import { Component, computed, inject, input, output } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import {
   CustomOptionComponent,
@@ -24,8 +24,11 @@ import { FontService } from "@app/services/font.service";
 export class UpcomingInspectorComponent {
   settings = input.required<any>();
   disableFontSizes = input<boolean>(false);
+  widgetType = input<string>("next-heat");
   change = output<void>();
   fontService = inject(FontService);
+
+  isNextHeat = computed(() => this.widgetType() === "next-heat");
 
   onSettingsChange() {
     this.change.emit();

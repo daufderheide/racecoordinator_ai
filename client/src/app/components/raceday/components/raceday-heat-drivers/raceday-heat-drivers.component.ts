@@ -22,6 +22,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
+import { isColorLight } from "@app/utils/color.utils";
 
 @Component({
   standalone: true,
@@ -44,6 +45,73 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
   heats = input<Heat[]>([]);
   parent = input<any>(undefined);
   widget = input<any>(undefined);
+
+  panelBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
+
+  isLightBackground = computed(() => {
+    const bg = this.panelBackgroundColor();
+    return bg ? isColorLight(bg) : false;
+  });
+
+  rowBg = computed(() => {
+    if (this.type() !== "next-heat") return null;
+    const bg = this.panelBackgroundColor();
+    if (bg && isColorLight(bg)) {
+      return "rgba(0, 0, 0, 0.03)";
+    }
+    return null;
+  });
+
+  rowHoverBg = computed(() => {
+    if (this.type() !== "next-heat") return null;
+    const bg = this.panelBackgroundColor();
+    if (bg && isColorLight(bg)) {
+      return "rgba(0, 0, 0, 0.08)";
+    }
+    return null;
+  });
+
+  rowOddBg = computed(() => {
+    if (this.type() !== "next-heat") return null;
+    const contrast = Number(
+      this.widget()?.customSettings?.["alternatingRowContrast"],
+    );
+    const isLight = this.isLightBackground();
+
+    if (isNaN(contrast) || contrast <= 0) {
+      return isLight ? "rgba(0, 0, 0, 0.03)" : null;
+    }
+
+    const c = Math.max(0, Math.min(100, contrast));
+    const alpha = (0.03 + (c / 100) * 0.25).toFixed(3);
+    return isLight
+      ? `rgba(0, 0, 0, ${alpha})`
+      : `rgba(255, 255, 255, ${alpha})`;
+  });
+
+  rowOddHoverBg = computed(() => {
+    if (this.type() !== "next-heat") return null;
+    const contrast = Number(
+      this.widget()?.customSettings?.["alternatingRowContrast"],
+    );
+    const isLight = this.isLightBackground();
+
+    if (isNaN(contrast) || contrast <= 0) {
+      return isLight ? "rgba(0, 0, 0, 0.08)" : null;
+    }
+
+    const c = Math.max(0, Math.min(100, contrast));
+    const hoverAlpha = Math.min(0.5, 0.03 + (c / 100) * 0.25 + 0.05).toFixed(3);
+    return isLight
+      ? `rgba(0, 0, 0, ${hoverAlpha})`
+      : `rgba(255, 255, 255, ${hoverAlpha})`;
+  });
 
   private driversPanel = viewChild<ElementRef<HTMLElement>>("driversPanel");
   private resizeObserver?: ResizeObserver;

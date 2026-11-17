@@ -235,6 +235,8 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       laneFontFamily: "",
       laneFontSize: 16,
       laneTextColor: "",
+      backgroundColor: "",
+      alternatingRowContrast: 0,
     }),
   },
   "heat-list": {

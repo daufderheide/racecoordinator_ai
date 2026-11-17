@@ -77,7 +77,7 @@ app-raceday-heat-drivers {
   justify-content: space-between;
   align-items: center;
   padding: var(--heat-drivers-item-padding-y, 6px) var(--heat-drivers-item-padding-x, 12px);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--row-bg, rgba(255, 255, 255, 0.03));
   border-radius: 4px;
   transition: background 0.2s ease;
   font-size: var(--custom-lane-size, var(--heat-drivers-font-size, 16px));
@@ -85,7 +85,15 @@ app-raceday-heat-drivers {
 }
 
 .next-heat-item:hover, .on-deck-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--row-hover-bg, rgba(255, 255, 255, 0.08));
+}
+
+.next-heat-item.row-odd {
+  background: var(--row-odd-bg, var(--row-bg, rgba(255, 255, 255, 0.03)));
+}
+
+.next-heat-item.row-odd:hover {
+  background: var(--row-odd-hover-bg, var(--row-hover-bg, rgba(255, 255, 255, 0.08)));
 }
 
 .driver-nickname {

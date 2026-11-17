@@ -107,6 +107,12 @@ describe("WIDGET_REGISTRY", () => {
     expect(heatListSettings["summaryTimeDecimalPlaces"]).toBe(3);
     expect(heatListSettings["summaryUseLaneColors"]).toBe(true);
 
+    const nextHeatSettings = WIDGET_REGISTRY["next-heat"].defaultSettings!();
+    expect(nextHeatSettings["titleFontSize"]).toBe(18);
+    expect(nextHeatSettings["laneFontSize"]).toBe(16);
+    expect(nextHeatSettings["backgroundColor"]).toBe("");
+    expect(nextHeatSettings["alternatingRowContrast"]).toBe(0);
+
     const laneColumnSettings =
       WIDGET_REGISTRY["lane-column"].defaultSettings!();
     expect(laneColumnSettings["columnKey"]).toBe("lastLapTime");
