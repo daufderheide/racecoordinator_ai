@@ -316,7 +316,7 @@
 .widget-wrapper.scale-fixed app-raceday-track-name .value-text,
 .widget-wrapper.scale-fixed app-raceday-event-name .value-text,
 .widget-wrapper.scale-fixed app-raceday-season-name .value-text {
-  font-size: var(--widget-font-size);
+  font-size: var(--header-value-font-size, var(--widget-font-size));
 }
 .widget-wrapper.scale-fixed app-raceday-race-name .label-text,
 .widget-wrapper.scale-fixed app-raceday-heat-info .label-text,
@@ -325,7 +325,7 @@
 .widget-wrapper.scale-fixed app-raceday-season-name .label-text,
 .widget-wrapper.scale-fixed .status-label,
 .widget-wrapper.scale-fixed .warmup-label {
-  font-size: calc(0.6 * var(--widget-font-size));
+  font-size: var(--header-label-font-size, calc(0.6 * var(--widget-font-size)));
 }
 
 /* Fixed scaling for lists and tables */

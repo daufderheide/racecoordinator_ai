@@ -80,6 +80,42 @@ export class RacedayHeatInfoComponent implements AfterViewInit, OnDestroy {
 
     if (!panelEl || !labelEl || !valueEl) return;
 
+    const customLabelFontSize = Number(
+      widgetData?.customSettings?.["labelFontSize"],
+    );
+    const customValueFontSize = Number(
+      widgetData?.customSettings?.["valueFontSize"],
+    );
+
+    if (
+      (customLabelFontSize && customLabelFontSize > 0) ||
+      (customValueFontSize && customValueFontSize > 0)
+    ) {
+      const labelRatio = 55 / 80;
+      const targetLabelSize =
+        customLabelFontSize && customLabelFontSize > 0
+          ? customLabelFontSize
+          : customValueFontSize && customValueFontSize > 0
+            ? Math.floor(customValueFontSize * labelRatio)
+            : 13;
+      const targetValueSize =
+        customValueFontSize && customValueFontSize > 0
+          ? customValueFontSize
+          : customLabelFontSize && customLabelFontSize > 0
+            ? Math.floor(customLabelFontSize / labelRatio)
+            : 18;
+
+      panelEl.style.setProperty(
+        "--header-label-font-size",
+        `${targetLabelSize}px`,
+      );
+      panelEl.style.setProperty(
+        "--header-value-font-size",
+        `${targetValueSize}px`,
+      );
+      return;
+    }
+
     const isAuto = !widgetData || widgetData.scaleMode === "auto";
     if (!isAuto) {
       panelEl.style.removeProperty("--header-value-font-size");

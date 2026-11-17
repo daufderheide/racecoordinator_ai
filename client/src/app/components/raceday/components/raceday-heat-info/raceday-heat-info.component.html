@@ -1,5 +1,18 @@
 @if (heat()) {
-  <div class="info-section" #infoPanel>
+  <div
+    class="info-section"
+    #infoPanel
+    [style.--header-label-font-size]="
+      widget()?.customSettings?.['labelFontSize']
+        ? widget()?.customSettings?.['labelFontSize'] + 'px'
+        : null
+    "
+    [style.--header-value-font-size]="
+      widget()?.customSettings?.['valueFontSize']
+        ? widget()?.customSettings?.['valueFontSize'] + 'px'
+        : null
+    "
+  >
     <span
       class="label-text"
       #labelText
@@ -7,9 +20,8 @@
         widget()?.customSettings?.['labelFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.scaleMode !== 'auto'
-          ? widget()?.customSettings?.['labelFontSize'] || 13
-          : null
+        widget()?.customSettings?.['labelFontSize'] ||
+        (widget()?.scaleMode !== 'auto' ? 13 : null)
       "
       [style.color]="widget()?.customSettings?.['labelTextColor'] || null"
       >{{ "RD_HEAT" | translate }}:</span
@@ -21,9 +33,8 @@
         widget()?.customSettings?.['valueFontFamily'] || null
       "
       [style.font-size.px]="
-        widget()?.scaleMode !== 'auto'
-          ? widget()?.customSettings?.['valueFontSize'] || 18
-          : null
+        widget()?.customSettings?.['valueFontSize'] ||
+        (widget()?.scaleMode !== 'auto' ? 18 : null)
       "
       [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
       >{{
