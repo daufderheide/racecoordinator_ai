@@ -56,4 +56,17 @@ export class TimerInspectorHarnessE2e implements TimerInspectorHarnessBase {
     const wrapper = this.locator.locator(".color-picker-wrapper").nth(0);
     await wrapper.locator(".color-reset-btn").click();
   }
+
+  async getBackgroundColor(): Promise<string> {
+    return await this.colorPickers.nth(1).inputValue();
+  }
+
+  async setBackgroundColor(val: string): Promise<void> {
+    await this.colorPickers.nth(1).fill(val);
+  }
+
+  async clickResetBackgroundColor(): Promise<void> {
+    const wrapper = this.locator.locator(".color-picker-wrapper").nth(1);
+    await wrapper.locator(".color-reset-btn").click();
+  }
 }

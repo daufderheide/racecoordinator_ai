@@ -7,6 +7,7 @@ import { AbsoluteWidgetNode, Settings } from "@app/models/settings";
 import { ActionButtonInspectorComponent } from "./action-button-inspector/action-button-inspector.component";
 import { CountdownInspectorComponent } from "./countdown-inspector/countdown-inspector.component";
 import { CustomWidgetInspectorComponent } from "./custom-widget-inspector/custom-widget-inspector.component";
+import { FlagInspectorComponent } from "./flag-inspector/flag-inspector.component";
 import { HeatListInspectorComponent } from "./heat-list-inspector/heat-list-inspector.component";
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
 import { LabelInspectorComponent } from "./label-inspector/label-inspector.component";
@@ -42,6 +43,7 @@ import { WidgetBorderInspectorComponent } from "./widget-border-inspector/widget
     MenuInspectorComponent,
     ActionButtonInspectorComponent,
     CustomWidgetInspectorComponent,
+    FlagInspectorComponent,
     WidgetBorderInspectorComponent,
   ],
 })

@@ -1,0 +1,49 @@
+@if (settings()) {
+  <div class="inspector-geometry-title">
+    {{ "UE_WIDGET_TYPE_FLAG" | translate }}
+  </div>
+
+  <!-- Background Color -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+    }}</label>
+    <div
+      class="color-picker-wrapper"
+      [class.is-null]="!settings().backgroundColor"
+    >
+      <input
+        type="color"
+        [value]="settings().backgroundColor || '#000019'"
+        (change)="onColorChange('backgroundColor', $event)"
+        class="color-picker-input"
+      />
+      @if (!settings().backgroundColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
+      @if (settings().backgroundColor) {
+        <button
+          class="color-reset-btn"
+          (click)="resetColor('backgroundColor')"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+        >
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Card & Border Styling -->
+  <app-widget-border-inspector
+    [settings]="settings()"
+    [defaultBorderRadius]="6"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#ffffff"
+    [defaultShowBorder]="true"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
+}

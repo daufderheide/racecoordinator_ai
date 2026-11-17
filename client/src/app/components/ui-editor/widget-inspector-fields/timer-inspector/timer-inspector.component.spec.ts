@@ -69,6 +69,25 @@ describe("TimerInspectorComponent", () => {
     expect(changeSpy).toHaveBeenCalled();
   });
 
+  it("should update backgroundColor and emit change on onColorChange", () => {
+    const event = {
+      target: {
+        value: "#001122",
+      },
+    } as any;
+
+    component.onColorChange("backgroundColor", event);
+    expect(component.settings().backgroundColor).toBe("#001122");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should reset backgroundColor to empty string and emit change on resetColor", () => {
+    component.settings().backgroundColor = "#001122";
+    component.resetColor("backgroundColor");
+    expect(component.settings().backgroundColor).toBe("");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
   it("should trigger loadLocalFonts on font service when select element is focused", () => {
     const selectEl = fixture.nativeElement.querySelector("app-custom-select");
     selectEl.dispatchEvent(new Event("focus"));

@@ -1,4 +1,8 @@
-<div #timerPanel class="panel-card timer-panel">
+<div
+  #timerPanel
+  class="panel-card timer-panel"
+  [style.background-color]="effectiveBackgroundColor()"
+>
   <div class="timer-wrapper">
     <!-- Top area for auto-advance label (always rendered to reserve space) -->
     <div class="label-container top-label">

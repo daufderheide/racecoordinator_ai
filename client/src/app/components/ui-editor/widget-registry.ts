@@ -119,6 +119,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       timeFontFamily: "",
       timeFontSize: 90,
       timeTextColor: "",
+      backgroundColor: "",
       ...getDefaultBorderConfigForWidget("timer"),
     }),
   },
@@ -154,6 +155,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
   flag: {
     defaultSettings: () => ({
       displayMode: "image",
+      backgroundColor: "",
       ...getDefaultBorderConfigForWidget("flag"),
     }),
   },

@@ -308,7 +308,12 @@
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
-    @case ("flag")
+    @case ("flag") {
+      <app-flag-inspector
+        [settings]="widgetSettings"
+        (change)="onSettingsChange()"
+      ></app-flag-inspector>
+    }
     @case ("branding")
     @case ("qr")
     @default {

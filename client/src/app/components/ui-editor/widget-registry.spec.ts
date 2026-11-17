@@ -145,11 +145,18 @@ describe("WIDGET_REGISTRY", () => {
   it("should configure timer default font size to 90 and include border settings", () => {
     const timerSettings = WIDGET_REGISTRY["timer"].defaultSettings!();
     expect(timerSettings["timeFontSize"]).toBe(90);
+    expect(timerSettings["backgroundColor"]).toBe("");
     expect(timerSettings["showBorder"]).toBe(true);
     expect(timerSettings["borderStyle"]).toBe("solid");
     expect(timerSettings["borderColor"]).toBe("#dddddd");
     expect(timerSettings["borderWidth"]).toBe(2);
     expect(timerSettings["borderRadius"]).toBe(8);
+  });
+
+  it("should configure flag default settings with backgroundColor", () => {
+    const flagSettings = WIDGET_REGISTRY["flag"].defaultSettings!();
+    expect(flagSettings["displayMode"]).toBe("image");
+    expect(flagSettings["backgroundColor"]).toBe("");
   });
 
   it("should supply border controls in default settings for all widgets with settings", () => {

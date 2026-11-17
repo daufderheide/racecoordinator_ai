@@ -197,6 +197,20 @@ export class RacedayFlagComponent {
   }
 
   get isLightBackground(): boolean {
+    if (this.effectiveBackgroundColor) {
+      return isColorLight(this.effectiveBackgroundColor);
+    }
     return isColorLight(this.effectiveRaceStateColor);
+  }
+
+  get effectiveBackgroundColor(): string | null {
+    if (this.isColorBarMode && !this.isImageMode) {
+      return null;
+    }
+    return (
+      this.effectiveSettings["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
   }
 }

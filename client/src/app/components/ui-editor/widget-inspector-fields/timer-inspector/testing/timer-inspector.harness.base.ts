@@ -15,4 +15,7 @@ export abstract class TimerInspectorHarnessBase {
   abstract getTimeTextColor(): Promise<string>;
   abstract setTimeTextColor(val: string): Promise<void>;
   abstract clickResetTimeTextColor(): Promise<void>;
+  abstract getBackgroundColor(): Promise<string>;
+  abstract setBackgroundColor(val: string): Promise<void>;
+  abstract clickResetBackgroundColor(): Promise<void>;
 }
