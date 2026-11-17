@@ -10,6 +10,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
+import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
@@ -18,7 +19,13 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   selector: "app-image-inspector",
   templateUrl: "./image-inspector.component.html",
   styleUrls: ["../../ui-editor.component.css"],
-  imports: [CommonModule, FormsModule, TranslatePipe, ImageSelectorComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    ImageSelectorComponent,
+    WidgetBorderInspectorComponent,
+  ],
 })
 export class ImageInspectorComponent implements OnInit, OnDestroy {
   settings = input.required<any>();

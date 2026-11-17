@@ -129,9 +129,9 @@ describe("LeaderboardInspectorComponent", () => {
     fixture.componentRef.setInput("disableFontSizes", true);
     fixture.detectChanges();
     await fixture.whenStable();
-    const sliders = fixture.nativeElement.querySelectorAll(
-      'input[type="range"]',
-    );
+    const sliders = Array.from<HTMLInputElement>(
+      fixture.nativeElement.querySelectorAll('input[type="range"]'),
+    ).filter((el) => el.getAttribute("max") === "120");
     expect(sliders.length).toBeGreaterThan(0);
     sliders.forEach((slider: HTMLInputElement) => {
       expect(slider.disabled).toBeTrue();

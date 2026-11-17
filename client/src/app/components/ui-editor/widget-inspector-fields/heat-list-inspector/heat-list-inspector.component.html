@@ -200,7 +200,9 @@
             (click)="resetColor('titleTextColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-            ✕
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
           </button>
         }
       </div>
@@ -297,7 +299,9 @@
           (click)="resetColor('heatNumberTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -389,7 +393,9 @@
           (click)="resetColor('laneTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -615,7 +621,9 @@
             (click)="resetColor('summaryBorderColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-            ✕
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
           </button>
         }
       </div>
@@ -711,7 +719,9 @@
             (click)="resetColor('summaryHeaderTextColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-            ✕
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
           </button>
         }
       </div>
@@ -742,7 +752,9 @@
             (click)="resetColor('summaryHeaderBackgroundColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-            ✕
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
           </button>
         }
       </div>
@@ -844,10 +856,21 @@
             (click)="resetColor('summaryRowTextColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-            ✕
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
           </button>
         }
       </div>
     </div>
   }
+
+  <app-widget-border-inspector
+    [settings]="settings()"
+    [defaultBorderRadius]="6"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#38bdf8"
+    [defaultShowBorder]="false"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
 }

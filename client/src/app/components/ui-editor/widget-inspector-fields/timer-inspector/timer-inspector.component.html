@@ -35,7 +35,7 @@
         min="10"
         max="200"
         step="1"
-        [ngModel]="settings().timeFontSize || 100"
+        [ngModel]="settings().timeFontSize || 90"
         (ngModelChange)="settings().timeFontSize = $event; onSettingsChange()"
         [disabled]="disableFontSizes()"
         class="inspector-slider"
@@ -52,7 +52,7 @@
         data-lpignore="true"
         data-bwignore="true"
         data-form-type="other"
-        [ngModel]="settings().timeFontSize || 100"
+        [ngModel]="settings().timeFontSize || 90"
         (ngModelChange)="settings().timeFontSize = $event; onSettingsChange()"
         [disabled]="disableFontSizes()"
         class="inspector-number-input"
@@ -85,7 +85,9 @@
           (click)="resetColor('timeTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -229,4 +231,14 @@
       </div>
     </div>
   </div>
+
+  <!-- Card & Border Styling -->
+  <app-widget-border-inspector
+    [settings]="settings()"
+    [defaultBorderRadius]="8"
+    [defaultBorderWidth]="2"
+    defaultBorderColor="#dddddd"
+    [defaultShowBorder]="true"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
 }

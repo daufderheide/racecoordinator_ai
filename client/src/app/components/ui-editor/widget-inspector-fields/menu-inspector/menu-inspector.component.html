@@ -76,9 +76,20 @@
           (click)="resetColor('textColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
   </div>
+
+  <app-widget-border-inspector
+    [settings]="settings"
+    [defaultBorderRadius]="0"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#38bdf8"
+    [defaultShowBorder]="false"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
 }

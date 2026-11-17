@@ -5,6 +5,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
@@ -20,6 +21,7 @@ import { FontService } from "@app/services/font.service";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class ActionButtonInspectorComponent {

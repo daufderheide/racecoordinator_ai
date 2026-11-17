@@ -85,7 +85,9 @@
           (click)="resetColor('titleTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -177,7 +179,9 @@
           (click)="resetColor('laneTextColor')"
           [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          ✕
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -215,7 +219,9 @@
             (click)="resetColor('backgroundColor')"
             [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-            ✕
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
           </button>
         }
       </div>
@@ -265,3 +271,12 @@
     </div>
   }
 }
+
+<app-widget-border-inspector
+  [settings]="settings()"
+  [defaultBorderRadius]="6"
+  [defaultBorderWidth]="1"
+  defaultBorderColor="#ffffff"
+  [defaultShowBorder]="true"
+  (change)="onSettingsChange()"
+></app-widget-border-inspector>

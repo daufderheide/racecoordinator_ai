@@ -18,6 +18,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
 import { CustomUI } from "@app/models/custom-ui";
 import { HighlightLapStyle, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -46,6 +47,7 @@ import {
     DragDropModule,
     CustomSelectComponent,
     CustomOptionComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class LaneViewInspectorComponent implements OnInit {

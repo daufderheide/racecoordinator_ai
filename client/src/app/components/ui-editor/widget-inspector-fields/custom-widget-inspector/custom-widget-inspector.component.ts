@@ -5,6 +5,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
 import {
   CustomWidgetDefinition,
   CustomWidgetSettingField,
@@ -24,6 +25,7 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class CustomWidgetInspectorComponent {
@@ -31,6 +33,19 @@ export class CustomWidgetInspectorComponent {
   change = output<AbsoluteWidgetNode>();
 
   private customWidgetService = inject(CustomWidgetService);
+
+  get settings(): any {
+    const w = this.widget();
+    if (!w) return {};
+    if (!w.customSettings) {
+      w.customSettings = {};
+    }
+    return w.customSettings;
+  }
+
+  onBorderChange(): void {
+    this.change.emit(this.widget());
+  }
 
   get definition(): CustomWidgetDefinition | undefined {
     return this.customWidgetService.getWidgetDefinition(

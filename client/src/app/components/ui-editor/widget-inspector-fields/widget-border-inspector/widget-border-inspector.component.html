@@ -1,0 +1,93 @@
+<hr class="inspector-divider" />
+
+<!-- Card & Border Styling -->
+<div class="inspector-geometry-title">
+  <span class="material-icons">border_style</span>
+  {{ "UE_INSPECTOR_BORDER_SECTION" | translate }}
+</div>
+
+<div class="inspector-section">
+  <label class="form-check-label">
+    <input
+      type="checkbox"
+      class="form-checkbox"
+      [ngModel]="showBorder"
+      (ngModelChange)="onShowBorderChange($event)"
+    />
+    <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
+  </label>
+</div>
+
+@if (showBorder) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BORDER_STYLE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="borderStyle"
+        (ngModelChange)="onBorderStyleChange($event)"
+      >
+        <app-custom-option value="solid">
+          {{ "UE_INSPECTOR_BORDER_STYLE_SOLID" | translate }}
+        </app-custom-option>
+        <app-custom-option value="dashed">
+          {{ "UE_INSPECTOR_BORDER_STYLE_DASHED" | translate }}
+        </app-custom-option>
+        <app-custom-option value="dotted">
+          {{ "UE_INSPECTOR_BORDER_STYLE_DOTTED" | translate }}
+        </app-custom-option>
+        <app-custom-option value="double">
+          {{ "UE_INSPECTOR_BORDER_STYLE_DOUBLE" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BORDER_COLOR" | translate
+    }}</label>
+    <input
+      type="color"
+      [value]="borderColor"
+      (input)="onBorderColorChange($event)"
+      (change)="onBorderColorChange($event)"
+      class="inspector-color-input"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_WIDTH" | translate
+      }}</label>
+      <span class="inspector-val-badge">{{ borderWidth }}px</span>
+    </div>
+    <input
+      type="range"
+      min="0"
+      max="10"
+      [ngModel]="borderWidth"
+      (ngModelChange)="onBorderWidthChange($event)"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_RADIUS" | translate
+      }}</label>
+      <span class="inspector-val-badge">{{ borderRadius }}px</span>
+    </div>
+    <input
+      type="range"
+      min="0"
+      max="32"
+      [ngModel]="borderRadius"
+      (ngModelChange)="onBorderRadiusChange($event)"
+      class="inspector-slider"
+    />
+  </div>
+}

@@ -78,9 +78,9 @@ describe("UpcomingInspectorComponent", () => {
     fixture.componentRef.setInput("disableFontSizes", true);
     fixture.detectChanges();
     await fixture.whenStable();
-    const sliders = fixture.nativeElement.querySelectorAll(
-      'input[type="range"]',
-    );
+    const sliders = Array.from<HTMLInputElement>(
+      fixture.nativeElement.querySelectorAll('input[type="range"]'),
+    ).filter((el) => el.getAttribute("max") === "120");
     expect(sliders.length).toBeGreaterThan(0);
     sliders.forEach((slider: HTMLInputElement) => {
       expect(slider.disabled).toBeTrue();
@@ -92,7 +92,7 @@ describe("UpcomingInspectorComponent", () => {
     fixture.detectChanges();
 
     const colorPickers = fixture.nativeElement.querySelectorAll(
-      'input[type="color"]',
+      ".color-picker-input",
     );
     // Title text color, Lane text color, Background color
     expect(colorPickers.length).toBe(3);
@@ -112,7 +112,7 @@ describe("UpcomingInspectorComponent", () => {
     fixture.detectChanges();
 
     const colorPickers = fixture.nativeElement.querySelectorAll(
-      'input[type="color"]',
+      ".color-picker-input",
     );
     // Only Title text color and Lane text color
     expect(colorPickers.length).toBe(2);

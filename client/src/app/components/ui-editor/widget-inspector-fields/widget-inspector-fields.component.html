@@ -308,5 +308,18 @@
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
+    @case ("flag")
+    @case ("branding")
+    @case ("qr")
+    @default {
+      <app-widget-border-inspector
+        [settings]="widgetSettings"
+        [defaultBorderRadius]="6"
+        [defaultBorderWidth]="1"
+        defaultBorderColor="#ffffff"
+        [defaultShowBorder]="true"
+        (change)="onSettingsChange()"
+      ></app-widget-border-inspector>
+    }
   }
 }

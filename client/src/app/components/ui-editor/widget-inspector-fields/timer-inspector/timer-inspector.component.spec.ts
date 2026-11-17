@@ -177,4 +177,24 @@ describe("TimerInspectorComponent", () => {
     expect(inputEl.getAttribute("data-bwignore")).toBe("true");
     expect(inputEl.getAttribute("data-form-type")).toBe("other");
   });
+
+  it("should render widget border inspector component", () => {
+    const borderInspector = fixture.nativeElement.querySelector(
+      "app-widget-border-inspector",
+    );
+    expect(borderInspector).toBeTruthy();
+  });
+
+  it("should default timeFontSize to 90 in slider when unset", async () => {
+    fixture.componentRef.setInput("settings", {
+      timeFontFamily: "",
+      timeTextColor: "",
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const slider = fixture.nativeElement.querySelector(
+      'input[type="range"][max="200"]',
+    ) as HTMLInputElement;
+    expect(slider.value).toBe("90");
+  });
 });

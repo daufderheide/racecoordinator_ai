@@ -208,36 +208,15 @@
     </div>
   </div>
 
-  <!-- Border Color -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_GAUGE_BORDER_COLOR" | translate
-    }}</label>
-    <div class="color-picker-wrapper" [class.is-null]="!settings().borderColor">
-      <input
-        type="color"
-        [value]="settings().borderColor || '#ffffff'"
-        (change)="onColorChange('borderColor', $event)"
-        class="color-picker-input"
-      />
-      @if (!settings().borderColor) {
-        <span class="color-picker-placeholder">{{
-          "UE_INSPECTOR_COLOR_DEFAULT" | translate
-        }}</span>
-      }
-      @if (settings().borderColor) {
-        <button
-          class="color-reset-btn"
-          (click)="resetColor('borderColor')"
-          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-        >
-          <span class="material-icons" style="font-size: 14px"
-            >restart_alt</span
-          >
-        </button>
-      }
-    </div>
-  </div>
+  <!-- Card & Border Styling -->
+  <app-widget-border-inspector
+    [settings]="settings()"
+    [defaultBorderRadius]="12"
+    [defaultBorderWidth]="1"
+    defaultBorderColor="#ffffff"
+    [defaultShowBorder]="false"
+    (change)="onSettingsChange()"
+  ></app-widget-border-inspector>
 
   <!-- Text / Foreground Color -->
   <div class="inspector-section">

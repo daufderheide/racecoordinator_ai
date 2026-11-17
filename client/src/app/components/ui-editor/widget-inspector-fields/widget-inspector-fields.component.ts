@@ -19,6 +19,7 @@ import { RecordsInspectorComponent } from "./records-inspector/records-inspector
 import { TextInfoInspectorComponent } from "./text-info-inspector/text-info-inspector.component";
 import { TimerInspectorComponent } from "./timer-inspector/timer-inspector.component";
 import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspector.component";
+import { WidgetBorderInspectorComponent } from "./widget-border-inspector/widget-border-inspector.component";
 
 @Component({
   standalone: true,
@@ -41,6 +42,7 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
     MenuInspectorComponent,
     ActionButtonInspectorComponent,
     CustomWidgetInspectorComponent,
+    WidgetBorderInspectorComponent,
   ],
 })
 export class WidgetInspectorFieldsComponent {
@@ -104,5 +106,14 @@ export class WidgetInspectorFieldsComponent {
 
   onSettingsChange(node?: AbsoluteWidgetNode) {
     this.change.emit(node || this.widget());
+  }
+
+  get widgetSettings(): Record<string, any> {
+    const w = this.widget();
+    if (!w) return {};
+    if (!w.customSettings) {
+      w.customSettings = {};
+    }
+    return w.customSettings;
   }
 }

@@ -141,4 +141,35 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["lastLapsBestLapFontWeight"]).toBe("bold");
     expect(laneColumnSettings["lastLapsBestLapUnderline"]).toBe(false);
   });
+
+  it("should configure timer default font size to 90 and include border settings", () => {
+    const timerSettings = WIDGET_REGISTRY["timer"].defaultSettings!();
+    expect(timerSettings["timeFontSize"]).toBe(90);
+    expect(timerSettings["showBorder"]).toBe(true);
+    expect(timerSettings["borderStyle"]).toBe("solid");
+    expect(timerSettings["borderColor"]).toBe("#dddddd");
+    expect(timerSettings["borderWidth"]).toBe(2);
+    expect(timerSettings["borderRadius"]).toBe(8);
+  });
+
+  it("should supply border controls in default settings for all widgets with settings", () => {
+    for (const [widgetType, entry] of Object.entries(WIDGET_REGISTRY)) {
+      if (widgetType === "grid" || widgetType.startsWith("custom:")) continue;
+      if (entry.defaultSettings) {
+        const settings = entry.defaultSettings();
+        expect(settings["showBorder"]).toBeDefined(
+          `showBorder should be defined for ${widgetType}`,
+        );
+        expect(settings["borderStyle"]).toBeDefined(
+          `borderStyle should be defined for ${widgetType}`,
+        );
+        expect(settings["borderWidth"]).toBeDefined(
+          `borderWidth should be defined for ${widgetType}`,
+        );
+        expect(settings["borderRadius"]).toBeDefined(
+          `borderRadius should be defined for ${widgetType}`,
+        );
+      }
+    }
+  });
 });

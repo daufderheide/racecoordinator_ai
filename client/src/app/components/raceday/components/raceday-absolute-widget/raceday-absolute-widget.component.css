@@ -787,3 +787,36 @@
   z-index: 10;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
+
+/* Dynamic Card & Border Styling for all widgets */
+.widget-wrapper.has-widget-border .panel-card,
+.widget-wrapper.has-widget-border .timer-panel,
+.widget-wrapper.has-widget-border .raceday-heat-list-container,
+.widget-wrapper.has-widget-border .info-section,
+.widget-wrapper.has-widget-border .bottom-section,
+.widget-wrapper.has-widget-border .progress-gauge-container,
+.widget-wrapper.has-widget-border .countdown-widget-root,
+.widget-wrapper.has-widget-border .action-button,
+.widget-wrapper.has-widget-border .browser-nav-btn,
+.widget-wrapper.has-widget-border .menu-bar,
+.widget-wrapper.has-widget-border .custom-widget-container {
+  border-style: var(--widget-border-style, solid) !important;
+  border-color: var(--widget-border-color, #ffffff) !important;
+  border-width: var(--widget-border-width, 1px) !important;
+  border-radius: var(--widget-border-radius, 6px) !important;
+}
+
+.widget-wrapper.no-widget-border .panel-card,
+.widget-wrapper.no-widget-border .timer-panel,
+.widget-wrapper.no-widget-border .raceday-heat-list-container,
+.widget-wrapper.no-widget-border .info-section,
+.widget-wrapper.no-widget-border .bottom-section,
+.widget-wrapper.no-widget-border .progress-gauge-container,
+.widget-wrapper.no-widget-border .countdown-widget-root,
+.widget-wrapper.no-widget-border .action-button,
+.widget-wrapper.no-widget-border .browser-nav-btn,
+.widget-wrapper.no-widget-border .menu-bar,
+.widget-wrapper.no-widget-border .custom-widget-container {
+  border: none !important;
+}
+

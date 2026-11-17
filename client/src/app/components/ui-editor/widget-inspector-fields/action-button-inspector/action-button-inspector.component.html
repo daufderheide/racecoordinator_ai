@@ -79,7 +79,7 @@
         (click)="resetColor('textColor')"
         [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
       >
-        ✕
+        <span class="material-icons" style="font-size: 14px">restart_alt</span>
       </button>
     }
   </div>
@@ -110,7 +110,7 @@
         (click)="resetColor('backgroundColor')"
         [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
       >
-        ✕
+        <span class="material-icons" style="font-size: 14px">restart_alt</span>
       </button>
     }
   </div>
@@ -134,3 +134,12 @@
     data-form-type="other"
   />
 </div>
+
+<app-widget-border-inspector
+  [settings]="settings"
+  [defaultBorderRadius]="4"
+  [defaultBorderWidth]="1"
+  defaultBorderColor="#cccccc"
+  [defaultShowBorder]="true"
+  (change)="onFieldChange()"
+></app-widget-border-inspector>
