@@ -94,6 +94,7 @@ import {
   ILap,
   IRaceTime,
   IRecordData,
+  ISegment,
   IStandingsUpdate,
   LapType,
   RaceFlag,
@@ -404,6 +405,7 @@ describe("DefaultRacedayComponent", () => {
   let standingsUpdateSubject: Subject<IStandingsUpdate>;
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
+  let segmentSubject: BehaviorSubject<ISegment | null>;
   let participantsSubject: Subject<any[]>;
   let carDataSubject: BehaviorSubject<ICarData>;
   let mockLogger: any;
@@ -437,6 +439,7 @@ describe("DefaultRacedayComponent", () => {
     raceStateSubject = mocks.raceStateSubject;
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
+    segmentSubject = mocks.segmentSubject;
     participantsSubject = mocks.participantsSubject;
     carDataSubject = mocks.carDataSubject;
 
@@ -704,35 +707,24 @@ describe("DefaultRacedayComponent", () => {
     expect(component["autoAdvanceRemaining"]).toBe(9.8);
   });
 
-  it("should skip cdr.markForCheck when formattedTime and countdown remain unchanged on steady ticks", () => {
+  it("should only markForCheck on segment events if layout has segment columns", () => {
     fixture.detectChanges();
-    raceStateSubject.next(RaceState.RACING);
-    (component as any).timeFormat = "1.0-0";
     const cdrSpy = spyOn((component as any).cdr, "markForCheck");
 
-    // First emission marks for check as formattedTime transitions to "59"
-    raceTimeSubject.next({
-      time: 59.4,
-      autoStartRemaining: 0,
-      autoAdvanceRemaining: 0,
-    });
-    expect(cdrSpy).toHaveBeenCalledTimes(1);
-
-    // Intermediate tick within the same second in integer format ("59" -> "59")
-    cdrSpy.calls.reset();
-    raceTimeSubject.next({
-      time: 59.2,
-      autoStartRemaining: 0,
-      autoAdvanceRemaining: 0,
-    });
+    // Layout without segment columns should skip markForCheck
+    (component as any).columns = [
+      { propertyName: "driver.nickname" },
+      { propertyName: "lapCount" },
+    ];
+    segmentSubject.next({ segmentNumber: 1, segmentTime: 1.23 } as any);
     expect(cdrSpy).not.toHaveBeenCalled();
 
-    // Time ticks to next second ("58") -> marks for check
-    raceTimeSubject.next({
-      time: 58.9,
-      autoStartRemaining: 0,
-      autoAdvanceRemaining: 0,
-    });
+    // Layout with segment columns should trigger markForCheck
+    (component as any).columns = [
+      { propertyName: "driver.nickname" },
+      { propertyName: "segmentTime" },
+    ];
+    segmentSubject.next({ segmentNumber: 1, segmentTime: 1.23 } as any);
     expect(cdrSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -4443,7 +4435,7 @@ describe("DefaultRacedayComponent", () => {
           { objectId: "hd2", rank: 1 },
         ],
       });
-      tick(); // Let async subscription execute
+      tick();
       fixture.detectChanges();
 
       expect((component as any).getDriverVisualPosition(mockHd2)).toBe(0);

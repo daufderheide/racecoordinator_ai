@@ -198,21 +198,8 @@ export class RacedaySubscriptionsHelper {
     host.time = time;
     host.previousTime = time;
 
-    const currentFormattedTime = host.formattedTime;
-    const shouldMarkForCheck =
-      currentFormattedTime !== host._lastMarkedFormattedTime ||
-      host.autoStartRemaining !== host._lastAutoStartRemaining ||
-      host.autoAdvanceRemaining !== host._lastAutoAdvanceRemaining ||
-      host.raceState !== host._lastMarkedRaceState;
-
-    if (shouldMarkForCheck) {
-      host._lastMarkedFormattedTime = currentFormattedTime;
-      host._lastAutoStartRemaining = host.autoStartRemaining;
-      host._lastAutoAdvanceRemaining = host.autoAdvanceRemaining;
-      host._lastMarkedRaceState = host.raceState;
-      if (!host.isDestroyed) {
-        host.cdr.markForCheck();
-      }
+    if (!host.isDestroyed) {
+      host.cdr.markForCheck();
     }
   }
 
@@ -718,6 +705,17 @@ export class RacedaySubscriptionsHelper {
     return settings?.highlightLapStyle || "classic";
   }
 
+  public static hasSegmentColumns(host: any): boolean {
+    if (!host || !Array.isArray(host.columns)) {
+      return false;
+    }
+    return host.columns.some(
+      (c: any) =>
+        typeof c?.propertyName === "string" &&
+        c.propertyName.startsWith("segmentTime"),
+    );
+  }
+
   public static subscribeToLiveUpdates(host: any): void {
     host.subscriptions.push(
       host.raceConnectionService.carData$.subscribe((carData: any) => {
@@ -733,7 +731,10 @@ export class RacedaySubscriptionsHelper {
 
     host.subscriptions.push(
       host.raceConnectionService.segments$.subscribe((_segment: any) => {
-        if (!host.isDestroyed) {
+        if (
+          !host.isDestroyed &&
+          RacedaySubscriptionsHelper.hasSegmentColumns(host)
+        ) {
           host.cdr.markForCheck();
         }
       }),

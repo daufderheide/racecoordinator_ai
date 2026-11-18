@@ -190,6 +190,26 @@ describe("DataSocketHelper", () => {
         fakeData.systemState as SystemState,
       );
     });
+
+    it("should enter ngZone when race data message is received", () => {
+      const raceData = RaceData.create({
+        raceTime: { time: 59.4 },
+      });
+      const encoded = RaceData.encode(raceData).finish();
+      const messageEvent = {
+        data: encoded.buffer.slice(
+          encoded.byteOffset,
+          encoded.byteOffset + encoded.byteLength,
+        ),
+        timeStamp: 100,
+      } as MessageEvent;
+
+      mockNgZone.run.calls.reset();
+      helper.handleRaceDataMessage(messageEvent);
+
+      expect(mockNgZone.run).toHaveBeenCalledTimes(1);
+      expect(helper.raceTimeSubject.value?.time).toBeCloseTo(59.4);
+    });
   });
 
   describe("socket lifecycle and disconnection", () => {
