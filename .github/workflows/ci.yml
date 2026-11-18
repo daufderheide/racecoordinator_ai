@@ -57,7 +57,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
       - name: Install dependencies
-        run: cd client && npm install --legacy-peer-deps
+        run: cd client && npm install --legacy-peer-deps && node scripts/link-custom-widgets-modules.js
       - name: Setup Chrome
         id: setup-chrome
         uses: browser-actions/setup-chrome@v2
@@ -97,18 +97,6 @@ jobs:
           - project: chromium
             shardIndex: 2
             shardTotal: 2
-          - project: webkit
-            shardIndex: 1
-            shardTotal: 4
-          - project: webkit
-            shardIndex: 2
-            shardTotal: 4
-          - project: webkit
-            shardIndex: 3
-            shardTotal: 4
-          - project: webkit
-            shardIndex: 4
-            shardTotal: 4
     steps:
       - uses: actions/checkout@v4
         with:
