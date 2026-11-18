@@ -202,7 +202,7 @@ else
 fi
 
 echo "Starting Race Coordinator..."
-"$JAVA_CMD" -jar RaceCoordinator.jar "$@"
+"$JAVA_CMD" -Xdock:name="Race Coordinator AI" -Dapple.awt.application.name="Race Coordinator AI" -jar RaceCoordinator.jar "$@"
 EOF
     chmod +x "$DEST_DIR/start_mac.command"
 
