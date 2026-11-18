@@ -43,7 +43,14 @@ public class PointsScoringCalculator {
     if (heats != null && !heats.isEmpty()) {
       for (Heat heat : heats) {
         if (heat == null || heat.getDrivers() == null) continue;
-        if (!isHeatScorable(heat)) continue;
+        if (!isHeatScorable(heat)) {
+          for (DriverHeatData dhd : heat.getDrivers()) {
+            if (dhd != null) {
+              dhd.setPoints(0.0);
+            }
+          }
+          continue;
+        }
 
         processHeat(heat, pointsScoring, heatScoring, overallScoring, driverHeatPointsList);
       }
@@ -123,8 +130,12 @@ public class PointsScoringCalculator {
 
     List<DriverHeatData> heatDrivers = new ArrayList<>();
     for (DriverHeatData dhd : heat.getDrivers()) {
-      if (dhd != null && !dhd.isEmptyParticipant()) {
-        heatDrivers.add(dhd);
+      if (dhd != null) {
+        if (!dhd.isEmptyParticipant()) {
+          heatDrivers.add(dhd);
+        } else {
+          dhd.setPoints(0.0);
+        }
       }
     }
     heatDrivers.sort(comparator);
@@ -139,7 +150,10 @@ public class PointsScoringCalculator {
     for (int pos = 0; pos < heatDrivers.size(); pos++) {
       DriverHeatData dhd = heatDrivers.get(pos);
       String driverId = getDriverIdFromDhd(dhd);
-      if (driverId == null || driverId.isEmpty()) continue;
+      if (driverId == null || driverId.isEmpty()) {
+        dhd.setPoints(0.0);
+        continue;
+      }
 
       double pts = 0.0;
       if (pos < heatPosPoints.size()) {
@@ -153,6 +167,9 @@ public class PointsScoringCalculator {
       for (double b : bonuses) {
         pts += b;
       }
+
+      pts = Math.round(pts * 100.0) / 100.0;
+      dhd.setPoints(pts);
 
       driverHeatPointsList.computeIfAbsent(driverId, k -> new ArrayList<>()).add(pts);
     }

@@ -3,7 +3,9 @@ package com.antigravity.race;
 import com.antigravity.models.Driver;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarLocation;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -132,6 +134,19 @@ public class DriverHeatData extends ServerToClientObject
   private int lane = 0;
   private int lapsLed = 0;
   private int trackCalls = 0;
+  private double points = 0.0;
+
+  @JsonProperty("points")
+  @JsonAlias({"heat_points", "heatPoints"})
+  public double getPoints() {
+    return points;
+  }
+
+  @JsonProperty("points")
+  @JsonAlias({"heat_points", "heatPoints"})
+  public void setPoints(double points) {
+    this.points = points;
+  }
 
   public int getLapsLed() {
     return lapsLed;
@@ -472,6 +487,7 @@ public class DriverHeatData extends ServerToClientObject
     hasDriftTime = false;
     isFinished = false;
     trackCalls = 0;
+    points = 0.0;
     autoCalculatedLaps = 0.0;
     lapsLed = 0;
     carryOverTime = 0.0;

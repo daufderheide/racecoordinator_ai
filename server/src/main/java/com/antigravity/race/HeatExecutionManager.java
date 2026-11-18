@@ -1049,12 +1049,13 @@ public class HeatExecutionManager {
     excludedPendingLapTime[lane] = 0.0;
     handleAnalogFuelLapTime(driverData, fuelLapTime, lane);
 
+    this.race.recalculateOverallStandings(driverData.getParticipantId());
+
     StandingsUpdate standingsUpdate = null;
     if (this.race.getCurrentHeat() != null
         && this.race.getCurrentHeat().getHeatStandings() != null) {
       standingsUpdate = this.race.getCurrentHeat().getHeatStandings().onLap(lane, effectiveLapTime);
     }
-    this.race.recalculateOverallStandings(driverData.getParticipantId());
 
     boolean[] leaderChange =
         evaluateLeaderChange(
@@ -1504,11 +1505,12 @@ public class HeatExecutionManager {
       }
     }
 
+    race.recalculateOverallStandings();
+
     StandingsUpdate update = null;
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getHeatStandings() != null) {
       update = race.getCurrentHeat().getHeatStandings().updateStandings();
     }
-    race.recalculateOverallStandings();
 
     RaceData.Builder finishBuilder = RaceData.newBuilder();
     if (update != null) {
@@ -1614,12 +1616,13 @@ public class HeatExecutionManager {
 
     race.setLanePower(false, lane);
 
+    this.race.recalculateOverallStandings();
+
     StandingsUpdate standingsUpdate = null;
     if (this.race.getCurrentHeat() != null
         && this.race.getCurrentHeat().getHeatStandings() != null) {
       standingsUpdate = this.race.getCurrentHeat().getHeatStandings().updateStandings();
     }
-    this.race.recalculateOverallStandings();
 
     RaceData.Builder finishDataBuilder = RaceData.newBuilder();
     if (standingsUpdate != null) {

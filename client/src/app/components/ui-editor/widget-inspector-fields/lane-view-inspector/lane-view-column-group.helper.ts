@@ -47,6 +47,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "crashes",
       "crashPenalty",
       "rankHeat",
+      "points",
     ],
   },
   {

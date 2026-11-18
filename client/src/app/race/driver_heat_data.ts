@@ -55,6 +55,7 @@ export class DriverHeatData {
   public lapsLed: number = 0;
   public isFinished: boolean = false;
   public trackCalls: number = 0;
+  public points: number = 0;
   public initialFuelLevel: number = 0;
   public consistencyScore: number | null = null;
   public standardDeviation: number | null = null;
@@ -122,6 +123,7 @@ export class DriverHeatData {
     this.lapsLed = 0;
     this.isFinished = false;
     this.trackCalls = 0;
+    this.points = 0;
     this.consistencyScore = null;
     this.standardDeviation = null;
     this.averageTop5 = null;

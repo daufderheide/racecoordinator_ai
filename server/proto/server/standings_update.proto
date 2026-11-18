@@ -17,6 +17,7 @@ message HeatPositionUpdate {
   int32 laps_led = 9;
   double gap_leader_laps = 10;
   double gap_position_laps = 11;
+  double points = 12;
 }
 
 message StandingsUpdate {

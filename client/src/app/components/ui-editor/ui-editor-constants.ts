@@ -19,6 +19,7 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
   { key: "physicalLapCount", label: "UI_EDITOR_COL_HEAT_RAW_LAPS" },
   { key: "lapsLed", label: "UI_EDITOR_COL_HEAT_LAPS_LED" },
   { key: "trackCalls", label: "UI_EDITOR_COL_HEAT_TRACK_CALLS" },
+  { key: "points", label: "UI_EDITOR_COL_HEAT_POINTS" },
   { key: "reactionTime", label: "RD_COL_REACTION_TIME" },
   { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
   { key: "lastLaps", label: "RD_COL_LAST_LAPS" },

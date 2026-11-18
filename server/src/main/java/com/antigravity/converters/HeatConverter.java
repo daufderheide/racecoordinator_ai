@@ -120,6 +120,7 @@ public class HeatConverter {
         .setIsDisqualified(data.isDisqualified())
         .setPenaltyTime(data.getPenaltyTime())
         .setDqScorePercentage(data.getDqScorePercentage())
+        .setPoints(data.getPoints())
         .build();
   }
 }

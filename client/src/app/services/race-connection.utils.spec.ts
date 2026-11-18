@@ -149,8 +149,14 @@ describe("RaceConnectionUtils", () => {
       };
       const update: IStandingsUpdate = {
         updates: [
-          { objectId: "d1", rank: 1, gapLeader: 0, gapPosition: 0 },
-          { objectId: "d2", rank: 2, gapLeader: 0.5, gapPosition: 0.5 },
+          { objectId: "d1", rank: 1, gapLeader: 0, gapPosition: 0, points: 10 },
+          {
+            objectId: "d2",
+            rank: 2,
+            gapLeader: 0.5,
+            gapPosition: 0.5,
+            points: 6,
+          },
         ],
       };
       const driverRankings = new Map<string, number>();
@@ -161,7 +167,9 @@ describe("RaceConnectionUtils", () => {
       expect(driverRankings.get("d1")).toBe(1);
       expect(driverRankings.get("d2")).toBe(2);
       expect(heat.heatDrivers[0].rank).toBe(1);
+      expect(heat.heatDrivers[0].points).toBe(10);
       expect(heat.heatDrivers[1].gapLeader).toBe(0.5);
+      expect(heat.heatDrivers[1].points).toBe(6);
     });
   });
 

@@ -84,6 +84,7 @@ describe("HeatConverter", () => {
           segments: [0.1, 0.2, 0.3],
           isRefueling: true,
           currentLocation: 100,
+          points: 18.5,
         } as any,
       ],
     };
@@ -103,6 +104,7 @@ describe("HeatConverter", () => {
     expect(driverData.currentLapSegments).toEqual([0.1, 0.2, 0.3]);
     expect(driverData.isRefueling).toBe(true);
     expect(driverData.currentLocation).toBe(100);
+    expect(driverData.points).toBe(18.5);
   });
 
   it("should preserve currentLapSegments when both laps and segments are present in proto", () => {

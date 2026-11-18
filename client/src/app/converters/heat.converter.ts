@@ -120,6 +120,7 @@ export class HeatConverter {
     hd.lapsLed = dProto.lapsLed || 0;
     hd.isFinished = !!(dProto.isFinished ?? (dProto as any).is_finished);
     hd.trackCalls = dProto.trackCalls ?? (dProto as any).track_calls ?? 0;
+    hd.points = dProto.points ?? (dProto as any).heat_points ?? 0;
     hd.initialFuelLevel =
       dProto.initialFuelLevel ?? (dProto as any).initial_fuel_level ?? 0;
 

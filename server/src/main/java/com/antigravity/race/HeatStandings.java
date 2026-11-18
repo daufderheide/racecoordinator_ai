@@ -162,6 +162,7 @@ public class HeatStandings {
                 .setLapsLed(dhd.getLapsLed())
                 .setGapLeaderLaps(dhd.getGapLeaderLaps())
                 .setGapPositionLaps(dhd.getGapPositionLaps())
+                .setPoints(dhd.getPoints())
                 .build());
       }
     }

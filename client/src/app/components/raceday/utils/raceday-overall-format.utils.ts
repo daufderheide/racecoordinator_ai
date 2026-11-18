@@ -298,7 +298,7 @@ export class RacedayOverallFormatUtils {
     );
     if (lapResult !== null) return lapResult;
 
-    const statsResult = this.formatOverallStatsValue(baseKey, value, hd);
+    const statsResult = this.formatOverallStatsValue(baseKey, value, hd, ctx);
     if (statsResult !== null) return statsResult;
 
     if (baseKey === "heatsRaced" || baseKey === "heatsRemaining") {
@@ -498,6 +498,7 @@ export class RacedayOverallFormatUtils {
     baseKey: string,
     value: any,
     hd: DriverHeatData,
+    ctx?: FormatContext,
   ): string | null {
     if (baseKey === "overallLapsLed") {
       const led =
@@ -516,6 +517,10 @@ export class RacedayOverallFormatUtils {
     }
 
     if (baseKey === "overallPoints") {
+      const race = ctx?.getRace ? ctx.getRace() : undefined;
+      if (race && !RacedayFormatUtils.isPointsRace(race)) {
+        return "--";
+      }
       const points =
         value !== undefined && value !== null
           ? value
