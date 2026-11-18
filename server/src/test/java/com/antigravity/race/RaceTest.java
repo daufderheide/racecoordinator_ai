@@ -5148,12 +5148,17 @@ public class RaceTest {
 
     private com.antigravity.race.Race buildRace(
         boolean practice, int timesThrough, List<RaceParticipant> drivers) {
+      return buildRace(practice, timesThrough, drivers, 2);
+    }
+
+    private com.antigravity.race.Race buildRace(
+        boolean practice, int timesThrough, List<RaceParticipant> drivers, int laneCount) {
+      List<Lane> lanes = new ArrayList<>();
+      for (int i = 0; i < laneCount; i++) {
+        lanes.add(new Lane("c" + i, "white", 100));
+      }
       Track track =
-          new Track.Builder()
-              .name("Practice Track")
-              .lanes(Arrays.asList(new Lane("red", "black", 100), new Lane("blue", "white", 100)))
-              .entityId("track1")
-              .build();
+          new Track.Builder().name("Practice Track").lanes(lanes).entityId("track1").build();
       Race model =
           new Race.Builder()
               .withName("Practice")
@@ -5181,39 +5186,31 @@ public class RaceTest {
       com.antigravity.race.Race race = buildRace(true, 0);
 
       assertTrue(race.isUnlimitedPractice());
-      int heatsPerPass = race.getHeats().size();
-      assertEquals(2, heatsPerPass);
+      // Drivers sit on fixed lanes: one heat (session) at a time
+      assertTrue(race.isLanePractice());
+      assertEquals(1, race.getHeats().size());
       goToLastHeat(race);
       assertFalse(race.isLastHeat());
     }
 
     @Test
-    public void testAdvancingPastTheLastHeatStartsAnotherPass() {
+    public void testAdvancingPastTheLastHeatStartsAnotherSession() {
       com.antigravity.race.Race race = buildRace(true, 0);
-      int heatsPerPass = race.getHeats().size();
-      List<Heat> firstPass = new ArrayList<>(race.getHeats());
-      goToLastHeat(race);
+      Heat first = race.getCurrentHeat();
 
       Common.advanceToNextHeat(race);
 
-      assertEquals(heatsPerPass * 2, race.getHeats().size());
+      assertEquals(2, race.getHeats().size());
       assertTrue(race.getState() instanceof NotStarted);
-      assertEquals(heatsPerPass + 1, race.getCurrentHeat().getHeatNumber());
-      assertSame(race.getHeats().get(heatsPerPass), race.getCurrentHeat());
-      // The new pass repeats the same rotation, lane by lane
-      for (int i = 0; i < heatsPerPass; i++) {
-        Heat original = firstPass.get(i);
-        Heat repeat = race.getHeats().get(heatsPerPass + i);
-        assertEquals(heatsPerPass + i + 1, repeat.getHeatNumber());
-        assertNotSame(original, repeat);
-        for (int lane = 0; lane < original.getDrivers().size(); lane++) {
-          assertSame(
-              original.getDrivers().get(lane).getDriver(),
-              repeat.getDrivers().get(lane).getDriver());
-        }
+      Heat second = race.getCurrentHeat();
+      assertEquals(2, second.getHeatNumber());
+      assertNotSame(first, second);
+      // Two drivers on two lanes: nobody waits, so everyone keeps their lane
+      for (int lane = 0; lane < 2; lane++) {
+        assertEquals(laneDriverId(first, lane), laneDriverId(second, lane));
       }
-      // The first pass is kept, so its results stay available
-      assertEquals(firstPass, race.getHeats().subList(0, heatsPerPass));
+      // The first session is kept, so its results stay available
+      assertSame(first, race.getHeats().get(0));
     }
 
     @Test
@@ -5230,6 +5227,15 @@ public class RaceTest {
       for (int i = 0; i < race.getHeats().size(); i++) {
         assertEquals(i + 1, race.getHeats().get(i).getHeatNumber());
       }
+    }
+
+    @Test
+    public void testPracticeWithTimesThroughAndDriversKeepsTheNormalRotation() {
+      com.antigravity.race.Race race = buildRace(true, 2);
+
+      assertFalse(race.isLanePractice());
+      // Round robin on 2 lanes, 2 times through
+      assertEquals(4, race.getHeats().size());
     }
 
     @Test
@@ -5334,7 +5340,7 @@ public class RaceTest {
 
     @Test
     public void testPracticeWithDriversIsNotALanePractice() {
-      com.antigravity.race.Race race = buildRace(true, 0);
+      com.antigravity.race.Race race = buildRace(true, 2);
 
       assertFalse(race.isLanePractice());
       assertNull(race.findLanePlaceholder("d1"));
@@ -5350,6 +5356,135 @@ public class RaceTest {
       assertEquals("Lane 2", p.getDriver().getName());
       assertNull(race.findLanePlaceholder(PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "9"));
       assertNull(race.findLanePlaceholder(null));
+    }
+
+    // Practice with the drivers present that day: shuffled onto lanes, waiting drivers rotate in
+
+    private List<RaceParticipant> drivers(int n) {
+      List<RaceParticipant> list = new ArrayList<>();
+      for (int i = 1; i <= n; i++) {
+        list.add(new RaceParticipant(new Driver("Driver " + i, "D" + i, "d" + i, "" + i), "p" + i));
+      }
+      return list;
+    }
+
+    private java.util.Map<String, Integer> sessionsPerDriver(com.antigravity.race.Race race) {
+      java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+      for (Heat h : race.getHeats()) {
+        for (DriverHeatData dhd : h.getDrivers()) {
+          counts.merge(dhd.getActualDriver().getEntityId(), 1, Integer::sum);
+        }
+      }
+      return counts;
+    }
+
+    @After
+    public void resetRandom() {
+      PracticeSessions.setRandomForTesting(null);
+    }
+
+    @Test
+    public void testPickedDriversAreShuffledOntoTheLanes() {
+      PracticeSessions.setRandomForTesting(new java.util.Random(7));
+      com.antigravity.race.Race race = buildRace(true, 0, drivers(4), 4);
+
+      assertTrue(race.isLanePractice());
+      Set<String> onLanes = new HashSet<>();
+      List<String> order = new ArrayList<>();
+      for (int lane = 0; lane < 4; lane++) {
+        onLanes.add(laneDriverId(race.getCurrentHeat(), lane));
+        order.add(laneDriverId(race.getCurrentHeat(), lane));
+      }
+      assertEquals(new HashSet<>(Arrays.asList("d1", "d2", "d3", "d4")), onLanes);
+      assertNotEquals(Arrays.asList("d1", "d2", "d3", "d4"), order);
+    }
+
+    @Test
+    public void testFewerDriversThanLanesFillsTheRestWithPlaceholders() {
+      com.antigravity.race.Race race = buildRace(true, 0, drivers(3), 4);
+
+      int placeholders = 0;
+      for (int lane = 0; lane < 4; lane++) {
+        if (laneDriverId(race.getCurrentHeat(), lane)
+            .startsWith(PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX)) {
+          placeholders++;
+        }
+      }
+      assertEquals(1, placeholders);
+      assertEquals(
+          PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "4",
+          laneDriverId(race.getCurrentHeat(), 3));
+      // Nobody waits, so the lanes stay the same
+      List<String> before = new ArrayList<>();
+      for (int lane = 0; lane < 4; lane++) {
+        before.add(laneDriverId(race.getCurrentHeat(), lane));
+      }
+      Common.advanceToNextHeat(race);
+      for (int lane = 0; lane < 4; lane++) {
+        assertEquals(before.get(lane), laneDriverId(race.getCurrentHeat(), lane));
+      }
+    }
+
+    @Test
+    public void testWaitingDriversRotateInSoEveryoneDrivesAboutTheSame() {
+      com.antigravity.race.Race race = buildRace(true, 0, drivers(6), 4);
+      assertEquals(4, race.getCurrentHeat().getDrivers().size());
+
+      for (int session = 2; session <= 9; session++) {
+        Heat previous = race.getCurrentHeat();
+        Common.advanceToNextHeat(race);
+        Heat next = race.getCurrentHeat();
+
+        // Everyone drives within one session of everyone else
+        java.util.Map<String, Integer> counts = sessionsPerDriver(race);
+        assertEquals(6, counts.size());
+        int min = java.util.Collections.min(counts.values());
+        int max = java.util.Collections.max(counts.values());
+        assertTrue("session " + session + ": " + counts, max - min <= 1);
+
+        // 4 different drivers on the lanes, 2 of them new, and those who stay keep their lane
+        Set<String> nextIds = new HashSet<>();
+        int stayed = 0;
+        for (int lane = 0; lane < 4; lane++) {
+          String id = laneDriverId(next, lane);
+          nextIds.add(id);
+          for (int l = 0; l < 4; l++) {
+            if (id.equals(laneDriverId(previous, l))) {
+              assertEquals("a driver who stays keeps the lane", l, lane);
+              stayed++;
+            }
+          }
+        }
+        assertEquals(4, nextIds.size());
+        assertEquals(2, stayed);
+      }
+      // 9 sessions x 4 lanes = 36 drives over 6 drivers = 6 each
+      for (int count : sessionsPerDriver(race).values()) {
+        assertEquals(6, count);
+      }
+    }
+
+    @Test
+    public void testDriverPutOnALaneDuringTheBreakDrivesTheNextSession() {
+      com.antigravity.race.Race race = buildRace(true, 0, drivers(6), 4);
+      race.changeState(new HeatOver());
+      Heat next = race.getOrCreateNextHeat();
+      // The director puts Dave on lane 1 for the next session
+      Driver dave = new Driver("Dave", "DA", "d9", "9");
+      DriverHeatData lane1 = next.getDrivers().get(0);
+      lane1.setDriver(new RaceParticipant(dave));
+      lane1.setActualDriver(dave);
+      race.addPracticeDriver(lane1.getDriver());
+
+      Common.advanceToNextHeat(race);
+
+      assertSame(next, race.getCurrentHeat());
+      assertEquals("d9", laneDriverId(race.getCurrentHeat(), 0));
+      // Dave now takes part in the rotation like everyone else
+      for (int i = 0; i < 6; i++) {
+        Common.advanceToNextHeat(race);
+      }
+      assertTrue(sessionsPerDriver(race).get("d9") >= 2);
     }
   }
 }

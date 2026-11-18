@@ -31,6 +31,57 @@ export class TeammateUtils {
   }
 
   /**
+   * Driver options for a lane practice (#471): this lane's "Lane N"
+   * placeholder, an empty lane, the drivers present today, then everyone else.
+   * Returns null when the practice isn't a lane practice.
+   */
+  private static getLanePracticeOptions(
+    hd: DriverHeatData | any,
+    allDrivers: Driver[] | any[],
+    participants: RaceParticipant[] | any[],
+    emptyDriver: any,
+    openPractice: boolean,
+  ): any[] | null {
+    const lanePlaceholders = participants.filter((p: any) =>
+      TeammateUtils.isLanePlaceholderId(p?.driver?.entity_id),
+    );
+    if (lanePlaceholders.length === 0 && !openPractice) {
+      return null;
+    }
+    const laneIndex = hd?.laneIndex ?? hd?.lane ?? -1;
+    const own = lanePlaceholders.find(
+      (p: any) =>
+        p.driver.entity_id ===
+        TeammateUtils.LANE_PLACEHOLDER_ID_PREFIX + (laneIndex + 1),
+    );
+    const ownOption = own
+      ? [
+          {
+            name: own.driver.name,
+            nickname: "",
+            entity_id: own.driver.entity_id,
+            id: own.driver.entity_id,
+          },
+        ]
+      : [];
+    const idOf = (d: any) => d?.entity_id || d?.id;
+    const presentIds = participants
+      .map((p: any) => p?.driver?.entity_id)
+      .filter(
+        (id: any) =>
+          !!id && id !== "EMPTY_LANE" && !TeammateUtils.isLanePlaceholderId(id),
+      );
+    const everyone = (allDrivers || []).filter(
+      (d: any) => idOf(d) !== "EMPTY_LANE",
+    );
+    const present = presentIds
+      .map((id: string) => everyone.find((d: any) => idOf(d) === id))
+      .filter((d: any) => !!d);
+    const others = everyone.filter((d: any) => !presentIds.includes(idOf(d)));
+    return [...ownOption, emptyDriver, ...present, ...others];
+  }
+
+  /**
    * Retrieves all available teammates for a heat driver entry.
    * In practice mode, returns an empty lane entry followed by all participants' drivers.
    * In team mode, returns the drivers associated with the team.
@@ -42,6 +93,8 @@ export class TeammateUtils {
       isPractice?: boolean;
       participants?: RaceParticipant[] | any[];
       emptyLaneLabel?: string;
+      /** Open practice (Times Through 0): fixed lanes, any driver (#471). */
+      openPractice?: boolean;
     },
   ): any[] {
     if (options?.isPractice) {
@@ -52,36 +105,21 @@ export class TeammateUtils {
         id: "EMPTY_LANE",
       };
 
-      // Practice started without drivers (#471): offer this lane's "Lane N"
-      // placeholder and every driver, so anyone can be put on a lane.
-      const lanePlaceholders = (options.participants || []).filter((p: any) =>
-        TeammateUtils.isLanePlaceholderId(p?.driver?.entity_id),
+      // Lane practice (#471): a practice started without drivers ("Lane N"
+      // placeholders) or an open practice (Times Through 0). Offer this lane's
+      // placeholder, an empty lane, the drivers present today and then everyone
+      // else, so anyone can be put on a lane.
+      const participants = options.participants || [];
+      const lanePractice = TeammateUtils.getLanePracticeOptions(
+        hd,
+        allDrivers,
+        participants,
+        emptyDriver,
+        !!options.openPractice,
       );
-      if (lanePlaceholders.length > 0) {
-        const laneIndex = hd?.laneIndex ?? hd?.lane ?? -1;
-        const own = lanePlaceholders.find(
-          (p: any) =>
-            p.driver.entity_id ===
-            TeammateUtils.LANE_PLACEHOLDER_ID_PREFIX + (laneIndex + 1),
-        );
-        const ownOption = own
-          ? [
-              {
-                name: own.driver.name,
-                nickname: "",
-                entity_id: own.driver.entity_id,
-                id: own.driver.entity_id,
-              },
-            ]
-          : [];
-        const everyone = (allDrivers || []).filter(
-          (d: any) => (d?.entity_id || d?.id) !== "EMPTY_LANE",
-        );
-        return [...ownOption, emptyDriver, ...everyone];
-      }
+      if (lanePractice) return lanePractice;
 
       const raceDrivers: any[] = [];
-      const participants = options.participants || [];
       participants.forEach((p) => {
         if (p.driver && p.driver.entity_id !== "EMPTY_LANE") {
           const d = allDrivers.find(

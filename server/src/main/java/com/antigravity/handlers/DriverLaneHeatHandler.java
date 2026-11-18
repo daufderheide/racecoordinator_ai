@@ -194,6 +194,7 @@ public class DriverLaneHeatHandler {
             }
             dhd.reset();
             dhd.setDriver(lanePlaceholder != null ? lanePlaceholder : new RaceParticipant(driver));
+            race.addPracticeDriver(dhd.getDriver());
           }
 
           dhd.setActualDriver(driver);

@@ -269,8 +269,8 @@ public class Race implements ProtocolListener {
   private void initializeHeats(Builder builder) {
     if (builder.heats == null) {
       int numLanes = this.track.getLanes().size();
-      // Practice started without drivers (#471): "Lane N" placeholders on their own lanes
-      PracticeSessions.fillLanePlaceholders(this.model, this.drivers, numLanes);
+      // Lane practice (#471): drivers shuffled onto fixed lanes, spare lanes get "Lane N"
+      PracticeSessions.prepareParticipants(this.model, this.drivers, numLanes);
       for (int i = 0; i < this.drivers.size(); i++) {
         this.drivers.get(i).setSeed(i + 1);
       }
@@ -279,7 +279,7 @@ public class Race implements ProtocolListener {
       }
       this.heats =
           isLanePractice()
-              ? PracticeSessions.buildLaneHeats(this.model, this.drivers)
+              ? PracticeSessions.buildLaneHeats(this.model, this.drivers, numLanes)
               : HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
       this.currentHeat = this.heats.get(0);
       recordsManager.resetHeatRecords();
@@ -528,6 +528,13 @@ public class Race implements ProtocolListener {
 
   public RaceParticipant findLanePlaceholder(String entityId) {
     return PracticeSessions.findLanePlaceholder(drivers, entityId);
+  }
+
+  /** A driver put on a lane of an unlimited practice joins its rotation (#471). */
+  public synchronized void addPracticeDriver(RaceParticipant participant) {
+    if (isUnlimitedPractice() && isLanePractice()) {
+      PracticeSessions.addToPool(drivers, participant);
+    }
   }
 
   /**

@@ -54,6 +54,41 @@ describe("RaceConverter", () => {
     expect(result.drift_time).toBe(1.5);
   });
 
+  // https://github.com/daufderheide/racecoordinator_ai/issues/471
+  it("should keep heat times through 0 (unlimited) for a practice", () => {
+    const result = RaceConverter.fromProto({
+      model: { entityId: "r471a" },
+      name: "Practice",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      practice: true,
+      heatTimesThrough: 0,
+    } as IRaceModel);
+    expect(result.heat_times_through).toBe(0);
+  });
+
+  it("should treat a missing or 0 heat times through as 1 for a race", () => {
+    const missing = RaceConverter.fromProto({
+      model: { entityId: "r471b" },
+      name: "Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    } as IRaceModel);
+    const zero = RaceConverter.fromProto({
+      model: { entityId: "r471c" },
+      name: "Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatTimesThrough: 0,
+    } as IRaceModel);
+    const three = RaceConverter.fromProto({
+      model: { entityId: "r471d" },
+      name: "Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      heatTimesThrough: 3,
+    } as IRaceModel);
+    expect(missing.heat_times_through).toBe(1);
+    expect(zero.heat_times_through).toBe(1);
+    expect(three.heat_times_through).toBe(3);
+  });
+
   it("should fallback to 0.5 drift time if missing in proto", () => {
     const mockProto: IRaceModel = {
       model: { entityId: "r4" },

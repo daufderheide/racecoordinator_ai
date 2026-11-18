@@ -143,7 +143,7 @@ export class RaceConverter {
         p.customRotationName ||
         p.custom_rotation_name,
       p.customRotations || p.custom_rotations || [],
-      p.heatTimesThrough || p.heat_times_through || 1,
+      RaceConverter.parseHeatTimesThrough(p),
       p.reverseHeats || p.reverse_heats || false,
       p.hotStart || p.hot_start || false,
       p.restartOnFalseStart || p.restart_on_false_start || false,
@@ -166,6 +166,16 @@ export class RaceConverter {
       p.stepUp ?? p.step_up ?? (proto as any).stepUp ?? 0,
       this.parsePointsScoring(p.pointsScoring || p.points_scoring),
     );
+  }
+
+  /**
+   * Heat Times Through; a missing value means 1. A practice keeps 0, which
+   * means unlimited (https://github.com/daufderheide/racecoordinator_ai/issues/471).
+   */
+  private static parseHeatTimesThrough(p: any): number {
+    const value = p.heatTimesThrough ?? p.heat_times_through;
+    if (value === 0 && p.practice) return 0;
+    return value || 1;
   }
 
   private static parseHeatScoring(rawScoring: any): HeatScoring {

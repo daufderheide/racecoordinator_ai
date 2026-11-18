@@ -122,6 +122,39 @@ describe("TeammateUtils", () => {
       expect(result.slice(2)).toEqual(allDrivers);
     });
 
+    it("should list the drivers present today first in an open practice", () => {
+      const present = [
+        { driver: { entity_id: allDrivers[2].entity_id } },
+        { driver: { entity_id: "practice_lane_2", name: "Lane 2" } },
+      ];
+      const result = TeammateUtils.getTeammates({ laneIndex: 1 }, allDrivers, {
+        isPractice: true,
+        participants: present,
+        openPractice: true,
+      });
+
+      expect(result.map((d: any) => d.entity_id)).toEqual([
+        "practice_lane_2",
+        "EMPTY_LANE",
+        allDrivers[2].entity_id,
+        allDrivers[0].entity_id,
+        allDrivers[1].entity_id,
+      ]);
+    });
+
+    it("should offer every driver in an open practice with no spare lanes", () => {
+      const present = [{ driver: { entity_id: allDrivers[1].entity_id } }];
+      const result = TeammateUtils.getTeammates({ laneIndex: 0 }, allDrivers, {
+        isPractice: true,
+        participants: present,
+        openPractice: true,
+      });
+
+      expect(result[0].entity_id).toBe("EMPTY_LANE");
+      expect(result[1]).toEqual(allDrivers[1]);
+      expect(result.length).toBe(1 + allDrivers.length);
+    });
+
     it("should not offer another lane's placeholder", () => {
       const result = TeammateUtils.getTeammates({ laneIndex: 0 }, allDrivers, {
         isPractice: true,

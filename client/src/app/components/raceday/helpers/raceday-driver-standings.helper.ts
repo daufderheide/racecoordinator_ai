@@ -588,6 +588,8 @@ export class RacedayDriverStandingsHelper {
       isPractice: !!host.race?.practice,
       participants: host.participants,
       emptyLaneLabel: host.translationService?.translate("RD_EMPTY_LANE"),
+      openPractice:
+        !!host.race?.practice && host.race?.heat_times_through === 0,
     });
   }
 
