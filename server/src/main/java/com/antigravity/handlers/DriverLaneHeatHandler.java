@@ -12,6 +12,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.service.DatabaseService;
@@ -126,7 +127,16 @@ public class DriverLaneHeatHandler {
         return;
       }
 
-      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      Heat targetHeat = race.getCurrentHeat();
+      if (race.isLanePractice() && race.getState() instanceof HeatOver) {
+        // Practice without drivers (#471): a change during the break is for the next session;
+        // the session that just finished keeps its driver and laps.
+        Heat next = race.getOrCreateNextHeat();
+        if (next != null) {
+          targetHeat = next;
+        }
+      }
+      List<DriverHeatData> drivers = targetHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
         DatabaseService dbService = DatabaseService.getInstance();
@@ -135,6 +145,11 @@ public class DriverLaneHeatHandler {
         Driver driver = driversList.isEmpty() ? null : driversList.get(0);
         if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
           driver = Driver.EMPTY_DRIVER;
+        }
+        // Practice without drivers (#471): the "Lane N" placeholders aren't in the database.
+        RaceParticipant lanePlaceholder = race.findLanePlaceholder(driverId);
+        if (driver == null && lanePlaceholder != null) {
+          driver = lanePlaceholder.getDriver();
         }
 
         if (driver != null) {
@@ -178,7 +193,7 @@ public class DriverLaneHeatHandler {
               }
             }
             dhd.reset();
-            dhd.setDriver(new RaceParticipant(driver));
+            dhd.setDriver(lanePlaceholder != null ? lanePlaceholder : new RaceParticipant(driver));
           }
 
           dhd.setActualDriver(driver);

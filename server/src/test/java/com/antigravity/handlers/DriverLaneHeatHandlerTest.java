@@ -643,4 +643,96 @@ public class DriverLaneHeatHandlerTest {
         "hist_rec_single", updatedSeason.getRaces().get(0).getHistoryRecordId());
     org.junit.Assert.assertEquals("season_single_1", activeRace.getSeasonEntityId());
   }
+
+  // Practice without drivers: changing a lane's driver, also during the break.
+  // https://github.com/daufderheide/racecoordinator_ai/issues/471
+
+  private com.antigravity.race.Race startLanePractice() {
+    Track track =
+        new Track.Builder()
+            .name("Track 1")
+            .lanes(
+                java.util.Arrays.asList(
+                    new Lane("red", "black", 100), new Lane("blue", "white", 100)))
+            .build();
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Practice")
+            .withEntityId("r_lane_practice")
+            .withPractice(true)
+            .withHeatTimesThrough(0)
+            .build();
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(new java.util.ArrayList<>())
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    ClientSubscriptionManager.getInstance().setRace(race);
+    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+    new com.antigravity.repository.SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .insert(new Driver("Dave", "DA", "d9", null));
+    return race;
+  }
+
+  private void changeLaneDriver(int lane, String driverId) {
+    Map<String, String> body = new HashMap<>();
+    body.put("driverId", driverId);
+    when(ctx.pathParam("lane")).thenReturn(String.valueOf(lane));
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn((HashMap) body);
+    handler.changeActualDriver(ctx);
+  }
+
+  @Test
+  public void testChangeActualDriver_LanePractice_SetsDriverOnTheLane() {
+    com.antigravity.race.Race race = startLanePractice();
+
+    changeLaneDriver(1, "d9");
+
+    verify(ctx).status(200);
+    com.antigravity.race.DriverHeatData lane1 = race.getCurrentHeat().getDrivers().get(1);
+    org.junit.Assert.assertEquals("d9", lane1.getActualDriver().getEntityId());
+    org.junit.Assert.assertEquals("d9", lane1.getDriver().getDriver().getEntityId());
+  }
+
+  @Test
+  public void testChangeActualDriver_LanePractice_BackToTheLanePlaceholder() {
+    com.antigravity.race.Race race = startLanePractice();
+    changeLaneDriver(1, "d9");
+
+    changeLaneDriver(1, com.antigravity.race.PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "2");
+
+    verify(ctx, org.mockito.Mockito.times(2)).status(200);
+    com.antigravity.race.DriverHeatData lane1 = race.getCurrentHeat().getDrivers().get(1);
+    org.junit.Assert.assertEquals("Lane 2", lane1.getActualDriver().getName());
+    // The same placeholder participant as at the start, not a copy
+    org.junit.Assert.assertSame(race.getDrivers().get(1), lane1.getDriver());
+  }
+
+  @Test
+  public void testChangeActualDriver_LanePracticeDuringBreak_AppliesToTheNextSession() {
+    com.antigravity.race.Race race = startLanePractice();
+    com.antigravity.race.Heat finished = race.getCurrentHeat();
+    finished.getDrivers().get(1).addLap(4.2, false, true);
+    race.changeState(new com.antigravity.race.states.HeatOver());
+
+    changeLaneDriver(1, "d9");
+
+    verify(ctx).status(200);
+    // The finished session keeps its driver and laps
+    org.junit.Assert.assertEquals(
+        "Lane 2", finished.getDrivers().get(1).getActualDriver().getName());
+    org.junit.Assert.assertEquals(1, finished.getDrivers().get(1).getLapCount());
+    // The next session has the new driver on that lane, and keeps lane 1 as it was
+    org.junit.Assert.assertEquals(2, race.getHeats().size());
+    com.antigravity.race.Heat next = race.getHeats().get(1);
+    org.junit.Assert.assertEquals("d9", next.getDrivers().get(1).getActualDriver().getEntityId());
+    org.junit.Assert.assertEquals("Lane 1", next.getDrivers().get(0).getActualDriver().getName());
+
+    // Moving on to the next session uses it instead of adding another
+    com.antigravity.race.states.Common.advanceToNextHeat(race);
+    org.junit.Assert.assertSame(next, race.getCurrentHeat());
+    org.junit.Assert.assertEquals(2, race.getHeats().size());
+  }
 }

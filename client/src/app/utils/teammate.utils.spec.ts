@@ -102,6 +102,43 @@ describe("TeammateUtils", () => {
     });
   });
 
+  // https://github.com/daufderheide/racecoordinator_ai/issues/471
+  describe("getTeammates in a practice without drivers", () => {
+    const participants = [
+      { driver: { entity_id: "practice_lane_1", name: "Lane 1" } },
+      { driver: { entity_id: "practice_lane_2", name: "Lane 2" } },
+    ];
+
+    it("should offer the lane's placeholder, an empty lane and every driver", () => {
+      const result = TeammateUtils.getTeammates({ laneIndex: 1 }, allDrivers, {
+        isPractice: true,
+        participants,
+        emptyLaneLabel: "Empty Lane",
+      });
+
+      expect(result[0].entity_id).toBe("practice_lane_2");
+      expect(result[0].name).toBe("Lane 2");
+      expect(result[1].entity_id).toBe("EMPTY_LANE");
+      expect(result.slice(2)).toEqual(allDrivers);
+    });
+
+    it("should not offer another lane's placeholder", () => {
+      const result = TeammateUtils.getTeammates({ laneIndex: 0 }, allDrivers, {
+        isPractice: true,
+        participants,
+      });
+      const ids = result.map((d: any) => d.entity_id);
+      expect(ids).toContain("practice_lane_1");
+      expect(ids).not.toContain("practice_lane_2");
+    });
+
+    it("should recognise placeholder ids", () => {
+      expect(TeammateUtils.isLanePlaceholderId("practice_lane_3")).toBeTrue();
+      expect(TeammateUtils.isLanePlaceholderId("d1")).toBeFalse();
+      expect(TeammateUtils.isLanePlaceholderId(undefined)).toBeFalse();
+    });
+  });
+
   describe("getDriverStats", () => {
     it("should return empty string if hd or driverId is missing", () => {
       expect(TeammateUtils.getDriverStats(null, "d1", [], labels)).toBe("");

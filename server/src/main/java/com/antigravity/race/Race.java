@@ -268,14 +268,19 @@ public class Race implements ProtocolListener {
 
   private void initializeHeats(Builder builder) {
     if (builder.heats == null) {
+      int numLanes = this.track.getLanes().size();
+      // Practice started without drivers (#471): "Lane N" placeholders on their own lanes
+      PracticeSessions.fillLanePlaceholders(this.model, this.drivers, numLanes);
       for (int i = 0; i < this.drivers.size(); i++) {
         this.drivers.get(i).setSeed(i + 1);
       }
-      int numLanes = this.track.getLanes().size();
       while (this.drivers.size() < numLanes) {
         this.drivers.add(new RaceParticipant(Driver.EMPTY_DRIVER));
       }
-      this.heats = HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
+      this.heats =
+          isLanePractice()
+              ? PracticeSessions.buildLaneHeats(this.model, this.drivers)
+              : HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
       this.currentHeat = this.heats.get(0);
       recordsManager.resetHeatRecords();
     } else {
@@ -511,19 +516,22 @@ public class Race implements ProtocolListener {
     return model != null && model.isPractice();
   }
 
-  /**
-   * A practice with Heat Times Through set to 0 keeps rotating until the director ends it: there is
-   * never a last heat, and another pass of the rotation is added whenever the heat list runs out
-   * (see {@link #appendUnlimitedPracticePass()}).
-   * https://github.com/daufderheide/racecoordinator_ai/issues/471
-   */
+  /** Unlimited practice (Heat Times Through 0), see {@link PracticeSessions}. #471 */
   public boolean isUnlimitedPractice() {
-    return model != null && model.isPractice() && model.getHeatTimesThrough() <= 0;
+    return PracticeSessions.isUnlimited(model);
+  }
+
+  /** Practice started without drivers ("Lane N" placeholders), see {@link PracticeSessions}. */
+  public boolean isLanePractice() {
+    return PracticeSessions.isLanePractice(model, drivers);
+  }
+
+  public RaceParticipant findLanePlaceholder(String entityId) {
+    return PracticeSessions.findLanePlaceholder(drivers, entityId);
   }
 
   /**
-   * Adds one more pass of the heat rotation to the end of an unlimited practice, numbered on from
-   * the existing heats. The pass is built the same way as the first one, from the current drivers.
+   * Adds one more pass to an unlimited practice.
    *
    * @return the number of heats added
    */
@@ -531,20 +539,23 @@ public class Race implements ProtocolListener {
     if (!isUnlimitedPractice()) {
       return 0;
     }
-    List<Heat> pass = HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
+    List<Heat> pass = PracticeSessions.nextPass(this);
     List<Heat> grown = new ArrayList<>(heats);
-    int offset = grown.size();
-    for (int i = 0; i < pass.size(); i++) {
-      pass.get(i).setHeatNumber(offset + i + 1);
-    }
     grown.addAll(pass);
     setHeats(grown);
-    logger.info(
-        "Unlimited practice: added heats {}-{} (pass {})",
-        offset + 1,
-        grown.size(),
-        pass.isEmpty() ? 0 : grown.size() / pass.size());
     return pass.size();
+  }
+
+  /**
+   * The heat after the current one, adding the next pass of an unlimited practice if needed. A lane
+   * practice uses it for driver changes during the break, so they apply to the next heat.
+   */
+  public synchronized Heat getOrCreateNextHeat() {
+    int idx = heats.indexOf(currentHeat);
+    if (idx == heats.size() - 1) {
+      appendUnlimitedPracticePass();
+    }
+    return idx >= 0 && idx + 1 < heats.size() ? heats.get(idx + 1) : null;
   }
 
   public List<RaceParticipant> getDrivers() {

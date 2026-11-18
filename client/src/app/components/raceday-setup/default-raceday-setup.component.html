@@ -1316,7 +1316,8 @@
               id="start-race-btn"
               (click)="startRace(false)"
               [disabled]="
-                selectedParticipants.length === 0 ||
+                (selectedParticipants.length === 0 &&
+                  !canStartWithoutDrivers()) ||
                 (!isEventMode && selectedRace?.compatibility?.can_run === false)
               "
               [title]="
@@ -1341,7 +1342,8 @@
               id="demo-race-btn"
               (click)="startRace(true)"
               [disabled]="
-                selectedParticipants.length === 0 ||
+                (selectedParticipants.length === 0 &&
+                  !canStartWithoutDrivers()) ||
                 (!isEventMode && selectedRace?.compatibility?.can_run === false)
               "
               [title]="

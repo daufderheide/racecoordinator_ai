@@ -10,6 +10,13 @@ export interface DriverStatsLabels {
 }
 
 export class TeammateUtils {
+  /** Entity id prefix of the server's "Lane N" practice placeholders (#471). */
+  public static readonly LANE_PLACEHOLDER_ID_PREFIX = "practice_lane_";
+
+  public static isLanePlaceholderId(id: string | undefined | null): boolean {
+    return !!id && id.startsWith(TeammateUtils.LANE_PLACEHOLDER_ID_PREFIX);
+  }
+
   /**
    * Determines if a heat driver represents a team entry or is in practice mode.
    */
@@ -44,6 +51,34 @@ export class TeammateUtils {
         entity_id: "EMPTY_LANE",
         id: "EMPTY_LANE",
       };
+
+      // Practice started without drivers (#471): offer this lane's "Lane N"
+      // placeholder and every driver, so anyone can be put on a lane.
+      const lanePlaceholders = (options.participants || []).filter((p: any) =>
+        TeammateUtils.isLanePlaceholderId(p?.driver?.entity_id),
+      );
+      if (lanePlaceholders.length > 0) {
+        const laneIndex = hd?.laneIndex ?? hd?.lane ?? -1;
+        const own = lanePlaceholders.find(
+          (p: any) =>
+            p.driver.entity_id ===
+            TeammateUtils.LANE_PLACEHOLDER_ID_PREFIX + (laneIndex + 1),
+        );
+        const ownOption = own
+          ? [
+              {
+                name: own.driver.name,
+                nickname: "",
+                entity_id: own.driver.entity_id,
+                id: own.driver.entity_id,
+              },
+            ]
+          : [];
+        const everyone = (allDrivers || []).filter(
+          (d: any) => (d?.entity_id || d?.id) !== "EMPTY_LANE",
+        );
+        return [...ownOption, emptyDriver, ...everyone];
+      }
 
       const raceDrivers: any[] = [];
       const participants = options.participants || [];

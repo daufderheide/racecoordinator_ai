@@ -124,3 +124,38 @@ export function formatTimerDisplay(
       return `${seconds}${fractionStr}`;
   }
 }
+
+/**
+ * Practice sessions with a set length count UP (0:00 → 3:00) instead of down,
+ * like RC1. Returns the session length in seconds, or 0 when the clock should
+ * behave as usual. https://github.com/daufderheide/racecoordinator_ai/issues/471
+ */
+export function practiceCountUpLimit(race: any): number {
+  if (!race?.practice) return 0;
+  const scoring = race.heat_scoring;
+  if (!scoring || scoring.finishMethod !== "Timed") return 0;
+  const limit = Number(scoring.finishValue) || 0;
+  return limit > 0 ? limit : 0;
+}
+
+/**
+ * The elapsed session time to show for a counting-up practice, or null when
+ * the clock shows something else (the break countdown, or no practice).
+ * `remaining` is the server's count-down time.
+ */
+export function practiceElapsedTime(
+  race: any,
+  state: number,
+  remaining: number,
+  isRestarting = false,
+): number | null {
+  const limit = practiceCountUpLimit(race);
+  if (!limit) return null;
+  // RaceState: 1 NOT_STARTED, 2 STARTING, 3 RACING, 4 PAUSED, 5 HEAT_OVER, 6 RACE_OVER
+  if (state === 2 && !isRestarting) return 0;
+  if (state === 2 || state === 3 || state === 4) {
+    return Math.min(limit, Math.max(0, limit - (remaining || 0)));
+  }
+  if ((state === 5 || state === 6) && (remaining || 0) <= 0) return limit;
+  return null;
+}

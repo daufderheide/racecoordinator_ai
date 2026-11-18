@@ -274,9 +274,12 @@ export class RacedaySetupLaunchHelper {
       return;
     }
 
+    // A practice may start without drivers: every lane gets a "Lane N"
+    // placeholder (#471).
     const hasSelection = host.isEventMode
       ? host.selectedEvent && host.selectedParticipants.length > 0
-      : host.selectedRace && host.selectedParticipants.length > 0;
+      : host.selectedRace &&
+        (host.selectedParticipants.length > 0 || !!host.selectedRace.practice);
 
     if (hasSelection) {
       const raceId = host.isEventMode

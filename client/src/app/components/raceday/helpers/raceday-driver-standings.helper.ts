@@ -529,6 +529,11 @@ export class RacedayDriverStandingsHelper {
     }
     const prop = col.propertyName || "";
     const baseKey = prop.split("_")[0];
+    // Practice (#471): clicking the lane number picks the driver for that lane,
+    // also on the default Practice layout, which has no driver-name field.
+    if (host.race?.practice && baseKey === "laneNumber") {
+      return true;
+    }
     let isTeamOrName =
       host.isNameProperty?.(prop) ||
       baseKey === "participant.team.name" ||

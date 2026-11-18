@@ -4,6 +4,8 @@ import { FinishMethod } from "@app/models/heat_scoring";
 import { IRaceTime, RaceState } from "@app/proto/antigravity";
 import {
   formatTimerDisplay,
+  practiceCountUpLimit,
+  practiceElapsedTime,
   TimerFormatOptions,
 } from "@app/utils/timer-format.utils";
 
@@ -633,7 +635,10 @@ export class RaceTimeService implements OnDestroy {
         (s === RaceState.STARTING && !this._isRestarting));
 
     if (showDurationOnly) {
-      const duration = race?.heat_scoring?.finishValue || 0;
+      // A counting-up practice (#471) starts at 0:00 instead of the length
+      const duration = practiceCountUpLimit(race)
+        ? 0
+        : race?.heat_scoring?.finishValue || 0;
       return formatTimerDisplay(duration, {
         ...this.timerFormatOptions,
         subsecondMode: "never",
@@ -649,6 +654,17 @@ export class RaceTimeService implements OnDestroy {
     }
 
     const time = this._time || 0;
+
+    const elapsed = practiceElapsedTime(race, s, time, this._isRestarting);
+    if (elapsed !== null) {
+      return formatTimerDisplay(elapsed, {
+        ...this.timerFormatOptions,
+        subsecondMode:
+          this.timerFormatOptions.subsecondMode === "always"
+            ? "always"
+            : "never",
+      });
+    }
 
     if ((s === RaceState.HEAT_OVER || s === RaceState.RACE_OVER) && time <= 0) {
       return formatTimerDisplay(0, {

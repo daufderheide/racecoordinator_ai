@@ -5140,6 +5140,14 @@ public class RaceTest {
     }
 
     private com.antigravity.race.Race buildRace(boolean practice, int timesThrough) {
+      List<RaceParticipant> drivers = new ArrayList<>();
+      drivers.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
+      drivers.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "2"), "p2"));
+      return buildRace(practice, timesThrough, drivers);
+    }
+
+    private com.antigravity.race.Race buildRace(
+        boolean practice, int timesThrough, List<RaceParticipant> drivers) {
       Track track =
           new Track.Builder()
               .name("Practice Track")
@@ -5155,9 +5163,6 @@ public class RaceTest {
               .withHeatTimesThrough(timesThrough)
               .withEntityId("practice1")
               .build();
-      List<RaceParticipant> drivers = new ArrayList<>();
-      drivers.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
-      drivers.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "2"), "p2"));
       return new com.antigravity.race.Race.Builder()
           .model(model)
           .drivers(drivers)
@@ -5256,6 +5261,95 @@ public class RaceTest {
 
       assertTrue(race.getState() instanceof RaceOver);
       assertEquals(heats, race.getHeats().size());
+    }
+
+    // Practice without drivers: "Lane N" placeholders, no rotation
+
+    private String laneDriverId(Heat heat, int lane) {
+      return heat.getDrivers().get(lane).getActualDriver().getEntityId();
+    }
+
+    @Test
+    public void testPracticeWithoutDriversFillsEveryLaneWithAPlaceholder() {
+      com.antigravity.race.Race race = buildRace(true, 0, new ArrayList<>());
+
+      assertTrue(race.isLanePractice());
+      assertEquals(2, race.getDrivers().size());
+      assertEquals(1, race.getHeats().size());
+      Heat heat = race.getCurrentHeat();
+      assertEquals("Lane 1", heat.getDrivers().get(0).getActualDriver().getName());
+      assertEquals("Lane 2", heat.getDrivers().get(1).getActualDriver().getName());
+      // The lanes count as active, so the practice doesn't end straight away
+      assertEquals(2, heat.getActiveDriverCount());
+      assertFalse(race.getState() instanceof RaceOver);
+    }
+
+    @Test
+    public void testLanePracticeKeepsLanesInEachNewSession() {
+      com.antigravity.race.Race race = buildRace(true, 0, new ArrayList<>());
+
+      for (int i = 0; i < 3; i++) {
+        Common.advanceToNextHeat(race);
+      }
+
+      assertEquals(4, race.getHeats().size());
+      assertEquals(4, race.getCurrentHeat().getHeatNumber());
+      assertEquals(
+          PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "1",
+          laneDriverId(race.getCurrentHeat(), 0));
+      assertEquals(
+          PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "2",
+          laneDriverId(race.getCurrentHeat(), 1));
+      assertFalse(race.getState() instanceof RaceOver);
+    }
+
+    @Test
+    public void testDriverAssignedOnTheFlyStaysOnTheLane() {
+      com.antigravity.race.Race race = buildRace(true, 0, new ArrayList<>());
+      Driver dave = new Driver("Dave", "DA", "d9", "9");
+      DriverHeatData lane2 = race.getCurrentHeat().getDrivers().get(1);
+      lane2.setDriver(new RaceParticipant(dave));
+      lane2.setActualDriver(dave);
+
+      Common.advanceToNextHeat(race);
+      Common.advanceToNextHeat(race);
+
+      assertEquals("d9", laneDriverId(race.getCurrentHeat(), 1));
+      assertEquals(
+          PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "1",
+          laneDriverId(race.getCurrentHeat(), 0));
+    }
+
+    @Test
+    public void testLanePracticeWithTimesThroughHasOneHeatPerPassAndEnds() {
+      com.antigravity.race.Race race = buildRace(true, 3, new ArrayList<>());
+
+      assertTrue(race.isLanePractice());
+      assertFalse(race.isUnlimitedPractice());
+      assertEquals(3, race.getHeats().size());
+      race.setCurrentHeat(race.getHeats().get(2));
+      Common.advanceToNextHeat(race);
+      assertTrue(race.getState() instanceof RaceOver);
+    }
+
+    @Test
+    public void testPracticeWithDriversIsNotALanePractice() {
+      com.antigravity.race.Race race = buildRace(true, 0);
+
+      assertFalse(race.isLanePractice());
+      assertNull(race.findLanePlaceholder("d1"));
+    }
+
+    @Test
+    public void testFindLanePlaceholder() {
+      com.antigravity.race.Race race = buildRace(true, 0, new ArrayList<>());
+
+      RaceParticipant p =
+          race.findLanePlaceholder(PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "2");
+      assertNotNull(p);
+      assertEquals("Lane 2", p.getDriver().getName());
+      assertNull(race.findLanePlaceholder(PracticeSessions.LANE_PLACEHOLDER_ID_PREFIX + "9"));
+      assertNull(race.findLanePlaceholder(null));
     }
   }
 }

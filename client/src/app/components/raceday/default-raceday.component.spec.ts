@@ -1926,6 +1926,18 @@ describe("DefaultRacedayComponent", () => {
       ).toBeTrue();
     });
 
+    // https://github.com/daufderheide/racecoordinator_ai/issues/471
+    it("should let the lane number pick the driver in a practice only", () => {
+      const laneNumber = { propertyName: "laneNumber" } as any;
+      expect(component.isTeamDriverSwapActive(mockHd, laneNumber)).toBeFalse();
+
+      component.race = { ...(component.race || {}), practice: true } as any;
+      expect(component.isTeamDriverSwapActive(mockHd, laneNumber)).toBeTrue();
+
+      mockAuthService.currentRoleSubject.next(Role.VIEWER);
+      expect(component.isTeamDriverSwapActive(mockHd, laneNumber)).toBeFalse();
+    });
+
     it("should return false for non-driver/team properties", () => {
       expect(
         component.isTeamDriverSwapActive(mockHd, {

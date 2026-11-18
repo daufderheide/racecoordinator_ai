@@ -740,9 +740,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   getStartRaceTooltip(): string {
     return getStartRaceTooltip(
-      this.selectedParticipants.length > 0,
+      this.selectedParticipants.length > 0 || this.canStartWithoutDrivers(),
       this.translationService,
     );
+  }
+
+  /** A practice can start without drivers: every lane gets a "Lane N" placeholder (#471). */
+  canStartWithoutDrivers(): boolean {
+    return !this.isEventMode && !!this.selectedRace?.practice;
   }
 
   getRaceCardBackgroundClass(index: number): string {

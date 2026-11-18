@@ -5,6 +5,8 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { RaceState } from "@app/proto/antigravity";
 import {
   formatTimerDisplay,
+  practiceCountUpLimit,
+  practiceElapsedTime,
   TimerFormatOptions,
 } from "@app/utils/timer-format.utils";
 
@@ -94,7 +96,10 @@ export class RacedayTimerLayoutHelper {
         (s === RaceState.STARTING && !host.isRestarting));
 
     if (showDurationOnly) {
-      const duration = host.race?.heat_scoring?.finishValue || 0;
+      // A counting-up practice (#471) starts at 0:00 instead of the length
+      const duration = practiceCountUpLimit(host.race)
+        ? 0
+        : host.race?.heat_scoring?.finishValue || 0;
       return formatTimerDisplay(duration, {
         ...timerOpts,
         subsecondMode: "never",
@@ -110,6 +115,15 @@ export class RacedayTimerLayoutHelper {
     }
 
     const time = host.time || 0;
+
+    const elapsed = practiceElapsedTime(host.race, s, time, host.isRestarting);
+    if (elapsed !== null) {
+      return formatTimerDisplay(elapsed, {
+        ...timerOpts,
+        subsecondMode:
+          timerOpts.subsecondMode === "always" ? "always" : "never",
+      });
+    }
 
     if (
       (s === RaceState.HEAT_OVER ||

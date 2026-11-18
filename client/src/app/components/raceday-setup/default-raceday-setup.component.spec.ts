@@ -626,6 +626,38 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
   }));
 
+  // https://github.com/daufderheide/racecoordinator_ai/issues/471
+  it("should start a practice without drivers", fakeAsync(() => {
+    component.selectedRace = { ...component.races[0], practice: true } as any;
+    component.selectedParticipants = [];
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(
+      of(InitializeRaceResponse.fromObject({ success: true })),
+    );
+
+    expect(component.canStartWithoutDrivers()).toBeTrue();
+    component.startRace(true);
+    flush();
+
+    expect(mockDataService.initializeRace).toHaveBeenCalled();
+    expect(mockDataService.initializeRace.calls.mostRecent().args[1]).toEqual(
+      [],
+    );
+  }));
+
+  it("should not start a race without drivers", fakeAsync(() => {
+    component.selectedRace = { ...component.races[0], practice: false } as any;
+    component.selectedParticipants = [];
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.calls.reset();
+
+    expect(component.canStartWithoutDrivers()).toBeFalse();
+    component.startRace(true);
+    flush();
+
+    expect(mockDataService.initializeRace).not.toHaveBeenCalled();
+  }));
+
   it("should start demo race", fakeAsync(() => {
     component.selectedRace = component.races[0];
     component.selectedParticipants = [component.unselectedParticipants[0]];

@@ -1,6 +1,8 @@
 import {
   formatTimerDisplay,
   isSubsecondActive,
+  practiceCountUpLimit,
+  practiceElapsedTime,
   TimerFormatOptions,
 } from "./timer-format.utils";
 
@@ -267,5 +269,54 @@ describe("TimerFormatUtils", () => {
       };
       expect(formatTimerDisplay(59.999, alwaysMmSs)).toBe("01:00.00");
     });
+  });
+});
+
+// https://github.com/daufderheide/racecoordinator_ai/issues/471
+describe("practice count-up clock", () => {
+  const practice = (finishMethod: string, finishValue: number) => ({
+    practice: true,
+    heat_scoring: { finishMethod, finishValue },
+  });
+
+  it("should only count up for a timed practice with a length", () => {
+    expect(practiceCountUpLimit(practice("Timed", 180))).toBe(180);
+    expect(practiceCountUpLimit(practice("Timed", 0))).toBe(0);
+    expect(practiceCountUpLimit(practice("Lap", 25))).toBe(0);
+    expect(
+      practiceCountUpLimit({ ...practice("Timed", 180), practice: false }),
+    ).toBe(0);
+    expect(practiceCountUpLimit(undefined)).toBe(0);
+  });
+
+  it("should show the elapsed time while the session runs", () => {
+    const race = practice("Timed", 180);
+    expect(practiceElapsedTime(race, 3, 180)).toBe(0); // racing, just started
+    expect(practiceElapsedTime(race, 3, 135)).toBe(45);
+    expect(practiceElapsedTime(race, 4, 60)).toBe(120); // paused
+    expect(practiceElapsedTime(race, 3, 0)).toBe(180);
+    expect(practiceElapsedTime(race, 3, -0.2)).toBe(180);
+  });
+
+  it("should start at 0:00 and end at the full length", () => {
+    const race = practice("Timed", 180);
+    expect(practiceElapsedTime(race, 2, 180)).toBe(0); // starting
+    expect(practiceElapsedTime(race, 5, 0)).toBe(180); // heat over
+    expect(practiceElapsedTime(race, 6, 0)).toBe(180); // race over
+  });
+
+  it("should leave the break countdown alone", () => {
+    const race = practice("Timed", 180);
+    // During the break the time is the auto-advance / auto-start countdown
+    expect(practiceElapsedTime(race, 5, 42)).toBeNull();
+    expect(practiceElapsedTime(race, 1, 42)).toBeNull();
+  });
+
+  it("should do nothing for a race", () => {
+    const race = {
+      practice: false,
+      heat_scoring: { finishMethod: "Timed", finishValue: 180 },
+    };
+    expect(practiceElapsedTime(race, 3, 135)).toBeNull();
   });
 });
