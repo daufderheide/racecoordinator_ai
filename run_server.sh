@@ -353,4 +353,26 @@ REPLAY_FLAG=""
 if [ -n "$REPLAY_LOG" ]; then
   REPLAY_FLAG="-DenableLogReplay=$REPLAY_LOG"
 fi
-mvn compile exec:java -Dbuild.dist.dir="$PROTO_DEST_DIR" -Dexec.mainClass="com.antigravity.App" -Dexec.args="--headless" -DLOG_DIR="$(pwd)/../data_v3" -Dapp.data.dir="$(pwd)/../data_v3" -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp" -Dmaven.repo.local="$(pwd)/.m2/repository" $REPLAY_FLAG
+
+if [ "$(uname)" = "Darwin" ]; then
+  mkdir -p "$PROTO_DEST_DIR/bin"
+  JAVA_BIN="$(command -v java)"
+  ln -sf "$JAVA_BIN" "$PROTO_DEST_DIR/bin/Race Coordinator AI"
+  MACOS_JAVA="$PROTO_DEST_DIR/bin/Race Coordinator AI"
+
+  mvn compile exec:exec \
+    -Dbuild.dist.dir="$PROTO_DEST_DIR" \
+    -Dmaven.repo.local="$(pwd)/.m2/repository" \
+    -Dexec.executable="$MACOS_JAVA" \
+    -Dexec.args="-Xdock:name=\"Race Coordinator AI\" -Dapple.awt.application.name=\"Race Coordinator AI\" -Djava.library.path=\"$(pwd)/lib/macos\" -DLOG_DIR=\"$(pwd)/../data_v3\" -Dapp.data.dir=\"$(pwd)/../data_v3\" -Dde.flapdoodle.embed.io.tmpdir=\"$(pwd)/../data_v3/server_temp\" $REPLAY_FLAG -classpath %classpath com.antigravity.App --headless --port=$SERVER_PORT"
+else
+  mvn compile exec:java \
+    -Dbuild.dist.dir="$PROTO_DEST_DIR" \
+    -Dexec.mainClass="com.antigravity.App" \
+    -Dexec.args="--headless --port=$SERVER_PORT" \
+    -DLOG_DIR="$(pwd)/../data_v3" \
+    -Dapp.data.dir="$(pwd)/../data_v3" \
+    -Dde.flapdoodle.embed.io.tmpdir="$(pwd)/../data_v3/server_temp" \
+    -Dmaven.repo.local="$(pwd)/.m2/repository" \
+    $REPLAY_FLAG
+fi
