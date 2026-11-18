@@ -53,6 +53,7 @@ import {
   resolvePacingDecimalPlaces,
 } from "./raceday-lane-column.utils";
 import { LaneColumnAnchorHelper } from "./raceday-lane-column-anchor.helper";
+import { LaneColumnCustomWidgetHelper } from "./raceday-lane-column-custom-widget.helper";
 import {
   isLaneColumnExtraGridRow,
   isOverallDataSource,
@@ -61,6 +62,10 @@ import {
   resolveLaneColumnEmptyRowsMode,
 } from "./raceday-lane-column-driver.helper";
 import { LaneColumnFitHelper } from "./raceday-lane-column-fit.helper";
+import {
+  isLaneColumnHighlighted,
+  resolveLaneColumnHighlightLapStyle,
+} from "./raceday-lane-column-highlight.helper";
 import {
   formatLaneColumnInsetValue,
   handleLaneColumnCardClick,
@@ -73,8 +78,6 @@ import {
   isTeamProperty,
   LaneColumnAvatarHelper,
   notifyLaneColumnParentChange,
-  resolveCachedSyntheticInsetInputs,
-  resolveCachedSyntheticMainInputs,
   resolveEffectiveHeaderFontSize,
   resolveEffectiveInsetFontSize,
   resolveLaneColumnBackgroundColor,
@@ -85,6 +88,7 @@ import {
   resolveLaneColumnForegroundColor,
   resolveLaneColumnFormattedValue,
 } from "./raceday-lane-column-interaction.helper";
+import { resolveVisibleLastLaps } from "./raceday-lane-column-last-laps.helper";
 import { isNumericalOrTimeText } from "./raceday-lane-column-text-wrap.helper";
 
 export { HeatDataLapItem };
@@ -124,8 +128,9 @@ export class RacedayLaneColumnComponent
   isTeamProperty(key?: string): boolean {
     return isTeamProperty(key);
   }
-  private insetCustomInputs = new Map<string, any>();
-  private mainCustomInputsRef: { current?: any } = {};
+  readonly customWidgetHelper = new LaneColumnCustomWidgetHelper(
+    this.customWidgetService,
+  );
   readonly avatarHelper = new LaneColumnAvatarHelper();
   readonly anchorHelper = new LaneColumnAnchorHelper(
     () => this.widget(),
@@ -145,6 +150,8 @@ export class RacedayLaneColumnComponent
   private cachedWidth = 0;
   private cachedHeight = 0;
   private fitHelper = new LaneColumnFitHelper();
+  private lastFittedValueSnapshot?: string;
+  private lastWidgetRef?: AbsoluteWidgetNode | null;
 
   constructor() {
     if (this.customWidgetService?.customWidgets$) {
@@ -181,6 +188,18 @@ export class RacedayLaneColumnComponent
     if (this.isImageProperty() || this.isPacingProperty()) {
       return;
     }
+    const currentWidget = this.widget();
+    const currentVal = this.isHeaderWidget
+      ? this.headerLabel
+      : this.formattedValue;
+    if (
+      currentWidget === this.lastWidgetRef &&
+      currentVal === this.lastFittedValueSnapshot
+    ) {
+      return;
+    }
+    this.lastWidgetRef = currentWidget;
+    this.lastFittedValueSnapshot = currentVal;
     this.fitContent(false);
   }
 
@@ -203,67 +222,17 @@ export class RacedayLaneColumnComponent
   }
 
   get isHighlighted(): boolean {
-    if (this.isHeaderWidget) {
-      return false;
-    }
-    if (
-      this.highlightLapStyle === "none" ||
-      this.settings.highlightRowOnLap === false
-    ) {
-      return false;
-    }
-    const driverId = this.targetDriver?.objectId;
-    const participantId = this.targetDriver?.participant?.objectId;
-    const entityDriverId =
-      this.targetDriver?.actualDriver?.entity_id ||
-      this.targetDriver?.driver?.entity_id;
-    const hd = this.parent()?.highlightedDrivers;
-    if (hd) {
-      if (driverId && hd.has(driverId)) return true;
-      if (participantId && hd.has(participantId)) return true;
-      if (entityDriverId && hd.has(entityDriverId)) return true;
-    }
-    if (
-      this.parent()?.isDriverStation &&
-      this.parent()?.activeLaneIndex !== undefined
-    ) {
-      const drivers: DriverHeatData[] =
-        this.parent()?.sortedHeatDrivers ||
-        this.parent()?.heatDrivers ||
-        this.parent()?.heat?.heatDrivers ||
-        [];
-      const hostDriver = drivers.find(
-        (d) => d.laneIndex === this.parent()?.activeLaneIndex,
-      );
-      if (hostDriver) {
-        if (hostDriver.objectId && hd?.has(hostDriver.objectId)) return true;
-        if (
-          hostDriver.participant?.objectId &&
-          hd?.has(hostDriver.participant.objectId)
-        ) {
-          return true;
-        }
-        const hostEntityDriverId =
-          hostDriver.actualDriver?.entity_id || hostDriver.driver?.entity_id;
-        if (hostEntityDriverId && hd?.has(hostEntityDriverId)) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return isLaneColumnHighlighted(
+      this.settings,
+      this.isHeaderWidget,
+      this.highlightLapStyle,
+      this.targetDriver,
+      this.parent(),
+    );
   }
 
   get highlightLapStyle(): HighlightLapStyle {
-    if (this.settings?.highlightLapStyle) {
-      return this.settings.highlightLapStyle;
-    }
-    if (this.settings?.highlightRowOnLap === false) {
-      return "none";
-    }
-    if (this.parent()?.isDriverStation) {
-      return this.parent()?.highlightLapStyle || "full-glow";
-    }
-    return this.parent()?.highlightLapStyle || "classic";
+    return resolveLaneColumnHighlightLapStyle(this.settings, this.parent());
   }
 
   get isLightBackground(): boolean {
@@ -309,10 +278,12 @@ export class RacedayLaneColumnComponent
     const h = this.widget()?.height || this.cachedHeight || 0;
     if (h > 0 && w > 0) return h >= w * 0.75;
     const cardEl = this.cardRef()?.nativeElement;
-    if (cardEl && cardEl.clientHeight > 0 && cardEl.clientWidth > 0) {
-      return cardEl.clientHeight >= cardEl.clientWidth * 0.75;
-    }
-    return false;
+    return Boolean(
+      cardEl &&
+      cardEl.clientHeight > 0 &&
+      cardEl.clientWidth > 0 &&
+      cardEl.clientHeight >= cardEl.clientWidth * 0.75,
+    );
   }
 
   get targetDriver(): DriverHeatData | undefined {
@@ -401,7 +372,6 @@ export class RacedayLaneColumnComponent
       this.foregroundColor,
     );
   }
-
   get effectiveInsetTextColor(): string {
     return resolveLaneColumnEffectiveInsetTextColor(
       this.settings,
@@ -429,32 +399,27 @@ export class RacedayLaneColumnComponent
   }
 
   getEffectiveInsetTextColor(anchor?: string): string {
-    if (anchor && this.settings.insetsConfig?.[anchor]?.textColor) {
-      return this.settings.insetsConfig[anchor].textColor!;
-    }
-    return this.effectiveInsetTextColor;
+    return (
+      (anchor && this.settings.insetsConfig?.[anchor]?.textColor) ||
+      this.effectiveInsetTextColor
+    );
   }
 
   getInsetHorizontalAlignment(anchor: string): "left" | "center" | "right" {
     return this.anchorHelper.getInsetHorizontalAlignment(anchor);
   }
-
   getInsetVerticalAlignment(anchor: string): "top" | "center" | "bottom" {
     return this.anchorHelper.getInsetVerticalAlignment(anchor);
   }
-
   getInsetJustifyContent(anchor: string): string {
     return this.anchorHelper.getInsetJustifyContent(anchor);
   }
-
   getInsetAlignItems(anchor: string): string {
     return this.anchorHelper.getInsetAlignItems(anchor);
   }
-
   getInsetTextAlign(anchor: string): string {
     return this.anchorHelper.getInsetHorizontalAlignment(anchor);
   }
-
   getInsetObjectPosition(anchor: string): string {
     return this.anchorHelper.getInsetObjectPosition(anchor);
   }
@@ -462,57 +427,53 @@ export class RacedayLaneColumnComponent
   get effectiveSelectedAnchor(): string | null {
     return this.anchorHelper.effectiveSelectedAnchor;
   }
-
   isAnchorSelected(anchor: string): boolean {
     return this.anchorHelper.isAnchorSelected(anchor);
   }
-
   onAnchorClick(anchor: string, event: MouseEvent): void {
     this.anchorHelper.onAnchorClick(anchor, event);
   }
-
   onCenterZoneClick(event: MouseEvent): void {
     this.anchorHelper.onCenterZoneClick(event);
   }
-
   get isUIEditorMode(): boolean {
     return this.anchorHelper.isUIEditorMode;
   }
-
   get isGridCellUnselected(): boolean {
     return this.anchorHelper.isGridCellUnselected;
   }
-
   get isWidgetInGrid(): boolean {
     return this.anchorHelper.isWidgetInGrid;
   }
-
   get isSelectedWidget(): boolean {
     return this.anchorHelper.isSelectedWidget;
   }
-
   get shouldRenderAnchorDropGrid(): boolean {
     return this.anchorHelper.shouldRenderAnchorDropGrid;
   }
 
   get isLapCountClickable(): boolean {
-    if (this.isExtraGridRow) return false;
-    return isLaneColumnLapCountClickable(
-      this.parent(),
-      this.targetDriver,
-      this.columnKey,
-      this.isUIEditorMode,
+    return (
+      !this.isExtraGridRow &&
+      isLaneColumnLapCountClickable(
+        this.parent(),
+        this.targetDriver,
+        this.columnKey,
+        this.isUIEditorMode,
+      )
     );
   }
 
   get isTeamDriverSwapActive(): boolean {
-    if (this.isExtraGridRow) return false;
-    return isLaneColumnTeamDriverSwapActive(
-      this.parent(),
-      this.targetDriver,
-      this.columnKey,
-      this.isUIEditorMode,
-      this.settings.insets,
+    return (
+      !this.isExtraGridRow &&
+      isLaneColumnTeamDriverSwapActive(
+        this.parent(),
+        this.targetDriver,
+        this.columnKey,
+        this.isUIEditorMode,
+        this.settings.insets,
+      )
     );
   }
 
@@ -534,11 +495,13 @@ export class RacedayLaneColumnComponent
   }
 
   get isPracticeLaneResetActive(): boolean {
-    if (this.isExtraGridRow) return false;
-    return isLaneColumnPracticeLaneResetActive(
-      this.parent(),
-      this.columnKey,
-      this.isUIEditorMode,
+    return (
+      !this.isExtraGridRow &&
+      isLaneColumnPracticeLaneResetActive(
+        this.parent(),
+        this.columnKey,
+        this.isUIEditorMode,
+      )
     );
   }
 
@@ -593,26 +556,21 @@ export class RacedayLaneColumnComponent
 
   onResetLane(event: Event): void {
     event.stopPropagation();
-    const p = this.parent();
-    const hd = this.targetDriver;
     const lane =
-      hd?.laneIndex ?? (this.bindingMode === "lane" ? this.targetIndex : -1);
-    if (lane >= 0) {
-      p?.resetLane?.(lane, event);
-    }
+      this.targetDriver?.laneIndex ??
+      (this.bindingMode === "lane" ? this.targetIndex : -1);
+    if (lane >= 0) this.parent()?.resetLane?.(lane, event);
   }
 
   onTeammateChange(event: any): void {
-    const hd = this.targetDriver;
-    if (hd) {
-      this.parent()?.onTeammateChange?.(hd, event);
+    if (this.targetDriver) {
+      this.parent()?.onTeammateChange?.(this.targetDriver, event);
     }
   }
 
   get borderColor(): string {
     if (this.settings.showBorder === false) return "transparent";
-    if (this.settings.borderColor) return this.settings.borderColor;
-    return this.foregroundColor;
+    return this.settings.borderColor || this.foregroundColor;
   }
 
   get columnBorderColor(): string {
@@ -701,18 +659,12 @@ export class RacedayLaneColumnComponent
   }
 
   getVisibleLastLaps(): HeatDataLapItem[] {
-    const all = this.getLastLaps();
-    const max = this.maxVisibleLaps();
-    if (max !== undefined && max > 0) {
-      return all.slice(0, max);
-    }
-    return all;
+    return resolveVisibleLastLaps(this.getLastLaps(), this.maxVisibleLaps());
   }
 
   get isBestLapHighlightEnabled(): boolean {
     return this.settings.lastLapsBestLapHighlight !== false;
   }
-
   getLastLapItemStyle(
     lap: HeatDataLapItem,
     isLast: boolean,
@@ -726,7 +678,6 @@ export class RacedayLaneColumnComponent
       this.columnBorderColor,
     );
   }
-
   getLastLapTimeStyle(
     lap: HeatDataLapItem,
   ): Record<string, string | number | null> {
@@ -745,6 +696,11 @@ export class RacedayLaneColumnComponent
   fitContent(force = false): void {
     const cardEl = this.cardRef()?.nativeElement;
     if (!cardEl) return;
+
+    this.lastWidgetRef = this.widget();
+    this.lastFittedValueSnapshot = this.isHeaderWidget
+      ? this.headerLabel
+      : this.formattedValue;
 
     this.fitHelper.fitContent(cardEl, force, {
       isHeaderWidget: this.isHeaderWidget,
@@ -850,28 +806,24 @@ export class RacedayLaneColumnComponent
       this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
-
   hasTopInsets(): boolean {
     return this.anchorHelper.hasSideInsets(
       "top",
       this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
-
   hasBottomInsets(): boolean {
     return this.anchorHelper.hasSideInsets(
       "bottom",
       this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
-
   hasLeftInsets(): boolean {
     return this.anchorHelper.hasSideInsets(
       "left",
       this.isExtraGridRow && this.emptyRowsMode === "blank",
     );
   }
-
   hasRightInsets(): boolean {
     return this.anchorHelper.hasSideInsets(
       "right",
@@ -936,26 +888,20 @@ export class RacedayLaneColumnComponent
   get imageErrors(): Set<string> {
     return this.avatarHelper.imageErrors;
   }
-
   get mainImageError(): boolean {
     return this.avatarHelper.mainImageError;
   }
-
   isPlaceholderAvatar(url?: string, _key?: string, anchor?: string): boolean {
-    if (this.isExtraGridRow) return false;
-    return this.avatarHelper.isPlaceholderAvatar(
-      this.targetDriver,
-      url,
-      anchor,
+    return (
+      !this.isExtraGridRow &&
+      this.avatarHelper.isPlaceholderAvatar(this.targetDriver, url, anchor)
     );
   }
-
   getSvgPreserveAspectRatio(anchor?: string): string {
     const h = anchor ? this.getInsetHorizontalAlignment(anchor) : undefined;
     const v = anchor ? this.getInsetVerticalAlignment(anchor) : undefined;
     return getSvgPreserveAspectRatio(anchor, h, v);
   }
-
   onImageError(event: Event, anchor?: string): void {
     this.avatarHelper.onImageError(event, anchor);
     this.cdr.markForCheck();
@@ -964,27 +910,21 @@ export class RacedayLaneColumnComponent
   hasAnchorValue(anchor: string): boolean {
     return this.anchorHelper.hasAnchorValue(anchor, this.columnKey);
   }
-
   onAnchorDragOver(event: DragEvent): void {
     this.anchorHelper.onAnchorDragOver(event);
   }
-
   onAnchorDragEnter(event: DragEvent): void {
     this.anchorHelper.onAnchorDragEnter(event);
   }
-
   onAnchorDragLeave(event: DragEvent): void {
     this.anchorHelper.onAnchorDragLeave(event);
   }
-
   onAnchorDrop(event: DragEvent, anchor: string): void {
     this.anchorHelper.onAnchorDrop(event, anchor);
   }
-
   setInset(anchor: string, key: string): void {
     this.anchorHelper.setInset(anchor, key);
   }
-
   deleteAnchor(anchor: string, event?: Event): void {
     this.anchorHelper.deleteAnchor(anchor, event);
   }
@@ -995,8 +935,10 @@ export class RacedayLaneColumnComponent
   }
 
   isPacingProperty(): boolean {
-    if (this.isExtraGridRow) return false;
-    return RacedayLayoutUtils.isPacingProperty(this.columnKey);
+    return (
+      !this.isExtraGridRow &&
+      RacedayLayoutUtils.isPacingProperty(this.columnKey)
+    );
   }
 
   getPacingDecimalPlaces(): number {
@@ -1015,24 +957,20 @@ export class RacedayLaneColumnComponent
   }
 
   isDriftLap(): boolean {
-    if (this.isExtraGridRow) return false;
-    const hd = this.targetDriver;
-    const parent = this.parent();
-    if (!hd || !parent) return false;
     return Boolean(
-      hd.isLastLapDrift &&
+      !this.isExtraGridRow &&
+      this.targetDriver?.isLastLapDrift &&
+      this.parent() &&
       (this.columnKey === "lastLapTime" || this.columnKey === "lapTime"),
     );
   }
 
   getCustomWidgetComponent(key: string | undefined): any {
-    if (!key) return null;
-    return this.customWidgetService?.getWidgetComponent(key) || null;
+    return this.customWidgetHelper.getCustomWidgetComponent(key);
   }
 
   getCustomWidgetInputsForInset(anchor: string) {
-    return resolveCachedSyntheticInsetInputs(
-      this.insetCustomInputs,
+    return this.customWidgetHelper.getCustomWidgetInputsForInset(
       anchor,
       this.getInsetKey(anchor),
       this.widget(),
@@ -1048,8 +986,7 @@ export class RacedayLaneColumnComponent
   }
 
   getCustomWidgetInputsForMain() {
-    return resolveCachedSyntheticMainInputs(
-      this.mainCustomInputsRef,
+    return this.customWidgetHelper.getCustomWidgetInputsForMain(
       this.columnKey,
       this.widget(),
       this.bindingMode,

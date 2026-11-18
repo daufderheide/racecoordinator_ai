@@ -410,3 +410,13 @@ export function fitColumnLastLaps(
     return { maxLaps, fontSize: targetFontSize };
   }
 }
+
+export function resolveVisibleLastLaps(
+  allLaps: HeatDataLapItem[],
+  maxVisible: number | undefined,
+): HeatDataLapItem[] {
+  if (maxVisible !== undefined && maxVisible > 0) {
+    return allLaps.slice(0, maxVisible);
+  }
+  return allLaps;
+}

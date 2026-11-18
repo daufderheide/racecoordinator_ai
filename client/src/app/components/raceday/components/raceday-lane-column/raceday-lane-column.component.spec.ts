@@ -4709,5 +4709,80 @@ describe("RacedayLaneColumnComponent", () => {
         expect(component.shouldAllowValueWrap()).toBeFalse();
       });
     });
+
+    describe("Performance Optimization & ViewChecked Snapshot Throttling", () => {
+      it("should skip fitContent in ngAfterViewChecked if widget reference and formattedValue are unchanged", () => {
+        const widget = createWidget({ columnKey: "lastLapTime" });
+        fixture.componentRef.setInput("widget", widget);
+        fixture.detectChanges();
+
+        spyOn(component, "fitContent");
+        // Trigger ngAfterViewChecked when values have not changed
+        component.ngAfterViewChecked();
+        expect(component.fitContent).not.toHaveBeenCalled();
+      });
+
+      it("should trigger fitContent in ngAfterViewChecked when formattedValue changes", () => {
+        const widget = createWidget({ columnKey: "lastLapTime" });
+        fixture.componentRef.setInput("widget", widget);
+        fixture.detectChanges();
+
+        spyOn(component, "fitContent");
+        spyOnProperty(component, "formattedValue", "get").and.returnValue(
+          "12.345",
+        );
+
+        component.ngAfterViewChecked();
+        expect(component.fitContent).toHaveBeenCalledWith(false);
+      });
+
+      it("should trigger fitContent in ngAfterViewChecked when widget reference changes", () => {
+        const widget1 = createWidget({ columnKey: "lastLapTime" });
+        fixture.componentRef.setInput("widget", widget1);
+        fixture.detectChanges();
+
+        spyOn(component, "fitContent");
+        const widget2 = createWidget({
+          columnKey: "lastLapTime",
+          valueFontSize: 42,
+        });
+        fixture.componentRef.setInput("widget", widget2);
+
+        component.ngAfterViewChecked();
+        expect(component.fitContent).toHaveBeenCalledWith(false);
+      });
+
+      it("should use headerLabel as snapshot when isHeaderWidget is true", () => {
+        const headerWidget = createWidget({
+          columnKey: "lastLapTime",
+          isHeaderWidget: true,
+          customLabel: "BEST LAP",
+        });
+        fixture.componentRef.setInput("widget", headerWidget);
+        fixture.detectChanges();
+
+        spyOn(component, "fitContent");
+        // Without change to headerLabel or widget, fitContent should be skipped
+        component.ngAfterViewChecked();
+        expect(component.fitContent).not.toHaveBeenCalled();
+
+        // When headerLabel changes, fitContent should be called
+        spyOnProperty(component, "headerLabel", "get").and.returnValue(
+          "RECORD LAP",
+        );
+        component.ngAfterViewChecked();
+        expect(component.fitContent).toHaveBeenCalledWith(false);
+      });
+
+      it("should skip ngAfterViewChecked for image and pacing properties", () => {
+        const pacingWidget = createWidget({ columnKey: "ghostPacing" });
+        fixture.componentRef.setInput("widget", pacingWidget);
+        fixture.detectChanges();
+
+        spyOn(component, "fitContent");
+        component.ngAfterViewChecked();
+        expect(component.fitContent).not.toHaveBeenCalled();
+      });
+    });
   });
 });
