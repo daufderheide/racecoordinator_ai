@@ -30,6 +30,14 @@
         <div class="menu-item" (click)="onFileMenuSelect('RACE_HISTORY')">
           {{ "RD_MENU_RACE_HISTORY" | translate }}
         </div>
+        @if ((authService.currentRole$ | async) !== Role.VIEWER) {
+          <div
+            class="menu-item race-again-item"
+            (click)="onFileMenuSelect('RACE_AGAIN')"
+          >
+            {{ "RD_MENU_RACE_AGAIN" | translate }}
+          </div>
+        }
         <div class="menu-separator"></div>
         <div
           class="menu-item"

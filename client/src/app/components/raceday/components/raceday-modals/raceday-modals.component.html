@@ -61,3 +61,14 @@
   (cancel)="deferHeatCancel.emit()"
 >
 </app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showRaceAgainConfirmation()"
+  title="RD_CONFIRM_RACE_AGAIN_TITLE"
+  message="RD_CONFIRM_RACE_AGAIN_MESSAGE"
+  confirmText="GEN_YES"
+  cancelText="GEN_NO"
+  (confirm)="raceAgainConfirm.emit()"
+  (cancel)="raceAgainCancel.emit()"
+>
+</app-confirmation-modal>

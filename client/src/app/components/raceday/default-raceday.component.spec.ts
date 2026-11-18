@@ -1198,6 +1198,63 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showSkipRaceConfirmation).toBeFalse();
     });
 
+    describe("Race Again (issue 679)", () => {
+      beforeEach(() => {
+        (mockDataService as any).endRace = jasmine
+          .createSpy("endRace")
+          .and.returnValue(of(true));
+        mockRouter.navigate.calls.reset();
+      });
+
+      it("should show the race again confirmation when RACE_AGAIN is selected from the File menu", () => {
+        fixture.detectChanges();
+        expect(component.showRaceAgainConfirmation).toBeFalse();
+
+        component.onFileMenuSelect("RACE_AGAIN");
+
+        expect(component.showRaceAgainConfirmation).toBeTrue();
+        expect((mockDataService as any).endRace).not.toHaveBeenCalled();
+      });
+
+      it("should end the race and go to setup with the raceAgain flag on confirm", () => {
+        fixture.detectChanges();
+        component.showRaceAgainConfirmation = true;
+
+        component.onRaceAgainConfirm();
+
+        expect(component.showRaceAgainConfirmation).toBeFalse();
+        expect((mockDataService as any).endRace).toHaveBeenCalled();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+          queryParams: { raceAgain: "1" },
+        });
+        // Leaving race day must not trigger a second "exit race?" prompt
+        expect(component.forceExit).toBeTrue();
+        expect(component.canDeactivate()).toBeTrue();
+      });
+
+      it("should not navigate when ending the race fails", () => {
+        fixture.detectChanges();
+        (mockDataService as any).endRace.and.returnValue(of(false));
+
+        component.onRaceAgainConfirm();
+
+        expect(mockRouter.navigate).not.toHaveBeenCalledWith(
+          ["/raceday-setup"],
+          jasmine.anything(),
+        );
+      });
+
+      it("should hide the dialog on cancel without ending the race", () => {
+        fixture.detectChanges();
+        component.showRaceAgainConfirmation = true;
+
+        component.onRaceAgainCancel();
+
+        expect(component.showRaceAgainConfirmation).toBeFalse();
+        expect((mockDataService as any).endRace).not.toHaveBeenCalled();
+      });
+    });
+
     it("should show add lap sections dialog in menu mode when ADD_LAP selected", () => {
       fixture.detectChanges();
       expect(component["showAddLapSectionsDialog"]).toBeFalse();

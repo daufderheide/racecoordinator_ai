@@ -604,6 +604,14 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
     RacedayActionsMenuHelper.onSkipRaceCancel(this);
   }
 
+  onRaceAgainConfirm(): void {
+    RacedayActionsMenuHelper.onRaceAgainConfirm(this);
+  }
+
+  onRaceAgainCancel(): void {
+    RacedayActionsMenuHelper.onRaceAgainCancel(this);
+  }
+
   onRestartHeatConfirm(): void {
     RacedayActionsMenuHelper.onRestartHeatConfirm(this);
   }

@@ -257,6 +257,7 @@ export class DefaultRacedayComponent
   skipRaceModalMessage = "RD_CONFIRM_SKIP_RACE_MESSAGE";
   skipRaceConfirmText = "GEN_YES";
   skipRaceCancelText = "GEN_NO";
+  showRaceAgainConfirmation = false;
 
   // Restart Heat Confirmation Modal State
   showRestartHeatConfirmation = false;

@@ -261,7 +261,25 @@ export class RacedaySetupLaunchHelper {
     }
   }
 
-  static startRace(host: any, isDemo: boolean): void {
+  /**
+   * "Race Again" (raceday File menu): start the previously run race again with
+   * the restored race/event, season and drivers, in the same mode (demo or
+   * official). A leftover auto-save of the previous run is discarded, exactly as
+   * if the user had answered "No" to the load-auto-save prompt.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/679
+   */
+  static raceAgain(host: any): void {
+    const settings = host.settingsService.getSettings();
+    RacedaySetupLaunchHelper.startRace(host, !!settings.lastStartIsDemo, {
+      discardAutoSave: true,
+    });
+  }
+
+  static startRace(
+    host: any,
+    isDemo: boolean,
+    options?: { discardAutoSave?: boolean },
+  ): void {
     if (
       !host.isEventMode &&
       host.selectedRace?.compatibility?.can_run === false
@@ -291,6 +309,10 @@ export class RacedaySetupLaunchHelper {
           if (autoSaveFile) {
             host.autoSaveFileToLoad = autoSaveFile.filename;
             host.pendingIsDemo = isDemo;
+            if (options?.discardAutoSave) {
+              RacedaySetupLaunchHelper.onCancelAutoSave(host);
+              return;
+            }
             host.showAutoSavePrompt = true;
             host.cdr.detectChanges();
             return;
@@ -326,6 +348,8 @@ export class RacedaySetupLaunchHelper {
 
     host.saveSettings(true);
     const settings = host.settingsService.getSettings();
+    settings.lastStartIsDemo = isDemo;
+    host.settingsService.saveSettings(settings);
 
     const raceId = host.isEventMode ? "" : host.selectedRace?.entity_id || "";
     const eventId = host.isEventMode

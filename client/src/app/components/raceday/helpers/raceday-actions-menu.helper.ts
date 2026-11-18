@@ -499,6 +499,9 @@ export class RacedayActionsMenuHelper {
     } else if (action === "RACE_HISTORY") {
       host.showRaceHistoryDialog = true;
       host.cdr?.markForCheck();
+    } else if (action === "RACE_AGAIN") {
+      host.showRaceAgainConfirmation = true;
+      host.cdr?.markForCheck();
     } else if (action === "BACK") {
       if (host.isBackDisabled) return;
       window.history.back();
@@ -650,6 +653,39 @@ export class RacedayActionsMenuHelper {
 
   static onSkipRaceCancel(host: any): void {
     host.showSkipRaceConfirmation = false;
+    host.cdr?.markForCheck();
+  }
+
+  /**
+   * File → Race Again: end the current race, then let Race Day Setup start the
+   * same race again with the same drivers and mode (see
+   * RacedaySetupLaunchHelper.raceAgain). Reusing the setup launch path keeps all
+   * its validation and error handling.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/679
+   */
+  static onRaceAgainConfirm(host: any): void {
+    host.showRaceAgainConfirmation = false;
+    host.cdr?.markForCheck();
+    host.dataService?.endRace().subscribe({
+      next: (success: boolean) => {
+        if (!success) {
+          host.logger?.error("Race Again: failed to end the current race");
+          return;
+        }
+        // The user already confirmed; skip the "leave race day?" guard prompt.
+        host.forceExit = true;
+        host.router.navigate(["/raceday-setup"], {
+          queryParams: { raceAgain: "1" },
+        });
+      },
+      error: (error: any) => {
+        host.logger?.error("Race Again: error ending the current race", error);
+      },
+    });
+  }
+
+  static onRaceAgainCancel(host: any): void {
+    host.showRaceAgainConfirmation = false;
     host.cdr?.markForCheck();
   }
 

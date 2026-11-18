@@ -17,7 +17,7 @@ import {
   ViewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -142,6 +142,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   importSettingsInput?: ElementRef<HTMLInputElement>;
 
   private helpLinkService = inject(HelpLinkService);
+  private route = inject(ActivatedRoute, { optional: true });
 
   // Driver/Team State
   selectedParticipants: Participant[] = [];
@@ -315,6 +316,24 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   private initInitialData(result: any) {
     RacedaySetupInitHelper.initInitialData(this, result);
+    this.handleRaceAgainRequest();
+  }
+
+  /**
+   * Raceday "File → Race Again" navigates here with ?raceAgain=1 after ending
+   * the current race. Once the last race, season and drivers are restored,
+   * start the same race again. The flag is removed from the URL first so a
+   * page refresh doesn't start yet another race.
+   */
+  private handleRaceAgainRequest() {
+    if (!this.route?.snapshot?.queryParamMap?.get("raceAgain")) return;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { raceAgain: null },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+    RacedaySetupLaunchHelper.raceAgain(this);
   }
 
   private initSeasonSelection(localSettings: any) {
@@ -641,8 +660,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     RacedaySetupLaunchHelper.saveSettings(this, updateRecent);
   }
 
-  startRace(isDemo: boolean) {
-    RacedaySetupLaunchHelper.startRace(this, isDemo);
+  startRace(isDemo: boolean, options?: { discardAutoSave?: boolean }) {
+    RacedaySetupLaunchHelper.startRace(this, isDemo, options);
   }
 
   getItemRaceId(item: any): string {
