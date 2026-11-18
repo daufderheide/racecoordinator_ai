@@ -102,9 +102,13 @@ export class RacedayHeatDriverReorderHelper {
       );
       const isNewRace =
         !host.race ||
-        host.race.entity_id !== race.entity_id ||
+        (host.race.entity_id || race.entity_id
+          ? host.race.entity_id !== race.entity_id
+          : host.race !== race) ||
         (host.race as any)?.current_event_race_index !==
-          (race as any)?.current_event_race_index;
+          (race as any)?.current_event_race_index ||
+        Boolean((host.race as any)?.practice) !==
+          Boolean((race as any)?.practice);
 
       host.race = race;
       host.track = race.track;
@@ -151,8 +155,13 @@ export class RacedayHeatDriverReorderHelper {
         host.themeService.activateForRace(race.entity_id, race.theme_id);
       }
       host.latestPredictionRecord = null;
-      host.laneQrCodeCache.clear();
-      host.generatingLaneQrCodes.clear();
+      // Lane QR codes depend only on lane index, theme and server URL (theme and
+      // server URL changes clear this cache elsewhere), so only clear it when
+      // the race itself changes, not on every heat/race update.
+      if (isNewRace) {
+        host.laneQrCodeCache.clear();
+        host.generatingLaneQrCodes.clear();
+      }
 
       if (host.currentRacedayLayout && host.currentRacedayLayout.widgets) {
         host.layout = JSON.parse(JSON.stringify(host.currentRacedayLayout));

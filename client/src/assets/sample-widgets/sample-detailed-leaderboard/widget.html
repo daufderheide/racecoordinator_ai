@@ -9,18 +9,24 @@
         <tr>
           <th class="col-pos">P</th>
           <th class="col-driver">Driver</th>
-          <th *ngFor="let col of configuredColumns" [class]="col.cssClass">
+          <th
+            *ngFor="let col of configuredColumns; trackBy: trackByIndex"
+            [class]="col.cssClass"
+          >
             {{ col.header }}
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let row of displayRows" [class.empty-row]="row.isEmpty">
+        <tr
+          *ngFor="let row of displayRows; trackBy: trackByIndex"
+          [class.empty-row]="row.isEmpty"
+        >
           <td class="col-pos">{{ row.position }}</td>
           <td class="col-driver">{{ row.name }}</td>
           <td
-            *ngFor="let cell of row.cells; let idx = index"
-            [class]="configuredColumns[idx]?.cssClass"
+            *ngFor="let cell of row.cells; trackBy: trackByIndex"
+            [class]="cell.cssClass"
             [style.color]="row.isEmpty || cell.text === '--' || !cell.color ? 'inherit' : cell.color"
           >
             {{ cell.text }}

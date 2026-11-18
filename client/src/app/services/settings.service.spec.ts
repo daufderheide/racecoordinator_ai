@@ -275,4 +275,44 @@ describe("SettingsService", () => {
     expect(retrieved.customExportTemplateName).toBe("my_results.xlsx");
     expect(retrieved.customExportTemplatePath).toBe("/docs/my_results.xlsx");
   });
+
+  describe("getSettingsSnapshot", () => {
+    it("should return cached snapshot instance when localStorage has not changed", () => {
+      const snap1 = service.getSettingsSnapshot();
+      const snap2 = service.getSettingsSnapshot();
+      expect(snap1).toBe(snap2);
+    });
+
+    it("should refresh snapshot when saveSettings is called", () => {
+      const snap1 = service.getSettingsSnapshot();
+      const newSettings = new Settings();
+      newSettings.serverIp = "192.168.1.100";
+      service.saveSettings(newSettings);
+
+      const snap2 = service.getSettingsSnapshot();
+      expect(snap2.serverIp).toBe("192.168.1.100");
+      expect(snap2).not.toBe(snap1);
+    });
+
+    it("should refresh snapshot when resetToDefaults is called", () => {
+      const custom = new Settings();
+      custom.serverIp = "192.168.1.50";
+      service.saveSettings(custom);
+      expect(service.getSettingsSnapshot().serverIp).toBe("192.168.1.50");
+
+      service.resetToDefaults();
+      expect(service.getSettingsSnapshot().serverIp).toBe("");
+    });
+
+    it("should detect external localStorage changes", () => {
+      const snap1 = service.getSettingsSnapshot();
+      const updated = new Settings();
+      updated.serverPort = 9999;
+      localStorage.setItem("racecoordinator_settings", JSON.stringify(updated));
+
+      const snap2 = service.getSettingsSnapshot();
+      expect(snap2.serverPort).toBe(9999);
+      expect(snap2).not.toBe(snap1);
+    });
+  });
 });

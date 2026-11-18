@@ -12,7 +12,27 @@ export class SettingsService {
   private settingsSubject = new BehaviorSubject<Settings>(this.getSettings());
   public settings$: Observable<Settings> = this.settingsSubject.asObservable();
 
+  private cachedRawString: string | null = null;
+  private cachedSnapshot: Settings | null = null;
+
   constructor(private logger: LoggerService) {}
+
+  /**
+   * Returns a cached, read-only snapshot of Settings.
+   * Only re-parsed from localStorage when the underlying stored string changes.
+   */
+  getSettingsSnapshot(): Settings {
+    const storedSettings = localStorage.getItem(this.STORAGE_KEY);
+    if (
+      storedSettings === this.cachedRawString &&
+      this.cachedSnapshot !== null
+    ) {
+      return this.cachedSnapshot;
+    }
+    this.cachedRawString = storedSettings;
+    this.cachedSnapshot = this.getSettings();
+    return this.cachedSnapshot;
+  }
 
   getSettings(): Settings {
     const storedSettings = localStorage.getItem(this.STORAGE_KEY);
@@ -67,7 +87,10 @@ export class SettingsService {
 
   saveSettings(settings: Settings): void {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+      const raw = JSON.stringify(settings);
+      localStorage.setItem(this.STORAGE_KEY, raw);
+      this.cachedRawString = raw;
+      this.cachedSnapshot = settings;
       this.settingsSubject.next(settings);
     } catch (e) {
       this.logger.error("Error saving settings to localStorage", e);
@@ -76,6 +99,8 @@ export class SettingsService {
 
   resetToDefaults(): void {
     localStorage.removeItem(this.STORAGE_KEY);
-    this.settingsSubject.next(new Settings());
+    this.cachedRawString = null;
+    this.cachedSnapshot = new Settings();
+    this.settingsSubject.next(this.cachedSnapshot);
   }
 }

@@ -13,6 +13,7 @@ export interface LeaderboardColumn {
 export interface MetricCell {
   text: string;
   color?: string;
+  cssClass?: string;
 }
 
 @Component({
@@ -257,9 +258,10 @@ export class DetailedLeaderboardComponent extends CustomWidgetBaseComponent {
     for (let i = 0; i < count; i++) {
       if (i < rawStandings.length) {
         const d = rawStandings[i];
-        const cells = columns.map((col) =>
-          this.formatMetric(col.metric, d, i, rawStandings, col.color),
-        );
+        const cells: MetricCell[] = columns.map((col) => ({
+          ...this.formatMetric(col.metric, d, i, rawStandings, col.color),
+          cssClass: col.cssClass,
+        }));
         rows.push({
           position: d.rank || i + 1,
           name: d.name || "Driver",
@@ -274,7 +276,10 @@ export class DetailedLeaderboardComponent extends CustomWidgetBaseComponent {
           isEmpty: false,
         });
       } else {
-        const emptyCells = columns.map(() => ({ text: "" }));
+        const emptyCells: MetricCell[] = columns.map((col) => ({
+          text: "",
+          cssClass: col.cssClass,
+        }));
         rows.push({
           position: i + 1,
           name: "",
@@ -290,6 +295,10 @@ export class DetailedLeaderboardComponent extends CustomWidgetBaseComponent {
     }
 
     return rows;
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 
   formatTotalTime(time: number | undefined): string {

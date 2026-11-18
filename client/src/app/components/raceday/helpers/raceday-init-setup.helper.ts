@@ -1,3 +1,4 @@
+import { RacedayActiveLayoutHelper } from "@app/components/raceday/helpers/raceday-active-layout.helper";
 import { createMockEditorData } from "@app/components/raceday/utils/raceday-mock.utils";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
@@ -57,6 +58,7 @@ export class RacedayInitSetupHelper {
   static initThemeAndTranslationSubscriptions(host: any): void {
     host.subscriptions.push(
       host.themeService.activeTheme$.subscribe(() => {
+        RacedayActiveLayoutHelper.clearLayoutMemoization(host);
         host.laneQrCodeCache.clear();
         host.generatingLaneQrCodes.clear();
         host.driverViewQrCodeCache.clear();

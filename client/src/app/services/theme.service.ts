@@ -52,7 +52,14 @@ export class ThemeService {
     }
   }
 
-  private setActiveThemeInternal(theme: Theme | null): void {
+  private setActiveThemeInternal(theme: Theme | null, force = false): void {
+    // Re-activating the exact same theme object is a no-op. Raceday calls
+    // activateForRace() on every heat/race update (several times per second
+    // while racing); re-emitting the same theme made subscribers clear QR code
+    // caches, rebuild layouts and re-preload audio each time.
+    if (!force && this.initialized && theme === this.activeTheme) {
+      return;
+    }
     this.activeTheme = theme;
     this.activeThemeSubject.next(this.activeTheme);
   }
@@ -94,7 +101,8 @@ export class ThemeService {
       }
     }
 
-    this.setActiveThemeInternal(selectedTheme);
+    // initialize() (re)loads themes from the server; always notify subscribers.
+    this.setActiveThemeInternal(selectedTheme, true);
     this.initialized = true;
   }
 

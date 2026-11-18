@@ -66,6 +66,8 @@
   text-align: center;
   white-space: nowrap;
   user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .leaderboard-table th.col-driver {
@@ -82,6 +84,8 @@
   font-size: 13px;
   white-space: nowrap;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .leaderboard-table tr:hover:not(.empty-row) {

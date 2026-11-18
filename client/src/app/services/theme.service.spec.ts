@@ -119,6 +119,26 @@ describe("ThemeService", () => {
     expect(service.resolveAssetId("non-existent")).toBeNull();
   });
 
+  it("should not re-emit activeTheme$ when activating the already-active theme", async () => {
+    await service.initialize();
+    service.setActiveTheme("theme-1");
+
+    let emissionCount = 0;
+    service.activeTheme$.subscribe(() => {
+      emissionCount++;
+    });
+    // First emission immediately on subscribe from BehaviorSubject: count = 1
+    expect(emissionCount).toBe(1);
+
+    // Activating the exact same theme should be a no-op
+    service.setActiveTheme("theme-1");
+    expect(emissionCount).toBe(1);
+
+    // Switching theme emits
+    service.setActiveTheme("theme-2");
+    expect(emissionCount).toBe(2);
+  });
+
   it("should activate race override when available", async () => {
     const settings = new Settings();
     settings.activeThemeId = "default_theme";

@@ -231,6 +231,36 @@ describe("DetailedLeaderboardComponent (sample-detailed-leaderboard)", () => {
       expect(rows[2].isEmpty).toBeTrue();
       expect(rows[2].position).toBe(3);
     });
+
+    it("should assign cssClass to each cell in displayRows and support trackByIndex", () => {
+      const driver = new Driver("d1", "Test", "Test");
+      const p = new RaceParticipant(
+        "p1",
+        driver,
+        1,
+        5,
+        20,
+        4.0,
+        4.0,
+        4.0,
+        5,
+        1,
+        100,
+      );
+      spyOnProperty(component, "participants", "get").and.returnValue([p]);
+
+      const rows = component.displayRows;
+      expect(rows.length).toBe(1);
+      expect(rows[0].cells.length).toBe(5);
+      expect(rows[0].cells[0].cssClass).toBe("col-time");
+      expect(rows[0].cells[1].cssClass).toBe("col-laps");
+      expect(rows[0].cells[2].cssClass).toBe("col-gap");
+      expect(rows[0].cells[3].cssClass).toBe("col-best");
+      expect(rows[0].cells[4].cssClass).toBe("col-avg");
+
+      expect(component.trackByIndex(0)).toBe(0);
+      expect(component.trackByIndex(42)).toBe(42);
+    });
   });
 
   describe("custom settings getters", () => {
