@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
   Component,
+  computed,
   effect,
   ElementRef,
   input,
@@ -24,6 +25,14 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 export class RacedaySeasonNameComponent implements AfterViewInit, OnDestroy {
   seasonName = input<string | undefined>("");
   widget = input<AbsoluteWidgetNode | null>(null);
+
+  effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
 
   private infoPanel = viewChild<ElementRef<HTMLElement>>("infoPanel");
   private labelText = viewChild<ElementRef<HTMLElement>>("labelText");

@@ -146,4 +146,25 @@ describe("RacedayEventNameComponent", () => {
     expect(labelEl.style.fontSize).toBe("");
     expect(valueEl.style.fontSize).toBe("");
   });
+
+  it("should apply background color when configured in customSettings or widget", () => {
+    fixture.componentRef.setInput("race", {
+      name: "Heat 1",
+      is_event: true,
+      event_name: "Grand Championship",
+    } as any);
+    fixture.componentRef.setInput("widget", {
+      id: "w-event",
+      widgetType: "event-name",
+      customSettings: {
+        backgroundColor: "#123456",
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.backgroundColor).toBe("rgb(18, 52, 86)");
+    expect(component.effectiveBackgroundColor()).toBe("#123456");
+  });
 });

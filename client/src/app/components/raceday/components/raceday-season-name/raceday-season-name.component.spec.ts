@@ -153,4 +153,21 @@ describe("RacedaySeasonNameComponent", () => {
     expect(labelEl.style.fontSize).toBe("");
     expect(valueEl.style.fontSize).toBe("");
   });
+
+  it("should apply background color when configured in customSettings or widget", () => {
+    fixture.componentRef.setInput("seasonName", "2026 Winter Cup");
+    fixture.componentRef.setInput("widget", {
+      id: "w-season",
+      widgetType: "season-name",
+      customSettings: {
+        backgroundColor: "#123456",
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".info-section");
+    expect(panelEl.style.backgroundColor).toBe("rgb(18, 52, 86)");
+    expect(component.effectiveBackgroundColor()).toBe("#123456");
+  });
 });

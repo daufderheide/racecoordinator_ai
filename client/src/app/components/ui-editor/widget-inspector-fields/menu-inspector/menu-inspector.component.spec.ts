@@ -63,10 +63,20 @@ describe("MenuInspectorComponent", () => {
     expect(component.change.emit).toHaveBeenCalled();
   });
 
+  it("should update backgroundColor and emit change on onColorChange", () => {
+    spyOn(component.change, "emit");
+    const mockEvent = { target: { value: "#0000ff" } } as unknown as Event;
+    component.onColorChange("backgroundColor", mockEvent);
+    expect(component.widget().backgroundColor).toBe("#0000ff");
+    expect(component.settings.backgroundColor).toBe("#0000ff");
+    expect(component.change.emit).toHaveBeenCalled();
+  });
+
   it("should reset color on resetColor", () => {
     spyOn(component.change, "emit");
     component.resetColor("backgroundColor");
     expect(component.widget().backgroundColor).toBe("");
+    expect(component.settings.backgroundColor).toBe("");
     expect(component.change.emit).toHaveBeenCalled();
   });
 });

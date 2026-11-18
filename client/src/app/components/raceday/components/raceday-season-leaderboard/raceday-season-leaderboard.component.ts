@@ -16,6 +16,14 @@ export class RacedaySeasonLeaderboardComponent {
   seasonStandings = input<SeasonStandingItem[] | any[]>([]);
   widget = input<AbsoluteWidgetNode | null>(null);
 
+  effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
+
   sortedStandings = computed(() => {
     const list = [...(this.seasonStandings() || [])];
     return list.sort((a, b) => {

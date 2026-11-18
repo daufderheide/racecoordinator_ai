@@ -30,6 +30,14 @@ export class RacedayHeatInfoComponent implements AfterViewInit, OnDestroy {
   totalHeats = input<number>(0);
   widget = input<AbsoluteWidgetNode | null>(null);
 
+  effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
+
   customGroupName = computed(() => {
     const r = this.race();
     const h = this.heat();

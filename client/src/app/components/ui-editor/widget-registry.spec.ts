@@ -22,6 +22,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("season-leaderboard");
     expect(keys).toContain("season-race-leaderboard");
     expect(keys).toContain("track-name");
+    expect(keys).toContain("menu-bar");
     expect(keys).toContain("action-start-resume");
     expect(keys).toContain("action-pause");
     expect(keys).toContain("action-next-heat");
@@ -66,6 +67,7 @@ describe("WIDGET_REGISTRY", () => {
     const leaderboardSettings =
       WIDGET_REGISTRY["leaderboard"].defaultSettings!();
     expect(leaderboardSettings["decimalPlaces"]).toBe(3);
+    expect(leaderboardSettings["backgroundColor"]).toBe("");
 
     const actionSettings =
       WIDGET_REGISTRY["action-start-resume"].defaultSettings!();
@@ -76,6 +78,13 @@ describe("WIDGET_REGISTRY", () => {
     expect(recordsSettings["showRaceRecordScore"]).toBe(true);
     expect(recordsSettings["showCurrentRaceBest"]).toBe(true);
     expect(recordsSettings["showHeatBest"]).toBe(true);
+    expect(recordsSettings["backgroundColor"]).toBe("");
+
+    const heatInfoSettings = WIDGET_REGISTRY["heat-info"].defaultSettings!();
+    expect(heatInfoSettings["backgroundColor"]).toBe("");
+
+    const menuBarSettings = WIDGET_REGISTRY["menu-bar"].defaultSettings!();
+    expect(menuBarSettings["backgroundColor"]).toBe("");
 
     const heatListSettings = WIDGET_REGISTRY["heat-list"].defaultSettings!();
     expect(heatListSettings["showHeader"]).toBe(true);

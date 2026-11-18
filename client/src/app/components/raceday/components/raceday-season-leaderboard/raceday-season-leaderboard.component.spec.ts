@@ -74,4 +74,17 @@ describe("RacedaySeasonLeaderboardComponent", () => {
     } as any);
     expect(component.getScoreFormat()).toBe("1.2-2");
   });
+
+  it("should apply background color when configured in customSettings or widget", () => {
+    fixture.componentRef.setInput("widget", {
+      customSettings: { backgroundColor: "#112233" },
+    } as any);
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector(
+      ".season-leaderboard-panel",
+    );
+    expect(panel.style.backgroundColor).toBe("rgb(17, 34, 51)");
+    expect(component.effectiveBackgroundColor()).toBe("#112233");
+  });
 });

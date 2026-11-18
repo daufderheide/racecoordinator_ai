@@ -33,6 +33,14 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
   heatBestNickname = input<string>("");
   heatBestTime = input<number>(0);
 
+  effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
+
   showRaceRecordLap = computed(
     () => this.widget()?.customSettings?.["showRaceRecordLap"] !== false,
   );
