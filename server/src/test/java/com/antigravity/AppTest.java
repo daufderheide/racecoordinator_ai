@@ -183,7 +183,7 @@ public class AppTest {
     App.setCurrentTrayIcon(null);
     assertNull(App.getCurrentTrayIcon());
 
-    if (!GraphicsEnvironment.isHeadless()) {
+    if (!GraphicsEnvironment.isHeadless() && java.awt.SystemTray.isSupported()) {
       java.awt.image.BufferedImage img =
           new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB);
       java.awt.TrayIcon icon = new java.awt.TrayIcon(img, "Test");
