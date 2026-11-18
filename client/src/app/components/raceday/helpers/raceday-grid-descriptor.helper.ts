@@ -384,6 +384,64 @@ export class RacedayGridDescriptorHelper {
     return { session, labelWidget };
   }
 
+  private static alignTopHeaderWidgets(
+    headers: AbsoluteWidgetNode[],
+    cellWidgets: AbsoluteWidgetNode[],
+  ): AbsoluteWidgetNode[] {
+    const masterMap = new Map<string, { x: number; width: number }>();
+    for (const cell of cellWidgets) {
+      const masterId = cell.customSettings?.["gridMasterId"] || cell.id;
+      const lane = Number(
+        cell.customSettings?.["gridLane"] ??
+          cell.customSettings?.["targetIndex"] ??
+          0,
+      );
+      if (lane === 0 || !masterMap.has(masterId)) {
+        masterMap.set(masterId, { x: cell.x, width: cell.width });
+      }
+    }
+
+    return headers.map((header) => {
+      const masterId = header.customSettings?.["gridMasterId"];
+      if (masterId && masterMap.has(masterId)) {
+        const geom = masterMap.get(masterId)!;
+        if (header.x !== geom.x || header.width !== geom.width) {
+          return { ...header, x: geom.x, width: geom.width };
+        }
+      }
+      return header;
+    });
+  }
+
+  private static alignLeftHeaderWidgets(
+    headers: AbsoluteWidgetNode[],
+    cellWidgets: AbsoluteWidgetNode[],
+  ): AbsoluteWidgetNode[] {
+    const masterMap = new Map<string, { y: number; height: number }>();
+    for (const cell of cellWidgets) {
+      const masterId = cell.customSettings?.["gridMasterId"] || cell.id;
+      const lane = Number(
+        cell.customSettings?.["gridLane"] ??
+          cell.customSettings?.["targetIndex"] ??
+          0,
+      );
+      if (lane === 0 || !masterMap.has(masterId)) {
+        masterMap.set(masterId, { y: cell.y, height: cell.height });
+      }
+    }
+
+    return headers.map((header) => {
+      const masterId = header.customSettings?.["gridMasterId"];
+      if (masterId && masterMap.has(masterId)) {
+        const geom = masterMap.get(masterId)!;
+        if (header.y !== geom.y || header.height !== geom.height) {
+          return { ...header, y: geom.y, height: geom.height };
+        }
+      }
+      return header;
+    });
+  }
+
   static partitionGridWidgets(
     sessionLike: LaneGridSession,
     allGridWidgets: AbsoluteWidgetNode[],
@@ -409,14 +467,30 @@ export class RacedayGridDescriptorHelper {
         : allGridWidgets;
 
     if (headerPlacement === "top" && isVertical) {
-      return {
-        headerWidgets: normalizedGridWidgets.filter(
-          (w) => w.customSettings?.["isHeaderWidget"],
-        ),
-        cellWidgets: normalizedGridWidgets.filter(
-          (w) => !w.customSettings?.["isHeaderWidget"],
-        ),
-      };
+      const rawHeaders = normalizedGridWidgets.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      const cellWidgets = normalizedGridWidgets.filter(
+        (w) => !w.customSettings?.["isHeaderWidget"],
+      );
+      const headerWidgets = RacedayGridDescriptorHelper.alignTopHeaderWidgets(
+        rawHeaders,
+        cellWidgets,
+      );
+      return { headerWidgets, cellWidgets };
+    }
+    if (headerPlacement === "left" && !isVertical) {
+      const rawHeaders = normalizedGridWidgets.filter(
+        (w) => w.customSettings?.["isHeaderWidget"],
+      );
+      const cellWidgets = normalizedGridWidgets.filter(
+        (w) => !w.customSettings?.["isHeaderWidget"],
+      );
+      const headerWidgets = RacedayGridDescriptorHelper.alignLeftHeaderWidgets(
+        rawHeaders,
+        cellWidgets,
+      );
+      return { headerWidgets, cellWidgets };
     }
     return {
       headerWidgets: [],

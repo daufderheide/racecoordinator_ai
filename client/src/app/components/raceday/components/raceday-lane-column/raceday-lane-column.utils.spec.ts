@@ -1778,17 +1778,25 @@ describe("raceday-lane-column.utils", () => {
       expect(family).toBe("Courier, monospace");
     });
 
-    it("should resolve computed style font-family when element is connected to DOM", () => {
+    it("should resolve computed style font-family when element is connected to DOM and cache result", () => {
       const parent = document.createElement("div");
       parent.style.fontFamily = "Tahoma, sans-serif";
       const card = document.createElement("div");
       parent.appendChild(card);
       document.body.appendChild(parent);
 
-      const family = resolveCardFontFamily(card, {} as any);
-      document.body.removeChild(parent);
+      const computedSpy = spyOn(window, "getComputedStyle").and.callThrough();
 
-      expect(family).toContain("Tahoma");
+      const family1 = resolveCardFontFamily(card, {} as any);
+      expect(family1).toContain("Tahoma");
+      expect(computedSpy).toHaveBeenCalledTimes(1);
+
+      // Second call should return cached font family without calling window.getComputedStyle again
+      const family2 = resolveCardFontFamily(card, {} as any);
+      expect(family2).toBe(family1);
+      expect(computedSpy).toHaveBeenCalledTimes(1);
+
+      document.body.removeChild(parent);
     });
   });
 

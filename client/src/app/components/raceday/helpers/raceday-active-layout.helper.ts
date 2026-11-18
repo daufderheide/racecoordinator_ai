@@ -182,6 +182,19 @@ export class RacedayActiveLayoutHelper {
     return undefined;
   }
 
+  private static getSettingsReadonly(host: any): Settings {
+    if (typeof host?.settingsService?.getSettingsSnapshot === "function") {
+      return host.settingsService.getSettingsSnapshot();
+    }
+    return host?.settingsService?.getSettings?.() || new Settings();
+  }
+
+  static clearLayoutMemoization(host: any): void {
+    if (host) {
+      host._memoizedLayoutInfo = null;
+    }
+  }
+
   static getCurrentRacedayLayout(host: any): LayoutConfig | undefined {
     if (host._explicitRacedayLayout !== undefined) {
       return host._explicitRacedayLayout ?? undefined;
@@ -190,39 +203,61 @@ export class RacedayActiveLayoutHelper {
     if (editorLayout !== undefined) {
       return editorLayout;
     }
-    const settings = host.settingsService.getSettings();
+
+    const settings = RacedayActiveLayoutHelper.getSettingsReadonly(host);
+    const activeTheme = host.themeService?.getActiveTheme?.();
+    const isDriverStation = Boolean(
+      host.isDriverStationLayout || host.isDriverStation,
+    );
+    const isPractice = Boolean(host.isPracticeLayout);
+    const themeId = activeTheme?.entity_id || "";
+    const themeUiId = activeTheme?.uiId || "";
+    const lanesCount = host.track?.lanes?.length || 4;
+
+    const memo = host._memoizedLayoutInfo;
+    if (
+      memo &&
+      memo.settings === settings &&
+      memo.themeId === themeId &&
+      memo.themeUiId === themeUiId &&
+      memo.isDriverStation === isDriverStation &&
+      memo.isPractice === isPractice &&
+      memo.lanesCount === lanesCount
+    ) {
+      return memo.layout;
+    }
+
     let customUI: CustomUI | undefined;
-    const activeTheme = host.themeService.getActiveTheme();
-    if (host.isDriverStationLayout || host.isDriverStation) {
+    if (isDriverStation) {
       if (activeTheme?.uiId) {
-        customUI = host.customUiService.getCustomUI(activeTheme.uiId);
+        customUI = host.customUiService?.getCustomUI?.(activeTheme.uiId);
       }
       if (!customUI) {
-        customUI = host.customUiService.getCustomUI(
+        customUI = host.customUiService?.getCustomUI?.(
           "driver_station_ui_layout_rc_ai",
         );
       }
     } else {
       customUI =
         activeTheme && activeTheme.uiId
-          ? host.customUiService.getCustomUI(activeTheme.uiId)
+          ? host.customUiService?.getCustomUI?.(activeTheme.uiId)
           : undefined;
     }
-    const fallbackLayout =
-      host.isDriverStationLayout || host.isDriverStation
-        ? JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT))
-        : host.isPracticeLayout
-          ? settings.practiceRacedayLayout ||
-            Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT
-          : settings.racedayLayout || Settings.LEGACY_DEFAULT_LAYOUT;
+    const fallbackLayout = isDriverStation
+      ? JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT))
+      : isPractice
+        ? settings.practiceRacedayLayout ||
+          Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT
+        : settings.racedayLayout || Settings.LEGACY_DEFAULT_LAYOUT;
     const resolvedLayout = RacedayActiveLayoutHelper.getParsedCustomUiProperty(
       host,
       customUI,
       "layoutJson",
       fallbackLayout,
     );
+    let finalLayout = resolvedLayout;
     if (
-      !host.isUIEditorMode() &&
+      !host.isUIEditorMode?.() &&
       LaneViewMigrationHelper.hasLegacyLaneView(resolvedLayout)
     ) {
       const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
@@ -231,16 +266,28 @@ export class RacedayActiveLayoutHelper {
         columnLayouts: host.currentColumnLayouts,
         columnWidths: host.currentColumnWidths,
         columnAnchors: host.currentColumnAnchors,
-        totalLanes: host.track?.lanes?.length || 4,
-        isPractice: host.isPracticeLayout,
+        totalLanes: lanesCount,
+        isPractice,
       });
       if (migration.migrated) {
         LaneViewMigrationHelper.migrateGapWidgets(migration.layout);
-        return migration.layout;
+        finalLayout = migration.layout;
       }
     }
-    LaneViewMigrationHelper.migrateGapWidgets(resolvedLayout);
-    return resolvedLayout;
+    if (finalLayout === resolvedLayout) {
+      LaneViewMigrationHelper.migrateGapWidgets(resolvedLayout);
+    }
+
+    host._memoizedLayoutInfo = {
+      settings,
+      themeId,
+      themeUiId,
+      isDriverStation,
+      isPractice,
+      lanesCount,
+      layout: finalLayout,
+    };
+    return finalLayout;
   }
 
   static setCurrentRacedayLayout(
@@ -248,6 +295,7 @@ export class RacedayActiveLayoutHelper {
     layout: LayoutConfig | undefined,
   ): void {
     host._explicitRacedayLayout = layout;
+    host._memoizedLayoutInfo = null;
     if (host.isUIEditorMode() && host.activeCustomUi()) {
       const ui = host.activeCustomUi()!;
       ui.layoutJson = layout ? JSON.stringify(layout) : "";
@@ -290,7 +338,7 @@ export class RacedayActiveLayoutHelper {
         ? host.editingSettings()!.practiceRacedayColumns || []
         : host.editingSettings()!.racedayColumns || [];
     }
-    const settings = host.settingsService.getSettings();
+    const settings = RacedayActiveLayoutHelper.getSettingsReadonly(host);
     const activeTheme = host.themeService.getActiveTheme();
     const customUI =
       activeTheme && activeTheme.uiId
@@ -354,7 +402,7 @@ export class RacedayActiveLayoutHelper {
         ? host.editingSettings()!.practiceColumnAnchors || {}
         : host.editingSettings()!.columnAnchors || {};
     }
-    const settings = host.settingsService.getSettings();
+    const settings = RacedayActiveLayoutHelper.getSettingsReadonly(host);
     const activeTheme = host.themeService.getActiveTheme();
     const customUI =
       activeTheme && activeTheme.uiId
@@ -423,7 +471,7 @@ export class RacedayActiveLayoutHelper {
         ? host.editingSettings()!.practiceColumnLayouts || {}
         : host.editingSettings()!.columnLayouts || {};
     }
-    const settings = host.settingsService.getSettings();
+    const settings = RacedayActiveLayoutHelper.getSettingsReadonly(host);
     const activeTheme = host.themeService.getActiveTheme();
     const customUI =
       activeTheme && activeTheme.uiId
@@ -490,7 +538,7 @@ export class RacedayActiveLayoutHelper {
         ? host.editingSettings()!.practiceColumnWidths || {}
         : host.editingSettings()!.columnWidths || {};
     }
-    const settings = host.settingsService.getSettings();
+    const settings = RacedayActiveLayoutHelper.getSettingsReadonly(host);
     const activeTheme = host.themeService.getActiveTheme();
     const customUI =
       activeTheme && activeTheme.uiId

@@ -746,6 +746,11 @@ app-default-raceday {
   box-sizing: border-box;
 }
 
+.raceday-grid-scroll-content > app-raceday-absolute-widget {
+  content-visibility: auto;
+  contain-intrinsic-size: 120px 40px;
+}
+
 .raceday-grid-label {
   position: absolute;
   display: flex;

@@ -705,6 +705,17 @@ export class RacedaySubscriptionsHelper {
     return settings?.highlightLapStyle || "classic";
   }
 
+  public static hasSegmentColumns(host: any): boolean {
+    if (!host || !Array.isArray(host.columns)) {
+      return false;
+    }
+    return host.columns.some(
+      (c: any) =>
+        typeof c?.propertyName === "string" &&
+        c.propertyName.startsWith("segmentTime"),
+    );
+  }
+
   public static subscribeToLiveUpdates(host: any): void {
     host.subscriptions.push(
       host.raceConnectionService.carData$.subscribe((carData: any) => {
@@ -720,7 +731,10 @@ export class RacedaySubscriptionsHelper {
 
     host.subscriptions.push(
       host.raceConnectionService.segments$.subscribe((_segment: any) => {
-        if (!host.isDestroyed) {
+        if (
+          !host.isDestroyed &&
+          RacedaySubscriptionsHelper.hasSegmentColumns(host)
+        ) {
           host.cdr.markForCheck();
         }
       }),

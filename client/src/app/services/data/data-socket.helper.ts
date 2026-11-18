@@ -128,9 +128,9 @@ export class DataSocketHelper {
     this.logger.info(`Sent RaceSubscriptionRequest: subscribe=${subscribe}`);
   }
 
-  public handleRaceDataMessage(event: MessageEvent) {
-    this.ngZone.run(() => {
-      try {
+  public handleRaceDataMessage(event: MessageEvent): void {
+    try {
+      this.ngZone.run(() => {
         const now =
           typeof performance !== "undefined" ? performance.now() : Date.now();
         const dispatchDelay =
@@ -152,43 +152,51 @@ export class DataSocketHelper {
           Reader.create(new Uint8Array(arrayBuffer)),
         );
 
-        const previousState = this.raceStateSubject.value;
-        let newState = previousState;
-        if (raceData.raceState) {
-          this.logger.debug("WS: Received RaceState", raceData.raceState);
-          newState = raceData.raceState;
-          this.raceStateSubject.next(raceData.raceState);
-        }
-        if (raceData.race) {
-          this.logger.debug("WS: Received Race", raceData.race);
-          this.raceUpdateSubject.next(raceData.race);
-          if (raceData.race.state) {
-            newState = raceData.race.state;
-            this.raceStateSubject.next(raceData.race.state);
-          }
-          if (raceData.race.flag) {
-            this.flagSubject.next(raceData.race.flag);
-          }
-          if (raceData.race.currentHeat) {
-            this.heatSubject.next(raceData.race.currentHeat);
-          }
-        }
-        if (newState !== previousState) {
-          this.lastRaceTimeReceivedAt = 0;
-        }
-        if (raceData.raceTime) {
-          this.handleRaceTimeMessage(
-            raceData.raceTime,
-            newState,
-            now,
-            dispatchDelay,
-          );
-        }
-        this.dispatchTelemetryUpdates(raceData);
-      } catch (e) {
-        this.logger.error("Error parsing race data message", e);
+        this.processDecodedRaceData(raceData, now, dispatchDelay);
+      });
+    } catch (e) {
+      this.logger.error("Error parsing race data message", e);
+    }
+  }
+
+  public processDecodedRaceData(
+    raceData: RaceData,
+    now: number,
+    dispatchDelay: number,
+  ): void {
+    const previousState = this.raceStateSubject.value;
+    let newState = previousState;
+    if (raceData.raceState) {
+      this.logger.debug("WS: Received RaceState", raceData.raceState);
+      newState = raceData.raceState;
+      this.raceStateSubject.next(raceData.raceState);
+    }
+    if (raceData.race) {
+      this.logger.debug("WS: Received Race", raceData.race);
+      this.raceUpdateSubject.next(raceData.race);
+      if (raceData.race.state) {
+        newState = raceData.race.state;
+        this.raceStateSubject.next(raceData.race.state);
       }
-    });
+      if (raceData.race.flag) {
+        this.flagSubject.next(raceData.race.flag);
+      }
+      if (raceData.race.currentHeat) {
+        this.heatSubject.next(raceData.race.currentHeat);
+      }
+    }
+    if (newState !== previousState) {
+      this.lastRaceTimeReceivedAt = 0;
+    }
+    if (raceData.raceTime) {
+      this.handleRaceTimeMessage(
+        raceData.raceTime,
+        newState,
+        now,
+        dispatchDelay,
+      );
+    }
+    this.dispatchTelemetryUpdates(raceData);
   }
 
   public handleRaceTimeMessage(

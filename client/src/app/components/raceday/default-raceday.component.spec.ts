@@ -94,6 +94,7 @@ import {
   ILap,
   IRaceTime,
   IRecordData,
+  ISegment,
   IStandingsUpdate,
   LapType,
   RaceFlag,
@@ -404,6 +405,7 @@ describe("DefaultRacedayComponent", () => {
   let standingsUpdateSubject: Subject<IStandingsUpdate>;
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
+  let segmentSubject: BehaviorSubject<ISegment | null>;
   let participantsSubject: Subject<any[]>;
   let carDataSubject: BehaviorSubject<ICarData>;
   let mockLogger: any;
@@ -437,6 +439,7 @@ describe("DefaultRacedayComponent", () => {
     raceStateSubject = mocks.raceStateSubject;
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
+    segmentSubject = mocks.segmentSubject;
     participantsSubject = mocks.participantsSubject;
     carDataSubject = mocks.carDataSubject;
 
@@ -702,6 +705,27 @@ describe("DefaultRacedayComponent", () => {
     expect(component["time"]).toBe(9.8);
     expect(component["autoStartRemaining"]).toBe(0);
     expect(component["autoAdvanceRemaining"]).toBe(9.8);
+  });
+
+  it("should only markForCheck on segment events if layout has segment columns", () => {
+    fixture.detectChanges();
+    const cdrSpy = spyOn((component as any).cdr, "markForCheck");
+
+    // Layout without segment columns should skip markForCheck
+    (component as any).columns = [
+      { propertyName: "driver.nickname" },
+      { propertyName: "lapCount" },
+    ];
+    segmentSubject.next({ segmentNumber: 1, segmentTime: 1.23 } as any);
+    expect(cdrSpy).not.toHaveBeenCalled();
+
+    // Layout with segment columns should trigger markForCheck
+    (component as any).columns = [
+      { propertyName: "driver.nickname" },
+      { propertyName: "segmentTime" },
+    ];
+    segmentSubject.next({ segmentNumber: 1, segmentTime: 1.23 } as any);
+    expect(cdrSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should update isInterfaceConnected when interface connects", () => {
@@ -4411,7 +4435,7 @@ describe("DefaultRacedayComponent", () => {
           { objectId: "hd2", rank: 1 },
         ],
       });
-      tick(); // Let async subscription execute
+      tick();
       fixture.detectChanges();
 
       expect((component as any).getDriverVisualPosition(mockHd2)).toBe(0);
@@ -8684,11 +8708,13 @@ describe("DefaultRacedayComponent", () => {
         // Active voice should have been preempted immediately by urgent White Flag
         expect(audioService.getActiveVoice()?.priority).toBe("urgent");
       } finally {
-        Object.defineProperty(window, "speechSynthesis", {
-          value: originalSpeechSynthesis,
-          writable: true,
-          configurable: true,
-        });
+        if (originalSpeechSynthesis) {
+          Object.defineProperty(window, "speechSynthesis", {
+            value: originalSpeechSynthesis,
+            writable: true,
+            configurable: true,
+          });
+        }
       }
     });
 
