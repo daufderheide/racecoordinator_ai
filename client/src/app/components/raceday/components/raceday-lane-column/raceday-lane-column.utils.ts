@@ -607,6 +607,12 @@ export function safeguardTextOverflow(
   }
 }
 
+const cardFontFamilyCache = new WeakMap<HTMLElement, string>();
+
+export function clearCardFontFamilyCache(): void {
+  // WeakMap entries are garbage collected automatically with elements
+}
+
 export function resolveCardFontFamily(
   cardEl: HTMLElement,
   settings: LaneColumnWidgetSettings,
@@ -616,6 +622,10 @@ export function resolveCardFontFamily(
   }
   if (cardEl.style?.fontFamily) {
     return cardEl.style.fontFamily;
+  }
+  const cached = cardFontFamilyCache.get(cardEl);
+  if (cached) {
+    return cached;
   }
   if (
     cardEl?.isConnected &&
@@ -631,6 +641,7 @@ export function resolveCardFontFamily(
           .replace(/^[\s,]+|[\s,]+$/g, "")
           .trim();
         if (sanitized) {
+          cardFontFamilyCache.set(cardEl, sanitized);
           return sanitized;
         }
       }
@@ -638,6 +649,7 @@ export function resolveCardFontFamily(
       // Fallback if element is disconnected or inaccessible
     }
   }
+  cardFontFamilyCache.set(cardEl, "Inter, sans-serif");
   return "Inter, sans-serif";
 }
 

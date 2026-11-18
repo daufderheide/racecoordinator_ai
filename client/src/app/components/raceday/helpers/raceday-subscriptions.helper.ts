@@ -198,8 +198,21 @@ export class RacedaySubscriptionsHelper {
     host.time = time;
     host.previousTime = time;
 
-    if (!host.isDestroyed) {
-      host.cdr.markForCheck();
+    const currentFormattedTime = host.formattedTime;
+    const shouldMarkForCheck =
+      currentFormattedTime !== host._lastMarkedFormattedTime ||
+      host.autoStartRemaining !== host._lastAutoStartRemaining ||
+      host.autoAdvanceRemaining !== host._lastAutoAdvanceRemaining ||
+      host.raceState !== host._lastMarkedRaceState;
+
+    if (shouldMarkForCheck) {
+      host._lastMarkedFormattedTime = currentFormattedTime;
+      host._lastAutoStartRemaining = host.autoStartRemaining;
+      host._lastAutoAdvanceRemaining = host.autoAdvanceRemaining;
+      host._lastMarkedRaceState = host.raceState;
+      if (!host.isDestroyed) {
+        host.cdr.markForCheck();
+      }
     }
   }
 

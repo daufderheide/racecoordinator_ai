@@ -704,6 +704,38 @@ describe("DefaultRacedayComponent", () => {
     expect(component["autoAdvanceRemaining"]).toBe(9.8);
   });
 
+  it("should skip cdr.markForCheck when formattedTime and countdown remain unchanged on steady ticks", () => {
+    fixture.detectChanges();
+    raceStateSubject.next(RaceState.RACING);
+    (component as any).timeFormat = "1.0-0";
+    const cdrSpy = spyOn((component as any).cdr, "markForCheck");
+
+    // First emission marks for check as formattedTime transitions to "59"
+    raceTimeSubject.next({
+      time: 59.4,
+      autoStartRemaining: 0,
+      autoAdvanceRemaining: 0,
+    });
+    expect(cdrSpy).toHaveBeenCalledTimes(1);
+
+    // Intermediate tick within the same second in integer format ("59" -> "59")
+    cdrSpy.calls.reset();
+    raceTimeSubject.next({
+      time: 59.2,
+      autoStartRemaining: 0,
+      autoAdvanceRemaining: 0,
+    });
+    expect(cdrSpy).not.toHaveBeenCalled();
+
+    // Time ticks to next second ("58") -> marks for check
+    raceTimeSubject.next({
+      time: 58.9,
+      autoStartRemaining: 0,
+      autoAdvanceRemaining: 0,
+    });
+    expect(cdrSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("should update isInterfaceConnected when interface connects", () => {
     fixture.detectChanges();
     expect((component as any).isInterfaceConnected).toBeFalse();

@@ -4783,6 +4783,46 @@ describe("RacedayLaneColumnComponent", () => {
         component.ngAfterViewChecked();
         expect(component.fitContent).not.toHaveBeenCalled();
       });
+
+      it("should defer fitContent and mark pending fit when viewportHelper.isVisible is false", () => {
+        const widget = createWidget({ columnKey: "driverName" });
+        fixture.componentRef.setInput("widget", widget);
+        fixture.detectChanges();
+
+        spyOnProperty(
+          component.viewportHelper,
+          "isVisible",
+          "get",
+        ).and.returnValue(false);
+        spyOn(component, "fitContent");
+        spyOnProperty(component, "formattedValue", "get").and.returnValue(
+          "Driver 25",
+        );
+
+        component.ngAfterViewChecked();
+        expect(component.fitContent).not.toHaveBeenCalled();
+        expect(component.viewportHelper.hasPendingFit).toBeTrue();
+      });
+
+      it("should fitContent immediately when viewportHelper.isVisible is true", () => {
+        const widget = createWidget({ columnKey: "driverName" });
+        fixture.componentRef.setInput("widget", widget);
+        fixture.detectChanges();
+
+        spyOnProperty(
+          component.viewportHelper,
+          "isVisible",
+          "get",
+        ).and.returnValue(true);
+        spyOn(component, "fitContent");
+        spyOnProperty(component, "formattedValue", "get").and.returnValue(
+          "Driver 1",
+        );
+
+        component.ngAfterViewChecked();
+        expect(component.fitContent).toHaveBeenCalledWith(false);
+        expect(component.viewportHelper.hasPendingFit).toBeFalse();
+      });
     });
   });
 });

@@ -90,6 +90,7 @@ import {
 } from "./raceday-lane-column-interaction.helper";
 import { resolveVisibleLastLaps } from "./raceday-lane-column-last-laps.helper";
 import { isNumericalOrTimeText } from "./raceday-lane-column-text-wrap.helper";
+import { LaneColumnViewportHelper } from "./raceday-lane-column-viewport.helper";
 
 export { HeatDataLapItem };
 
@@ -132,6 +133,9 @@ export class RacedayLaneColumnComponent
     this.customWidgetService,
   );
   readonly avatarHelper = new LaneColumnAvatarHelper();
+  readonly viewportHelper = new LaneColumnViewportHelper(() => {
+    this.fitContent(false);
+  });
   readonly anchorHelper = new LaneColumnAnchorHelper(
     () => this.widget(),
     () => this.parent(),
@@ -165,16 +169,19 @@ export class RacedayLaneColumnComponent
 
   ngAfterViewInit(): void {
     const cardEl = this.cardRef()?.nativeElement;
-    if (cardEl && typeof ResizeObserver !== "undefined") {
-      this.resizeObserver = new ResizeObserver((entries) => {
-        if (entries && entries[0] && entries[0].contentRect) {
-          const rect = entries[0].contentRect;
-          this.cachedWidth = Math.round(rect.width);
-          this.cachedHeight = Math.round(rect.height);
-        }
-        this.fitContent();
-      });
-      this.resizeObserver.observe(cardEl);
+    if (cardEl) {
+      if (typeof ResizeObserver !== "undefined") {
+        this.resizeObserver = new ResizeObserver((entries) => {
+          if (entries && entries[0] && entries[0].contentRect) {
+            const rect = entries[0].contentRect;
+            this.cachedWidth = Math.round(rect.width);
+            this.cachedHeight = Math.round(rect.height);
+          }
+          this.fitContent();
+        });
+        this.resizeObserver.observe(cardEl);
+      }
+      this.viewportHelper.setup(cardEl);
     }
     this.fitContent();
     checkCustomWidgetReload(
@@ -200,11 +207,17 @@ export class RacedayLaneColumnComponent
     }
     this.lastWidgetRef = currentWidget;
     this.lastFittedValueSnapshot = currentVal;
+    if (!this.viewportHelper.isVisible) {
+      this.viewportHelper.markPendingFit();
+      return;
+    }
+    this.viewportHelper.clearPendingFit();
     this.fitContent(false);
   }
 
   ngOnDestroy(): void {
     this.customWidgetSub?.unsubscribe();
+    this.viewportHelper.destroy();
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }
