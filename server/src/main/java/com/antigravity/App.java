@@ -136,7 +136,23 @@ public class App {
     System.exit(1);
   }
 
+  /** Application name shown by the OS (system tray tooltip, macOS Dock tooltip and app menu). */
+  static final String APP_DISPLAY_NAME = "Race Coordinator AI";
+
+  /**
+   * Without this, macOS shows the process name "java" in the Dock tooltip and app menu, because the
+   * server runs via "java -jar" rather than from an .app bundle. Must be set before AWT starts. The
+   * macOS launch script also passes -Xdock:name, which is what the Dock reliably honours.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/1162
+   */
+  static void applyApplicationName() {
+    if (System.getProperty("apple.awt.application.name") == null) {
+      System.setProperty("apple.awt.application.name", APP_DISPLAY_NAME);
+    }
+  }
+
   public static void main(String[] args) {
+    applyApplicationName();
     triggerLogRollover();
     try {
       logger.info("Race Coordinator AI Server {}", SERVER_VERSION);
@@ -255,7 +271,7 @@ public class App {
         g2d.dispose();
       }
 
-      TrayIcon trayIcon = new TrayIcon(image, "Race Coordinator AI");
+      TrayIcon trayIcon = new TrayIcon(image, APP_DISPLAY_NAME);
       trayIcon.setImageAutoSize(true);
 
       PopupMenu popup = new PopupMenu();

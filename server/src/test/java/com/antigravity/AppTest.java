@@ -75,6 +75,38 @@ public class AppTest {
   }
 
   @Test
+  public void testApplyApplicationName_SetsMacAppNameWhenUnset() {
+    String previous = System.getProperty("apple.awt.application.name");
+    try {
+      System.clearProperty("apple.awt.application.name");
+      App.applyApplicationName();
+      assertEquals("Race Coordinator AI", System.getProperty("apple.awt.application.name"));
+    } finally {
+      restoreProperty("apple.awt.application.name", previous);
+    }
+  }
+
+  @Test
+  public void testApplyApplicationName_KeepsExplicitlyProvidedName() {
+    String previous = System.getProperty("apple.awt.application.name");
+    try {
+      System.setProperty("apple.awt.application.name", "Custom Name");
+      App.applyApplicationName();
+      assertEquals("Custom Name", System.getProperty("apple.awt.application.name"));
+    } finally {
+      restoreProperty("apple.awt.application.name", previous);
+    }
+  }
+
+  private static void restoreProperty(String key, String value) {
+    if (value == null) {
+      System.clearProperty(key);
+    } else {
+      System.setProperty(key, value);
+    }
+  }
+
+  @Test
   public void testParseServerPortDefault() {
     int port = App.parseServerPort(new String[0]);
     assertEquals(7070, port);
