@@ -1612,6 +1612,7 @@
   "RE_TIEBREAKER_AVERAGE_LAP": "Gemiddelde rondetijd",
   "RE_TIEBREAKER_MEDIAN_LAP": "Mediane rondetijd",
   "RE_HEAT_TIMES_THROUGH": "Aantal keren door de heats",
+  "RE_HEAT_TIMES_THROUGH_UNLIMITED_HINT": "0 = onbeperkt: de rotatie herhaalt zich tot je de training beëindigt.",
   "RE_HEAT_TIMES_THROUGH_HINT": "Zorgt ervoor dat de heat-rotatie N keer wordt gedupliceerd.",
   "RE_HELP_ADJUST_DRIFT_LAPS_CONTENT": "Wanneer ingesteld op waar, telt elke ronde die plaatsvindt met enige vorm van driften niet mee voor race-, heat- of coureurrecords.",
   "RE_HELP_ADJUST_DRIFT_LAPS_TITLE": "Rondes met drift uitsluiten van records",

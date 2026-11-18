@@ -511,6 +511,42 @@ public class Race implements ProtocolListener {
     return model != null && model.isPractice();
   }
 
+  /**
+   * A practice with Heat Times Through set to 0 keeps rotating until the director ends it: there is
+   * never a last heat, and another pass of the rotation is added whenever the heat list runs out
+   * (see {@link #appendUnlimitedPracticePass()}).
+   * https://github.com/daufderheide/racecoordinator_ai/issues/471
+   */
+  public boolean isUnlimitedPractice() {
+    return model != null && model.isPractice() && model.getHeatTimesThrough() <= 0;
+  }
+
+  /**
+   * Adds one more pass of the heat rotation to the end of an unlimited practice, numbered on from
+   * the existing heats. The pass is built the same way as the first one, from the current drivers.
+   *
+   * @return the number of heats added
+   */
+  public synchronized int appendUnlimitedPracticePass() {
+    if (!isUnlimitedPractice()) {
+      return 0;
+    }
+    List<Heat> pass = HeatBuilder.buildHeats(this, this.drivers, this.customRotations);
+    List<Heat> grown = new ArrayList<>(heats);
+    int offset = grown.size();
+    for (int i = 0; i < pass.size(); i++) {
+      pass.get(i).setHeatNumber(offset + i + 1);
+    }
+    grown.addAll(pass);
+    setHeats(grown);
+    logger.info(
+        "Unlimited practice: added heats {}-{} (pass {})",
+        offset + 1,
+        grown.size(),
+        pass.isEmpty() ? 0 : grown.size() / pass.size());
+    return pass.size();
+  }
+
   public List<RaceParticipant> getDrivers() {
     return drivers;
   }
@@ -1769,6 +1805,9 @@ public class Race implements ProtocolListener {
   }
 
   public boolean isLastHeat() {
+    if (isUnlimitedPractice()) {
+      return false;
+    }
     return heats.indexOf(currentHeat) == heats.size() - 1;
   }
 

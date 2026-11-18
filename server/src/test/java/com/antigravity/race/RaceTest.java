@@ -5122,4 +5122,140 @@ public class RaceTest {
       assertEquals(0.2, protoP2.getGapPosition(), 0.001);
     }
   }
+
+  // =========================================================================
+  // Unlimited practice (Heat Times Through = 0)
+  // https://github.com/daufderheide/racecoordinator_ai/issues/471
+  // =========================================================================
+  public static class UnlimitedPractice {
+
+    @Before
+    public void setUp() {
+      ServerConfigService configService = mock(ServerConfigService.class);
+      DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+      when(mockDbCtx.getConfigService()).thenReturn(configService);
+      ClientSubscriptionManager.getInstance().setAutoShutdownAction(() -> {});
+      ClientSubscriptionManager.getInstance().setAutoShutdownDelaySeconds(999999);
+      ClientSubscriptionManager.getInstance().setDatabaseContext(mockDbCtx);
+    }
+
+    private com.antigravity.race.Race buildRace(boolean practice, int timesThrough) {
+      Track track =
+          new Track.Builder()
+              .name("Practice Track")
+              .lanes(Arrays.asList(new Lane("red", "black", 100), new Lane("blue", "white", 100)))
+              .entityId("track1")
+              .build();
+      Race model =
+          new Race.Builder()
+              .withName("Practice")
+              .withTrackEntityId("track1")
+              .withHeatRotationType(HeatRotationType.RoundRobin)
+              .withPractice(practice)
+              .withHeatTimesThrough(timesThrough)
+              .withEntityId("practice1")
+              .build();
+      List<RaceParticipant> drivers = new ArrayList<>();
+      drivers.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
+      drivers.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "2"), "p2"));
+      return new com.antigravity.race.Race.Builder()
+          .model(model)
+          .drivers(drivers)
+          .track(track)
+          .isDemoMode(true)
+          .build();
+    }
+
+    private void goToLastHeat(com.antigravity.race.Race race) {
+      List<Heat> heats = race.getHeats();
+      race.setCurrentHeat(heats.get(heats.size() - 1));
+    }
+
+    @Test
+    public void testPracticeWithZeroTimesThroughIsUnlimited() {
+      com.antigravity.race.Race race = buildRace(true, 0);
+
+      assertTrue(race.isUnlimitedPractice());
+      int heatsPerPass = race.getHeats().size();
+      assertEquals(2, heatsPerPass);
+      goToLastHeat(race);
+      assertFalse(race.isLastHeat());
+    }
+
+    @Test
+    public void testAdvancingPastTheLastHeatStartsAnotherPass() {
+      com.antigravity.race.Race race = buildRace(true, 0);
+      int heatsPerPass = race.getHeats().size();
+      List<Heat> firstPass = new ArrayList<>(race.getHeats());
+      goToLastHeat(race);
+
+      Common.advanceToNextHeat(race);
+
+      assertEquals(heatsPerPass * 2, race.getHeats().size());
+      assertTrue(race.getState() instanceof NotStarted);
+      assertEquals(heatsPerPass + 1, race.getCurrentHeat().getHeatNumber());
+      assertSame(race.getHeats().get(heatsPerPass), race.getCurrentHeat());
+      // The new pass repeats the same rotation, lane by lane
+      for (int i = 0; i < heatsPerPass; i++) {
+        Heat original = firstPass.get(i);
+        Heat repeat = race.getHeats().get(heatsPerPass + i);
+        assertEquals(heatsPerPass + i + 1, repeat.getHeatNumber());
+        assertNotSame(original, repeat);
+        for (int lane = 0; lane < original.getDrivers().size(); lane++) {
+          assertSame(
+              original.getDrivers().get(lane).getDriver(),
+              repeat.getDrivers().get(lane).getDriver());
+        }
+      }
+      // The first pass is kept, so its results stay available
+      assertEquals(firstPass, race.getHeats().subList(0, heatsPerPass));
+    }
+
+    @Test
+    public void testUnlimitedPracticeKeepsGoingForManyPasses() {
+      com.antigravity.race.Race race = buildRace(true, 0);
+      int heatsPerPass = race.getHeats().size();
+
+      for (int i = 0; i < 10 * heatsPerPass; i++) {
+        Common.advanceToNextHeat(race);
+        assertFalse(race.getState() instanceof RaceOver);
+      }
+
+      assertEquals(10 * heatsPerPass + 1, race.getCurrentHeat().getHeatNumber());
+      for (int i = 0; i < race.getHeats().size(); i++) {
+        assertEquals(i + 1, race.getHeats().get(i).getHeatNumber());
+      }
+    }
+
+    @Test
+    public void testZeroTimesThroughOnARaceStillEndsAfterOnePass() {
+      com.antigravity.race.Race race = buildRace(false, 0);
+      int heatsPerPass = race.getHeats().size();
+
+      assertFalse(race.isUnlimitedPractice());
+      assertEquals(0, race.appendUnlimitedPracticePass());
+      goToLastHeat(race);
+      assertTrue(race.isLastHeat());
+
+      Common.advanceToNextHeat(race);
+
+      assertTrue(race.getState() instanceof RaceOver);
+      assertEquals(heatsPerPass, race.getHeats().size());
+    }
+
+    @Test
+    public void testPracticeWithTimesThroughStillEnds() {
+      com.antigravity.race.Race race = buildRace(true, 2);
+      int heats = race.getHeats().size();
+
+      assertFalse(race.isUnlimitedPractice());
+      goToLastHeat(race);
+      assertTrue(race.isLastHeat());
+
+      Common.advanceToNextHeat(race);
+
+      assertTrue(race.getState() instanceof RaceOver);
+      assertEquals(heats, race.getHeats().size());
+    }
+  }
 }

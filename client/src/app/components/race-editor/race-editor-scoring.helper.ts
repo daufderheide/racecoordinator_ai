@@ -38,9 +38,13 @@ export class RaceEditorScoringHelper {
 
   static validateHeatConfigurations(editingRace: any): void {
     if (!editingRace) return;
+    // A practice may use 0 = unlimited: the rotation repeats until the
+    // director ends it. https://github.com/daufderheide/racecoordinator_ai/issues/471
+    const min = editingRace.practice ? 0 : 1;
     if (
       editingRace.heat_times_through === null ||
-      editingRace.heat_times_through < 1
+      editingRace.heat_times_through === undefined ||
+      editingRace.heat_times_through < min
     ) {
       editingRace.heat_times_through = 1;
     }

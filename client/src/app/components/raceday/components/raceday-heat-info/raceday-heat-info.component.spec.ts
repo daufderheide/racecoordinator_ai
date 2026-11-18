@@ -62,6 +62,35 @@ describe("RacedayHeatInfoComponent", () => {
     expect((await harness.getHeatStatus()).trim()).toBe("3 of 6");
   });
 
+  // https://github.com/daufderheide/racecoordinator_ai/issues/471
+  it("should show an infinite total for an unlimited practice", async () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 5, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("race", {
+      practice: true,
+      heat_times_through: 0,
+      group_options: { enabled: false },
+    } as Race);
+
+    fixture.detectChanges();
+
+    expect((await harness.getHeatStatus()).trim()).toBe("5 of ∞");
+  });
+
+  it("should show the real total for a practice with times through set", async () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 5, group: 0 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("race", {
+      practice: true,
+      heat_times_through: 3,
+      group_options: { enabled: false },
+    } as Race);
+
+    fixture.detectChanges();
+
+    expect((await harness.getHeatStatus()).trim()).toBe("5 of 6");
+  });
+
   it("should display group details when group options are enabled", async () => {
     fixture.componentRef.setInput("heat", { heatNumber: 3, group: 2 } as Heat);
     fixture.componentRef.setInput("totalHeats", 6);

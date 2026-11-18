@@ -30,6 +30,17 @@ export class RacedayHeatInfoComponent implements AfterViewInit, OnDestroy {
   totalHeats = input<number>(0);
   widget = input<AbsoluteWidgetNode | null>(null);
 
+  /**
+   * An unlimited practice (Heat Times Through 0) keeps adding heats, so show
+   * "Heat 5 of ∞" instead of a total that keeps growing.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/471
+   */
+  totalLabel = computed(() => {
+    const r = this.race();
+    if (r?.practice && r.heat_times_through === 0) return "∞";
+    return this.totalHeats();
+  });
+
   customGroupName = computed(() => {
     const r = this.race();
     const h = this.heat();

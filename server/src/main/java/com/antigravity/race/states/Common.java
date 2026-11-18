@@ -54,6 +54,17 @@ public class Common {
     return false;
   }
 
+  private static int findNextActiveHeat(List<Heat> heats, int currentIndex) {
+    if (heats != null) {
+      for (int i = currentIndex + 1; i < heats.size(); i++) {
+        if (heats.get(i).getActiveDriverCount() > 0) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
   public static void advanceToNextHeat(Race race) {
     List<Heat> heats = race.getHeats();
     Heat currentHeat = race.getCurrentHeat();
@@ -63,14 +74,11 @@ public class Common {
       race.getHeatManager().handleStepUpAdvancement(currentHeat);
     }
 
-    int nextIndex = -1;
-    if (heats != null) {
-      for (int i = currentIndex + 1; i < heats.size(); i++) {
-        if (heats.get(i).getActiveDriverCount() > 0) {
-          nextIndex = i;
-          break;
-        }
-      }
+    int nextIndex = findNextActiveHeat(heats, currentIndex);
+    if (nextIndex == -1 && race.isUnlimitedPractice() && race.appendUnlimitedPracticePass() > 0) {
+      // Unlimited practice (#471): the rotation ran out, so start the next pass.
+      heats = race.getHeats();
+      nextIndex = findNextActiveHeat(heats, currentIndex);
     }
 
     if (nextIndex != -1) {

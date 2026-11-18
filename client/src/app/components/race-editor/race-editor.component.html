@@ -463,10 +463,18 @@
                     type="number"
                     [(ngModel)]="editingRace.heat_times_through"
                     (ngModelChange)="captureState()"
-                    min="1"
+                    [min]="editingRace.practice ? 0 : 1"
                     max="100"
                     step="1"
                   />
+                  @if (editingRace.practice) {
+                    <div
+                      class="heat-times-through-hint"
+                      data-testid="heat-times-through-hint"
+                    >
+                      {{ "RE_HEAT_TIMES_THROUGH_UNLIMITED_HINT" | translate }}
+                    </div>
+                  }
                 </div>
                 <div class="config-section checkbox-section">
                   <label

@@ -39,7 +39,7 @@
       [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
       >{{
         "RD_HEAT_OF_TOTAL"
-          | translate: { current: heat()!.heatNumber, total: totalHeats() }
+          | translate: { current: heat()!.heatNumber, total: totalLabel() }
       }}<!--
    -->
       @if (race() && race()!.group_options && race()!.group_options.enabled) {

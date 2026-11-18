@@ -58,6 +58,34 @@ describe("RaceEditorScoringHelper", () => {
       expect(mockEditingRace.heat_times_through).toBe(1);
     });
 
+    // https://github.com/daufderheide/racecoordinator_ai/issues/471
+    it("should allow 0 (unlimited) heat times through for a practice", () => {
+      mockEditingRace.practice = true;
+      mockEditingRace.heat_times_through = 0;
+      RaceEditorScoringHelper.validateHeatConfigurations(mockEditingRace);
+      expect(mockEditingRace.heat_times_through).toBe(0);
+    });
+
+    it("should still clamp negative or empty heat times through for a practice", () => {
+      mockEditingRace.practice = true;
+      mockEditingRace.heat_times_through = -1;
+      RaceEditorScoringHelper.validateHeatConfigurations(mockEditingRace);
+      expect(mockEditingRace.heat_times_through).toBe(1);
+
+      mockEditingRace.heat_times_through = null;
+      RaceEditorScoringHelper.validateHeatConfigurations(mockEditingRace);
+      expect(mockEditingRace.heat_times_through).toBe(1);
+    });
+
+    it("should reset 0 to 1 when the race is no longer a practice", () => {
+      mockEditingRace.practice = true;
+      mockEditingRace.heat_times_through = 0;
+      RaceEditorScoringHelper.validateHeatConfigurations(mockEditingRace);
+      mockEditingRace.practice = false;
+      RaceEditorScoringHelper.validateHeatConfigurations(mockEditingRace);
+      expect(mockEditingRace.heat_times_through).toBe(1);
+    });
+
     it("should clamp warmup times to main times", () => {
       RaceEditorScoringHelper.validateWarmupTimes(mockEditingRace);
       expect(mockEditingRace.auto_advance_warmup_time).toBe(10);
