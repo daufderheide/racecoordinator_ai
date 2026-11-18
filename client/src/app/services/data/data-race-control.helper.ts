@@ -98,6 +98,7 @@ export class DataRaceControlHelper {
     eventId?: string,
     seasonId?: string,
     themeId?: string,
+    raceAgain?: boolean,
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
@@ -107,6 +108,7 @@ export class DataRaceControlHelper {
       eventId,
       seasonId,
       themeId,
+      raceAgain: raceAgain || undefined,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 

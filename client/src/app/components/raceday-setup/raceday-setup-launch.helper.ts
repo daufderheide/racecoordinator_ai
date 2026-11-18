@@ -265,21 +265,24 @@ export class RacedaySetupLaunchHelper {
    * "Race Again" (raceday File menu): start the previously run race again with
    * the restored race/event, season and drivers, in the same mode (demo or
    * official). A leftover auto-save of the previous run is discarded, exactly as
-   * if the user had answered "No" to the load-auto-save prompt.
+   * if the user had answered "No" to the load-auto-save prompt. The request is
+   * flagged as race_again, so the server refuses it unless the race is over.
    * https://github.com/daufderheide/racecoordinator_ai/issues/679
    */
   static raceAgain(host: any): void {
     const settings = host.settingsService.getSettings();
     RacedaySetupLaunchHelper.startRace(host, !!settings.lastStartIsDemo, {
       discardAutoSave: true,
+      raceAgain: true,
     });
   }
 
   static startRace(
     host: any,
     isDemo: boolean,
-    options?: { discardAutoSave?: boolean },
+    options?: { discardAutoSave?: boolean; raceAgain?: boolean },
   ): void {
+    host.pendingRaceAgain = !!options?.raceAgain;
     if (
       !host.isEventMode &&
       host.selectedRace?.compatibility?.can_run === false
@@ -365,6 +368,9 @@ export class RacedaySetupLaunchHelper {
       host.selectedRace?.theme_id ||
       undefined;
 
+    const raceAgain = !!host.pendingRaceAgain;
+    host.pendingRaceAgain = false;
+
     const initializeObservable =
       eventId || seasonId
         ? host.dataService.initializeRace(
@@ -375,6 +381,7 @@ export class RacedaySetupLaunchHelper {
             eventId,
             seasonId,
             themeId,
+            raceAgain,
           )
         : host.dataService.initializeRace(
             raceId,
@@ -384,6 +391,7 @@ export class RacedaySetupLaunchHelper {
             undefined,
             undefined,
             themeId,
+            raceAgain,
           );
 
     initializeObservable.subscribe({

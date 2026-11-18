@@ -33,6 +33,7 @@
         @if ((authService.currentRole$ | async) !== Role.VIEWER) {
           <div
             class="menu-item race-again-item"
+            [class.disabled]="isRaceAgainDisabled()"
             (click)="onFileMenuSelect('RACE_AGAIN')"
           >
             {{ "RD_MENU_RACE_AGAIN" | translate }}

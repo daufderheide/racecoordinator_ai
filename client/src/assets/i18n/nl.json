@@ -1462,7 +1462,7 @@
   "RD_MENU_RACE_HISTORY": "Racehistorie",
   "RD_MENU_RACE_AGAIN": "Opnieuw racen",
   "RD_CONFIRM_RACE_AGAIN_TITLE": "Opnieuw racen",
-  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "De huidige race beëindigen en opnieuw starten vanaf heat 1 met dezelfde coureurs en instellingen? Is de race nog niet klaar, gebruik dan eerst Bestand → Opslaan om de voortgang te bewaren.",
+  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "De huidige race verlaten en opnieuw starten vanaf heat 1 met dezelfde coureurs en instellingen?",
   "RD_MENU_RENDER_PDF_BACKGROUNDS": "PDF-achtergronden renderen: {{state}}",
   "RD_MENU_RESTART": "Heat Herstarten",
   "RD_MENU_SAVE": "Opslaan",

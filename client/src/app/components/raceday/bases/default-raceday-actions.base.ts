@@ -813,6 +813,10 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
     return RacedayRaceStatusHelper.isSkipRaceDisabled(this);
   }
 
+  get isRaceAgainDisabled(): boolean {
+    return RacedayRaceStatusHelper.isRaceAgainDisabled(this);
+  }
+
   get isAddLapDisabled(): boolean {
     return RacedayRaceStatusHelper.isAddLapDisabled(this);
   }

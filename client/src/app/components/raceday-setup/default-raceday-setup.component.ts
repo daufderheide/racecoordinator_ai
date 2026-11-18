@@ -660,7 +660,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     RacedaySetupLaunchHelper.saveSettings(this, updateRecent);
   }
 
-  startRace(isDemo: boolean, options?: { discardAutoSave?: boolean }) {
+  startRace(
+    isDemo: boolean,
+    options?: { discardAutoSave?: boolean; raceAgain?: boolean },
+  ) {
     RacedaySetupLaunchHelper.startRace(this, isDemo, options);
   }
 

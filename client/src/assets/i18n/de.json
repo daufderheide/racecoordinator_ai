@@ -1248,7 +1248,7 @@
   "RD_MENU_RACE_HISTORY": "Rennhistorie",
   "RD_MENU_RACE_AGAIN": "Rennen wiederholen",
   "RD_CONFIRM_RACE_AGAIN_TITLE": "Rennen wiederholen",
-  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Das aktuelle Rennen beenden und mit denselben Fahrern und Einstellungen ab Lauf 1 neu starten? Ist das Rennen noch nicht fertig, verwenden Sie zuerst Datei → Speichern, um den Fortschritt zu behalten.",
+  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Das aktuelle Rennen verlassen und mit denselben Fahrern und Einstellungen ab Lauf 1 neu starten?",
   "RD_MENU_RENDER_PDF_BACKGROUNDS": "PDF-Hintergründe rendern: {{state}}",
   "RD_MENU_RESTART": "Heat neustarten",
   "RD_MENU_SAVE": "Speichern",

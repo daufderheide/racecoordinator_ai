@@ -647,6 +647,7 @@ describe("DefaultRacedaySetupComponent", () => {
       undefined,
       undefined,
       "default_classic_rc_ai",
+      false,
     );
   }));
 
@@ -684,6 +685,7 @@ describe("DefaultRacedaySetupComponent", () => {
       undefined,
       undefined,
       "custom-theme-123",
+      false,
     );
   }));
 
@@ -4639,6 +4641,10 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockDataService.initializeRace.calls.mostRecent().args[2]).toBe(
         true,
       );
+      // Flagged as race again, so the server can refuse it unless the race is over
+      expect(mockDataService.initializeRace.calls.mostRecent().args[7]).toBe(
+        true,
+      );
       // The flag is removed from the URL so a refresh doesn't start another race
       expect(mockRouter.navigate).toHaveBeenCalledWith(
         [],
@@ -4680,6 +4686,10 @@ describe("DefaultRacedaySetupComponent", () => {
       component.startRace(true);
       flush();
       expect(mockSettingsService.getSettings().lastStartIsDemo).toBeTrue();
+      // A normal start is not a race again
+      expect(mockDataService.initializeRace.calls.mostRecent().args[7]).toBe(
+        false,
+      );
 
       component.startRace(false);
       flush();

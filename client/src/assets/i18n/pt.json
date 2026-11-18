@@ -1462,7 +1462,7 @@
   "RD_MENU_RACE_HISTORY": "Histórico de corridas",
   "RD_MENU_RACE_AGAIN": "Correr novamente",
   "RD_CONFIRM_RACE_AGAIN_TITLE": "Correr novamente",
-  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Encerrar a corrida atual e reiniciá-la a partir da bateria 1 com os mesmos pilotos e configurações? Se a corrida ainda não terminou, use primeiro Arquivo → Salvar para manter o progresso.",
+  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Sair da corrida atual e reiniciá-la a partir da bateria 1 com os mesmos pilotos e configurações?",
   "RD_MENU_RENDER_PDF_BACKGROUNDS": "Renderizar fundos PDF: {{state}}",
   "RD_MENU_RESTART": "Reiniciar Bateria",
   "RD_MENU_SAVE": "Salvar",

@@ -1462,7 +1462,7 @@
   "RD_MENU_RACE_HISTORY": "Cronologia gare",
   "RD_MENU_RACE_AGAIN": "Ripeti gara",
   "RD_CONFIRM_RACE_AGAIN_TITLE": "Ripeti gara",
-  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Terminare la gara in corso e ripartire dalla manche 1 con gli stessi piloti e impostazioni? Se la gara non è ancora finita, usa prima File → Salva per conservarne l'avanzamento.",
+  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Lasciare la gara in corso e ripartire dalla manche 1 con gli stessi piloti e impostazioni?",
   "RD_MENU_RENDER_PDF_BACKGROUNDS": "Rendering sfondi PDF: {{state}}",
   "RD_MENU_RESTART": "Riavvia Manche",
   "RD_MENU_SAVE": "Salva",

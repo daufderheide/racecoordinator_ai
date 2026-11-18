@@ -1248,7 +1248,7 @@
   "RD_MENU_RACE_HISTORY": "Race History",
   "RD_MENU_RACE_AGAIN": "Race Again",
   "RD_CONFIRM_RACE_AGAIN_TITLE": "Race Again",
-  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "End the current race and start it again from heat 1 with the same drivers and settings? If the race isn't finished yet, use File → Save first to keep its progress.",
+  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "Leave the current race and start it again from heat 1 with the same drivers and settings?",
   "RD_MENU_RENDER_PDF_BACKGROUNDS": "Render PDF Backgrounds: {{state}}",
   "RD_MENU_RESTART": "Restart Heat",
   "RD_MENU_SAVE": "Save",

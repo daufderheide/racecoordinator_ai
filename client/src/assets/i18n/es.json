@@ -1462,7 +1462,7 @@
   "RD_MENU_RACE_HISTORY": "Historial de carreras",
   "RD_MENU_RACE_AGAIN": "Repetir carrera",
   "RD_CONFIRM_RACE_AGAIN_TITLE": "Repetir carrera",
-  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "¿Terminar la carrera actual y volver a empezarla desde la manga 1 con los mismos pilotos y ajustes? Si la carrera aún no ha terminado, use primero Archivo → Guardar para conservar su progreso.",
+  "RD_CONFIRM_RACE_AGAIN_MESSAGE": "¿Salir de la carrera actual y volver a empezarla desde la manga 1 con los mismos pilotos y ajustes?",
   "RD_MENU_RENDER_PDF_BACKGROUNDS": "Renderizar fondos PDF: {{state}}",
   "RD_MENU_RESTART": "Reiniciar Manga",
   "RD_MENU_SAVE": "Guardar",
