@@ -192,6 +192,38 @@ public class SqliteRepository<T> {
     }
   }
 
+  /**
+   * Writes a raw JSON document. Like {@link #save}, fields of the stored row that the new JSON does
+   * not have are kept, so values a newer or older version doesn't know survive. Used by the club
+   * package import, which works on raw JSON to stay version independent.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/972
+   */
+  public void saveRawJson(String entityId, String json) {
+    if (entityId == null || json == null) {
+      return;
+    }
+    ensureTableExists();
+    if (databaseContext == null || databaseContext.getConnection() == null) {
+      return;
+    }
+    try {
+      String merged = mergeUnmappedProperties(findRawJsonByEntityId(entityId), json);
+      String sql =
+          "INSERT INTO "
+              + tableName
+              + " (entity_id, sequence_id, json_data) VALUES (?, ?, ?) "
+              + "ON CONFLICT(entity_id) DO UPDATE SET sequence_id=excluded.sequence_id, json_data=excluded.json_data";
+      try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, entityId);
+        pstmt.setString(2, null);
+        pstmt.setString(3, merged);
+        pstmt.executeUpdate();
+      }
+    } catch (Exception e) {
+      logger.error("Error saving raw JSON to table {}", tableName, e);
+    }
+  }
+
   private String mergeUnmappedProperties(String existingJson, String newJson) {
     if (existingJson == null || existingJson.trim().isEmpty()) {
       return newJson;

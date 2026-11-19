@@ -68,6 +68,7 @@ public class DatabaseTaskHandler {
     this.historyPredictionTaskHandler = new HistoryPredictionTaskHandler(databaseContext, app);
     this.raceHeatTaskHandler = new RaceHeatTaskHandler(databaseContext, app);
     new DriverImportTaskHandler(databaseContext, driverRepository, app);
+    new ClubPackageTaskHandler(databaseContext, app);
     new DriverLabelTaskHandler(databaseContext, driverRepository, teamRepository, app);
 
     // Driver Endpoints

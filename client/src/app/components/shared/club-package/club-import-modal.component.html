@@ -1,0 +1,323 @@
+@if (visible()) {
+  <div class="club-modal-backdrop" id="club-import-modal-backdrop">
+    <div
+      class="club-modal-dialog"
+      [class.wide]="step === 'preview'"
+      id="club-import-modal-dialog"
+    >
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">download</span>
+          <h2 class="modal-title">{{ "CRI_TITLE" | translate }}</h2>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (errorMessage) {
+          <div class="alert-banner error" id="club-import-error">
+            <span class="material-icons">error</span>
+            <span>{{ errorMessage | translate }}</span>
+          </div>
+        }
+
+        <!-- Step 1: choose the file -->
+        @if (step === "upload") {
+          <p class="hint">{{ "CRI_INFO" | translate }}</p>
+          <div
+            class="dropzone"
+            id="club-import-dropzone"
+            [class.dragging]="isDragging"
+            (click)="fileInput.click()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+          >
+            <span class="material-icons">upload_file</span>
+            <div>
+              {{ (isLoading ? "CRI_READING" : "CRI_DROP_FILE") | translate }}
+            </div>
+          </div>
+          <input
+            #fileInput
+            id="club-import-file-input"
+            type="file"
+            accept=".json,application/json"
+            hidden
+            (change)="onFileSelected($event)"
+          />
+        }
+
+        <!-- Step 2: preview and choices -->
+        @if (step === "preview" && preview) {
+          @for (w of preview.warnings; track w) {
+            <div class="alert-banner warning">
+              <span class="material-icons">warning</span>
+              <span>{{ w | translate }}</span>
+            </div>
+          }
+
+          <!-- Championship -->
+          <div class="section" id="club-import-season">
+            <div class="section-header">
+              <span>{{ "CRI_SECTION_CHAMPIONSHIP" | translate }}</span>
+              <span class="hint"
+                >{{
+                  "CRI_FROM_VERSION"
+                    | translate: { version: preview.sourceAppVersion }
+                }}
+                · {{ preview.exportedAt | localDate: "short" }}</span
+              >
+            </div>
+            <div class="section-body">
+              <div class="season-row">
+                <div>
+                  <span class="field-label">{{
+                    "CRI_CHAMPIONSHIP" | translate
+                  }}</span>
+                  <strong>{{ preview.season.name }}</strong>
+                </div>
+                <div>
+                  <label class="field-label" for="club-import-season-target">{{
+                    "CRI_IMPORT_INTO" | translate
+                  }}</label>
+                  <select
+                    id="club-import-season-target"
+                    class="club-select"
+                    [ngModel]="seasonTarget()"
+                    (ngModelChange)="setSeasonTarget($event)"
+                  >
+                    <option value="new">
+                      {{
+                        "CRI_NEW_SEASON"
+                          | translate: { name: preview.season.name }
+                      }}
+                    </option>
+                    @for (s of preview.existing.seasons ?? []; track s.id) {
+                      <option [value]="s.id">{{ s.name }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              @if (
+                preview.season.resolution === "MERGE" &&
+                preview.season.existingDrops !== preview.season.packageDrops
+              ) {
+                <label class="checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="club-import-use-drops"
+                    [(ngModel)]="preview.season.usePackageDrops"
+                  />
+                  {{
+                    "CRI_USE_PACKAGE_DROPS"
+                      | translate
+                        : {
+                            theirs: preview.season.packageDrops,
+                            mine: preview.season.existingDrops,
+                          }
+                  }}
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Race nights -->
+          <div class="section" id="club-import-nights">
+            <div class="section-header">
+              <span>{{ "CRI_SECTION_RACE_NIGHTS" | translate }}</span>
+              <span class="hint">{{
+                "CRI_NIGHT_COUNTS"
+                  | translate
+                    : {
+                        new: countStatus("NEW"),
+                        changed: countStatus("CHANGED"),
+                        same: countStatus("SAME"),
+                      }
+              }}</span>
+            </div>
+            <div class="section-body">
+              <table class="club-table">
+                <thead>
+                  <tr>
+                    <th>{{ "CRI_COL_DATE" | translate }}</th>
+                    <th>{{ "CRI_COL_RACE" | translate }}</th>
+                    <th>{{ "CRI_COL_DRIVERS" | translate }}</th>
+                    <th>{{ "CRI_COL_STATUS" | translate }}</th>
+                    <th>{{ "CRI_COL_ACTION" | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (n of preview.raceNights; track n.key) {
+                    <tr>
+                      <td>{{ n.timestamp | localDate: "short" }}</td>
+                      <td>{{ n.raceName }}</td>
+                      <td>{{ n.driverCount }}</td>
+                      <td>
+                        <span
+                          class="badge"
+                          [class.badge-new]="n.status === 'NEW'"
+                          [class.badge-same]="n.status === 'SAME'"
+                          [class.badge-changed]="n.status === 'CHANGED'"
+                          >{{ "CRI_STATUS_" + n.status | translate }}</span
+                        >
+                      </td>
+                      <td>
+                        <select class="club-select" [(ngModel)]="n.resolution">
+                          @for (o of nightOptions(n); track o) {
+                            <option [value]="o">
+                              {{ "CRI_NIGHT_" + o | translate }}
+                            </option>
+                          }
+                        </select>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Drivers, tracks, race classes -->
+          @for (k of kinds; track k.kind) {
+            @if (items(k.kind).length > 0) {
+              <div class="section" [id]="'club-import-' + k.kind">
+                <div class="section-header">
+                  <span>{{ k.titleKey | translate }}</span>
+                  <span class="hint">{{ items(k.kind).length }}</span>
+                </div>
+                <div class="section-body">
+                  <table class="club-table">
+                    <thead>
+                      <tr>
+                        <th>{{ "CRI_COL_IN_FILE" | translate }}</th>
+                        <th>{{ "CRI_COL_MATCH" | translate }}</th>
+                        <th>{{ "CRI_COL_USE" | translate }}</th>
+                        <th>{{ "CRI_COL_UPDATE" | translate }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (item of items(k.kind); track item.ref) {
+                        <tr>
+                          <td>
+                            {{ item.name }}
+                            @for (d of item.differences; track d) {
+                              <span class="diff">{{ d | translate }}</span>
+                            }
+                          </td>
+                          <td>
+                            <span
+                              class="badge"
+                              [class.badge-match]="item.resolution !== 'CREATE'"
+                              [class.badge-new]="item.resolution === 'CREATE'"
+                              >{{ matchLabelKey(item) | translate }}</span
+                            >
+                          </td>
+                          <td>
+                            <select
+                              class="club-select"
+                              [ngModel]="targetOf(item)"
+                              (ngModelChange)="setTarget(k.kind, item, $event)"
+                            >
+                              <option value="new">
+                                {{ "CRI_ADD_AS_NEW" | translate }}
+                              </option>
+                              @for (o of existingOptions(k.kind); track o.id) {
+                                <option [value]="o.id">{{ o.name }}</option>
+                              }
+                            </select>
+                          </td>
+                          <td>
+                            @if (item.resolution !== "CREATE") {
+                              <input
+                                type="checkbox"
+                                [title]="'CRI_UPDATE_TOOLTIP' | translate"
+                                [ngModel]="item.resolution === 'UPDATE'"
+                                (ngModelChange)="setUpdate(item, $event)"
+                              />
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          }
+        }
+
+        <!-- Step 3: summary -->
+        @if (step === "summary" && result) {
+          <div class="alert-banner info">
+            <span class="material-icons">check_circle</span>
+            <span>{{
+              "CRI_DONE" | translate: { name: result.seasonName }
+            }}</span>
+          </div>
+          <div class="summary-grid" id="club-import-summary">
+            <div class="summary-card">
+              <div class="num">{{ result.nightsAdded }}</div>
+              <div class="lbl">{{ "CRI_SUM_NIGHTS_ADDED" | translate }}</div>
+            </div>
+            <div class="summary-card">
+              <div class="num">{{ result.nightsUpdated }}</div>
+              <div class="lbl">{{ "CRI_SUM_NIGHTS_UPDATED" | translate }}</div>
+            </div>
+            <div class="summary-card">
+              <div class="num">{{ result.nightsSkipped }}</div>
+              <div class="lbl">{{ "CRI_SUM_NIGHTS_SKIPPED" | translate }}</div>
+            </div>
+            <div class="summary-card">
+              <div class="num">{{ result.driversCreated }}</div>
+              <div class="lbl">{{ "CRI_SUM_DRIVERS_CREATED" | translate }}</div>
+            </div>
+            <div class="summary-card">
+              <div class="num">
+                {{ result.tracksCreated + result.raceClassesCreated }}
+              </div>
+              <div class="lbl">{{ "CRI_SUM_OTHER_CREATED" | translate }}</div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        @if (step === "preview") {
+          <button type="button" class="btn-secondary" (click)="reset()">
+            {{ "CRI_BTN_OTHER_FILE" | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            id="btn-club-import-commit"
+            [disabled]="isLoading"
+            (click)="commit()"
+          >
+            <span class="material-icons">download</span>
+            {{ "CRI_BTN_IMPORT" | translate: { count: nightsToImport } }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn-primary"
+            id="btn-club-import-close"
+            (click)="onClose()"
+          >
+            {{
+              (step === "summary" ? "COMMON_DONE" : "COMMON_CANCEL") | translate
+            }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

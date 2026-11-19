@@ -2,6 +2,11 @@ import { HttpClient } from "@angular/common/http";
 import { forkJoin, Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import {
+  ClubImportCommitRequest,
+  ClubImportPreview,
+  ClubImportResult,
+} from "@app/models/club-package.model";
+import {
   DriverImportCommitRequest,
   DriverImportPreview,
   DriverImportResult,
@@ -224,6 +229,34 @@ export class DataEntityCrudHelper {
   getSeasonStandings(id: string): Observable<SeasonStandingItem[]> {
     return this.http.get<SeasonStandingItem[]>(
       `${this.seasonsUrl}/${id}/standings`,
+    );
+  }
+
+  // Club Race Export & Import (https://github.com/daufderheide/racecoordinator_ai/issues/972)
+
+  exportClubPackage(seasonId: string, name: string): Observable<Blob> {
+    const params = new URLSearchParams({ seasonId, name });
+    return this.http.get(
+      `${this.getBaseUrl()}/api/club/export?${params.toString()}`,
+      { responseType: "blob" },
+    );
+  }
+
+  previewClubImport(file: File): Observable<ClubImportPreview> {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.http.post<ClubImportPreview>(
+      `${this.getBaseUrl()}/api/club/import/preview`,
+      formData,
+    );
+  }
+
+  commitClubImport(
+    request: ClubImportCommitRequest,
+  ): Observable<ClubImportResult> {
+    return this.http.post<ClubImportResult>(
+      `${this.getBaseUrl()}/api/club/import/commit`,
+      request,
     );
   }
 

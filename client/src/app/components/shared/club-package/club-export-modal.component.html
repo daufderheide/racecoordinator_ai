@@ -1,0 +1,67 @@
+@if (visible()) {
+  <div class="club-modal-backdrop" id="club-export-modal-backdrop">
+    <div class="club-modal-dialog" id="club-export-modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">upload</span>
+          <h2 class="modal-title">{{ "CRE_TITLE" | translate }}</h2>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (errorMessage) {
+          <div class="alert-banner error" id="club-export-error">
+            <span class="material-icons">error</span>
+            <span>{{ errorMessage | translate }}</span>
+          </div>
+        }
+        <p class="hint">
+          {{ "CRE_INFO" | translate: { count: raceNightCount() } }}
+        </p>
+        <div>
+          <label class="field-label" for="club-export-name">{{
+            "CRE_CHAMPIONSHIP_NAME" | translate
+          }}</label>
+          <input
+            id="club-export-name"
+            class="text-input"
+            type="text"
+            [(ngModel)]="championshipName"
+            [placeholder]="'CRE_CHAMPIONSHIP_PLACEHOLDER' | translate"
+            (keyup.enter)="onExport()"
+          />
+        </div>
+        <p class="hint">{{ "CRE_CHAMPIONSHIP_HINT" | translate }}</p>
+        <div class="alert-banner info">
+          <span class="material-icons">info</span>
+          <span>{{ "CRE_WHAT_IS_INCLUDED" | translate }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="onClose()">
+          {{ "COMMON_CANCEL" | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          id="btn-club-export"
+          [disabled]="!canExport"
+          (click)="onExport()"
+        >
+          <span class="material-icons">upload</span>
+          {{ "CRE_BTN_EXPORT" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

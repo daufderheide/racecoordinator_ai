@@ -10,6 +10,16 @@
     [showAdd]="true"
     [showCopy]="true"
     [showDelete]="true"
+    [showImport]="true"
+    [showExport]="true"
+    [importTitleKey]="'CRI_TITLE'"
+    [exportTitleKey]="'CRE_TITLE'"
+    [importHelpTitleKey]="'CRI_HELP_TITLE'"
+    [importHelpContentKey]="'CRI_HELP_CONTENT'"
+    [exportHelpTitleKey]="'CRE_HELP_TITLE'"
+    [exportHelpContentKey]="'CRE_HELP_CONTENT'"
+    [disabledImport]="isEditMode || isSaving"
+    [disabledExport]="!canExportClubPackage"
     [disabledCopy]="!isFormValid || isSaving"
     [disabledDelete]="
       !editingSeason ||
@@ -24,8 +34,24 @@
     (add)="onAddNewSeason()"
     (copy)="saveAsNew()"
     (delete)="onDeleteSeason()"
+    (import)="showClubImportModal = true"
+    (export)="showClubExportModal = true"
     (back)="onBack()"
   ></app-editor-title>
+
+  <!-- Club Race Export & Import (#972) -->
+  <app-club-export-modal
+    [visible]="showClubExportModal"
+    [seasonId]="editingSeason.entity_id"
+    [seasonName]="editingSeason.name"
+    [raceNightCount]="editingSeason.races?.length ?? 0"
+    (close)="showClubExportModal = false"
+  ></app-club-export-modal>
+  <app-club-import-modal
+    [visible]="showClubImportModal"
+    (close)="showClubImportModal = false"
+    (imported)="onClubPackageImported($event)"
+  ></app-club-import-modal>
 
   @if (!isLoading) {
     <div class="content-split">

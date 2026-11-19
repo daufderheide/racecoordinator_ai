@@ -11,12 +11,15 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, of, Subscription } from "rxjs";
 import { catchError } from "rxjs/operators";
+import { ClubExportModalComponent } from "@app/components/shared/club-package/club-export-modal.component";
+import { ClubImportModalComponent } from "@app/components/shared/club-package/club-import-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
+import { ClubImportResult } from "@app/models/club-package.model";
 import {
   Season,
   SeasonRaceRecord,
@@ -61,6 +64,8 @@ import { SeasonEditorHelpHelper } from "./season-editor-help.helper";
     FormsModule,
     ConfirmationModalComponent,
     DecimalPipe,
+    ClubExportModalComponent,
+    ClubImportModalComponent,
   ],
 })
 export class SeasonEditorComponent
@@ -69,6 +74,22 @@ export class SeasonEditorComponent
   lifecycle!: EditorLifecycleHelper;
   // Delete Season Confirmation Modal
   showDeleteConfirm = false;
+
+  // Club Race Export & Import (https://github.com/daufderheide/racecoordinator_ai/issues/972)
+  showClubExportModal = false;
+  showClubImportModal = false;
+
+  get canExportClubPackage(): boolean {
+    const id = this.editingSeason?.entity_id;
+    return !!id && id !== "new" && !this.isEditMode && !this.isDirty;
+  }
+
+  /** After an import, reload and show the season the race nights went into. */
+  onClubPackageImported(result: ClubImportResult): void {
+    if (result?.seasonId) {
+      this.loadData(result.seasonId);
+    }
+  }
 
   get showDiscardConfirm(): boolean {
     return this.lifecycle.showDiscardConfirm;

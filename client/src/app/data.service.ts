@@ -2,6 +2,11 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { Observable } from "rxjs";
 import {
+  ClubImportCommitRequest,
+  ClubImportPreview,
+  ClubImportResult,
+} from "@app/models/club-package.model";
+import {
   DriverImportCommitRequest,
   DriverImportPreview,
   DriverImportResult,
@@ -280,6 +285,17 @@ export class DataService {
   }
   getSeasonStandings(id: string): Observable<SeasonStandingItem[]> {
     return this.crudHelper.getSeasonStandings(id);
+  }
+  exportClubPackage(seasonId: string, name: string): Observable<Blob> {
+    return this.crudHelper.exportClubPackage(seasonId, name);
+  }
+  previewClubImport(file: File): Observable<ClubImportPreview> {
+    return this.crudHelper.previewClubImport(file);
+  }
+  commitClubImport(
+    request: ClubImportCommitRequest,
+  ): Observable<ClubImportResult> {
+    return this.crudHelper.commitClubImport(request);
   }
   getRaceHistory(isDemo?: boolean): Observable<any[]> {
     return this.crudHelper.getRaceHistory(isDemo);
