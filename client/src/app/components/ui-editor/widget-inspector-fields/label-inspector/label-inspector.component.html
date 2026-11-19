@@ -136,14 +136,21 @@
         (change)="onColorChange('textColor', $event)"
         class="color-picker-input"
       />
+      @if (!settings().textColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
       @if (settings().textColor) {
         <button
           type="button"
           class="color-reset-btn"
           (click)="resetColor('textColor')"
-          [title]="'UE_INSPECTOR_RESET_COLOR' | translate"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          <span class="material-icons">restart_alt</span>
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>
@@ -164,14 +171,21 @@
         (change)="onColorChange('backgroundColor', $event)"
         class="color-picker-input"
       />
+      @if (!settings().backgroundColor) {
+        <span class="color-picker-placeholder">{{
+          "UE_INSPECTOR_COLOR_DEFAULT" | translate
+        }}</span>
+      }
       @if (settings().backgroundColor) {
         <button
           type="button"
           class="color-reset-btn"
           (click)="resetColor('backgroundColor')"
-          [title]="'UE_INSPECTOR_RESET_COLOR' | translate"
+          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
         >
-          <span class="material-icons">restart_alt</span>
+          <span class="material-icons" style="font-size: 14px"
+            >restart_alt</span
+          >
         </button>
       }
     </div>

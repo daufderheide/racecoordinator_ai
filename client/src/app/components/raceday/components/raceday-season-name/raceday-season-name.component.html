@@ -1,6 +1,7 @@
 <div
   class="info-section"
   #infoPanel
+  [style.background-color]="effectiveBackgroundColor()"
   [style.--header-label-font-size]="
     widget()?.customSettings?.['labelFontSize']
       ? widget()?.customSettings?.['labelFontSize'] + 'px'

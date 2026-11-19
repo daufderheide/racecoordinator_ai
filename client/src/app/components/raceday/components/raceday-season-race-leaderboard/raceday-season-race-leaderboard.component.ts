@@ -16,6 +16,14 @@ export class RacedaySeasonRaceLeaderboardComponent {
   seasonStandings = input<SeasonStandingItem[] | any[]>([]);
   widget = input<AbsoluteWidgetNode | null>(null);
 
+  effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
+
   getRacePoints(item: any): number {
     if (!item) return 0;
     if (

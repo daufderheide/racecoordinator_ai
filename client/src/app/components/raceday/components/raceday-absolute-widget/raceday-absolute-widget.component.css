@@ -456,6 +456,10 @@
 }
 
 /* Support custom background color on widgets */
+.widget-wrapper.has-custom-bg {
+  border-radius: var(--widget-border-radius, 0px);
+}
+
 .widget-wrapper.has-custom-bg .panel-card {
   background: transparent !important;
 }

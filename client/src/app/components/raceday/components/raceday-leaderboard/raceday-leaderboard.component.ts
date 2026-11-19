@@ -14,6 +14,14 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 export class RacedayLeaderboardComponent {
   leaderboardEntries = input<any[]>([]);
   widget = input<AbsoluteWidgetNode | null>(null);
+
+  effectiveBackgroundColor = computed(() => {
+    return (
+      this.widget()?.customSettings?.["backgroundColor"] ||
+      this.widget()?.backgroundColor ||
+      null
+    );
+  });
   isGroup = input<boolean>(false);
   groupNumber = input<number>(0);
   groupEnabled = input<boolean>(false);

@@ -1,6 +1,7 @@
 <div
   class="panel-card record-panel"
   #recordPanel
+  [style.background-color]="effectiveBackgroundColor()"
   [style.--record-header-font-size]="
     widget()?.customSettings?.['headerFontSize']
       ? widget()?.customSettings?.['headerFontSize'] + 'px'

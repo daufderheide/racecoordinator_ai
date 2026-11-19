@@ -186,4 +186,19 @@ describe("RacedayLeaderboardComponent", () => {
       "20px",
     );
   });
+
+  it("should apply background color when configured in customSettings or widget", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "w1",
+      widgetType: "leaderboard",
+      customSettings: {
+        backgroundColor: "#112233",
+      },
+    });
+    fixture.detectChanges();
+
+    const panel = fixture.nativeElement.querySelector(".leaderboard-panel");
+    expect(panel.style.backgroundColor).toBe("rgb(17, 34, 51)");
+    expect(component.effectiveBackgroundColor()).toBe("#112233");
+  });
 });

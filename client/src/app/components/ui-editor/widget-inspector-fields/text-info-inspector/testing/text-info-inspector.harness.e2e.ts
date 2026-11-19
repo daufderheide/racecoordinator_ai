@@ -88,4 +88,19 @@ export class TextInfoInspectorHarnessE2e implements TextInfoInspectorHarnessBase
     const wrapper = this.locator.locator(".color-picker-wrapper").nth(1);
     await wrapper.locator(".color-reset-btn").click();
   }
+
+  async getBackgroundColor(): Promise<string> {
+    const wrapper = this.locator.locator(".color-picker-wrapper").nth(2);
+    return await wrapper.locator("input[type='color']").inputValue();
+  }
+
+  async setBackgroundColor(val: string): Promise<void> {
+    const wrapper = this.locator.locator(".color-picker-wrapper").nth(2);
+    await wrapper.locator("input[type='color']").fill(val);
+  }
+
+  async clickResetBackgroundColor(): Promise<void> {
+    const wrapper = this.locator.locator(".color-picker-wrapper").nth(2);
+    await wrapper.locator(".color-reset-btn").click();
+  }
 }

@@ -414,6 +414,16 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(wrapper.classList.contains("has-custom-bg")).toBeTrue();
   });
 
+  it("should apply custom background class and style when set in customSettings", () => {
+    mockWidget.backgroundColor = undefined as any;
+    mockWidget.customSettings = { backgroundColor: "#123456" };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("has-custom-bg")).toBeTrue();
+    expect(component.effectiveBackgroundColor).toBe("#123456");
+  });
+
   it("should render on-deck widget", () => {
     mockWidget.widgetType = "on-deck";
     fixture.componentRef.setInput("widget", { ...mockWidget });

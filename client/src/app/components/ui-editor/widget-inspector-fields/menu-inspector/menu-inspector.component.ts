@@ -47,6 +47,9 @@ export class MenuInspectorComponent {
     const value = (event.target as HTMLInputElement).value;
     if (this.widget()) {
       this.widget()[field] = value;
+      if (this.settings) {
+        this.settings[field] = value;
+      }
       this.change.emit();
     }
   }
@@ -54,6 +57,9 @@ export class MenuInspectorComponent {
   resetColor(field: "textColor" | "backgroundColor") {
     if (this.widget()) {
       this.widget()[field] = "";
+      if (this.settings) {
+        this.settings[field] = "";
+      }
       this.change.emit();
     }
   }

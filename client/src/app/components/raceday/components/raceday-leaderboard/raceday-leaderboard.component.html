@@ -1,5 +1,6 @@
 <div
   class="panel-card leaderboard-panel"
+  [style.background-color]="effectiveBackgroundColor()"
   [style.--leaderboard-title-font-size]="
     widget()?.customSettings?.['titleFontSize']
       ? widget()?.customSettings?.['titleFontSize'] + 'px'
