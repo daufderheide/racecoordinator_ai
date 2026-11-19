@@ -12,6 +12,14 @@ import java.util.Map;
 
 public class SeasonStandingsCalculator {
 
+  /** Case-insensitive name order for a full tie; null names last. */
+  public static int compareNames(String a, String b) {
+    String x = a == null ? "" : a;
+    String y = b == null ? "" : b;
+    int c = String.CASE_INSENSITIVE_ORDER.compare(x, y);
+    return c != 0 ? c : x.compareTo(y);
+  }
+
   public static List<SeasonStandingItem> calculateStandings(Season season) {
     if (season == null || season.getRaces() == null || season.getRaces().isEmpty()) {
       return new ArrayList<>();
@@ -88,7 +96,11 @@ public class SeasonStandingsCalculator {
             return Double.compare(b.getNetPoints(), a.getNetPoints());
           if (b.getGrossPoints() != a.getGrossPoints())
             return Double.compare(b.getGrossPoints(), a.getGrossPoints());
-          return Integer.compare(b.getRacesRun(), a.getRacesRun());
+          if (b.getRacesRun() != a.getRacesRun())
+            return Integer.compare(b.getRacesRun(), a.getRacesRun());
+          // A full tie is ordered by name, so every PC shows it the same way (driver ids differ
+          // per PC). https://github.com/daufderheide/racecoordinator_ai/issues/972
+          return compareNames(a.getDriverName(), b.getDriverName());
         });
 
     // Set rank

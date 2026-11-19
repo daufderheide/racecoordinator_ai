@@ -16,6 +16,7 @@ import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Heat;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.SeasonStandingsCalculator;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.IRaceState;
 import com.antigravity.race.states.Paused;
@@ -883,7 +884,10 @@ public class SeasonPointsCalculator {
           if (a.getNetPoints() != b.getNetPoints()) {
             return Double.compare(b.getNetPoints(), a.getNetPoints());
           }
-          return Double.compare(b.getGrossPoints(), a.getGrossPoints());
+          if (a.getGrossPoints() != b.getGrossPoints()) {
+            return Double.compare(b.getGrossPoints(), a.getGrossPoints());
+          }
+          return SeasonStandingsCalculator.compareNames(a.getDriverName(), b.getDriverName());
         });
 
     return standings;

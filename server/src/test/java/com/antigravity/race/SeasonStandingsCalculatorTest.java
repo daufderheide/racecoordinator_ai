@@ -221,4 +221,32 @@ public class SeasonStandingsCalculatorTest {
     assertEquals(1.23, detail.getHeatBonusPoints(), 0.001);
     assertEquals(32.38, detail.getTotalPoints(), 0.001);
   }
+
+  // https://github.com/daufderheide/racecoordinator_ai/issues/972
+  @Test
+  public void testAFullTieIsOrderedByNameWhateverTheDriverIds() {
+    for (String[] ids : new String[][] {{"1", "2"}, {"2", "1"}, {"zz", "aa"}}) {
+      SeasonDriverResult bank = new SeasonDriverResult(ids[0], "Bank Farter", 1, 10.0, 0.0, 10.0);
+      SeasonDriverResult bad = new SeasonDriverResult(ids[1], "Bad Cheese", 2, 10.0, 0.0, 10.0);
+      Season season =
+          new Season(
+              "Tie",
+              0,
+              new ArrayList<>(
+                  Collections.singletonList(
+                      new SeasonRaceRecord("1", "Night", 1000L, Arrays.asList(bank, bad)))));
+
+      List<SeasonStandingItem> standings = SeasonStandingsCalculator.calculateStandings(season);
+
+      assertEquals("Bad Cheese", standings.get(0).getDriverName());
+      assertEquals("Bank Farter", standings.get(1).getDriverName());
+    }
+  }
+
+  @Test
+  public void testCompareNamesIgnoresCase() {
+    assertTrue(SeasonStandingsCalculator.compareNames("abby", "Bob") < 0);
+    assertTrue(SeasonStandingsCalculator.compareNames("Bob", "abby") > 0);
+    assertEquals(0, SeasonStandingsCalculator.compareNames(null, null));
+  }
 }

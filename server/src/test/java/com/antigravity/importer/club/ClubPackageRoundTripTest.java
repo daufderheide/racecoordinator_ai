@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.After;
@@ -266,6 +267,40 @@ public class ClubPackageRoundTripTest {
     return out;
   }
 
+  private static List<String> standingsOrder(DatabaseContext pc, String seasonId) {
+    Season s = new SqliteRepository<>(pc, "seasons", Season.class).findByEntityId(seasonId);
+    List<String> out = new ArrayList<>();
+    for (SeasonStandingItem i : SeasonStandingsCalculator.calculateStandings(s)) {
+      out.add(i.getRank() + ":" + i.getDriverName());
+    }
+    return out;
+  }
+
+  @Test
+  public void testComparingRaceClassesIgnoresEachPcsOwnAssets() {
+    ObjectNode a = ClubPackageFormat.MAPPER.createObjectNode();
+    a.put("name", "Club Sprint").put("min_lap_time", 2.5).put("custom_rotation_asset_id", "x1");
+    ObjectNode b = a.deepCopy();
+    b.put("custom_rotation_asset_id", "y2").put("entity_id", "9").put("club_id", "c");
+    assertEquals(
+        ClubPackageImporter.normalizedSettings(a), ClubPackageImporter.normalizedSettings(b));
+    b.put("min_lap_time", 3.0);
+    assertNotEquals(
+        ClubPackageImporter.normalizedSettings(a), ClubPackageImporter.normalizedSettings(b));
+  }
+
+  @Test
+  public void testComparingRaceClassesIgnoresNumberFormatAndInternalIds() {
+    ObjectNode a = ClubPackageFormat.MAPPER.createObjectNode();
+    a.put("auto_start_time", 3).put("@id", 1);
+    a.putObject("heat_scoring").put("finish_value", 10).put("@id", 2);
+    ObjectNode b = ClubPackageFormat.MAPPER.createObjectNode();
+    b.putObject("heat_scoring").put("@id", 7).put("finish_value", 10.0);
+    b.put("@id", 4).put("auto_start_time", 3.00);
+    assertEquals(
+        ClubPackageImporter.normalizedSettings(a), ClubPackageImporter.normalizedSettings(b));
+  }
+
   private static String driverIdByName(DatabaseContext pc, String name) {
     for (Driver d : new SqliteRepository<>(pc, "drivers", Driver.class).findAll()) {
       if (name.equals(d.getName())) {
@@ -447,6 +482,7 @@ public class ClubPackageRoundTripTest {
     assertEquals(0, onA.driversCreated);
     assertEquals(3, count(pcA, "drivers"));
     assertEquals(standings(pcB, onB.seasonId), standings(pcA, seasonA));
+    assertEquals(standingsOrder(pcB, onB.seasonId), standingsOrder(pcA, seasonA));
     Map<String, Double> expected = new HashMap<>();
     expected.put("Dave Jackson", 10.0 + 6); // drops 1: best two of 10, 6, 4
     expected.put("Abby", 10.0 + 8);

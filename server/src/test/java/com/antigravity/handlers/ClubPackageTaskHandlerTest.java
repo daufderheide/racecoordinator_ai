@@ -105,6 +105,34 @@ public class ClubPackageTaskHandlerTest {
   }
 
   @Test
+  public void testChampionshipNameIsRememberedAfterTheFirstExport() throws Exception {
+    String id = databaseContext.getNextSequence("seasons");
+    new SqliteRepository<>(databaseContext, "seasons", Season.class)
+        .insert(new Season("Club 2026", 0, new ArrayList<>(), id, null));
+    Context first = mock(Context.class);
+    when(first.contentType(anyString())).thenReturn(first);
+    when(first.queryParam("seasonId")).thenReturn(id);
+    handler.handleChampionship(first);
+    ArgumentCaptor<String> before = ArgumentCaptor.forClass(String.class);
+    verify(first).result(before.capture());
+    assertEquals("Club 2026", new ObjectMapper().readTree(before.getValue()).path("name").asText());
+
+    when(ctx.queryParam("seasonId")).thenReturn(id);
+    when(ctx.queryParam("name")).thenReturn("Hobby Club 2026");
+    handler.handleExport(ctx);
+
+    Context second = mock(Context.class);
+    when(second.contentType(anyString())).thenReturn(second);
+    when(second.queryParam("seasonId")).thenReturn(id);
+    handler.handleChampionship(second);
+    ArgumentCaptor<String> after = ArgumentCaptor.forClass(String.class);
+    verify(second).result(after.capture());
+    JsonNode n = new ObjectMapper().readTree(after.getValue());
+    assertEquals("Hobby Club 2026", n.path("name").asText());
+    assertTrue(n.path("remembered").asBoolean());
+  }
+
+  @Test
   public void testPreviewOfSomethingElseIsABadRequest() {
     when(ctx.body()).thenReturn("{\"hello\":\"world\"}");
     handler.handlePreview(ctx);

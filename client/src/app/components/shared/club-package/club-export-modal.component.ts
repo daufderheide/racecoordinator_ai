@@ -44,7 +44,23 @@ export class ClubExportModalComponent {
       if (this.visible()) {
         this.championshipName = this.seasonName() || "";
         this.errorMessage = null;
+        this.loadRememberedName();
       }
+    });
+  }
+
+  /** After the first export the championship name is stored with the season. */
+  private loadRememberedName(): void {
+    const seasonId = this.seasonId();
+    if (!seasonId || seasonId === "new") return;
+    this.dataService.getClubChampionship(seasonId).subscribe({
+      next: (c) => {
+        if (c?.name) {
+          this.championshipName = c.name;
+          this.cdr.detectChanges();
+        }
+      },
+      error: () => {},
     });
   }
 

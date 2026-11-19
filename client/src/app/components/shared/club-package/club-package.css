@@ -208,6 +208,11 @@
   border: 1px solid #334155;
   border-radius: 10px;
   overflow: hidden;
+  flex-shrink: 0; /* scroll the body instead of squashing the sections */
+}
+
+.modal-body > * {
+  flex-shrink: 0;
 }
 
 .section-header {

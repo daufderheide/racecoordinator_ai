@@ -94,7 +94,10 @@ export function calculateSeasonStandings(season: Season): SeasonStandingItem[] {
     if (b.net_points !== a.net_points) return b.net_points - a.net_points;
     if (b.gross_points !== a.gross_points)
       return b.gross_points - a.gross_points;
-    return b.races_run - a.races_run;
+    if (b.races_run !== a.races_run) return b.races_run - a.races_run;
+    // A full tie is ordered by name, the same as the server, so every PC shows
+    // it the same way. https://github.com/daufderheide/racecoordinator_ai/issues/972
+    return compareDriverNames(a.driver_name, b.driver_name);
   });
 
   return result;
@@ -325,4 +328,14 @@ export function buildRaceRecordFromHistory(
     is_event_race: isEventRace,
     driver_results: extractDriverResultsFromHistory(item),
   };
+}
+
+/** Case-insensitive name order for a full tie, like the server. */
+export function compareDriverNames(a?: string, b?: string): number {
+  const x = a ?? "";
+  const y = b ?? "";
+  const lx = x.toLowerCase();
+  const ly = y.toLowerCase();
+  if (lx !== ly) return lx < ly ? -1 : 1;
+  return x === y ? 0 : x < y ? -1 : 1;
 }

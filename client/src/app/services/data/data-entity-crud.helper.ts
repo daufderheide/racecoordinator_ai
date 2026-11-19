@@ -242,6 +242,15 @@ export class DataEntityCrudHelper {
     );
   }
 
+  getClubChampionship(
+    seasonId: string,
+  ): Observable<{ name: string; remembered: boolean }> {
+    const params = new URLSearchParams({ seasonId });
+    return this.http.get<{ name: string; remembered: boolean }>(
+      `${this.getBaseUrl()}/api/club/championship?${params.toString()}`,
+    );
+  }
+
   previewClubImport(file: File): Observable<ClubImportPreview> {
     const formData = new FormData();
     formData.append("file", file);

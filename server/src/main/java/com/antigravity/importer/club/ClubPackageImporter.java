@@ -230,18 +230,51 @@ public class ClubPackageImporter {
         java.util.Arrays.asList(
             "entity_id",
             "_id",
-            "@id",
             "objectId",
             "track_entity_id",
             "compatibility",
+            // assets live on each PC, and each PC fills in its own
+            "custom_rotation_asset_id",
+            "customRotationAssetId",
             ClubPackageFormat.CLUB_ID));
-    return new TreeSet<>(fieldsAsStrings(copy)).toString();
+    StringBuilder sb = new StringBuilder();
+    canonical(copy, sb);
+    return sb.toString();
   }
 
-  private static List<String> fieldsAsStrings(ObjectNode node) {
-    List<String> out = new ArrayList<>();
-    node.fields().forEachRemaining(e -> out.add(e.getKey() + "=" + e.getValue()));
-    return out;
+  /**
+   * A canonical text form: keys sorted, numbers by value (2 and 2.0 are the same after a round trip
+   * through another PC), and the internal "@id" numbering left out.
+   */
+  private static void canonical(JsonNode node, StringBuilder sb) {
+    if (node == null || node.isNull()) {
+      sb.append("null");
+    } else if (node.isObject()) {
+      sb.append('{');
+      List<String> keys = new ArrayList<>();
+      node.fieldNames().forEachRemaining(keys::add);
+      java.util.Collections.sort(keys);
+      for (String k : keys) {
+        if ("@id".equals(k)) {
+          continue;
+        }
+        sb.append(k).append(':');
+        canonical(node.get(k), sb);
+        sb.append(',');
+      }
+      sb.append('}');
+    } else if (node.isArray()) {
+      sb.append('[');
+      for (JsonNode child : node) {
+        canonical(child, sb);
+        sb.append(',');
+      }
+      sb.append(']');
+    } else if (node.isNumber()) {
+      sb.append(node.decimalValue().stripTrailingZeros().toPlainString());
+    } else {
+      sb.append(node.toString());
+    }
   }
 
   private static SeasonChoice matchSeason(JsonNode championship, Map<String, JsonNode> local) {

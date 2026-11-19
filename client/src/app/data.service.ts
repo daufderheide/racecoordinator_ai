@@ -289,6 +289,11 @@ export class DataService {
   exportClubPackage(seasonId: string, name: string): Observable<Blob> {
     return this.crudHelper.exportClubPackage(seasonId, name);
   }
+  getClubChampionship(
+    seasonId: string,
+  ): Observable<{ name: string; remembered: boolean }> {
+    return this.crudHelper.getClubChampionship(seasonId);
+  }
   previewClubImport(file: File): Observable<ClubImportPreview> {
     return this.crudHelper.previewClubImport(file);
   }

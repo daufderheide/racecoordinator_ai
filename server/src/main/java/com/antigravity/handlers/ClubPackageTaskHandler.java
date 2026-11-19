@@ -4,7 +4,10 @@ import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.importer.club.ClubImport;
 import com.antigravity.importer.club.ClubPackageExporter;
+import com.antigravity.importer.club.ClubPackageFormat;
 import com.antigravity.importer.club.ClubPackageImporter;
+import com.antigravity.models.Season;
+import com.antigravity.repository.SqliteRepository;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +42,7 @@ public class ClubPackageTaskHandler {
   public ClubPackageTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
     app.get("/api/club/export", this::handleExport, Role.DIRECTOR);
+    app.get("/api/club/championship", this::handleChampionship, Role.VIEWER);
     app.post("/api/club/import/preview", this::handlePreview, Role.DIRECTOR);
     app.post("/api/club/import/commit", this::handleCommit, Role.DIRECTOR);
   }
@@ -61,6 +65,31 @@ public class ClubPackageTaskHandler {
       ctx.status(404).result(e.getMessage());
     } catch (Exception e) {
       logger.error("Club package export failed", e);
+      ctx.status(500).result("CRE_ERR_EXPORT_FAILED");
+    }
+  }
+
+  /** The remembered championship name of a season (or its own name), to suggest on export. */
+  void handleChampionship(Context ctx) {
+    try {
+      String seasonId = ctx.queryParam("seasonId");
+      String raw =
+          seasonId == null
+              ? null
+              : new SqliteRepository<>(databaseContext, "seasons", Season.class)
+                  .findRawJsonByEntityId(seasonId);
+      if (raw == null) {
+        ctx.status(404).result("CRE_ERR_SEASON_NOT_FOUND");
+        return;
+      }
+      JsonNode season = MAPPER.readTree(raw);
+      String clubName = season.path(ClubPackageFormat.CLUB_NAME).asText("");
+      ObjectNode out = MAPPER.createObjectNode();
+      out.put("name", clubName.isEmpty() ? season.path("name").asText("") : clubName);
+      out.put("remembered", !clubName.isEmpty());
+      ctx.contentType("application/json").result(MAPPER.writeValueAsString(out));
+    } catch (Exception e) {
+      logger.error("Club championship lookup failed", e);
       ctx.status(500).result("CRE_ERR_EXPORT_FAILED");
     }
   }
