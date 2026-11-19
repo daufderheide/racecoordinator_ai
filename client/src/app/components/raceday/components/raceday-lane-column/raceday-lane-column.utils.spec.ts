@@ -345,6 +345,39 @@ describe("raceday-lane-column.utils", () => {
   });
 
   describe("resolveColumnHeaderLabel", () => {
+    it("should label the flag column 'Driver Flag' instead of the missing RD_COL_FLAG key", () => {
+      const label = resolveColumnHeaderLabel("flag", {} as any, null, (k) =>
+        k === "RD_COL_DRIVER_FLAG" ? "DRIVER FLAG" : k,
+      );
+      expect(label).toBe("DRIVER FLAG");
+    });
+
+    it("should use the flag fallback label when the parent's column has an empty label key", () => {
+      const parent = {
+        columns: [{ propertyName: "flag", labelKey: "" }],
+        getColumnLabel: jasmine
+          .createSpy("getColumnLabel")
+          .and.callFake((c: any) => c.labelKey),
+      } as any;
+      const label = resolveColumnHeaderLabel(
+        "flag",
+        {} as any,
+        parent,
+        (k) => k,
+      );
+      expect(label).toBe("RD_COL_DRIVER_FLAG");
+    });
+
+    it("should keep a parent's own non-empty column label key", () => {
+      const parent = {
+        columns: [{ propertyName: "lastLapTime", labelKey: "RD_COL_LAP_TIME" }],
+        getColumnLabel: (c: any) => c.labelKey,
+      } as any;
+      expect(
+        resolveColumnHeaderLabel("lastLapTime", {} as any, parent, (k) => k),
+      ).toBe("RD_COL_LAP_TIME");
+    });
+
     it("should resolve custom widget label from service manifest", () => {
       const mockParent = {
         customWidgetService: {

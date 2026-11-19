@@ -803,6 +803,7 @@
 .widget-wrapper.has-widget-border .action-button,
 .widget-wrapper.has-widget-border .browser-nav-btn,
 .widget-wrapper.has-widget-border .menu-bar,
+.widget-wrapper.has-widget-border .branding-qr,
 .widget-wrapper.has-widget-border .custom-widget-container {
   border-style: var(--widget-border-style, solid) !important;
   border-color: var(--widget-border-color, #ffffff) !important;
@@ -820,6 +821,7 @@
 .widget-wrapper.no-widget-border .action-button,
 .widget-wrapper.no-widget-border .browser-nav-btn,
 .widget-wrapper.no-widget-border .menu-bar,
+.widget-wrapper.no-widget-border .branding-qr,
 .widget-wrapper.no-widget-border .custom-widget-container {
   border: none !important;
 }

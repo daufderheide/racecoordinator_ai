@@ -73,7 +73,10 @@ import {
   LaneColumnDriverCache,
   resolveLaneColumnEmptyRowsMode,
 } from "./raceday-lane-column-driver.helper";
-import { LaneColumnFitHelper } from "./raceday-lane-column-fit.helper";
+import {
+  LaneColumnFitContext,
+  LaneColumnFitHelper,
+} from "./raceday-lane-column-fit.helper";
 import {
   isLaneColumnHighlighted,
   resolveLaneColumnHighlightLapStyle,
@@ -213,6 +216,14 @@ export class RacedayLaneColumnComponent
       this.isPacingProperty() ||
       (this.isDriftIndicatorColumn && this.isDriftImageMode)
     ) {
+      this.fitHelper.fitHeaderOnly(this.cardRef()?.nativeElement, {
+        isHeaderWidget: this.isHeaderWidget,
+        cachedWidth: this.cachedWidth,
+        cachedHeight: this.cachedHeight,
+        settings: this.settings,
+        widget: this.widget(),
+        headerLabel: this.headerLabel,
+      });
       return;
     }
     const currentWidget = this.widget();
@@ -706,7 +717,11 @@ export class RacedayLaneColumnComponent
         ? this.driftDisplayText
         : this.formattedValue;
 
-    this.fitHelper.fitContent(cardEl, force, {
+    this.fitHelper.fitContent(cardEl, force, this.buildFitContext());
+  }
+
+  private buildFitContext(): LaneColumnFitContext {
+    return {
       isHeaderWidget: this.isHeaderWidget,
       isLastLaps: this.isLastLaps(),
       isImageProperty:
@@ -727,7 +742,7 @@ export class RacedayLaneColumnComponent
       setMaxVisibleLaps: (count) => this.maxVisibleLaps.set(count),
       onFitTextValue: (el) => this.fitTextValue(el),
       onFitPacingValue: (el) => this.fitPacingValue(el),
-    });
+    };
   }
 
   private fitPacingValue(cardEl: HTMLElement): void {

@@ -358,7 +358,18 @@ export function handleWidgetSelection(
   const uiId = ui?.entity_id || comp.activeCustomUiId;
   if (comp.selectedWidgetId && selectedWidget) {
     if (applyWidgetDefaultSettings(selectedWidget)) {
-      if (ui) ui.layoutJson = JSON.stringify(comp.getLayout(ui));
+      const target = ui || comp.activeCustomUi;
+      if (target && layout?.widgets?.includes(selectedWidget)) {
+        // Store the filled-in defaults on the layout the widget came from and show
+        // them on the canvas straight away. Without this the layout editor (which
+        // calls this without `ui`) only filled in a parsed copy: the panel showed
+        // e.g. a Menu Bar font size of 24 while the canvas kept the auto-sized text
+        // until the next edit saved the copy.
+        target.layoutJson = JSON.stringify(layout);
+        comp.syncRacedayPreview?.(layout);
+      } else if (ui) {
+        ui.layoutJson = JSON.stringify(comp.getLayout(ui));
+      }
       if (comp.editingState?.settings) {
         comp.editingState.settings = { ...comp.editingState.settings };
       }

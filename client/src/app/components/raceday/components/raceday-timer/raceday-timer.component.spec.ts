@@ -189,9 +189,54 @@ describe("RacedayTimerComponent", () => {
     const timerTextEl = fixture.nativeElement.querySelector(".timer-text");
     const timerPanelEl = fixture.nativeElement.querySelector(".timer-panel");
     expect(timerTextEl.style.fontSize).toBe("85px");
-    expect(timerPanelEl.style.getPropertyValue("--timer-font-size")).toBe(
-      "85px",
+    // the custom size is the maximum; it may only shrink to fit the panel
+    const applied = parseInt(
+      timerPanelEl.style.getPropertyValue("--timer-font-size"),
+      10,
     );
+    expect(applied).toBeGreaterThan(0);
+    expect(applied).toBeLessThanOrEqual(85);
+  });
+
+  it("should keep the custom time font size when it fits and shrink it when it does not (auto)", () => {
+    const panelEl = () =>
+      fixture.nativeElement.querySelector(".timer-panel") as HTMLElement;
+    const run = (w: number, h: number) => {
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        scaleMode: "auto",
+        customSettings: { timeFontSize: 60 },
+      } as any);
+      fixture.detectChanges();
+      Object.defineProperty(panelEl(), "clientWidth", {
+        value: w,
+        configurable: true,
+      });
+      Object.defineProperty(panelEl(), "clientHeight", {
+        value: h,
+        configurable: true,
+      });
+      (component as any).lastFittedWidth = -1;
+      (component as any).fitText();
+      return parseInt(
+        panelEl().style.getPropertyValue("--timer-font-size"),
+        10,
+      );
+    };
+    expect(run(2000, 600)).toBe(60);
+    expect(run(120, 90)).toBeLessThan(60);
+  });
+
+  it("should use the custom time font size as-is in fixed scale mode", () => {
+    fixture.componentRef.setInput("widget", {
+      widgetType: "timer",
+      scaleMode: "fixed",
+      customSettings: { timeFontSize: 70 },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+    const panel = fixture.nativeElement.querySelector(".timer-panel");
+    expect(panel.style.getPropertyValue("--timer-font-size")).toBe("70px");
   });
 
   describe("editor mode mock time formatting", () => {
