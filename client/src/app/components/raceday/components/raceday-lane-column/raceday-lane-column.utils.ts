@@ -210,15 +210,6 @@ export function formatAdjustedLapValue(
   return String(raw);
 }
 
-/**
- * Header labels for columns that the classic heat table deliberately leaves unlabelled
- * (COLUMN_LABELS maps them to ""). A lane column widget always draws a header strip, so it
- * uses the name the Widget Library shows instead of falling back to a missing RD_COL_ key.
- */
-const LANE_COLUMN_HEADER_LABEL_FALLBACKS: Record<string, string> = {
-  flag: "RD_COL_DRIVER_FLAG",
-};
-
 export function resolveColumnHeaderLabel(
   key: string,
   settings: LaneColumnWidgetSettings,
@@ -238,21 +229,22 @@ export function resolveColumnHeaderLabel(
     }
     return key.substring("custom:".length);
   }
-  const labelKey =
-    RacedayLayoutUtils.getLabelKeyForColumn(key) ||
-    LANE_COLUMN_HEADER_LABEL_FALLBACKS[key] ||
-    "";
+  const labelKey = RacedayLayoutUtils.getLabelKeyForColumn(key);
+  if (labelKey === "") {
+    // Deliberately unlabelled column (e.g. the driver flag): keep the header
+    // empty everywhere, as on race day, instead of showing a raw RD_COL_ key.
+    return "";
+  }
   const resolvedLabelKey =
     labelKey && labelKey !== "UNKNOWN"
       ? labelKey
       : `RD_COL_${key.toUpperCase()}`;
 
   if (parent?.getColumnLabel) {
-    const found = parent.columns?.find((c: any) => c.propertyName === key);
-    const colDef =
-      found && found.labelKey
-        ? found
-        : { ...(found || {}), propertyName: key, labelKey: resolvedLabelKey };
+    const colDef = parent.columns?.find((c: any) => c.propertyName === key) || {
+      propertyName: key,
+      labelKey: resolvedLabelKey,
+    };
     return parent.getColumnLabel(colDef);
   }
   if (labelKey && labelKey !== "UNKNOWN") {

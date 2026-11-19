@@ -345,27 +345,28 @@ describe("raceday-lane-column.utils", () => {
   });
 
   describe("resolveColumnHeaderLabel", () => {
-    it("should label the flag column 'Driver Flag' instead of the missing RD_COL_FLAG key", () => {
-      const label = resolveColumnHeaderLabel("flag", {} as any, null, (k) =>
-        k === "RD_COL_DRIVER_FLAG" ? "DRIVER FLAG" : k,
+    it("should keep the deliberately unlabelled flag column header empty instead of showing RD_COL_FLAG", () => {
+      expect(resolveColumnHeaderLabel("flag", {} as any, null, (k) => k)).toBe(
+        "",
       );
-      expect(label).toBe("DRIVER FLAG");
+      const parent = {
+        columns: [],
+        getColumnLabel: (c: any) => c.labelKey,
+      } as any;
+      expect(
+        resolveColumnHeaderLabel("flag", {} as any, parent, (k) => k),
+      ).toBe("");
     });
 
-    it("should use the flag fallback label when the parent's column has an empty label key", () => {
-      const parent = {
-        columns: [{ propertyName: "flag", labelKey: "" }],
-        getColumnLabel: jasmine
-          .createSpy("getColumnLabel")
-          .and.callFake((c: any) => c.labelKey),
-      } as any;
-      const label = resolveColumnHeaderLabel(
-        "flag",
-        {} as any,
-        parent,
-        (k) => k,
-      );
-      expect(label).toBe("RD_COL_DRIVER_FLAG");
+    it("should still use a custom header label on the flag column", () => {
+      expect(
+        resolveColumnHeaderLabel(
+          "flag",
+          { customLabel: "FLAG" } as any,
+          null,
+          (k) => k,
+        ),
+      ).toBe("FLAG");
     });
 
     it("should keep a parent's own non-empty column label key", () => {
