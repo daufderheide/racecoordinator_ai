@@ -1,4 +1,4 @@
-import { ICustomRotation } from "@app/proto/antigravity";
+import { ICustomHeat, ICustomRotation } from "@app/proto/antigravity";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { saveFileAs } from "@app/utils/file-download.utils";
@@ -6,6 +6,10 @@ import {
   checkLaneEquality,
   LaneEqualityResult,
 } from "@app/utils/lane-equality";
+
+export interface LocalCustomHeat extends ICustomHeat {
+  originalHeatNumber?: number;
+}
 
 export interface LocalRotation extends ICustomRotation {
   isExpanded?: boolean;
@@ -117,6 +121,12 @@ export function areCustomRotationStatesEqual(
     }
     return heats.every((heat, heatIdx) => {
       const otherHeat = otherHeats[heatIdx];
+      if (
+        (heat as any).originalHeatNumber !==
+        (otherHeat as any).originalHeatNumber
+      ) {
+        return false;
+      }
       if (heat.group !== otherHeat.group) {
         return false;
       }

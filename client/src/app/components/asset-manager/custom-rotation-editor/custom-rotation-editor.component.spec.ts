@@ -25,6 +25,7 @@ import {
 } from "@app/testing/unit-test-mocks";
 
 import { CustomRotationEditorComponent } from "./custom-rotation-editor.component";
+import { initializeRotationOriginalHeatNumbers } from "./rotation-editor.utils";
 import { buildSingleRotationExportJson } from "./rotation-export.utils";
 
 describe("CustomRotationEditorComponent", () => {
@@ -2269,6 +2270,283 @@ describe("CustomRotationEditorComponent", () => {
         ]),
         undefined,
       );
+    });
+  });
+
+  describe("Driver Highlighting in Custom Rotation Editor", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "Highlight Test";
+      component.internalRotations = [
+        {
+          numDrivers: 4,
+          isExpanded: true,
+          heats: [
+            { driverIndices: [1, 2, 0, 0], group: 0 },
+            { driverIndices: [3, 4, -1, 0], group: 0 },
+          ],
+        },
+      ];
+      component.updateDropListConnections();
+      fixture.detectChanges();
+    });
+
+    it("should toggle virtual driver highlight when driver name is clicked in driver pool", () => {
+      expect(component.isDriverHighlighted(1)).toBeFalse();
+      expect(component.getDriverHighlightColor(1)).toBeNull();
+
+      const poolDriverNames = fixture.debugElement.queryAll(
+        By.css("#driver-pool .clickable-driver-name"),
+      );
+      expect(poolDriverNames.length).toBeGreaterThan(0);
+
+      // Click Driver 1
+      poolDriverNames[0].nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.isDriverHighlighted(1)).toBeTrue();
+      const hlColor = component.getDriverHighlightColor(1);
+      expect(hlColor).toBeTruthy();
+
+      // Check driver item in pool has highlighted class
+      const poolDriverItems = fixture.debugElement.queryAll(
+        By.css("#driver-pool .driver-item"),
+      );
+      expect(
+        poolDriverItems[0].nativeElement.classList.contains(
+          "driver-highlighted",
+        ),
+      ).toBeTrue();
+      expect(
+        poolDriverItems[1].nativeElement.classList.contains("driver-dimmed"),
+      ).toBeTrue();
+
+      // Check badge and chip exist
+      const badge = poolDriverNames[0].query(By.css(".driver-highlight-badge"));
+      expect(badge).toBeTruthy();
+      const chip = poolDriverItems[0].query(By.css(".driver-highlight-chip"));
+      expect(chip).toBeTruthy();
+
+      // Check heat card highlighting: Heat 1 has driver 1, Heat 2 does not
+      const heatCards = fixture.debugElement.queryAll(By.css(".heat-card"));
+      expect(
+        heatCards[0].nativeElement.classList.contains("heat-has-highlight"),
+      ).toBeTrue();
+      expect(
+        heatCards[1].nativeElement.classList.contains("heat-dimmed"),
+      ).toBeTrue();
+
+      // Check heat pips in Heat 1
+      const pips = heatCards[0].queryAll(By.css(".heat-pip"));
+      expect(pips.length).toBe(1);
+
+      // Check lane 0 in Heat 1 (driver 1) is highlighted
+      const laneDriver = heatCards[0].query(
+        By.css(".driver-item.populated.driver-highlighted"),
+      );
+      expect(laneDriver).toBeTruthy();
+
+      // Click Driver 1 again to remove highlight
+      poolDriverNames[0].nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.isDriverHighlighted(1)).toBeFalse();
+      expect(component.hasHighlightedDrivers()).toBeFalse();
+      expect(
+        poolDriverItems[0].nativeElement.classList.contains(
+          "driver-highlighted",
+        ),
+      ).toBeFalse();
+      expect(
+        heatCards[0].nativeElement.classList.contains("heat-has-highlight"),
+      ).toBeFalse();
+    });
+
+    it("should toggle step-up driver highlight when clicked in step-up pool", () => {
+      const stepUpNames = fixture.debugElement.queryAll(
+        By.css("#step-up-pool .clickable-driver-name"),
+      );
+      expect(stepUpNames.length).toBeGreaterThan(0);
+
+      // Click Step-Up 1 (ID -1)
+      stepUpNames[0].nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.isDriverHighlighted(-1)).toBeTrue();
+      const hlColor = component.getDriverHighlightColor(-1);
+      expect(hlColor).toBeTruthy();
+
+      const heatCards = fixture.debugElement.queryAll(By.css(".heat-card"));
+      // Heat 2 contains step-up driver -1
+      expect(
+        heatCards[1].nativeElement.classList.contains("heat-has-highlight"),
+      ).toBeTrue();
+    });
+
+    it("should toggle driver highlight when clicking driver name in heat lane", () => {
+      const heatCards = fixture.debugElement.queryAll(By.css(".heat-card"));
+      const laneDriverName = heatCards[0].query(
+        By.css(".clickable-driver-name"),
+      );
+      expect(laneDriverName).toBeTruthy();
+
+      laneDriverName.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.isDriverHighlighted(1)).toBeTrue();
+
+      // Click again in lane to toggle off
+      laneDriverName.nativeElement.click();
+      fixture.detectChanges();
+
+      expect(component.isDriverHighlighted(1)).toBeFalse();
+    });
+
+    it("should allow multiple drivers to be highlighted with distinct colors", () => {
+      component.toggleDriverHighlight(1);
+      component.toggleDriverHighlight(2);
+      fixture.detectChanges();
+
+      expect(component.isDriverHighlighted(1)).toBeTrue();
+      expect(component.isDriverHighlighted(2)).toBeTrue();
+
+      const color1 = component.getDriverHighlightColor(1);
+      const color2 = component.getDriverHighlightColor(2);
+      expect(color1).not.toBe(color2);
+
+      const heatCards = fixture.debugElement.queryAll(By.css(".heat-card"));
+      const pips = heatCards[0].queryAll(By.css(".heat-pip"));
+      expect(pips.length).toBe(2);
+    });
+
+    it("should clear all highlights with clearDriverHighlights()", () => {
+      component.toggleDriverHighlight(1);
+      component.toggleDriverHighlight(3);
+      expect(component.hasHighlightedDrivers()).toBeTrue();
+
+      component.clearDriverHighlights();
+      fixture.detectChanges();
+
+      expect(component.hasHighlightedDrivers()).toBeFalse();
+      expect(component.isDriverHighlighted(1)).toBeFalse();
+      expect(component.isDriverHighlighted(3)).toBeFalse();
+    });
+  });
+
+  describe("Original Heat Number Display", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "Original Heat Test";
+      component.internalRotations = [
+        {
+          numDrivers: 4,
+          isExpanded: true,
+          heats: [
+            { driverIndices: [1, 2, 3, 4], group: 0 },
+            { driverIndices: [2, 3, 4, 1], group: 0 },
+          ],
+        },
+      ];
+      initializeRotationOriginalHeatNumbers(component.internalRotations);
+      component.updateDropListConnections();
+      fixture.detectChanges();
+    });
+
+    it("should initialize originalHeatNumber on heats and render original heat tags", () => {
+      const heat1 = component.internalRotations[0].heats![0] as any;
+      const heat2 = component.internalRotations[0].heats![1] as any;
+      expect(heat1.originalHeatNumber).toBe(1);
+      expect(heat2.originalHeatNumber).toBe(2);
+
+      expect(component.getOriginalHeatDisplay(heat1)).toBe("1");
+      expect(component.getOriginalHeatDisplay(heat2)).toBe("2");
+
+      const tags = fixture.debugElement.queryAll(By.css(".original-heat-tag"));
+      expect(tags.length).toBe(2);
+      expect(
+        tags[0]
+          .query(By.css(".original-heat-value"))
+          .nativeElement.textContent.trim(),
+      ).toBe("1");
+      expect(
+        tags[1]
+          .query(By.css(".original-heat-value"))
+          .nativeElement.textContent.trim(),
+      ).toBe("2");
+    });
+
+    it("should display '--' for newly added heats without originalHeatNumber", () => {
+      component.addHeat(component.internalRotations[0]);
+      fixture.detectChanges();
+
+      const addedHeat = component.internalRotations[0].heats![2] as any;
+      expect(addedHeat.originalHeatNumber).toBeUndefined();
+      expect(component.getOriginalHeatDisplay(addedHeat)).toBe("--");
+
+      const tags = fixture.debugElement.queryAll(By.css(".original-heat-tag"));
+      expect(tags.length).toBe(3);
+      const newTagValue = tags[2].query(By.css(".original-heat-value"));
+      expect(newTagValue.nativeElement.textContent.trim()).toBe("--");
+      expect(newTagValue.nativeElement.classList.contains("is-new")).toBeTrue();
+    });
+
+    it("should preserve originalHeatNumber when heats are reordered", () => {
+      // Reorder heats: move heat at index 1 to index 0
+      component.dropHeat(component.internalRotations[0], {
+        previousIndex: 1,
+        currentIndex: 0,
+      } as any);
+      fixture.detectChanges();
+
+      const reorderedHeats = component.internalRotations[0].heats! as any[];
+      expect(reorderedHeats[0].originalHeatNumber).toBe(2);
+      expect(reorderedHeats[1].originalHeatNumber).toBe(1);
+
+      expect(component.getOriginalHeatDisplay(reorderedHeats[0])).toBe("2");
+      expect(component.getOriginalHeatDisplay(reorderedHeats[1])).toBe("1");
+
+      const tags = fixture.debugElement.queryAll(By.css(".original-heat-tag"));
+      expect(
+        tags[0]
+          .query(By.css(".original-heat-value"))
+          .nativeElement.textContent.trim(),
+      ).toBe("2");
+      expect(
+        tags[1]
+          .query(By.css(".original-heat-value"))
+          .nativeElement.textContent.trim(),
+      ).toBe("1");
+    });
+  });
+
+  describe("Lane Driver Removal via Double Click", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "Remove Driver Test";
+      component.internalRotations = [
+        {
+          numDrivers: 4,
+          isExpanded: true,
+          heats: [{ driverIndices: [1, 2, 3, 4], group: 0 }],
+        },
+      ];
+      component.updateDropListConnections();
+      fixture.detectChanges();
+    });
+
+    it("should remove driver from lane and set driver index to 0", () => {
+      const heat = component.internalRotations[0].heats![0];
+      expect(heat.driverIndices![1]).toBe(2);
+
+      component.removeFromHeat(component.internalRotations[0], heat, 1);
+      fixture.detectChanges();
+
+      expect(heat.driverIndices![1]).toBe(0);
+
+      // Verify lane 1 in DOM renders empty driver item
+      const heatCards = fixture.debugElement.queryAll(By.css(".heat-card"));
+      const emptySlot = heatCards[0].query(By.css(".driver-item.empty"));
+      expect(emptySlot).toBeTruthy();
     });
   });
 });

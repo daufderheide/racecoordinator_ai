@@ -108,6 +108,7 @@ Pour créer un nouvel actif d'ensemble de rotations personnalisées :
 ### Ajout et Réorganisation des Manches {: #adding-heats }
 
 - **Ajouter une Manche :** Cliquez sur l'icône `+` dans l'en-tête de la rotation pour ajouter des manches supplémentaires.
+- **Numéro d'Origine de la Manche :** Le sous-en-tête de chaque manche affiche un badge **Manche d'origine** indiquant sa position séquentielle initiale (`Manche d'origine : 1`, `Manche d'origine : 2`). Lorsque les manches sont réorganisées par glisser-déposer, ce badge reste fixe afin de suivre la séquence d'origine, tandis que les manches nouvellement créées affichent `--`.
 - **Réorganiser les Manches :** Glissez-déposez les cartes de manches dans la grille pour modifier la séquence de course.
 - **Supprimer une Manche :** Cliquez sur l'icône de corbeille d'une carte de manche pour la supprimer.
 
@@ -115,9 +116,10 @@ Pour créer un nouvel actif d'ensemble de rotations personnalisées :
 
 - **Bassin de Pilotes Virtuels :** Le panneau de gauche propose un réservoir de pilotes virtuels (`Pilote 1`, `Pilote 2`, etc.). Vous pouvez ajuster le nombre de pilotes du bassin pour générer autant de têtes de série que nécessaire.
 - **Réserve de Pilotes de Montée :** Située juste en dessous du bassin des pilotes virtuels, fournissant des jetons de qualification dynamique pour les courses Step Up (voir [Courses Step Up & Paliers de Progression](#step-up-races) ci-dessous).
+- **Mise en Évidence des Pilotes :** Cliquez sur le nom d'un pilote dans le bassin, la réserve de montée ou sur une voie de manche pour activer/désactiver sa mise en évidence visuelle. Les pilotes mis en évidence reçoivent une couleur d'accentuation dédiée issue d'une palette animée, des pastilles colorées et des repères (pips) dans les en-têtes des manches participantes. Les manches non participantes et les autres pilotes sont estompés pour vérifier rapidement les temps de pause et l'intervalle entre les relais. Plusieurs pilotes peuvent être mis en valeur simultanément ; un nouveau clic ou l'option **Effacer la mise en évidence** réinitialise l'affichage.
 - **Glisser-Déposer :** Faites glisser les jetons de pilotes depuis le bassin directement vers les créneaux de voie d'une manche.
 - **Échange de Voies :** Faites glisser un jeton de pilote d'une voie à une autre pour échanger leurs affectations.
-- **Vider une Voie :** Retirez un pilote d'une voie pour la laisser inoccupée (vide).
+- **Vider une Voie :** Double-cliquez sur un pilote placé sur une voie pour le retirer immédiatement et laisser la voie vide. Vous pouvez également glisser un pilote hors de sa voie pour la libérer.
 
 ### Affectation des Groupes {: #group-assignments }
 

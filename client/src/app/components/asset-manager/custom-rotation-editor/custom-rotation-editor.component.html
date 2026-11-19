@@ -113,7 +113,18 @@
           (cdkDropListDropped)="onDrop($event)"
         >
           @for (driver of virtualDrivers; track driver.id) {
-            <div class="driver-item" cdkDrag [cdkDragData]="driver">
+            <div
+              class="driver-item"
+              cdkDrag
+              [cdkDragData]="driver"
+              [class.driver-highlighted]="isDriverHighlighted(driver.id)"
+              [class.driver-dimmed]="
+                hasHighlightedDrivers() && !isDriverHighlighted(driver.id)
+              "
+              [style.--driver-highlight-color]="
+                getDriverHighlightColor(driver.id)
+              "
+            >
               <div class="driver-seed">({{ driver.id }})</div>
               <!-- Premium helmet graphic icon -->
               <svg
@@ -167,8 +178,40 @@
                 />
               </svg>
               <div class="driver-details">
-                <div class="driver-name">Driver {{ driver.id }}</div>
+                <div
+                  class="driver-name clickable-driver-name"
+                  (click)="toggleDriverHighlight(driver.id, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                  [title]="
+                    isDriverHighlighted(driver.id)
+                      ? ('RDS_REMOVE_HIGHLIGHT' | translate)
+                      : ('RDS_HIGHLIGHT_DRIVER' | translate)
+                  "
+                >
+                  <span class="driver-name-text">Driver {{ driver.id }}</span>
+                  @if (getDriverHighlightColor(driver.id); as hlColor) {
+                    <span
+                      class="driver-highlight-badge"
+                      [style.background-color]="hlColor"
+                      [style.box-shadow]="'0 0 6px ' + hlColor"
+                    ></span>
+                  }
+                </div>
               </div>
+              @if (getDriverHighlightColor(driver.id); as hlColor) {
+                <div
+                  class="driver-highlight-chip"
+                  [style.background-color]="hlColor"
+                  [style.color]="getContrastTextColor(hlColor)"
+                  [style.box-shadow]="'0 0 10px ' + hlColor"
+                  [title]="'RDS_REMOVE_HIGHLIGHT' | translate"
+                  (click)="toggleDriverHighlight(driver.id, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                >
+                  <span class="chip-dot"></span>
+                  <span class="chip-text">Driver {{ driver.id }}</span>
+                </div>
+              }
             </div>
           }
         </div>
@@ -206,6 +249,13 @@
               class="driver-item step-up-item"
               cdkDrag
               [cdkDragData]="driver"
+              [class.driver-highlighted]="isDriverHighlighted(driver.id)"
+              [class.driver-dimmed]="
+                hasHighlightedDrivers() && !isDriverHighlighted(driver.id)
+              "
+              [style.--driver-highlight-color]="
+                getDriverHighlightColor(driver.id)
+              "
             >
               <span
                 class="material-icons step-up-icon"
@@ -213,10 +263,44 @@
                 >arrow_upward</span
               >
               <div class="driver-details">
-                <div class="driver-name">
-                  {{ "RD_STEP_UP_N" | translate: { n: driver.stepUpIndex } }}
+                <div
+                  class="driver-name clickable-driver-name"
+                  (click)="toggleDriverHighlight(driver.id, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                  [title]="
+                    isDriverHighlighted(driver.id)
+                      ? ('RDS_REMOVE_HIGHLIGHT' | translate)
+                      : ('RDS_HIGHLIGHT_DRIVER' | translate)
+                  "
+                >
+                  <span class="driver-name-text">
+                    {{ "RD_STEP_UP_N" | translate: { n: driver.stepUpIndex } }}
+                  </span>
+                  @if (getDriverHighlightColor(driver.id); as hlColor) {
+                    <span
+                      class="driver-highlight-badge"
+                      [style.background-color]="hlColor"
+                      [style.box-shadow]="'0 0 6px ' + hlColor"
+                    ></span>
+                  }
                 </div>
               </div>
+              @if (getDriverHighlightColor(driver.id); as hlColor) {
+                <div
+                  class="driver-highlight-chip"
+                  [style.background-color]="hlColor"
+                  [style.color]="getContrastTextColor(hlColor)"
+                  [style.box-shadow]="'0 0 10px ' + hlColor"
+                  [title]="'RDS_REMOVE_HIGHLIGHT' | translate"
+                  (click)="toggleDriverHighlight(driver.id, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                >
+                  <span class="chip-dot"></span>
+                  <span class="chip-text">{{
+                    "RD_STEP_UP_N" | translate: { n: driver.stepUpIndex }
+                  }}</span>
+                </div>
+              }
             </div>
           }
         </div>
@@ -367,6 +451,7 @@
               <div class="expander-body">
                 <div
                   class="heats-grid"
+                  [class.has-driver-highlight]="hasHighlightedDrivers()"
                   [style.zoom]="zoomLevel / 100"
                   cdkDropList
                   cdkDropListOrientation="mixed"
@@ -380,6 +465,10 @@
                       [cdkDragData]="heat"
                       cdkDragPreviewContainer="parent"
                       [class.is-step-boundary]="heat.isStepUpBoundary"
+                      [class.heat-has-highlight]="isHeatHighlighted(heat)"
+                      [class.heat-dimmed]="
+                        hasHighlightedDrivers() && !isHeatHighlighted(heat)
+                      "
                       [class.heat-error]="
                         heatHasError(rotation, hIdx) ||
                         heatHasGroupConflict(rotation, hIdx)
@@ -404,6 +493,19 @@
                               >
                             }
                           </h4>
+                          @if (getHeatHighlightColors(heat); as pips) {
+                            @if (pips.length > 0) {
+                              <span class="heat-highlight-pips">
+                                @for (pipColor of pips; track pipColor) {
+                                  <span
+                                    class="heat-pip"
+                                    [style.background-color]="pipColor"
+                                    [style.box-shadow]="'0 0 6px ' + pipColor"
+                                  ></span>
+                                }
+                              </span>
+                            }
+                          }
                           @if (heatHasStepUpInStepOne(rotation, hIdx)) {
                             <span
                               class="warning-icon"
@@ -426,6 +528,23 @@
                         </div>
                       </div>
                       <div class="heat-subheader">
+                        <span
+                          class="original-heat-tag"
+                          [attr.data-original-heat]="
+                            getOriginalHeatDisplay(heat)
+                          "
+                        >
+                          <span class="original-heat-label"
+                            >{{ "RD_ORIGINAL_HEAT" | translate }}:</span
+                          >
+                          <span
+                            class="original-heat-value"
+                            [class.is-new]="
+                              getOriginalHeatDisplay(heat) === '--'
+                            "
+                            >{{ getOriginalHeatDisplay(heat) }}</span
+                          >
+                        </span>
                         <div class="heat-group-tag">
                           <span class="group-label"
                             >{{ "RE_GROUPS_LABEL" | translate }}:</span
@@ -494,6 +613,16 @@
                                     class="driver-item populated step-up-item"
                                     cdkDrag
                                     [cdkDragData]="{ id: driverId }"
+                                    [class.driver-highlighted]="
+                                      isDriverHighlighted(driverId)
+                                    "
+                                    [class.driver-dimmed]="
+                                      hasHighlightedDrivers() &&
+                                      !isDriverHighlighted(driverId)
+                                    "
+                                    [style.--driver-highlight-color]="
+                                      getDriverHighlightColor(driverId)
+                                    "
                                     [style.background-color]="
                                       $any(lane).background_color ||
                                       lane.backgroundColor
@@ -501,6 +630,10 @@
                                     [style.color]="
                                       $any(lane).foreground_color ||
                                       lane.foregroundColor
+                                    "
+                                    (dblclick)="
+                                      removeFromHeat(rotation, heat, lIdx);
+                                      $event.stopPropagation()
                                     "
                                   >
                                     <span
@@ -516,16 +649,44 @@
                                     >
                                     <div class="driver-details">
                                       <div
-                                        class="driver-name"
+                                        class="driver-name clickable-driver-name"
                                         [style.color]="
                                           $any(lane).foreground_color ||
                                           lane.foregroundColor
                                         "
+                                        (click)="
+                                          toggleDriverHighlight(
+                                            driverId,
+                                            $event
+                                          )
+                                        "
+                                        (dblclick)="$event.stopPropagation()"
+                                        [title]="
+                                          isDriverHighlighted(driverId)
+                                            ? ('RDS_REMOVE_HIGHLIGHT'
+                                              | translate)
+                                            : ('RDS_HIGHLIGHT_DRIVER'
+                                              | translate)
+                                        "
                                       >
-                                        {{
-                                          "RD_STEP_UP_N"
-                                            | translate: { n: -driverId }
-                                        }}
+                                        <span class="driver-name-text">
+                                          {{
+                                            "RD_STEP_UP_N"
+                                              | translate: { n: -driverId }
+                                          }}
+                                        </span>
+                                        @if (
+                                          getDriverHighlightColor(driverId);
+                                          as hlColor
+                                        ) {
+                                          <span
+                                            class="driver-highlight-badge"
+                                            [style.background-color]="hlColor"
+                                            [style.box-shadow]="
+                                              '0 0 6px ' + hlColor
+                                            "
+                                          ></span>
+                                        }
                                       </div>
                                     </div>
                                   </div>
@@ -534,6 +695,16 @@
                                     class="driver-item populated"
                                     cdkDrag
                                     [cdkDragData]="{ id: driverId }"
+                                    [class.driver-highlighted]="
+                                      isDriverHighlighted(driverId)
+                                    "
+                                    [class.driver-dimmed]="
+                                      hasHighlightedDrivers() &&
+                                      !isDriverHighlighted(driverId)
+                                    "
+                                    [style.--driver-highlight-color]="
+                                      getDriverHighlightColor(driverId)
+                                    "
                                     [style.background-color]="
                                       $any(lane).background_color ||
                                       lane.backgroundColor
@@ -541,6 +712,10 @@
                                     [style.color]="
                                       $any(lane).foreground_color ||
                                       lane.foregroundColor
+                                    "
+                                    (dblclick)="
+                                      removeFromHeat(rotation, heat, lIdx);
+                                      $event.stopPropagation()
                                     "
                                   >
                                     <!-- Small helmet icon -->
@@ -627,13 +802,41 @@
                                     </svg>
                                     <div class="driver-details">
                                       <div
-                                        class="driver-name"
+                                        class="driver-name clickable-driver-name"
                                         [style.color]="
                                           $any(lane).foreground_color ||
                                           lane.foregroundColor
                                         "
+                                        (click)="
+                                          toggleDriverHighlight(
+                                            driverId,
+                                            $event
+                                          )
+                                        "
+                                        (dblclick)="$event.stopPropagation()"
+                                        [title]="
+                                          isDriverHighlighted(driverId)
+                                            ? ('RDS_REMOVE_HIGHLIGHT'
+                                              | translate)
+                                            : ('RDS_HIGHLIGHT_DRIVER'
+                                              | translate)
+                                        "
                                       >
-                                        Driver {{ driverId }}
+                                        <span class="driver-name-text"
+                                          >Driver {{ driverId }}</span
+                                        >
+                                        @if (
+                                          getDriverHighlightColor(driverId);
+                                          as hlColor
+                                        ) {
+                                          <span
+                                            class="driver-highlight-badge"
+                                            [style.background-color]="hlColor"
+                                            [style.box-shadow]="
+                                              '0 0 6px ' + hlColor
+                                            "
+                                          ></span>
+                                        }
                                         @if (
                                           driverHasGroupConflict(
                                             rotation,

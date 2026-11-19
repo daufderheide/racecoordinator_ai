@@ -108,6 +108,7 @@ Para crear un nuevo activo de conjunto de rotaciones personalizadas:
 ### Adición y Reordenación de Heats {: #adding-heats }
 
 - **Añadir Heat:** Haga clic en el icono `+` del encabezado de la rotación para agregar heats adicionales.
+- **Número Original del Heat:** Cada subtítulo de heat muestra una etiqueta de **Heat Original** indicando su número de secuencia inicial (`Heat Original: 1`, `Heat Original: 2`). Si los heats se reordenan o mueven mediante arrastrar y soltar, la etiqueta original permanece fija para rastrear su posición histórica, mientras que los heats recién creados muestran `--`.
 - **Reordenar Heats:** Arrastre y suelte las tarjetas de heat dentro de la cuadrícula para modificar la secuencia de carreras.
 - **Eliminar Heat:** Haga clic en el icono de papelera de una tarjeta de heat individual para eliminarla.
 
@@ -115,9 +116,10 @@ Para crear un nuevo activo de conjunto de rotaciones personalizadas:
 
 - **Grupo de Pilotos Virtuales:** El panel izquierdo ofrece un grupo de pilotos virtuales (`Piloto 1`, `Piloto 2`, etc.). Puede ajustar el número de pilotos en el grupo para generar tantas cabezas de serie como necesite.
 - **Grupo de Pilotos de Ascenso:** Situado directamente debajo de los pilotos virtuales, proporciona fichas dinámicas de ascenso para carreras Step Up (consulte [Carreras Step Up y Escalones de Progresión](#step-up-races) más abajo).
+- **Resaltado de Pilotos:** Haga clic en el nombre de cualquier piloto en el grupo de pilotos, grupo de ascenso o en un carril de heat para alternar su resaltado visual. Los pilotos resaltados reciben colores de contraste únicos de una paleta animada, puntos distintivos y puntos indicadores (pips) en los encabezados de los heats participantes. Los heats no participantes y los pilotos no resaltados se atenúan para comprobar de un vistazo los descansos y la cadencia de turnos. Se pueden resaltar múltiples pilotos al mismo tiempo; hacer clic de nuevo o pulsar **Limpiar resaltados** restablece el estilo predeterminado.
 - **Arrastrar y Soltar:** Arrastre las fichas de piloto desde el grupo directamente a los espacios de carril de cualquier heat.
 - **Intercambio de Carriles:** Arrastre la ficha de un piloto de un carril a otro para intercambiar sus asignaciones.
-- **Vaciar Carril:** Arrastre un piloto fuera de un carril o retírelo para dejarlo desocupado.
+- **Vaciar Carril:** Haga doble clic sobre un piloto asignado a un carril para eliminarlo de inmediato y dejar la ranura vacía. También puede arrastrar un piloto fuera del carril para dejarlo desocupado.
 
 ### Asignaciones de Grupo {: #group-assignments }
 

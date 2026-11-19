@@ -108,6 +108,7 @@ Para criar um novo ativo de conjunto de rotações personalizadas:
 ### Adição e Reordenação de Baterias {: #adding-heats }
 
 - **Adicionar Bateria:** Clique no ícone `+` no cabeçalho da rotação para acrescentar baterias adicionais.
+- **Número Original da Bateria:** O subtítulo de cada bateria apresenta um distintivo de **Bateria original** com o seu número sequencial inicial (`Bateria original: 1`, `Bateria original: 2`). Quando as baterias são reordenadas ou movidas por arrastamento, este distintivo permanece fixo para rastrear a posição original, enquanto novas baterias exibem `--`.
 - **Reordenar Baterias:** Arraste e solte os cartões de bateria na grelha para alterar a sequência de corrida.
 - **Eliminar Bateria:** Clique no ícone de caixote do lixo de uma bateria para a remover.
 
@@ -115,9 +116,10 @@ Para criar um novo ativo de conjunto de rotações personalizadas:
 
 - **Conjunto de Pilotos Virtuais:** O painel esquerdo disponibiliza uma reserva de pilotos virtuais (`Piloto 1`, `Piloto 2`, etc.). Pode ajustar o número de pilotos para gerar todas as cabeças de série necessárias.
 - **Grupo de Pilotos de Avanço:** Situado logo abaixo da reserva de pilotos virtuais; disponibiliza fichas dinâmicas de avanço para corridas Step Up (consulte [Corridas Step Up e Degraus de Progressão](#step-up-races) abaixo).
+- **Destaque de Piloto:** Clique no nome de qualquer piloto no conjunto de pilotos, grupo de avanço ou numa pista da bateria para alternar o destaque visual. Os pilotos destacados recebem cores distintas de uma paleta animada, pontos de destaque e pontos indicadores (pips) nos cabeçalhos das baterias participantes. Baterias não participantes e pilotos não destacados são atenuados para verificar rapidamente os descansos e o espaçamento dos turnos. Podem ser destacados múltiplos pilotos simultaneamente; clicar novamente ou selecionar **Limpar destaques** repõe o estilo normal.
 - **Arrastar e Largar:** Arraste as fichas de pilotos do conjunto diretamente para os lugares de pista de qualquer bateria.
 - **Troca de Pista:** Arraste a ficha de um piloto de uma pista para outra para trocar as suas posições.
-- **Esvaziar Pista:** Arraste um piloto para fora de uma pista para deixá-la desocupada (vazia).
+- **Esvaziar Pista:** Faça duplo clique num piloto colocado numa pista para o remover imediatamente e deixar o lugar desocupado. Também pode arrastar o piloto para fora da pista para deixá-la vazia.
 
 ### Atribuição de Grupos {: #group-assignments }
 

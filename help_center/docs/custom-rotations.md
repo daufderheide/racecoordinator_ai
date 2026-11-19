@@ -108,6 +108,7 @@ To create a new custom rotation set asset:
 ### Adding and Reordering Heats {: #adding-heats }
 
 - **Add Heat:** Click the `+` icon on the rotation header to append additional heats to the rotation.
+- **Original Heat Number:** Each heat card subheader displays an **Original Heat** badge indicating its initial sequence number (`Original Heat: 1`, `Original Heat: 2`). When heats are reordered or moved via drag-and-drop, the original heat badge remains fixed to track historical heat position, while newly added heats display `--`.
 - **Reorder Heats:** Drag and drop heat cards within the grid to change the sequence of heats.
 - **Delete Heat:** Click the trashcan icon on an individual heat card to remove it.
 
@@ -115,9 +116,10 @@ To create a new custom rotation set asset:
 
 - **Virtual Drivers Pool:** The left panel provides a pool of virtual drivers (`Driver 1`, `Driver 2`, etc.). You can adjust the **Number of Drivers** in the pool to generate as many virtual seeds as needed.
 - **Step-Up Drivers Pool:** Located directly below the virtual driver pool, providing dynamic advancement chips for step up races (see [Step Up Races & Progression Ladders](#step-up-races) below).
+- **Driver Highlighting:** Click any driver name in the driver pool, step-up pool, or heat lane to toggle visual highlighting. Highlighted drivers receive distinct accent colors from an animated palette, badge dots, and indicator pips in participating heat headers. Non-participating heats and unhighlighted drivers are dimmed to help race organizers verify rest cadence and stint spacing at a glance. Multiple drivers can be highlighted concurrently, and clicking a highlighted driver again or clicking **Clear Highlights** resets styling.
 - **Drag and Drop:** Drag driver chips from the pool directly into lane slots on any heat card.
 - **Lane Swapping:** Drag a driver chip from one lane and drop it onto another lane to swap their assignments.
-- **Clear Lane:** Click or drag a driver out of a lane to leave it unoccupied (empty).
+- **Clear Lane:** Double-click a populated driver in a heat lane to quickly clear that lane slot and restore it to empty. You can also drag a driver out of a lane to leave it unoccupied.
 
 ### Group Assignments {: #group-assignments }
 
