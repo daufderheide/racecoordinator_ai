@@ -1212,7 +1212,7 @@ describe("LaneViewMigrationHelper", () => {
             height: 50,
             zIndex: 100,
             customSettings: {
-              columnKey: "lastLapTime",
+              columnKey: "driver.name",
               highlightLapStyle: "shimmer",
               highlightRowOnLap: true,
               minFontSize: 0,
@@ -1226,6 +1226,43 @@ describe("LaneViewMigrationHelper", () => {
       expect(layout.widgets[0].customSettings?.["highlightLapStyle"]).toBe(
         "shimmer",
       );
+    });
+
+    it("should migrate lastLapTime and lapTime widgets to include bottom-center driftIndicator inset", () => {
+      const layout: LayoutConfig = {
+        widgets: [
+          {
+            id: "w-last-lap",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "lastLapTime",
+              highlightLapStyle: "classic",
+              minFontSize: 0,
+              maxFontSize: 60,
+            },
+          } as any,
+          {
+            id: "w-lap-time",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "lapTime",
+              insets: { "top-left": "flag" },
+              highlightLapStyle: "classic",
+              minFontSize: 0,
+              maxFontSize: 60,
+            },
+          } as any,
+        ],
+      };
+      const migrated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+      expect(migrated).toBeTrue();
+      expect(layout.widgets[0].customSettings?.["insets"]).toEqual({
+        "bottom-center": "driftIndicator",
+      });
+      expect(layout.widgets[1].customSettings?.["insets"]).toEqual({
+        "top-left": "flag",
+        "bottom-center": "driftIndicator",
+      });
     });
   });
 
@@ -1299,6 +1336,21 @@ describe("LaneViewMigrationHelper", () => {
       expect(layouts["gap"]).toBeDefined();
       expect(layouts["gap"]["center-center"]).toBe("gap");
       expect(layouts["gap"]["bottom-right"]).toBe("gap");
+    });
+
+    it("should ensure bottom-center driftIndicator on lastLapTime and lapTime column layouts", () => {
+      const layouts: Record<string, Record<string, string>> = {
+        lastLapTime: {
+          "center-center": "lastLapTime",
+        },
+        lapTime: {
+          "center-center": "lapTime",
+        },
+      };
+      const migrated = LaneViewMigrationHelper.migrateColumnLayouts(layouts);
+      expect(migrated).toBeTrue();
+      expect(layouts["lastLapTime"]["bottom-center"]).toBe("driftIndicator");
+      expect(layouts["lapTime"]["bottom-center"]).toBe("driftIndicator");
     });
   });
 

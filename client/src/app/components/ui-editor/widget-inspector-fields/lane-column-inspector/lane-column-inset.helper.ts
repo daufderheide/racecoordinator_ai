@@ -88,6 +88,12 @@ export class LaneColumnInsetHelper {
       : key;
     if (normalizedKey.startsWith("custom:")) return "extension";
     if (
+      normalizedKey === "driftIndicator" ||
+      normalizedKey === "drift-indicator"
+    ) {
+      return "navigation";
+    }
+    if (
       normalizedKey.includes("Time") ||
       normalizedKey === "totalTime" ||
       normalizedKey === "segmentTime"
@@ -669,6 +675,80 @@ export class LaneColumnInsetHelper {
       height: 100,
       zIndex: 1,
     };
+  }
+
+  public static isInsetDriftIndicatorColumn(key: string | undefined): boolean {
+    if (!key) return false;
+    const normalizedKey = key.startsWith("lane-col:")
+      ? key.substring("lane-col:".length)
+      : key;
+    return RacedayLayoutUtils.isDriftIndicatorProperty(normalizedKey);
+  }
+
+  public static getInsetDriftDisplayMode(
+    currentSettings: any,
+    anchor: string,
+  ): "text" | "image" {
+    const config = currentSettings["insetsConfig"]?.[anchor];
+    return config?.displayMode === "image" ? "image" : "text";
+  }
+
+  public static setInsetDriftDisplayMode(
+    currentSettings: any,
+    anchor: string,
+    val: "text" | "image",
+    onChange?: () => void,
+  ): void {
+    const config = LaneColumnInsetHelper.getOrCreateInsetConfig(
+      currentSettings,
+      anchor,
+    );
+    config.displayMode = val;
+    onChange?.();
+  }
+
+  public static getInsetDriftText(
+    currentSettings: any,
+    anchor: string,
+  ): string {
+    const config = currentSettings["insetsConfig"]?.[anchor];
+    return config?.driftText !== undefined ? config.driftText : "DRIFT";
+  }
+
+  public static setInsetDriftText(
+    currentSettings: any,
+    anchor: string,
+    val: string,
+    onChange?: () => void,
+  ): void {
+    const config = LaneColumnInsetHelper.getOrCreateInsetConfig(
+      currentSettings,
+      anchor,
+    );
+    config.driftText = val;
+    onChange?.();
+  }
+
+  public static getInsetDriftImageUrl(
+    currentSettings: any,
+    anchor: string,
+  ): string {
+    const config = currentSettings["insetsConfig"]?.[anchor];
+    return config?.imageUrl || "";
+  }
+
+  public static setInsetDriftImageUrl(
+    currentSettings: any,
+    anchor: string,
+    val: string | undefined,
+    onChange?: () => void,
+  ): void {
+    const config = LaneColumnInsetHelper.getOrCreateInsetConfig(
+      currentSettings,
+      anchor,
+    );
+    config.imageUrl = val || "";
+    onChange?.();
   }
 
   public static normalizeSettings(s: any): any {

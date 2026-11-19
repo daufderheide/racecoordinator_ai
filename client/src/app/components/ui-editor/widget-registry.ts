@@ -239,6 +239,22 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       showPartialHeats: false,
     }),
   },
+  "drift-indicator": {
+    defaultSettings: () => ({
+      ...defaultLaneColumnSettings(),
+      columnKey: "driftIndicator",
+      displayMode: "text",
+      driftText: "DRIFT",
+      imageUrl: "",
+      valueFontSize: 24,
+      valueFontBold: true,
+      valueAlignment: "center",
+      useLaneColors: false,
+      backgroundColor: "#ef4444",
+      textColor: "#ffffff",
+      ...getDefaultBorderConfigForWidget("drift-indicator"),
+    }),
+  },
   "on-deck": {
     defaultSettings: () => ({
       titleFontFamily: "",

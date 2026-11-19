@@ -420,3 +420,23 @@ export function resolveVisibleLastLaps(
   }
   return allLaps;
 }
+
+export function resolveIsVerticalLapsFlow(
+  settings: LaneColumnWidgetSettings,
+  widget: { width?: number; height?: number } | null | undefined,
+  cachedWidth?: number,
+  cachedHeight?: number,
+  cardEl?: HTMLElement | null,
+): boolean {
+  if (settings.gridDirection === "horizontal") return true;
+  if (settings.gridDirection === "vertical") return false;
+  const w = widget?.width || cachedWidth || 0;
+  const h = widget?.height || cachedHeight || 0;
+  if (h > 0 && w > 0) return h >= w * 0.75;
+  return Boolean(
+    cardEl &&
+    cardEl.clientHeight > 0 &&
+    cardEl.clientWidth > 0 &&
+    cardEl.clientHeight >= cardEl.clientWidth * 0.75,
+  );
+}

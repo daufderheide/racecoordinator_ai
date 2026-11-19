@@ -859,10 +859,21 @@ public class DatabaseInitializer {
       }
     }
 
+    String columnLayoutsJson = ui.getColumnLayoutsJson();
+    if (columnLayoutsJson != null) {
+      String updatedColumnLayoutsJson =
+          CustomUI.ensureDriftIndicatorColumnLayouts(columnLayoutsJson);
+      if (!updatedColumnLayoutsJson.equals(columnLayoutsJson)) {
+        columnLayoutsJson = updatedColumnLayoutsJson;
+        updated = true;
+      }
+    }
+
     String layoutJson = ui.getLayoutJson();
     if (layoutJson != null) {
       String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
       updatedLayoutJson = CustomUI.ensureAspectRatioAndDimensions(updatedLayoutJson);
+      updatedLayoutJson = CustomUI.ensureDriftIndicatorInsets(updatedLayoutJson);
       if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
         updatedLayoutJson = CustomUI.ensurePracticeTopRowCoordinates(updatedLayoutJson);
       }
@@ -887,7 +898,7 @@ public class DatabaseInitializer {
               ui.isDefault(),
               layoutJson,
               ui.getColumnsJson(),
-              ui.getColumnLayoutsJson(),
+              columnLayoutsJson,
               ui.getColumnVisibilityJson(),
               ui.getColumnWidthsJson(),
               ui.getColumnAnchorsJson(),

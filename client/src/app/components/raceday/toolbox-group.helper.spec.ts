@@ -56,7 +56,14 @@ describe("ToolboxGroupHelper", () => {
       lapsStandingsSg?.widgets.find((w) => w.type === "lane-col:points"),
     ).toBeDefined();
 
-    expect(rcAiGroup.totalCount).toBe(132);
+    const lapTimesSg = heatDataSg?.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-lap-times",
+    );
+    expect(
+      lapTimesSg?.widgets.find((w) => w.type === "lane-col:driftIndicator"),
+    ).toBeDefined();
+
+    expect(rcAiGroup.totalCount).toBe(133);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -95,7 +102,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(132);
+    expect(rcAiGroup.totalCount).toBe(133);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {

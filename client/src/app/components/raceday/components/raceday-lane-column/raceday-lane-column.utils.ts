@@ -593,8 +593,11 @@ export function safeguardTextOverflow(
   initialTargetSize: number,
   minSize: number,
 ): void {
-  const textEl = cardEl.querySelector(".lane-col-text") as HTMLElement | null;
-  const valueEl = cardEl.querySelector(".lane-col-value") as HTMLElement | null;
+  const textEl = cardEl.querySelector(
+    ".lane-col-text, .lane-col-main-content .drift-indicator",
+  ) as HTMLElement | null;
+  const valueEl = (cardEl.querySelector(".lane-col-value") ||
+    cardEl.querySelector(".lane-col-main-content")) as HTMLElement | null;
   if (!textEl || !valueEl || valueEl.clientWidth <= 0) return;
 
   const overflow = textEl.scrollWidth - valueEl.clientWidth;
@@ -785,7 +788,6 @@ export function fitColumnTextValue(
   textScaleFactor: number = 1,
   hasTeamName: boolean = false,
   columnKey?: string,
-  isDriftLap: boolean = false,
 ): void {
   if (!text) return;
 
@@ -812,7 +814,7 @@ export function fitColumnTextValue(
     explicitWidth,
     explicitHeight,
     scaleMode,
-    hasTeamName || isDriftLap,
+    hasTeamName,
   );
   const dims = applyColumnInsetsAndPaddings(
     cardEl,

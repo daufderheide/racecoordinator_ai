@@ -1,3 +1,4 @@
+import { AnchorPoint } from "@app/components/raceday/column_definition";
 import {
   AbsoluteWidgetNode,
   HighlightLapStyle,
@@ -169,6 +170,20 @@ function migrateInsetsConfig(s: Record<string, any>): boolean {
   return migrated;
 }
 
+function migrateDriftIndicatorInsets(s: Record<string, any>): boolean {
+  const colKey = s["columnKey"];
+  if (colKey === "lastLapTime" || colKey === "lapTime") {
+    if (!s["insets"] || typeof s["insets"] !== "object") {
+      s["insets"] = {};
+    }
+    if (!s["insets"]["bottom-center"]) {
+      s["insets"]["bottom-center"] = "driftIndicator";
+      return true;
+    }
+  }
+  return false;
+}
+
 function migrateHighlightLapStyle(
   widget: AbsoluteWidgetNode,
   s: Record<string, any>,
@@ -236,6 +251,7 @@ export class LaneViewMigrationHelper {
       if (migrateColumnKey(s)) migrated = true;
       if (migrateInsets(s)) migrated = true;
       if (migrateInsetsConfig(s)) migrated = true;
+      if (migrateDriftIndicatorInsets(s)) migrated = true;
       if (migrateHighlightLapStyle(w, s)) migrated = true;
       if (migrateWidgetFontScalingForWidget(w, s)) migrated = true;
     }
@@ -333,6 +349,17 @@ export class LaneViewMigrationHelper {
         }
         delete layouts[key];
         migrated = true;
+      }
+    }
+    for (const key of ["lastLapTime", "lapTime"]) {
+      if (layouts[key] && typeof layouts[key] === "object") {
+        if (
+          !layouts[key]["bottom-center"] &&
+          !layouts[key][AnchorPoint.BottomCenter]
+        ) {
+          layouts[key][AnchorPoint.BottomCenter] = "driftIndicator";
+          migrated = true;
+        }
       }
     }
     return migrated;

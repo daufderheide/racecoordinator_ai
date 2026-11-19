@@ -17,7 +17,10 @@ test.describe("Drift Lap Indicator Visuals", () => {
       racedayColumns: ["driver.name", "lastLapTime"],
       columnLayouts: {
         "driver.name": { CenterCenter: "driver.name" },
-        lastLapTime: { CenterCenter: "lastLapTime" },
+        lastLapTime: {
+          CenterCenter: "lastLapTime",
+          BottomCenter: "driftIndicator",
+        },
       },
       columnAnchors: {
         "driver.name": "Center",

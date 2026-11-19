@@ -39,6 +39,7 @@ export type WidgetType =
   | "lane-view"
   | "lane-column"
   | "average-score"
+  | "drift-indicator"
   | "on-deck"
   | "next-heat"
   | "heat-list"
@@ -107,6 +108,9 @@ export interface InsetConfig {
   timeDecimalPlaces?: number;
   lapDecimalPlaces?: number;
   decimalPlaces?: number;
+  displayMode?: "text" | "image" | string;
+  driftText?: string;
+  imageUrl?: string;
   timeDisplayFormat?: TimerDisplayFormat;
   timeSubsecondMode?: TimerSubsecondMode;
   timeSubsecondThreshold?: number;
@@ -140,6 +144,9 @@ export interface LaneColumnWidgetSettings {
   gapTarget?: "leader" | "position";
   gapMode?: "always_time" | "laps_and_time" | "always_laps";
   showPartialHeats?: boolean;
+  displayMode?: "text" | "image" | string;
+  driftText?: string;
+  imageUrl?: string;
   bindingMode:
     | "lane"
     | "position"
@@ -368,6 +375,7 @@ export class Settings {
     },
     lastLapTime: {
       [AnchorPoint.CenterCenter]: "lastLapTime",
+      [AnchorPoint.BottomCenter]: "driftIndicator",
       [AnchorPoint.BottomRight]: "bestLapTime",
     },
     gap: {
@@ -397,6 +405,7 @@ export class Settings {
     },
     lastLapTime: {
       [AnchorPoint.CenterCenter]: "lastLapTime",
+      [AnchorPoint.BottomCenter]: "driftIndicator",
     },
     lastLaps: {
       [AnchorPoint.CenterCenter]: "lastLaps",
@@ -595,6 +604,9 @@ export class Settings {
           useLaneColors: true,
           highlightRowOnLap: true,
           highlightLapStyle: "full-glow",
+          insets: {
+            "bottom-center": "driftIndicator",
+          },
         },
       },
       {

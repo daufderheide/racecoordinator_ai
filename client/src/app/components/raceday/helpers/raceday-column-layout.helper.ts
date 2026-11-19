@@ -384,6 +384,11 @@ export class RacedayColumnLayoutHelper {
       getCurrentHeat: () => resolveHostCurrentHeat(host),
       getSortedHeatDrivers: () => host.sortedHeatDrivers || [],
       getHeatTime: () => host.raceTimeService?.time ?? host.time ?? 0,
+      isUIEditorMode: () =>
+        typeof host.isUIEditorMode === "function"
+          ? host.isUIEditorMode()
+          : Boolean(host.isUIEditorMode),
+      isLayoutCustomizing: host.isLayoutCustomizing,
     };
     return RacedayFormatUtils.formatValue(
       propertyName,
@@ -520,6 +525,11 @@ export class RacedayColumnLayoutHelper {
       getCurrentHeat: () => resolveHostCurrentHeat(host),
       getSortedHeatDrivers: () => host.sortedHeatDrivers || [],
       getHeatTime: () => host.raceTimeService?.time ?? host.time ?? 0,
+      isUIEditorMode: () =>
+        typeof host.isUIEditorMode === "function"
+          ? host.isUIEditorMode()
+          : Boolean(host.isUIEditorMode),
+      isLayoutCustomizing: host.isLayoutCustomizing,
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -570,6 +580,11 @@ export class RacedayColumnLayoutHelper {
       getCurrentHeat: () => resolveHostCurrentHeat(host),
       getSortedHeatDrivers: () => host.sortedHeatDrivers || [],
       getHeatTime: () => host.raceTimeService?.time ?? host.time ?? 0,
+      isUIEditorMode: () =>
+        typeof host.isUIEditorMode === "function"
+          ? host.isUIEditorMode()
+          : Boolean(host.isUIEditorMode),
+      isLayoutCustomizing: host.isLayoutCustomizing,
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;

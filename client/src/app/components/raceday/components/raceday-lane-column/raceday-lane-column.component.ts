@@ -15,7 +15,6 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
-import { ColumnDefinition } from "@app/components/raceday/column_definition";
 import { RacedayGhostPacingComponent } from "@app/components/raceday/components/raceday-ghost-pacing/raceday-ghost-pacing.component";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
@@ -23,6 +22,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { DataService } from "@app/data.service";
 import {
   AbsoluteWidgetNode,
   HighlightLapStyle,
@@ -54,6 +54,18 @@ import {
 } from "./raceday-lane-column.utils";
 import { LaneColumnAnchorHelper } from "./raceday-lane-column-anchor.helper";
 import { LaneColumnCustomWidgetHelper } from "./raceday-lane-column-custom-widget.helper";
+import {
+  getDriftDisplayText,
+  getDriftImageUrl,
+  getEffectiveMainDriftFontSize,
+  getInsetDriftDisplayText,
+  getInsetDriftImageUrl,
+  isDriftActive,
+  isDriftImageMode,
+  isDriftIndicatorColumn,
+  isDriftIndicatorProperty,
+  isInsetDriftImageMode,
+} from "./raceday-lane-column-drift.helper";
 import {
   isLaneColumnExtraGridRow,
   isOverallDataSource,
@@ -88,7 +100,10 @@ import {
   resolveLaneColumnForegroundColor,
   resolveLaneColumnFormattedValue,
 } from "./raceday-lane-column-interaction.helper";
-import { resolveVisibleLastLaps } from "./raceday-lane-column-last-laps.helper";
+import {
+  resolveIsVerticalLapsFlow,
+  resolveVisibleLastLaps,
+} from "./raceday-lane-column-last-laps.helper";
 import { isNumericalOrTimeText } from "./raceday-lane-column-text-wrap.helper";
 import { LaneColumnViewportHelper } from "./raceday-lane-column-viewport.helper";
 
@@ -118,6 +133,7 @@ export class RacedayLaneColumnComponent
   anchorSelected = output<{ widgetId: string; anchor: string | null }>();
 
   protected translationService = inject(TranslationService);
+  protected dataService = inject(DataService, { optional: true });
   protected customWidgetService = inject(CustomWidgetService, {
     optional: true,
   });
@@ -192,13 +208,19 @@ export class RacedayLaneColumnComponent
   }
 
   ngAfterViewChecked(): void {
-    if (this.isImageProperty() || this.isPacingProperty()) {
+    if (
+      this.isImageProperty() ||
+      this.isPacingProperty() ||
+      (this.isDriftIndicatorColumn && this.isDriftImageMode)
+    ) {
       return;
     }
     const currentWidget = this.widget();
     const currentVal = this.isHeaderWidget
       ? this.headerLabel
-      : this.formattedValue;
+      : this.isDriftIndicatorColumn
+        ? this.driftDisplayText
+        : this.formattedValue;
     if (
       currentWidget === this.lastWidgetRef &&
       currentVal === this.lastFittedValueSnapshot
@@ -260,6 +282,9 @@ export class RacedayLaneColumnComponent
     if (type === "average-score" || type === "averageScore") {
       return "averageScore";
     }
+    if (type === "drift-indicator" || type === "driftIndicator") {
+      return "driftIndicator";
+    }
     if (type && isCustomWidgetKey(type)) {
       return type;
     }
@@ -285,17 +310,12 @@ export class RacedayLaneColumnComponent
   }
 
   get isVerticalLapsFlow(): boolean {
-    if (this.settings.gridDirection === "horizontal") return true;
-    if (this.settings.gridDirection === "vertical") return false;
-    const w = this.widget()?.width || this.cachedWidth || 0;
-    const h = this.widget()?.height || this.cachedHeight || 0;
-    if (h > 0 && w > 0) return h >= w * 0.75;
-    const cardEl = this.cardRef()?.nativeElement;
-    return Boolean(
-      cardEl &&
-      cardEl.clientHeight > 0 &&
-      cardEl.clientWidth > 0 &&
-      cardEl.clientHeight >= cardEl.clientWidth * 0.75,
+    return resolveIsVerticalLapsFlow(
+      this.settings,
+      this.widget(),
+      this.cachedWidth,
+      this.cachedHeight,
+      this.cardRef()?.nativeElement,
     );
   }
 
@@ -401,11 +421,7 @@ export class RacedayLaneColumnComponent
   }
 
   getEffectiveInsetFontSize(anchor?: string): number {
-    if (
-      this.widget()?.scaleMode !== "auto" &&
-      anchor &&
-      this.settings.insetsConfig?.[anchor]?.fontSize
-    ) {
+    if (anchor && this.settings.insetsConfig?.[anchor]?.fontSize) {
       return this.settings.insetsConfig[anchor].fontSize!;
     }
     return this.effectiveInsetFontSize;
@@ -606,28 +622,6 @@ export class RacedayLaneColumnComponent
     );
   }
 
-  private cachedColDefKey?: string;
-  private cachedColDefsRef?: any;
-  private cachedColDef?: ColumnDefinition;
-
-  private getColumnDefinition(
-    key: string,
-    parent: any,
-  ): ColumnDefinition | undefined {
-    if (
-      this.cachedColDefKey === key &&
-      this.cachedColDefsRef === parent?.columns
-    ) {
-      return this.cachedColDef;
-    }
-    this.cachedColDefKey = key;
-    this.cachedColDefsRef = parent?.columns;
-    this.cachedColDef = parent?.columns?.find(
-      (c: any) => c.propertyName === key,
-    );
-    return this.cachedColDef;
-  }
-
   get formattedValue(): string {
     if (this.isExtraGridRow) {
       if (this.emptyRowsMode === "blank") {
@@ -645,17 +639,12 @@ export class RacedayLaneColumnComponent
       }
       return "--";
     }
-    const parent = this.parent();
-    const colDef = parent?.formatValue
-      ? this.getColumnDefinition(this.columnKey, parent)
-      : undefined;
     return resolveLaneColumnFormattedValue(
       this.targetDriver,
       this.columnKey,
-      parent,
+      this.parent(),
       this.settings,
       this.bindingMode,
-      colDef,
     );
   }
 
@@ -713,14 +702,20 @@ export class RacedayLaneColumnComponent
     this.lastWidgetRef = this.widget();
     this.lastFittedValueSnapshot = this.isHeaderWidget
       ? this.headerLabel
-      : this.formattedValue;
+      : this.isDriftIndicatorColumn
+        ? this.driftDisplayText
+        : this.formattedValue;
 
     this.fitHelper.fitContent(cardEl, force, {
       isHeaderWidget: this.isHeaderWidget,
       isLastLaps: this.isLastLaps(),
-      isImageProperty: this.isImageProperty(),
+      isImageProperty:
+        this.isImageProperty() ||
+        (this.isDriftIndicatorColumn && this.isDriftImageMode),
       isPacingProperty: this.isPacingProperty(),
-      formattedValue: this.formattedValue,
+      formattedValue: this.isDriftIndicatorColumn
+        ? this.driftDisplayText.toUpperCase()
+        : this.formattedValue,
       cachedWidth: this.cachedWidth,
       cachedHeight: this.cachedHeight,
       settings: this.settings,
@@ -758,7 +753,9 @@ export class RacedayLaneColumnComponent
     const explicitH = this.cachedHeight || cardEl.clientHeight;
     fitColumnTextValue(
       cardEl,
-      this.formattedValue?.trim() || "",
+      this.isDriftIndicatorColumn
+        ? this.driftDisplayText.toUpperCase()
+        : this.formattedValue?.trim() || "",
       this.settings,
       this.widget()?.scaleMode,
       this.layoutOrientation,
@@ -771,7 +768,6 @@ export class RacedayLaneColumnComponent
       this.widget()?.textScaleFactor ?? 1,
       this.hasTeamName,
       this.columnKey,
-      this.isDriftLap(),
     );
   }
 
@@ -969,12 +965,56 @@ export class RacedayLaneColumnComponent
     return resolvePacingBenchmarkType(this.columnKey, isOverall);
   }
 
-  isDriftLap(): boolean {
-    return Boolean(
-      !this.isExtraGridRow &&
-      this.targetDriver?.isLastLapDrift &&
-      this.parent() &&
-      (this.columnKey === "lastLapTime" || this.columnKey === "lapTime"),
+  get isDriftIndicatorColumn(): boolean {
+    return isDriftIndicatorColumn(this.columnKey, this.widget());
+  }
+
+  isDriftIndicatorProperty(key: string | undefined): boolean {
+    return isDriftIndicatorProperty(key);
+  }
+
+  isDriftActive(): boolean {
+    return isDriftActive(this.isUIEditorMode, this.targetDriver);
+  }
+
+  get isDriftImageMode(): boolean {
+    return isDriftImageMode(this.settings);
+  }
+
+  get driftImageUrl(): string {
+    return getDriftImageUrl(
+      this.settings,
+      this.isUIEditorMode,
+      this.dataService?.serverUrl,
+    );
+  }
+
+  get driftDisplayText(): string {
+    return getDriftDisplayText(this.settings, (k) =>
+      this.translationService.translate(k),
+    );
+  }
+
+  get effectiveMainDriftFontSize(): number | null {
+    return getEffectiveMainDriftFontSize(this.settings, this.isScaleAuto());
+  }
+
+  isInsetDriftImageMode(anchor: string): boolean {
+    return isInsetDriftImageMode(this.settings, anchor);
+  }
+
+  getInsetDriftImageUrl(anchor: string): string {
+    return getInsetDriftImageUrl(
+      this.settings,
+      anchor,
+      this.isUIEditorMode,
+      this.dataService?.serverUrl,
+    );
+  }
+
+  getInsetDriftDisplayText(anchor: string): string {
+    return getInsetDriftDisplayText(this.settings, anchor, (k) =>
+      this.translationService.translate(k),
     );
   }
 

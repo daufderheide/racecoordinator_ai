@@ -451,4 +451,73 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
       target.src = "assets/images/default_avatar.svg";
     }
   }
+
+  isDriftIndicatorProperty(prop: string | undefined): boolean {
+    return RacedayLayoutUtils.isDriftIndicatorProperty(prop);
+  }
+
+  isDriftActive(hd: any): boolean {
+    const p = this.parent();
+    const inEditor =
+      typeof p?.isUIEditorMode === "function"
+        ? p.isUIEditorMode()
+        : Boolean(p?.isUIEditorMode);
+    if (inEditor || Boolean(p?.isLayoutCustomizing)) return true;
+    return Boolean(hd?.isLastLapDrift);
+  }
+
+  isDriftImageMode(col?: any, anchor?: string): boolean {
+    const cfg =
+      anchor &&
+      anchor !== "center-center" &&
+      this.widget()?.customSettings?.["insetsConfig"]?.[anchor]
+        ? this.widget()?.customSettings?.["insetsConfig"]?.[anchor]
+        : this.widget()?.customSettings;
+    return cfg?.displayMode === "image";
+  }
+
+  getDriftImageUrl(col?: any, anchor?: string): string {
+    const cfg =
+      anchor &&
+      anchor !== "center-center" &&
+      this.widget()?.customSettings?.["insetsConfig"]?.[anchor]
+        ? this.widget()?.customSettings?.["insetsConfig"]?.[anchor]
+        : this.widget()?.customSettings;
+    return cfg?.imageUrl || "";
+  }
+
+  getDriftInsetFontSize(col?: any, anchor?: string): number | null {
+    const s = this.widget()?.customSettings;
+    if (
+      anchor &&
+      anchor !== "center-center" &&
+      s?.["insetsConfig"]?.[anchor]?.fontSize
+    ) {
+      return s["insetsConfig"][anchor].fontSize;
+    }
+    if (this.widget()?.scaleMode !== "auto") {
+      if (anchor && !anchor.startsWith("center-") && s?.["insetFontSize"]) {
+        return s["insetFontSize"];
+      }
+      if (s?.["dataFontSize"]) {
+        return s["dataFontSize"];
+      }
+    }
+    return null;
+  }
+
+  getDriftInsetFontFamily(col?: any, anchor?: string): string | null {
+    const s = this.widget()?.customSettings;
+    if (
+      anchor &&
+      anchor !== "center-center" &&
+      s?.["insetsConfig"]?.[anchor]?.fontFamily
+    ) {
+      return s["insetsConfig"][anchor].fontFamily;
+    }
+    if (anchor && !anchor.startsWith("center-")) {
+      return s?.["insetFontFamily"] || null;
+    }
+    return s?.["dataFontFamily"] || null;
+  }
 }

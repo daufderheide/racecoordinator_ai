@@ -48,6 +48,8 @@ export interface FormatContext {
   getCurrentHeat?: () => any;
   getSortedHeatDrivers?: () => DriverHeatData[];
   getHeatTime?: () => number;
+  isUIEditorMode?: () => boolean;
+  isLayoutCustomizing?: boolean;
 }
 
 export class RacedayFormatUtils {
@@ -205,6 +207,9 @@ export class RacedayFormatUtils {
         ctx,
         parent,
       );
+    }
+    if (baseKey === "driftIndicator") {
+      return heatDriver.isLastLapDrift;
     }
     if (baseKey === "gap") {
       const config =
@@ -490,6 +495,9 @@ export class RacedayFormatUtils {
     if (baseKey === "recordLapTime") {
       return this.formatRecordLapTime(hd, ctx, timeDecimals, timePlaceholder);
     }
+    if (baseKey === "driftIndicator") {
+      return this.formatDriftIndicator(hd, value, ctx, anchor);
+    }
     if (baseKey === "averageScore") {
       let calcValue = value;
       if (calcValue === null || calcValue === undefined) {
@@ -529,9 +537,7 @@ export class RacedayFormatUtils {
       );
     }
     if (baseKey === "consistencyScore") {
-      if (this.isEmptyDriver(hd) || value === null || value === undefined)
-        return "--.-%";
-      return value.toFixed(1) + "%";
+      return this.formatConsistencyScore(value, hd);
     }
     if (baseKey.startsWith("gap")) {
       return this.formatGapValue(
@@ -616,6 +622,37 @@ export class RacedayFormatUtils {
       return `${timeStr} (${nickname}, ${dateStr})`;
     }
     return `${timePlaceholder} (---, ---)`;
+  }
+
+  private static formatDriftIndicator(
+    hd: DriverHeatData,
+    value: any,
+    ctx: FormatContext,
+    anchor?: string,
+  ): string {
+    const inEditor =
+      (typeof ctx?.isUIEditorMode === "function"
+        ? ctx.isUIEditorMode()
+        : Boolean(ctx?.isUIEditorMode)) || Boolean(ctx?.isLayoutCustomizing);
+    const isDrift = inEditor || Boolean(hd?.isLastLapDrift) || value === true;
+    if (!isDrift) return "";
+    const cfg =
+      anchor &&
+      anchor !== "center-center" &&
+      ctx?.laneViewWidgetSettings?.insetsConfig?.[anchor]
+        ? ctx.laneViewWidgetSettings.insetsConfig[anchor]
+        : ctx?.laneViewWidgetSettings;
+    return cfg?.driftText || ctx?.translate?.("RD_DRIFT_LAP") || "DRIFT";
+  }
+
+  private static formatConsistencyScore(
+    value: any,
+    hd: DriverHeatData,
+  ): string {
+    if (this.isEmptyDriver(hd) || value === null || value === undefined) {
+      return "--.-%";
+    }
+    return value.toFixed(1) + "%";
   }
 
   private static formatBestRaceLapTime(

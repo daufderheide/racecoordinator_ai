@@ -115,6 +115,9 @@ Race Coordinator AI bevat een complete collectie ingebouwde widgets:
 11. **Aangepaste Widgets**:
     - **Doel**: Laadt dynamisch externe webcomponenten en telemetriemeters uit uw map met aangepaste widgets.
     - **Configuratieopties**: Aangepaste eigenschapsvelden (kleuren, drempelwaarden, schakelaars, tekstlabels) gedefinieerd in het widgetmanifest.
+12. **Drift-indicator Widget**:
+    - **Doel**: Toont een indicator wanneer een coureur tijdens de heat een driftronde neerzet. Wanneer aanwezig op de lay-out (als zelfstandig widget, tabelkolom of inset-slot), vervangt deze automatisch de standaard "DRIFT"-markering onder de rondetijd.
+    - **Configuratieopties**: Weergavemodus (**Statische tekst** met aanpasbare tekst, typografie en tekstkleur, of **Asset-afbeelding** geselecteerd uit uw afbeeldingenbibliotheek), baantoewijzing, achtergrondkleur (met optionele overname van baankleur), kaders en inset-plaatsing.
 
 Voor volledige details over widgetstijlen, formules en de ontwikkeling van aangepaste widgets, zie de [UI Editor Gids](ui-editor.nl.md) en de [Handleiding Aangepaste Widgets](custom-widgets.nl.md).
 

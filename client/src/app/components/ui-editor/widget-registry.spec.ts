@@ -11,6 +11,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("grid");
     expect(keys).toContain("lane-view");
     expect(keys).toContain("lane-column");
+    expect(keys).toContain("drift-indicator");
     expect(keys).toContain("on-deck");
     expect(keys).toContain("next-heat");
     expect(keys).toContain("heat-list");
@@ -66,6 +67,13 @@ describe("WIDGET_REGISTRY", () => {
     const leaderboardSettings =
       WIDGET_REGISTRY["leaderboard"].defaultSettings!();
     expect(leaderboardSettings["decimalPlaces"]).toBe(3);
+
+    const driftSettings = WIDGET_REGISTRY["drift-indicator"].defaultSettings!();
+    expect(driftSettings["columnKey"]).toBe("driftIndicator");
+    expect(driftSettings["displayMode"]).toBe("text");
+    expect(driftSettings["driftText"]).toBe("DRIFT");
+    expect(driftSettings["backgroundColor"]).toBe("#ef4444");
+    expect(driftSettings["textColor"]).toBe("#ffffff");
 
     const actionSettings =
       WIDGET_REGISTRY["action-start-resume"].defaultSettings!();

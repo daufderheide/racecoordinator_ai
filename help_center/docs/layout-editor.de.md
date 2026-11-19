@@ -115,6 +115,9 @@ Race Coordinator AI enthält eine umfangreiche Sammlung integrierter Widgets:
 11. **Benutzerdefinierte Widgets (Custom Widgets)**:
     - **Zweck**: Lädt dynamisch externe Webkomponenten und Telemetrieanzeigen aus Ihrem benutzerdefinierten Widget-Ordner.
     - **Konfigurationsoptionen**: Benutzerdefinierte Eigenschaften (Farben, Schwellenwerte, Schalter, Texte) aus dem Widget-Manifest.
+12. **Drift-Anzeige-Widget (Drift Indicator)**:
+    - **Zweck**: Zeigt eine Anzeige an, wenn ein Fahrer während des Laufs eine Drift-Runde erzielt. Wenn es im Layout vorhanden ist (als eigenständiges Widget, Tabellenspalte oder Inset-Slot), ersetzt es automatisch die standardmäßige "DRIFT"-Markierung unter der Rundenzeit.
+    - **Konfigurationsoptionen**: Anzeigemodus (**Statischer Text** mit anpassbarem Text, Typografie und Textfarbe oder **Asset-Bild** aus der Bildbibliothek), Spurenzuordnung, Hintergrundfarbe (mit optionaler Spurfarbenübernahme), Rahmen und Inset-Platzierung.
 
 Ausführliche Informationen zur Widget-Gestaltung und Entwicklung eigener Widgets finden Sie im [UI-Editor-Leitfaden](ui-editor.de.md) und im [Leitfaden für benutzerdefinierte Widgets](custom-widgets.de.md).
 

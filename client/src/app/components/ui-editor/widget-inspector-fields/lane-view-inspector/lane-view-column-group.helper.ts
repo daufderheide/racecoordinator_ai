@@ -56,6 +56,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
     columnKeys: [
       "lastLapTime",
       "lastLaps",
+      "driftIndicator",
       "bestLapTime",
       "segmentTime",
       "reactionTime",

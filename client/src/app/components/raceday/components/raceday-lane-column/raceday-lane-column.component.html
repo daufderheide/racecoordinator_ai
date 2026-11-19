@@ -1,6 +1,9 @@
 <div
   #cardElement
   class="raceday-lane-column-card"
+  [class.drift-inactive]="
+    isDriftIndicatorColumn && !isDriftActive() && !settings.gridId
+  "
   [class.clickable-lap-card]="isLapCountClickable"
   [class.clickable-team-card]="isTeamDriverSwapActive"
   [class.orientation-vertical]="layoutOrientation === 'vertical'"
@@ -320,7 +323,11 @@
             <div
               class="inset-cell tl"
               [attr.data-anchor]="'top-left'"
-              [class.has-image]="isImageProperty(getInsetKey('top-left')!)"
+              [class.has-image]="
+                isImageProperty(getInsetKey('top-left')!) ||
+                (isDriftIndicatorProperty(getInsetKey('top-left')!) &&
+                  isInsetDriftImageMode('top-left'))
+              "
               [class.clickable-lap-cell]="isInsetLapCount('top-left')"
               [style.justify-content]="getInsetJustifyContent('top-left')"
               [style.align-items]="getInsetAlignItems('top-left')"
@@ -344,6 +351,35 @@
                     "
                   />
                 </div>
+              } @else if (isDriftIndicatorProperty(getInsetKey("top-left")!)) {
+                @if (isDriftActive()) {
+                  @if (isInsetDriftImageMode("top-left")) {
+                    <div class="lane-col-inset-image-wrapper">
+                      @if (getInsetDriftImageUrl("top-left")) {
+                        <img
+                          [src]="getInsetDriftImageUrl('top-left')"
+                          class="lane-col-inset-image"
+                          alt="Drift Indicator"
+                        />
+                      }
+                    </div>
+                  } @else {
+                    <span
+                      class="drift-indicator"
+                      data-testid="drift-badge"
+                      [style.font-size.px]="
+                        getEffectiveInsetFontSize('top-left')
+                      "
+                      [style.font-family]="getInsetFontFamily('top-left')"
+                      [style.background-color]="
+                        getEffectiveInsetTextColor('top-left') ||
+                        foregroundColor
+                      "
+                      [style.color]="backgroundColor"
+                      >{{ getInsetDriftDisplayText("top-left") }}</span
+                    >
+                  }
+                }
               } @else if (isImageProperty(getInsetKey("top-left")!)) {
                 @if (
                   isPlaceholderAvatar(
@@ -401,7 +437,11 @@
             <div
               class="inset-cell tc"
               [attr.data-anchor]="'top-center'"
-              [class.has-image]="isImageProperty(getInsetKey('top-center')!)"
+              [class.has-image]="
+                isImageProperty(getInsetKey('top-center')!) ||
+                (isDriftIndicatorProperty(getInsetKey('top-center')!) &&
+                  isInsetDriftImageMode('top-center'))
+              "
               [class.clickable-lap-cell]="isInsetLapCount('top-center')"
               [style.justify-content]="getInsetJustifyContent('top-center')"
               [style.align-items]="getInsetAlignItems('top-center')"
@@ -425,6 +465,37 @@
                     "
                   />
                 </div>
+              } @else if (
+                isDriftIndicatorProperty(getInsetKey("top-center")!)
+              ) {
+                @if (isDriftActive()) {
+                  @if (isInsetDriftImageMode("top-center")) {
+                    <div class="lane-col-inset-image-wrapper">
+                      @if (getInsetDriftImageUrl("top-center")) {
+                        <img
+                          [src]="getInsetDriftImageUrl('top-center')"
+                          class="lane-col-inset-image"
+                          alt="Drift Indicator"
+                        />
+                      }
+                    </div>
+                  } @else {
+                    <span
+                      class="drift-indicator"
+                      data-testid="drift-badge"
+                      [style.font-size.px]="
+                        getEffectiveInsetFontSize('top-center')
+                      "
+                      [style.font-family]="getInsetFontFamily('top-center')"
+                      [style.background-color]="
+                        getEffectiveInsetTextColor('top-center') ||
+                        foregroundColor
+                      "
+                      [style.color]="backgroundColor"
+                      >{{ getInsetDriftDisplayText("top-center") }}</span
+                    >
+                  }
+                }
               } @else if (isImageProperty(getInsetKey("top-center")!)) {
                 @if (
                   isPlaceholderAvatar(
@@ -484,7 +555,11 @@
             <div
               class="inset-cell tr"
               [attr.data-anchor]="'top-right'"
-              [class.has-image]="isImageProperty(getInsetKey('top-right')!)"
+              [class.has-image]="
+                isImageProperty(getInsetKey('top-right')!) ||
+                (isDriftIndicatorProperty(getInsetKey('top-right')!) &&
+                  isInsetDriftImageMode('top-right'))
+              "
               [class.clickable-lap-cell]="isInsetLapCount('top-right')"
               [style.justify-content]="getInsetJustifyContent('top-right')"
               [style.align-items]="getInsetAlignItems('top-right')"
@@ -508,6 +583,35 @@
                     "
                   />
                 </div>
+              } @else if (isDriftIndicatorProperty(getInsetKey("top-right")!)) {
+                @if (isDriftActive()) {
+                  @if (isInsetDriftImageMode("top-right")) {
+                    <div class="lane-col-inset-image-wrapper">
+                      @if (getInsetDriftImageUrl("top-right")) {
+                        <img
+                          [src]="getInsetDriftImageUrl('top-right')"
+                          class="lane-col-inset-image"
+                          alt="Drift Indicator"
+                        />
+                      }
+                    </div>
+                  } @else {
+                    <span
+                      class="drift-indicator"
+                      data-testid="drift-badge"
+                      [style.font-size.px]="
+                        getEffectiveInsetFontSize('top-right')
+                      "
+                      [style.font-family]="getInsetFontFamily('top-right')"
+                      [style.background-color]="
+                        getEffectiveInsetTextColor('top-right') ||
+                        foregroundColor
+                      "
+                      [style.color]="backgroundColor"
+                      >{{ getInsetDriftDisplayText("top-right") }}</span
+                    >
+                  }
+                }
               } @else if (isImageProperty(getInsetKey("top-right")!)) {
                 @if (
                   isPlaceholderAvatar(
@@ -572,7 +676,11 @@
           <div
             class="inset-cell cl"
             [attr.data-anchor]="'center-left'"
-            [class.has-image]="isImageProperty(getInsetKey('center-left')!)"
+            [class.has-image]="
+              isImageProperty(getInsetKey('center-left')!) ||
+              (isDriftIndicatorProperty(getInsetKey('center-left')!) &&
+                isInsetDriftImageMode('center-left'))
+            "
             [class.clickable-lap-cell]="isInsetLapCount('center-left')"
             [style.justify-content]="getInsetJustifyContent('center-left')"
             [style.align-items]="getInsetAlignItems('center-left')"
@@ -596,6 +704,35 @@
                   "
                 />
               </div>
+            } @else if (isDriftIndicatorProperty(getInsetKey("center-left")!)) {
+              @if (isDriftActive()) {
+                @if (isInsetDriftImageMode("center-left")) {
+                  <div class="lane-col-inset-image-wrapper">
+                    @if (getInsetDriftImageUrl("center-left")) {
+                      <img
+                        [src]="getInsetDriftImageUrl('center-left')"
+                        class="lane-col-inset-image"
+                        alt="Drift Indicator"
+                      />
+                    }
+                  </div>
+                } @else {
+                  <span
+                    class="drift-indicator"
+                    data-testid="drift-badge"
+                    [style.font-size.px]="
+                      getEffectiveInsetFontSize('center-left')
+                    "
+                    [style.font-family]="getInsetFontFamily('center-left')"
+                    [style.background-color]="
+                      getEffectiveInsetTextColor('center-left') ||
+                      foregroundColor
+                    "
+                    [style.color]="backgroundColor"
+                    >{{ getInsetDriftDisplayText("center-left") }}</span
+                  >
+                }
+              }
             } @else if (isImageProperty(getInsetKey("center-left")!)) {
               @if (
                 isPlaceholderAvatar(
@@ -717,6 +854,31 @@
                 }
               }
             </div>
+          } @else if (isDriftIndicatorColumn) {
+            <!-- Drift Indicator Column -->
+            @if (isDriftActive()) {
+              @if (isDriftImageMode) {
+                <div class="lane-col-image-wrapper">
+                  @if (driftImageUrl) {
+                    <img
+                      [src]="driftImageUrl"
+                      class="lane-col-image"
+                      alt="Drift Indicator"
+                    />
+                  }
+                </div>
+              } @else {
+                <span
+                  class="drift-indicator"
+                  data-testid="drift-badge"
+                  [style.font-size.px]="effectiveMainDriftFontSize"
+                  [style.font-family]="settings.valueFontFamily || null"
+                  [style.background-color]="foregroundColor"
+                  [style.color]="backgroundColor"
+                  >{{ driftDisplayText }}</span
+                >
+              }
+            }
           } @else if (isImageProperty()) {
             <!-- Case 2: Images, Avatars, QR Codes, Flags -->
             <div class="lane-col-image-wrapper">
@@ -802,7 +964,7 @@
                     : 'center'
               "
               [style.align-items]="
-                hasTeamName || isDriftLap()
+                hasTeamName
                   ? settings.valueAlignment === 'start'
                     ? 'flex-start'
                     : settings.valueAlignment === 'end'
@@ -824,15 +986,6 @@
                 [class.numeric-value]="isNumericValue"
                 >{{ formattedValue }}</span
               >
-              @if (isDriftLap()) {
-                <div
-                  class="drift-indicator"
-                  [style.background-color]="foregroundColor"
-                  [style.color]="backgroundColor"
-                >
-                  {{ "RD_DRIFT_LAP" | translate }}
-                </div>
-              }
               @if (
                 isTeamColumn &&
                 isTeamDriverSwapActive &&
@@ -926,7 +1079,11 @@
           <div
             class="inset-cell cr"
             [attr.data-anchor]="'center-right'"
-            [class.has-image]="isImageProperty(getInsetKey('center-right')!)"
+            [class.has-image]="
+              isImageProperty(getInsetKey('center-right')!) ||
+              (isDriftIndicatorProperty(getInsetKey('center-right')!) &&
+                isInsetDriftImageMode('center-right'))
+            "
             [class.clickable-lap-cell]="isInsetLapCount('center-right')"
             [style.justify-content]="getInsetJustifyContent('center-right')"
             [style.align-items]="getInsetAlignItems('center-right')"
@@ -950,6 +1107,35 @@
                   "
                 />
               </div>
+            } @else if (
+              isDriftIndicatorProperty(getInsetKey("center-right")!)
+            ) {
+              @if (isDriftActive()) {
+                @if (isInsetDriftImageMode("center-right")) {
+                  @if (getInsetDriftImageUrl("center-right")) {
+                    <img
+                      [src]="getInsetDriftImageUrl('center-right')"
+                      class="lane-col-inset-image"
+                      alt=""
+                    />
+                  }
+                } @else {
+                  <span
+                    class="drift-indicator"
+                    data-testid="drift-badge"
+                    [style.font-size.px]="
+                      getEffectiveInsetFontSize('center-right')
+                    "
+                    [style.font-family]="getInsetFontFamily('center-right')"
+                    [style.background-color]="
+                      getEffectiveInsetTextColor('center-right') ||
+                      foregroundColor
+                    "
+                    [style.color]="backgroundColor"
+                    >{{ getInsetDriftDisplayText("center-right") }}</span
+                  >
+                }
+              }
             } @else if (isImageProperty(getInsetKey("center-right")!)) {
               @if (
                 isPlaceholderAvatar(
@@ -1019,7 +1205,11 @@
             <div
               class="inset-cell bl"
               [attr.data-anchor]="'bottom-left'"
-              [class.has-image]="isImageProperty(getInsetKey('bottom-left')!)"
+              [class.has-image]="
+                isImageProperty(getInsetKey('bottom-left')!) ||
+                (isDriftIndicatorProperty(getInsetKey('bottom-left')!) &&
+                  isInsetDriftImageMode('bottom-left'))
+              "
               [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
               [style.justify-content]="getInsetJustifyContent('bottom-left')"
               [style.align-items]="getInsetAlignItems('bottom-left')"
@@ -1043,6 +1233,35 @@
                     "
                   />
                 </div>
+              } @else if (
+                isDriftIndicatorProperty(getInsetKey("bottom-left")!)
+              ) {
+                @if (isDriftActive()) {
+                  @if (isInsetDriftImageMode("bottom-left")) {
+                    @if (getInsetDriftImageUrl("bottom-left")) {
+                      <img
+                        [src]="getInsetDriftImageUrl('bottom-left')"
+                        class="lane-col-inset-image"
+                        alt=""
+                      />
+                    }
+                  } @else {
+                    <span
+                      class="drift-indicator"
+                      data-testid="drift-badge"
+                      [style.font-size.px]="
+                        getEffectiveInsetFontSize('bottom-left')
+                      "
+                      [style.font-family]="getInsetFontFamily('bottom-left')"
+                      [style.background-color]="
+                        getEffectiveInsetTextColor('bottom-left') ||
+                        foregroundColor
+                      "
+                      [style.color]="backgroundColor"
+                      >{{ getInsetDriftDisplayText("bottom-left") }}</span
+                    >
+                  }
+                }
               } @else if (isImageProperty(getInsetKey("bottom-left")!)) {
                 @if (
                   isPlaceholderAvatar(
@@ -1102,7 +1321,11 @@
             <div
               class="inset-cell bc"
               [attr.data-anchor]="'bottom-center'"
-              [class.has-image]="isImageProperty(getInsetKey('bottom-center')!)"
+              [class.has-image]="
+                isImageProperty(getInsetKey('bottom-center')!) ||
+                (isDriftIndicatorProperty(getInsetKey('bottom-center')!) &&
+                  isInsetDriftImageMode('bottom-center'))
+              "
               [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
               [style.justify-content]="getInsetJustifyContent('bottom-center')"
               [style.align-items]="getInsetAlignItems('bottom-center')"
@@ -1126,6 +1349,35 @@
                     "
                   />
                 </div>
+              } @else if (
+                isDriftIndicatorProperty(getInsetKey("bottom-center")!)
+              ) {
+                @if (isDriftActive()) {
+                  @if (isInsetDriftImageMode("bottom-center")) {
+                    @if (getInsetDriftImageUrl("bottom-center")) {
+                      <img
+                        [src]="getInsetDriftImageUrl('bottom-center')"
+                        class="lane-col-inset-image"
+                        alt=""
+                      />
+                    }
+                  } @else {
+                    <span
+                      class="drift-indicator"
+                      data-testid="drift-badge"
+                      [style.font-size.px]="
+                        getEffectiveInsetFontSize('bottom-center')
+                      "
+                      [style.font-family]="getInsetFontFamily('bottom-center')"
+                      [style.background-color]="
+                        getEffectiveInsetTextColor('bottom-center') ||
+                        foregroundColor
+                      "
+                      [style.color]="backgroundColor"
+                      >{{ getInsetDriftDisplayText("bottom-center") }}</span
+                    >
+                  }
+                }
               } @else if (isImageProperty(getInsetKey("bottom-center")!)) {
                 @if (
                   isPlaceholderAvatar(
@@ -1185,7 +1437,11 @@
             <div
               class="inset-cell br"
               [attr.data-anchor]="'bottom-right'"
-              [class.has-image]="isImageProperty(getInsetKey('bottom-right')!)"
+              [class.has-image]="
+                isImageProperty(getInsetKey('bottom-right')!) ||
+                (isDriftIndicatorProperty(getInsetKey('bottom-right')!) &&
+                  isInsetDriftImageMode('bottom-right'))
+              "
               [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
               [style.justify-content]="getInsetJustifyContent('bottom-right')"
               [style.align-items]="getInsetAlignItems('bottom-right')"
@@ -1209,6 +1465,35 @@
                     "
                   />
                 </div>
+              } @else if (
+                isDriftIndicatorProperty(getInsetKey("bottom-right")!)
+              ) {
+                @if (isDriftActive()) {
+                  @if (isInsetDriftImageMode("bottom-right")) {
+                    @if (getInsetDriftImageUrl("bottom-right")) {
+                      <img
+                        [src]="getInsetDriftImageUrl('bottom-right')"
+                        class="lane-col-inset-image"
+                        alt=""
+                      />
+                    }
+                  } @else {
+                    <span
+                      class="drift-indicator"
+                      data-testid="drift-badge"
+                      [style.font-size.px]="
+                        getEffectiveInsetFontSize('bottom-right')
+                      "
+                      [style.font-family]="getInsetFontFamily('bottom-right')"
+                      [style.background-color]="
+                        getEffectiveInsetTextColor('bottom-right') ||
+                        foregroundColor
+                      "
+                      [style.color]="backgroundColor"
+                      >{{ getInsetDriftDisplayText("bottom-right") }}</span
+                    >
+                  }
+                }
               } @else if (isImageProperty(getInsetKey("bottom-right")!)) {
                 @if (
                   isPlaceholderAvatar(

@@ -655,8 +655,7 @@
   text-overflow: clip;
 }
 
-.lane-col-value:has(.team-name),
-.lane-col-value:has(.drift-indicator) {
+.lane-col-value:has(.team-name) {
   flex-direction: column;
   justify-content: center;
 }
@@ -837,6 +836,18 @@ svg.lane-col-image {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.inset-cell .drift-indicator {
+  position: static;
+  margin-top: 0;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.lane-col-main-content .drift-indicator {
+  margin-top: 0;
+  font-size: var(--lane-col-value-font-size, 36px);
 }
 
 /* UI Editor Drop Zones */

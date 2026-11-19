@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
+import { of } from "rxjs";
+import { DataService } from "@app/data.service";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
@@ -27,6 +29,12 @@ describe("LaneColumnInspectorComponent", () => {
     const fontSpy = jasmine.createSpyObj("FontService", ["loadLocalFonts"], {
       availableFonts: () => ["Font A", "Font B"],
     });
+
+    const mockDataService = {
+      listAssets: jasmine.createSpy("listAssets").and.returnValue(of([])),
+      resolveAssetUrl: (url: string) => url,
+      assets$: of([]),
+    };
 
     mockSettings = {
       columnKey: "lastLapTime",
@@ -70,6 +78,7 @@ describe("LaneColumnInspectorComponent", () => {
       providers: [
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: FontService, useValue: fontSpy },
+        { provide: DataService, useValue: mockDataService },
       ],
     }).compileComponents();
 
@@ -2886,6 +2895,55 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.currentSettings["minFontSize"]).toBe(15);
       expect(component.currentSettings["_syncAction"]).toBe("value");
       expect(component.change.emit).toHaveBeenCalled();
+    });
+
+    it("should correctly classify drift indicator columns and toggle between text and image modes", () => {
+      component.currentSettings["columnKey"] = "driftIndicator";
+      component.currentSettings["displayMode"] = "text";
+      expect(component.isDriftIndicatorColumn).toBeTrue();
+      expect(component.isTextColumn).toBeTrue();
+      expect(component.isImageColumn).toBeFalse();
+
+      component.currentSettings["displayMode"] = "image";
+      expect(component.isDriftIndicatorColumn).toBeTrue();
+      expect(component.isTextColumn).toBeFalse();
+      expect(component.isImageColumn).toBeTrue();
+
+      component.driftDisplayMode = "text";
+      expect(component.currentSettings["displayMode"]).toBe("text");
+      expect(component.driftDisplayMode).toBe("text");
+
+      component.driftText = "POWERSLIDE";
+      expect(component.currentSettings["driftText"]).toBe("POWERSLIDE");
+      expect(component.driftText).toBe("POWERSLIDE");
+
+      component.onDriftImageUrlChange("assets/images/drift.png");
+      expect(component.currentSettings["imageUrl"]).toBe(
+        "assets/images/drift.png",
+      );
+      expect(component.driftImageUrl).toBe("assets/images/drift.png");
+    });
+
+    it("should configure drift indicator insets correctly", () => {
+      component.currentSettings["insets"] = { "top-left": "driftIndicator" };
+      expect(component.isInsetDriftIndicator("top-left")).toBeTrue();
+      expect(component.isInsetDriftIndicator("top-right")).toBeFalse();
+
+      component.setInsetDriftDisplayMode("top-left", "image");
+      expect(component.getInsetDriftDisplayMode("top-left")).toBe("image");
+      expect(component.isInsetDriftImage("top-left")).toBeTrue();
+
+      component.setInsetDriftImageUrl("top-left", "assets/drift-badge.svg");
+      expect(component.getInsetDriftImageUrl("top-left")).toBe(
+        "assets/drift-badge.svg",
+      );
+
+      component.setInsetDriftDisplayMode("top-left", "text");
+      expect(component.getInsetDriftDisplayMode("top-left")).toBe("text");
+      expect(component.isInsetDriftImage("top-left")).toBeFalse();
+
+      component.setInsetDriftText("top-left", "SLIDE");
+      expect(component.getInsetDriftText("top-left")).toBe("SLIDE");
     });
   });
 });

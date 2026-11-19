@@ -115,6 +115,9 @@ Race Coordinator AI includes a comprehensive collection of built-in widgets:
 11. **Custom Widgets**:
     - **Purpose**: Dynamically loads external web components and telemetry gauges from your custom widgets folder.
     - **Configuration Options**: Custom property fields (colors, thresholds, toggles, text labels) defined in the widget manifest.
+12. **Drift Indicator Widget**:
+    - **Purpose**: Displays an indicator when a driver records a drift lap during the heat. When present on the layout (as a standalone widget, table column, or inset slot), it automatically replaces the default "drift" badge displayed beneath the lap time.
+    - **Configuration Options**: Display mode (**Static Text** with customizable text, typography, and text color, or **Asset Image** selected from your image library), lane binding, background color (with optional lane color inheritance), borders, and inset placement.
 
 For complete widget styling details, formulas, and custom widget development, see the [UI Editor Guide](ui-editor.md) and [Custom Widgets Guide](custom-widgets.md).
 

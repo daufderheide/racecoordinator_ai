@@ -299,22 +299,6 @@
               "
               (click)="parent().onCellClick(hd, col, $event)"
             >
-              @if (hd.isLastLapDrift && parent().isLapTimeColumn(col)) {
-                <div
-                  class="drift-indicator"
-                  data-testid="drift-badge"
-                  [style.background-color]="
-                    widget()?.customSettings?.['dataTextColor'] ||
-                    parent().getLaneColor(hd, 'foreground_color')
-                  "
-                  [style.color]="parent().getLaneColor(hd, 'background_color')"
-                  [style.font-family]="
-                    widget()?.customSettings?.['dataFontFamily'] || null
-                  "
-                >
-                  {{ "RD_DRIFT_LAP" | translate }}
-                </div>
-              }
               @for (
                 entry of parent().getLayoutEntries(col);
                 track parent().trackByLayout($index, entry)
@@ -671,6 +655,44 @@
                             </span>
                           </div>
                         </div>
+                      }
+                    } @else if (isDriftIndicatorProperty(entry.property)) {
+                      @if (isDriftActive(hd)) {
+                        @if (isDriftImageMode(col, entry.anchor)) {
+                          @if (getDriftImageUrl(col, entry.anchor)) {
+                            <img
+                              [src]="getDriftImageUrl(col, entry.anchor)"
+                              alt=""
+                            />
+                          }
+                        } @else {
+                          <span
+                            class="drift-indicator"
+                            data-testid="drift-badge"
+                            [style.background-color]="
+                              widget()?.customSettings?.['dataTextColor'] ||
+                              parent().getLaneColor(hd, 'foreground_color')
+                            "
+                            [style.color]="
+                              parent().getLaneColor(hd, 'background_color')
+                            "
+                            [style.font-size.px]="
+                              getDriftInsetFontSize(col, entry.anchor)
+                            "
+                            [style.font-family]="
+                              getDriftInsetFontFamily(col, entry.anchor)
+                            "
+                          >
+                            {{
+                              parent().formatColumnValue(
+                                hd,
+                                col,
+                                entry.property,
+                                entry.anchor
+                              )
+                            }}
+                          </span>
+                        }
                       }
                     } @else if (!shouldShowTeammateSelect(col, entry, hd)) {
                       <span

@@ -23,6 +23,7 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
   { key: "reactionTime", label: "RD_COL_REACTION_TIME" },
   { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
   { key: "lastLaps", label: "RD_COL_LAST_LAPS" },
+  { key: "driftIndicator", label: "RD_COL_DRIFT_INDICATOR" },
   { key: "medianLapTime", label: "UI_EDITOR_COL_HEAT_MEDIAN_LAP" },
   { key: "averageLapTime", label: "UI_EDITOR_COL_HEAT_AVG_LAP" },
   { key: "averageScore", label: "UI_EDITOR_COL_HEAT_AVG_SCORE" },

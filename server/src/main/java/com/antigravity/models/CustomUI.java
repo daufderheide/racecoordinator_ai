@@ -189,7 +189,7 @@ public class CustomUI extends Model {
             + "\"bottom-left\":\"driverViewQrCode\"},\"imageset_fuel-gauge-builtin\":{"
             + "\"center-center\":\"imageset_fuel-gauge-builtin\"},\"lapCount\":{"
             + "\"center-center\":\"lapCount\",\"bottom-left\":\"flag\"},\"lastLapTime\":{"
-            + "\"center-center\":\"lastLapTime\",\"bottom-right\":\"bestLapTime\"},"
+            + "\"center-center\":\"lastLapTime\",\"bottom-center\":\"driftIndicator\",\"bottom-right\":\"bestLapTime\"},"
             + "\"gap\":{\"center-center\":\"gap\",\"bottom-right\":\"gapPosition\"}}";
     String columnVisibilityJson = "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\"}";
     String columnWidthsJson = "{\"ghostPacingLeaderAvg\":200,\"averageLapTime\":310}";
@@ -211,7 +211,7 @@ public class CustomUI extends Model {
     String columnsJson =
         "[\"laneNumber\",\"lastLapTime\",\"bestLapTime\",\"lastLaps\",\"lapCount\"]";
     String columnLayoutsJson =
-        "{\"laneNumber\":{\"center-center\":\"laneNumber\"},\"driver.nickname\":{\"center-center\":\"driver.nickname\"},\"lastLapTime\":{\"center-center\":\"lastLapTime\"},\"lastLaps\":{\"center-center\":\"lastLaps\"},\"bestLapTime\":{\"center-center\":\"bestLapTime\"},\"lapCount\":{\"center-center\":\"lapCount\"}}";
+        "{\"laneNumber\":{\"center-center\":\"laneNumber\"},\"driver.nickname\":{\"center-center\":\"driver.nickname\"},\"lastLapTime\":{\"center-center\":\"lastLapTime\",\"bottom-center\":\"driftIndicator\"},\"lastLaps\":{\"center-center\":\"lastLaps\"},\"bestLapTime\":{\"center-center\":\"bestLapTime\"},\"lapCount\":{\"center-center\":\"lapCount\"}}";
     String columnVisibilityJson =
         "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\",\"laneNumber\":\"Always\",\"lastLaps\":\"Always\"}";
     return new CustomUI(
@@ -239,7 +239,7 @@ public class CustomUI extends Model {
             + "\"center-center\":\"imageset_fuel-gauge-builtin\"},\"lapCount\":{"
             + "\"center-center\":\"lapCount\",\"bottom-left\":\"flag\"},\"lastLapTime\":{"
             + "\"center-center\":\"lastLapTime\",\"top-right\":\"bestLapTime\","
-            + "\"bottom-right\":\"averageLapTime\"},\"gap\":{\"center-center\":\"gap\","
+            + "\"bottom-center\":\"driftIndicator\",\"bottom-right\":\"averageLapTime\"},\"gap\":{\"center-center\":\"gap\","
             + "\"bottom-right\":\"gapPosition\"}}";
     String columnVisibilityJson = "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\"}";
     String columnWidthsJson =
@@ -267,7 +267,7 @@ public class CustomUI extends Model {
             + "{\"id\":\"widget-ds-rank-heat\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankHeat\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-rank-overall\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":550,\"y\":330,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"rankOverall\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-lap-count\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lapCount\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"lapDecimalPlaces\":0,\"decimalPlaces\":0,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
-            + "{\"id\":\"widget-ds-last-lap-time\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":550,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lastLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
+            + "{\"id\":\"widget-ds-last-lap-time\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":550,\"y\":640,\"width\":410,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"lastLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\",\"insets\":{\"bottom-center\":\"driftIndicator\"}}},"
             + "{\"id\":\"widget-ds-gap-leader\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":950,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"gapLeader\",\"customLabel\":\"GAP LEADER\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-best-lap-time\",\"widgetType\":\"lane-column\",\"scaleMode\":\"auto\",\"x\":120,\"y\":1260,\"width\":840,\"height\":290,\"zIndex\":100,\"customSettings\":{\"columnKey\":\"bestLapTime\",\"bindingMode\":\"hostLane\",\"showHeader\":true,\"showBorder\":true,\"borderWidth\":2,\"borderRadius\":10,\"borderColor\":\"rgba(0,0,0,0.1)\",\"backgroundColor\":\"rgba(255,255,255,0.1)\",\"useLaneColors\":true,\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
             + "{\"id\":\"widget-ds-flag\",\"widgetType\":\"flag\",\"scaleMode\":\"auto\",\"x\":120,\"y\":1570,\"width\":840,\"height\":330,\"zIndex\":100,\"customSettings\":{\"displayMode\":\"color-bar\",\"highlightRowOnLap\":true,\"highlightLapStyle\":\"full-glow\"}},"
@@ -613,5 +613,87 @@ public class CustomUI extends Model {
       // Return original on error
     }
     return layoutJson;
+  }
+
+  public static String ensureDriftIndicatorInsets(String layoutJson) {
+    if (layoutJson == null || layoutJson.trim().isEmpty()) {
+      return layoutJson;
+    }
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(layoutJson);
+      if (!root.isObject()) {
+        return layoutJson;
+      }
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj =
+          (com.fasterxml.jackson.databind.node.ObjectNode) root;
+      com.fasterxml.jackson.databind.JsonNode widgetsNode = rootObj.get("widgets");
+      if (widgetsNode != null && widgetsNode.isArray()) {
+        boolean modified = false;
+        com.fasterxml.jackson.databind.node.ArrayNode widgetsArray =
+            (com.fasterxml.jackson.databind.node.ArrayNode) widgetsNode;
+        for (com.fasterxml.jackson.databind.JsonNode widgetNode : widgetsArray) {
+          if (widgetNode.isObject()) {
+            com.fasterxml.jackson.databind.node.ObjectNode wObj =
+                (com.fasterxml.jackson.databind.node.ObjectNode) widgetNode;
+            if (wObj.has("customSettings") && wObj.get("customSettings").isObject()) {
+              com.fasterxml.jackson.databind.node.ObjectNode cs =
+                  (com.fasterxml.jackson.databind.node.ObjectNode) wObj.get("customSettings");
+              String colKey = cs.has("columnKey") ? cs.get("columnKey").asText() : "";
+              if ("lastLapTime".equals(colKey) || "lapTime".equals(colKey)) {
+                com.fasterxml.jackson.databind.node.ObjectNode insets;
+                if (cs.has("insets") && cs.get("insets").isObject()) {
+                  insets = (com.fasterxml.jackson.databind.node.ObjectNode) cs.get("insets");
+                } else {
+                  insets = mapper.createObjectNode();
+                  cs.set("insets", insets);
+                  modified = true;
+                }
+                if (!insets.has("bottom-center")) {
+                  insets.put("bottom-center", "driftIndicator");
+                  modified = true;
+                }
+              }
+            }
+          }
+        }
+        return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
+      }
+    } catch (Exception e) {
+      // Return original on error
+    }
+    return layoutJson;
+  }
+
+  public static String ensureDriftIndicatorColumnLayouts(String columnLayoutsJson) {
+    if (columnLayoutsJson == null || columnLayoutsJson.trim().isEmpty()) {
+      return columnLayoutsJson;
+    }
+    try {
+      com.fasterxml.jackson.databind.ObjectMapper mapper =
+          new com.fasterxml.jackson.databind.ObjectMapper();
+      com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(columnLayoutsJson);
+      if (!root.isObject()) {
+        return columnLayoutsJson;
+      }
+      com.fasterxml.jackson.databind.node.ObjectNode rootObj =
+          (com.fasterxml.jackson.databind.node.ObjectNode) root;
+      boolean modified = false;
+      for (String colName : new String[] {"lastLapTime", "lapTime"}) {
+        if (rootObj.has(colName) && rootObj.get(colName).isObject()) {
+          com.fasterxml.jackson.databind.node.ObjectNode colObj =
+              (com.fasterxml.jackson.databind.node.ObjectNode) rootObj.get(colName);
+          if (!colObj.has("bottom-center")) {
+            colObj.put("bottom-center", "driftIndicator");
+            modified = true;
+          }
+        }
+      }
+      return modified ? mapper.writeValueAsString(rootObj) : columnLayoutsJson;
+    } catch (Exception e) {
+      // Return original on error
+    }
+    return columnLayoutsJson;
   }
 }

@@ -1031,5 +1031,113 @@ describe("RacedayLayoutUtils", () => {
       expect(RacedayLayoutUtils.isOverallColumnKey("driver.name")).toBeFalse();
       expect(RacedayLayoutUtils.isOverallColumnKey(undefined)).toBeFalse();
     });
+
+    it("should correctly identify drift indicator properties and widgets", () => {
+      expect(
+        RacedayLayoutUtils.isDriftIndicatorProperty("driftIndicator"),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isDriftIndicatorProperty("drift-indicator"),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.isDriftIndicatorProperty("lastLapTime"),
+      ).toBeFalse();
+      expect(
+        RacedayLayoutUtils.isDriftIndicatorProperty(undefined),
+      ).toBeFalse();
+
+      // hasDriftIndicatorWidget with columns array
+      expect(
+        RacedayLayoutUtils.hasDriftIndicatorWidget(undefined, [
+          "lastLapTime",
+          "driftIndicator",
+        ]),
+      ).toBeTrue();
+      expect(
+        RacedayLayoutUtils.hasDriftIndicatorWidget(undefined, [
+          "lastLapTime",
+          "lapCount",
+        ]),
+      ).toBeFalse();
+
+      // hasDriftIndicatorWidget with layout widgets
+      const layoutWithWidget = {
+        widgets: [
+          {
+            id: "w1",
+            widgetType: "drift-indicator",
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            scaleMode: "fixed",
+            zIndex: 1,
+          },
+        ],
+      } as any;
+      expect(
+        RacedayLayoutUtils.hasDriftIndicatorWidget(layoutWithWidget),
+      ).toBeTrue();
+
+      const layoutWithLaneCol = {
+        widgets: [
+          {
+            id: "w2",
+            widgetType: "lane-column",
+            customSettings: { columnKey: "driftIndicator" },
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            scaleMode: "fixed",
+            zIndex: 1,
+          },
+        ],
+      } as any;
+      expect(
+        RacedayLayoutUtils.hasDriftIndicatorWidget(layoutWithLaneCol),
+      ).toBeTrue();
+
+      const layoutWithInset = {
+        widgets: [
+          {
+            id: "w3",
+            widgetType: "lane-column",
+            customSettings: {
+              columnKey: "lastLapTime",
+              insets: { "top-left": "driftIndicator" },
+            },
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            scaleMode: "fixed",
+            zIndex: 1,
+          },
+        ],
+      } as any;
+      expect(
+        RacedayLayoutUtils.hasDriftIndicatorWidget(layoutWithInset),
+      ).toBeTrue();
+
+      const layoutWithoutDrift = {
+        widgets: [
+          {
+            id: "w4",
+            widgetType: "lane-column",
+            customSettings: { columnKey: "lastLapTime" },
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            scaleMode: "fixed",
+            zIndex: 1,
+          },
+        ],
+      } as any;
+      expect(
+        RacedayLayoutUtils.hasDriftIndicatorWidget(layoutWithoutDrift),
+      ).toBeFalse();
+    });
   });
 });
