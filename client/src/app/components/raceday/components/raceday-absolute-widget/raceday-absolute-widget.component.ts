@@ -441,6 +441,9 @@ export class RacedayAbsoluteWidgetComponent
     }
     const el = this.wrapperRef()?.nativeElement;
     el?.classList.remove("grid-animating");
+    if (el) {
+      el.style.zIndex = "";
+    }
   }
 
   private calculateResizedBounds(
@@ -906,6 +909,7 @@ export class RacedayAbsoluteWidgetComponent
 
     this.isGridAnimating = true;
     el.classList.add("grid-animating");
+    el.style.zIndex = String(this.computedZIndex + 1000);
     el.style.transition = "none";
     el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
     void el.offsetHeight;
@@ -915,6 +919,7 @@ export class RacedayAbsoluteWidgetComponent
     this.gridAnimTimer = setTimeout(() => {
       if (el) {
         el.classList.remove("grid-animating");
+        el.style.zIndex = "";
         el.style.transition = "";
         el.style.transform = "";
       }
