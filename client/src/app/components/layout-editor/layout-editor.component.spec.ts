@@ -71,6 +71,7 @@ class MockDefaultRacedayComponent {
   gridBoundsChange = output<any>();
   selectionToggled = output<string>();
   boxSelected = output<any>();
+  soleSelected = output<string>();
   syncLayoutFromEditor(_layout: any): void {}
 }
 
@@ -1278,6 +1279,39 @@ describe("LayoutEditorComponent", () => {
         expect(component.selectedWidgetIds).toEqual(["b"]);
         component.onSelectionToggled("c");
         component.onWidgetSelected("a");
+        expect(component.selectedWidgetIds).toEqual(["a"]);
+      });
+
+      it("Delete asks first for several, then removes them all (phase 4c-2)", () => {
+        component["initUndoManager"]();
+        component.onBoxSelected({ ids: ["a", "b"], additive: false });
+        component.handleKeyboardEvent(
+          new KeyboardEvent("keydown", { key: "Delete" }),
+        );
+        expect(component.showDeleteSelectionConfirm).toBeTrue();
+        expect(component.getLayoutWidgets().length).toBe(4);
+        component.onConfirmDeleteSelection();
+        expect(component.showDeleteSelectionConfirm).toBeFalse();
+        expect(component.getLayoutWidgets().map((w: any) => w.id)).toEqual([
+          "c",
+          "g",
+        ]);
+        expect(component.selectedWidgetIds).toEqual([]);
+      });
+
+      it("Delete with one widget selected works as before", () => {
+        spyOn(component, "removeSelectedWidget");
+        component.deleteSelection();
+        expect(component.showDeleteSelectionConfirm).toBeFalse();
+        expect(component.removeSelectedWidget).toHaveBeenCalled();
+      });
+
+      it("a click on one of several selects only that one", () => {
+        component.onBoxSelected({ ids: ["a", "b", "c"], additive: false });
+        component.onSoleSelected("b");
+        expect(component.selectedWidgetIds).toEqual(["b"]);
+        component.onBoxSelected({ ids: ["a", "b"], additive: false });
+        component.onSoleSelected("a");
         expect(component.selectedWidgetIds).toEqual(["a"]);
       });
 

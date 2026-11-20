@@ -1,3 +1,7 @@
+import {
+  clampGroupDelta,
+  movableIds,
+} from "@app/components/ui-editor/multi-select.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import {
   LaneGridReplicationHelper,
@@ -590,6 +594,26 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   comp.onLayoutChanged(updatedLayout, targetUi);
 }
 
+/**
+ * Delete several selected widgets at once (phase 4c-2), as one undo step.
+ * Only plain widgets can be part of a multi-selection, so no grid clean-up
+ * is needed. Nothing stays selected afterwards.
+ */
+export function handleRemoveWidgets(
+  comp: any,
+  ids: string[],
+  ui?: CustomUI,
+): void {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets || !ids.length) return;
+  const newWidgets = layout.widgets.filter((w: any) => !ids.includes(w.id));
+  if (newWidgets.length === layout.widgets.length) return;
+  comp.selectedAnchor = null;
+  comp.selectedWidgetId = null;
+  comp.onLayoutChanged({ ...layout, widgets: newWidgets }, targetUi);
+}
+
 export function isWidgetHeightAutoCalculated(
   widget: any,
   session?: LaneGridSession | null,
@@ -659,6 +683,38 @@ export function handleNudgeSelectedWidget(
   const targetUi = ui || comp.activeCustomUi;
   const layout = comp.getLayout(targetUi);
   if (!layout?.widgets) return;
+
+  // several selected (phase 4c-2): move them all, as one undo step
+  const ids: string[] = comp.selectedWidgetIds || [];
+  if (ids.length > 1) {
+    const starts = movableIds(layout.widgets, ids).map((id) =>
+      layout.widgets.find((w: any) => w.id === id),
+    );
+    if (!starts.length) return;
+    const d = clampGroupDelta(
+      starts,
+      dx,
+      dy,
+      comp.getLayoutBaseWidth(targetUi),
+      comp.getLayoutBaseHeight(targetUi),
+    );
+    if (!d.dx && !d.dy) return;
+    for (const w of starts) {
+      w.x += d.dx;
+      w.y += d.dy;
+    }
+    updateLayoutOnModel(
+      layout,
+      targetUi,
+      comp.editingSettings,
+      comp.isCustomUiPractice(targetUi),
+      comp.parsedLayouts,
+    );
+    comp.syncRacedayPreview?.(layout, targetUi);
+    comp.captureState();
+    comp.cdr?.markForCheck();
+    return;
+  }
 
   const widget = layout.widgets.find(
     (w: any) => w.id === comp.selectedWidgetId,

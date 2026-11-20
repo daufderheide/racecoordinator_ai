@@ -377,6 +377,7 @@
                 (widgetSelected)="onWidgetSelected($event)"
                 (selectionToggled)="onSelectionToggled($event)"
                 (boxSelected)="onBoxSelected($event)"
+                (soleSelected)="onSoleSelected($event)"
                 (anchorSelected)="onAnchorSelected($event)"
                 (layoutChanged)="onLayoutChanged($event)"
                 (columnsChanged)="onColumnsChanged()"
@@ -399,6 +400,7 @@
             (makeMain)="makeMainSelected($event)"
             (remove)="removeFromSelection($event)"
             (keepMain)="keepOnlyMainSelected()"
+            (deleteAll)="deleteSelection()"
           ></app-inspector-multi>
         } @else if (
           currentSelectedWidget && isEditMode && isWidgetConfigVisible
@@ -583,6 +585,19 @@
     >
     </app-confirmation-modal>
   }
+
+  <!-- Delete several selected widgets (phase 4c-2) -->
+  <app-confirmation-modal
+    [visible]="showDeleteSelectionConfirm"
+    title="UE_MULTI_DELETE_TITLE"
+    message="UE_MULTI_DELETE_MSG"
+    [messageParams]="{ count: selectedWidgetIds.length }"
+    confirmText="CD_YES"
+    cancelText="CD_NO"
+    (confirm)="onConfirmDeleteSelection()"
+    (cancel)="showDeleteSelectionConfirm = false"
+  >
+  </app-confirmation-modal>
 
   <!-- Delete Confirmation Modal -->
   <app-confirmation-modal

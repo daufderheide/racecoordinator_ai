@@ -130,3 +130,46 @@ export function selectionFromBox(
   const main = sel.main && all.includes(sel.main) ? sel.main : all[0];
   return { main, extras: all.filter((x) => x !== main) };
 }
+
+export interface GroupStart {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * How far a group can move: the wanted dx / dy, cut so no member leaves the
+ * canvas (phase 4c-2). The group keeps its shape.
+ */
+export function clampGroupDelta(
+  starts: GroupStart[],
+  dx: number,
+  dy: number,
+  baseWidth: number,
+  baseHeight: number,
+): { dx: number; dy: number } {
+  let minDx = -Infinity;
+  let maxDx = Infinity;
+  let minDy = -Infinity;
+  let maxDy = Infinity;
+  for (const s of starts) {
+    minDx = Math.max(minDx, -s.x);
+    maxDx = Math.min(maxDx, baseWidth - s.width - s.x);
+    minDy = Math.max(minDy, -s.y);
+    maxDy = Math.min(maxDy, baseHeight - s.height - s.y);
+  }
+  const clamp = (v: number, lo: number, hi: number) =>
+    lo > hi ? 0 : Math.max(lo, Math.min(hi, v));
+  return { dx: clamp(dx, minDx, maxDx), dy: clamp(dy, minDy, maxDy) };
+}
+
+/** Widgets of a selection that may move: not locked, not in a grid. */
+export function movableIds(widgets: any[], ids: string[]): string[] {
+  const byId = new Map<string, any>((widgets || []).map((w) => [w.id, w]));
+  return ids.filter((id) => {
+    const w = byId.get(id);
+    return w && canMultiSelect(w) && w.customSettings?.["locked"] !== true;
+  });
+}

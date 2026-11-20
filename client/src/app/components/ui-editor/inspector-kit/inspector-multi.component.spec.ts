@@ -41,4 +41,11 @@ describe("InspectorMultiComponent", () => {
     expect(removed).toEqual(["a"]);
     expect(kept).toBe(1);
   });
+
+  it("asks to delete all selected widgets from the header button", () => {
+    let asked = 0;
+    fixture.componentInstance.deleteAll.subscribe(() => asked++);
+    (q("#kit-multi-delete") as HTMLButtonElement).click();
+    expect(asked).toBe(1);
+  });
 });

@@ -3038,6 +3038,8 @@
   "UE_KIT_PART_HEADER": "Kop",
   "UE_KIT_PART_VALUE": "Waarde",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_MULTI_DELETE_TITLE": "Geselecteerde widgets verwijderen",
+  "UE_MULTI_DELETE_MSG": "Deze {{count}} widgets verwijderen? Je kunt dit ongedaan maken.",
   "UE_MULTI_COUNT": "{{count}} widgets geselecteerd",
   "UE_MULTI_HINT": "Shift-klik op een widget om hem toe te voegen of weg te halen",
   "UE_MULTI_MAKE_MAIN": "Maak dit de hoofdwidget",

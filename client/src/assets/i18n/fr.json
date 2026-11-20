@@ -3038,6 +3038,8 @@
   "UE_KIT_PART_HEADER": "En-tête",
   "UE_KIT_PART_VALUE": "Valeur",
   "UE_KIT_PART_LABEL": "Libellé",
+  "UE_MULTI_DELETE_TITLE": "Supprimer les widgets sélectionnés",
+  "UE_MULTI_DELETE_MSG": "Supprimer ces {{count}} widgets ? Vous pourrez l'annuler.",
   "UE_MULTI_COUNT": "{{count}} widgets sélectionnés",
   "UE_MULTI_HINT": "Maj-clic sur un widget pour l'ajouter ou le retirer",
   "UE_MULTI_MAKE_MAIN": "En faire le widget principal",

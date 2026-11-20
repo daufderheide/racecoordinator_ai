@@ -2712,6 +2712,8 @@
   "UE_KIT_PART_HEADER": "Header",
   "UE_KIT_PART_VALUE": "Value",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_MULTI_DELETE_TITLE": "Delete selected widgets",
+  "UE_MULTI_DELETE_MSG": "Delete these {{count}} widgets? You can undo this.",
   "UE_MULTI_COUNT": "{{count}} widgets selected",
   "UE_MULTI_HINT": "Shift-click a widget to add or remove it",
   "UE_MULTI_MAKE_MAIN": "Make this the main widget",

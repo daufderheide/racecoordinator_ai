@@ -2712,6 +2712,8 @@
   "UE_KIT_PART_HEADER": "Überschrift",
   "UE_KIT_PART_VALUE": "Wert",
   "UE_KIT_PART_LABEL": "Beschriftung",
+  "UE_MULTI_DELETE_TITLE": "Ausgewählte Widgets löschen",
+  "UE_MULTI_DELETE_MSG": "Diese {{count}} Widgets löschen? Du kannst das rückgängig machen.",
   "UE_MULTI_COUNT": "{{count}} Widgets ausgewählt",
   "UE_MULTI_HINT": "Umschalt-Klick auf ein Widget fügt es hinzu oder entfernt es",
   "UE_MULTI_MAKE_MAIN": "Zum Haupt-Widget machen",

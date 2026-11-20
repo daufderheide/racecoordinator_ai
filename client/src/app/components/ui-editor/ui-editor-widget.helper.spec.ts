@@ -906,6 +906,62 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.captureState).toHaveBeenCalledTimes(1);
   });
 
+  describe("several selected (phase 4c-2)", () => {
+    const setup = () => {
+      const a: any = { id: "a", x: 10, y: 10, width: 100, height: 50 };
+      const b: any = { id: "b", x: 300, y: 10, width: 100, height: 50 };
+      const l: any = {
+        id: "l",
+        x: 600,
+        y: 10,
+        width: 100,
+        height: 50,
+        customSettings: { locked: true },
+      };
+      const layout: any = { widgets: [a, b, l] };
+      const ui: any = { entity_id: "ui1" };
+      const comp: any = {
+        selectedWidgetId: "a",
+        selectedWidgetIds: ["a", "b", "l"],
+        activeCustomUi: ui,
+        editingSettings: {},
+        parsedLayouts: new Map(),
+        getLayout: () => layout,
+        getLayoutBaseWidth: () => 1920,
+        getLayoutBaseHeight: () => 1080,
+        isCustomUiPractice: () => false,
+        syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+        captureState: jasmine.createSpy("captureState"),
+        onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+        onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+      };
+      return { a, b, l, comp, ui };
+    };
+
+    it("arrow keys move all unlocked selected widgets as one undo step", () => {
+      const {
+        handleNudgeSelectedWidget,
+      } = require("./ui-editor-widget.helper");
+      const { a, b, l, comp, ui } = setup();
+      handleNudgeSelectedWidget(comp, 5, -20);
+      // stopped at the top edge: -10, not -20
+      expect([a.x, a.y, b.x, b.y]).toEqual([15, 0, 305, 0]);
+      expect([l.x, l.y]).toEqual([600, 10]);
+      expect(comp.captureState).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(ui.layoutJson).widgets[1].x).toBe(305);
+      expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
+    });
+
+    it("deletes several at once and leaves nothing selected", () => {
+      const { handleRemoveWidgets } = require("./ui-editor-widget.helper");
+      const { comp } = setup();
+      handleRemoveWidgets(comp, ["a", "b"]);
+      expect(comp.selectedWidgetId).toBeNull();
+      const [layout] = comp.onLayoutChanged.calls.mostRecent().args;
+      expect(layout.widgets.map((w: any) => w.id)).toEqual(["l"]);
+    });
+  });
+
   it("does not nudge a locked widget", () => {
     const { handleNudgeSelectedWidget } = require("./ui-editor-widget.helper");
     const widget = {

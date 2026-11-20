@@ -453,6 +453,7 @@ export abstract class DefaultRacedayLayoutBase {
     handle: string,
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
+    alsoIgnore: string[] = [],
   ): SnapResult {
     return RacedayGridLayoutHelper.snapWithGuides(
       this,
@@ -461,6 +462,7 @@ export abstract class DefaultRacedayLayoutBase {
       handle,
       layoutWidth,
       layoutHeight,
+      alsoIgnore,
     );
   }
 

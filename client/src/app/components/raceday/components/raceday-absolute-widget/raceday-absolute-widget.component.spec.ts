@@ -376,6 +376,79 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component.onDragStart).not.toHaveBeenCalled();
   });
 
+  describe("moving several together (phase 4c-2)", () => {
+    let other: any;
+    let locked: any;
+    beforeEach(() => {
+      other = { id: "other", x: 300, y: 300, width: 100, height: 100 };
+      locked = {
+        id: "locked",
+        x: 600,
+        y: 300,
+        width: 100,
+        height: 100,
+        customSettings: { locked: true },
+      };
+      mockParent.layout.widgets = [mockWidget, other, locked];
+      mockParent.isUIEditorMode = () => true;
+      mockParent.selectWidget = jasmine.createSpy("selectWidget");
+      mockParent.soleSelected = jasmine.createSpyObj("soleSelected", ["emit"]);
+      mockParent.snapWithGuides = jasmine
+        .createSpy("snapWithGuides")
+        .and.callFake((r: any) => ({ ...r, guidesX: [], guidesY: [] }));
+      fixture.componentRef.setInput("selectedWidgetIds", [
+        "test-widget",
+        "other",
+        "locked",
+      ]);
+      fixture.detectChanges();
+    });
+
+    const press = () => {
+      const e = new PointerEvent("pointerdown", { clientX: 50, clientY: 50 });
+      Object.defineProperty(e, "target", {
+        value: document.createElement("div"),
+      });
+      component.onDragStart(e);
+    };
+
+    it("drags the others along, keeps the selection, leaves locked ones", () => {
+      press();
+      expect(mockParent.selectWidget).not.toHaveBeenCalled();
+      document.dispatchEvent(
+        new PointerEvent("pointermove", { clientX: 70, clientY: 90 }),
+      );
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect([mockWidget.x, mockWidget.y]).toEqual([30, 60]);
+      expect([other.x, other.y]).toEqual([320, 340]);
+      expect([locked.x, locked.y]).toEqual([600, 300]);
+      // snapping ignores the group's own members
+      expect(mockParent.snapWithGuides.calls.mostRecent().args[5]).toEqual([
+        "other",
+      ]);
+      expect(mockParent.layoutChanged.emit).toHaveBeenCalled();
+      expect(mockParent.soleSelected.emit).not.toHaveBeenCalled();
+    });
+
+    it("a click without moving selects only this widget", () => {
+      press();
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(mockParent.soleSelected.emit).toHaveBeenCalledWith("test-widget");
+      expect(mockParent.layoutChanged.emit).not.toHaveBeenCalled();
+    });
+
+    it("stops the whole group at the canvas edge", () => {
+      other.x = 1800; // 20 px from the right edge
+      press();
+      document.dispatchEvent(
+        new PointerEvent("pointermove", { clientX: 150, clientY: 50 }),
+      );
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(other.x).toBe(1820);
+      expect(mockWidget.x).toBe(30);
+    });
+  });
+
   describe("selecting several (phase 4c-1)", () => {
     it("Shift- or Ctrl-click in the Layout Editor toggles instead of dragging", () => {
       const toggled: string[] = [];

@@ -38,6 +38,16 @@ export interface MultiSelectItem {
       <div class="kit-head">
         <div class="kit-head-top">
           <h2 class="kit-head-title">{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+          <button
+            type="button"
+            class="kit-icon-btn kit-danger"
+            id="kit-multi-delete"
+            [title]="'UE_MULTI_DELETE_TITLE' | translate"
+            [attr.aria-label]="'UE_MULTI_DELETE_TITLE' | translate"
+            (click)="deleteAll.emit()"
+          >
+            <span class="material-icons">delete</span>
+          </button>
         </div>
         <div class="kit-head-widget">
           <span class="kit-head-icon"
@@ -120,6 +130,7 @@ export class InspectorMultiComponent {
   makeMain = output<string>();
   remove = output<string>();
   keepMain = output<void>();
+  deleteAll = output<void>();
 
   theme = signal<PanelTheme>(readPanelTheme());
 }

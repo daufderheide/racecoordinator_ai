@@ -1,5 +1,7 @@
 import {
   boxFromPoints,
+  clampGroupDelta,
+  movableIds,
   canMultiSelect,
   makeMain,
   selectedIds,
@@ -101,5 +103,30 @@ describe("multi-select", () => {
       extras: [],
     });
     expect(selectionFromBox(sel, [], true)).toEqual(sel);
+  });
+
+  it("cuts a group move so no member leaves the canvas (phase 4c-2)", () => {
+    const starts = [
+      { id: "a", x: 10, y: 100, width: 100, height: 50 },
+      { id: "b", x: 1700, y: 20, width: 200, height: 50 },
+    ];
+    // b can go 20 px right, a 10 px left; b 20 px up
+    expect(clampGroupDelta(starts, 50, -50, 1920, 1080)).toEqual({
+      dx: 20,
+      dy: -20,
+    });
+    expect(clampGroupDelta(starts, -50, 5, 1920, 1080)).toEqual({
+      dx: -10,
+      dy: 5,
+    });
+  });
+
+  it("leaves locked widgets and grid columns out of a group move", () => {
+    const ws = [
+      w("a", 0, 0),
+      w("l", 0, 0, { customSettings: { locked: true } }),
+      w("g", 0, 0, { customSettings: { gridId: "x" } }),
+    ];
+    expect(movableIds(ws, ["a", "l", "g", "gone"])).toEqual(["a"]);
   });
 });

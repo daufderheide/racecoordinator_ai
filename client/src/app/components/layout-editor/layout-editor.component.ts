@@ -50,6 +50,7 @@ import {
 import {
   findDefaultWidgetId,
   handleLayerOrder,
+  handleRemoveWidgets,
 } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { layerState } from "@app/components/raceday/utils/layer-order.utils";
 import { WidgetInspectorFieldsComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-inspector-fields.component";
@@ -276,6 +277,33 @@ export class LayoutEditorComponent
 
   removeFromSelection(id: string): void {
     this.applySelection(toggleSelection(this.currentSelection(), id));
+  }
+
+  /** Click (no drag) on one of several selected widgets: select only it. */
+  onSoleSelected(id: string): void {
+    if (id !== this.selectedWidgetId) this.onWidgetSelected(id);
+    this.keepOnlyMainSelected();
+  }
+
+  /** Delete key / panel button: one widget as before, several after asking. */
+  showDeleteSelectionConfirm = false;
+  deleteSelection(): void {
+    if (this.selectedWidgetIds.length > 1) {
+      this.showDeleteSelectionConfirm = true;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.removeSelectedWidget();
+  }
+
+  onConfirmDeleteSelection(): void {
+    this.showDeleteSelectionConfirm = false;
+    handleRemoveWidgets(
+      this,
+      this.selectedWidgetIds,
+      this.editingLayout ?? undefined,
+    );
+    this.cdr.markForCheck();
   }
 
   keepOnlyMainSelected(): void {
@@ -507,7 +535,7 @@ export class LayoutEditorComponent
       event,
       () => this.undoManager?.undo(),
       () => this.undoManager?.redo(),
-      () => this.removeSelectedWidget(),
+      () => this.deleteSelection(),
       (dx, dy) => this.nudgeSelectedWidget(dx, dy),
     );
   }

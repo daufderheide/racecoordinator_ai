@@ -501,6 +501,8 @@ export class DefaultRacedayComponent
   selectionToggled = output<string>();
   /** Widgets fully inside a box drawn on the empty canvas (Shift = add). */
   boxSelected = output<{ ids: string[]; additive: boolean }>();
+  /** A click (no drag) on a widget of a multi-selection: select only it. */
+  soleSelected = output<string>();
   anchorSelected = output<{ widgetId: string; anchor: string | null }>();
   finishGrid = output<void>();
   deleteGrid = output<string>();
