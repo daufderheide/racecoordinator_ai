@@ -167,7 +167,7 @@ export class InspectorShellComponent implements OnDestroy {
   }
 
   onReset(event: ResetEvent): void {
-    const name = this.translation.translate(event.labelKey);
+    const name = event.label ?? this.translation.translate(event.labelKey);
     this.showToast(
       this.translation.translate("UE_KIT_RESET_DONE", { name }),
       true,

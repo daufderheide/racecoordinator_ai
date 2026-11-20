@@ -81,6 +81,9 @@ interface FieldBase {
   id: string;
   labelKey: string;
   helpKey?: string;
+  /** Literal label / help text, used instead of the keys (e.g. a custom widget's manifest). */
+  label?: string;
+  help?: string;
   /** Extra words that find this field (English, lower case). */
   searchTerms?: string;
   /** Shown only when this returns true for the current settings. */
@@ -190,6 +193,13 @@ export interface TextPartField extends FieldBase {
   };
 }
 
+/** A short paragraph (e.g. a custom widget's description). No setting. */
+export interface NoteField extends FieldBase {
+  type: "note";
+  /** Literal text; `labelKey` is used when it's absent. */
+  text?: string;
+}
+
 /** An image from the asset library (the existing image selector). */
 export interface ImageField extends FieldBase {
   type: "image";
@@ -223,6 +233,7 @@ export type InspectorField =
   | TextPartField
   | ImageField
   | EmbedField
+  | NoteField
   | GeometryField;
 
 export interface InspectorGroup {
@@ -257,6 +268,7 @@ export function fieldKeys(field: InspectorField): string[] {
       return Object.values(field.keys).filter((k): k is string => !!k);
     case "geometry":
     case "embed":
+    case "note":
       return [];
     default:
       return [...new Set([field.key, ...(field.touches || [])])];
@@ -358,8 +370,8 @@ export function fieldMatches(
   const q = query.trim().toLowerCase();
   if (!q) return true;
   const text = [
-    translate(field.labelKey),
-    field.helpKey ? translate(field.helpKey) : "",
+    field.label ?? translate(field.labelKey),
+    field.help ?? (field.helpKey ? translate(field.helpKey) : ""),
     field.searchTerms || "",
   ]
     .join(" ")

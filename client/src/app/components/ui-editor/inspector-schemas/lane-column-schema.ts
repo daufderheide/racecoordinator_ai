@@ -49,7 +49,10 @@ export class LaneColumnPartComponent {
 }
 
 /** Lane Column, Average Score and Drift Indicator share the inspector. */
-function laneColumnSchema(widgetType: string, icon: string): InspectorSchema {
+export function laneColumnSchema(
+  widgetType: string,
+  icon: string,
+): InspectorSchema {
   return {
     widgetType,
     icon,

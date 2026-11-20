@@ -30,6 +30,7 @@ import {
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 import { InspectorShellComponent } from "@app/components/ui-editor/inspector-kit/inspector-shell.component";
 import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
+import { customWidgetSchemaFor } from "@app/components/ui-editor/inspector-schemas/custom-widget-schema";
 import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -161,7 +162,38 @@ export class LayoutEditorComponent
 
   /** Redesigned panel schema for the widget, or null for its existing inspector. */
   getInspectorSchema(widget: any): InspectorSchema | null {
-    return getInspectorSchema(widget?.widgetType);
+    const type: string | undefined = widget?.widgetType;
+    if (type?.startsWith("custom:")) {
+      // fields from the widget's own manifest, or the Lane Column inspector
+      // when it is bound to a grid / lane (same rule as before)
+      return customWidgetSchemaFor(
+        widget,
+        this.customWidgetService?.getWidgetDefinition(type),
+      );
+    }
+    return getInspectorSchema(type);
+  }
+
+  /**
+   * Header name for the redesigned panel. Custom widgets show their manifest
+   * name (the generic name is a translation key that doesn't exist for them).
+   */
+  panelDisplayName(widget: any): string {
+    const type: string = widget?.widgetType || "";
+    if (type.startsWith("custom:")) {
+      return (
+        this.customWidgetService?.getWidgetDefinition(type)?.manifest?.name ||
+        type.replace(/^custom:/, "")
+      );
+    }
+    return this.getWidgetDisplayName(widget);
+  }
+
+  panelTypeLabelKey(widget: any): string {
+    const type: string = widget?.widgetType || "";
+    return type.startsWith("custom:")
+      ? "UE_INSPECTOR_CUSTOM_WIDGET"
+      : this.getWidgetTypeLabelKey(type);
   }
 
   /** Type name key for the redesigned panel's header. */
@@ -235,9 +267,8 @@ export class LayoutEditorComponent
     optional: true,
   });
   public customUiService = inject(CustomUiService, { optional: true });
-  protected override customWidgetService = inject(CustomWidgetService, {
-    optional: true,
-  });
+  /** Custom widget manifests, for the redesigned panel's custom widget fields. */
+  private customWidgetService = inject(CustomWidgetService, { optional: true });
   public helpService = inject(HelpService, { optional: true });
 
   constructor(

@@ -53,11 +53,8 @@
                       [title]="'UE_KIT_CHANGED' | translate"
                     ></span>
                   }
-                  <span
-                    class="kit-label-text"
-                    [title]="field.labelKey | translate"
-                  >
-                    @for (p of labelParts(field.labelKey); track $index) {
+                  <span class="kit-label-text" [title]="labelOf(field)">
+                    @for (p of labelParts(labelOf(field)); track $index) {
                       @if (p.hit) {
                         <mark>{{ p.text }}</mark>
                       } @else {
@@ -65,10 +62,10 @@
                       }
                     }
                   </span>
-                  @if (field.helpKey) {
+                  @if (helpOf(field)) {
                     <span
                       class="material-icons kit-info"
-                      [title]="field.helpKey | translate"
+                      [title]="helpOf(field)"
                       >info</span
                     >
                   }
@@ -101,7 +98,7 @@
                         role="switch"
                         [attr.id]="'kit-' + field.id"
                         [attr.aria-checked]="value(field) !== false"
-                        [attr.aria-label]="field.labelKey | translate"
+                        [attr.aria-label]="labelOf(field)"
                         (click)="setField(field, !(value(field) !== false))"
                       ></button>
                     </div>
@@ -118,7 +115,7 @@
                       <div
                         class="kit-seg"
                         role="radiogroup"
-                        [attr.aria-label]="field.labelKey | translate"
+                        [attr.aria-label]="labelOf(field)"
                       >
                         @for (o of $any(field).options; track o.value) {
                           <button
@@ -151,7 +148,7 @@
                       <select
                         class="kit-select"
                         [attr.id]="'kit-' + field.id"
-                        [attr.aria-label]="field.labelKey | translate"
+                        [attr.aria-label]="labelOf(field)"
                         (change)="
                           setField(
                             field,
@@ -190,7 +187,7 @@
                         [step]="$any(field).step || 1"
                         [unit]="$any(field).unit || ''"
                         [inputId]="'kit-' + field.id"
-                        [ariaLabel]="field.labelKey | translate"
+                        [ariaLabel]="labelOf(field)"
                         (valueChange)="setField(field, $event)"
                       ></app-kit-stepper>
                     </div>
@@ -208,7 +205,7 @@
                         [value]="value(field)"
                         [placeholder]="$any(field).placeholder || '#ffffff'"
                         [inputId]="'kit-' + field.id"
-                        [ariaLabel]="field.labelKey | translate"
+                        [ariaLabel]="labelOf(field)"
                         (valueChange)="setField(field, $event)"
                       ></app-kit-color>
                     </div>
@@ -233,7 +230,7 @@
                             ? ($any(field).placeholderKey | translate)
                             : $any(field).placeholder || ''
                         "
-                        [attr.aria-label]="field.labelKey | translate"
+                        [attr.aria-label]="labelOf(field)"
                         (change)="setField(field, $any($event.target).value)"
                         autocomplete="off"
                         data-dashlane-ignore="true"
@@ -244,6 +241,11 @@
                       />
                     </div>
                   </div>
+                }
+                @case ("note") {
+                  <p class="kit-note" [attr.data-field]="field.id">
+                    {{ $any(field).text ?? labelOf(field) }}
+                  </p>
                 }
                 @case ("embed") {
                   <div class="kit-embed" [attr.data-field]="field.id">
@@ -282,7 +284,7 @@
                       <div
                         class="kit-tiles"
                         role="radiogroup"
-                        [attr.aria-label]="field.labelKey | translate"
+                        [attr.aria-label]="labelOf(field)"
                       >
                         @for (o of $any(field).tiles; track o.value) {
                           <button
@@ -374,7 +376,7 @@
                       }
                       <span class="kit-part-names">
                         <span class="kit-part-name">
-                          @for (p of labelParts(field.labelKey); track $index) {
+                          @for (p of labelParts(labelOf(field)); track $index) {
                             @if (p.hit) {
                               <mark>{{ p.text }}</mark>
                             } @else {
@@ -533,8 +535,7 @@
                             <span class="material-icons">restart_alt</span>
                             {{
                               "UE_KIT_RESET_PART"
-                                | translate
-                                  : { name: (field.labelKey | translate) }
+                                | translate: { name: labelOf(field) }
                             }}
                           </button>
                         }

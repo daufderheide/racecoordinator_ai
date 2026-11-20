@@ -39,6 +39,8 @@ export interface GeometryChange {
 export interface ResetEvent {
   /** Translation key of what was reset (field label or folder name). */
   labelKey: string;
+  /** Literal name, when the field has no translation key. */
+  label?: string;
 }
 
 /** Folders opened per widget type, remembered while the editor is open. */
@@ -189,8 +191,17 @@ export class InspectorFormComponent {
   }
 
   /** Label split around the search term so it can be highlighted. */
-  labelParts(key: string): { text: string; hit: boolean }[] {
-    const label = this.t(key);
+  /** A field's label: its literal text when it has one, else the translation. */
+  labelOf(field: InspectorField): string {
+    return field.label ?? this.t(field.labelKey);
+  }
+
+  /** A field's help text, if any (literal or translated). */
+  helpOf(field: InspectorField): string {
+    return field.help ?? (field.helpKey ? this.t(field.helpKey) : "");
+  }
+
+  labelParts(label: string): { text: string; hit: boolean }[] {
     const q = this.query().trim().toLowerCase();
     const i = q ? label.toLowerCase().indexOf(q) : -1;
     if (i < 0) return [{ text: label, hit: false }];
@@ -333,7 +344,7 @@ export class InspectorFormComponent {
       this.defaults(),
     );
     this.settingsChange.emit();
-    this.reset.emit({ labelKey: field.labelKey });
+    this.reset.emit({ labelKey: field.labelKey, label: field.label });
   }
 
   resetFolder(folder: InspectorFolder): void {
@@ -374,7 +385,7 @@ export class InspectorFormComponent {
       return String(this.settings()[field.sampleSetting]);
     }
     if (field.sampleKey) return this.t(field.sampleKey);
-    return field.sample ?? this.t(field.labelKey);
+    return field.sample ?? this.labelOf(field);
   }
 
   partMeta(field: TextPartField): string {
