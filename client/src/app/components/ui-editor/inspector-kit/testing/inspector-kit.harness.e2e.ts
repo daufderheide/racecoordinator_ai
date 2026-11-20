@@ -37,6 +37,26 @@ export class InspectorKitHarnessE2e {
     await input.press("Tab");
   }
 
+  /** Clicks the segment / tile option with this text (e.g. "2", "Bar"). */
+  async pickOption(fieldId: string, text: string): Promise<void> {
+    await this.page
+      .locator(
+        `[data-field="${fieldId}"] .kit-seg button, [data-field="${fieldId}"] .kit-tile`,
+      )
+      .filter({ hasText: new RegExp("^\\s*" + text + "\\s*$", "i") })
+      .first()
+      .click();
+  }
+
+  async setPartColor(id: string, hex: string): Promise<void> {
+    await this.openPart(id);
+    await this.page.locator(`#kit-${id}-color`).evaluate((el, v) => {
+      const input = el as HTMLInputElement;
+      input.value = v;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    }, hex);
+  }
+
   async fillText(fieldId: string, value: string): Promise<void> {
     const input = this.page.locator(`#kit-${fieldId}`);
     await input.fill(value);

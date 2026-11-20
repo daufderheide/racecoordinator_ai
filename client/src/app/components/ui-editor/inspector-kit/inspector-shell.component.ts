@@ -59,6 +59,8 @@ export class InspectorShellComponent implements OnDestroy {
   schema = input<InspectorSchema | null>(null);
   displayName = input("");
   typeLabelKey = input("");
+  /** Number of lanes on the track, for limits such as a target lane. */
+  totalLanes = input(4);
   widthLocked = input(false);
   heightLocked = input(false);
   canNavigate = input(true);

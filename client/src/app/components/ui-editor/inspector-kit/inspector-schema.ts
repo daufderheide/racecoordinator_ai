@@ -42,6 +42,12 @@ export interface InspectorOption {
   icon?: string;
 }
 
+/** What a field may need beyond the settings: the widget and the track. */
+export interface InspectorContext {
+  widget: any;
+  totalLanes: number;
+}
+
 interface FieldBase {
   /** Unique within the schema; used for search highlight and test ids. */
   id: string;
@@ -51,6 +57,20 @@ interface FieldBase {
   searchTerms?: string;
   /** Shown only when this returns true for the current settings. */
   visibleWhen?: (settings: Record<string, any>) => boolean;
+  /**
+   * For a field that isn't one key: what it shows, worked out from the stored
+   * settings the way the old inspector did (so older layouts read the same).
+   * Without it the field shows `key`.
+   */
+  read?: (settings: Record<string, any>) => any;
+  /** For a field that isn't one key: store a chosen value (may set several keys). */
+  write?: (
+    settings: Record<string, any>,
+    value: any,
+    context: InspectorContext,
+  ) => void;
+  /** Other keys `write` sets, so "changed" and reset cover them too. */
+  touches?: string[];
 }
 
 export interface SwitchField extends FieldBase {
@@ -82,6 +102,8 @@ export interface StepperField extends FieldBase {
   unit?: string;
   icon?: string;
   default?: number;
+  /** A maximum that depends on the track, e.g. the number of lanes. */
+  maxFrom?: (context: InspectorContext) => number;
 }
 
 export interface ColorField extends FieldBase {
@@ -119,6 +141,8 @@ export interface TextPartField extends FieldBase {
   keys: { font?: string; size?: string; color?: string; align?: string };
   sizeMin?: number;
   sizeMax?: number;
+  /** Hide just the colour row when the colour has no effect (e.g. lane colours win). */
+  colorVisibleWhen?: (settings: Record<string, any>) => boolean;
   /** Colour shown in the sample while the colour setting is empty. */
   defaultColor?: string;
   /** Defaults for keys the widget registry doesn't define. */
@@ -178,7 +202,7 @@ export function fieldKeys(field: InspectorField): string[] {
     case "geometry":
       return [];
     default:
-      return [field.key];
+      return [...new Set([field.key, ...(field.touches || [])])];
   }
 }
 
@@ -230,6 +254,13 @@ export function isFieldChanged(
   settings: Record<string, any>,
   defaults: Record<string, any>,
 ): boolean {
+  if (field.read) {
+    // A worked-out field is changed when what it shows differs from the default.
+    const stored = fieldKeys(field).some(
+      (k) => settings?.[k] !== undefined && settings?.[k] !== null,
+    );
+    return stored && !same(field.read(settings), field.read(defaults));
+  }
   return fieldKeys(field).some((key) => {
     const value = settings?.[key];
     if (value === undefined || value === null) return false;

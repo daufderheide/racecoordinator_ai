@@ -1,4 +1,8 @@
-import { InspectorFolder, TextPartField } from "./inspector-schema";
+import {
+  InspectorFolder,
+  InspectorOption,
+  TextPartField,
+} from "./inspector-schema";
 
 /**
  * One line shown on a closed folder, so you can see what's set without
@@ -58,11 +62,17 @@ export function folderSummary(
   }
   for (const f of fields) {
     if (parts.length >= 3) break;
-    if (
-      (f.type === "segment" || f.type === "select") &&
-      settings[f.key] !== undefined
-    ) {
-      const opt = f.options.find((o) => o.value === settings[f.key]);
+    const chosen =
+      f.type === "segment" || f.type === "select"
+        ? f.read
+          ? f.read(settings)
+          : settings[f.key]
+        : undefined;
+    if (chosen !== undefined && chosen !== null) {
+      // 2 and "2" are the same choice (older inspectors stored text)
+      const opt = (f as { options: InspectorOption[] }).options.find(
+        (o) => String(o.value) === String(chosen),
+      );
       if (opt)
         parts.push(
           opt.labelKey ? t(opt.labelKey) : (opt.label ?? String(opt.value)),

@@ -9,6 +9,7 @@ import {
   fieldMatches,
   FOLDER_META,
   FOLDER_ORDER,
+  InspectorContext,
   InspectorField,
   InspectorFolder,
   InspectorFolderId,
@@ -78,6 +79,8 @@ export class InspectorFormComponent {
   widget = input<any>(null);
   query = input("");
   onlyChanged = input(false);
+  /** Number of lanes on the track (for limits such as a target lane). */
+  totalLanes = input(4);
   widthLocked = input(false);
   heightLocked = input(false);
   /** Bumped by the shell after any change so computed values refresh. */
@@ -177,7 +180,14 @@ export class InspectorFormComponent {
     ].filter((p) => p.text);
   }
 
+  context(): InspectorContext {
+    return { widget: this.widget(), totalLanes: this.totalLanes() || 4 };
+  }
+
   value(field: InspectorField): any {
+    if (field.read) {
+      return field.read(this.settings() || {});
+    }
     if (!("key" in field)) return undefined;
     const v = this.settings()?.[field.key];
     return v === undefined || v === null
@@ -197,8 +207,42 @@ export class InspectorFormComponent {
       : v;
   }
 
+  /**
+   * Whether an option is the current value. Older inspectors stored some numbers
+   * as text ("2"), so 2 and "2" count as the same choice.
+   */
+  isOption(field: InspectorField, o: InspectorOption): boolean {
+    const v = this.value(field);
+    if (v === undefined || v === null) return false;
+    return String(v) === String(o.value);
+  }
+
   optionLabel(o: InspectorOption): string {
     return o.labelKey ? this.t(o.labelKey) : (o.label ?? String(o.value));
+  }
+
+  partColorVisible(field: TextPartField): boolean {
+    return (
+      !field.colorVisibleWhen || field.colorVisibleWhen(this.settings() || {})
+    );
+  }
+
+  /** Stores a field's value: through its `write` when it has one, else its key. */
+  setField(field: InspectorField, value: any): void {
+    const s = this.settings();
+    if (!s) return;
+    if (field.write) {
+      field.write(s, value, this.context());
+      this.localRevision++;
+      this.settingsChange.emit();
+      return;
+    }
+    if ("key" in field) this.set(field.key, value);
+  }
+
+  maxFor(field: InspectorField): number {
+    if (field.type !== "stepper") return 100;
+    return field.maxFrom ? field.maxFrom(this.context()) : field.max;
   }
 
   set(key: string, value: any): void {

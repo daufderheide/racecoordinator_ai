@@ -396,6 +396,7 @@
             [widthLocked]="isWidgetWidthAutoCalculated(currentSelectedWidget)"
             [heightLocked]="isWidgetHeightAutoCalculated(currentSelectedWidget)"
             [canNavigate]="getLayoutWidgets().length > 1"
+            [totalLanes]="totalTrackLanes"
             (widgetChange)="onWidgetInspectorChange($event)"
             (geometryChange)="onKitGeometryChange($event)"
             (deleteWidget)="removeSelectedWidget()"
