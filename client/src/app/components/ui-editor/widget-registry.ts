@@ -466,6 +466,9 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
   "action-skip-race": {
     defaultSettings: () => defaultActionSettings("action-skip-race"),
   },
+  "action-race-again": {
+    defaultSettings: () => defaultActionSettings("action-race-again"),
+  },
   "action-add-lap": {
     defaultSettings: () => defaultActionSettings("action-add-lap"),
   },

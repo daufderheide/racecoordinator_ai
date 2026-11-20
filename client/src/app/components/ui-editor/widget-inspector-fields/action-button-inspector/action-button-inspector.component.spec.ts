@@ -53,6 +53,7 @@ describe("ActionButtonInspectorComponent", () => {
       "action-defer-heat": "RD_MENU_DEFER",
       "action-skip-heat": "RD_MENU_SKIP_HEAT",
       "action-skip-race": "RD_MENU_SKIP_RACE",
+      "action-race-again": "RD_MENU_RACE_AGAIN",
       "action-add-lap": "RD_MENU_ADD_LAP",
       "action-modify-heats": "RD_MENU_MODIFY",
       "action-export-pdf": "RD_MENU_EXPORT_PDF",

@@ -647,6 +647,7 @@ describe("DefaultRacedaySetupComponent", () => {
       undefined,
       undefined,
       "default_classic_rc_ai",
+      false,
     );
   }));
 
@@ -684,6 +685,7 @@ describe("DefaultRacedaySetupComponent", () => {
       undefined,
       undefined,
       "custom-theme-123",
+      false,
     );
   }));
 
@@ -4595,5 +4597,103 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(editorPanel.contains(availSection)).toBeTrue();
       expect(editorPanel.contains(racingSection)).toBeTrue();
     });
+  });
+
+  describe("Race Again (issue 679)", () => {
+    let routeGet: jasmine.Spy;
+
+    beforeEach(() => {
+      routeGet = (TestBed.inject(ActivatedRoute) as any).snapshot.queryParamMap
+        .get as jasmine.Spy;
+      component.selectedRace = component.races.find(
+        (r) => r.entity_id === "r1",
+      );
+      component.selectedParticipants = [component.unselectedParticipants[0]];
+      mockDataService.initializeRace.and.returnValue(
+        of(InitializeRaceResponse.fromObject({ success: true })),
+      );
+    });
+
+    it("should restart the restored race in the last mode and discard a leftover auto-save without prompting", fakeAsync(() => {
+      mockSettingsService.getSettings().lastStartIsDemo = true;
+      routeGet.and.callFake((key: string) =>
+        key === "raceAgain" ? "1" : null,
+      );
+      mockDataService.getSavedRaces.and.returnValue(
+        of([{ filename: "autosave_r1.json", corrupt: false }]),
+      );
+      mockDataService.deleteSavedRace.and.returnValue(of("OK"));
+      mockRouter.navigate.calls.reset();
+
+      (component as any).handleRaceAgainRequest();
+      flush();
+
+      expect(component.showAutoSavePrompt).toBeFalse();
+      expect(mockDataService.getSavedRaces).toHaveBeenCalledWith(true);
+      expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
+        "autosave_r1.json",
+        true,
+      );
+      expect(mockDataService.initializeRace).toHaveBeenCalled();
+      expect(mockDataService.initializeRace.calls.mostRecent().args[0]).toBe(
+        "r1",
+      );
+      expect(mockDataService.initializeRace.calls.mostRecent().args[2]).toBe(
+        true,
+      );
+      // Flagged as race again, so the server can refuse it unless the race is over
+      expect(mockDataService.initializeRace.calls.mostRecent().args[7]).toBe(
+        true,
+      );
+      // The flag is removed from the URL so a refresh doesn't start another race
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        [],
+        jasmine.objectContaining({ queryParams: { raceAgain: null } }),
+      );
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+    }));
+
+    it("should start an official race again when the last start was official", fakeAsync(() => {
+      mockSettingsService.getSettings().lastStartIsDemo = false;
+      routeGet.and.callFake((key: string) =>
+        key === "raceAgain" ? "1" : null,
+      );
+      mockDataService.getSavedRaces.and.returnValue(of([]));
+
+      (component as any).handleRaceAgainRequest();
+      flush();
+
+      expect(mockDataService.initializeRace.calls.mostRecent().args[2]).toBe(
+        false,
+      );
+    }));
+
+    it("should do nothing without the raceAgain flag", fakeAsync(() => {
+      routeGet.and.returnValue(null);
+      mockDataService.initializeRace.calls.reset();
+      mockDataService.getSavedRaces.calls.reset();
+
+      (component as any).handleRaceAgainRequest();
+      flush();
+
+      expect(mockDataService.getSavedRaces).not.toHaveBeenCalled();
+      expect(mockDataService.initializeRace).not.toHaveBeenCalled();
+    }));
+
+    it("should remember whether the last start was a demo", fakeAsync(() => {
+      mockDataService.getSavedRaces.and.returnValue(of([]));
+
+      component.startRace(true);
+      flush();
+      expect(mockSettingsService.getSettings().lastStartIsDemo).toBeTrue();
+      // A normal start is not a race again
+      expect(mockDataService.initializeRace.calls.mostRecent().args[7]).toBe(
+        false,
+      );
+
+      component.startRace(false);
+      flush();
+      expect(mockSettingsService.getSettings().lastStartIsDemo).toBeFalse();
+    }));
   });
 });

@@ -1198,6 +1198,133 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showSkipRaceConfirmation).toBeFalse();
     });
 
+    describe("Race Again (issue 679)", () => {
+      beforeEach(() => {
+        (mockDataService as any).endRace = jasmine
+          .createSpy("endRace")
+          .and.returnValue(of(true));
+        mockRouter.navigate.calls.reset();
+      });
+
+      it("should only enable Race Again once the race is over", () => {
+        fixture.detectChanges();
+        for (const state of [
+          RaceState.NOT_STARTED,
+          RaceState.STARTING,
+          RaceState.RACING,
+          RaceState.PAUSED,
+          RaceState.HEAT_OVER,
+        ]) {
+          (component as any).raceState = state;
+          expect(component.isRaceAgainDisabled)
+            .withContext(`${state}`)
+            .toBeTrue();
+        }
+        (component as any).raceState = RaceState.RACE_OVER;
+        expect(component.isRaceAgainDisabled).toBeFalse();
+      });
+
+      it("should only enable Race Again in an event once its last race is over", () => {
+        fixture.detectChanges();
+        (component as any).raceState = RaceState.RACE_OVER;
+        const setEventRace = (index: number, total: number) => {
+          (component as any).race = {
+            ...((component as any).race || {}),
+            is_event: true,
+            current_event_race_index: index,
+            total_event_races: total,
+          };
+        };
+
+        setEventRace(0, 3);
+        expect(component.isRaceAgainDisabled)
+          .withContext("first of three races")
+          .toBeTrue();
+        setEventRace(1, 3);
+        expect(component.isRaceAgainDisabled)
+          .withContext("second of three races")
+          .toBeTrue();
+        setEventRace(2, 3);
+        expect(component.isRaceAgainDisabled)
+          .withContext("last race of the event")
+          .toBeFalse();
+
+        (component as any).raceState = RaceState.HEAT_OVER;
+        expect(component.isRaceAgainDisabled)
+          .withContext("last race, heat over")
+          .toBeTrue();
+      });
+
+      it("should keep Race Again disabled for viewers", () => {
+        fixture.detectChanges();
+        (component as any).raceState = RaceState.RACE_OVER;
+        (component as any).authService.currentRoleSubject.next(Role.VIEWER);
+
+        expect(component.isRaceAgainDisabled).toBeTrue();
+      });
+
+      it("should not open the confirmation while the race is not over", () => {
+        fixture.detectChanges();
+        (component as any).raceState = RaceState.HEAT_OVER;
+
+        component.onFileMenuSelect("RACE_AGAIN");
+
+        expect(component.showRaceAgainConfirmation).toBeFalse();
+      });
+
+      it("should show the race again confirmation when the race is over", () => {
+        fixture.detectChanges();
+        (component as any).raceState = RaceState.RACE_OVER;
+
+        component.onFileMenuSelect("RACE_AGAIN");
+
+        expect(component.showRaceAgainConfirmation).toBeTrue();
+      });
+
+      it("should go to setup with the raceAgain flag on confirm without ending the race", () => {
+        fixture.detectChanges();
+        (component as any).raceState = RaceState.RACE_OVER;
+        component.showRaceAgainConfirmation = true;
+
+        component.onRaceAgainConfirm();
+
+        expect(component.showRaceAgainConfirmation).toBeFalse();
+        // The race is already over, so there is nothing to end
+        expect((mockDataService as any).endRace).not.toHaveBeenCalled();
+        expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+          queryParams: { raceAgain: "1" },
+        });
+        // Leaving race day must not trigger a second "exit race?" prompt
+        expect(component.forceExit).toBeTrue();
+        expect(component.canDeactivate()).toBeTrue();
+      });
+
+      it("should not navigate on confirm when the race is not over", () => {
+        fixture.detectChanges();
+        (component as any).raceState = RaceState.PAUSED;
+
+        component.onRaceAgainConfirm();
+
+        expect(mockRouter.navigate).not.toHaveBeenCalledWith(
+          ["/raceday-setup"],
+          jasmine.anything(),
+        );
+      });
+
+      it("should hide the dialog on cancel", () => {
+        fixture.detectChanges();
+        component.showRaceAgainConfirmation = true;
+
+        component.onRaceAgainCancel();
+
+        expect(component.showRaceAgainConfirmation).toBeFalse();
+        expect(mockRouter.navigate).not.toHaveBeenCalledWith(
+          ["/raceday-setup"],
+          jasmine.anything(),
+        );
+      });
+    });
+
     it("should show add lap sections dialog in menu mode when ADD_LAP selected", () => {
       fixture.detectChanges();
       expect(component["showAddLapSectionsDialog"]).toBeFalse();

@@ -499,6 +499,10 @@ export class RacedayActionsMenuHelper {
     } else if (action === "RACE_HISTORY") {
       host.showRaceHistoryDialog = true;
       host.cdr?.markForCheck();
+    } else if (action === "RACE_AGAIN") {
+      if (host.isRaceAgainDisabled) return;
+      host.showRaceAgainConfirmation = true;
+      host.cdr?.markForCheck();
     } else if (action === "BACK") {
       if (host.isBackDisabled) return;
       window.history.back();
@@ -650,6 +654,30 @@ export class RacedayActionsMenuHelper {
 
   static onSkipRaceCancel(host: any): void {
     host.showSkipRaceConfirmation = false;
+    host.cdr?.markForCheck();
+  }
+
+  /**
+   * File → Race Again (only once the race is over): leave race day and let Race
+   * Day Setup start the same race again with the same drivers and mode (see
+   * RacedaySetupLaunchHelper.raceAgain). Reusing the setup launch path keeps all
+   * its validation and error handling; the server refuses the restart unless
+   * the race is over.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/679
+   */
+  static onRaceAgainConfirm(host: any): void {
+    host.showRaceAgainConfirmation = false;
+    host.cdr?.markForCheck();
+    if (host.isRaceAgainDisabled) return;
+    // The user already confirmed; skip the "leave race day?" guard prompt.
+    host.forceExit = true;
+    host.router.navigate(["/raceday-setup"], {
+      queryParams: { raceAgain: "1" },
+    });
+  }
+
+  static onRaceAgainCancel(host: any): void {
+    host.showRaceAgainConfirmation = false;
     host.cdr?.markForCheck();
   }
 

@@ -71,4 +71,11 @@ export class RacedayModalsComponent {
   deferHeatCancelText = input<string>("GEN_NO");
   deferHeatConfirm = output<void>();
   deferHeatCancel = output<void>();
+
+  // Race again confirmation modal (issue 679)
+  showRaceAgainConfirmation = input<boolean>(false);
+  /** In an event, Race Again restarts the whole event (issue 679). */
+  raceAgainIsEvent = input<boolean>(false);
+  raceAgainConfirm = output<void>();
+  raceAgainCancel = output<void>();
 }

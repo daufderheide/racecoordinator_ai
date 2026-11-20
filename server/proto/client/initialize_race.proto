@@ -17,6 +17,9 @@ message InitializeRaceRequest {
   string event_id = 5;
   string season_id = 6;
   string theme_id = 7;
+  // File → Race Again: only allowed while the current race is over.
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  bool race_again = 8;
 }
 
 message InitializeRaceResponse {
