@@ -376,6 +376,48 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component.onDragStart).not.toHaveBeenCalled();
   });
 
+  describe("selecting several (phase 4c-1)", () => {
+    it("Shift- or Ctrl-click in the Layout Editor toggles instead of dragging", () => {
+      const toggled: string[] = [];
+      mockParent.isUIEditorMode = () => true;
+      mockParent.selectionToggled = { emit: (id: string) => toggled.push(id) };
+      spyOn(component, "onDragStart");
+      for (const init of [{ shiftKey: true }, { ctrlKey: true }]) {
+        const e = new PointerEvent("pointerdown", init);
+        Object.defineProperty(e, "target", {
+          value: document.createElement("div"),
+        });
+        component.onWidgetPointerDown(e);
+      }
+      expect(toggled).toEqual(["test-widget", "test-widget"]);
+      expect(component.onDragStart).not.toHaveBeenCalled();
+    });
+
+    it("outside the Layout Editor a Shift-press still drags", () => {
+      mockParent.isUIEditorMode = () => false;
+      spyOn(component, "onDragStart");
+      const e = new PointerEvent("pointerdown", { shiftKey: true });
+      Object.defineProperty(e, "target", {
+        value: document.createElement("div"),
+      });
+      component.onWidgetPointerDown(e);
+      expect(component.onDragStart).toHaveBeenCalled();
+    });
+
+    it("draws a dashed outline on the other selected widgets", () => {
+      fixture.componentRef.setInput("selectedWidgetId", "other");
+      fixture.componentRef.setInput("selectedWidgetIds", [
+        "other",
+        "test-widget",
+      ]);
+      fixture.detectChanges();
+      const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+      expect(component.isAlsoSelected).toBeTrue();
+      expect(wrapper.classList).toContain("also-selected");
+      expect(wrapper.classList).not.toContain("selected");
+    });
+  });
+
   describe("layer order while dragging (phase 4b)", () => {
     let lifted: Set<string>;
     beforeEach(() => {

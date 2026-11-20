@@ -97,6 +97,8 @@ export class RacedayAbsoluteWidgetComponent
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
+  /** Layout Editor multi-select (phase 4c-1): every selected id, main first. */
+  selectedWidgetIds = input<string[]>([]);
   isCountdownPreviewActive = input<boolean>(false);
   gridContentOffset = input<{ x: number; y: number } | null>(null);
   showCountdownOverlay = input<boolean>(false);
@@ -114,6 +116,14 @@ export class RacedayAbsoluteWidgetComponent
 
   get isSelected(): boolean {
     return this.selectedWidgetId() === this.widget().id;
+  }
+
+  /** Selected along with others, but not the main widget (phase 4c-1). */
+  get isAlsoSelected(): boolean {
+    return (
+      !this.isSelected &&
+      (this.selectedWidgetIds() || []).includes(this.widget().id)
+    );
   }
 
   get isCountdownWidget(): boolean {
@@ -794,6 +804,19 @@ export class RacedayAbsoluteWidgetComponent
   onWidgetPointerDown(event: PointerEvent): void {
     if (!this.isCustomizing() || this.isCountdownGhost) return;
     const target = event.target as HTMLElement | null;
+    // Layout Editor: Shift / Ctrl-click adds or removes the widget (phase 4c-1)
+    const parent = this.parentComponent();
+    if (
+      (event.shiftKey || event.ctrlKey || event.metaKey) &&
+      parent?.isUIEditorMode?.() &&
+      parent?.selectionToggled &&
+      !target?.closest(".resize-handle, button, .widget-remove-btn")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      parent.selectionToggled.emit(this.widget().id);
+      return;
+    }
     if (
       target?.closest(
         ".resize-handle, button, .widget-remove-btn, app-custom-select, select, input, textarea",

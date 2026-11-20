@@ -58,6 +58,7 @@ class MockDefaultRacedayComponent {
   activeCustomUi = input<any>();
   uiScale = input<number>(1);
   selectedWidgetId = input<string>("");
+  selectedWidgetIds = input<string[]>([]);
   selectedAnchor = input<any>();
   isCountdownPreviewActive = input<boolean>(false);
   gridSession = input<any>();
@@ -68,6 +69,8 @@ class MockDefaultRacedayComponent {
   finishGrid = output<any>();
   deleteGrid = output<any>();
   gridBoundsChange = output<any>();
+  selectionToggled = output<string>();
+  boxSelected = output<any>();
   syncLayoutFromEditor(_layout: any): void {}
 }
 
@@ -1179,6 +1182,116 @@ describe("LayoutEditorComponent", () => {
       spyOn(window.URL, "revokeObjectURL");
       component.exportLayout();
       expect(mockLogger.error).not.toHaveBeenCalled();
+    });
+
+    describe("Selecting several widgets (phase 4c-1)", () => {
+      beforeEach(() => {
+        component.onSelectLayoutById("custom_ui_1");
+        component.isEditMode = true;
+        component.editingLayout!.layoutJson = JSON.stringify({
+          widgets: [
+            {
+              id: "a",
+              widgetType: "timer",
+              x: 0,
+              y: 0,
+              width: 100,
+              height: 50,
+            },
+            {
+              id: "b",
+              widgetType: "label",
+              x: 200,
+              y: 0,
+              width: 100,
+              height: 50,
+            },
+            {
+              id: "c",
+              widgetType: "image",
+              x: 400,
+              y: 0,
+              width: 100,
+              height: 50,
+            },
+            {
+              id: "g",
+              widgetType: "lane-column",
+              x: 0,
+              y: 300,
+              width: 100,
+              height: 50,
+              customSettings: { gridId: "grid-1" },
+            },
+          ],
+        });
+        component.parsedLayouts.clear();
+        component.onWidgetSelected("a");
+      });
+
+      it("Shift-click adds and removes, the last added is the main one", () => {
+        component.onSelectionToggled("b");
+        expect(component.selectedWidgetId).toBe("b");
+        expect(component.selectedWidgetIds).toEqual(["b", "a"]);
+        component.onSelectionToggled("c");
+        expect(component.selectedWidgetIds).toEqual(["c", "a", "b"]);
+        component.onSelectionToggled("a");
+        expect(component.selectedWidgetIds).toEqual(["c", "b"]);
+      });
+
+      it("grid columns can't join; the canvas says why", () => {
+        const note = jasmine.createSpy("showCanvasNote");
+        (component as any).racedayComp = { showCanvasNote: note };
+        component.onSelectionToggled("g");
+        expect(component.selectedWidgetIds).toEqual(["a"]);
+        expect(note).toHaveBeenCalledWith("UE_MULTI_GRID_NOTE");
+      });
+
+      it("a box replaces the selection or adds with Shift", () => {
+        component.onBoxSelected({ ids: ["b", "c"], additive: false });
+        expect(component.selectedWidgetIds).toEqual(["b", "c"]);
+        component.onBoxSelected({ ids: ["a"], additive: true });
+        expect(component.selectedWidgetIds).toEqual(["b", "c", "a"]);
+      });
+
+      it("panel rows: make main, remove, keep only the main", () => {
+        component.onBoxSelected({ ids: ["a", "b", "c"], additive: false });
+        expect(component.multiSelectItems().map((i) => i.id)).toEqual([
+          "a",
+          "b",
+          "c",
+        ]);
+        component.makeMainSelected("c");
+        expect(component.selectedWidgetId).toBe("c");
+        expect(component.selectedWidgetIds.length).toBe(3);
+        component.removeFromSelection("b");
+        expect(component.selectedWidgetIds).toEqual(["c", "a"]);
+        component.keepOnlyMainSelected();
+        expect(component.selectedWidgetIds).toEqual(["c"]);
+      });
+
+      it("Escape and a plain selection drop the extras", () => {
+        component.onSelectionToggled("b");
+        component.handleKeyboardEvent(
+          new KeyboardEvent("keydown", { key: "Escape" }),
+        );
+        expect(component.selectedWidgetIds).toEqual(["b"]);
+        component.onSelectionToggled("c");
+        component.onWidgetSelected("a");
+        expect(component.selectedWidgetIds).toEqual(["a"]);
+      });
+
+      it("shows the several-widgets panel instead of the widget panel", () => {
+        component.isWidgetConfigVisible = true;
+        component.onSelectionToggled("b");
+        fixture.detectChanges();
+        const el: HTMLElement = fixture.nativeElement;
+        expect(el.querySelector("app-inspector-multi")).not.toBeNull();
+        expect(el.querySelector("app-inspector-shell")).toBeNull();
+        component.keepOnlyMainSelected();
+        fixture.detectChanges();
+        expect(el.querySelector("app-inspector-multi")).toBeNull();
+      });
     });
 
     describe("Keyboard Shortcuts and Nudge", () => {

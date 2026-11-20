@@ -370,10 +370,13 @@
                 [activeCustomUi]="editingLayout"
                 [uiScale]="getPreviewScaleNumber()"
                 [selectedWidgetId]="isEditMode ? getSelectedWidgetId() : null"
+                [selectedWidgetIds]="isEditMode ? selectedWidgetIds : []"
                 [selectedAnchor]="isEditMode ? selectedAnchor : null"
                 [isCountdownPreviewActive]="isCountdownPreviewActive()"
                 [gridSession]="isEditMode ? activeGridSession : null"
                 (widgetSelected)="onWidgetSelected($event)"
+                (selectionToggled)="onSelectionToggled($event)"
+                (boxSelected)="onBoxSelected($event)"
                 (anchorSelected)="onAnchorSelected($event)"
                 (layoutChanged)="onLayoutChanged($event)"
                 (columnsChanged)="onColumnsChanged()"
@@ -387,7 +390,19 @@
         </div>
 
         <!-- Widget Configuration Inspector -->
-        @if (currentSelectedWidget && isEditMode && isWidgetConfigVisible) {
+        @if (
+          isEditMode && isWidgetConfigVisible && selectedWidgetIds.length > 1
+        ) {
+          <app-inspector-multi
+            [items]="multiSelectItems()"
+            [mainId]="selectedWidgetId"
+            (makeMain)="makeMainSelected($event)"
+            (remove)="removeFromSelection($event)"
+            (keepMain)="keepOnlyMainSelected()"
+          ></app-inspector-multi>
+        } @else if (
+          currentSelectedWidget && isEditMode && isWidgetConfigVisible
+        ) {
           <app-inspector-shell
             [widget]="currentSelectedWidget"
             [schema]="getInspectorSchema(currentSelectedWidget)"

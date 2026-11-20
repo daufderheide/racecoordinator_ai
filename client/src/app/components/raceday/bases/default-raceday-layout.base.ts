@@ -503,7 +503,28 @@ export abstract class DefaultRacedayLayoutBase {
     RacedayLayoutEditorHelper.onMasterWidgetModified(this, widget);
   }
 
-  onCanvasPointerDown(_event: PointerEvent): void {}
+  /** Layout Editor: a press and drag on the empty canvas draws a selection box. */
+  onCanvasPointerDown(event: PointerEvent): void {
+    RacedayLayoutEditorHelper.onCanvasPointerDown(this, event);
+  }
+
+  /** The selection box while it's drawn (layout px), phase 4c-1. */
+  readonly selectionBox = signal<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
+
+  /** A short message on the canvas (translation key), e.g. why a click did nothing. */
+  readonly canvasNote = signal<string | null>(null);
+  private canvasNoteTimer?: ReturnType<typeof setTimeout>;
+
+  showCanvasNote(key: string, ms = 2500): void {
+    this.canvasNote.set(key);
+    clearTimeout(this.canvasNoteTimer);
+    this.canvasNoteTimer = setTimeout(() => this.canvasNote.set(null), ms);
+  }
 
   getDefaultLayout(): LayoutConfig {
     return RacedayLayoutEditorHelper.getDefaultLayout(this);

@@ -219,6 +219,12 @@
      panel's layer buttons change it) and is lifted only while dragged. */
 }
 
+/* Selected along with others, not the main widget (phase 4c-1) */
+.widget-wrapper.edit-mode.also-selected {
+  outline: 2px dashed #38bdf8 !important;
+  outline-offset: 1px;
+}
+
 /* Grid Crosshair Track Highlights */
 .widget-wrapper.edit-mode.same-grid-column:not(.selected) {
   outline: 1.5px dashed rgba(56, 189, 248, 0.5) !important;

@@ -12,7 +12,7 @@ app-default-raceday {
   overflow: hidden;
   box-sizing: border-box;
   background: linear-gradient(90deg, #17253d 35%, #2a3d61 50%, #17253d 65%);
-  font-family: 'Tahoma', sans-serif;
+  font-family: "Tahoma", sans-serif;
 
   .dashboard-wrapper {
     width: 100%;
@@ -91,7 +91,8 @@ app-default-raceday {
   .cdk-drag-preview {
     box-sizing: border-box;
     border-radius: 4px;
-    box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+    box-shadow:
+      0 5px 5px -3px rgba(0, 0, 0, 0.2),
       0 8px 10px 1px rgba(0, 0, 0, 0.14),
       0 3px 14px 2px rgba(0, 0, 0, 0.12);
     display: grid;
@@ -189,22 +190,25 @@ app-default-raceday {
     width: 260px;
     background-color: rgba(255, 215, 0, 0.9);
     backdrop-filter: blur(16px);
-    border: 2px solid #FFD700;
-    border-top: 4px solid #FFD700;
+    border: 2px solid #ffd700;
+    border-top: 4px solid #ffd700;
     border-radius: 8px;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(255, 215, 0, 0.2);
+    box-shadow:
+      0 0 20px rgba(255, 215, 0, 0.5),
+      0 10px 30px rgba(0, 0, 0, 0.7),
+      inset 0 0 15px rgba(255, 215, 0, 0.2);
     display: flex;
     flex-direction: column;
     max-height: 40vh;
     overflow: hidden;
-    font-family: var(--app-font-family);
+    font-family: "Rajdhani", sans-serif;
     color: #000;
     box-sizing: border-box;
   }
 
   .toolbox-title {
     padding: 12px 16px;
-    font-family: var(--app-font-family);
+    font-family: "Rajdhani", sans-serif;
     font-size: 16px;
     font-weight: 700;
     text-transform: uppercase;
@@ -303,11 +307,13 @@ app-default-raceday {
     padding: 10px;
     border: none;
     border-radius: 6px;
-    font-family: var(--app-font-family);
+    font-family: "Inter", sans-serif;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.15s, transform 0.1s;
+    transition:
+      background-color 0.15s,
+      transform 0.1s;
   }
 
   .toolbox-btn:active {
@@ -341,7 +347,8 @@ app-default-raceday {
   .reset-btn:hover {
     background: rgba(239, 68, 68, 0.3);
     border-color: #ef4444;
-  }}
+  }
+}
 @media print {
   * {
     text-shadow: none !important;
@@ -372,7 +379,8 @@ app-default-raceday {
   :host-context(body.print-no-background) app-default-raceday,
   :host-context(body.print-no-background) .dashboard-wrapper,
   :host-context(body.print-no-background) .scalable-content,
-  :host-context(body.print-no-background) .raceday-absolute-layout-root-wrapper {
+  :host-context(body.print-no-background)
+    .raceday-absolute-layout-root-wrapper {
     background: #ffffff !important;
     background-color: #ffffff !important;
     background-image: none !important;
@@ -551,7 +559,9 @@ app-default-raceday {
   z-index: 70;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   user-select: none;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .grid-move-handle-bar:hover {
@@ -575,7 +585,9 @@ app-default-raceday {
   z-index: 60;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   box-sizing: border-box;
-  transition: transform 0.1s ease, background-color 0.1s ease;
+  transition:
+    transform 0.1s ease,
+    background-color 0.1s ease;
 }
 
 .grid-resize-handle:hover {
@@ -636,7 +648,9 @@ app-default-raceday {
   pointer-events: none;
   border: 2px dashed rgba(56, 189, 248, 0.7);
   border-radius: 8px;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.15), inset 0 0 12px rgba(56, 189, 248, 0.04);
+  box-shadow:
+    0 0 16px rgba(56, 189, 248, 0.15),
+    inset 0 0 12px rgba(56, 189, 248, 0.04);
   z-index: 1004;
   transition: all 0.12s ease-out;
 }
@@ -825,14 +839,16 @@ app-default-raceday {
 }
 
 .lane-blueprint-cell.grid-label-blueprint-cell.label-wrap,
-.lane-blueprint-cell.grid-label-blueprint-cell.label-wrap .grid-label-blueprint-text {
+.lane-blueprint-cell.grid-label-blueprint-cell.label-wrap
+  .grid-label-blueprint-text {
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
   line-height: 1.15;
 }
 
-.lane-blueprint-cell.grid-label-blueprint-cell.scale-auto .grid-label-blueprint-text {
+.lane-blueprint-cell.grid-label-blueprint-cell.scale-auto
+  .grid-label-blueprint-text {
   text-overflow: clip;
   max-width: 100%;
 }
@@ -897,7 +913,9 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
   background: rgba(30, 20, 10, 0.95);
   border: 1px solid #f59e0b;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 10px rgba(245, 158, 11, 0.3);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.6),
+    0 0 10px rgba(245, 158, 11, 0.3);
   backdrop-filter: blur(8px);
   color: #fef3c7;
   animation: slideDownAlert 0.3s ease-out;
@@ -1007,7 +1025,9 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
   border-radius: 12px;
   width: 100%;
   max-width: 540px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.2);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.7),
+    0 0 15px rgba(245, 158, 11, 0.2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1255,10 +1275,6 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
   background: #2563eb;
 }
 
-
-
-
-
 /* Layout Editor: snap guide lines and position / size readout (phase 4a).
    Above every widget (the countdown sits at 100000+), never in the way of
    the mouse. */
@@ -1292,7 +1308,38 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
   background: rgba(15, 23, 42, 0.92);
   border: 1px solid rgba(56, 189, 248, 0.6);
   color: #e2e8f0;
-  font: 600 11px/1.4 "Inter", Arial, sans-serif;
+  font:
+    600 11px/1.4 "Inter",
+    Arial,
+    sans-serif;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+/* Layout Editor: selection box on the empty canvas (phase 4c-1) */
+.selection-box {
+  position: absolute;
+  pointer-events: none;
+  z-index: 200000;
+  border: 1px dashed #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+/* Layout Editor: a short note, e.g. why a Shift-click did nothing */
+.canvas-note {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 200001;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  color: #e2e8f0;
+  font:
+    600 13px/1.4 "Inter",
+    Arial,
+    sans-serif;
 }

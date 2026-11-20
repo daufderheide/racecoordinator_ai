@@ -6,7 +6,8 @@
    One accent per theme; labels sit above their field like in every editor. */
 
 /* Same place and size as today's panel in the Layout Editor. */
-app-inspector-shell {
+app-inspector-shell,
+app-inspector-multi {
   display: block;
   width: 350px;
   height: 100%;
@@ -1430,4 +1431,86 @@ app-inspector-shell {
     .hero-widget-label
   ) {
   color: var(--k-text);
+}
+
+/* ---- several widgets selected (phase 4c-1) ---- */
+.kit-multi-list {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kit-multi-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--k-folder);
+  border: 1px solid var(--k-folder-line);
+  border-radius: 6px;
+  padding: 2px 4px 2px 2px;
+}
+
+.kit-multi-row.is-main {
+  border-color: var(--k-hit-line);
+  box-shadow: inset 3px 0 0 var(--k-hit-line);
+}
+
+.kit-multi-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--k-folder-text, var(--k-text));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 6px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.kit-multi-name:hover,
+.kit-multi-name:focus-visible {
+  background: var(--k-folder-hover);
+  outline: none;
+}
+
+.kit-multi-name .material-icons {
+  font-size: 18px;
+  color: var(--k-folder-icon, var(--k-text));
+}
+
+.kit-multi-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kit-multi-name .kit-multi-lock {
+  font-size: 15px;
+  color: var(--k-muted);
+}
+
+.kit-multi-main {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--k-muted);
+  flex-shrink: 0;
+}
+
+.kit-multi-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px 12px;
 }

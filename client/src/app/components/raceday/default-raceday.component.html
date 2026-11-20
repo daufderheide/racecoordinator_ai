@@ -253,6 +253,18 @@
             ></div>
           }
         }
+        @if (isLayoutCustomizing && selectionBox(); as b) {
+          <div
+            class="selection-box"
+            [style.left.%]="(b.x / (layout?.baseWidth || 1920)) * 100"
+            [style.top.%]="(b.y / (layout?.baseHeight || 1080)) * 100"
+            [style.width.%]="(b.w / (layout?.baseWidth || 1920)) * 100"
+            [style.height.%]="(b.h / (layout?.baseHeight || 1080)) * 100"
+          ></div>
+        }
+        @if (isLayoutCustomizing && canvasNote(); as note) {
+          <div class="canvas-note" role="status">{{ note | translate }}</div>
+        }
         @if (isLayoutCustomizing && dragReadout(); as r) {
           <div
             class="drag-readout"
@@ -268,6 +280,7 @@
             [parentComponent]="this"
             [isCustomizing]="isLayoutCustomizing"
             [selectedWidgetId]="selectedWidgetId()"
+            [selectedWidgetIds]="selectedWidgetIds()"
             [isCountdownPreviewActive]="isCountdownPreviewActive()"
             [showCountdownOverlay]="showCountdownOverlay"
             [countdownLamps]="countdownLamps"
@@ -353,6 +366,7 @@
                     [parentComponent]="this"
                     [isCustomizing]="isLayoutCustomizing"
                     [selectedWidgetId]="selectedWidgetId()"
+                    [selectedWidgetIds]="selectedWidgetIds()"
                     [gridContentOffset]="grid.headerOffset"
                   ></app-raceday-absolute-widget>
                 }
@@ -393,6 +407,7 @@
                     [parentComponent]="this"
                     [isCustomizing]="isLayoutCustomizing"
                     [selectedWidgetId]="selectedWidgetId()"
+                    [selectedWidgetIds]="selectedWidgetIds()"
                     [gridContentOffset]="grid.contentOffset"
                   ></app-raceday-absolute-widget>
                 }

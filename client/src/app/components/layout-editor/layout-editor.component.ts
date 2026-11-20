@@ -1,3 +1,15 @@
+import {
+  canMultiSelect,
+  makeMain,
+  selectedIds,
+  Selection,
+  selectionFromBox,
+  toggleSelection,
+} from "@app/components/ui-editor/multi-select.utils";
+import {
+  InspectorMultiComponent,
+  MultiSelectItem,
+} from "@app/components/ui-editor/inspector-kit/inspector-multi.component";
 import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
@@ -106,6 +118,7 @@ import { NewLayoutModalComponent } from "./new-layout-modal/new-layout-modal.com
     CustomOptionComponent,
     WidgetInspectorFieldsComponent,
     InspectorShellComponent,
+    InspectorMultiComponent,
     ReplicateLaneDialogComponent,
     ReviewStackedColumnsModalComponent,
     NewLayoutModalComponent,
@@ -135,7 +148,22 @@ export class LayoutEditorComponent
   undoManager!: UndoManager<CustomUI>;
   lifecycle!: EditorLifecycleHelper;
 
-  selectedWidgetId: string | null = null;
+  /**
+   * The main selected widget (the last one clicked). The panel and the rest
+   * of the editor read this one. Changing it any other way than through the
+   * multi-select handlers below drops the extras (phase 4c-1).
+   */
+  private _selectedWidgetId: string | null = null;
+  get selectedWidgetId(): string | null {
+    return this._selectedWidgetId;
+  }
+  set selectedWidgetId(id: string | null) {
+    if (id !== this._selectedWidgetId) this.extraSelectedIds = [];
+    this._selectedWidgetId = id;
+  }
+
+  /** Other selected widgets besides the main one (phase 4c-1). */
+  extraSelectedIds: string[] = [];
 
   get currentSelectedWidget(): any | null {
     const layout = this.getLayout(this.editingLayout);
@@ -167,6 +195,94 @@ export class LayoutEditorComponent
     layerState: (id) =>
       layerState(this.getLayout(this.editingLayout)?.widgets || [], id),
   };
+
+  /** Main + extra selected widgets that still exist, main first. */
+  get selectedWidgetIds(): string[] {
+    if (!this.extraSelectedIds.length) {
+      return this.selectedWidgetId ? [this.selectedWidgetId] : [];
+    }
+    const existing = new Set<string>(
+      this.getLayoutWidgets().map((w: any) => w.id),
+    );
+    return selectedIds(
+      { main: this.selectedWidgetId, extras: this.extraSelectedIds },
+      existing,
+    );
+  }
+
+  /** Rows for the panel while several widgets are selected. */
+  multiSelectItems(): MultiSelectItem[] {
+    const byId = new Map<string, any>(
+      this.getLayoutWidgets().map((w: any) => [w.id, w]),
+    );
+    return this.selectedWidgetIds
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map((w: any) => ({
+        id: w.id,
+        name: this.panelDisplayName(w),
+        icon: this.getInspectorSchema(w)?.icon || "widgets",
+        locked: w.customSettings?.["locked"] === true,
+      }));
+  }
+
+  /**
+   * Select the given main widget with the usual side effects (grid session,
+   * tab, remembered widget), then put the extras back.
+   */
+  private applySelection(sel: Selection): void {
+    if (sel.main !== this.selectedWidgetId) this.onWidgetSelected(sel.main);
+    this.extraSelectedIds = sel.main ? sel.extras : [];
+    this.selectionToken++;
+    this.cdr.markForCheck();
+  }
+
+  private currentSelection(): Selection {
+    return { main: this.selectedWidgetId, extras: this.extraSelectedIds };
+  }
+
+  /** Shift / Ctrl-click on the canvas. */
+  onSelectionToggled(id: string): void {
+    const widgets = this.getLayoutWidgets();
+    const widget = widgets.find((w: any) => w.id === id);
+    if (!widget) return;
+    const main = widgets.find((w: any) => w.id === this.selectedWidgetId);
+    if (!this.selectedWidgetId || !main) {
+      this.onWidgetSelected(id);
+      return;
+    }
+    if (!canMultiSelect(widget) || !canMultiSelect(main)) {
+      this.racedayComp?.showCanvasNote?.("UE_MULTI_GRID_NOTE");
+      return;
+    }
+    this.applySelection(toggleSelection(this.currentSelection(), id));
+  }
+
+  /** A selection box drawn on the empty canvas. */
+  onBoxSelected(event: { ids: string[]; additive: boolean }): void {
+    const sel = this.currentSelection();
+    const main = this.getLayoutWidgets().find(
+      (w: any) => w.id === this.selectedWidgetId,
+    );
+    // a grid column can't be combined with others: start over from the box
+    const base =
+      main && !canMultiSelect(main) ? { main: null, extras: [] } : sel;
+    this.applySelection(selectionFromBox(base, event.ids, event.additive));
+  }
+
+  makeMainSelected(id: string): void {
+    this.applySelection(makeMain(this.currentSelection(), id));
+  }
+
+  removeFromSelection(id: string): void {
+    this.applySelection(toggleSelection(this.currentSelection(), id));
+  }
+
+  keepOnlyMainSelected(): void {
+    this.extraSelectedIds = [];
+    this.selectionToken++;
+    this.cdr.markForCheck();
+  }
 
   /** Redesigned panel schema for the widget, or null for its existing inspector. */
   getInspectorSchema(widget: any): InspectorSchema | null {
@@ -381,6 +497,12 @@ export class LayoutEditorComponent
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent): void {
     if (!this.isEditMode) return;
+    // Escape: back to the main widget only (phase 4c-1)
+    if (event.key === "Escape" && this.extraSelectedIds.length) {
+      event.preventDefault();
+      this.keepOnlyMainSelected();
+      return;
+    }
     handleUiEditorKeyboardShortcut(
       event,
       () => this.undoManager?.undo(),
