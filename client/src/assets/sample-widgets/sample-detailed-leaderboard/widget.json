@@ -1,6 +1,7 @@
 {
   "id": "sample-detailed-leaderboard",
   "name": "Detailed Leaderboard",
+  "nameKey": "UE_WIDGET_SAMPLE_DETAILED_LEADERBOARD",
   "version": "1.0.0",
   "description": "Comprehensive race leaderboard table displaying position, driver, elapsed time, laps, gap, best lap, and average lap times",
   "author": "Race Coordinator AI",

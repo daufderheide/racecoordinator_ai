@@ -3,6 +3,7 @@ import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout
 import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { TranslationService } from "@app/services/translation.service";
+import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
 import {
   formatTimerDisplay,
   TimerDisplayFormat,
@@ -71,8 +72,11 @@ export class LaneColumnInsetHelper {
       : key;
     if (normalizedKey.startsWith("custom:")) {
       const def = customWidgetService?.getWidgetDefinition(normalizedKey);
-      if (def?.manifest?.name) return def.manifest.name;
-      return normalizedKey.substring("custom:".length);
+      return resolveCustomWidgetName(
+        normalizedKey,
+        def?.manifest,
+        translationService,
+      );
     }
     const colDef = availableColumns.find((c) => c.key === normalizedKey);
     if (colDef && translationService) {

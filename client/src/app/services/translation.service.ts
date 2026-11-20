@@ -77,6 +77,17 @@ export class TranslationService {
   }
 
   /**
+   * Look up optional text without reporting a missing translation.
+   */
+  findTranslation(key: string): string | undefined {
+    if (!Object.prototype.hasOwnProperty.call(this.translations, key)) {
+      return undefined;
+    }
+    const value = this.translations[key];
+    return typeof value === "string" ? value : undefined;
+  }
+
+  /**
    * Get translated text by key
    */
   translate(key: string, params?: { [key: string]: any }): string {

@@ -5,6 +5,10 @@ import {
 } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { WidgetType } from "@app/models/settings";
+import {
+  resolveCustomWidgetName,
+  WidgetNameTranslations,
+} from "@app/utils/custom-widget-name.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 export interface ToolboxWidgetItem {
@@ -345,6 +349,7 @@ export class ToolboxGroupHelper {
     subgroupExpandedStates: Map<string, boolean> = new Map(),
     translateFn?: (key: string) => string,
     availableColumnsList?: { key: string; label: string }[],
+    widgetNameTranslations?: WidgetNameTranslations,
   ): ToolboxGroup[] {
     const term = (searchTerm || "").trim().toLowerCase();
     const groups: ToolboxGroup[] = [];
@@ -367,7 +372,7 @@ export class ToolboxGroupHelper {
       term,
       groupExpandedStates,
       subgroupExpandedStates,
-      translateFn,
+      widgetNameTranslations,
     );
     groups.push(...customGroups);
 
@@ -765,7 +770,7 @@ export class ToolboxGroupHelper {
     term: string,
     groupExpandedStates: Map<string, boolean>,
     subgroupExpandedStates: Map<string, boolean>,
-    translateFn?: (key: string) => string,
+    widgetNameTranslations?: WidgetNameTranslations,
   ): ToolboxGroup[] {
     const customByGroup = new Map<string, CustomWidgetDefinition[]>();
     for (const cw of customWidgets) {
@@ -799,7 +804,7 @@ export class ToolboxGroupHelper {
         term,
         groupExpandedStates,
         subgroupExpandedStates,
-        translateFn,
+        widgetNameTranslations,
       );
       if (group) {
         groups.push(group);
@@ -814,20 +819,28 @@ export class ToolboxGroupHelper {
     term: string,
     groupExpandedStates: Map<string, boolean>,
     subgroupExpandedStates: Map<string, boolean>,
-    translateFn?: (key: string) => string,
+    widgetNameTranslations?: WidgetNameTranslations,
   ): ToolboxGroup | null {
     const rootWidgets: ToolboxWidgetItem[] = [];
     const subgroupsMap = new Map<string, ToolboxWidgetItem[]>();
 
     for (const cw of defs) {
+      const type = `custom:${cw.manifest.id}`;
       const item: ToolboxWidgetItem = {
-        type: `custom:${cw.manifest.id}`,
-        labelKey: cw.manifest.name || cw.manifest.id,
+        type,
+        labelKey: resolveCustomWidgetName(
+          type,
+          cw.manifest,
+          widgetNameTranslations,
+        ),
         icon: "",
         customDef: cw,
       };
 
-      if (!ToolboxGroupHelper.matchesSearch(item, term, translateFn)) {
+      if (
+        !ToolboxGroupHelper.matchesSearch(item, term) &&
+        !cw.manifest.name?.toLowerCase().includes(term)
+      ) {
         continue;
       }
 
@@ -841,9 +854,7 @@ export class ToolboxGroupHelper {
       }
     }
 
-    rootWidgets.sort((a, b) =>
-      ToolboxGroupHelper.compareWidgets(a, b, translateFn),
-    );
+    rootWidgets.sort((a, b) => ToolboxGroupHelper.compareWidgets(a, b));
 
     const subgroups: ToolboxSubgroup[] = [];
     const sortedSubNames = Array.from(subgroupsMap.keys()).sort((a, b) =>
@@ -852,9 +863,7 @@ export class ToolboxGroupHelper {
     for (const subName of sortedSubNames) {
       const sWidgets = subgroupsMap.get(subName)!;
       if (sWidgets.length > 0) {
-        sWidgets.sort((a, b) =>
-          ToolboxGroupHelper.compareWidgets(a, b, translateFn),
-        );
+        sWidgets.sort((a, b) => ToolboxGroupHelper.compareWidgets(a, b));
         const sgId = `${groupName}:${subName}`;
         const isSgExpanded = term
           ? true

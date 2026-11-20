@@ -122,6 +122,27 @@ describe("TranslationService", () => {
     });
   });
 
+  it("should quietly look up optional text and still report missing required keys", () => {
+    settingsServiceSpy.getSettings.and.returnValue(
+      Object.assign(new Settings(), { language: "nl" }),
+    );
+    service = TestBed.inject(TranslationService);
+    const logger = TestBed.inject(LoggerService);
+    httpMock
+      .expectOne((request) => request.url.startsWith("assets/i18n/nl.json"))
+      .flush({ SAMPLE_NAME: "Rondetijdverschil" });
+
+    expect(service.findTranslation("SAMPLE_NAME")).toBe("Rondetijdverschil");
+    expect(service.findTranslation("Club Split Times")).toBeUndefined();
+    expect(service.findTranslation("constructor")).toBeUndefined();
+    expect(logger.debug).not.toHaveBeenCalled();
+
+    expect(service.translate("REQUIRED_KEY")).toBe("REQUIRED_KEY");
+    expect(logger.debug).toHaveBeenCalledWith(
+      jasmine.stringMatching("Translation missing for key: REQUIRED_KEY"),
+    );
+  });
+
   it('should resolve and load browser language when setLanguage("") is called', (done) => {
     // Mock navigator.language to 'nl' (Dutch)
     spyOnProperty(navigator, "language", "get").and.returnValue("nl-NL");
