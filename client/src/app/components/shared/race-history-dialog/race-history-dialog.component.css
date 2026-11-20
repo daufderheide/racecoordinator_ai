@@ -94,6 +94,8 @@
 
 .search-bar-row {
   display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .search-input-wrapper {
@@ -342,6 +344,60 @@
 .race-run-select ::ng-deep .custom-select-option {
   padding: 6px 10px;
   font-size: 0.85rem;
+}
+
+.btn-import-package {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-import-package:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.3);
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+.btn-import-package:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-export-package {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-export-package:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.3);
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+.btn-export-package:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-open-race {

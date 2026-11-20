@@ -14,6 +14,7 @@ import {
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
+import { firstValueFrom } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
@@ -21,13 +22,20 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
+import { RacePackageModalComponent } from "@app/components/shared/race-package-modal/race-package-modal.component";
 import { DataService } from "@app/data.service";
+import {
+  RacePackagePreview,
+  RacePackageResult,
+} from "@app/models/race-package.model";
 import { isAtLeast, Role } from "@app/models/role";
+import { Season } from "@app/models/season";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
+import { saveFileAs } from "@app/utils/file-download.utils";
 
 export interface GroupedRaceHistory {
   id: string;
@@ -57,6 +65,7 @@ export interface GroupedRaceHistory {
     DisallowLapRecordsDialogComponent,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
+    RacePackageModalComponent,
   ],
 })
 export class RaceHistoryDialogComponent implements OnInit, OnChanges {
@@ -88,6 +97,15 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
   isLoadingDetails: boolean = false;
 
   selectedRaceIdByGroup: Map<string, string> = new Map();
+  showPackageModal: boolean = false;
+  packagePreview: RacePackagePreview | null = null;
+  availableSeasons: Season[] = [];
+  isExportingPackage: boolean = false;
+  isImportingPackage: boolean = false;
+  showPackageAckModal: boolean = false;
+  packageAckTitle: string = "";
+  packageAckMessage: string = "";
+  packageAckParams: any = {};
 
   ngOnInit(): void {
     this.authService.currentRole$
@@ -580,6 +598,122 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
     this.showResetSuccess = false;
     this.resetRaceName = "";
     this.resetRaceEntityId = "";
+    this.cdr.markForCheck();
+  }
+
+  async exportRacePackage(group: GroupedRaceHistory): Promise<void> {
+    if (!group) return;
+    const selectedRace = this.getSelectedRace(group);
+    const raceId =
+      selectedRace?._id || selectedRace?.id || selectedRace?.entity_id;
+    if (!raceId) return;
+
+    const sanitizedName = (group.raceName || "race")
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "_");
+    const filename = `${sanitizedName}.rcpack`;
+
+    this.isExportingPackage = true;
+    this.cdr.markForCheck();
+    try {
+      await saveFileAs({
+        suggestedName: filename,
+        data: async () => {
+          return await firstValueFrom(
+            this.dataService.exportRacePackageBlob(raceId),
+          );
+        },
+        mimeType: "application/zip",
+        description: "Race Coordinator Race Package",
+        extension: ".rcpack",
+      });
+    } catch (err) {
+      this.logger.error("Failed to export race package:", err);
+    } finally {
+      this.isExportingPackage = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  onPackageFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.isImportingPackage = true;
+    this.cdr.markForCheck();
+
+    this.dataService.getSeasons().subscribe({
+      next: (seasons) => (this.availableSeasons = seasons || []),
+      error: () => (this.availableSeasons = []),
+    });
+
+    this.dataService.previewRacePackage(file).subscribe({
+      next: (preview) => {
+        this.isImportingPackage = false;
+        this.packagePreview = preview;
+        this.showPackageModal = true;
+        input.value = "";
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isImportingPackage = false;
+        input.value = "";
+        this.logger.error("Failed to preview race package:", err);
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  closePackageModal(): void {
+    this.showPackageModal = false;
+    this.packagePreview = null;
+    this.cdr.markForCheck();
+  }
+
+  onPackageCommitted(result: RacePackageResult): void {
+    this.closePackageModal();
+    this.loadHistories();
+
+    if (result && result.success) {
+      this.packageAckTitle = "RPM_IMPORT_SUCCESS_TITLE";
+      if (result.action === "SKIPPED") {
+        this.packageAckMessage = "RPM_IMPORT_SKIPPED_MSG";
+        this.packageAckParams = {
+          raceName: result.race_name || "Race",
+          driverCount: result.driver_count || 0,
+          createdCount: result.drivers_created || 0,
+          linkedCount: result.drivers_linked || 0,
+        };
+      } else {
+        let detailKey = "RPM_CONFIG_DETAIL_CREATED";
+        if (result.race_config_action === "AUTO_RENAME") {
+          detailKey = "RPM_CONFIG_DETAIL_RENAMED";
+        } else if (result.race_config_action === "OVERWRITE") {
+          detailKey = "RPM_CONFIG_DETAIL_OVERWRITTEN";
+        } else if (result.race_config_action === "USE_EXISTING") {
+          detailKey = "RPM_CONFIG_DETAIL_LINKED";
+        } else if (result.race_config_action === "SKIPPED") {
+          detailKey = "RPM_CONFIG_DETAIL_SKIPPED";
+        }
+
+        this.packageAckMessage = "RPM_IMPORT_SUCCESS_HISTORY_MSG";
+        this.packageAckParams = {
+          raceName: result.race_name || "Race",
+          configName: result.race_config_name || result.race_name || "Race",
+          configDetail: this.translationService.translate(detailKey),
+          driverCount: result.driver_count || 0,
+          createdCount: result.drivers_created || 0,
+          linkedCount: result.drivers_linked || 0,
+        };
+      }
+      this.showPackageAckModal = true;
+      this.cdr.markForCheck();
+    }
+  }
+
+  closePackageAckModal(): void {
+    this.showPackageAckModal = false;
     this.cdr.markForCheck();
   }
 

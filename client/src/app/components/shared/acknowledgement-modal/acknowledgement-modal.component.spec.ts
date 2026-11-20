@@ -1,16 +1,8 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
-import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { AcknowledgementModalComponent } from "./acknowledgement-modal.component";
 import { AcknowledgementModalHarness } from "./testing/acknowledgement-modal.harness";
-
-@Pipe({ name: "translate" })
-class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string {
-    return `TRANSLATED_${value}`;
-  }
-}
 
 describe("AcknowledgementModalComponent", () => {
   let component: AcknowledgementModalComponent;
@@ -19,7 +11,7 @@ describe("AcknowledgementModalComponent", () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AcknowledgementModalComponent, MockTranslatePipe],
+      imports: [AcknowledgementModalComponent],
     }).compileComponents();
   });
 
@@ -56,5 +48,32 @@ describe("AcknowledgementModalComponent", () => {
     await harness.clickAcknowledge();
 
     expect(component.acknowledge.emit).toHaveBeenCalled();
+  });
+
+  it("should use default button text ACK_MODAL_BTN_OK when not specified", async () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    expect(component.buttonText()).toBe("ACK_MODAL_BTN_OK");
+    expect(await harness.getButtonText()).toBe("OK");
+  });
+
+  it("should translate custom button text such as COMMON_OK", async () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("buttonText", "COMMON_OK");
+    fixture.detectChanges();
+
+    expect(component.buttonText()).toBe("COMMON_OK");
+    expect(await harness.getButtonText()).toBe("OK");
+  });
+
+  it("should render title and message properly", async () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("title", "TEST_TITLE");
+    fixture.componentRef.setInput("message", "TEST_MESSAGE");
+    fixture.detectChanges();
+
+    expect(await harness.getTitle()).toBe("TEST_TITLE");
+    expect(await harness.getMessage()).toBe("TEST_MESSAGE");
   });
 });

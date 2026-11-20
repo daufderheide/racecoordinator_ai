@@ -67,3 +67,14 @@ The race breakdown section provides detailed performance cards for each race inc
 - **Expandable Race Cards**: Click any race card to expand or collapse its per-driver results table, showing finishing positions, individual points earned, and any bonus points awarded.
 - **Removing Races**: In Edit Mode, click the trashcan icon (<span class="material-icons">delete</span>) in the title bar of a race card to remove that completed race from the championship season.
 
+---
+
+## Multi-Machine Race Package Ingestion (`.rcpack`) {: #race-package-ingestion }
+
+To aggregate race results from other computers or tracks into your championship season:
+
+- **Exporting Completed Races**: On the source track PC, open the **Race History** dialog from the toolbar and click **Export Package** (<span class="material-icons">file_download</span>) on the finished race. This packages the full race history, race configuration, heat lap records, calculated driver season points, and driver profiles into a `.rcpack` archive.
+- **One-Step Season Ingestion**: On your destination computer, open the Season Editor, enter Edit Mode, and click **+ Add Race**. In the modal, click **Import Race Package...** (<span class="material-icons">file_upload</span>) and choose the `.rcpack` file.
+- **Race Configuration & Driver Resolution**: An interactive dialog matches drivers and detects any race configuration collisions. If a race configuration with the same name already exists locally, you can choose to **Auto-Rename** (creates a unique copy), **Overwrite Existing**, or **Use Existing Configuration**. Drivers are matched by exact name or nickname with options to link or create new entries.
+- **Automatic Ingestion**: The race configuration, results, and season points are saved to your local database and immediately appended to the season ledger, recalculating net standings, dropped points, and tiebreakers in real time.
+

@@ -8,6 +8,11 @@ import {
 } from "@app/models/driver-import.model";
 import { DriverLabel } from "@app/models/driver-label";
 import { Event } from "@app/models/event";
+import {
+  RacePackageCommitRequest,
+  RacePackagePreview,
+  RacePackageResult,
+} from "@app/models/race-package.model";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import {
   ArduinoConfig,
@@ -247,6 +252,27 @@ export class DataService {
   }
   deleteRace(id: string): Observable<any> {
     return this.crudHelper.deleteRace(id);
+  }
+  exportRaceConfigBlob(id: string): Observable<Blob> {
+    return this.crudHelper.exportRaceConfigBlob(id);
+  }
+  importRaceConfig(
+    file: File,
+    resolution?: string,
+    customName?: string,
+  ): Observable<any> {
+    return this.crudHelper.importRaceConfig(file, resolution, customName);
+  }
+  exportRacePackageBlob(id: string): Observable<Blob> {
+    return this.crudHelper.exportRacePackageBlob(id);
+  }
+  previewRacePackage(file: File): Observable<RacePackagePreview> {
+    return this.crudHelper.previewRacePackage(file);
+  }
+  commitRacePackage(
+    request: RacePackageCommitRequest,
+  ): Observable<RacePackageResult> {
+    return this.crudHelper.commitRacePackage(request);
   }
   getEvents(): Observable<Event[]> {
     return this.crudHelper.getEvents();
@@ -889,9 +915,12 @@ export class DataService {
     userTime?: number,
     crashes?: number,
   ): Observable<any> {
-    return crashes !== undefined
-      ? this.raceControlHelper.updateUserLaps(lane, userLaps, userTime, crashes)
-      : this.raceControlHelper.updateUserLaps(lane, userLaps, userTime);
+    return this.raceControlHelper.updateUserLaps(
+      lane,
+      userLaps,
+      userTime,
+      crashes,
+    );
   }
   updateHeatUserLaps(
     heatNumber: number,
@@ -900,20 +929,13 @@ export class DataService {
     userTime?: number,
     crashes?: number,
   ): Observable<any> {
-    return crashes !== undefined
-      ? this.raceControlHelper.updateHeatUserLaps(
-          heatNumber,
-          lane,
-          userLaps,
-          userTime,
-          crashes,
-        )
-      : this.raceControlHelper.updateHeatUserLaps(
-          heatNumber,
-          lane,
-          userLaps,
-          userTime,
-        );
+    return this.raceControlHelper.updateHeatUserLaps(
+      heatNumber,
+      lane,
+      userLaps,
+      userTime,
+      crashes,
+    );
   }
   updateBatchUserLaps(
     updates: {

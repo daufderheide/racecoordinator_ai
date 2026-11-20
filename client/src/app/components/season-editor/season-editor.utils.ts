@@ -1,3 +1,4 @@
+import { RacePackageResult } from "@app/models/race-package.model";
 import {
   Season,
   SeasonRaceRecord,
@@ -277,6 +278,8 @@ export function buildRaceRecordFromHistory(
   const raceId =
     item.original_entity_id ||
     item.model?.entity_id ||
+    item.race_id ||
+    item.raceId ||
     item.event_id ||
     item.eventId ||
     item._id ||
@@ -324,5 +327,130 @@ export function buildRaceRecordFromHistory(
     is_event: isEventSummary,
     is_event_race: isEventRace,
     driver_results: extractDriverResultsFromHistory(item),
+  };
+}
+
+export function isRaceAlreadyInSeason(
+  candidate: SeasonRaceRecord,
+  existingRaces: SeasonRaceRecord[],
+): boolean {
+  if (!existingRaces || existingRaces.length === 0) return false;
+  const candTs = Number(candidate.timestamp) || 0;
+  const candId = String(candidate.race_id || "").trim();
+  const candName = (candidate.race_name || "").trim().toLowerCase();
+
+  return existingRaces.some((r) => {
+    const rTs = Number(r.timestamp) || 0;
+    const rId = String(r.race_id || "").trim();
+    const rName = (r.race_name || "").trim().toLowerCase();
+
+    if (candTs > 0 && rTs > 0) {
+      return candTs === rTs;
+    }
+    if (rId && candId && rId === candId) {
+      return true;
+    }
+    if (rName && candName && rName === candName) {
+      return true;
+    }
+    return false;
+  });
+}
+
+export function getRaceDeduplicationKey(r: SeasonRaceRecord): string {
+  const ts = Number(r.timestamp) || 0;
+  if (ts > 0) {
+    return `ts_${ts}`;
+  }
+  return `id_${r.race_id || ""}`;
+}
+
+export function collectAvailableFinishedRaces(
+  existingRaces: SeasonRaceRecord[],
+  existingSeasons: Season[],
+  history: any[],
+): SeasonRaceRecord[] {
+  const availableMap = new Map<string, SeasonRaceRecord>();
+
+  for (const season of existingSeasons || []) {
+    if (!season.races) continue;
+    for (const raceRec of season.races) {
+      if (raceRec && (raceRec.race_id || raceRec.timestamp)) {
+        if (!isRaceAlreadyInSeason(raceRec, existingRaces)) {
+          const key = getRaceDeduplicationKey(raceRec);
+          if (!availableMap.has(key)) {
+            availableMap.set(key, { ...raceRec });
+          }
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(history)) {
+    for (const item of history) {
+      const rec = buildRaceRecordFromHistory(item);
+      if ((rec as any).is_event_race) {
+        continue;
+      }
+      if (!isRaceAlreadyInSeason(rec, existingRaces)) {
+        const key = getRaceDeduplicationKey(rec);
+        if (availableMap.has(key)) {
+          if (!rec.is_demo) {
+            availableMap.get(key)!.is_demo = false;
+          }
+        } else {
+          availableMap.set(key, rec);
+        }
+      }
+    }
+  }
+
+  return Array.from(availableMap.values()).sort(
+    (a, b) => (b.timestamp || 0) - (a.timestamp || 0),
+  );
+}
+
+export function buildSeasonPackageAckDetails(
+  result: RacePackageResult,
+  translate: (key: string) => string,
+): { title: string; message: string; params: any } | null {
+  if (!result || !result.success) return null;
+
+  const title = "RPM_IMPORT_SUCCESS_TITLE";
+  if (result.action === "SKIPPED") {
+    return {
+      title,
+      message: "RPM_IMPORT_SKIPPED_MSG",
+      params: {
+        raceName: result.race_name || "Race",
+        driverCount: result.driver_count || 0,
+        createdCount: result.drivers_created || 0,
+        linkedCount: result.drivers_linked || 0,
+      },
+    };
+  }
+
+  let detailKey = "RPM_CONFIG_DETAIL_CREATED";
+  if (result.race_config_action === "AUTO_RENAME") {
+    detailKey = "RPM_CONFIG_DETAIL_RENAMED";
+  } else if (result.race_config_action === "OVERWRITE") {
+    detailKey = "RPM_CONFIG_DETAIL_OVERWRITTEN";
+  } else if (result.race_config_action === "USE_EXISTING") {
+    detailKey = "RPM_CONFIG_DETAIL_LINKED";
+  } else if (result.race_config_action === "SKIPPED") {
+    detailKey = "RPM_CONFIG_DETAIL_SKIPPED";
+  }
+
+  return {
+    title,
+    message: "RPM_IMPORT_SUCCESS_SEASON_MSG",
+    params: {
+      raceName: result.race_name || "Race",
+      configName: result.race_config_name || result.race_name || "Race",
+      configDetail: translate(detailKey),
+      driverCount: result.driver_count || 0,
+      createdCount: result.drivers_created || 0,
+      linkedCount: result.drivers_linked || 0,
+    },
   };
 }

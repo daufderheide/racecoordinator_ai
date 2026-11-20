@@ -45,6 +45,25 @@
               </button>
             }
           </div>
+          @if (canEdit) {
+            <button
+              type="button"
+              class="btn-import-package"
+              (click)="packageFileInput.click()"
+              [disabled]="isImportingPackage"
+              [title]="'RHD_BTN_IMPORT_PACKAGE' | translate"
+            >
+              <span class="material-icons btn-icon">file_upload</span>
+              <span>{{ "RHD_BTN_IMPORT_PACKAGE" | translate }}</span>
+            </button>
+            <input
+              #packageFileInput
+              type="file"
+              accept=".rcpack,application/zip"
+              style="display: none"
+              (change)="onPackageFileSelected($event)"
+            />
+          }
         </div>
 
         <!-- Race List -->
@@ -144,6 +163,18 @@
                         }
                       </app-custom-select>
                     </div>
+                    <button
+                      type="button"
+                      class="btn-action btn-export-package"
+                      [disabled]="
+                        isLoadingDetails || isResetting || isExportingPackage
+                      "
+                      (click)="exportRacePackage(group)"
+                      [title]="'RHD_BTN_EXPORT_PACKAGE' | translate"
+                    >
+                      <span class="material-icons btn-icon">file_download</span>
+                      <span>{{ "RHD_BTN_EXPORT_PACKAGE" | translate }}</span>
+                    </button>
                     <button
                       type="button"
                       class="btn-action btn-open-race"
@@ -249,3 +280,19 @@
   (acknowledge)="onCloseResetSuccess()"
 >
 </app-acknowledgement-modal>
+
+<app-race-package-modal
+  [visible]="showPackageModal"
+  [preview]="packagePreview"
+  [seasons]="availableSeasons"
+  (close)="closePackageModal()"
+  (committed)="onPackageCommitted($event)"
+></app-race-package-modal>
+
+<app-acknowledgement-modal
+  [visible]="showPackageAckModal"
+  [title]="packageAckTitle"
+  [message]="packageAckMessage"
+  [messageParams]="packageAckParams"
+  (acknowledge)="closePackageAckModal()"
+></app-acknowledgement-modal>
