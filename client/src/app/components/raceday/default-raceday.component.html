@@ -237,6 +237,31 @@
         style="position: relative; width: 100%; height: 100%"
         (pointerdown)="onCanvasPointerDown($event)"
       >
+        <!-- Layout Editor: snap guide lines and the position / size readout
+             while a widget is dragged or resized (hold Alt to drag freely) -->
+        @if (isLayoutCustomizing && snapGuides(); as g) {
+          @for (gx of g.x; track $index) {
+            <div
+              class="snap-guide snap-guide-v"
+              [style.left.%]="(gx / (layout?.baseWidth || 1920)) * 100"
+            ></div>
+          }
+          @for (gy of g.y; track $index) {
+            <div
+              class="snap-guide snap-guide-h"
+              [style.top.%]="(gy / (layout?.baseHeight || 1080)) * 100"
+            ></div>
+          }
+        }
+        @if (isLayoutCustomizing && dragReadout(); as r) {
+          <div
+            class="drag-readout"
+            [style.left.%]="(r.x / (layout?.baseWidth || 1920)) * 100"
+            [style.top.%]="((r.y + r.h) / (layout?.baseHeight || 1080)) * 100"
+          >
+            {{ r.x }}, {{ r.y }} · {{ r.w }} × {{ r.h }}
+          </div>
+        }
         @for (widget of getNonGridWidgets(); track widget.id) {
           <app-raceday-absolute-widget
             [widget]="widget"
