@@ -1,6 +1,7 @@
 import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
 import { BATCH2_SCHEMAS } from "./batch2-schemas";
+import { BATCH3_SCHEMAS } from "./batch3-schemas";
 import { frameFolder, layoutFolder, textPart } from "./common";
 
 /**
@@ -455,6 +456,7 @@ export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
     ]),
   ),
   ...BATCH2_SCHEMAS,
+  ...BATCH3_SCHEMAS,
 };
 
 /** The redesigned schema for a widget, or null to keep its existing inspector. */

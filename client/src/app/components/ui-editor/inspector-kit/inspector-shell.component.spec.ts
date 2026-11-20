@@ -131,6 +131,27 @@ describe("InspectorShellComponent", () => {
     expect(q("#kit-search")).toBeNull();
   });
 
+  it("runs the schema's onOpen once per selected widget and saves what it changed", () => {
+    let runs = 0;
+    host.schema = {
+      ...WIDGET_SCHEMAS["records"],
+      onOpen: (s: Record<string, any>) => {
+        runs++;
+        s["migrated"] = true;
+        return true;
+      },
+    };
+    host.widget = { ...host.widget, id: "w9" };
+    fixture.detectChanges();
+    expect(runs).toBe(1);
+    expect(host.changes).toBe(1);
+    expect(host.changedWidget.customSettings.migrated).toBeTrue();
+    // the same widget again (e.g. a fresh copy after a save): no second run
+    host.widget = { ...host.widget };
+    fixture.detectChanges();
+    expect(runs).toBe(1);
+  });
+
   it("stores a change for a widget created without customSettings", () => {
     // Regression: Branding Image and QR Code have no customSettings, and the
     // form silently dropped every change.

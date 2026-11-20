@@ -71,6 +71,11 @@ interface FieldBase {
   ) => void;
   /** Other keys `write` sets, so "changed" and reset cover them too. */
   touches?: string[];
+  /**
+   * Where the keys live: in customSettings (default), on the widget itself
+   * (e.g. the Menu Bar's font), or on both (kept in step, as its old inspector did).
+   */
+  on?: "settings" | "widget" | "both";
 }
 
 export interface SwitchField extends FieldBase {
@@ -192,6 +197,15 @@ export interface InspectorSchema {
   widgetType: string;
   icon: string;
   folders: InspectorFolder[];
+  /**
+   * Runs once when a widget of this type is selected, before its settings are
+   * shown (fill missing defaults, migrate old values). Returns true when it
+   * changed something, so the change is saved.
+   */
+  onOpen?: (
+    settings: Record<string, any>,
+    context: InspectorContext,
+  ) => boolean;
 }
 
 /** Keys in customSettings that a field reads and writes. */
@@ -311,4 +325,42 @@ export function fieldMatches(
 
 export function allFields(schema: InspectorSchema): InspectorField[] {
   return schema.folders.flatMap((f) => f.groups.flatMap((g) => g.fields));
+}
+
+/** The object a field reads from: customSettings, or the widget itself. */
+export function fieldSource(
+  field: InspectorField,
+  settings: Record<string, any>,
+  widget: any,
+): Record<string, any> {
+  return field.on === "widget" || field.on === "both"
+    ? widget || {}
+    : settings || {};
+}
+
+/** Stores one key of a field where it lives (both places for `on: "both"`). */
+export function writeFieldKey(
+  field: InspectorField,
+  settings: Record<string, any>,
+  widget: any,
+  key: string,
+  value: any,
+): void {
+  if (field.on === "widget" || field.on === "both") {
+    if (widget) widget[key] = value;
+  }
+  if (field.on !== "widget" && settings) settings[key] = value;
+}
+
+/** Puts a field back to its defaults wherever its keys live. */
+export function resetFieldWhereStored(
+  field: InspectorField,
+  settings: Record<string, any>,
+  widget: any,
+  defaults: Record<string, any>,
+): void {
+  if ((field.on === "widget" || field.on === "both") && widget) {
+    resetField(field, widget, defaults);
+  }
+  if (field.on !== "widget" && settings) resetField(field, settings, defaults);
 }

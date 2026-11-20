@@ -6,7 +6,9 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   defaultFor,
+  fieldKeys,
   fieldMatches,
+  fieldSource,
   FOLDER_META,
   FOLDER_ORDER,
   InspectorContext,
@@ -19,8 +21,9 @@ import {
   isFieldChanged,
   isFieldVisible,
   registryDefaults,
-  resetField,
+  resetFieldWhereStored,
   TextPartField,
+  writeFieldKey,
 } from "./inspector-schema";
 import { folderSummary } from "./inspector-summary";
 import { KitColorComponent } from "./kit-color.component";
@@ -155,12 +158,19 @@ export class InspectorFormComponent {
   }
 
   summary(folder: InspectorFolder): string {
-    return folderSummary(folder, this.settings() || {}, this.widget(), this.t);
+    // fields stored on the widget itself are summarised from there
+    const view = { ...(this.settings() || {}) };
+    for (const field of folder.groups.flatMap((g) => g.fields)) {
+      if (field.on === "widget" || field.on === "both") {
+        for (const key of fieldKeys(field)) view[key] = this.widget()?.[key];
+      }
+    }
+    return folderSummary(folder, view, this.widget(), this.t);
   }
 
   isChanged(field: InspectorField): boolean {
     if (field.type === "geometry") return false;
-    return isFieldChanged(field, this.settings() || {}, this.defaults());
+    return isFieldChanged(field, this.source(field), this.defaults());
   }
 
   isHit(field: InspectorField): boolean {
@@ -189,7 +199,7 @@ export class InspectorFormComponent {
       return field.read(this.settings() || {});
     }
     if (!("key" in field)) return undefined;
-    const v = this.settings()?.[field.key];
+    const v = this.source(field)?.[field.key];
     return v === undefined || v === null
       ? defaultFor(field, field.key, this.defaults())
       : v;
@@ -201,7 +211,7 @@ export class InspectorFormComponent {
   ): any {
     const key = field.keys[part];
     if (!key) return undefined;
-    const v = this.settings()?.[key];
+    const v = this.source(field)?.[key];
     return v === undefined || v === null
       ? defaultFor(field, key, this.defaults())
       : v;
@@ -237,7 +247,18 @@ export class InspectorFormComponent {
       this.settingsChange.emit();
       return;
     }
-    if ("key" in field) this.set(field.key, value);
+    if ("key" in field) this.setKey(field, field.key, value);
+  }
+
+  /** The object a field reads from (customSettings or the widget itself). */
+  source(field: InspectorField): Record<string, any> {
+    return fieldSource(field, this.settings(), this.widget());
+  }
+
+  private setKey(field: InspectorField, key: string, value: any): void {
+    writeFieldKey(field, this.settings(), this.widget(), key, value);
+    this.localRevision++;
+    this.settingsChange.emit();
   }
 
   maxFor(field: InspectorField): number {
@@ -259,7 +280,7 @@ export class InspectorFormComponent {
     value: any,
   ): void {
     const key = field.keys[part];
-    if (key) this.set(key, value);
+    if (key) this.setKey(field, key, value);
   }
 
   toggle(key: string, current: boolean): void {
@@ -267,7 +288,12 @@ export class InspectorFormComponent {
   }
 
   resetOne(field: InspectorField): void {
-    resetField(field, this.settings(), this.defaults());
+    resetFieldWhereStored(
+      field,
+      this.settings(),
+      this.widget(),
+      this.defaults(),
+    );
     this.settingsChange.emit();
     this.reset.emit({ labelKey: field.labelKey });
   }
@@ -275,7 +301,12 @@ export class InspectorFormComponent {
   resetFolder(folder: InspectorFolder): void {
     for (const field of folder.groups.flatMap((g) => g.fields)) {
       if (this.isChanged(field))
-        resetField(field, this.settings(), this.defaults());
+        resetFieldWhereStored(
+          field,
+          this.settings(),
+          this.widget(),
+          this.defaults(),
+        );
     }
     this.settingsChange.emit();
     this.reset.emit({ labelKey: FOLDER_META[folder.id].labelKey });

@@ -2639,6 +2639,7 @@
   "UE_KIT_PART_HEADER": "Header",
   "UE_KIT_PART_VALUE": "Value",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_KIT_PART_MENU": "Menu text",
   "UE_KIT_AUTO": "Auto",
   "UE_KIT_PART_TITLE": "Title",
   "UE_KIT_PART_SUBTITLE": "Subtitle",
