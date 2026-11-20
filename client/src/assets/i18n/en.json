@@ -2962,7 +2962,7 @@
   "UE_GRID_SORT_ORDER_SEED": "Driver Seed",
   "UE_GRID_SORT_ORDER_HOST_LANE": "Station Lane (From URL)",
   "UE_GRID_SORT_ORDER_HOST_DRIVER": "Station Driver (From URL)",
-  "UE_GRID_EMPTY_ROWS": "Extra Rows",
+  "UE_GRID_EMPTY_ROWS": "Empty / Extra Rows",
   "UE_GRID_EMPTY_ROWS_REMOVE": "Remove",
   "UE_GRID_EMPTY_ROWS_SHOW_EMPTY": "Show Empty",
   "UE_GRID_EMPTY_ROWS_SHOW_BLANK": "Show Blank",

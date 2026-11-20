@@ -6,6 +6,13 @@ import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
+import deJson from "../../../../../assets/i18n/de.json";
+import enJson from "../../../../../assets/i18n/en.json";
+import esJson from "../../../../../assets/i18n/es.json";
+import frJson from "../../../../../assets/i18n/fr.json";
+import itJson from "../../../../../assets/i18n/it.json";
+import nlJson from "../../../../../assets/i18n/nl.json";
+import ptJson from "../../../../../assets/i18n/pt.json";
 import { LaneColumnInspectorComponent } from "./lane-column-inspector.component";
 
 describe("LaneColumnInspectorComponent", () => {
@@ -2807,6 +2814,33 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.currentSettings["emptyRowsMode"]).toBe("remove");
       expect(component.currentSettings["_gridEmptyRowsModeChanged"]).toBeTrue();
       expect(component.change.emit).toHaveBeenCalledTimes(2);
+    });
+
+    it("should localize UE_GRID_EMPTY_ROWS as Empty / Extra Rows across all 7 supported languages", () => {
+      const i18nFiles = [
+        { lang: "en", json: enJson },
+        { lang: "de", json: deJson },
+        { lang: "es", json: esJson },
+        { lang: "fr", json: frJson },
+        { lang: "it", json: itJson },
+        { lang: "nl", json: nlJson },
+        { lang: "pt", json: ptJson },
+      ];
+
+      expect((enJson as Record<string, string>)["UE_GRID_EMPTY_ROWS"]).toBe(
+        "Empty / Extra Rows",
+      );
+
+      i18nFiles.forEach(({ lang, json }) => {
+        const langData = json as Record<string, string>;
+        const val = langData["UE_GRID_EMPTY_ROWS"];
+        expect(val)
+          .withContext(`Missing UE_GRID_EMPTY_ROWS in ${lang}.json`)
+          .toBeDefined();
+        expect(val?.trim().length)
+          .withContext(`Empty UE_GRID_EMPTY_ROWS in ${lang}.json`)
+          .toBeGreaterThan(0);
+      });
     });
 
     it("should handle averageScore column and inset properties correctly", () => {

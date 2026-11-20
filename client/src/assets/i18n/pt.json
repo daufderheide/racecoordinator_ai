@@ -2446,7 +2446,7 @@
   "UE_GRID_DELETE_TOOLTIP": "Excluir toda a grade e todos os seus widgets",
   "UE_GRID_DETACH": "Desanexar da grade",
   "UE_GRID_EDIT_TEMPLATE": "Editar modelo de grade",
-  "UE_GRID_EMPTY_ROWS": "Linhas extras",
+  "UE_GRID_EMPTY_ROWS": "Linhas vazias / extras",
   "UE_GRID_EMPTY_ROWS_REMOVE": "Remover",
   "UE_GRID_EMPTY_ROWS_SHOW_BLANK": "Mostrar em branco",
   "UE_GRID_EMPTY_ROWS_SHOW_EMPTY": "Mostrar vazio",

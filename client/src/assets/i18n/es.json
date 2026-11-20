@@ -2446,7 +2446,7 @@
   "UE_GRID_DELETE_TOOLTIP": "Eliminar toda la cuadrícula y todos sus widgets",
   "UE_GRID_DETACH": "Separar de la cuadrícula",
   "UE_GRID_EDIT_TEMPLATE": "Editar plantilla de cuadrícula",
-  "UE_GRID_EMPTY_ROWS": "Filas adicionales",
+  "UE_GRID_EMPTY_ROWS": "Filas vacías / adicionales",
   "UE_GRID_EMPTY_ROWS_REMOVE": "Eliminar",
   "UE_GRID_EMPTY_ROWS_SHOW_BLANK": "Mostrar en blanco",
   "UE_GRID_EMPTY_ROWS_SHOW_EMPTY": "Mostrar vacías",

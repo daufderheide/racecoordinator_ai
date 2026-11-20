@@ -2446,7 +2446,7 @@
   "UE_GRID_DELETE_TOOLTIP": "Supprimer toute la grille et tous ses widgets",
   "UE_GRID_DETACH": "Détacher de la grille",
   "UE_GRID_EDIT_TEMPLATE": "Modifier le modèle de grille",
-  "UE_GRID_EMPTY_ROWS": "Lignes supplémentaires",
+  "UE_GRID_EMPTY_ROWS": "Lignes vides / supplémentaires",
   "UE_GRID_EMPTY_ROWS_REMOVE": "Supprimer",
   "UE_GRID_EMPTY_ROWS_SHOW_BLANK": "Afficher blanc",
   "UE_GRID_EMPTY_ROWS_SHOW_EMPTY": "Afficher vide",

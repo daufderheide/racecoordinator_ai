@@ -2446,7 +2446,7 @@
   "UE_GRID_DELETE_TOOLTIP": "Verwijder het hele raster en alle bijbehorende widgets",
   "UE_GRID_DETACH": "Loskoppelen van raster",
   "UE_GRID_EDIT_TEMPLATE": "Rastersjabloon bewerken",
-  "UE_GRID_EMPTY_ROWS": "Extra rijen",
+  "UE_GRID_EMPTY_ROWS": "Lege / extra rijen",
   "UE_GRID_EMPTY_ROWS_REMOVE": "Verwijderen",
   "UE_GRID_EMPTY_ROWS_SHOW_BLANK": "Blanco weergeven",
   "UE_GRID_EMPTY_ROWS_SHOW_EMPTY": "Leeg weergeven",
