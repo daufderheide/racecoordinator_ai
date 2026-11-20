@@ -1,7 +1,9 @@
-/* Redesigned Widget Configuration panel. Everything is scoped under
-   .kit-panel and coloured through the variables of the active theme
-   (data-panel-theme="yellow" | "dark"), so the controls never carry their
-   own colours. Yellow uses today's panel values. */
+/* Redesigned Widget Configuration panel, in the RC AI look (preview v3).
+   Everything is scoped under .kit-panel and coloured through the variables of
+   the active theme (data-panel-theme="yellow" | "dark"):
+   - yellow follows the Widget Library (gold frame, Rajdhani, black on gold);
+   - dark follows the RC AI editors (navy glass, cyan #38bdf8, grey labels).
+   One accent per theme; labels sit above their field like in every editor. */
 
 /* Same place and size as today's panel in the Layout Editor. */
 app-inspector-shell {
@@ -26,66 +28,136 @@ app-inspector-shell {
   }
 }
 
+/* Yellow = the Widget Library. */
 .kit-panel[data-panel-theme="yellow"] {
-  --k-bg: #e9c507;
-  --k-text: #141414;
-  --k-sub: #3d3504;
-  --k-muted: #6b5c0c;
-  --k-line: rgba(0, 0, 0, 0.16);
-  --k-folder: #f1d64a;
-  --k-folder-open: #f4dd62;
-  --k-body: #f8e98f;
-  --k-input: #fffbe6;
-  --k-input-text: #141414;
+  --k-bg: rgba(255, 215, 0, 0.92);
+  /* the panel colour as it shows over the editor, for things that must hide what scrolls under them */
+  --k-solid: #ecc803;
+  --k-head: transparent;
+  --k-border: 2px solid #ffd700;
+  --k-border-top: 4px solid #ffd700;
+  --k-shadow: 0 0 20px rgba(255, 215, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7),
+    inset 0 0 15px rgba(255, 215, 0, 0.2);
+  --k-text: #000;
+  --k-title: #000;
+  --k-label: #111;
+  --k-muted: #4a3f00;
+  --k-line: rgba(0, 0, 0, 0.18);
+  --k-icon-bg: #000;
+  --k-icon: #ffd700;
+  --k-icon-line: 0;
+  --k-icon-btn: #000;
+  --k-danger: #b91c1c;
+  --k-hit: rgba(0, 0, 0, 0.1);
+  --k-hit-line: rgba(0, 0, 0, 0.25);
+  --k-input: rgba(255, 255, 255, 0.92);
+  --k-input-text: #000;
   --k-input-line: rgba(0, 0, 0, 0.22);
+  --k-placeholder: #6b5f1f;
   --k-select: #0f172a;
   --k-select-text: #f1f5f9;
-  --k-accent: #0f172a;
-  --k-accent-text: #fbf6da;
-  --k-dot: #c2410c;
-  --k-dot-text: #ffffff;
-  --k-hit: rgba(15, 23, 42, 0.12);
-  --k-seg: rgba(0, 0, 0, 0.09);
-  --k-tile: #fffbe6;
-  --k-danger: #b91c1c;
-  --k-shadow: 0 4px 20px rgba(255, 215, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.6);
-  --k-content: #1d4ed8;
-  --k-textc: #7c3aed;
-  --k-frame: #c2410c;
-  --k-layout: #047857;
-  --k-behaviour: #be185d;
-  --k-legacy: #64748b;
+  --k-select-line: #0f172a;
+  --k-focus: #000;
+  --k-focus-ring: rgba(0, 0, 0, 0.18);
+  --k-chip-bg: rgba(0, 0, 0, 0.12);
+  --k-chip-line: rgba(0, 0, 0, 0.22);
+  --k-chip-text: #000;
+  --k-on-bg: #000;
+  --k-on-text: #ffd700;
+  --k-on-line: #000;
+  --k-badge-bg: rgba(0, 0, 0, 0.78);
+  --k-badge-text: #ffd700;
+  --k-dot: #b91c1c;
+  --k-mark: #000;
+  --k-mark-text: #ffd700;
+  --k-folder: rgba(0, 0, 0, 0.12);
+  --k-folder-hover: rgba(0, 0, 0, 0.18);
+  --k-folder-line: rgba(0, 0, 0, 0.22);
+  --k-folder-text: #000;
+  --k-folder-icon: #000;
+  --k-expander: #000;
+  --k-fbody: rgba(0, 0, 0, 0.04);
+  --k-fbody-line: rgba(0, 0, 0, 0.15);
+  --k-grp: #000;
+  --k-grp-line: rgba(0, 0, 0, 0.22);
+  --k-switch-off: rgba(0, 0, 0, 0.15);
+  --k-knob-off: #fff;
+  --k-switch-on: #000;
+  --k-knob-on: #ffd700;
+  --k-seg: rgba(255, 255, 255, 0.6);
+  --k-seg-line: rgba(0, 0, 0, 0.22);
+  --k-seg-text: #000;
+  --k-part: rgba(255, 255, 255, 0.45);
+  --k-part-line: rgba(0, 0, 0, 0.2);
+  --k-part-body: rgba(255, 255, 255, 0.35);
+  --k-btn-bg: rgba(0, 0, 0, 0.1);
+  --k-btn-line: rgba(0, 0, 0, 0.3);
+  --k-btn-text: #000;
 }
 
+/* Dark = the RC AI editors (Race / Track / Theme Editor). */
 .kit-panel[data-panel-theme="dark"] {
-  --k-bg: #171d29;
-  --k-text: #e5e9f0;
-  --k-sub: #cbd5e1;
-  --k-muted: #8b97aa;
-  --k-line: #2c3646;
-  --k-folder: #1f2735;
-  --k-folder-open: #222b3b;
-  --k-body: #1a212e;
-  --k-input: #0f1521;
-  --k-input-text: #f1f5f9;
-  --k-input-line: #334155;
-  --k-select: #0f172a;
-  --k-select-text: #f1f5f9;
-  --k-accent: #e9c507;
-  --k-accent-text: #141414;
+  --k-bg: rgba(15, 23, 42, 0.94);
+  --k-solid: #0f172a;
+  --k-head: rgba(2, 6, 23, 0.35);
+  --k-border: 1px solid rgba(56, 189, 248, 0.35);
+  --k-border-top: 3px solid #38bdf8;
+  --k-shadow: 0 0 20px rgba(56, 189, 248, 0.18), 0 10px 30px rgba(0, 0, 0, 0.7);
+  --k-text: #f1f5f9;
+  --k-title: #fff;
+  --k-label: #94a3b8;
+  --k-muted: #7c8aa0;
+  --k-line: rgba(56, 189, 248, 0.2);
+  --k-icon-bg: rgba(56, 189, 248, 0.12);
+  --k-icon: #38bdf8;
+  --k-icon-line: 1px solid rgba(56, 189, 248, 0.5);
+  --k-icon-btn: #cbd5e1;
+  --k-danger: #ef4444;
+  --k-hit: rgba(56, 189, 248, 0.12);
+  --k-hit-line: rgba(56, 189, 248, 0.4);
+  --k-input: rgba(15, 23, 42, 0.6);
+  --k-input-text: #f8fafc;
+  --k-input-line: rgba(148, 163, 184, 0.3);
+  --k-placeholder: #64748b;
+  --k-select: rgba(15, 23, 42, 0.6);
+  --k-select-text: #f8fafc;
+  --k-select-line: rgba(148, 163, 184, 0.3);
+  --k-focus: #38bdf8;
+  --k-focus-ring: rgba(56, 189, 248, 0.2);
+  --k-chip-bg: rgba(15, 23, 42, 0.6);
+  --k-chip-line: rgba(148, 163, 184, 0.3);
+  --k-chip-text: #cbd5e1;
+  --k-on-bg: rgba(56, 189, 248, 0.15);
+  --k-on-text: #38bdf8;
+  --k-on-line: #38bdf8;
+  --k-badge-bg: #38bdf8;
+  --k-badge-text: #0f172a;
   --k-dot: #fbbf24;
-  --k-dot-text: #141414;
-  --k-hit: rgba(233, 197, 7, 0.14);
-  --k-seg: #0f1521;
-  --k-tile: #0f1521;
-  --k-danger: #f87171;
-  --k-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  --k-content: #60a5fa;
-  --k-textc: #a78bfa;
-  --k-frame: #fb923c;
-  --k-layout: #34d399;
-  --k-behaviour: #f472b6;
-  --k-legacy: #94a3b8;
+  --k-mark: rgba(56, 189, 248, 0.35);
+  --k-mark-text: #fff;
+  --k-folder: rgba(30, 41, 59, 0.55);
+  --k-folder-hover: rgba(51, 65, 85, 0.55);
+  --k-folder-line: rgba(56, 189, 248, 0.25);
+  --k-folder-text: #fff;
+  --k-folder-icon: #38bdf8;
+  --k-expander: #38bdf8;
+  --k-fbody: rgba(2, 6, 23, 0.3);
+  --k-fbody-line: rgba(56, 189, 248, 0.18);
+  --k-grp: #38bdf8;
+  --k-grp-line: rgba(255, 255, 255, 0.1);
+  --k-switch-off: rgba(15, 23, 42, 0.8);
+  --k-knob-off: #64748b;
+  --k-switch-on: #38bdf8;
+  --k-knob-on: #0f172a;
+  --k-seg: rgba(15, 23, 42, 0.6);
+  --k-seg-line: rgba(148, 163, 184, 0.3);
+  --k-seg-text: #cbd5e1;
+  --k-part: rgba(30, 41, 59, 0.45);
+  --k-part-line: rgba(148, 163, 184, 0.2);
+  --k-part-body: rgba(2, 6, 23, 0.25);
+  --k-btn-bg: rgba(56, 189, 248, 0.08);
+  --k-btn-line: rgba(56, 189, 248, 0.5);
+  --k-btn-text: #38bdf8;
 }
 
 /* ---------- shell ---------- */
@@ -99,9 +171,11 @@ app-inspector-shell {
   animation: kit-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   background: var(--k-bg);
   color: var(--k-text);
-  border: 0;
+  border: var(--k-border);
+  border-top: var(--k-border-top);
   padding: 0;
   box-shadow: var(--k-shadow);
+  backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -120,8 +194,9 @@ app-inspector-shell {
 }
 
 .kit-head {
-  padding: 10px 10px 8px 14px;
+  padding: 10px 10px 10px 14px;
   border-bottom: 1px solid var(--k-line);
+  background: var(--k-head);
   flex: 0 0 auto;
 }
 
@@ -135,11 +210,10 @@ app-inspector-shell {
   margin: 0;
   flex: 1;
   min-width: 0;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font: 700 16px/1 "Rajdhani", sans-serif;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--k-muted);
+  color: var(--k-title);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -148,18 +222,20 @@ app-inspector-shell {
 .kit-head-widget {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .kit-head-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
   display: grid;
   place-items: center;
-  background: var(--k-accent);
-  color: var(--k-accent-text);
+  background: var(--k-icon-bg);
+  color: var(--k-icon);
+  border: var(--k-icon-line);
+  box-sizing: border-box;
   flex-shrink: 0;
 }
 
@@ -170,10 +246,10 @@ app-inspector-shell {
 }
 
 .kit-panel .kit-head-name .inspector-widget-subtitle {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--k-text);
-  line-height: 1.15;
+  font: 700 18px/1.05 "Rajdhani", sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--k-title);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -182,19 +258,23 @@ app-inspector-shell {
 .kit-head-name small {
   font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   color: var(--k-muted);
+  margin-top: 2px;
 }
 
 .kit-head-nav {
   margin-left: auto;
   display: flex;
+  gap: 2px;
 }
 
 .kit-icon-btn {
   background: transparent;
-  border: 0;
-  color: var(--k-text);
-  border-radius: 6px;
+  border: 1px solid transparent;
+  color: var(--k-icon-btn);
+  border-radius: 4px;
   width: 28px;
   height: 28px;
   display: inline-grid;
@@ -202,13 +282,23 @@ app-inspector-shell {
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 .kit-icon-btn:hover,
 .kit-icon-btn:focus-visible,
 .kit-icon-btn[aria-pressed="true"] {
   background: var(--k-hit);
+  border-color: var(--k-hit-line);
   outline: none;
+}
+
+.kit-icon-btn .material-icons {
+  font-size: 19px;
+}
+
+.kit-head-nav .kit-icon-btn {
+  border-color: var(--k-input-line);
 }
 
 .kit-icon-btn.kit-danger {
@@ -218,6 +308,7 @@ app-inspector-shell {
 .kit-icon-btn.kit-small {
   width: 22px;
   height: 22px;
+  border: 0;
 }
 
 .kit-icon-btn.kit-small .material-icons {
@@ -241,16 +332,17 @@ app-inspector-shell {
   gap: 6px;
   background: var(--k-input);
   border: 1px solid var(--k-input-line);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 0 6px 0 8px;
 }
 
 .kit-search:focus-within {
-  border-color: var(--k-accent);
+  border-color: var(--k-focus);
+  box-shadow: 0 0 0 2px var(--k-focus-ring);
 }
 
 .kit-search .material-icons {
-  color: var(--k-muted);
+  color: var(--k-placeholder);
 }
 
 .kit-search input {
@@ -264,44 +356,49 @@ app-inspector-shell {
   font: inherit;
 }
 
+.kit-search input::placeholder {
+  color: var(--k-placeholder);
+}
+
 .kit-search kbd {
-  font: 10px inherit;
-  color: var(--k-muted);
+  font-size: 10px;
+  font-family: inherit;
+  color: var(--k-placeholder);
   border: 1px solid var(--k-input-line);
   border-radius: 3px;
   padding: 0 4px;
 }
 
 .kit-chip {
-  border: 1px solid var(--k-input-line);
-  background: transparent;
-  color: var(--k-text);
-  border-radius: 999px;
-  padding: 4px 9px;
+  border: 1px solid var(--k-chip-line);
+  background: var(--k-chip-bg);
+  color: var(--k-chip-text);
+  border-radius: 4px;
+  padding: 5px 9px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
+  font: 700 12px/1 "Rajdhani", sans-serif !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .kit-chip[aria-pressed="true"] {
-  background: var(--k-accent);
-  color: var(--k-accent-text);
-  border-color: var(--k-accent);
+  background: var(--k-on-bg);
+  color: var(--k-on-text);
+  border-color: var(--k-on-line);
 }
 
 .kit-chip-count,
 .kit-badge {
-  background: var(--k-dot);
-  color: var(--k-dot-text);
-  border-radius: 999px;
+  background: var(--k-badge-bg);
+  color: var(--k-badge-text);
+  border-radius: 10px;
   padding: 0 6px;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 16px;
+  font: 700 11px/16px "Inter", sans-serif;
+  letter-spacing: 0;
 }
 
 .kit-panel .kit-body {
@@ -309,67 +406,57 @@ app-inspector-shell {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 8px 8px 14px;
+  padding: 10px 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .kit-empty {
   padding: 22px 8px;
   text-align: center;
   color: var(--k-muted);
+  font-weight: 600;
 }
 
-/* ---------- folders ---------- */
+/* ---------- folders: library group rows (yellow) / editor sections (dark) ---------- */
 .kit-folder {
-  --fc: var(--k-legacy);
-  border-radius: 10px;
-  background: var(--k-folder);
   flex-shrink: 0;
-  overflow: hidden;
-  border-left: 4px solid var(--fc);
-}
-
-.kit-folder[data-folder="content"] { --fc: var(--k-content); }
-.kit-folder[data-folder="text"] { --fc: var(--k-textc); }
-.kit-folder[data-folder="frame"] { --fc: var(--k-frame); }
-.kit-folder[data-folder="layout"] { --fc: var(--k-layout); }
-.kit-folder[data-folder="behaviour"] { --fc: var(--k-behaviour); }
-
-.kit-folder.open {
-  background: var(--k-folder-open);
 }
 
 .kit-folder-head {
   position: sticky;
-  top: 0;
+  top: -10px;
   z-index: 2;
   width: 100%;
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto auto;
+  grid-template-columns: 22px minmax(0, 1fr) auto 20px;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px 8px 8px;
-  background: inherit;
-  border: 0;
+  padding: 7px 10px;
+  /* sticky: solid underneath so the settings don't show through when scrolling */
+  background: linear-gradient(var(--k-folder), var(--k-folder)), var(--k-solid);
+  border: 1px solid var(--k-folder-line);
+  border-radius: 6px;
   color: var(--k-text);
   cursor: pointer;
   text-align: left;
+  box-sizing: border-box;
+}
+
+.kit-folder-head:hover {
+  background: linear-gradient(var(--k-folder-hover), var(--k-folder-hover)),
+    var(--k-solid);
+}
+
+.kit-folder.open > .kit-folder-head {
+  border-radius: 6px 6px 0 0;
 }
 
 .kit-folder-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--fc) 18%, transparent);
-  color: var(--fc);
-}
-
-.kit-folder-icon .material-icons {
-  font-size: 17px;
+  color: var(--k-folder-icon);
 }
 
 .kit-folder-titles {
@@ -378,10 +465,10 @@ app-inspector-shell {
 
 .kit-folder-title {
   display: block;
-  font-weight: 800;
-  font-size: 12px;
-  letter-spacing: 0.07em;
+  font: 700 14px/1.1 "Rajdhani", sans-serif;
+  letter-spacing: 1px;
   text-transform: uppercase;
+  color: var(--k-folder-text);
 }
 
 .kit-folder-summary {
@@ -392,46 +479,47 @@ app-inspector-shell {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: 1px;
 }
 
 .kit-chev {
-  color: var(--k-muted);
+  color: var(--k-expander);
   transition: transform 0.15s;
+  transform: rotate(-90deg);
 }
 
 .kit-folder.open > .kit-folder-head .kit-chev {
-  transform: rotate(90deg);
+  transform: none;
 }
 
 .kit-folder-body {
-  background: var(--k-body);
-  padding: 4px 10px 10px;
+  background: var(--k-fbody);
+  border: 1px solid var(--k-fbody-line);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 2px 10px 10px;
   display: flex;
   flex-direction: column;
 }
 
 .kit-group {
-  padding: 8px 0 4px;
+  padding: 10px 0 2px;
   display: grid;
-  gap: 8px;
-}
-
-.kit-group + .kit-group {
-  border-top: 1px dashed var(--k-line);
-  margin-top: 4px;
+  gap: 10px;
 }
 
 .kit-group-title {
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font: 700 12.5px/1 "Rajdhani", sans-serif;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--fc);
+  color: var(--k-grp);
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--k-grp-line);
 }
 
 .kit-folder-reset {
   align-self: flex-end;
-  margin-top: 6px;
+  margin-top: 10px;
 }
 
 /* Existing inspectors in "All settings" keep the look they were made for. */
@@ -441,29 +529,28 @@ app-inspector-shell {
   padding: 8px 10px 12px;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-folder-legacy .kit-legacy-body {
-  border-radius: 0 0 8px 0;
-}
-
-/* ---------- rows ---------- */
+/* ---------- rows: label above the field; switches and steppers on one line ---------- */
 .kit-row {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  min-height: 30px;
-  border-radius: 6px;
-}
-
-/* A text input needs the width: its label goes on its own line above it. */
-.kit-row.kit-row-stack {
   grid-template-columns: minmax(0, 1fr);
-  gap: 4px;
+  gap: 5px;
+  border-radius: 4px;
 }
 
-/* A switch is small: its label gets the whole width. */
-.kit-row.kit-row-switch {
+.kit-row.kit-row-switch,
+.kit-row:has(> .kit-ctrl > app-kit-stepper) {
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+}
+
+/* Inside a text part the sub-settings are short: a small label column. */
+.kit-part-body .kit-row,
+.kit-part-body .kit-row:has(> .kit-ctrl > app-kit-stepper) {
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
 }
 
 .kit-row.hit,
@@ -475,9 +562,10 @@ app-inspector-shell {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--k-sub);
+  font: 700 12.5px/1.15 "Rajdhani", sans-serif;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--k-label);
   min-width: 0;
 }
 
@@ -488,8 +576,8 @@ app-inspector-shell {
 }
 
 .kit-panel mark {
-  background: var(--k-dot);
-  color: var(--k-dot-text);
+  background: var(--k-mark);
+  color: var(--k-mark-text);
   border-radius: 2px;
   padding: 0 1px;
 }
@@ -540,90 +628,95 @@ app-inspector-shell {
   color: var(--k-muted);
 }
 
-.kit-input {
-  width: 100%;
-  min-width: 0;
-  background: var(--k-input);
-  color: var(--k-input-text);
-  border: 1px solid var(--k-input-line);
-  border-radius: 6px;
-  padding: 6px 8px;
-  font: inherit;
-}
-
+.kit-input,
 .kit-select {
   width: 100%;
   min-width: 0;
+  border-radius: 4px;
+  padding: 7px 10px;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.kit-input {
+  background: var(--k-input);
+  color: var(--k-input-text);
+  border: 1px solid var(--k-input-line);
+}
+
+.kit-input::placeholder {
+  color: var(--k-placeholder);
+}
+
+.kit-select {
   background: var(--k-select);
   color: var(--k-select-text);
-  border: 1px solid #334155;
-  border-radius: 6px;
-  padding: 6px 8px;
-  font: inherit;
+  border: 1px solid var(--k-select-line);
+  color-scheme: dark;
 }
 
 .kit-input:focus,
 .kit-select:focus {
-  outline: 2px solid var(--k-accent);
-  outline-offset: 0;
+  outline: none;
+  border-color: var(--k-focus);
+  box-shadow: 0 0 0 2px var(--k-focus-ring);
 }
 
 .kit-switch {
   margin-left: auto;
-  width: 38px;
+  width: 40px;
   height: 22px;
-  border-radius: 999px;
-  border: 0;
-  background: var(--k-seg);
+  border-radius: 11px;
+  border: 1px solid var(--k-input-line);
+  background: var(--k-switch-off);
   position: relative;
   cursor: pointer;
   flex-shrink: 0;
-  box-shadow: inset 0 0 0 1px var(--k-input-line);
   padding: 0;
+  box-sizing: border-box;
 }
 
 .kit-switch::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
+  top: 2px;
+  left: 2px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--k-muted);
+  background: var(--k-knob-off);
   transition: left 0.15s;
 }
 
 .kit-switch[aria-checked="true"] {
-  background: var(--k-accent);
-  box-shadow: none;
+  background: var(--k-switch-on);
+  border-color: var(--k-switch-on);
 }
 
 .kit-switch[aria-checked="true"]::after {
-  left: 19px;
-  background: var(--k-accent-text);
+  left: 20px;
+  background: var(--k-knob-on);
 }
 
 .kit-seg {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  background: var(--k-seg);
-  border-radius: 7px;
-  padding: 2px;
-  gap: 2px;
+  gap: 4px;
   width: 100%;
 }
 
 .kit-seg button {
-  border: 0;
-  background: transparent;
-  color: var(--k-text);
-  border-radius: 5px;
-  padding: 4px 2px;
+  border: 1px solid var(--k-seg-line);
+  background: var(--k-seg);
+  color: var(--k-seg-text);
+  border-radius: 4px;
+  padding: 5px 2px;
+  min-height: 28px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 12px;
+  font: 700 12.5px/1 "Rajdhani", sans-serif !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   display: inline-grid;
   place-items: center;
   min-width: 0;
@@ -632,9 +725,14 @@ app-inspector-shell {
   text-overflow: ellipsis;
 }
 
+.kit-seg button:hover {
+  border-color: var(--k-focus);
+}
+
 .kit-seg button[aria-pressed="true"] {
-  background: var(--k-accent);
-  color: var(--k-accent-text);
+  background: var(--k-on-bg);
+  color: var(--k-on-text);
+  border-color: var(--k-on-line);
 }
 
 .kit-seg .material-icons {
@@ -647,15 +745,16 @@ app-inspector-shell {
   align-items: stretch;
   background: var(--k-input);
   border: 1px solid var(--k-input-line);
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
   height: 30px;
+  box-sizing: border-box;
 }
 
 .kit-step-btn {
   border: 0;
   background: transparent;
-  color: var(--k-text);
+  color: var(--k-input-text);
   width: 26px;
   cursor: pointer;
   display: grid;
@@ -683,6 +782,7 @@ app-inspector-shell {
   color: var(--k-input-text);
   text-align: center;
   font: inherit;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
   appearance: textfield;
@@ -696,25 +796,30 @@ app-inspector-shell {
 
 .kit-step-unit {
   padding-right: 4px;
-  color: var(--k-muted);
+  color: var(--k-placeholder);
   font-size: 11px;
   display: grid;
   place-items: center;
 }
 
-/* colour */
+/* colour: one input-like box, like the other fields */
 .kit-color {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
+  background: var(--k-input);
+  border: 1px solid var(--k-input-line);
+  border-radius: 4px;
+  padding: 2px 4px 2px 2px;
+  box-sizing: border-box;
 }
 
 .kit-swatch {
   width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  height: 24px;
+  border-radius: 3px;
   border: 1px solid var(--k-input-line);
   position: relative;
   overflow: hidden;
@@ -728,6 +833,7 @@ app-inspector-shell {
   background-size: 8px 8px;
   background-position: 0 0, 0 4px, 4px -4px, -4px 0;
   background-color: #fff;
+  box-sizing: border-box;
 }
 
 .kit-swatch i {
@@ -748,16 +854,19 @@ app-inspector-shell {
   flex: 1;
   min-width: 0;
   font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--k-sub);
+  color: var(--k-input-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .kit-hex.is-default {
-  font-style: italic;
-  color: var(--k-muted);
+  font: 700 11.5px "Rajdhani", sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--k-placeholder);
 }
 
 .kit-quick {
@@ -765,20 +874,20 @@ app-inspector-shell {
   gap: 2px;
   flex-shrink: 0;
   /* room for the outline of the chosen swatch */
-  padding: 3px 3px 3px 0;
+  padding: 3px;
 }
 
 .kit-quick-btn {
   width: 14px;
   height: 14px;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--k-input-line);
   cursor: pointer;
   padding: 0;
 }
 
 .kit-quick-btn[aria-pressed="true"] {
-  outline: 2px solid var(--k-accent);
+  outline: 2px solid var(--k-focus);
   outline-offset: 1px;
 }
 
@@ -796,33 +905,39 @@ app-inspector-shell {
 }
 
 .kit-tile {
-  background: var(--k-tile);
-  border: 1px solid var(--k-input-line);
-  border-radius: 8px;
-  padding: 6px 2px 4px;
+  background: var(--k-seg);
+  border: 1px solid var(--k-seg-line);
+  border-radius: 4px;
+  padding: 7px 2px 5px;
   cursor: pointer;
-  color: var(--k-text);
+  color: var(--k-seg-text);
   display: grid;
-  gap: 4px;
+  gap: 5px;
   justify-items: center;
   min-width: 0;
 }
 
+.kit-tile:hover {
+  border-color: var(--k-focus);
+}
+
 .kit-tile[aria-pressed="true"] {
-  border-color: var(--k-accent);
-  box-shadow: 0 0 0 2px var(--k-accent);
+  background: var(--k-on-bg);
+  color: var(--k-on-text);
+  border-color: var(--k-on-line);
 }
 
 .kit-tile-demo {
   width: 30px;
   height: 18px;
   border-radius: 3px;
-  color: var(--k-text);
+  color: currentColor;
 }
 
 .kit-tile-label {
-  font-size: 10.5px;
-  font-weight: 600;
+  font: 700 11.5px/1 "Rajdhani", sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -840,15 +955,15 @@ app-inspector-shell {
   align-items: center;
   background: var(--k-input);
   border: 1px solid var(--k-input-line);
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
   min-width: 0;
 }
 
 .kit-xy-field b {
-  padding: 0 6px;
-  color: var(--k-muted);
-  font-size: 11px;
+  padding: 0 8px;
+  color: var(--k-placeholder);
+  font: 700 12px "Rajdhani", sans-serif;
 }
 
 .kit-xy-field input {
@@ -857,7 +972,7 @@ app-inspector-shell {
   border: 0;
   background: transparent;
   color: var(--k-input-text);
-  padding: 6px 4px 6px 0;
+  padding: 7px 4px 7px 0;
   font: inherit;
   font-variant-numeric: tabular-nums;
 }
@@ -866,11 +981,15 @@ app-inspector-shell {
   opacity: 0.5;
 }
 
+.kit-xy .kit-icon-btn {
+  border-color: var(--k-input-line);
+}
+
 /* text part */
 .kit-part {
-  border: 1px solid var(--k-line);
-  border-radius: 9px;
-  background: var(--k-folder);
+  border: 1px solid var(--k-part-line);
+  border-radius: 6px;
+  background: var(--k-part);
   overflow: hidden;
 }
 
@@ -878,7 +997,7 @@ app-inspector-shell {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 8px;
+  padding: 7px 8px 7px 10px;
   cursor: pointer;
   width: 100%;
   border: 0;
@@ -894,8 +1013,10 @@ app-inspector-shell {
 }
 
 .kit-part-name {
-  font-weight: 700;
-  font-size: 12.5px;
+  font: 700 14px/1.1 "Rajdhani", sans-serif;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--k-folder-text);
 }
 
 .kit-part-meta {
@@ -910,8 +1031,9 @@ app-inspector-shell {
   margin-left: auto;
   max-width: 130px;
   padding: 3px 8px;
-  border-radius: 5px;
-  background: #0f172a;
+  border-radius: 4px;
+  background: #0a1020;
+  border: 1px solid rgba(148, 163, 184, 0.25);
   color: #f1f5f9;
   white-space: nowrap;
   overflow: hidden;
@@ -921,45 +1043,51 @@ app-inspector-shell {
 }
 
 .kit-part-body {
-  padding: 6px 8px 8px;
+  padding: 8px 10px 10px;
   display: grid;
   gap: 8px;
-  border-top: 1px solid var(--k-line);
-  background: var(--k-body);
+  border-top: 1px solid var(--k-part-line);
+  background: var(--k-part-body);
 }
 
 .kit-link {
-  background: none;
-  border: 0;
-  color: var(--k-text);
-  font-weight: 600;
+  background: var(--k-btn-bg);
+  border: 1px solid var(--k-btn-line);
+  color: var(--k-btn-text);
   cursor: pointer;
-  padding: 0;
+  padding: 5px 10px;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 12px;
+  gap: 5px;
+  font: 700 12px/1 "Rajdhani", sans-serif !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.kit-link:hover {
+  border-color: var(--k-focus);
 }
 
 .kit-link .material-icons {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .kit-part-reset {
   justify-self: end;
 }
 
-/* toast */
+/* toast: the RC AI dark tooltip style in both themes */
 .kit-toast {
   position: absolute;
   left: 10px;
   right: 10px;
   bottom: 10px;
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.4);
   color: #e2e8f0;
   padding: 8px 8px 8px 12px;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   display: flex;
   gap: 10px;
@@ -970,12 +1098,14 @@ app-inspector-shell {
 }
 
 .kit-toast-undo {
-  background: #e9c507;
-  color: #141414;
-  border: 0;
-  border-radius: 5px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid #38bdf8;
+  border-radius: 4px;
   padding: 4px 10px;
-  font-weight: 700;
+  font: 700 12px "Rajdhani", sans-serif !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
