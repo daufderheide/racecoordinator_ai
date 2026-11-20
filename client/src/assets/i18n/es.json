@@ -2965,6 +2965,8 @@
   "UE_KIT_PART_HEADER": "Encabezado",
   "UE_KIT_PART_VALUE": "Valor",
   "UE_KIT_PART_LABEL": "Etiqueta",
+  "UE_KIT_IMAGE": "Imagen",
+  "UE_KIT_SHORTCUT_HELP": "Una tecla o combinación de teclas que pulsa este botón, p. ej. F4 o Control+S.",
   "UE_KIT_PART_TIME": "Tiempo",
   "UE_KIT_PART_STATUS": "Texto de estado",
   "UE_KIT_CHANGED": "Cambiado",

@@ -233,7 +233,7 @@
                         [placeholder]="
                           $any(field).placeholderKey
                             ? ($any(field).placeholderKey | translate)
-                            : ''
+                            : $any(field).placeholder || ''
                         "
                         [attr.aria-label]="field.labelKey | translate"
                         (change)="
@@ -246,6 +246,22 @@
                         data-bwignore="true"
                         data-form-type="other"
                       />
+                    </div>
+                  </div>
+                }
+                @case ("image") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl kit-ctrl-image">
+                      <app-kit-image
+                        [attr.id]="'kit-' + field.id"
+                        [value]="value(field)"
+                        (valueChange)="set($any(field).key, $event)"
+                      ></app-kit-image>
                     </div>
                   </div>
                 }

@@ -1,4 +1,5 @@
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
+import { getDefaultBorderConfigForWidget } from "@app/utils/widget-border.utils";
 
 /**
  * Describes a widget's settings for the redesigned Widget Configuration panel.
@@ -6,7 +7,7 @@ import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
  * x/y/width/height), so a schema never changes what is stored in a layout.
  */
 
-/** Fixed folder order; each folder has its own accent colour in the panel. */
+/** Fixed folder order. */
 export type InspectorFolderId =
   | "content"
   | "text"
@@ -95,6 +96,8 @@ export interface TextField extends FieldBase {
   type: "text";
   key: string;
   placeholderKey?: string;
+  /** Literal placeholder (e.g. a key combination) when there's nothing to translate. */
+  placeholder?: string;
   maxLength?: number;
   default?: string;
 }
@@ -111,6 +114,8 @@ export interface TextPartField extends FieldBase {
   type: "textPart";
   sampleKey?: string;
   sample?: string;
+  /** Show the text stored in this setting as the sample (e.g. a Label's own text). */
+  sampleSetting?: string;
   keys: { font?: string; size?: string; color?: string; align?: string };
   sizeMin?: number;
   sizeMax?: number;
@@ -123,6 +128,12 @@ export interface TextPartField extends FieldBase {
     color?: string;
     align?: string;
   };
+}
+
+/** An image from the asset library (the existing image selector). */
+export interface ImageField extends FieldBase {
+  type: "image";
+  key: string;
 }
 
 /** Position or size on the widget itself (not in customSettings). */
@@ -140,6 +151,7 @@ export type InspectorField =
   | TextField
   | TilesField
   | TextPartField
+  | ImageField
   | GeometryField;
 
 export interface InspectorGroup {
@@ -170,8 +182,17 @@ export function fieldKeys(field: InspectorField): string[] {
   }
 }
 
+/**
+ * Defaults as the widget is drawn: no own background (the wrapper then uses the
+ * theme), the border defaults the canvas uses for this type
+ * (widget-border.utils), and the registry's own defaults on top.
+ */
 export function registryDefaults(widgetType: string): Record<string, any> {
-  return WIDGET_REGISTRY[widgetType]?.defaultSettings?.() || {};
+  return {
+    backgroundColor: "",
+    ...getDefaultBorderConfigForWidget(widgetType),
+    ...(WIDGET_REGISTRY[widgetType]?.defaultSettings?.() || {}),
+  };
 }
 
 /** Default for one key: the field's own default wins over the registry. */

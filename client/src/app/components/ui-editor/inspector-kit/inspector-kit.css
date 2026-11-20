@@ -548,7 +548,7 @@ app-inspector-shell {
 /* Inside a text part the sub-settings are short: a small label column. */
 .kit-part-body .kit-row,
 .kit-part-body .kit-row:has(> .kit-ctrl > app-kit-stepper) {
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
@@ -622,6 +622,11 @@ app-inspector-shell {
   display: block;
   flex: 1;
   min-width: 0;
+}
+
+/* image: the selector centred in its row */
+.kit-ctrl-image {
+  justify-content: center;
 }
 
 .kit-muted {

@@ -2965,6 +2965,8 @@
   "UE_KIT_PART_HEADER": "Kop",
   "UE_KIT_PART_VALUE": "Waarde",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_KIT_IMAGE": "Afbeelding",
+  "UE_KIT_SHORTCUT_HELP": "Een toets of toetscombinatie die deze knop indrukt, bv. F4 of Control+S.",
   "UE_KIT_PART_TIME": "Tijd",
   "UE_KIT_PART_STATUS": "Statustekst",
   "UE_KIT_CHANGED": "Gewijzigd",

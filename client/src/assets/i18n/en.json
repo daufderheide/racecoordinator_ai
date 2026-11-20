@@ -2639,6 +2639,8 @@
   "UE_KIT_PART_HEADER": "Header",
   "UE_KIT_PART_VALUE": "Value",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_KIT_IMAGE": "Image",
+  "UE_KIT_SHORTCUT_HELP": "A key or key combination that presses this button, e.g. F4 or Control+S.",
   "UE_KIT_PART_TIME": "Time",
   "UE_KIT_PART_STATUS": "Status text",
   "UE_KIT_CHANGED": "Changed",

@@ -131,6 +131,27 @@ describe("InspectorShellComponent", () => {
     expect(q("#kit-search")).toBeNull();
   });
 
+  it("stores a change for a widget created without customSettings", () => {
+    // Regression: Branding Image and QR Code have no customSettings, and the
+    // form silently dropped every change.
+    host.widget = {
+      id: "w2",
+      widgetType: "qr",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 200,
+    };
+    host.schema = WIDGET_SCHEMAS["qr"];
+    fixture.detectChanges();
+    q("#kit-folder-frame")!.click();
+    fixture.detectChanges();
+    (q("#kit-showBorder") as HTMLButtonElement).click();
+    expect(host.changes).toBe(1);
+    // QR has the panel card defaults: the border starts on, one click turns it off
+    expect(host.changedWidget.customSettings.showBorder).toBe(false);
+  });
+
   it("passes changes, delete and previous/next up to the editor", () => {
     (q("#kit-showHeatBest") as HTMLButtonElement).click();
     q(".inspector-delete-btn")!.click();

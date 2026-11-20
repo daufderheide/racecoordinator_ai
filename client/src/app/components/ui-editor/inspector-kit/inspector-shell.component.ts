@@ -81,6 +81,18 @@ export class InspectorShellComponent implements OnDestroy {
   toast = signal<{ message: string; undo: boolean } | null>(null);
   private toastTimer: any = null;
 
+  /**
+   * The settings object the form edits. Some widgets (Branding Image, QR Code)
+   * are created without customSettings; the form needs an object to write into,
+   * so it is added here and saved with the first change.
+   */
+  formSettings(): Record<string, any> {
+    const w = this.widget();
+    if (!w) return {};
+    if (!w.customSettings) w.customSettings = {};
+    return w.customSettings;
+  }
+
   changedCount(): number {
     const schema = this.schema();
     const settings = this.widget()?.customSettings;

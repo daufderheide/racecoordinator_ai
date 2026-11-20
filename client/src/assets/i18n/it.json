@@ -2965,6 +2965,8 @@
   "UE_KIT_PART_HEADER": "Intestazione",
   "UE_KIT_PART_VALUE": "Valore",
   "UE_KIT_PART_LABEL": "Etichetta",
+  "UE_KIT_IMAGE": "Immagine",
+  "UE_KIT_SHORTCUT_HELP": "Un tasto o una combinazione di tasti che preme questo pulsante, ad es. F4 o Control+S.",
   "UE_KIT_PART_TIME": "Tempo",
   "UE_KIT_PART_STATUS": "Testo di stato",
   "UE_KIT_CHANGED": "Modificato",

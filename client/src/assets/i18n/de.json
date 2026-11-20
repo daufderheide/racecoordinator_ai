@@ -2639,6 +2639,8 @@
   "UE_KIT_PART_HEADER": "Überschrift",
   "UE_KIT_PART_VALUE": "Wert",
   "UE_KIT_PART_LABEL": "Beschriftung",
+  "UE_KIT_IMAGE": "Bild",
+  "UE_KIT_SHORTCUT_HELP": "Eine Taste oder Tastenkombination, die diese Schaltfläche drückt, z. B. F4 oder Strg+S.",
   "UE_KIT_PART_TIME": "Zeit",
   "UE_KIT_PART_STATUS": "Statustext",
   "UE_KIT_CHANGED": "Geändert",

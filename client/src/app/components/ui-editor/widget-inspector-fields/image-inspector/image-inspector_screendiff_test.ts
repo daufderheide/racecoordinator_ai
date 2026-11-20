@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
-
-import { ImageInspectorHarnessE2e } from "./testing/image-inspector.harness.e2e";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 test.describe("Image Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -64,18 +63,10 @@ test.describe("Image Inspector Visuals", () => {
     const inspectorPanel = page.locator(".widget-inspector-panel");
     await inspectorPanel.waitFor({ state: "visible" });
 
-    // Verify inspector contains image-specific fields
-    const inspectorFields = page.locator("app-image-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const _harness = new ImageInspectorHarnessE2e(inspectorFields);
-
-    // Blur any active element, clear hover, and scroll inspector panel so image fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-image-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
+    // The redesigned panel: the image picker is in Content (open by default)
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.settle('[data-folder="content"]');
     await TestSetupHelper.waitForImagesLoaded(inspectorPanel);
     await page.mouse.move(0, 0);
 

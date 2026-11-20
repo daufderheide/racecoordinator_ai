@@ -2965,6 +2965,8 @@
   "UE_KIT_PART_HEADER": "En-tête",
   "UE_KIT_PART_VALUE": "Valeur",
   "UE_KIT_PART_LABEL": "Libellé",
+  "UE_KIT_IMAGE": "Image",
+  "UE_KIT_SHORTCUT_HELP": "Une touche ou combinaison de touches qui appuie sur ce bouton, p. ex. F4 ou Control+S.",
   "UE_KIT_PART_TIME": "Temps",
   "UE_KIT_PART_STATUS": "Texte d'état",
   "UE_KIT_CHANGED": "Modifié",

@@ -23,6 +23,7 @@ import {
 } from "./inspector-schema";
 import { folderSummary } from "./inspector-summary";
 import { KitColorComponent } from "./kit-color.component";
+import { KitImageComponent } from "./kit-image.component";
 import { KitStepperComponent } from "./kit-stepper.component";
 
 export interface GeometryChange {
@@ -68,6 +69,7 @@ interface VisibleFolder {
     TranslatePipe,
     KitStepperComponent,
     KitColorComponent,
+    KitImageComponent,
   ],
 })
 export class InspectorFormComponent {
@@ -255,6 +257,9 @@ export class InspectorFormComponent {
   }
 
   partSample(field: TextPartField): string {
+    if (field.sampleSetting && this.settings()?.[field.sampleSetting]) {
+      return String(this.settings()[field.sampleSetting]);
+    }
     if (field.sampleKey) return this.t(field.sampleKey);
     return field.sample ?? this.t(field.labelKey);
   }

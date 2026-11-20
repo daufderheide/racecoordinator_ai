@@ -194,6 +194,17 @@ describe("InspectorFormComponent", () => {
     ).toBe("100, 50 · 400 × 200");
   });
 
+  it("rounds a scaled position in the Layout summary", () => {
+    fixture.componentRef.setInput("widget", {
+      ...fixture.componentInstance.widget(),
+      y: 741.7358609997833,
+    });
+    fixture.detectChanges();
+    expect(
+      q('[data-folder="layout"] .kit-folder-summary')!.textContent!.trim(),
+    ).toBe("100, 742 · 400 × 200");
+  });
+
   it("opens and closes a folder and remembers it for the widget type", () => {
     q("#kit-folder-frame")!.click();
     render();
