@@ -1,6 +1,11 @@
+import {
+  ArrangeAction,
+  MIN_TO_DISTRIBUTE,
+} from "@app/components/ui-editor/arrange.utils";
 import { CommonModule } from "@angular/common";
 import {
   Component,
+  computed,
   input,
   output,
   signal,
@@ -63,6 +68,38 @@ export interface MultiSelectItem {
       </div>
 
       <div class="kit-body inspector-body">
+        <div class="kit-arrange" id="kit-multi-arrange">
+          @for (group of toolGroups; track group.labelKey) {
+            <div class="kit-arrange-group" [attr.data-group]="group.id">
+              <span class="kit-arrange-label">{{
+                group.labelKey | translate
+              }}</span>
+              <div class="kit-buttons">
+                @for (tool of group.tools; track tool.action) {
+                  <button
+                    type="button"
+                    class="kit-icon-btn"
+                    [attr.data-arrange]="tool.action"
+                    [attr.aria-label]="tool.labelKey | translate"
+                    [title]="tool.labelKey | translate"
+                    [disabled]="isDisabled(tool.action)"
+                    (click)="arrange.emit(tool.action)"
+                  >
+                    <span class="material-icons" aria-hidden="true">{{
+                      tool.icon
+                    }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (lockedCount() > 0) {
+            <p class="kit-arrange-note" id="kit-multi-locked-note">
+              <span class="material-icons" aria-hidden="true">lock</span>
+              {{ "UE_MULTI_LOCKED_NOTE" | translate: { count: lockedCount() } }}
+            </p>
+          }
+        </div>
         <ul class="kit-multi-list" role="list">
           @for (item of items(); track item.id) {
             <li
@@ -131,6 +168,87 @@ export class InspectorMultiComponent {
   remove = output<string>();
   keepMain = output<void>();
   deleteAll = output<void>();
+  arrange = output<ArrangeAction>();
+
+  /** Locked widgets stay put while aligning (they still count for the box). */
+  lockedCount = computed(() => this.items().filter((i) => i.locked).length);
+
+  isDisabled(action: ArrangeAction): boolean {
+    const n = this.items().length;
+    if (action === "distributeX" || action === "distributeY") {
+      return n < MIN_TO_DISTRIBUTE;
+    }
+    return n < 2;
+  }
+
+  readonly toolGroups: {
+    id: string;
+    labelKey: string;
+    tools: { action: ArrangeAction; icon: string; labelKey: string }[];
+  }[] = [
+    {
+      id: "align",
+      labelKey: "UE_MULTI_ALIGN",
+      tools: [
+        {
+          action: "left",
+          icon: "align_horizontal_left",
+          labelKey: "UE_MULTI_ALIGN_LEFT",
+        },
+        {
+          action: "centre",
+          icon: "align_horizontal_center",
+          labelKey: "UE_MULTI_ALIGN_CENTRE",
+        },
+        {
+          action: "right",
+          icon: "align_horizontal_right",
+          labelKey: "UE_MULTI_ALIGN_RIGHT",
+        },
+        {
+          action: "top",
+          icon: "align_vertical_top",
+          labelKey: "UE_MULTI_ALIGN_TOP",
+        },
+        {
+          action: "middle",
+          icon: "align_vertical_center",
+          labelKey: "UE_MULTI_ALIGN_MIDDLE",
+        },
+        {
+          action: "bottom",
+          icon: "align_vertical_bottom",
+          labelKey: "UE_MULTI_ALIGN_BOTTOM",
+        },
+      ],
+    },
+    {
+      id: "spread",
+      labelKey: "UE_MULTI_SPACE_SIZE",
+      tools: [
+        {
+          action: "distributeX",
+          icon: "horizontal_distribute",
+          labelKey: "UE_MULTI_DISTRIBUTE_X",
+        },
+        {
+          action: "distributeY",
+          icon: "vertical_distribute",
+          labelKey: "UE_MULTI_DISTRIBUTE_Y",
+        },
+        {
+          action: "sameWidth",
+          icon: "width_normal",
+          labelKey: "UE_MULTI_SAME_WIDTH",
+        },
+        {
+          action: "sameHeight",
+          icon: "height",
+          labelKey: "UE_MULTI_SAME_HEIGHT",
+        },
+      ],
+    },
+  ];
 
   theme = signal<PanelTheme>(readPanelTheme());
 }

@@ -401,6 +401,7 @@
             (remove)="removeFromSelection($event)"
             (keepMain)="keepOnlyMainSelected()"
             (deleteAll)="deleteSelection()"
+            (arrange)="onArrange($event)"
           ></app-inspector-multi>
         } @else if (
           currentSelectedWidget && isEditMode && isWidgetConfigVisible

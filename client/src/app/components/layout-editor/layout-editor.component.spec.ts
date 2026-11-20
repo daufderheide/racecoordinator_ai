@@ -1315,6 +1315,26 @@ describe("LayoutEditorComponent", () => {
         expect(component.selectedWidgetIds).toEqual(["a"]);
       });
 
+      it("aligns from the panel tools (phase 4c-3)", () => {
+        component["initUndoManager"]();
+        component.onBoxSelected({ ids: ["a", "b", "c"], additive: false });
+        component.onArrange("distributeX");
+        component.onArrange("top");
+        const ws = component.getLayoutWidgets();
+        expect(ws.slice(0, 3).map((w: any) => [w.x, w.y])).toEqual([
+          [0, 0],
+          [200, 0],
+          [400, 0],
+        ]);
+        component.onArrange("right");
+        expect(
+          component
+            .getLayoutWidgets()
+            .slice(0, 3)
+            .map((w: any) => w.x),
+        ).toEqual([400, 400, 400]);
+      });
+
       it("shows the several-widgets panel instead of the widget panel", () => {
         component.isWidgetConfigVisible = true;
         component.onSelectionToggled("b");

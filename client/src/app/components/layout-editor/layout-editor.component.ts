@@ -1,3 +1,4 @@
+import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
 import {
   canMultiSelect,
   makeMain,
@@ -49,6 +50,7 @@ import {
 } from "@app/components/ui-editor/ui-editor-data.helper";
 import {
   findDefaultWidgetId,
+  handleArrange,
   handleLayerOrder,
   handleRemoveWidgets,
 } from "@app/components/ui-editor/ui-editor-widget.helper";
@@ -304,6 +306,11 @@ export class LayoutEditorComponent
       this.editingLayout ?? undefined,
     );
     this.cdr.markForCheck();
+  }
+
+  /** Align / distribute / same size from the several-widgets panel (phase 4c-3). */
+  onArrange(action: ArrangeAction): void {
+    handleArrange(this, action, this.editingLayout ?? undefined);
   }
 
   keepOnlyMainSelected(): void {

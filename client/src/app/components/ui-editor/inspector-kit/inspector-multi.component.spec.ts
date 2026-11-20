@@ -48,4 +48,36 @@ describe("InspectorMultiComponent", () => {
     (q("#kit-multi-delete") as HTMLButtonElement).click();
     expect(asked).toBe(1);
   });
+
+  it("has align, distribute and same-size tools (phase 4c-3)", () => {
+    const actions: string[] = [];
+    fixture.componentInstance.arrange.subscribe((a) => actions.push(a));
+    const tools = fixture.nativeElement.querySelectorAll("[data-arrange]");
+    expect(tools.length).toBe(10);
+    (q('[data-arrange="left"]') as HTMLButtonElement).click();
+    (q('[data-arrange="sameHeight"]') as HTMLButtonElement).click();
+    expect(actions).toEqual(["left", "sameHeight"]);
+    // distributing needs 3: greyed out with 2
+    expect(
+      (q('[data-arrange="distributeX"]') as HTMLButtonElement).disabled,
+    ).toBeTrue();
+    expect(
+      (q('[data-arrange="top"]') as HTMLButtonElement).disabled,
+    ).toBeFalse();
+    // one of the two is locked: the note says so
+    expect(q("#kit-multi-locked-note")).not.toBeNull();
+  });
+
+  it("enables distributing with 3 and hides the note without locked widgets", () => {
+    fixture.componentRef.setInput("items", [
+      { id: "a", name: "A", icon: "timer" },
+      { id: "b", name: "B", icon: "timer" },
+      { id: "c", name: "C", icon: "timer" },
+    ]);
+    fixture.detectChanges();
+    expect(
+      (q('[data-arrange="distributeY"]') as HTMLButtonElement).disabled,
+    ).toBeFalse();
+    expect(q("#kit-multi-locked-note")).toBeNull();
+  });
 });

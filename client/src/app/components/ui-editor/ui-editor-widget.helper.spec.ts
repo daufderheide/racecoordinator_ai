@@ -952,6 +952,20 @@ describe("ui-editor-widget.helper", () => {
       expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
     });
 
+    it("aligns the selection as one undo step, locked ones stay (phase 4c-3)", () => {
+      const { handleArrange } = require("./ui-editor-widget.helper");
+      const { a, b, l, comp, ui } = setup();
+      a.y = 40;
+      const r = handleArrange(comp, "top");
+      expect(r).toEqual({ changed: 1, skipped: 1 });
+      expect([a.y, b.y, l.y]).toEqual([10, 10, 10]);
+      expect(comp.captureState).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(ui.layoutJson).widgets[0].y).toBe(10);
+      // nothing to change: no undo step
+      handleArrange(comp, "top");
+      expect(comp.captureState).toHaveBeenCalledTimes(1);
+    });
+
     it("deletes several at once and leaves nothing selected", () => {
       const { handleRemoveWidgets } = require("./ui-editor-widget.helper");
       const { comp } = setup();

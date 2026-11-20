@@ -1,7 +1,13 @@
 import {
+  canMultiSelect,
   clampGroupDelta,
   movableIds,
 } from "@app/components/ui-editor/multi-select.utils";
+import {
+  arrange,
+  ArrangeAction,
+  ArrangeResult,
+} from "@app/components/ui-editor/arrange.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import {
   LaneGridReplicationHelper,
@@ -612,6 +618,44 @@ export function handleRemoveWidgets(
   comp.selectedAnchor = null;
   comp.selectedWidgetId = null;
   comp.onLayoutChanged({ ...layout, widgets: newWidgets }, targetUi);
+}
+
+/**
+ * Align / distribute / same size for the selected widgets (phase 4c-3), as
+ * one undo step. Locked widgets are left as they are.
+ */
+export function handleArrange(
+  comp: any,
+  action: ArrangeAction,
+  ui?: CustomUI,
+): ArrangeResult {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  const none = { changed: 0, skipped: 0 };
+  if (!layout?.widgets) return none;
+  const byId = new Map<string, any>(layout.widgets.map((w: any) => [w.id, w]));
+  const selected = (comp.selectedWidgetIds || [])
+    .map((id: string) => byId.get(id))
+    .filter((w: any) => w && canMultiSelect(w));
+  if (selected.length < 2) return none;
+  const result = arrange(
+    selected,
+    action,
+    comp.getLayoutBaseWidth(targetUi),
+    comp.getLayoutBaseHeight(targetUi),
+  );
+  if (!result.changed) return result;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+  return result;
 }
 
 export function isWidgetHeightAutoCalculated(

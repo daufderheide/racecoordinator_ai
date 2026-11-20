@@ -1514,3 +1514,44 @@ app-inspector-multi {
   justify-content: flex-end;
   padding: 6px 12px 12px;
 }
+
+/* align / distribute / same size (phase 4c-3) */
+.kit-arrange {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 6px;
+  border-bottom: 1px solid var(--k-line);
+}
+
+.kit-arrange-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kit-arrange-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--k-text);
+}
+
+.kit-arrange .kit-buttons {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.kit-arrange-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--k-muted);
+}
+
+.kit-arrange-note .material-icons {
+  font-size: 15px;
+}
