@@ -317,6 +317,9 @@ export class RaceEditorPersistenceHelper {
     wasNew: boolean,
     isAutoSave: boolean,
   ): Promise<any> {
+    // Exactly what is sent. Edits made while the request is in flight must not
+    // be marked as saved when it returns (#1195).
+    const sentState = deepCopy(host.editingRace);
     const payload = RaceEditorNormalizationHelper.buildRacePayload(
       host.editingRace,
     );
@@ -330,7 +333,7 @@ export class RaceEditorPersistenceHelper {
       host.subscriptions.push(
         obs.subscribe({
           next: (result) => {
-            this.handleSaveSuccess(host, result, wasNew, isAutoSave);
+            this.handleSaveSuccess(host, result, wasNew, isAutoSave, sentState);
             resolve(result);
           },
           error: (err) => {
@@ -347,6 +350,7 @@ export class RaceEditorPersistenceHelper {
     result: any,
     wasNew: boolean,
     isAutoSave: boolean,
+    sentState: any = deepCopy(host.editingRace),
   ): void {
     host.isSaving = false;
     host.isAutoSaving = false;
@@ -355,34 +359,56 @@ export class RaceEditorPersistenceHelper {
 
     if (wasNew && result?.entity_id) {
       host.editingRace.entity_id = result.entity_id;
+      sentState.entity_id = result.entity_id;
     }
+
+    // Anything typed while this request was in flight (e.g. the "0" of "10"
+    // after the "1" started an auto-save) is not on the server yet (#1195).
+    const changedDuringSave =
+      JSON.stringify(host.editingRace) !== JSON.stringify(sentState);
+    const leaveEditMode = !isAutoSave || host.transitionToReadOnlyOnSave;
 
     if (wasNew) {
       host.isEditMode = true;
       host.isPreservingEditModeOnNavigation = true;
       host.defaultRaceName = host.editingRace.name;
-    } else if (!isAutoSave || host.transitionToReadOnlyOnSave) {
+    } else if (leaveEditMode && !changedDuringSave) {
       host.isEditMode = false;
       host.transitionToReadOnlyOnSave = false;
     }
 
-    host.originalRace = deepCopy(host.editingRace);
-    host.undoManager.resetTracking(host.editingRace);
-    host.selectedRace = deepCopy(host.editingRace);
-    host.selectedRaceId = host.editingRace.entity_id;
+    // Track what the server has, not what is on screen now.
+    host.originalRace = deepCopy(sentState);
+    host.undoManager.resetTracking(sentState);
+    host.selectedRace = deepCopy(sentState);
+    host.selectedRaceId = sentState.entity_id;
 
     const idx = host.allRaces.findIndex(
-      (r) => r.entity_id === host.editingRace.entity_id,
+      (r) => r.entity_id === sentState.entity_id,
     );
     if (idx >= 0) {
-      host.allRaces[idx] = deepCopy(host.editingRace);
+      host.allRaces[idx] = deepCopy(sentState);
     } else {
-      host.allRaces.push(deepCopy(host.editingRace));
+      host.allRaces.push(deepCopy(sentState));
     }
     host.updateRaceSelectItems();
     host.cdr.detectChanges();
     if (wasNew) {
       host.focusNameInput();
+    }
+
+    if (changedDuringSave) {
+      // Save the newer edits now. A manual save or a "leave edit mode" that
+      // came in during the auto-save stays a manual save, so the editor
+      // leaves edit mode (or navigates back) once everything is stored.
+      if (wasNew && !host.navigateBackOnSave) {
+        this.handleNewRaceNavigation(host, savedEntityId, isAutoSave);
+      }
+      // A new race stays in edit mode after its first save, so its follow-up
+      // save is an auto-save too.
+      host.transitionToReadOnlyOnSave = !wasNew && leaveEditMode;
+      this.updateRace(host, wasNew || (isAutoSave && !leaveEditMode));
+      return;
     }
 
     if (host.navigateBackOnSave) {
