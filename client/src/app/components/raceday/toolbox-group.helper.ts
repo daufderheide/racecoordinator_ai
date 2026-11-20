@@ -163,6 +163,11 @@ export class ToolboxGroupHelper {
           labelKey: "UE_WIDGET_TYPE_ACTION_OPEN_PREDICTION_RESULTS",
         },
         {
+          type: "action-race-again",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_ACTION_RACE_AGAIN",
+        },
+        {
           type: "action-open-race-results",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_ACTION_OPEN_RACE_RESULTS",

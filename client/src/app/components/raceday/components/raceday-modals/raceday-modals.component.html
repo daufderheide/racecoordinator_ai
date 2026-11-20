@@ -65,7 +65,11 @@
 <app-confirmation-modal
   [visible]="showRaceAgainConfirmation()"
   title="RD_CONFIRM_RACE_AGAIN_TITLE"
-  message="RD_CONFIRM_RACE_AGAIN_MESSAGE"
+  [message]="
+    raceAgainIsEvent()
+      ? 'RD_CONFIRM_RACE_AGAIN_EVENT_MESSAGE'
+      : 'RD_CONFIRM_RACE_AGAIN_MESSAGE'
+  "
   confirmText="GEN_YES"
   cancelText="GEN_NO"
   (confirm)="raceAgainConfirm.emit()"

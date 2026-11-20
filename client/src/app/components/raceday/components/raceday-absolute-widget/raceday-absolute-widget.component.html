@@ -335,6 +335,12 @@
             [parent]="parentComponent()"
           ></app-raceday-action-button>
         }
+        @case ("action-race-again") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
         @case ("action-add-lap") {
           <app-raceday-action-button
             [widget]="widget()"

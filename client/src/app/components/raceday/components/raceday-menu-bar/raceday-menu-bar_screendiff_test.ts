@@ -341,6 +341,55 @@ test.describe("Raceday Menu Bar Visuals", () => {
     );
   });
 
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  test("should display menu bar with File dropdown open and Race Again disabled before the last race of an event", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      window.history.replaceState({ appHistoryIndex: 1 }, "");
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    await page.locator(".dashboard-wrapper").waitFor();
+    await TestSetupHelper.mockRaceData(page, {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Screendiff Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [{ objectId: "l1", length: 10 }],
+          },
+        },
+        isEvent: true,
+        eventName: "Club Event",
+        currentEventRaceIndex: 0,
+        totalEventRaces: 3,
+      },
+    });
+    await TestSetupHelper.sendRaceState(page, RaceState.RACE_OVER);
+
+    const menuBar = page.locator("app-raceday-menu-bar");
+    await expect(menuBar).toBeVisible();
+
+    const fileBtn = menuBar.locator(".menu-button-top").first();
+    await fileBtn.click();
+
+    const dropdown = menuBar.locator(".menu-dropdown");
+    await expect(dropdown).toBeVisible();
+    await expect(dropdown.locator(".race-again-item")).toHaveClass(/disabled/);
+
+    await expect(page).toHaveScreenshot(
+      "raceday-menu-bar-file-open-event-mid.png",
+    );
+  });
+
   test("should display menu bar with File dropdown open and back disabled", async ({
     page,
   }) => {

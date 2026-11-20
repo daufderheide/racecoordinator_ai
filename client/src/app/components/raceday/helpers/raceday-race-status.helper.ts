@@ -145,13 +145,23 @@ export class RacedayRaceStatusHelper {
 
   /**
    * File → Race Again restarts the same race, so it is only available once the
-   * race is over. https://github.com/daufderheide/racecoordinator_ai/issues/679
+   * race is over. In an event it restarts the whole event, so it is only
+   * available once the last race of the event is over.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/679
    */
   static isRaceAgainDisabled(host: any): boolean {
     if (host.authService.currentRole === Role.VIEWER) {
       return true;
     }
-    return host.raceState !== RaceState.RACE_OVER;
+    if (host.raceState !== RaceState.RACE_OVER) {
+      return true;
+    }
+    const race = host.race as any;
+    const isEventBeforeLastRace =
+      !!race?.is_event &&
+      (race?.current_event_race_index ?? 0) + 1 <
+        (race?.total_event_races ?? 0);
+    return isEventBeforeLastRace;
   }
 
   static isAddLapDisabled(host: any): boolean {

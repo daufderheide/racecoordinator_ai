@@ -224,6 +224,12 @@
         (change)="onSettingsChange()"
       ></app-action-button-inspector>
     }
+    @case ("action-race-again") {
+      <app-action-button-inspector
+        [widget]="widget()"
+        (change)="onSettingsChange()"
+      ></app-action-button-inspector>
+    }
     @case ("action-add-lap") {
       <app-action-button-inspector
         [widget]="widget()"

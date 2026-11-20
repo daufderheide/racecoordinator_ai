@@ -27,7 +27,7 @@ describe("ToolboxGroupHelper", () => {
     ]);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
-    expect(actionsSg?.widgets.length).toBe(21);
+    expect(actionsSg?.widgets.length).toBe(22);
 
     const standingsSg = rcAiGroup.subgroups.find(
       (sg) => sg.id === "standings-heats",
@@ -63,7 +63,7 @@ describe("ToolboxGroupHelper", () => {
       lapTimesSg?.widgets.find((w) => w.type === "lane-col:driftIndicator"),
     ).toBeDefined();
 
-    expect(rcAiGroup.totalCount).toBe(133);
+    expect(rcAiGroup.totalCount).toBe(134);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -90,7 +90,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       actionsSg?.widgets.find((w) => w.type === "action-start-resume"),
     ).toBeDefined();
-    expect(actionsSg?.widgets.length).toBe(21);
+    expect(actionsSg?.widgets.length).toBe(22);
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
     expect(
@@ -102,7 +102,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(133);
+    expect(rcAiGroup.totalCount).toBe(134);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {

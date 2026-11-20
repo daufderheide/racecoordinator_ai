@@ -42,6 +42,7 @@ export class RacedayToolboxHelper {
       "action-defer-heat",
       "action-skip-heat",
       "action-skip-race",
+      "action-race-again",
       "action-add-lap",
       "action-modify-heats",
       "action-export-pdf",
