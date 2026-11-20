@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { BehaviorSubject } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { RacedayColumnLayoutHelper } from "@app/components/raceday/helpers/raceday-column-layout.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -157,6 +158,60 @@ describe("RacedayLaneViewComponent", () => {
       "RD_COL_LAPS",
     ]);
     expect(await harness.getRowCount()).toBe(2);
+  });
+
+  it("formats native gaps and insets with the lane view's settings in either widget order", async () => {
+    const table = {
+      widgetType: "lane-view",
+      customSettings: {
+        gapTarget: "leader",
+        gapMode: "always_time",
+        timeDecimalPlaces: 2,
+      },
+    };
+    const gridCell = {
+      widgetType: "lane-column",
+      customSettings: { gapTarget: "position", gapMode: "laps_and_time" },
+    };
+    Object.assign(mockParent, {
+      currentRacedayColumns: ["gap"],
+      currentColumnLayouts: {
+        gap: { "center-center": "gap", "bottom-right": "gapPositionF1" },
+      },
+      currentColumnAnchors: {},
+      editingSettings: () => ({}),
+      reindexColumnLayout: RacedayLayoutUtils.reindexColumnLayout,
+      getLayoutEntries: RacedayLayoutUtils.getLayoutEntries,
+      updateAudioRelevance: () => {},
+      driverRankings: new Map(),
+      raceService: { getRace: () => ({}) },
+      getDriverParticipant: () => undefined,
+      translationService: { translate: () => "+{{count}} Lap" },
+      getDefaultLaneWidgetSettings: () =>
+        mockParent.currentRacedayLayout.widgets[0].customSettings,
+      formatValue: RacedayColumnLayoutHelper.formatValue.bind(null, mockParent),
+      formatColumnValue: RacedayColumnLayoutHelper.formatColumnValue.bind(
+        null,
+        mockParent,
+      ),
+    });
+    Object.assign(mockParent.sortedHeatDrivers[0], {
+      gapLeader: 7.25,
+      gapPositionF1: 2.5,
+      lapsDownPosition: 1,
+    });
+    fixture.componentRef.setInput("widget", table);
+    for (const widgets of [
+      [gridCell, table],
+      [table, gridCell],
+    ]) {
+      mockParent.currentRacedayLayout = { widgets };
+      RacedayColumnLayoutHelper.loadColumns(mockParent);
+      fixture.detectChanges();
+      const [cell] = await harness.getRowCells(0);
+      expect(cell).toContain("+7.25");
+      expect(cell).toContain("+1 Lap");
+    }
   });
 
   it("should display drift indicator when column layout includes driftIndicator property", async () => {

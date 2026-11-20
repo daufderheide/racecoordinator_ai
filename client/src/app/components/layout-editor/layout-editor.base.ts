@@ -1,8 +1,6 @@
 import { ChangeDetectorRef } from "@angular/core";
-import { StackedColumnIssue } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import { LaneGridSession } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
-import { exportMigrationDiagnostics as exportDiagnosticsHelper } from "@app/components/ui-editor/ui-editor-io.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, LayoutScaleMode } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
@@ -16,7 +14,6 @@ import {
   setLastEditedWidgetForLayout,
 } from "./layout-editor.helper";
 import {
-  canUpgradeLegacyHeatView,
   clearLayout,
   exportLayout,
   getCanvasViewportMaxHeight,
@@ -34,7 +31,6 @@ import {
   getPreviewContainerWidth,
   getPreviewScale,
   getPreviewScaleNumber,
-  getStackedColumnsBannerDesc,
   getWidgetDisplayName,
   getWidgetTypeLabelKey,
   handleGridBringToFront,
@@ -42,13 +38,8 @@ import {
   handleGridDetach,
   handleGridReMirror,
   handleGridTemplateEdit,
-  handleOpenReviewStackedColumnsModal,
-  handleRestorePreMigrationBackup,
-  handleUpgradeLegacyHeatView,
-  hasStackedColumns,
   isCountdownPreviewActive,
   isCustomWidget,
-  isMigratedLayout,
   isWidgetHeightAutoCalculated,
   isWidgetWidthAutoCalculated,
   nudgeSelectedWidget,
@@ -64,8 +55,6 @@ import {
   onWidgetWidthChange,
   onWidgetXChange,
   onWidgetYChange,
-  parseLayoutConfig,
-  quickFixStackedColumns,
   removeSelectedWidget,
   resetLayout,
   resetLayoutZoom,
@@ -104,9 +93,6 @@ export abstract class LayoutEditorBase {
   importErrorMessage = "";
   importErrorParams: Record<string, any> = {};
   showReplicateModal = false;
-  showReviewStackedColumnsModal = false;
-  stackedColumnsToReview: any = null;
-  detectedStackedIssues: StackedColumnIssue[] = [];
 
   replicateBindingMode: "lane" | "position" | "overallPosition" | "seed" =
     "lane";
@@ -575,58 +561,6 @@ export abstract class LayoutEditorBase {
   exportLayout(): void {
     if (this.editingLayout) {
       exportLayout(this.editingLayout);
-    }
-  }
-
-  // --- Stacked Columns & Migration ---
-  hasStackedColumns(): boolean {
-    return this.editingLayout
-      ? hasStackedColumns(this.editingLayout, this.availableColumns)
-      : false;
-  }
-
-  getStackedColumnsBannerDesc(): string {
-    return this.editingLayout
-      ? getStackedColumnsBannerDesc(
-          this.editingLayout,
-          this.translationService,
-          this.availableColumns,
-        )
-      : "";
-  }
-
-  openReviewStackedColumnsModal(): void {
-    handleOpenReviewStackedColumnsModal(this);
-  }
-
-  quickFixStackedColumns(): void {
-    if (this.editingLayout) {
-      quickFixStackedColumns(this.editingLayout, this);
-    }
-  }
-
-  isMigratedLayout(): boolean {
-    return this.editingLayout ? isMigratedLayout(this.editingLayout) : false;
-  }
-
-  canUpgradeLegacyHeatView(): boolean {
-    return this.editingLayout
-      ? canUpgradeLegacyHeatView(this.editingLayout)
-      : false;
-  }
-
-  restorePreMigrationBackup(): void {
-    handleRestorePreMigrationBackup(this);
-  }
-
-  upgradeLegacyHeatView(): void {
-    handleUpgradeLegacyHeatView(this);
-  }
-
-  exportMigrationDiagnostics(): void {
-    if (this.editingLayout) {
-      const currentLayout = parseLayoutConfig(this.editingLayout);
-      exportDiagnosticsHelper(this.editingLayout, currentLayout);
     }
   }
 }

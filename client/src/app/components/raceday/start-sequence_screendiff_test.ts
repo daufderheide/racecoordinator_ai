@@ -117,6 +117,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
   });
 
   test("should show all green lamps when race starts", async ({ page }) => {
+    await page.clock.install();
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -154,7 +155,9 @@ test.describe("Raceday Start Sequence Visuals", () => {
       time: 0.1,
       autoStartRemaining: 0.1,
     });
+    await page.clock.pauseAt(new Date(Date.now() + 1000));
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
+    await page.clock.runFor(50);
 
     const overlay = page.locator(".countdown-overlay");
     await overlay.waitFor({ state: "visible" });
@@ -169,6 +172,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
   test("should stay green if a late countdown message arrives after race start", async ({
     page,
   }) => {
+    await page.clock.install();
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -206,16 +210,15 @@ test.describe("Raceday Start Sequence Visuals", () => {
       time: 0.1,
       autoStartRemaining: 0.1,
     });
+    await page.clock.pauseAt(new Date(Date.now() + 1000));
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
 
-    // 2. Wait a tiny bit, but less than 1s (overlay still visible)
-
-    // 3. Send a late RACETIME message that would normally show red lamps if the state check wasn't there
-    // For example, if we were back in STARTING at 2.5s
+    // Send a late race time while the one-second green overlay is still visible.
     await TestSetupHelper.sendRaceTime(page, {
       time: 2.5,
       autoStartRemaining: 2.5,
     });
+    await page.clock.runFor(50);
 
     const overlay = page.locator(".countdown-overlay");
     await overlay.waitFor({ state: "visible" });

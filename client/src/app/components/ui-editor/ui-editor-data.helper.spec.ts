@@ -15,6 +15,7 @@ import {
   refreshUiEditorDisplayProperties,
   resolveBackNavigation,
 } from "./ui-editor-data.helper";
+import { resolveActiveLayout } from "./ui-editor-widget.helper";
 
 describe("ui-editor-data.helper", () => {
   it("should ensure default custom UIs for raceday, practice, fuel, and driver station", () => {
@@ -23,6 +24,13 @@ describe("ui-editor-data.helper", () => {
 
     ensureDefaultCustomUis(uis, settings);
     expect(uis.length).toBe(4);
+    for (const [id, template] of [
+      ["default_ui_layout_rc_ai", Settings.DEFAULT_LAYOUT],
+      ["practice_ui_layout_rc_ai", Settings.DEFAULT_PRACTICE_LAYOUT],
+    ] as const) {
+      const ui = uis.find((item) => item.entity_id === id)!;
+      expect(JSON.parse(ui.layoutJson!)).toEqual(template);
+    }
     expect(
       uis.some((u) => u.entity_id === "default_ui_layout_rc_ai"),
     ).toBeTrue();
@@ -35,6 +43,49 @@ describe("ui-editor-data.helper", () => {
     expect(
       uis.some((u) => u.entity_id === "driver_station_ui_layout_rc_ai"),
     ).toBeTrue();
+  });
+
+  it("opens the saved race and practice lane views even when their settings are already current", () => {
+    const customUIs = [
+      "default_ui_layout_rc_ai",
+      "practice_ui_layout_rc_ai",
+    ].map((id) => ({
+      name: id,
+      entity_id: id,
+      is_default: true,
+      layoutJson: JSON.stringify({
+        widgets: [
+          {
+            id: id + "-table",
+            widgetType: "lane-view",
+            x: 10,
+            y: 20,
+            width: 800,
+            height: 400,
+            zIndex: 1,
+            customSettings: { highlightLapStyle: "classic" },
+          },
+        ],
+      }),
+    }));
+    const { initialState } = processLoadedEditorData(
+      {
+        assets: [],
+        dirHandle: null,
+        widgetDirHandle: null,
+        themes: [],
+        tracks: [],
+        customUIs,
+      },
+      new Settings(),
+    );
+
+    for (const ui of customUIs) {
+      const layout = resolveActiveLayout(ui, initialState.settings);
+      expect(layout?.widgets.map((w) => w.id)).toEqual([
+        ui.entity_id + "-table",
+      ]);
+    }
   });
 
   it("should normalize loaded custom UIs without adding missing defaults", () => {
@@ -675,6 +726,114 @@ describe("ui-editor-data.helper", () => {
   });
 
   describe("gap migration in normalizeLoadedCustomUis", () => {
+    it("loads settings-only race and practice tables without changing their gap columns", () => {
+      const settings = new Settings();
+      const columns = ["gapLeader", "gapPositionF1"];
+      const widths = { gapLeader: 110, gapPositionF1: 245 };
+      settings.racedayColumns = [...columns];
+      settings.columnWidths = { ...widths };
+      settings.practiceRacedayColumns = [...columns];
+      settings.practiceColumnWidths = { ...widths };
+      const emptyData = {
+        assets: [],
+        dirHandle: null,
+        widgetDirHandle: null,
+        themes: [],
+        tracks: [],
+        customUIs: [],
+      };
+      const { initialState } = processLoadedEditorData(emptyData, settings);
+
+      for (const id of [
+        "default_ui_layout_rc_ai",
+        "practice_ui_layout_rc_ai",
+      ]) {
+        const ui = initialState.customUIs!.find(
+          (item) => item.entity_id === id,
+        )!;
+        expect(
+          resolveActiveLayout(ui, initialState.settings)?.widgets.some(
+            (w) => w.widgetType === "lane-view",
+          ),
+        ).toBeTrue();
+        expect(JSON.parse(ui.columnsJson!)).toEqual(columns);
+        expect(JSON.parse(ui.columnWidthsJson!)).toEqual(widths);
+      }
+      expect(initialState.settings.racedayColumns).toEqual(columns);
+      expect(initialState.settings.practiceRacedayColumns).toEqual(columns);
+    });
+
+    it("loads a stored modular preset when settings have no layout", () => {
+      const stored = {
+        entity_id: "default_ui_layout_rc_ai",
+        name: "RC AI",
+        is_default: true,
+        layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
+      };
+      const { initialState } = processLoadedEditorData(
+        {
+          assets: [],
+          dirHandle: null,
+          widgetDirHandle: null,
+          themes: [],
+          tracks: [],
+          customUIs: [stored],
+        },
+        new Settings(),
+      );
+      const layout = resolveActiveLayout(stored, initialState.settings);
+      expect(layout?.widgets.map((w) => w.id)).toEqual(
+        Settings.DEFAULT_LAYOUT.widgets.map((w) => w.id),
+      );
+    });
+
+    it("keeps gap column identities for an existing backup and settings-only lane views", () => {
+      const settings = new Settings();
+      const columns = ["gapLeader", "gapPositionF1"];
+      const widths = { gapLeader: 110, gapPositionF1: 245 };
+      const layouts = {
+        gapLeader: {
+          "center-center": "gapLeader",
+          "top-right": "gapPositionF1",
+        },
+        gapPositionF1: {
+          "center-center": "gapPositionF1",
+          "top-right": "overallGapLeader",
+        },
+      };
+      const ui: CustomUI = {
+        entity_id: "existing-backup",
+        name: "Club (Pre-Migration Backup)",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          preserveLegacyHeatView: true,
+          widgets: [{ widgetType: "lane-view" }],
+        }),
+        columnsJson: JSON.stringify(columns),
+        columnWidthsJson: JSON.stringify(widths),
+        columnLayoutsJson: JSON.stringify(layouts),
+      };
+      settings.racedayColumns = [...columns];
+      settings.columnWidths = { ...widths };
+      settings.columnLayouts = structuredClone(layouts);
+      settings.practiceRacedayLayout = JSON.parse(ui.layoutJson!);
+      settings.practiceRacedayColumns = [...columns];
+      settings.practiceColumnWidths = { ...widths };
+      settings.practiceColumnLayouts = structuredClone(layouts);
+
+      normalizeLoadedCustomUis([ui], settings);
+
+      expect(JSON.parse(ui.columnsJson!)).toEqual(columns);
+      expect(JSON.parse(ui.columnWidthsJson!)).toEqual(widths);
+      expect(JSON.parse(ui.columnLayoutsJson!)).toEqual(layouts);
+      expect(settings.racedayColumns).toEqual(columns);
+      expect(settings.columnWidths).toEqual(widths);
+      expect(settings.columnLayouts).toEqual(layouts);
+      expect(settings.practiceRacedayColumns).toEqual(columns);
+      expect(settings.practiceColumnWidths).toEqual(widths);
+      expect(settings.practiceColumnLayouts).toEqual(layouts);
+    });
+
     it("should migrate legacy gap widgets, columns, widths, and layouts across CustomUIs and editingSettings", () => {
       const customUis: CustomUI[] = [
         {

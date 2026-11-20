@@ -878,6 +878,14 @@ export class RacedayFormatUtils {
     anchor?: string,
   ): string {
     const prop = propertyName || column?.propertyName || "";
+    if (
+      (prop === "participant.fuelLevel" ||
+        prop === "fuelCapacity" ||
+        prop === "fuelPercentage") &&
+      this.isEmptyDriver(heatDriver)
+    ) {
+      return "--";
+    }
     if (column && prop === column.propertyName && column.formatter) {
       return column.formatter(
         RacedayFormatUtils.getPropertyValue(
@@ -890,6 +898,7 @@ export class RacedayFormatUtils {
         heatDriver,
         column,
         anchor,
+        ctx.laneViewWidgetSettings,
       );
     }
     const value = RacedayFormatUtils.getPropertyValue(

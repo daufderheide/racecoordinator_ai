@@ -1,8 +1,6 @@
 import { firstValueFrom } from "rxjs";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
-import { LaneGridRepairHelper } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
-import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import {
   handleBringGridToFront,
   handleDeleteGrid,
@@ -14,11 +12,7 @@ import {
 import {
   buildLayoutExport,
   downloadJsonFile,
-  exportMigrationDiagnostics,
   formatImportErrorMessage,
-  preMigrationLayoutCache,
-  restorePreMigrationLayout,
-  upgradePreservedHeatViewLayout,
 } from "@app/components/ui-editor/ui-editor-io.helper";
 import {
   applyClearLayout,
@@ -53,7 +47,6 @@ import {
 } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, LayoutScaleMode, Settings } from "@app/models/settings";
-import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
 
@@ -637,60 +630,6 @@ export function exportLayout(ui: CustomUI): void {
   downloadJsonFile(layoutExport, fileName || defaultFileName);
 }
 
-export function hasStackedColumns(
-  ui: CustomUI,
-  availableColumns: any[],
-): boolean {
-  if (!ui) return false;
-  const layout = parseLayoutConfig(ui);
-  return LaneGridRepairHelper.detectStackedColumns(layout, availableColumns)
-    .hasIssues;
-}
-
-export function getStackedColumnsBannerDesc(
-  ui: CustomUI,
-  translationService: TranslationService,
-  availableColumns: any[],
-): string {
-  const layout = parseLayoutConfig(ui);
-  const result = LaneGridRepairHelper.detectStackedColumns(
-    layout,
-    availableColumns,
-  );
-  if (result.totalDuplicatesCount === 1) {
-    return (
-      translationService?.translate("UE_STACKED_COLUMNS_BANNER_DESC_ONE") ||
-      "This layout contains 1 duplicate or overlapping column."
-    );
-  }
-  return (
-    translationService?.translate("UE_STACKED_COLUMNS_BANNER_DESC") ||
-    "This layout contains duplicate or overlapping columns."
-  );
-}
-
-export function quickFixStackedColumns(ui: CustomUI, comp: any): void {
-  const layout = parseLayoutConfig(ui);
-  const repaired = LaneGridRepairHelper.repairStackedColumns(
-    layout,
-    comp.availableColumns,
-  );
-  saveLayoutConfig(ui, repaired.layout);
-  comp.captureState?.();
-  comp.cdr?.markForCheck();
-}
-
-export function isMigratedLayout(ui: CustomUI): boolean {
-  if (!ui?.entity_id) return false;
-  return preMigrationLayoutCache.has(ui.entity_id);
-}
-
-export function canUpgradeLegacyHeatView(ui: CustomUI): boolean {
-  if (!ui?.entity_id) return false;
-  const layout = parseLayoutConfig(ui);
-  return LaneViewMigrationHelper.canUpgradeLegacyHeatView(layout, ui?.name);
-}
-
 export async function handleStartNewLayout(
   comp: any,
   templateId?: string,
@@ -773,47 +712,7 @@ export async function handleDeleteCurrentLayout(comp: any): Promise<void> {
   }
 }
 
-export function handleOpenReviewStackedColumnsModal(comp: any): void {
-  if (comp.editingLayout) {
-    const layout = parseLayoutConfig(comp.editingLayout);
-    const res = LaneGridRepairHelper.detectStackedColumns(
-      layout,
-      comp.availableColumns,
-    );
-    comp.detectedStackedIssues = res.issues || [];
-  }
-  comp.showReviewStackedColumnsModal = true;
-}
-
-export function handleRestorePreMigrationBackup(comp: any): void {
-  if (comp.editingLayout) {
-    const res = restorePreMigrationLayout(comp.editingLayout, comp.allLayouts);
-    if (res.restored) {
-      const parsed = parseLayoutConfig(comp.editingLayout);
-      comp.syncRacedayPreview?.(parsed);
-      comp.captureState?.();
-      comp.cdr?.markForCheck();
-    }
-  }
-}
-
-export function handleUpgradeLegacyHeatView(comp: any): void {
-  if (comp.editingLayout) {
-    const isPractice =
-      comp.editingLayout.entity_id === "practice_ui_layout_rc_ai" ||
-      comp.editingLayout.name?.toLowerCase().includes("practice");
-    const res = upgradePreservedHeatViewLayout(comp.editingLayout, isPractice);
-    if (res.upgraded && res.layout) {
-      const parsed = parseLayoutConfig(comp.editingLayout);
-      comp.syncRacedayPreview?.(parsed);
-      comp.captureState?.();
-      comp.cdr?.markForCheck();
-    }
-  }
-}
-
 export {
-  exportMigrationDiagnostics,
   handleBringGridToFront,
   handleBringGridToFront as handleGridBringToFront,
   handleDeleteGrid,
@@ -827,7 +726,5 @@ export {
   handleUpdateGridBounds,
   handleUpdateGridBounds as updateGridSessionBounds,
   loadLayoutZoomFromStorage,
-  restorePreMigrationLayout,
   saveLayoutZoomToStorage,
-  upgradePreservedHeatViewLayout,
 };

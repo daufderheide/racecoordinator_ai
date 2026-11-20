@@ -17,7 +17,6 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, NavigationStart, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
-import { StackedColumnIssue } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import {
   LaneGridBounds,
   LaneGridSession,
@@ -58,7 +57,6 @@ import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
 import { ReplicateLaneDialogComponent } from "./components/replicate-lane-dialog/replicate-lane-dialog.component";
-import { ReviewStackedColumnsModalComponent } from "./components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
@@ -164,7 +162,6 @@ import {
   LayoutZoomController,
   loadExpanderStateFromStorage,
   MAIN_AUDIO_SLOTS,
-  MigrationController,
   MOCK_RACEDAY_PROPERTIES,
   navigateToEditorHelper,
   openDeleteCustomUiModal,
@@ -189,7 +186,6 @@ import {
   toggleUiExpander,
   UIEditorState,
 } from "./ui-editor-helpers";
-import { StackedColumnsController } from "./ui-editor-stacked-columns.helper";
 
 export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
 
@@ -209,7 +205,6 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     TemplateVariablesModalComponent,
     EnterPathModalComponent,
     ReplicateLaneDialogComponent,
-    ReviewStackedColumnsModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
   ],
@@ -307,71 +302,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  migrationController = new MigrationController(this);
-
-  get dismissedMigrationUis(): Set<string> {
-    return this.migrationController.dismissedMigrationUis;
-  }
-  set dismissedMigrationUis(val: Set<string>) {
-    this.migrationController.dismissedMigrationUis = val;
-  }
-  saveDismissedMigrationUis(): void {
-    this.migrationController.saveDismissedMigrationUis();
-  }
-  isPreMigrationBackup(ui: CustomUI): boolean {
-    return this.migrationController.isPreMigrationBackup(ui);
-  }
-  hasAvailablePreMigrationBackup(ui: CustomUI): boolean {
-    return this.migrationController.hasAvailablePreMigrationBackup(ui);
-  }
-
   get customUIs(): CustomUI[] {
     return this.displayCustomUIs?.length > 0
       ? this.displayCustomUIs
       : this.editingState?.customUIs || [];
   }
-
-  isMigratedLayout = (ui: CustomUI) =>
-    this.migrationController.isMigratedLayout(ui);
-  canUpgradeLegacyHeatView = (ui: CustomUI) =>
-    this.migrationController.canUpgradeLegacyHeatView(ui);
-  canReopenMigrationBanner = (ui: CustomUI) =>
-    this.migrationController.canReopenMigrationBanner(ui);
-  dismissMigrationBanner = (ui: CustomUI) =>
-    this.migrationController.dismissMigrationBanner(ui);
-  reopenMigrationBanner = (ui: CustomUI) =>
-    this.migrationController.reopenMigrationBanner(ui);
-
-  stackedColumnsController = new StackedColumnsController(this);
-  detectedStackedIssues: StackedColumnIssue[] = [];
-  pendingRepairStackedUi: CustomUI | null = null;
-  showReviewStackedColumnsModal = false;
-  showImportStackedConfirm = false;
-  pendingImportStacked: any = null;
-  importStackedCount = 0;
-
-  hasStackedColumns = (ui: CustomUI) =>
-    this.stackedColumnsController.hasStackedColumns(ui);
-  getStackedColumnsIssueCount = (ui: CustomUI) =>
-    this.stackedColumnsController.getStackedColumnsIssueCount(ui);
-  getStackedColumnsBannerDesc = (ui: CustomUI) =>
-    this.stackedColumnsController.getStackedColumnsBannerDesc(ui);
-  canReopenStackedColumnsBanner = (ui: CustomUI) =>
-    this.stackedColumnsController.canReopenStackedColumnsBanner(ui);
-  dismissStackedColumnsBanner = (ui: CustomUI) =>
-    this.stackedColumnsController.dismissStackedColumnsBanner(ui);
-  reopenStackedColumnsBanner = (ui: CustomUI) =>
-    this.stackedColumnsController.reopenStackedColumnsBanner(ui);
-  openReviewStackedColumnsModal = (ui: CustomUI) =>
-    this.stackedColumnsController.openReviewStackedColumnsModal(ui);
-  quickFixStackedColumns = (ui: CustomUI) =>
-    this.stackedColumnsController.quickFixStackedColumns(ui);
-  confirmRepairStackedColumns = () =>
-    this.stackedColumnsController.confirmRepairStackedColumns();
-  confirmRepairImportedLayout = () =>
-    this.stackedColumnsController.confirmRepairImportedLayout();
-  cancelRepairImportedLayout = (importAsIs = false) =>
-    this.stackedColumnsController.cancelRepairImportedLayout(importAsIs);
 
   showSuccessModal = false;
   successModalTitle = "";
@@ -725,26 +660,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.layoutActionsController.onImportRacedayLayout(event);
   onImportPracticeRacedayLayout = (event: Event) =>
     this.layoutActionsController.onImportPracticeRacedayLayout(event);
-
-  showRestoreBackupConfirm = false;
-  pendingRestoreBackupUi: CustomUI | null = null;
-  showUpgradeHeatViewConfirm = false;
-  pendingUpgradeHeatViewUi: CustomUI | null = null;
-
-  restorePreMigrationBackup = (ui: CustomUI) =>
-    this.migrationController.restorePreMigrationBackup(ui);
-  confirmRestorePreMigrationBackup = () =>
-    this.migrationController.confirmRestorePreMigrationBackup();
-  cancelRestorePreMigrationBackup = () =>
-    this.migrationController.cancelRestorePreMigrationBackup();
-  upgradeLegacyHeatView = (ui: CustomUI) =>
-    this.migrationController.upgradeLegacyHeatView(ui);
-  confirmUpgradeLegacyHeatView = () =>
-    this.migrationController.confirmUpgradeLegacyHeatView();
-  cancelUpgradeLegacyHeatView = () =>
-    this.migrationController.cancelUpgradeLegacyHeatView();
-  exportMigrationDiagnostics = (ui: CustomUI) =>
-    this.migrationController.exportMigrationDiagnostics(ui);
 
   areSettingsEqual(a: Settings, b: Settings) {
     return areSettingsEqual(a, b);

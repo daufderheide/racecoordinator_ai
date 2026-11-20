@@ -76,7 +76,6 @@ A tela serve como uma prévia autêntica em tempo real do seu layout, exatamente
   - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado em 10px.
   - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado.
 - **Replicar Pistas**: Replica um cartão de coluna de pista selecionado em todas as pistas ativas, posições da bateria, classificação geral ou cabeças de chave de pilotos.
-- **Detecção e Correção de Colunas Sobrepostas**: O editor detecta automaticamente colunas duplicadas ou sobrepostas em grades de pistas. Um banner de alerta oferece **Correção Rápida** em um clique ou **Revisar Problemas** em uma caixa de diálogo interativa.
 
 ### Widgets Disponíveis e Opções de Configuração
 
@@ -123,8 +122,7 @@ Para obter detalhes completos sobre estilos de widgets, fórmulas e desenvolvime
 
 ---
 
-## Importação, Exportação e Migração
+## Importação e exportação
 
 - **Importar Layout**: Importe um arquivo JSON de layout existente via seleção de arquivos.
 - **Exportar Layout**: Baixe o layout ativo como um arquivo JSON independente.
-- **Backups Pré-Migração**: Para layouts atualizados de versões anteriores, restaure snapshots de backup pré-migração ou exporte diagnósticos de migração para solução de problemas.

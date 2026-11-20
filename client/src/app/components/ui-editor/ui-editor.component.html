@@ -513,30 +513,6 @@
     </app-confirmation-modal>
   }
 
-  <!-- Restore Pre-Migration Backup Confirmation -->
-  <app-confirmation-modal
-    [visible]="showRestoreBackupConfirm"
-    title="UE_CONFIRM_RESTORE_BACKUP_TITLE"
-    message="UE_CONFIRM_RESTORE_BACKUP_MSG"
-    confirmText="COMMON_RESTORE"
-    cancelText="COMMON_CANCEL"
-    (confirm)="confirmRestorePreMigrationBackup()"
-    (cancel)="cancelRestorePreMigrationBackup()"
-  >
-  </app-confirmation-modal>
-
-  <!-- Upgrade Legacy Heat View Confirmation -->
-  <app-confirmation-modal
-    [visible]="showUpgradeHeatViewConfirm"
-    title="UE_CONFIRM_UPGRADE_TITLE"
-    message="UE_CONFIRM_UPGRADE_MSG"
-    confirmText="UE_MIGRATION_UPGRADE_BTN"
-    cancelText="COMMON_CANCEL"
-    (confirm)="confirmUpgradeLegacyHeatView()"
-    (cancel)="cancelUpgradeLegacyHeatView()"
-  >
-  </app-confirmation-modal>
-
   <!-- Success Acknowledgement Modal -->
   <app-acknowledgement-modal
     [visible]="showSuccessModal"
@@ -596,31 +572,4 @@
     (confirm)="onConfirmReplicateLanes($event)"
     (cancel)="showReplicateLaneModal = false"
   ></app-replicate-lane-dialog>
-
-  <!-- Review Stacked Columns Modal -->
-  <app-review-stacked-columns-modal
-    [visible]="showReviewStackedColumnsModal"
-    [issues]="detectedStackedIssues"
-    [layoutName]="
-      activeCustomUi
-        ? (getCustomUiDisplayNameKey(activeCustomUi) | translate)
-        : ''
-    "
-    [availableColumns]="availableColumns"
-    (fix)="confirmRepairStackedColumns()"
-    (cancel)="showReviewStackedColumnsModal = false"
-  ></app-review-stacked-columns-modal>
-
-  <!-- Import Stacked Columns Confirmation Modal -->
-  <app-confirmation-modal
-    [visible]="showImportStackedConfirm"
-    title="UE_STACKED_COLUMNS_IMPORT_ALERT_TITLE"
-    message="UE_STACKED_COLUMNS_IMPORT_ALERT_MSG"
-    [messageParams]="{ count: importStackedCount }"
-    confirmText="UE_STACKED_COLUMNS_IMPORT_REPAIR_BTN"
-    cancelText="UE_STACKED_COLUMNS_IMPORT_AS_IS_BTN"
-    (confirm)="confirmRepairImportedLayout()"
-    (cancel)="cancelRepairImportedLayout(true)"
-  >
-  </app-confirmation-modal>
 </div>

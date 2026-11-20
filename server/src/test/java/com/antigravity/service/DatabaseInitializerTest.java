@@ -72,7 +72,6 @@ public class DatabaseInitializerTest {
       } else {
         assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
       }
-      assertFalse(CustomUI.hasLaneView(ui.getLayoutJson()));
       assertFalse(ui.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
       assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     }
@@ -165,7 +164,6 @@ public class DatabaseInitializerTest {
       } else {
         assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
       }
-      assertFalse(CustomUI.hasLaneView(ui.getLayoutJson()));
       assertFalse(ui.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
       assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     }
@@ -699,70 +697,32 @@ public class DatabaseInitializerTest {
   }
 
   @Test
-  public void testEnsurePreMigrationBackups() {
+  public void testBackfillCustomUIsPreservesLaneViewLayoutsAndExistingBackups() {
+    initializer.resetCustomUIs(context);
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
-    uiRepo.drop();
-
-    CustomUI customUi =
+    String layoutFields =
+        "\"aspectRatio\":\"16:9\",\"baseWidth\":1920,\"baseHeight\":1080,\"scaleMode\":\"stretch\","
+            + "\"widgets\":[{\"id\":\"heat-view\",\"widgetType\":\"lane-view\"}]}";
+    String layoutJson = "{" + layoutFields;
+    String backupJson = "{\"preserveLegacyHeatView\":true," + layoutFields;
+    String backupName = "Earlier Layout (Pre-Migration Backup)";
+    uiRepo.save(
         new CustomUI(
-            "My Club Layout",
-            false,
-            "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
-            "[]",
-            "{}",
-            "{}",
-            "{}",
-            "{}",
-            "custom_1",
-            null);
-    uiRepo.save(customUi);
-
-    initializer.ensurePreMigrationBackups(context, uiRepo);
-
-    List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(2, uis.size());
-    CustomUI backup =
-        uis.stream()
-            .filter(u -> "My Club Layout (Pre-Migration Backup)".equals(u.getName()))
-            .findFirst()
-            .orElse(null);
-    assertNotNull(backup);
-    assertEquals(
-        "{\"preserveLegacyHeatView\":true,\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
-        backup.getLayoutJson());
-
-    // Verify default UI does NOT get backed up (defaults are restored via built-in definitions)
-    CustomUI defaultUi =
+            "My Club Layout", false, layoutJson, "[]", "{}", "{}", "{}", "{}", "custom_1", null));
+    uiRepo.save(
         new CustomUI(
-            CustomUI.DEFAULT_UI_NAME,
-            true,
-            "{\"widgets\":[{\"widgetType\":\"lane-view\"}]}",
-            "[]",
-            "{}",
-            "{}",
-            "{}",
-            "{}",
-            CustomUI.DEFAULT_UI_ID,
-            null);
-    uiRepo.save(defaultUi);
+            backupName, false, backupJson, "[]", "{}", "{}", "{}", "{}", "backup_1", null));
+    int countBeforeBackfill = uiRepo.findAll().size();
 
-    initializer.ensurePreMigrationBackups(context, uiRepo);
+    initializer.backfillCustomUIs(context);
+    initializer.backfillCustomUIs(context);
 
-    List<CustomUI> uisAfter = uiRepo.findAll();
-    // Size should still be 3 (custom_1, backup, defaultUi)
-    assertEquals(3, uisAfter.size());
-    boolean hasDefaultBackup =
-        uisAfter.stream()
-            .anyMatch(
-                u ->
-                    (CustomUI.DEFAULT_UI_NAME + CustomUI.PRE_MIGRATION_BACKUP_SUFFIX)
-                        .equals(u.getName()));
-    assertFalse(hasDefaultBackup);
-
-    // Running again does not duplicate user backups
-    initializer.ensurePreMigrationBackups(context, uiRepo);
-    assertEquals(3, uiRepo.findAll().size());
+    assertEquals(countBeforeBackfill, uiRepo.findAll().size());
+    assertEquals(layoutJson, uiRepo.findByEntityId("custom_1").getLayoutJson());
+    CustomUI backup = uiRepo.findByEntityId("backup_1");
+    assertEquals(backupName, backup.getName());
+    assertEquals(backupJson, backup.getLayoutJson());
   }
 
   @Test

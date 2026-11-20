@@ -9,6 +9,24 @@ describe("RacedayFormatUtils", () => {
   let ctx: FormatContext;
   let hd: DriverHeatData;
 
+  it("shows a placeholder for fuel metrics on an empty lane", () => {
+    const emptyLane = { isEmpty: true, participant: { fuelLevel: 0 } } as any;
+    for (const property of [
+      "participant.fuelLevel",
+      "fuelCapacity",
+      "fuelPercentage",
+    ]) {
+      expect(
+        RacedayFormatUtils.formatColumnValue(
+          emptyLane,
+          undefined,
+          property,
+          ctx,
+        ),
+      ).toBe("--");
+    }
+  });
+
   beforeEach(() => {
     ctx = {
       translate: (key: string) => {

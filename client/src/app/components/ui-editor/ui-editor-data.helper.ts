@@ -3,7 +3,7 @@ import { catchError } from "rxjs/operators";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { CustomUI } from "@app/models/custom-ui";
-import { Settings } from "@app/models/settings";
+import { getRacedayLayoutForSettings, Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { deepCopy } from "@app/utils/clone.utils";
 
@@ -21,7 +21,6 @@ import {
 import { sortCustomUisForDisplay } from "./ui-editor-custom-ui.helper";
 import { restoreOpenLayoutOnEntry } from "./ui-editor-expander.helper";
 import { handleUiEditorHelpStep } from "./ui-editor-help.helper";
-import { preMigrationLayoutCache } from "./ui-editor-io.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
 import { sortThemesForDisplay } from "./ui-editor-theme.helper";
 
@@ -108,18 +107,6 @@ export function processLoadedEditorData(
 
   const editingSettings = cloneSettings(currentSettings);
 
-  if (!editingSettings.racedayLayout) {
-    editingSettings.racedayLayout = JSON.parse(
-      JSON.stringify(Settings.DEFAULT_LAYOUT),
-    );
-  }
-
-  if (!editingSettings.practiceRacedayLayout) {
-    editingSettings.practiceRacedayLayout = JSON.parse(
-      JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
-    );
-  }
-
   if (!editingSettings.activeThemeId && themes.length > 0) {
     const defaultTheme = themes.find((t) => t.is_default);
     if (defaultTheme) {
@@ -135,6 +122,14 @@ export function processLoadedEditorData(
     ensureDefaultCustomUis(customUIs, editingSettings);
   }
   normalizeLoadedCustomUis(customUIs, editingSettings);
+  editingSettings.racedayLayout ??= getRacedayLayoutForSettings(
+    editingSettings,
+    false,
+  );
+  editingSettings.practiceRacedayLayout ??= getRacedayLayoutForSettings(
+    editingSettings,
+    true,
+  );
 
   const initialState: UIEditorState = {
     settings: editingSettings,
@@ -202,73 +197,31 @@ function migrateCustomUiLayout(
   layout: any,
   editingSettings?: Settings,
 ): void {
-  if (!layout) return;
+  if (!Array.isArray(layout?.widgets)) return;
 
-  if (LaneViewMigrationHelper.hasLegacyLaneView(layout, ui.name)) {
-    const isPractice =
-      ui.entity_id === "practice_ui_layout_rc_ai" ||
-      ui.name?.toLowerCase().includes("practice");
-    let columns: string[] | undefined;
-    let columnLayouts: any;
-    let columnVisibility: any;
-    let columnWidths: any;
-    let columnAnchors: any;
-    try {
-      if (ui.columnsJson) columns = JSON.parse(ui.columnsJson);
-      if (ui.columnLayoutsJson)
-        columnLayouts = JSON.parse(ui.columnLayoutsJson);
-      if (ui.columnVisibilityJson)
-        columnVisibility = JSON.parse(ui.columnVisibilityJson);
-      if (ui.columnWidthsJson) columnWidths = JSON.parse(ui.columnWidthsJson);
-      if (ui.columnAnchorsJson)
-        columnAnchors = JSON.parse(ui.columnAnchorsJson);
-    } catch {
-      // ignore
-    }
-
-    const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-      layout,
-      columns,
-      columnLayouts,
-      columnVisibility,
-      columnWidths,
-      columnAnchors,
-      isPractice,
-    });
-    if (migration.migrated) {
-      (ui as any)._wasMigrated = true;
-      (ui as any)._preMigrationLayout = layout;
-      if (ui.entity_id) {
-        preMigrationLayoutCache.set(
-          ui.entity_id,
-          JSON.parse(JSON.stringify(layout)),
-        );
-      }
-      ui.layoutJson = JSON.stringify(migration.layout);
-      syncSettingsLayout(ui.entity_id, migration.layout, editingSettings);
-    }
-  } else if (LaneViewMigrationHelper.migrateGapWidgets(layout)) {
+  const updated = LaneViewMigrationHelper.migrateGapWidgets(layout);
+  if (updated) {
     ui.layoutJson = JSON.stringify(layout);
-    syncSettingsLayout(ui.entity_id, layout, editingSettings);
   }
-}
-
-function syncSettingsLayout(
-  entityId: string | undefined,
-  layout: any,
-  editingSettings?: Settings,
-): void {
   if (!editingSettings) return;
-  if (entityId === "default_ui_layout_rc_ai") {
+  const preferStoredLayout =
+    updated || LaneViewMigrationHelper.usesLaneViewColumns(layout);
+  if (
+    ui.entity_id === "default_ui_layout_rc_ai" &&
+    (preferStoredLayout || !editingSettings.racedayLayout)
+  ) {
     editingSettings.racedayLayout = layout;
-  } else if (entityId === "practice_ui_layout_rc_ai") {
+  } else if (
+    ui.entity_id === "practice_ui_layout_rc_ai" &&
+    (preferStoredLayout || !editingSettings.practiceRacedayLayout)
+  ) {
     editingSettings.practiceRacedayLayout = layout;
   }
 }
 
-function migrateCustomUiColumns(ui: CustomUI): void {
+function migrateCustomUiColumns(ui: CustomUI, preserveGapKeys: boolean): void {
   try {
-    if (ui.columnsJson) {
+    if (!preserveGapKeys && ui.columnsJson) {
       const cols = JSON.parse(ui.columnsJson);
       if (LaneViewMigrationHelper.migrateColumnList(cols)) {
         ui.columnsJson = JSON.stringify(cols);
@@ -276,11 +229,13 @@ function migrateCustomUiColumns(ui: CustomUI): void {
     }
     if (ui.columnLayoutsJson) {
       const layouts = JSON.parse(ui.columnLayoutsJson);
-      if (LaneViewMigrationHelper.migrateColumnLayouts(layouts)) {
+      if (
+        LaneViewMigrationHelper.migrateColumnLayouts(layouts, preserveGapKeys)
+      ) {
         ui.columnLayoutsJson = JSON.stringify(layouts);
       }
     }
-    if (ui.columnWidthsJson) {
+    if (!preserveGapKeys && ui.columnWidthsJson) {
       const widths = JSON.parse(ui.columnWidthsJson);
       if (LaneViewMigrationHelper.migrateColumnWidths(widths)) {
         ui.columnWidthsJson = JSON.stringify(widths);
@@ -292,38 +247,22 @@ function migrateCustomUiColumns(ui: CustomUI): void {
 }
 
 function migrateEditingSettingsGapData(editingSettings: Settings): void {
-  if (editingSettings.racedayLayout) {
-    LaneViewMigrationHelper.migrateGapWidgets(editingSettings.racedayLayout);
-  }
-  if (editingSettings.practiceRacedayLayout) {
-    LaneViewMigrationHelper.migrateGapWidgets(
-      editingSettings.practiceRacedayLayout,
-    );
-  }
-  if (editingSettings.racedayColumns) {
-    LaneViewMigrationHelper.migrateColumnList(editingSettings.racedayColumns);
-  }
-  if (editingSettings.practiceRacedayColumns) {
-    LaneViewMigrationHelper.migrateColumnList(
-      editingSettings.practiceRacedayColumns,
-    );
-  }
-  if (editingSettings.columnWidths) {
-    LaneViewMigrationHelper.migrateColumnWidths(editingSettings.columnWidths);
-  }
-  if (editingSettings.practiceColumnWidths) {
-    LaneViewMigrationHelper.migrateColumnWidths(
-      editingSettings.practiceColumnWidths,
-    );
-  }
-  if (editingSettings.columnLayouts) {
-    LaneViewMigrationHelper.migrateColumnLayouts(editingSettings.columnLayouts);
-  }
-  if (editingSettings.practiceColumnLayouts) {
-    LaneViewMigrationHelper.migrateColumnLayouts(
-      editingSettings.practiceColumnLayouts,
-    );
-  }
+  LaneViewMigrationHelper.migrateGapWidgets(editingSettings.racedayLayout);
+  LaneViewMigrationHelper.migrateLayoutColumns(
+    editingSettings.racedayLayout,
+    editingSettings.racedayColumns,
+    editingSettings.columnLayouts,
+    editingSettings.columnWidths,
+  );
+  LaneViewMigrationHelper.migrateGapWidgets(
+    editingSettings.practiceRacedayLayout,
+  );
+  LaneViewMigrationHelper.migrateLayoutColumns(
+    editingSettings.practiceRacedayLayout,
+    editingSettings.practiceRacedayColumns,
+    editingSettings.practiceColumnLayouts,
+    editingSettings.practiceColumnWidths,
+  );
 }
 
 export function normalizeLoadedCustomUis(
@@ -355,7 +294,10 @@ export function normalizeLoadedCustomUis(
     }
 
     migrateCustomUiLayout(ui, layout, editingSettings);
-    migrateCustomUiColumns(ui);
+    migrateCustomUiColumns(
+      ui,
+      LaneViewMigrationHelper.usesLaneViewColumns(layout),
+    );
   }
 
   if (editingSettings) {
@@ -455,7 +397,7 @@ function ensureRacedayCustomUi(customUIs: CustomUI[], s: Settings): void {
     customUIs.push({
       name: "RC AI",
       is_default: true,
-      layoutJson: JSON.stringify(s.racedayLayout || Settings.DEFAULT_LAYOUT),
+      layoutJson: JSON.stringify(getRacedayLayoutForSettings(s, false)),
       columnsJson: JSON.stringify(s.racedayColumns || Settings.DEFAULT_COLUMNS),
       columnLayoutsJson: JSON.stringify(
         s.columnLayouts || new Settings().columnLayouts,
@@ -483,9 +425,7 @@ function ensurePracticeCustomUi(customUIs: CustomUI[], s: Settings): void {
     customUIs.push({
       name: "RC AI (Practice)",
       is_default: true,
-      layoutJson: JSON.stringify(
-        s.practiceRacedayLayout || Settings.DEFAULT_PRACTICE_LAYOUT,
-      ),
+      layoutJson: JSON.stringify(getRacedayLayoutForSettings(s, true)),
       columnsJson: JSON.stringify(
         s.practiceRacedayColumns || Settings.DEFAULT_PRACTICE_COLUMNS,
       ),

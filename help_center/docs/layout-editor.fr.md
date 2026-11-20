@@ -76,7 +76,6 @@ Le canevas sert d'authentique aperçu en direct de votre disposition exactement 
   - <kbd>Shift</kbd> + Touches fléchées : Déplace le widget sélectionné de 10px.
   - <kbd>Suppr</kbd> ou <kbd>Retour arrière</kbd> : Supprime le widget sélectionné.
 - **Dupliquer les Voies** : Duplique une carte de colonne de voie sélectionnée sur toutes les voies actives, positions, classements généraux ou têtes de série.
-- **Détection & Réparation des Colonnes Superposées** : L'éditeur détecte automatiquement les colonnes dupliquées ou superposées dans les grilles de voies. Une bannière d'alerte propose une **Correction Rapide** en un clic ou **Examiner les Problèmes** dans une boîte de dialogue interactive.
 
 ### Widgets Disponibles & Options de Configuration
 
@@ -123,8 +122,7 @@ Pour plus de détails sur le style des widgets et la création de widgets person
 
 ---
 
-## Importation, Exportation & Migration
+## Importation et exportation
 
 - **Importer une Disposition** : Importez un fichier JSON de disposition existant via le sélecteur de fichiers.
 - **Exporter la Disposition** : Téléchargez la disposition active sous forme de fichier JSON autonome.
-- **Sauvegardes Pré-Migration** : Pour les dispositions mises à niveau depuis d'anciennes versions, restaurez les instantanés de sauvegarde pré-migration ou exportez les diagnostics de migration pour le dépannage.

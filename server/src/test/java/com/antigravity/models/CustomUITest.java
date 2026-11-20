@@ -53,7 +53,6 @@ public class CustomUITest {
     assertTrue(defaultUi.getColumnWidthsJson().contains("\"averageLapTime\":310"));
     assertTrue(defaultUi.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     assertFalse(defaultUi.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
-    assertFalse(CustomUI.hasLaneView(defaultUi.getLayoutJson()));
     assertTrue(defaultUi.getLayoutJson().contains("\"highlightLapStyle\":\"shimmer\""));
 
     CustomUI practiceUi = CustomUI.createPractice();
@@ -62,7 +61,6 @@ public class CustomUITest {
     assertEquals(CustomUI.PRACTICE_UI_ID, practiceUi.getEntityId());
     assertTrue(practiceUi.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     assertFalse(practiceUi.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
-    assertFalse(CustomUI.hasLaneView(practiceUi.getLayoutJson()));
     assertTrue(practiceUi.getLayoutJson().contains("\"highlightLapStyle\":\"shimmer\""));
 
     CustomUI fuelUi = CustomUI.createFuel();
@@ -77,7 +75,6 @@ public class CustomUITest {
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"gap\":310"));
     assertTrue(fuelUi.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
     assertFalse(fuelUi.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
-    assertFalse(CustomUI.hasLaneView(fuelUi.getLayoutJson()));
 
     CustomUI driverStationUi = CustomUI.createDriverStation();
     assertTrue(driverStationUi.isDefault());
@@ -283,19 +280,6 @@ public class CustomUITest {
     assertTrue(CustomUI.isLegacyDriverStationName("RaceCoordinator AI (Driver Station)"));
     assertTrue(CustomUI.isLegacyDriverStationName("RC AI (Driver Station)"));
     assertFalse(CustomUI.isLegacyDriverStationName("Custom Leaderboard"));
-  }
-
-  @Test
-  public void testHasLaneView() {
-    assertFalse(CustomUI.hasLaneView(null));
-    assertFalse(CustomUI.hasLaneView(""));
-    assertFalse(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\":\"leaderboard\"}]}"));
-    assertTrue(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\":\"lane-view\"}]}"));
-    assertTrue(CustomUI.hasLaneView("{\"widgets\":[{\"widgetType\": \"lane-view\"}]}"));
-    assertFalse(
-        CustomUI.hasLaneView(
-            "{\"preserveLegacyHeatView\":true,\"widgets\":[{\"widgetType\":\"lane-view\"}]}"));
-    assertEquals(" (Pre-Migration Backup)", CustomUI.PRE_MIGRATION_BACKUP_SUFFIX);
   }
 
   @Test

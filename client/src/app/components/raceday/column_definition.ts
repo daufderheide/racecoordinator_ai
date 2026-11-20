@@ -26,6 +26,7 @@ export class ColumnDefinition {
     hd: any,
     column: ColumnDefinition,
     anchor?: string,
+    widgetSettings?: Record<string, any>,
   ) => string;
   readonly anchor: AnchorPoint;
   readonly layout: { [A in AnchorPoint]?: string };
@@ -43,6 +44,7 @@ export class ColumnDefinition {
       hd: any,
       column: ColumnDefinition,
       anchor?: string,
+      widgetSettings?: Record<string, any>,
     ) => string = (v) => v?.toString() ?? "",
     layout: { [A in AnchorPoint]?: string } = {},
   ) {

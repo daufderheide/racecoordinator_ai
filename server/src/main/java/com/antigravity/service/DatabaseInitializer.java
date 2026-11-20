@@ -689,7 +689,6 @@ public class DatabaseInitializer {
       uiRepo.save(CustomUI.createDriverStation());
       logger.info("Backfilled driver station custom UI with ID {}", CustomUI.DRIVER_STATION_UI_ID);
     }
-    ensurePreMigrationBackups(context, uiRepo);
   }
 
   public void backfillThemes(DatabaseContext context) {
@@ -759,57 +758,6 @@ public class DatabaseInitializer {
               null);
       themeRepo.save(driverStationTheme);
       logger.info("Backfilled driver station theme with ID {}", Theme.DRIVER_STATION_THEME_ID);
-    }
-  }
-
-  public void ensurePreMigrationBackups(
-      DatabaseContext context, SqliteRepository<CustomUI> uiRepo) {
-    List<CustomUI> allUis = uiRepo.findAll();
-    for (CustomUI ui : allUis) {
-      String layoutJson = ui.getLayoutJson();
-      if (!CustomUI.hasLaneView(layoutJson)) {
-        continue;
-      }
-      String name = ui.getName();
-      if (name == null || name.endsWith(CustomUI.PRE_MIGRATION_BACKUP_SUFFIX)) {
-        continue;
-      }
-
-      String entityId = ui.getEntityId();
-      if (ui.isDefault()
-          || CustomUI.DEFAULT_UI_ID.equals(entityId)
-          || CustomUI.PRACTICE_UI_ID.equals(entityId)
-          || CustomUI.FUEL_UI_ID.equals(entityId)
-          || CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
-        continue;
-      }
-
-      String backupName = name + CustomUI.PRE_MIGRATION_BACKUP_SUFFIX;
-      boolean backupExists =
-          allUis.stream().anyMatch(other -> backupName.equalsIgnoreCase(other.getName()));
-      if (!backupExists) {
-        String nextId = context.getNextSequence("custom_uis");
-        String backupLayoutJson = ui.getLayoutJson();
-        if (backupLayoutJson != null && !backupLayoutJson.contains("\"preserveLegacyHeatView\"")) {
-          if (backupLayoutJson.startsWith("{")) {
-            backupLayoutJson = "{\"preserveLegacyHeatView\":true," + backupLayoutJson.substring(1);
-          }
-        }
-        CustomUI backup =
-            new CustomUI(
-                backupName,
-                false,
-                backupLayoutJson,
-                ui.getColumnsJson(),
-                ui.getColumnLayoutsJson(),
-                ui.getColumnVisibilityJson(),
-                ui.getColumnWidthsJson(),
-                ui.getColumnAnchorsJson(),
-                nextId,
-                null);
-        uiRepo.save(backup);
-        logger.info("Created pre-migration backup for layout '{}' with ID {}", backupName, nextId);
-      }
     }
   }
 

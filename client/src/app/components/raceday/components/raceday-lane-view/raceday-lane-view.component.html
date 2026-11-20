@@ -1,4 +1,5 @@
 @if (parent() && parent().columns && parent().columns.length > 0) {
+  @let widgetSettings = widget()?.customSettings ?? {};
   <div
     class="bottom-section"
     [class.vertical-layout]="widget()?.customSettings?.['isVertical']"
@@ -552,7 +553,9 @@
                         [style.height]="'max-content'"
                       >
                         @for (
-                          lapObj of parent().getLastLaps(hd, col, entry.anchor);
+                          lapObj of parent().getLastLaps(
+                            hd, col, entry.anchor, undefined, widgetSettings
+                          );
                           track $index
                         ) {
                           <div
@@ -688,7 +691,8 @@
                                 hd,
                                 col,
                                 entry.property,
-                                entry.anchor
+                                entry.anchor,
+                                widgetSettings
                               )
                             }}
                           </span>
@@ -715,7 +719,8 @@
                             hd,
                             col,
                             entry.property,
-                            entry.anchor
+                            entry.anchor,
+                            widgetSettings
                           )
                         }}
                       </span>
@@ -768,7 +773,8 @@
                         hd,
                         col,
                         entry.property,
-                        entry.anchor
+                        entry.anchor,
+                        widgetSettings
                       );
                     @let errorKey =
                       (hd?.objectId || "lane-" + hd?.laneIndex) +

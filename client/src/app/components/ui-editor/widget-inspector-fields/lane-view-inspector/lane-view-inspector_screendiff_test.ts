@@ -21,7 +21,6 @@ test.describe("Lane View Inspector Visuals", () => {
       layoutEditorHelpShown: true,
       uiEditorHelpShown: true,
       racedayLayout: {
-        preserveLegacyHeatView: true,
         widgets: [
           {
             id: "widget-lane-view",

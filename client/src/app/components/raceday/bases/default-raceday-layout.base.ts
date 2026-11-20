@@ -803,6 +803,7 @@ export abstract class DefaultRacedayLayoutBase {
     column?: ColumnDefinition,
     propertyName?: string,
     anchor?: string,
+    widgetSettings?: Record<string, any>,
   ): string {
     return RacedayColumnLayoutHelper.formatColumnValue(
       this,
@@ -810,6 +811,7 @@ export abstract class DefaultRacedayLayoutBase {
       column,
       propertyName,
       anchor,
+      widgetSettings,
     );
   }
 
@@ -818,6 +820,7 @@ export abstract class DefaultRacedayLayoutBase {
     column: ColumnDefinition,
     anchor?: string,
     countOverride?: number,
+    widgetSettings?: Record<string, any>,
   ): LapDisplayInfo[] {
     return RacedayColumnLayoutHelper.getLastLaps(
       this,
@@ -825,6 +828,7 @@ export abstract class DefaultRacedayLayoutBase {
       column,
       anchor,
       countOverride,
+      widgetSettings,
     );
   }
 }
