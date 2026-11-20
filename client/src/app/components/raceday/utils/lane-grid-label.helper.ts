@@ -371,7 +371,7 @@ export class LaneGridLabelHelper {
     }
 
     const weight = fontBold ? "bold" : "normal";
-    const rawFamily = fontFamily?.trim() || "Inter, sans-serif";
+    const rawFamily = fontFamily?.trim() || "sans-serif";
     const family =
       rawFamily
         .replace(/-apple-system|BlinkMacSystemFont/gi, "")

@@ -20,7 +20,7 @@ app-raceday-race-name .label-text {
   letter-spacing: 1px;
   color: #94a3b8;
   margin-right: 8px;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--app-font-family);
 }
 
 app-raceday-race-name .value-text {
@@ -28,7 +28,7 @@ app-raceday-race-name .value-text {
   font-weight: 700;
   color: #f8fafc;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--app-font-family);
 }
 
 @media print {

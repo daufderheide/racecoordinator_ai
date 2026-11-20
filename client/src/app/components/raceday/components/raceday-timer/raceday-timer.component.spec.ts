@@ -172,6 +172,26 @@ describe("RacedayTimerComponent", () => {
     expect(timerTextEl.style.color).toBe("rgb(255, 0, 0)");
   });
 
+  it("should use the application font for status labels and keep the selected clock font", () => {
+    fixture.componentRef.setInput("widget", {
+      widgetType: "timer",
+      customSettings: { timeFontFamily: "Orbitron" },
+    });
+    fixture.componentRef.setInput("autoStatusLabel", "RD_PAUSED");
+    fixture.componentRef.setInput("isWarmup", true);
+    fixture.detectChanges();
+
+    const status = fixture.nativeElement.querySelector(".status-label");
+    const warmup = fixture.nativeElement.querySelector(".warmup-label");
+    const clock = fixture.nativeElement.querySelector(".timer-text");
+
+    expect(getComputedStyle(status).fontFamily).toContain("Segoe UI");
+    expect(getComputedStyle(warmup).fontFamily).toBe(
+      getComputedStyle(status).fontFamily,
+    );
+    expect(getComputedStyle(clock).fontFamily).toBe("Orbitron");
+  });
+
   it("should apply custom font sizes for timer text even when scaleMode is auto", () => {
     const mockWidget: any = {
       widgetType: "timer",

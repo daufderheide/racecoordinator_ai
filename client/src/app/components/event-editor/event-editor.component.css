@@ -6,7 +6,7 @@
   height: 100vh;
   background-color: #000;
   color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--app-font-family);
   overflow: hidden;
   position: relative;
 }
@@ -232,7 +232,7 @@
   gap: 15px;
   padding: 12px 18px;
   color: #f8fafc;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--app-font-family);
 }
 
 .cdk-drag-placeholder {

@@ -71,7 +71,7 @@
 }
 
 .status-label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-size: 16px;
   font-weight: 700;
   color: #ffaa00;
@@ -83,7 +83,7 @@
 
 .warmup-label,
 .cooldown-label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-size: 20px;
   font-weight: 800;
   color: #00ffff;
