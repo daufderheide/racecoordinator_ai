@@ -35,7 +35,11 @@ import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
 } from "@app/components/ui-editor/ui-editor-data.helper";
-import { findDefaultWidgetId } from "@app/components/ui-editor/ui-editor-widget.helper";
+import {
+  findDefaultWidgetId,
+  handleLayerOrder,
+} from "@app/components/ui-editor/ui-editor-widget.helper";
+import { layerState } from "@app/components/raceday/utils/layer-order.utils";
 import { WidgetInspectorFieldsComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-inspector-fields.component";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
@@ -158,6 +162,10 @@ export class LayoutEditorComponent
     deleteGrid: (gridId) => this.onDeleteGrid(gridId),
     reMirrorGrid: (gridId) => this.onReMirrorGrid(gridId),
     bringGridToFront: (gridId) => this.onBringGridToFront(gridId),
+    layerOrder: (id, move) =>
+      handleLayerOrder(this, id, move, this.editingLayout ?? undefined),
+    layerState: (id) =>
+      layerState(this.getLayout(this.editingLayout)?.widgets || [], id),
   };
 
   /** Redesigned panel schema for the widget, or null for its existing inspector. */

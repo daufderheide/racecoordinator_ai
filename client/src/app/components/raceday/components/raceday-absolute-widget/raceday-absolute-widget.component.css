@@ -215,7 +215,8 @@
   box-shadow:
     var(--widget-shadow, 0 0 0 transparent),
     0 0 14px rgba(56, 189, 248, 0.6) !important;
-  z-index: 1050 !important;
+  /* phase 4b: no z-index here. The widget stays at its saved layer (the
+     panel's layer buttons change it) and is lifted only while dragged. */
 }
 
 /* Grid Crosshair Track Highlights */
@@ -347,12 +348,18 @@
 }
 
 .widget-wrapper.scale-fixed .leaderboard-title {
-  font-size: var(--leaderboard-title-font-size, calc(1.125 * var(--widget-font-size)));
+  font-size: var(
+    --leaderboard-title-font-size,
+    calc(1.125 * var(--widget-font-size))
+  );
   margin-bottom: calc(0.75 * var(--widget-font-size)) !important;
 }
 
 .widget-wrapper.scale-fixed .leaderboard-subtitle {
-  font-size: var(--leaderboard-subtitle-font-size, calc(0.8125 * var(--widget-font-size)));
+  font-size: var(
+    --leaderboard-subtitle-font-size,
+    calc(0.8125 * var(--widget-font-size))
+  );
   margin-bottom: calc(0.75 * var(--widget-font-size)) !important;
 }
 
@@ -369,9 +376,15 @@
 }
 .widget-wrapper.scale-fixed .leaderboard-item:not(:first-child),
 .widget-wrapper.scale-fixed .leaderboard-item:not(:first-child) span,
-.widget-wrapper.scale-fixed .leaderboard-item:not(:first-child) .leaderboard-rank,
-.widget-wrapper.scale-fixed .leaderboard-item:not(:first-child) .leaderboard-name,
-.widget-wrapper.scale-fixed .leaderboard-item:not(:first-child) .leaderboard-score {
+.widget-wrapper.scale-fixed
+  .leaderboard-item:not(:first-child)
+  .leaderboard-rank,
+.widget-wrapper.scale-fixed
+  .leaderboard-item:not(:first-child)
+  .leaderboard-name,
+.widget-wrapper.scale-fixed
+  .leaderboard-item:not(:first-child)
+  .leaderboard-score {
   font-size: var(--leaderboard-rest-font-size, inherit);
 }
 
@@ -381,12 +394,18 @@
 }
 
 .widget-wrapper.scale-auto .leaderboard-title {
-  font-size: var(--leaderboard-title-font-size, calc(8cqmin * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --leaderboard-title-font-size,
+    calc(8cqmin * var(--widget-scale-factor, 1))
+  ) !important;
   margin-bottom: calc(3cqmin * var(--widget-scale-factor, 1)) !important;
 }
 
 .widget-wrapper.scale-auto .leaderboard-subtitle {
-  font-size: var(--leaderboard-subtitle-font-size, calc(6cqmin * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --leaderboard-subtitle-font-size,
+    calc(6cqmin * var(--widget-scale-factor, 1))
+  ) !important;
   margin-bottom: calc(3cqmin * var(--widget-scale-factor, 1)) !important;
 }
 
@@ -395,16 +414,28 @@
 .widget-wrapper.scale-auto .leaderboard-item:first-child .leaderboard-rank,
 .widget-wrapper.scale-auto .leaderboard-item:first-child .leaderboard-name,
 .widget-wrapper.scale-auto .leaderboard-item:first-child .leaderboard-score {
-  font-size: var(--leaderboard-overall-leader-font-size, calc(6.5cqmin * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --leaderboard-overall-leader-font-size,
+    calc(6.5cqmin * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 .widget-wrapper.scale-auto .leaderboard-item:not(:first-child),
 .widget-wrapper.scale-auto .leaderboard-item:not(:first-child) span,
-.widget-wrapper.scale-auto .leaderboard-item:not(:first-child) .leaderboard-rank,
-.widget-wrapper.scale-auto .leaderboard-item:not(:first-child) .leaderboard-name,
-.widget-wrapper.scale-auto .leaderboard-item:not(:first-child) .leaderboard-score,
+.widget-wrapper.scale-auto
+  .leaderboard-item:not(:first-child)
+  .leaderboard-rank,
+.widget-wrapper.scale-auto
+  .leaderboard-item:not(:first-child)
+  .leaderboard-name,
+.widget-wrapper.scale-auto
+  .leaderboard-item:not(:first-child)
+  .leaderboard-score,
 .widget-wrapper.scale-auto .leaderboard-empty-message {
-  font-size: var(--leaderboard-rest-font-size, calc(6.5cqmin * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --leaderboard-rest-font-size,
+    calc(6.5cqmin * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 /* Fixed scaling for records */
@@ -413,7 +444,10 @@
   font-size: var(--record-value-font-size, var(--widget-font-size));
 }
 .widget-wrapper.scale-fixed .record-header {
-  font-size: var(--record-header-font-size, calc(0.9 * var(--widget-font-size)));
+  font-size: var(
+    --record-header-font-size,
+    calc(0.9 * var(--widget-font-size))
+  );
 }
 
 /* Auto scaling for records */
@@ -593,10 +627,7 @@
 .widget-wrapper.scale-auto .on-deck-title {
   font-size: var(
     --custom-title-size,
-    var(
-      --heat-drivers-title-size,
-      calc(8cqh * var(--widget-scale-factor, 1))
-    )
+    var(--heat-drivers-title-size, calc(8cqh * var(--widget-scale-factor, 1)))
   ) !important;
   margin-bottom: var(
     --heat-drivers-title-margin,
@@ -631,10 +662,7 @@
 .widget-wrapper.scale-auto .on-deck-empty {
   font-size: var(
     --custom-lane-size,
-    var(
-      --heat-drivers-font-size,
-      calc(6.5cqh * var(--widget-scale-factor, 1))
-    )
+    var(--heat-drivers-font-size, calc(6.5cqh * var(--widget-scale-factor, 1)))
   ) !important;
 }
 
@@ -653,14 +681,20 @@
     1.75 *
       var(
         --custom-lane-size,
-        var(--heat-drivers-font-size, calc(11cqh * var(--widget-scale-factor, 1)))
+        var(
+          --heat-drivers-font-size,
+          calc(11cqh * var(--widget-scale-factor, 1))
+        )
       )
   ) !important;
   height: calc(
     1.5 *
       var(
         --custom-lane-size,
-        var(--heat-drivers-font-size, calc(9cqh * var(--widget-scale-factor, 1)))
+        var(
+          --heat-drivers-font-size,
+          calc(9cqh * var(--widget-scale-factor, 1))
+        )
       )
   ) !important;
   padding: 0
@@ -716,17 +750,26 @@
 }
 .widget-wrapper.scale-fixed .menu-shortcut,
 .widget-wrapper.scale-fixed .submenu-arrow {
-  font-size: var(--menu-shortcut-font-size, calc(0.75 * var(--widget-font-size)));
+  font-size: var(
+    --menu-shortcut-font-size,
+    calc(0.75 * var(--widget-font-size))
+  );
 }
 
 /* Auto scaling for menu-bar */
 .widget-wrapper.scale-auto .menu-button-top,
 .widget-wrapper.scale-auto .menu-item {
-  font-size: var(--menu-font-size, calc(26cqh * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --menu-font-size,
+    calc(26cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 .widget-wrapper.scale-auto .menu-shortcut,
 .widget-wrapper.scale-auto .submenu-arrow {
-  font-size: var(--menu-shortcut-font-size, calc(20cqh * var(--widget-scale-factor, 1))) !important;
+  font-size: var(
+    --menu-shortcut-font-size,
+    calc(20cqh * var(--widget-scale-factor, 1))
+  ) !important;
 }
 
 /* Custom color overrides for menu-bar */
@@ -835,3 +878,11 @@
   border: none !important;
 }
 
+/* Locked widget (customSettings.locked): no resize handles, no move cursor. */
+.widget-wrapper.is-locked .resize-handle {
+  display: none !important;
+}
+
+.widget-wrapper.is-locked .widget-header-drag {
+  cursor: default !important;
+}

@@ -10203,6 +10203,42 @@ describe("DefaultRacedayComponent", () => {
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("gw-delegate");
     });
 
+    it("selectWidget selects without changing any zIndex, and picks the master of a mirrored lane (phase 4b)", () => {
+      spyOn(component, "bringGridToFront");
+      (component.widgetSelected.emit as jasmine.Spy).calls.reset();
+      const master: any = {
+        id: "w-master-sel",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: { gridId: "g-sel", gridLane: 0, mirrorRows: true },
+      };
+      const child: any = {
+        id: "w-child-sel",
+        widgetType: "lane-column",
+        zIndex: 5,
+        customSettings: {
+          gridId: "g-sel",
+          gridMasterId: "w-master-sel",
+          gridLane: 1,
+          mirrorRows: true,
+        },
+      };
+      const plain: any = { id: "w-plain-sel", widgetType: "timer", zIndex: 1 };
+      component.layout.widgets.push(master, child, plain);
+      const before = component.layout.widgets.map((w: any) => w.zIndex);
+
+      component.selectWidget("w-child-sel");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith(
+        "w-master-sel",
+      );
+      component.selectWidget("w-plain-sel");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("w-plain-sel");
+      expect(component.layout.widgets.map((w: any) => w.zIndex)).toEqual(
+        before,
+      );
+      expect(component.bringGridToFront).not.toHaveBeenCalled();
+    });
+
     it("should redirect to master widget when bringToFront is called on a mirrored child widget", () => {
       spyOn(component, "bringGridToFront");
       const master: any = {
@@ -10232,7 +10268,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should handle onGridContainerPointerDown to elevate grid and select master widget", () => {
+    it("should handle onGridContainerPointerDown to select the master widget without changing the layer order", () => {
       spyOn(component, "bringGridToFront");
       (component.widgetSelected.emit as jasmine.Spy).calls.reset();
       component.isLayoutCustomizing = true;
@@ -10259,7 +10295,8 @@ describe("DefaultRacedayComponent", () => {
 
       component.onGridContainerPointerDown(mockEvent, "g-pointer-test");
 
-      expect(component.bringGridToFront).toHaveBeenCalledWith("g-pointer-test");
+      // phase 4b: only the layer buttons change the saved order
+      expect(component.bringGridToFront).not.toHaveBeenCalled();
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("w-grid-m1");
     });
 
@@ -14386,7 +14423,22 @@ describe("DefaultRacedayComponent", () => {
       fixture.componentRef.setInput("uiScale", 1);
       fixture.componentRef.setInput("gridSession", session);
       fixture.detectChanges();
-      component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [
+          {
+            id: "gm-1",
+            widgetType: "lane-column",
+            x: 100,
+            y: 100,
+            width: 200,
+            height: 400,
+            zIndex: 100,
+            customSettings: { gridId: "test-grid-move" },
+          } as any,
+        ],
+      };
 
       const emitSpy = spyOn(component.gridBoundsChange, "emit");
       const layoutSpy = spyOn(component.layoutChanged, "emit");
@@ -14396,6 +14448,10 @@ describe("DefaultRacedayComponent", () => {
         clientY: 300,
       });
       component.onGridMoveStart(pointerDownEvent);
+      // phase 4b: lifted while dragging, saved order untouched
+      expect(component.liftedIds().has("gm-1")).toBeTrue();
+      expect(component.getGridSessionZIndex()).toBeGreaterThan(90000);
+      expect(component.layout.widgets[0].zIndex).toBe(100);
 
       const moveEvent = new PointerEvent("pointermove", {
         clientX: 550,
@@ -14416,6 +14472,7 @@ describe("DefaultRacedayComponent", () => {
       document.dispatchEvent(upEvent);
 
       expect(layoutSpy).toHaveBeenCalledWith(component.layout);
+      expect(component.liftedIds().size).toBe(0);
 
       emitSpy.calls.reset();
       document.dispatchEvent(moveEvent);

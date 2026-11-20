@@ -64,7 +64,8 @@ describe("Lane View schema", () => {
   it("every key has a default", () => {
     const defaults = registryDefaults("lane-view");
     for (const f of allFields(laneViewSchema)) {
-      if (f.type === "geometry" || f.type === "embed") continue;
+      if (f.type === "geometry" || f.type === "embed" || f.type === "buttons")
+        continue;
       const keys =
         f.type === "textPart"
           ? Object.values(f.keys)

@@ -36,7 +36,8 @@ app-inspector-shell {
   --k-head: transparent;
   --k-border: 2px solid #ffd700;
   --k-border-top: 4px solid #ffd700;
-  --k-shadow: 0 0 20px rgba(255, 215, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7),
+  --k-shadow:
+    0 0 20px rgba(255, 215, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7),
     inset 0 0 15px rgba(255, 215, 0, 0.2);
   --k-text: #000;
   --k-title: #000;
@@ -179,7 +180,13 @@ app-inspector-shell {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: var(--app-font-family);
+  font-family:
+    "Inter",
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
   font-size: 13px;
   line-height: 1.4;
 }
@@ -210,7 +217,9 @@ app-inspector-shell {
   margin: 0;
   flex: 1;
   min-width: 0;
-  font: 700 16px/1 var(--app-font-family);
+  font:
+    700 16px/1 "Rajdhani",
+    sans-serif;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--k-title);
@@ -246,7 +255,9 @@ app-inspector-shell {
 }
 
 .kit-panel .kit-head-name .inspector-widget-subtitle {
-  font: 700 18px/1.05 var(--app-font-family);
+  font:
+    700 18px/1.05 "Rajdhani",
+    sans-serif;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--k-title);
@@ -291,6 +302,24 @@ app-inspector-shell {
   background: var(--k-hit);
   border-color: var(--k-hit-line);
   outline: none;
+}
+
+.kit-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+  border-color: transparent;
+}
+
+/* a row of action buttons (layer order) */
+.kit-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.kit-buttons .kit-icon-btn {
+  border-color: var(--k-input-line);
 }
 
 .kit-icon-btn .material-icons {
@@ -376,7 +405,9 @@ app-inspector-shell {
   border-radius: 4px;
   padding: 5px 9px;
   cursor: pointer;
-  font: 700 12px/1 var(--app-font-family) !important;
+  font:
+    700 12px/1 "Rajdhani",
+    sans-serif !important;
   letter-spacing: 1px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -397,7 +428,9 @@ app-inspector-shell {
   color: var(--k-badge-text);
   border-radius: 10px;
   padding: 0 6px;
-  font: 700 11px/16px var(--app-font-family);
+  font:
+    700 11px/16px "Inter",
+    sans-serif;
   letter-spacing: 0;
 }
 
@@ -445,7 +478,8 @@ app-inspector-shell {
 }
 
 .kit-folder-head:hover {
-  background: linear-gradient(var(--k-folder-hover), var(--k-folder-hover)),
+  background:
+    linear-gradient(var(--k-folder-hover), var(--k-folder-hover)),
     var(--k-solid);
 }
 
@@ -465,7 +499,9 @@ app-inspector-shell {
 
 .kit-folder-title {
   display: block;
-  font: 700 14px/1.1 var(--app-font-family);
+  font:
+    700 14px/1.1 "Rajdhani",
+    sans-serif;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--k-folder-text);
@@ -509,7 +545,9 @@ app-inspector-shell {
 }
 
 .kit-group-title {
-  font: 700 12.5px/1 var(--app-font-family);
+  font:
+    700 12.5px/1 "Rajdhani",
+    sans-serif;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--k-grp);
@@ -562,7 +600,9 @@ app-inspector-shell {
   display: flex;
   align-items: center;
   gap: 5px;
-  font: 700 12.5px/1.15 var(--app-font-family);
+  font:
+    700 12.5px/1.15 "Rajdhani",
+    sans-serif;
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--k-label);
@@ -735,7 +775,9 @@ app-inspector-shell {
   padding: 5px 2px;
   min-height: 28px;
   cursor: pointer;
-  font: 700 12.5px/1 var(--app-font-family) !important;
+  font:
+    700 12.5px/1 "Rajdhani",
+    sans-serif !important;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   display: inline-grid;
@@ -852,7 +894,11 @@ app-inspector-shell {
     linear-gradient(45deg, transparent 75%, #ccc 75%),
     linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
   background-color: #fff;
   box-sizing: border-box;
 }
@@ -884,7 +930,9 @@ app-inspector-shell {
 }
 
 .kit-hex.is-default {
-  font: 700 11.5px var(--app-font-family);
+  font:
+    700 11.5px "Rajdhani",
+    sans-serif;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--k-placeholder);
@@ -913,7 +961,9 @@ app-inspector-shell {
 }
 
 .kit-quick-default {
-  background: linear-gradient(135deg, transparent 45%, #c2410c 45% 55%, transparent 55%), #fff !important;
+  background:
+    linear-gradient(135deg, transparent 45%, #c2410c 45% 55%, transparent 55%),
+    #fff !important;
 }
 
 /* tiles */
@@ -956,7 +1006,9 @@ app-inspector-shell {
 }
 
 .kit-tile-label {
-  font: 700 11.5px/1 var(--app-font-family);
+  font:
+    700 11.5px/1 "Rajdhani",
+    sans-serif;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -984,7 +1036,9 @@ app-inspector-shell {
 .kit-xy-field b {
   padding: 0 8px;
   color: var(--k-placeholder);
-  font: 700 12px var(--app-font-family);
+  font:
+    700 12px "Rajdhani",
+    sans-serif;
 }
 
 .kit-xy-field input {
@@ -1034,7 +1088,9 @@ app-inspector-shell {
 }
 
 .kit-part-name {
-  font: 700 14px/1.1 var(--app-font-family);
+  font:
+    700 14px/1.1 "Rajdhani",
+    sans-serif;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--k-folder-text);
@@ -1081,7 +1137,9 @@ app-inspector-shell {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font: 700 12px/1 var(--app-font-family) !important;
+  font:
+    700 12px/1 "Rajdhani",
+    sans-serif !important;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -1124,7 +1182,9 @@ app-inspector-shell {
   border: 1px solid #38bdf8;
   border-radius: 4px;
   padding: 4px 10px;
-  font: 700 12px var(--app-font-family) !important;
+  font:
+    700 12px "Rajdhani",
+    sans-serif !important;
   letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
@@ -1187,38 +1247,54 @@ app-inspector-shell {
 }
 
 /* Available Columns tree in the dark panel: the editor's section look */
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-header,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-header {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-group-header,
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-subgroup-header {
   background: var(--k-folder);
   border-color: var(--k-folder-line);
   color: var(--k-folder-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-content,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-content {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-group-content,
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-subgroup-content {
   background: var(--k-fbody);
   border-color: var(--k-fbody-line);
 }
 
 .kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-folder-icon,
 .kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-icon,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .drag-indicator-icon {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .drag-indicator-icon {
   color: var(--k-folder-icon);
 }
 
 .kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-badge,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-badge {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-subgroup-badge {
   background: var(--k-badge-bg);
   color: var(--k-badge-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-item {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-widget-item {
   background: var(--k-seg);
   border-color: var(--k-seg-line);
   color: var(--k-seg-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-item:hover {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-widget-item:hover {
   border-color: var(--k-focus);
 }
 
@@ -1228,17 +1304,24 @@ app-inspector-shell {
   color: var(--k-folder-icon) !important;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-input {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-search-input {
   background: var(--k-input) !important;
   color: var(--k-input-text) !important;
   border-color: var(--k-input-line) !important;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-input:focus {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-search-input:focus {
   border-color: var(--k-focus) !important;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-wrapper .toolbox-search-input::placeholder {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-search-wrapper
+  .toolbox-search-input::placeholder {
   color: var(--k-placeholder);
 }
 
@@ -1249,7 +1332,9 @@ app-inspector-shell {
   color: var(--k-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(
     .inspector-label,
     .inspector-geometry-title,
     .inspector-group-title,
@@ -1259,10 +1344,9 @@ app-inspector-shell {
   color: var(--k-label);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
-    .inspector-geometry-title,
-    .inspector-group-title
-  )
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(.inspector-geometry-title, .inspector-group-title)
   .material-icons {
   color: var(--k-folder-icon);
 }
@@ -1308,10 +1392,9 @@ app-inspector-shell {
 }
 
 /* inputs, buttons and the inset map */
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
-    .inspector-input,
-    .inspector-number-input
-  ) {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(.inspector-input, .inspector-number-input) {
   background: var(--k-input);
   color: var(--k-input-text);
   border-color: var(--k-input-line);
@@ -1338,7 +1421,9 @@ app-inspector-shell {
   color: var(--k-seg-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(
     .inset-map-label,
     .hero-widget-name,
     .hero-drop-title,

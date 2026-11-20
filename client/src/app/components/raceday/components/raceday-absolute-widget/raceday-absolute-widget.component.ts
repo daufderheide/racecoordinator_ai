@@ -1,3 +1,4 @@
+import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { CommonModule, NgComponentOutlet } from "@angular/common";
 import {
@@ -297,6 +298,11 @@ export class RacedayAbsoluteWidgetComponent
     return Boolean(session && session.gridId === gridId);
   }
 
+  /** Locked in the Layout Editor: can be selected, not moved or resized. */
+  get isLocked(): boolean {
+    return this.widget()?.customSettings?.["locked"] === true;
+  }
+
   get canModifyWidget(): boolean {
     if (!this.isCustomizing() || this.isCountdownGhost) return false;
     if (this.isWidgetInGrid && !this.isGridSelected) return false;
@@ -333,6 +339,10 @@ export class RacedayAbsoluteWidgetComponent
     }
     if (w.widgetType === "menu-bar") {
       return 99999;
+    }
+    // on top while dragged (phase 4b), below the menu bar and countdown
+    if (this.parentComponent()?.liftedIds?.()?.has(w.id)) {
+      return LIFTED_Z + (w.zIndex || 100);
     }
     return w.zIndex || 100;
   }
@@ -615,7 +625,7 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   onResizeStart(event: PointerEvent, handle: string) {
-    if (!this.canModifyWidget) return;
+    if (!this.canModifyWidget || this.isLocked) return;
     event.preventDefault();
     event.stopPropagation();
 
@@ -684,6 +694,11 @@ export class RacedayAbsoluteWidgetComponent
   // Handle dragging manually to support snapping better than cdkDrag might out of the box
   onDragStart(event: PointerEvent) {
     if (!this.canModifyWidget) return;
+    if (this.isLocked) {
+      // a locked widget is only selected, never dragged
+      this.selectWidget();
+      return;
+    }
     const target = event.target as HTMLElement | null;
     // Don't drag if clicking a resize handle, button, or input
     if (target?.closest(".resize-handle")) return;
@@ -693,7 +708,10 @@ export class RacedayAbsoluteWidgetComponent
     event.preventDefault();
     event.stopPropagation();
 
-    this.bringToFront();
+    // select, and lift on top only while dragging: the saved layer order
+    // changes only through the panel's layer buttons (phase 4b)
+    this.selectWidget();
+    this.setLifted(true);
 
     const scale = this.parentComponent().visualScale || 1;
     const startX = event.clientX;
@@ -742,6 +760,7 @@ export class RacedayAbsoluteWidgetComponent
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
       this.clearSnapOverlay();
+      this.setLifted(false);
       if (this.parentComponent().gridSession?.()) {
         const session = this.parentComponent().gridSession();
         if (
@@ -790,10 +809,40 @@ export class RacedayAbsoluteWidgetComponent
       return;
     }
     if (!this.canModifyWidget) {
-      this.bringToFront();
+      this.selectWidget();
       return;
     }
     this.onDragStart(event);
+  }
+
+  /**
+   * Select this widget (or its grid master) without changing the layer order.
+   * Hosts without selectWidget keep the old bring-to-front behaviour.
+   */
+  selectWidget(): void {
+    const parent = this.parentComponent();
+    if (parent?.selectWidget) {
+      parent.selectWidget(this.widget().id);
+    } else {
+      this.bringToFront();
+    }
+  }
+
+  /** Draw this widget, or its whole grid, on top while it's dragged. */
+  private setLifted(on: boolean): void {
+    const lifted = this.parentComponent()?.liftedIds;
+    if (!lifted?.set) return;
+    if (!on) {
+      lifted.set(new Set());
+      return;
+    }
+    const gridId = this.widget().customSettings?.["gridId"];
+    const ids = gridId
+      ? (this.parentComponent().layout?.widgets || [])
+          .filter((w: any) => w.customSettings?.["gridId"] === gridId)
+          .map((w: any) => w.id)
+      : [this.widget().id];
+    lifted.set(new Set(ids));
   }
 
   bringToFront() {

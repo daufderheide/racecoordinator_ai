@@ -879,6 +879,56 @@ describe("ui-editor-widget.helper", () => {
     );
   });
 
+  it("moves a widget in the layer order as one undo step (phase 4b)", () => {
+    const { handleLayerOrder } = require("./ui-editor-widget.helper");
+    const a: any = { id: "a", zIndex: 100 };
+    const b: any = { id: "b", zIndex: 101 };
+    const layout = { widgets: [a, b] };
+    const ui: any = { entity_id: "ui1" };
+    const comp = {
+      activeCustomUi: ui,
+      editingSettings: {},
+      parsedLayouts: new Map(),
+      getLayout: () => layout,
+      isCustomUiPractice: () => false,
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+    handleLayerOrder(comp, "a", "front");
+    expect([a.zIndex, b.zIndex]).toEqual([101, 100]);
+    expect(JSON.parse(ui.layoutJson).widgets[0].zIndex).toBe(101);
+    expect(comp.syncRacedayPreview).toHaveBeenCalled();
+    expect(comp.captureState).toHaveBeenCalledTimes(1);
+
+    // already in front: nothing to save
+    handleLayerOrder(comp, "a", "front");
+    expect(comp.captureState).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not nudge a locked widget", () => {
+    const { handleNudgeSelectedWidget } = require("./ui-editor-widget.helper");
+    const widget = {
+      id: "w1",
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 100,
+      customSettings: { locked: true },
+    };
+    const comp = {
+      selectedWidgetId: "w1",
+      activeCustomUi: { entity_id: "ui1" },
+      getLayout: () => ({ widgets: [widget] }),
+      getLayoutBaseWidth: () => 1920,
+      getLayoutBaseHeight: () => 1080,
+      onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+    };
+    handleNudgeSelectedWidget(comp, 5, -10);
+    expect([widget.x, widget.y]).toEqual([10, 20]);
+    expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
+  });
+
   it("should clamp dimension and position changes", () => {
     const {
       handleWidgetXChange,

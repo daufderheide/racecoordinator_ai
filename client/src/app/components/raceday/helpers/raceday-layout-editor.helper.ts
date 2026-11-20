@@ -452,6 +452,36 @@ export class RacedayLayoutEditorHelper {
     );
   }
 
+  /**
+   * Select a widget from the canvas without changing the saved layer order
+   * (phase 4b). Picks the same widget bringToFront would select: the grid
+   * master for a mirrored lane, else the widget itself.
+   */
+  public static selectWidget(host: any, id: string): void {
+    const target = host.layout?.widgets?.find((w: any) => w.id === id);
+    if (!target) return;
+    const s = target.customSettings;
+    const session = host.gridSession?.();
+    const isHoriz =
+      session?.direction === "horizontal" ||
+      session?.layoutOrientation === "horizontal" ||
+      s?.["gridDirection"] === "horizontal" ||
+      s?.["layoutOrientation"] === "horizontal";
+    const isLanesMirrored = isHoriz
+      ? s?.["linkColumns"] !== false && session?.linkColumns !== false
+      : s?.["mirrorRows"] !== false && session?.mirrorRows !== false;
+    const masterId = s?.["gridMasterId"];
+    if (
+      isLanesMirrored &&
+      masterId &&
+      host.layout.widgets.some((w: any) => w.id === masterId)
+    ) {
+      host.widgetSelected.emit(masterId);
+      return;
+    }
+    host.widgetSelected.emit(id);
+  }
+
   public static bringToFront(host: any, id: string): void {
     if (!host.layout?.widgets) return;
 

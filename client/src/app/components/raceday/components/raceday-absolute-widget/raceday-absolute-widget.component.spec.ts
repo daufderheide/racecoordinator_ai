@@ -376,6 +376,91 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component.onDragStart).not.toHaveBeenCalled();
   });
 
+  describe("layer order while dragging (phase 4b)", () => {
+    let lifted: Set<string>;
+    beforeEach(() => {
+      lifted = new Set();
+      const liftedIds: any = () => lifted;
+      liftedIds.set = (v: Set<string>) => (lifted = v);
+      mockParent.liftedIds = liftedIds;
+      mockParent.selectWidget = jasmine.createSpy("selectWidget");
+    });
+
+    it("selects without bringing to front, lifts while dragging, drops back after", () => {
+      const target = document.createElement("div");
+      const down = new PointerEvent("pointerdown", {
+        clientX: 50,
+        clientY: 50,
+      });
+      Object.defineProperty(down, "target", { value: target });
+      component.onDragStart(down);
+      expect(mockParent.selectWidget).toHaveBeenCalledWith("test-widget");
+      expect(mockParent.bringToFront).not.toHaveBeenCalled();
+      expect(component.computedZIndex).toBe(90000 + 100);
+
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(lifted.size).toBe(0);
+      expect(component.computedZIndex).toBe(100);
+      expect(mockWidget.zIndex).toBe(100);
+    });
+
+    it("a press on a widget that can't be dragged only selects it", () => {
+      spyOnProperty(component, "canModifyWidget", "get").and.returnValue(false);
+      const down = new PointerEvent("pointerdown");
+      Object.defineProperty(down, "target", {
+        value: document.createElement("div"),
+      });
+      component.onWidgetPointerDown(down);
+      expect(mockParent.selectWidget).toHaveBeenCalledWith("test-widget");
+      expect(mockParent.bringToFront).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("locked widget (phase 4b)", () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: { locked: true },
+      });
+      fixture.detectChanges();
+    });
+
+    it("shows a lock instead of the grab icon and hides the resize handles", () => {
+      const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+      expect(component.isLocked).toBeTrue();
+      expect(wrapper.classList).toContain("is-locked");
+      expect(
+        fixture.nativeElement.querySelector(".widget-header-drag")?.textContent,
+      ).toContain("lock");
+      const handle = fixture.nativeElement.querySelector(".resize-handle");
+      if (handle) expect(getComputedStyle(handle).display).toBe("none");
+    });
+
+    it("can still be selected (brought to front) but not dragged or resized", () => {
+      const target = document.createElement("div");
+      const down = new PointerEvent("pointerdown", {
+        clientX: 50,
+        clientY: 50,
+      });
+      Object.defineProperty(down, "target", { value: target });
+      spyOn(down, "preventDefault");
+      component.onDragStart(down);
+      expect(mockParent.bringToFront).toHaveBeenCalledWith("test-widget");
+      expect(down.preventDefault).not.toHaveBeenCalled();
+      document.dispatchEvent(
+        new PointerEvent("pointermove", { clientX: 90, clientY: 90 }),
+      );
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(mockParent.snapToEdges).not.toHaveBeenCalled();
+      expect(mockParent.layoutChanged.emit).not.toHaveBeenCalled();
+
+      const r = new PointerEvent("pointerdown");
+      spyOn(r, "preventDefault");
+      component.onResizeStart(r, "se");
+      expect(r.preventDefault).not.toHaveBeenCalled();
+    });
+  });
+
   it("should handle removeWidget directly", () => {
     const fakeEvent = new Event("click");
     spyOn(fakeEvent, "stopPropagation");

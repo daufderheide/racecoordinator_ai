@@ -1,3 +1,4 @@
+import { hasFixedLayer } from "@app/components/raceday/utils/layer-order.utils";
 import {
   InspectorFolder,
   InspectorGroup,
@@ -167,6 +168,61 @@ export function layoutFolder(): InspectorFolder {
             pair: "size",
             labelKey: "UE_KIT_SIZE_WH",
             searchTerms: "size width height",
+          },
+          {
+            id: "locked",
+            type: "switch",
+            key: "locked",
+            labelKey: "UE_KIT_LOCK",
+            helpKey: "UE_KIT_LOCK_HELP",
+            searchTerms: "lock locked pin fixed move resize",
+            // grid columns move with their grid
+            visibleWhen: (s) => !s["gridId"],
+          },
+          {
+            id: "layer",
+            type: "buttons",
+            labelKey: "UE_KIT_LAYER",
+            helpKey: "UE_KIT_LAYER_HELP",
+            searchTerms:
+              "layer order front back forward backward z-index above below behind",
+            // the menu bar and countdown have fixed layers
+            visibleWhen: (_s, c) =>
+              !!c?.actions?.layerOrder && !hasFixedLayer(c.widget),
+            buttons: [
+              {
+                id: "front",
+                icon: "flip_to_front",
+                labelKey: "UE_KIT_LAYER_FRONT",
+                run: (c) => c.actions?.layerOrder?.(c.widget.id, "front"),
+                disabled: (c) =>
+                  c.actions?.layerState?.(c.widget.id)?.top ?? false,
+              },
+              {
+                id: "forward",
+                icon: "arrow_upward",
+                labelKey: "UE_KIT_LAYER_FORWARD",
+                run: (c) => c.actions?.layerOrder?.(c.widget.id, "forward"),
+                disabled: (c) =>
+                  c.actions?.layerState?.(c.widget.id)?.top ?? false,
+              },
+              {
+                id: "backward",
+                icon: "arrow_downward",
+                labelKey: "UE_KIT_LAYER_BACKWARD",
+                run: (c) => c.actions?.layerOrder?.(c.widget.id, "backward"),
+                disabled: (c) =>
+                  c.actions?.layerState?.(c.widget.id)?.bottom ?? false,
+              },
+              {
+                id: "back",
+                icon: "flip_to_back",
+                labelKey: "UE_KIT_LAYER_BACK",
+                run: (c) => c.actions?.layerOrder?.(c.widget.id, "back"),
+                disabled: (c) =>
+                  c.actions?.layerState?.(c.widget.id)?.bottom ?? false,
+              },
+            ],
           },
         ],
       },

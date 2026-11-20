@@ -343,6 +343,14 @@ export abstract class DefaultRacedayLayoutBase {
     RacedayLayoutEditorHelper.bringToFront(this, id);
   }
 
+  /** Select a widget on the canvas without changing the layer order (phase 4b). */
+  selectWidget(id: string): void {
+    RacedayLayoutEditorHelper.selectWidget(this, id);
+  }
+
+  /** Widgets drawn on top only while they're dragged (phase 4b). */
+  readonly liftedIds = signal<ReadonlySet<string>>(new Set());
+
   normalizeZIndices(): void {
     RacedayLayoutEditorHelper.normalizeZIndices(this);
   }

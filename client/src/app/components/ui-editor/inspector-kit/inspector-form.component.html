@@ -247,6 +247,32 @@
                     {{ $any(field).text ?? labelOf(field) }}
                   </p>
                 }
+                @case ("buttons") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl kit-buttons">
+                      @for (b of $any(field).buttons; track b.id) {
+                        <button
+                          type="button"
+                          class="kit-icon-btn"
+                          [attr.data-button]="b.id"
+                          [attr.aria-label]="b.labelKey | translate"
+                          [attr.title]="b.labelKey | translate"
+                          [disabled]="buttonDisabled(b)"
+                          (click)="runButton(b)"
+                        >
+                          <span class="material-icons" aria-hidden="true">{{
+                            b.icon
+                          }}</span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
                 @case ("embed") {
                   <div class="kit-embed" [attr.data-field]="field.id">
                     <ng-container

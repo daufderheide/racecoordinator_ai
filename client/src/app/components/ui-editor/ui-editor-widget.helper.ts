@@ -7,6 +7,10 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "@app/components/raceday/utils/lane-replication.helper";
+import {
+  LayerMove,
+  moveLayer,
+} from "@app/components/raceday/utils/layer-order.utils";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
@@ -620,6 +624,31 @@ export function isWidgetWidthAutoCalculated(
   return dir === "horizontal";
 }
 
+/**
+ * Layer buttons in the panel (phase 4b): move a widget, or its whole grid,
+ * in the saved order. One undo step.
+ */
+export function handleLayerOrder(
+  comp: any,
+  widgetId: string,
+  move: LayerMove,
+  ui?: CustomUI,
+): void {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets || !moveLayer(layout.widgets, widgetId, move)) return;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+}
+
 export function handleNudgeSelectedWidget(
   comp: any,
   dx: number,
@@ -635,6 +664,8 @@ export function handleNudgeSelectedWidget(
     (w: any) => w.id === comp.selectedWidgetId,
   );
   if (!widget) return;
+  // a locked widget doesn't move with the arrow keys either
+  if (widget.customSettings?.["locked"] === true) return;
 
   const canNudgeX = !isWidgetWidthAutoCalculated(
     widget,

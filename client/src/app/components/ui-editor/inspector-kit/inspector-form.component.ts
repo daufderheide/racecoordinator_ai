@@ -13,6 +13,7 @@ import {
   FOLDER_META,
   FOLDER_ORDER,
   InspectorActions,
+  ButtonsField,
   InspectorContext,
   InspectorField,
   InspectorFolder,
@@ -284,6 +285,15 @@ export class InspectorFormComponent {
     this.settingsChange.emit();
   };
 
+  /** A ButtonsField button: run its editor action / see if it can run now. */
+  runButton(b: ButtonsField["buttons"][number]): void {
+    b.run(this.context());
+  }
+
+  buttonDisabled(b: ButtonsField["buttons"][number]): boolean {
+    return b.disabled ? b.disabled(this.context()) : false;
+  }
+
   /** Inputs for an embedded part (see EmbedField). */
   embedInputs(): Record<string, unknown> {
     return {
@@ -409,6 +419,8 @@ export class InspectorFormComponent {
 
   geometryDisabled(field: InspectorField, index: 0 | 1): boolean {
     if (field.type !== "geometry") return false;
+    // locked widgets keep their position and size (phase 4b)
+    if (this.settings()?.["locked"] === true) return true;
     if (field.pair === "position")
       return index === 0 ? this.widthLocked() : this.heightLocked();
     return index === 0 ? this.widthLocked() : this.heightLocked();
