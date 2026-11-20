@@ -42,8 +42,30 @@
           <small>{{ typeLabelKey() | translate }}</small>
         }
       </div>
-      @if (canNavigate()) {
-        <div class="kit-head-nav">
+      <div class="kit-head-nav">
+        <button
+          type="button"
+          class="kit-icon-btn"
+          id="kit-copy-style"
+          [title]="'UE_STYLE_COPY' | translate"
+          [attr.aria-label]="'UE_STYLE_COPY' | translate"
+          (click)="copyStyle.emit()"
+        >
+          <span class="material-icons">format_paint</span>
+        </button>
+        <button
+          type="button"
+          class="kit-icon-btn"
+          id="kit-paste-style"
+          [class.kit-has-dot]="canPasteStyle()"
+          [disabled]="!canPasteStyle()"
+          [title]="'UE_STYLE_PASTE' | translate"
+          [attr.aria-label]="'UE_STYLE_PASTE' | translate"
+          (click)="pasteStyle.emit()"
+        >
+          <span class="material-icons">content_paste</span>
+        </button>
+        @if (canNavigate()) {
           <button
             type="button"
             class="kit-icon-btn"
@@ -62,8 +84,8 @@
           >
             <span class="material-icons">chevron_right</span>
           </button>
-        </div>
-      }
+        }
+      </div>
     </div>
   </div>
 

@@ -80,4 +80,19 @@ describe("InspectorMultiComponent", () => {
     ).toBeFalse();
     expect(q("#kit-multi-locked-note")).toBeNull();
   });
+
+  it("copies style from the main widget and pastes on all (phase 5a)", () => {
+    const events: string[] = [];
+    fixture.componentInstance.copyStyle.subscribe(() => events.push("copy"));
+    fixture.componentInstance.pasteStyle.subscribe(() => events.push("paste"));
+    const paste = q("#kit-paste-style") as HTMLButtonElement;
+    expect(paste.disabled).toBeTrue();
+    fixture.componentRef.setInput("canPasteStyle", true);
+    fixture.detectChanges();
+    expect(paste.disabled).toBeFalse();
+    expect(paste.classList).toContain("kit-has-dot");
+    (q("#kit-copy-style") as HTMLButtonElement).click();
+    paste.click();
+    expect(events).toEqual(["copy", "paste"]);
+  });
 });

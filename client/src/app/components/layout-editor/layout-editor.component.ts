@@ -1,3 +1,8 @@
+import { StyleClipboardService } from "@app/components/ui-editor/style-clipboard.service";
+import {
+  copyStyle as copyWidgetStyle,
+  pasteStyle as pasteWidgetStyle,
+} from "@app/components/ui-editor/style-copy.utils";
 import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
 import {
   canMultiSelect,
@@ -52,6 +57,7 @@ import {
   findDefaultWidgetId,
   handleArrange,
   handleLayerOrder,
+  handlePasteStyle,
   handleRemoveWidgets,
 } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { layerState } from "@app/components/raceday/utils/layer-order.utils";
@@ -308,6 +314,56 @@ export class LayoutEditorComponent
     this.cdr.markForCheck();
   }
 
+  /** Copied widget style, shared across layouts for this session (phase 5a). */
+  private readonly styleClipboard = inject(StyleClipboardService);
+
+  get hasCopiedStyle(): boolean {
+    return !!this.styleClipboard.copied();
+  }
+
+  /** Copy the main selected widget's style (panel button, Ctrl+Alt+C). */
+  copyStyle(): void {
+    const widget = this.currentSelectedWidget;
+    if (!widget) return;
+    const copy = copyWidgetStyle(this.getInspectorSchema(widget), widget);
+    if (!copy) return;
+    this.styleClipboard.set(copy);
+    this.racedayComp?.showCanvasNote?.("UE_STYLE_COPIED");
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Paste the copied style on the selection (panel button, Ctrl+Alt+V).
+   * One widget goes through the normal change path, so a grid column
+   * passes it on to every lane; several are one undo step.
+   */
+  pasteStyle(): void {
+    const copy = this.styleClipboard.copied();
+    if (!copy) {
+      this.racedayComp?.showCanvasNote?.("UE_STYLE_NOTHING");
+      return;
+    }
+    const ids = this.selectedWidgetIds;
+    if (!ids.length) return;
+    let changed = 0;
+    if (ids.length === 1) {
+      const widget = this.currentSelectedWidget;
+      if (!widget) return;
+      changed = pasteWidgetStyle(copy, this.getInspectorSchema(widget), widget);
+      if (changed) this.onWidgetInspectorChange(widget);
+    } else {
+      changed = handlePasteStyle(
+        this,
+        copy,
+        ids,
+        (w) => this.getInspectorSchema(w),
+        this.editingLayout ?? undefined,
+      );
+    }
+    if (changed) this.racedayComp?.showCanvasNote?.("UE_STYLE_PASTED");
+    this.cdr.markForCheck();
+  }
+
   /** Align / distribute / same size from the several-widgets panel (phase 4c-3). */
   onArrange(action: ArrangeAction): void {
     handleArrange(this, action, this.editingLayout ?? undefined);
@@ -532,6 +588,28 @@ export class LayoutEditorComponent
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent): void {
     if (!this.isEditMode) return;
+    // Ctrl+Alt+C / Ctrl+Alt+V: copy / paste style (phase 5a). AltGr reports
+    // Ctrl+Alt too, so it is skipped: typing é / ć must not trigger this.
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      event.altKey &&
+      !event.getModifierState?.("AltGraph") &&
+      (event.code === "KeyC" || event.code === "KeyV")
+    ) {
+      const t = event.target as HTMLElement | null;
+      const typing =
+        !!t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable);
+      if (!typing) {
+        event.preventDefault();
+        if (event.code === "KeyC") this.copyStyle();
+        else this.pasteStyle();
+        return;
+      }
+    }
     // Escape: back to the main widget only (phase 4c-1)
     if (event.key === "Escape" && this.extraSelectedIds.length) {
       event.preventDefault();

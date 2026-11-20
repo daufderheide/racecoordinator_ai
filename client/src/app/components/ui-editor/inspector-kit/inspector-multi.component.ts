@@ -45,6 +45,28 @@ export interface MultiSelectItem {
           <h2 class="kit-head-title">{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
           <button
             type="button"
+            class="kit-icon-btn"
+            id="kit-copy-style"
+            [title]="'UE_STYLE_COPY' | translate"
+            [attr.aria-label]="'UE_STYLE_COPY' | translate"
+            (click)="copyStyle.emit()"
+          >
+            <span class="material-icons">format_paint</span>
+          </button>
+          <button
+            type="button"
+            class="kit-icon-btn"
+            id="kit-paste-style"
+            [class.kit-has-dot]="canPasteStyle()"
+            [disabled]="!canPasteStyle()"
+            [title]="'UE_STYLE_PASTE_ALL' | translate"
+            [attr.aria-label]="'UE_STYLE_PASTE_ALL' | translate"
+            (click)="pasteStyle.emit()"
+          >
+            <span class="material-icons">content_paste</span>
+          </button>
+          <button
+            type="button"
             class="kit-icon-btn kit-danger"
             id="kit-multi-delete"
             [title]="'UE_MULTI_DELETE_TITLE' | translate"
@@ -169,6 +191,9 @@ export class InspectorMultiComponent {
   keepMain = output<void>();
   deleteAll = output<void>();
   arrange = output<ArrangeAction>();
+  canPasteStyle = input(false);
+  copyStyle = output<void>();
+  pasteStyle = output<void>();
 
   /** Locked widgets stay put while aligning (they still count for the box). */
   lockedCount = computed(() => this.items().filter((i) => i.locked).length);

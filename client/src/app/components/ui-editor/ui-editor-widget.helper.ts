@@ -1,4 +1,9 @@
 import {
+  pasteStyle,
+  StyleCopy,
+} from "@app/components/ui-editor/style-copy.utils";
+import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
+import {
   canMultiSelect,
   clampGroupDelta,
   movableIds,
@@ -656,6 +661,41 @@ export function handleArrange(
   comp.captureState();
   comp.cdr?.markForCheck();
   return result;
+}
+
+/**
+ * Paste a copied style on several selected widgets (phase 5a), as one undo
+ * step. `schemaFor` gives each widget's panel schema. Returns how many
+ * widgets changed.
+ */
+export function handlePasteStyle(
+  comp: any,
+  copy: StyleCopy | null,
+  ids: string[],
+  schemaFor: (widget: any) => InspectorSchema | null,
+  ui?: CustomUI,
+): number {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!copy || !layout?.widgets) return 0;
+  let changed = 0;
+  for (const id of ids) {
+    const w = layout.widgets.find((x: any) => x.id === id);
+    if (!w || !canMultiSelect(w)) continue;
+    if (pasteStyle(copy, schemaFor(w), w)) changed++;
+  }
+  if (!changed) return 0;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+  return changed;
 }
 
 export function isWidgetHeightAutoCalculated(

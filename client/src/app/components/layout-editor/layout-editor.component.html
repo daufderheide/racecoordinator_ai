@@ -402,6 +402,9 @@
             (keepMain)="keepOnlyMainSelected()"
             (deleteAll)="deleteSelection()"
             (arrange)="onArrange($event)"
+            [canPasteStyle]="hasCopiedStyle"
+            (copyStyle)="copyStyle()"
+            (pasteStyle)="pasteStyle()"
           ></app-inspector-multi>
         } @else if (
           currentSelectedWidget && isEditMode && isWidgetConfigVisible
@@ -423,6 +426,9 @@
             [selectionToken]="selectionToken"
             [activeTab]="selectedWidgetTab"
             [actions]="inspectorActions"
+            [canPasteStyle]="hasCopiedStyle"
+            (copyStyle)="copyStyle()"
+            (pasteStyle)="pasteStyle()"
             (widgetChange)="onWidgetInspectorChange($event)"
             (geometryChange)="onKitGeometryChange($event)"
             (deleteWidget)="removeSelectedWidget()"

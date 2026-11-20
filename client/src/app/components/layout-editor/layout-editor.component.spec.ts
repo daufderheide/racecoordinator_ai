@@ -1335,6 +1335,122 @@ describe("LayoutEditorComponent", () => {
         ).toEqual([400, 400, 400]);
       });
 
+      describe("copy / paste style (phase 5a)", () => {
+        const layoutWidget = (id: string) =>
+          component.getLayoutWidgets().find((w: any) => w.id === id);
+        beforeEach(() => {
+          sessionStorage.removeItem("rcai.layoutEditor.styleClipboard");
+          component["initUndoManager"]();
+          component.editingLayout!.layoutJson = JSON.stringify({
+            widgets: [
+              {
+                id: "a",
+                widgetType: "records",
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 50,
+                customSettings: {
+                  headerFontFamily: "Orbitron",
+                  borderRadius: 9,
+                },
+              },
+              {
+                id: "b",
+                widgetType: "records",
+                x: 200,
+                y: 0,
+                width: 100,
+                height: 50,
+                customSettings: {},
+              },
+              {
+                id: "c",
+                widgetType: "timer",
+                x: 400,
+                y: 0,
+                width: 100,
+                height: 50,
+                customSettings: {},
+              },
+            ],
+          });
+          component.parsedLayouts.clear();
+          component.onWidgetSelected("a");
+        });
+        afterEach(() =>
+          sessionStorage.removeItem("rcai.layoutEditor.styleClipboard"),
+        );
+
+        it("copies and pastes on one widget, as one undo step", () => {
+          expect(component.hasCopiedStyle).toBeFalse();
+          component.copyStyle();
+          expect(component.hasCopiedStyle).toBeTrue();
+          component.onWidgetSelected("b");
+          const capture = spyOn(component, "captureState").and.callThrough();
+          component.pasteStyle();
+          expect(capture).toHaveBeenCalledTimes(1);
+          expect(layoutWidget("b").customSettings.headerFontFamily).toBe(
+            "Orbitron",
+          );
+          expect(layoutWidget("b").customSettings.borderRadius).toBe(9);
+        });
+
+        it("pastes on all selected with Ctrl+Alt+V, as one undo step", () => {
+          component.handleKeyboardEvent(
+            new KeyboardEvent("keydown", {
+              code: "KeyC",
+              ctrlKey: true,
+              altKey: true,
+            }),
+          );
+          component.onBoxSelected({ ids: ["b", "c"], additive: false });
+          const capture = spyOn(component, "captureState").and.callThrough();
+          component.handleKeyboardEvent(
+            new KeyboardEvent("keydown", {
+              code: "KeyV",
+              ctrlKey: true,
+              altKey: true,
+            }),
+          );
+          expect(layoutWidget("b").customSettings.borderRadius).toBe(9);
+          expect(layoutWidget("c").customSettings.borderRadius).toBe(9);
+          expect(capture).toHaveBeenCalledTimes(1);
+        });
+
+        it("ignores AltGr (Ctrl+Alt on some keyboards) and typing in a field", () => {
+          const altGr = new KeyboardEvent("keydown", {
+            code: "KeyC",
+            ctrlKey: true,
+            altKey: true,
+          });
+          spyOn(altGr, "getModifierState").and.callFake(
+            (k: string) => k === "AltGraph",
+          );
+          component.handleKeyboardEvent(altGr);
+          expect(component.hasCopiedStyle).toBeFalse();
+          const input = document.createElement("input");
+          document.body.appendChild(input);
+          const typed = new KeyboardEvent("keydown", {
+            code: "KeyC",
+            ctrlKey: true,
+            altKey: true,
+            bubbles: true,
+          });
+          Object.defineProperty(typed, "target", { value: input });
+          component.handleKeyboardEvent(typed);
+          input.remove();
+          expect(component.hasCopiedStyle).toBeFalse();
+        });
+
+        it("says so when pasting with nothing copied", () => {
+          const note = jasmine.createSpy("showCanvasNote");
+          (component as any).racedayComp = { showCanvasNote: note };
+          component.pasteStyle();
+          expect(note).toHaveBeenCalledWith("UE_STYLE_NOTHING");
+        });
+      });
+
       it("shows the several-widgets panel instead of the widget panel", () => {
         component.isWidgetConfigVisible = true;
         component.onSelectionToggled("b");
