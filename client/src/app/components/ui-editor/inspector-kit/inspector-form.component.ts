@@ -11,6 +11,7 @@ import {
   fieldSource,
   FOLDER_META,
   FOLDER_ORDER,
+  InspectorActions,
   InspectorContext,
   InspectorField,
   InspectorFolder,
@@ -89,6 +90,11 @@ export class InspectorFormComponent {
   customUi = input<any>(null);
   availableColumns = input<{ key: string; label: string }[]>([]);
   isPracticeMode = input(false);
+  /** Lane Column: the inset clicked on the canvas, the open tab, editor handlers. */
+  selectedAnchor = input<string | null>(null);
+  selectionToken = input(0);
+  activeTab = input<string | null>(null);
+  actions = input<InspectorActions | null>(null);
   widthLocked = input(false);
   heightLocked = input(false);
   /** Bumped by the shell after any change so computed values refresh. */
@@ -203,6 +209,10 @@ export class InspectorFormComponent {
       customUi: this.customUi(),
       availableColumns: this.availableColumns(),
       isPracticeMode: this.isPracticeMode(),
+      selectedAnchor: this.selectedAnchor(),
+      selectionToken: this.selectionToken(),
+      activeTab: this.activeTab(),
+      actions: this.actions() || undefined,
     };
   }
 

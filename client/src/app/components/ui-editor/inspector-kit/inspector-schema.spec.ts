@@ -88,7 +88,8 @@ describe("inspector schema helpers", () => {
 
 describe("widget schemas", () => {
   it("returns null for widgets that keep their existing inspector", () => {
-    expect(getInspectorSchema("lane-column")).toBeNull();
+    expect(getInspectorSchema("custom:my-widget")).toBeNull();
+    expect(getInspectorSchema("lane-column")?.widgetType).toBe("lane-column");
     expect(getInspectorSchema(undefined)).toBeNull();
     expect(getInspectorSchema("records")?.widgetType).toBe("records");
   });

@@ -55,6 +55,25 @@ export interface InspectorContext {
   customUi?: any;
   availableColumns?: { key: string; label: string }[];
   isPracticeMode?: boolean;
+  /** Lane Column: the inset clicked on the canvas and the open tab / scope. */
+  selectedAnchor?: string | null;
+  selectionToken?: number;
+  activeTab?: string | null;
+  /** Editor handlers an embedded part can call (tab, anchor, grid actions...). */
+  actions?: InspectorActions;
+}
+
+/** The Layout Editor's handlers for what an old inspector used to emit. */
+export interface InspectorActions {
+  tabChange?: (tab: string) => void;
+  anchorChange?: (anchor: string | null) => void;
+  requestReplicate?: () => void;
+  replicate?: (options: any) => void;
+  editGrid?: (gridId: string) => void;
+  detachGrid?: (gridId: string) => void;
+  deleteGrid?: (gridId: string) => void;
+  reMirrorGrid?: (gridId: string) => void;
+  bringGridToFront?: (gridId: string) => void;
 }
 
 interface FieldBase {

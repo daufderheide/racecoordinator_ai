@@ -24,7 +24,10 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import { GeometryChange } from "@app/components/ui-editor/inspector-kit/inspector-form.component";
-import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
+import {
+  InspectorActions,
+  InspectorSchema,
+} from "@app/components/ui-editor/inspector-kit/inspector-schema";
 import { InspectorShellComponent } from "@app/components/ui-editor/inspector-kit/inspector-shell.component";
 import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
 import {
@@ -138,6 +141,23 @@ export class LayoutEditorComponent
   set currentSelectedWidget(val: any) {
     this.selectedWidgetId = val?.id || (typeof val === "string" ? val : null);
   }
+
+  /**
+   * What the old Lane Column inspector emitted, as handlers for the redesigned
+   * panel (it shows that inspector inside a folder). Same handlers as the
+   * outputs of app-widget-inspector-fields.
+   */
+  readonly inspectorActions: InspectorActions = {
+    tabChange: (tab) => this.onWidgetTabChange(tab),
+    anchorChange: (anchor) => this.onSelectedAnchorChange(anchor),
+    requestReplicate: () => this.openReplicateLaneModal(),
+    replicate: (options) => this.onReplicateLanes(options),
+    editGrid: (gridId) => this.onEditGridTemplate(gridId),
+    detachGrid: (gridId) => this.onDetachGrid(gridId),
+    deleteGrid: (gridId) => this.onDeleteGrid(gridId),
+    reMirrorGrid: (gridId) => this.onReMirrorGrid(gridId),
+    bringGridToFront: (gridId) => this.onBringGridToFront(gridId),
+  };
 
   /** Redesigned panel schema for the widget, or null for its existing inspector. */
   getInspectorSchema(widget: any): InspectorSchema | null {
