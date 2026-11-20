@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-import { TextInfoInspectorHarnessE2e } from "./testing/text-info-inspector.harness.e2e";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 test.describe("Text Info Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -74,29 +74,15 @@ test.describe("Text Info Inspector Visuals", () => {
       .first();
     await heatInfoWidget.dispatchEvent("pointerdown");
 
-    // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
+    // The redesigned panel: open Text and change the Label and Value sizes
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.setPartSize("label", 22);
+    await kit.setPartSize("value", 26);
+    await kit.settle('[data-folder="text"]');
 
-    // Verify inspector contains records-specific fields
-    const inspectorFields = page.locator("app-text-info-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const harness = new TextInfoInspectorHarnessE2e(inspectorFields);
-    // Interact with options to show they work and are displayed properly
-    await harness.setLabelFontSize(22);
-    await harness.setValueFontSize(26);
-
-    // Blur any active element, clear hover, and scroll inspector panel so text info fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-text-info-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
-    await page.mouse.move(0, 0);
-
-    // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "text-info-inspector-options.png",
       {
         animations: "disabled",

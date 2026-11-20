@@ -19,7 +19,7 @@ import {
       [schema]="schema"
       displayName="Records"
       typeLabelKey="UE_WIDGET_TYPE_RECORDS"
-      (change)="changes = changes + 1; changedWidget = $event"
+      (widgetChange)="changes = changes + 1; changedWidget = $event"
       (deleteWidget)="deleted = true"
       (previous)="moves.push(-1)"
       (next)="moves.push(1)"
@@ -141,6 +141,17 @@ describe("InspectorShellComponent", () => {
     expect(host.widget.customSettings.showHeatBest).toBeFalse();
     expect(host.deleted).toBeTrue();
     expect(host.moves).toEqual([-1, 1]);
+  });
+
+  it("doesn't save the widget again when a typed position bubbles its native change event", () => {
+    // Regression: an output named `change` also caught the input's own DOM
+    // `change` event, which saved the stale widget copy over the new X.
+    q("#kit-folder-layout")!.click();
+    fixture.detectChanges();
+    const x = q("#kit-position-0") as HTMLInputElement;
+    x.value = "120";
+    x.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(host.changes).toBe(0);
   });
 
   it("counts changed settings on the Changed chip and filters on it", () => {

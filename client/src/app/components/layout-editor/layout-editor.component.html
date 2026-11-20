@@ -398,7 +398,7 @@
             [widthLocked]="isWidgetWidthAutoCalculated(currentSelectedWidget)"
             [heightLocked]="isWidgetHeightAutoCalculated(currentSelectedWidget)"
             [canNavigate]="getLayoutWidgets().length > 1"
-            (change)="onWidgetInspectorChange($event)"
+            (widgetChange)="onWidgetInspectorChange($event)"
             (geometryChange)="onKitGeometryChange($event)"
             (deleteWidget)="removeSelectedWidget()"
             (previous)="selectAdjacentWidget(-1)"

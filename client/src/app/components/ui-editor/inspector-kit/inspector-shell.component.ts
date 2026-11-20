@@ -64,7 +64,7 @@ export class InspectorShellComponent implements OnDestroy {
   canNavigate = input(true);
 
   /** Emits the widget whose settings were changed (the same object the form edited). */
-  change = output<any>();
+  widgetChange = output<any>();
   geometryChange = output<GeometryChange>();
   deleteWidget = output<void>();
   previous = output<void>();

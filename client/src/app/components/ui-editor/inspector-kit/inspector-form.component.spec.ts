@@ -162,7 +162,7 @@ describe("InspectorFormComponent", () => {
     fixture.componentRef.setInput("schema", schema);
     fixture.componentRef.setInput("settings", settings);
     fixture.componentRef.setInput("widget", widget);
-    component.change.subscribe(() => changes++);
+    component.settingsChange.subscribe(() => changes++);
     component.geometryChange.subscribe((g) => geometry.push(g));
     component.reset.subscribe((r) => resets.push(r.labelKey));
     fixture.detectChanges();

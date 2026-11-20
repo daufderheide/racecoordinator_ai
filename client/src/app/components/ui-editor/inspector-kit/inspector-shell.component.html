@@ -125,7 +125,7 @@
         [onlyChanged]="onlyChanged()"
         [widthLocked]="widthLocked()"
         [heightLocked]="heightLocked()"
-        (change)="change.emit(widget())"
+        (settingsChange)="widgetChange.emit(widget())"
         (geometryChange)="geometryChange.emit($event)"
         (reset)="onReset($event)"
       ></app-inspector-form>

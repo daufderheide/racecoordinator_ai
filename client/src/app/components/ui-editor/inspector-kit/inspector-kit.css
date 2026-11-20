@@ -455,6 +455,12 @@ app-inspector-shell {
   border-radius: 6px;
 }
 
+/* A text input needs the width: its label goes on its own line above it. */
+.kit-row.kit-row-stack {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
 /* A switch is small: its label gets the whole width. */
 .kit-row.kit-row-switch {
   grid-template-columns: minmax(0, 1fr) auto;
@@ -520,6 +526,13 @@ app-inspector-shell {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+}
+
+/* The colour control fills its cell and may shrink, so the hex text ellipses. */
+.kit-ctrl > app-kit-color {
+  display: block;
+  flex: 1;
   min-width: 0;
 }
 
@@ -751,6 +764,8 @@ app-inspector-shell {
   display: flex;
   gap: 2px;
   flex-shrink: 0;
+  /* room for the outline of the chosen swatch */
+  padding: 3px 3px 3px 0;
 }
 
 .kit-quick-btn {

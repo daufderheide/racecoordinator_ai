@@ -56,7 +56,7 @@ interface VisibleFolder {
 /**
  * Draws a widget's settings from its schema: folders in a fixed order,
  * groups, label-left rows, changed dots and resets, search and smart
- * visibility. It changes `settings` in place and emits `change`, the same way
+ * visibility. It changes `settings` in place and emits `settingsChange`, the same way
  * the existing inspectors do, so undo and saving work as before.
  */
 @Component({
@@ -81,7 +81,7 @@ export class InspectorFormComponent {
   /** Bumped by the shell after any change so computed values refresh. */
   revision = input(0);
 
-  change = output<void>();
+  settingsChange = output<void>();
   geometryChange = output<GeometryChange>();
   reset = output<ResetEvent>();
 
@@ -204,7 +204,7 @@ export class InspectorFormComponent {
     if (!s) return;
     s[key] = value;
     this.localRevision++;
-    this.change.emit();
+    this.settingsChange.emit();
   }
 
   setPart(
@@ -222,7 +222,7 @@ export class InspectorFormComponent {
 
   resetOne(field: InspectorField): void {
     resetField(field, this.settings(), this.defaults());
-    this.change.emit();
+    this.settingsChange.emit();
     this.reset.emit({ labelKey: field.labelKey });
   }
 
@@ -231,7 +231,7 @@ export class InspectorFormComponent {
       if (this.isChanged(field))
         resetField(field, this.settings(), this.defaults());
     }
-    this.change.emit();
+    this.settingsChange.emit();
     this.reset.emit({ labelKey: FOLDER_META[folder.id].labelKey });
   }
 
