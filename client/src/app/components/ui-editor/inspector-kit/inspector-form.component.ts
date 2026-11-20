@@ -1,0 +1,326 @@
+import { CommonModule } from "@angular/common";
+import { Component, computed, inject, input, output } from "@angular/core";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { FontService } from "@app/services/font.service";
+import { TranslationService } from "@app/services/translation.service";
+
+import {
+  defaultFor,
+  fieldMatches,
+  FOLDER_META,
+  FOLDER_ORDER,
+  InspectorField,
+  InspectorFolder,
+  InspectorFolderId,
+  InspectorGroup,
+  InspectorOption,
+  InspectorSchema,
+  isFieldChanged,
+  isFieldVisible,
+  registryDefaults,
+  resetField,
+  TextPartField,
+} from "./inspector-schema";
+import { folderSummary } from "./inspector-summary";
+import { KitColorComponent } from "./kit-color.component";
+import { KitStepperComponent } from "./kit-stepper.component";
+
+export interface GeometryChange {
+  prop: "x" | "y" | "width" | "height";
+  value: number;
+}
+
+export interface ResetEvent {
+  /** Translation key of what was reset (field label or folder name). */
+  labelKey: string;
+}
+
+/** Folders opened per widget type, remembered while the editor is open. */
+const openFolders = new Map<string, Set<InspectorFolderId>>();
+/** Text parts opened per widget type. */
+const openParts = new Map<string, Set<string>>();
+
+/** Forget which folders and text parts were open (used by tests). */
+export function resetInspectorFormMemory(): void {
+  openFolders.clear();
+  openParts.clear();
+}
+
+interface VisibleFolder {
+  folder: InspectorFolder;
+  groups: InspectorGroup[];
+  open: boolean;
+  changed: number;
+}
+
+/**
+ * Draws a widget's settings from its schema: folders in a fixed order,
+ * groups, label-left rows, changed dots and resets, search and smart
+ * visibility. It changes `settings` in place and emits `change`, the same way
+ * the existing inspectors do, so undo and saving work as before.
+ */
+@Component({
+  standalone: true,
+  selector: "app-inspector-form",
+  templateUrl: "./inspector-form.component.html",
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    KitStepperComponent,
+    KitColorComponent,
+  ],
+})
+export class InspectorFormComponent {
+  schema = input.required<InspectorSchema>();
+  settings = input.required<Record<string, any>>();
+  widget = input<any>(null);
+  query = input("");
+  onlyChanged = input(false);
+  widthLocked = input(false);
+  heightLocked = input(false);
+  /** Bumped by the shell after any change so computed values refresh. */
+  revision = input(0);
+
+  change = output<void>();
+  geometryChange = output<GeometryChange>();
+  reset = output<ResetEvent>();
+
+  private translation = inject(TranslationService);
+  fontService = inject(FontService);
+  keepRatio = false;
+  private localRevision = 0;
+
+  readonly meta = FOLDER_META;
+
+  defaults = computed(() => registryDefaults(this.schema().widgetType));
+
+  private t = (key: string) => this.translation.translate(key);
+
+  folders(): VisibleFolder[] {
+    // Read the inputs so Angular re-renders when they change.
+    this.revision();
+    const schema = this.schema();
+    const settings = this.settings() || {};
+    const query = this.query();
+    const onlyChanged = this.onlyChanged();
+    const filtering = !!query.trim() || onlyChanged;
+    const opened = this.openSet();
+    const result: VisibleFolder[] = [];
+    for (const id of FOLDER_ORDER) {
+      const folder = schema.folders.find((f) => f.id === id);
+      if (!folder) continue;
+      const groups = folder.groups
+        .map((g) => ({
+          ...g,
+          fields: g.fields.filter(
+            (f) =>
+              isFieldVisible(f, settings) &&
+              fieldMatches(f, query, this.t) &&
+              (!onlyChanged || this.isChanged(f)),
+          ),
+        }))
+        .filter((g) => g.fields.length > 0);
+      if (filtering && groups.length === 0) continue;
+      result.push({
+        folder,
+        groups,
+        open: filtering || opened.has(id),
+        changed: folder.groups
+          .flatMap((g) => g.fields)
+          .filter((f) => this.isChanged(f)).length,
+      });
+    }
+    return result;
+  }
+
+  hasResults(): boolean {
+    return this.folders().length > 0;
+  }
+
+  private openSet(): Set<InspectorFolderId> {
+    const type = this.schema().widgetType;
+    if (!openFolders.has(type)) openFolders.set(type, new Set(["content"]));
+    return openFolders.get(type)!;
+  }
+
+  toggleFolder(id: InspectorFolderId): void {
+    const set = this.openSet();
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+  }
+
+  summary(folder: InspectorFolder): string {
+    return folderSummary(folder, this.settings() || {}, this.widget(), this.t);
+  }
+
+  isChanged(field: InspectorField): boolean {
+    if (field.type === "geometry") return false;
+    return isFieldChanged(field, this.settings() || {}, this.defaults());
+  }
+
+  isHit(field: InspectorField): boolean {
+    return !!this.query().trim() && fieldMatches(field, this.query(), this.t);
+  }
+
+  /** Label split around the search term so it can be highlighted. */
+  labelParts(key: string): { text: string; hit: boolean }[] {
+    const label = this.t(key);
+    const q = this.query().trim().toLowerCase();
+    const i = q ? label.toLowerCase().indexOf(q) : -1;
+    if (i < 0) return [{ text: label, hit: false }];
+    return [
+      { text: label.slice(0, i), hit: false },
+      { text: label.slice(i, i + q.length), hit: true },
+      { text: label.slice(i + q.length), hit: false },
+    ].filter((p) => p.text);
+  }
+
+  value(field: InspectorField): any {
+    if (!("key" in field)) return undefined;
+    const v = this.settings()?.[field.key];
+    return v === undefined || v === null
+      ? defaultFor(field, field.key, this.defaults())
+      : v;
+  }
+
+  partValue(
+    field: TextPartField,
+    part: "font" | "size" | "color" | "align",
+  ): any {
+    const key = field.keys[part];
+    if (!key) return undefined;
+    const v = this.settings()?.[key];
+    return v === undefined || v === null
+      ? defaultFor(field, key, this.defaults())
+      : v;
+  }
+
+  optionLabel(o: InspectorOption): string {
+    return o.labelKey ? this.t(o.labelKey) : (o.label ?? String(o.value));
+  }
+
+  set(key: string, value: any): void {
+    const s = this.settings();
+    if (!s) return;
+    s[key] = value;
+    this.localRevision++;
+    this.change.emit();
+  }
+
+  setPart(
+    field: TextPartField,
+    part: "font" | "size" | "color" | "align",
+    value: any,
+  ): void {
+    const key = field.keys[part];
+    if (key) this.set(key, value);
+  }
+
+  toggle(key: string, current: boolean): void {
+    this.set(key, !current);
+  }
+
+  resetOne(field: InspectorField): void {
+    resetField(field, this.settings(), this.defaults());
+    this.change.emit();
+    this.reset.emit({ labelKey: field.labelKey });
+  }
+
+  resetFolder(folder: InspectorFolder): void {
+    for (const field of folder.groups.flatMap((g) => g.fields)) {
+      if (this.isChanged(field))
+        resetField(field, this.settings(), this.defaults());
+    }
+    this.change.emit();
+    this.reset.emit({ labelKey: FOLDER_META[folder.id].labelKey });
+  }
+
+  // ----- text parts -----
+
+  partKey(field: TextPartField): string {
+    return this.schema().widgetType + ":" + field.id;
+  }
+
+  isPartOpen(field: TextPartField): boolean {
+    if (this.query().trim() && this.isHit(field)) return true;
+    return openParts.get(this.schema().widgetType)?.has(field.id) ?? false;
+  }
+
+  togglePart(field: TextPartField): void {
+    const type = this.schema().widgetType;
+    if (!openParts.has(type)) openParts.set(type, new Set());
+    const set = openParts.get(type)!;
+    if (set.has(field.id)) set.delete(field.id);
+    else set.add(field.id);
+  }
+
+  partSample(field: TextPartField): string {
+    if (field.sampleKey) return this.t(field.sampleKey);
+    return field.sample ?? this.t(field.labelKey);
+  }
+
+  partMeta(field: TextPartField): string {
+    const font = this.partValue(field, "font") || this.t("UE_KIT_THEME_FONT");
+    const size = this.partValue(field, "size");
+    return size ? `${font} · ${size}px` : font;
+  }
+
+  // ----- geometry -----
+
+  geometry(field: InspectorField, index: 0 | 1): number {
+    const w = this.widget();
+    if (!w || field.type !== "geometry") return 0;
+    const props = field.pair === "position" ? ["x", "y"] : ["width", "height"];
+    return Number(w[props[index]] ?? 0);
+  }
+
+  geometryDisabled(field: InspectorField, index: 0 | 1): boolean {
+    if (field.type !== "geometry") return false;
+    if (field.pair === "position")
+      return index === 0 ? this.widthLocked() : this.heightLocked();
+    return index === 0 ? this.widthLocked() : this.heightLocked();
+  }
+
+  onGeometry(field: InspectorField, index: 0 | 1, event: Event): void {
+    if (field.type !== "geometry") return;
+    const el = event.target as HTMLInputElement;
+    const value = Number(el.value);
+    if (isNaN(value)) return;
+    if (field.pair === "position") {
+      this.geometryChange.emit({ prop: index === 0 ? "x" : "y", value });
+      return;
+    }
+    const w = this.widget();
+    if (this.keepRatio && w?.width && w?.height) {
+      const ratio = w.height / w.width;
+      if (index === 0) {
+        this.geometryChange.emit({ prop: "width", value });
+        this.geometryChange.emit({
+          prop: "height",
+          value: Math.round(value * ratio),
+        });
+      } else {
+        this.geometryChange.emit({ prop: "height", value });
+        this.geometryChange.emit({
+          prop: "width",
+          value: Math.round(value / ratio),
+        });
+      }
+      return;
+    }
+    this.geometryChange.emit({ prop: index === 0 ? "width" : "height", value });
+  }
+
+  // ----- tiles -----
+
+  tileStyle(demo: "border" | "shadow", value: any): Record<string, string> {
+    if (demo === "border") {
+      return value === "none"
+        ? { border: "0" }
+        : { border: `2px ${value} currentColor` };
+    }
+    return {};
+  }
+
+  trackField = (_: number, f: InspectorField) => f.id;
+}

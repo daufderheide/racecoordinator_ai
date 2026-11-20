@@ -23,6 +23,10 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
+import { GeometryChange } from "@app/components/ui-editor/inspector-kit/inspector-form.component";
+import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
+import { InspectorShellComponent } from "@app/components/ui-editor/inspector-kit/inspector-shell.component";
+import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
 import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -92,6 +96,7 @@ import { NewLayoutModalComponent } from "./new-layout-modal/new-layout-modal.com
     CustomSelectComponent,
     CustomOptionComponent,
     WidgetInspectorFieldsComponent,
+    InspectorShellComponent,
     ReplicateLaneDialogComponent,
     ReviewStackedColumnsModalComponent,
     NewLayoutModalComponent,
@@ -131,6 +136,38 @@ export class LayoutEditorComponent
   }
   set currentSelectedWidget(val: any) {
     this.selectedWidgetId = val?.id || (typeof val === "string" ? val : null);
+  }
+
+  /** Redesigned panel schema for the widget, or null for its existing inspector. */
+  getInspectorSchema(widget: any): InspectorSchema | null {
+    return getInspectorSchema(widget?.widgetType);
+  }
+
+  /** Position / size fields of the redesigned panel use the existing handlers. */
+  onKitGeometryChange(change: GeometryChange): void {
+    switch (change.prop) {
+      case "x":
+        this.onWidgetXChange(change.value);
+        break;
+      case "y":
+        this.onWidgetYChange(change.value);
+        break;
+      case "width":
+        this.onWidgetWidthChange(change.value);
+        break;
+      case "height":
+        this.onWidgetHeightChange(change.value);
+        break;
+    }
+  }
+
+  /** Previous / next widget in the same order as the Select Widget list. */
+  selectAdjacentWidget(direction: number): void {
+    const widgets = this.getLayoutWidgets();
+    if (widgets.length === 0) return;
+    const index = widgets.findIndex((w: any) => w.id === this.selectedWidgetId);
+    const next = widgets[(index + direction + widgets.length) % widgets.length];
+    if (next) this.onWidgetDropdownSelect(next.id);
   }
 
   get selectedWidget(): any | null {
