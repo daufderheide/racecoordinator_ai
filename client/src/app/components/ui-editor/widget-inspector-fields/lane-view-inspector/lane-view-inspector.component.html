@@ -1,318 +1,332 @@
 @if (settings()) {
-  <div class="inspector-section">
-    <label class="inspector-checkbox-label">
-      <input
-        type="checkbox"
-        [(ngModel)]="settings().isVertical"
-        (change)="onSettingsChange()"
-      />
-      {{ "UE_INSPECTOR_LANE_VIEW_VERTICAL_LAYOUT" | translate }}
-    </label>
-  </div>
-
-  @if (!isPracticeMode()) {
-    <div class="inspector-section" id="help-raceday-sort">
+  <!-- In the redesigned panel only the column manager is shown (columnsOnly);
+       the other settings live in the panel's own folders. -->
+  @if (!columnsOnly()) {
+    <div class="inspector-section">
       <label class="inspector-checkbox-label">
-        <input type="checkbox" [(ngModel)]="sortByStandings" />
-        {{ "UE_INSPECTOR_LANE_VIEW_SORT_BY_STANDINGS" | translate }}
+        <input
+          type="checkbox"
+          [(ngModel)]="settings().isVertical"
+          (change)="onSettingsChange()"
+        />
+        {{ "UE_INSPECTOR_LANE_VIEW_VERTICAL_LAYOUT" | translate }}
       </label>
     </div>
-  }
 
-  <div class="inspector-section" id="help-raceday-highlight">
-    <div class="inspector-field">
+    @if (!isPracticeMode()) {
+      <div class="inspector-section" id="help-raceday-sort">
+        <label class="inspector-checkbox-label">
+          <input type="checkbox" [(ngModel)]="sortByStandings" />
+          {{ "UE_INSPECTOR_LANE_VIEW_SORT_BY_STANDINGS" | translate }}
+        </label>
+      </div>
+    }
+
+    <div class="inspector-section" id="help-raceday-highlight">
+      <div class="inspector-field">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select [(ngModel)]="highlightLapStyle">
+            <app-custom-option value="none">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_NONE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="classic">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_CLASSIC" | translate }}
+            </app-custom-option>
+            <app-custom-option value="full-glow">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_FULL_GLOW" | translate }}
+            </app-custom-option>
+            <app-custom-option value="glow-border">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_GLOW_BORDER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="tint-wash">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_TINT_WASH" | translate }}
+            </app-custom-option>
+            <app-custom-option value="shimmer">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SHIMMER" | translate }}
+            </app-custom-option>
+            <app-custom-option value="scale-pulse">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SCALE_PULSE" | translate }}
+            </app-custom-option>
+            <app-custom-option value="adaptive-dip">
+              {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_ADAPTIVE_DIP" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columns Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION" | translate }}
+    </div>
+
+    <div class="inspector-section">
       <label class="inspector-label">{{
-        "UE_INSPECTOR_LANE_VIEW_HIGHLIGHT_LAP" | translate
+        "UE_INSPECTOR_FONT_FAMILY" | translate
       }}</label>
       <div class="select-container select-sm">
-        <app-custom-select [(ngModel)]="highlightLapStyle">
-          <app-custom-option value="none">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_NONE" | translate }}
+        <app-custom-select
+          [(ngModel)]="settings().columnFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
           </app-custom-option>
-          <app-custom-option value="classic">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_CLASSIC" | translate }}
-          </app-custom-option>
-          <app-custom-option value="full-glow">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_FULL_GLOW" | translate }}
-          </app-custom-option>
-          <app-custom-option value="glow-border">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_GLOW_BORDER" | translate }}
-          </app-custom-option>
-          <app-custom-option value="tint-wash">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_TINT_WASH" | translate }}
-          </app-custom-option>
-          <app-custom-option value="shimmer">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SHIMMER" | translate }}
-          </app-custom-option>
-          <app-custom-option value="scale-pulse">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_SCALE_PULSE" | translate }}
-          </app-custom-option>
-          <app-custom-option value="adaptive-dip">
-            {{ "UE_INSPECTOR_HIGHLIGHT_STYLE_ADAPTIVE_DIP" | translate }}
-          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
         </app-custom-select>
       </div>
     </div>
-  </div>
 
-  <!-- Columns Section -->
-  <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION" | translate }}
-  </div>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="10"
+          max="120"
+          step="1"
+          [ngModel]="settings().columnFontSize || 24"
+          (ngModelChange)="
+            settings().columnFontSize = $event; onSettingsChange()
+          "
+          [disabled]="disableFontSizes()"
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="10"
+          max="120"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="settings().columnFontSize || 24"
+          (ngModelChange)="
+            settings().columnFontSize = $event; onSettingsChange()
+          "
+          [disabled]="disableFontSizes()"
+          class="inspector-number-input"
+        />
+      </div>
+    </div>
 
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_FAMILY" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().columnFontFamily"
-        (change)="onSettingsChange()"
-        (focus)="fontService.loadLocalFonts()"
-        (click)="fontService.loadLocalFonts()"
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().columnTextColor"
       >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </app-custom-option>
-        @for (font of fontService.availableFonts(); track font) {
-          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        <input
+          type="color"
+          [value]="settings().columnTextColor || '#ffffff'"
+          (change)="onColorChange('columnTextColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().columnTextColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
         }
-      </app-custom-select>
-    </div>
-  </div>
-
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_SIZE" | translate
-    }}</label>
-    <div style="display: flex; gap: 8px; align-items: center">
-      <input
-        type="range"
-        min="10"
-        max="120"
-        step="1"
-        [ngModel]="settings().columnFontSize || 24"
-        (ngModelChange)="settings().columnFontSize = $event; onSettingsChange()"
-        [disabled]="disableFontSizes()"
-        class="inspector-slider"
-        style="flex: 1"
-      />
-      <input
-        type="number"
-        min="10"
-        max="120"
-        step="1"
-        autocomplete="off"
-        data-dashlane-ignore="true"
-        data-1p-ignore="true"
-        data-lpignore="true"
-        data-bwignore="true"
-        data-form-type="other"
-        [ngModel]="settings().columnFontSize || 24"
-        (ngModelChange)="settings().columnFontSize = $event; onSettingsChange()"
-        [disabled]="disableFontSizes()"
-        class="inspector-number-input"
-      />
-    </div>
-  </div>
-
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_TEXT_COLOR" | translate
-    }}</label>
-    <div
-      class="color-picker-wrapper"
-      [class.is-null]="!settings().columnTextColor"
-    >
-      <input
-        type="color"
-        [value]="settings().columnTextColor || '#ffffff'"
-        (change)="onColorChange('columnTextColor', $event)"
-        class="color-picker-input"
-      />
-      @if (!settings().columnTextColor) {
-        <span class="color-picker-placeholder">{{
-          "UE_INSPECTOR_COLOR_DEFAULT" | translate
-        }}</span>
-      }
-      @if (settings().columnTextColor) {
-        <button
-          class="color-reset-btn"
-          (click)="resetColor('columnTextColor')"
-          [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
-        >
-          <span class="material-icons" style="font-size: 14px"
-            >restart_alt</span
+        @if (settings().columnTextColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('columnTextColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
           >
-        </button>
-      }
-    </div>
-  </div>
-
-  <!-- Lane Data Section -->
-  <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_DATA_SECTION" | translate }}
-  </div>
-
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_FAMILY" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().dataFontFamily"
-        (change)="onSettingsChange()"
-        (focus)="fontService.loadLocalFonts()"
-        (click)="fontService.loadLocalFonts()"
-      >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </app-custom-option>
-        @for (font of fontService.availableFonts(); track font) {
-          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
+          </button>
         }
-      </app-custom-select>
+      </div>
     </div>
-  </div>
 
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_SIZE" | translate
-    }}</label>
-    <div style="display: flex; gap: 8px; align-items: center">
-      <input
-        type="range"
-        min="10"
-        max="120"
-        step="1"
-        [ngModel]="settings().dataFontSize || 54"
-        (ngModelChange)="settings().dataFontSize = $event; onSettingsChange()"
-        [disabled]="disableFontSizes()"
-        class="inspector-slider"
-        style="flex: 1"
-      />
-      <input
-        type="number"
-        min="10"
-        max="120"
-        step="1"
-        autocomplete="off"
-        data-dashlane-ignore="true"
-        data-1p-ignore="true"
-        data-lpignore="true"
-        data-bwignore="true"
-        data-form-type="other"
-        [ngModel]="settings().dataFontSize || 54"
-        (ngModelChange)="settings().dataFontSize = $event; onSettingsChange()"
-        [disabled]="disableFontSizes()"
-        class="inspector-number-input"
-      />
+    <!-- Lane Data Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_LANE_VIEW_DATA_SECTION" | translate }}
     </div>
-  </div>
 
-  <!-- Lane Inset Data Settings Section -->
-  <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
-  </div>
-
-  <!-- Inset Time Decimal Places -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().insetTimeDecimalPlaces"
-        (change)="onSettingsChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().dataFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
     </div>
-  </div>
 
-  <!-- Inset Lap Decimal Places -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().insetLapDecimalPlaces"
-        (change)="onSettingsChange()"
-      >
-        <app-custom-option [value]="0">0</app-custom-option>
-        <app-custom-option [value]="1">1</app-custom-option>
-        <app-custom-option [value]="2">2</app-custom-option>
-        <app-custom-option [value]="3">3</app-custom-option>
-      </app-custom-select>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="10"
+          max="120"
+          step="1"
+          [ngModel]="settings().dataFontSize || 54"
+          (ngModelChange)="settings().dataFontSize = $event; onSettingsChange()"
+          [disabled]="disableFontSizes()"
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="10"
+          max="120"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="settings().dataFontSize || 54"
+          (ngModelChange)="settings().dataFontSize = $event; onSettingsChange()"
+          [disabled]="disableFontSizes()"
+          class="inspector-number-input"
+        />
+      </div>
     </div>
-  </div>
 
-  <!-- Inset Font Family -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_FAMILY" | translate
-    }}</label>
-    <div class="select-container select-sm">
-      <app-custom-select
-        [(ngModel)]="settings().insetFontFamily"
-        (change)="onSettingsChange()"
-        (focus)="fontService.loadLocalFonts()"
-        (click)="fontService.loadLocalFonts()"
-      >
-        <app-custom-option value="">
-          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-        </app-custom-option>
-        @for (font of fontService.availableFonts(); track font) {
-          <app-custom-option [value]="font">{{ font }}</app-custom-option>
-        }
-      </app-custom-select>
+    <!-- Lane Inset Data Settings Section -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
     </div>
-  </div>
 
-  <!-- Inset Font Size -->
-  <div class="inspector-section">
-    <label class="inspector-label">{{
-      "UE_INSPECTOR_FONT_SIZE" | translate
-    }}</label>
-    <div style="display: flex; gap: 8px; align-items: center">
-      <input
-        type="range"
-        min="10"
-        max="120"
-        step="1"
-        [ngModel]="settings().insetFontSize || 24"
-        (ngModelChange)="settings().insetFontSize = $event; onSettingsChange()"
-        [disabled]="disableFontSizes()"
-        class="inspector-slider"
-        style="flex: 1"
-      />
-      <input
-        type="number"
-        min="10"
-        max="120"
-        step="1"
-        autocomplete="off"
-        data-dashlane-ignore="true"
-        data-1p-ignore="true"
-        data-lpignore="true"
-        data-bwignore="true"
-        data-form-type="other"
-        [ngModel]="settings().insetFontSize || 24"
-        (ngModelChange)="settings().insetFontSize = $event; onSettingsChange()"
-        [disabled]="disableFontSizes()"
-        class="inspector-number-input"
-      />
+    <!-- Inset Time Decimal Places -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_LANE_VIEW_TIME_DECIMAL_PLACES" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().insetTimeDecimalPlaces"
+          (change)="onSettingsChange()"
+        >
+          <app-custom-option [value]="0">0</app-custom-option>
+          <app-custom-option [value]="1">1</app-custom-option>
+          <app-custom-option [value]="2">2</app-custom-option>
+          <app-custom-option [value]="3">3</app-custom-option>
+        </app-custom-select>
+      </div>
     </div>
-  </div>
+
+    <!-- Inset Lap Decimal Places -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_LANE_VIEW_LAP_DECIMAL_PLACES" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().insetLapDecimalPlaces"
+          (change)="onSettingsChange()"
+        >
+          <app-custom-option [value]="0">0</app-custom-option>
+          <app-custom-option [value]="1">1</app-custom-option>
+          <app-custom-option [value]="2">2</app-custom-option>
+          <app-custom-option [value]="3">3</app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Inset Font Family -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().insetFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Inset Font Size -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="10"
+          max="120"
+          step="1"
+          [ngModel]="settings().insetFontSize || 24"
+          (ngModelChange)="
+            settings().insetFontSize = $event; onSettingsChange()
+          "
+          [disabled]="disableFontSizes()"
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="10"
+          max="120"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="settings().insetFontSize || 24"
+          (ngModelChange)="
+            settings().insetFontSize = $event; onSettingsChange()
+          "
+          [disabled]="disableFontSizes()"
+          class="inspector-number-input"
+        />
+      </div>
+    </div>
+  }
 
   <!-- Columns Management Section -->
-  <div class="inspector-geometry-title">
-    {{ "UE_INSPECTOR_LANE_VIEW_MANAGE_COLUMNS_SECTION" | translate }}
-  </div>
+  @if (!columnsOnly()) {
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_LANE_VIEW_MANAGE_COLUMNS_SECTION" | translate }}
+    </div>
+  }
 
   <div
     class="inspector-column-list"
@@ -719,12 +733,14 @@
     </div>
   }
 
-  <app-widget-border-inspector
-    [settings]="settings()"
-    [defaultBorderRadius]="4"
-    [defaultBorderWidth]="1"
-    defaultBorderColor="#ffffff"
-    [defaultShowBorder]="false"
-    (change)="onSettingsChange()"
-  ></app-widget-border-inspector>
+  @if (!columnsOnly()) {
+    <app-widget-border-inspector
+      [settings]="settings()"
+      [defaultBorderRadius]="4"
+      [defaultBorderWidth]="1"
+      defaultBorderColor="#ffffff"
+      [defaultShowBorder]="false"
+      (change)="onSettingsChange()"
+    ></app-widget-border-inspector>
+  }
 }

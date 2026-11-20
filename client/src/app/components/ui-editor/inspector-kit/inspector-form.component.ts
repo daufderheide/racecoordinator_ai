@@ -84,6 +84,11 @@ export class InspectorFormComponent {
   onlyChanged = input(false);
   /** Number of lanes on the track (for limits such as a target lane). */
   totalLanes = input(4);
+  /** Editor data some embedded parts work on (Lane View columns). */
+  globalSettings = input<any>(null);
+  customUi = input<any>(null);
+  availableColumns = input<{ key: string; label: string }[]>([]);
+  isPracticeMode = input(false);
   widthLocked = input(false);
   heightLocked = input(false);
   /** Bumped by the shell after any change so computed values refresh. */
@@ -122,7 +127,7 @@ export class InspectorFormComponent {
           ...g,
           fields: g.fields.filter(
             (f) =>
-              isFieldVisible(f, settings) &&
+              isFieldVisible(f, settings, this.context()) &&
               fieldMatches(f, query, this.t) &&
               (!onlyChanged || this.isChanged(f)),
           ),
@@ -191,7 +196,14 @@ export class InspectorFormComponent {
   }
 
   context(): InspectorContext {
-    return { widget: this.widget(), totalLanes: this.totalLanes() || 4 };
+    return {
+      widget: this.widget(),
+      totalLanes: this.totalLanes() || 4,
+      globalSettings: this.globalSettings(),
+      customUi: this.customUi(),
+      availableColumns: this.availableColumns(),
+      isPracticeMode: this.isPracticeMode(),
+    };
   }
 
   value(field: InspectorField): any {
@@ -235,6 +247,22 @@ export class InspectorFormComponent {
     return (
       !field.colorVisibleWhen || field.colorVisibleWhen(this.settings() || {})
     );
+  }
+
+  /** Called by an embedded part after it changed the widget or the editor data. */
+  private readonly embedNotify = () => {
+    this.localRevision++;
+    this.settingsChange.emit();
+  };
+
+  /** Inputs for an embedded part (see EmbedField). */
+  embedInputs(): Record<string, unknown> {
+    return {
+      settings: this.settings(),
+      widget: this.widget(),
+      context: this.context(),
+      notify: this.embedNotify,
+    };
   }
 
   /** Stores a field's value: through its `write` when it has one, else its key. */

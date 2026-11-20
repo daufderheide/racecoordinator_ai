@@ -64,6 +64,11 @@ export class InspectorShellComponent implements OnDestroy {
   typeLabelKey = input("");
   /** Number of lanes on the track, for limits such as a target lane. */
   totalLanes = input(4);
+  /** Editor data some embedded parts work on (Lane View columns). */
+  globalSettings = input<any>(null);
+  customUi = input<any>(null);
+  availableColumns = input<{ key: string; label: string }[]>([]);
+  isPracticeMode = input(false);
   widthLocked = input(false);
   heightLocked = input(false);
   canNavigate = input(true);

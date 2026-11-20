@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 import { LaneViewInspectorHarnessE2e } from "./testing/lane-view-inspector.harness.e2e";
 
@@ -62,11 +63,10 @@ test.describe("Lane View Inspector Visuals", () => {
       .first();
     await laneViewWidget.dispatchEvent("pointerdown");
 
-    // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    // Verify inspector contains lane-view-specific fields
+    // The redesigned panel: the column manager is in the Columns folder
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("columns");
     const inspectorFields = page.locator("app-lane-view-inspector");
     await inspectorFields.waitFor({ state: "visible" });
 
@@ -84,7 +84,7 @@ test.describe("Lane View Inspector Visuals", () => {
     await page.mouse.move(0, 0);
 
     // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "lane-view-inspector-options.png",
       {
         animations: "disabled",

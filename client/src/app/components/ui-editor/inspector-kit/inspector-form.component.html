@@ -245,6 +245,16 @@
                     </div>
                   </div>
                 }
+                @case ("embed") {
+                  <div class="kit-embed" [attr.data-field]="field.id">
+                    <ng-container
+                      *ngComponentOutlet="
+                        $any(field).component;
+                        inputs: embedInputs()
+                      "
+                    ></ng-container>
+                  </div>
+                }
                 @case ("image") {
                   <div
                     class="kit-row"
@@ -459,7 +469,10 @@
                             </div>
                           </div>
                         }
-                        @if ($any(field).keys.color && partColorVisible($any(field))) {
+                        @if (
+                          $any(field).keys.color &&
+                          partColorVisible($any(field))
+                        ) {
                           <div class="kit-row">
                             <div class="kit-label">
                               <span class="kit-label-text">{{

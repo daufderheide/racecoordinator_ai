@@ -1,3 +1,4 @@
+import { Type } from "@angular/core";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { getDefaultBorderConfigForWidget } from "@app/utils/widget-border.utils";
 
@@ -10,6 +11,7 @@ import { getDefaultBorderConfigForWidget } from "@app/utils/widget-border.utils"
 /** Fixed folder order. */
 export type InspectorFolderId =
   | "content"
+  | "columns"
   | "text"
   | "frame"
   | "layout"
@@ -17,6 +19,7 @@ export type InspectorFolderId =
 
 export const FOLDER_ORDER: InspectorFolderId[] = [
   "content",
+  "columns",
   "text",
   "frame",
   "layout",
@@ -28,6 +31,7 @@ export const FOLDER_META: Record<
   { labelKey: string; icon: string }
 > = {
   content: { labelKey: "UE_KIT_FOLDER_CONTENT", icon: "list_alt" },
+  columns: { labelKey: "UE_KIT_FOLDER_COLUMNS", icon: "view_column" },
   text: { labelKey: "UE_KIT_FOLDER_TEXT", icon: "text_fields" },
   frame: { labelKey: "UE_KIT_FOLDER_FRAME", icon: "palette" },
   layout: { labelKey: "UE_KIT_FOLDER_LAYOUT", icon: "straighten" },
@@ -46,6 +50,11 @@ export interface InspectorOption {
 export interface InspectorContext {
   widget: any;
   totalLanes: number;
+  /** The editor's settings and layout, for parts that keep data there (Lane View columns). */
+  globalSettings?: any;
+  customUi?: any;
+  availableColumns?: { key: string; label: string }[];
+  isPracticeMode?: boolean;
 }
 
 interface FieldBase {
@@ -56,7 +65,10 @@ interface FieldBase {
   /** Extra words that find this field (English, lower case). */
   searchTerms?: string;
   /** Shown only when this returns true for the current settings. */
-  visibleWhen?: (settings: Record<string, any>) => boolean;
+  visibleWhen?: (
+    settings: Record<string, any>,
+    context?: InspectorContext,
+  ) => boolean;
   /**
    * For a field that isn't one key: what it shows, worked out from the stored
    * settings the way the old inspector did (so older layouts read the same).
@@ -165,6 +177,16 @@ export interface ImageField extends FieldBase {
   key: string;
 }
 
+/**
+ * An existing editor part shown as-is inside a folder (e.g. the Lane View
+ * column manager). The component gets `settings`, `widget`, `context` and a
+ * `notify` function to call after it changed something.
+ */
+export interface EmbedField extends FieldBase {
+  type: "embed";
+  component: Type<unknown>;
+}
+
 /** Position or size on the widget itself (not in customSettings). */
 export interface GeometryField extends FieldBase {
   type: "geometry";
@@ -181,6 +203,7 @@ export type InspectorField =
   | TilesField
   | TextPartField
   | ImageField
+  | EmbedField
   | GeometryField;
 
 export interface InspectorGroup {
@@ -214,6 +237,7 @@ export function fieldKeys(field: InspectorField): string[] {
     case "textPart":
       return Object.values(field.keys).filter((k): k is string => !!k);
     case "geometry":
+    case "embed":
       return [];
     default:
       return [...new Set([field.key, ...(field.touches || [])])];
@@ -301,8 +325,9 @@ export function resetField(
 export function isFieldVisible(
   field: InspectorField,
   settings: Record<string, any>,
+  context?: InspectorContext,
 ): boolean {
-  return !field.visibleWhen || field.visibleWhen(settings || {});
+  return !field.visibleWhen || field.visibleWhen(settings || {}, context);
 }
 
 /** Search on the translated label and help text plus the field's extra words. */

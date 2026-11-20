@@ -58,6 +58,8 @@ export class LaneViewInspectorComponent implements OnInit {
   availableColumns = input<{ key: string; label: string }[]>([]);
   isPracticeMode = input<boolean>(false);
   disableFontSizes = input<boolean>(false);
+  /** Only the column manager (used inside the redesigned panel's Columns folder). */
+  columnsOnly = input<boolean>(false);
   change = output<void>();
   fontService = inject(FontService);
   private translationService = inject(TranslationService);
