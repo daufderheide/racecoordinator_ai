@@ -148,6 +148,45 @@ export function isTeamProperty(property?: string): boolean {
   );
 }
 
+export function buildLaneColumnInsetSettings(
+  settings: LaneColumnWidgetSettings,
+  anchor: string,
+  key: string,
+): any {
+  const anchorCfg = settings.insetsConfig?.[anchor];
+  const insetTimeDec =
+    anchorCfg?.timeDecimalPlaces !== undefined
+      ? anchorCfg.timeDecimalPlaces
+      : 3;
+  const insetLapDec =
+    anchorCfg?.lapDecimalPlaces !== undefined ? anchorCfg.lapDecimalPlaces : 2;
+  const insetDec =
+    anchorCfg?.decimalPlaces !== undefined
+      ? anchorCfg.decimalPlaces
+      : undefined;
+
+  return {
+    gapTarget: anchorCfg?.gapTarget,
+    gapMode: anchorCfg?.gapMode,
+    showPartialHeats: anchorCfg?.showPartialHeats ?? settings.showPartialHeats,
+    insetsConfig: settings.insetsConfig,
+    insetTimeDecimalPlaces: insetTimeDec,
+    insetLapDecimalPlaces: insetLapDec,
+    timeDecimalPlaces: insetTimeDec,
+    lapDecimalPlaces: insetLapDec,
+    columnDecimals: insetDec !== undefined ? { [key]: insetDec } : {},
+    timeDisplayFormat: anchorCfg?.timeDisplayFormat || "dynamic",
+    timeSubsecondMode: anchorCfg?.timeSubsecondMode || "never",
+    timeSubsecondThreshold: anchorCfg?.timeSubsecondThreshold ?? 10,
+    timeSubsecondDecimals: anchorCfg?.timeSubsecondDecimals ?? 2,
+    heatsDisplayMode: anchorCfg?.heatsDisplayMode || "raced",
+    gridType: settings.gridType,
+    bindingMode: settings.bindingMode,
+    gridId: settings.gridId,
+    emptyRowsMode: settings.emptyRowsMode,
+  };
+}
+
 export function formatLaneColumnInsetValue(
   hd: DriverHeatData | undefined,
   anchor: string,
@@ -172,37 +211,7 @@ export function formatLaneColumnInsetValue(
   }
 
   const anchorCfg = settings.insetsConfig?.[anchor];
-  const insetTimeDec =
-    anchorCfg?.timeDecimalPlaces !== undefined
-      ? anchorCfg.timeDecimalPlaces
-      : 3;
-  const insetLapDec =
-    anchorCfg?.lapDecimalPlaces !== undefined ? anchorCfg.lapDecimalPlaces : 2;
-  const insetDec =
-    anchorCfg?.decimalPlaces !== undefined
-      ? anchorCfg.decimalPlaces
-      : undefined;
-
-  const insetSettings: any = {
-    gapTarget: anchorCfg?.gapTarget,
-    gapMode: anchorCfg?.gapMode,
-    showPartialHeats: anchorCfg?.showPartialHeats ?? settings.showPartialHeats,
-    insetsConfig: settings.insetsConfig,
-    insetTimeDecimalPlaces: insetTimeDec,
-    insetLapDecimalPlaces: insetLapDec,
-    timeDecimalPlaces: insetTimeDec,
-    lapDecimalPlaces: insetLapDec,
-    columnDecimals: insetDec !== undefined ? { [key]: insetDec } : {},
-    timeDisplayFormat: anchorCfg?.timeDisplayFormat || "dynamic",
-    timeSubsecondMode: anchorCfg?.timeSubsecondMode || "never",
-    timeSubsecondThreshold: anchorCfg?.timeSubsecondThreshold ?? 10,
-    timeSubsecondDecimals: anchorCfg?.timeSubsecondDecimals ?? 2,
-    heatsDisplayMode: anchorCfg?.heatsDisplayMode || "raced",
-    gridType: settings.gridType,
-    bindingMode: settings.bindingMode,
-    gridId: settings.gridId,
-    emptyRowsMode: settings.emptyRowsMode,
-  };
+  const insetSettings = buildLaneColumnInsetSettings(settings, anchor, key);
 
   if (parent?.formatValue) {
     const colDef = parent.columns?.find((c: any) => c.propertyName === key);
@@ -244,8 +253,22 @@ export function formatLaneColumnInsetValue(
     undefined,
     parent,
   );
+  if (key === "driftIndicator" || key.startsWith("driftIndicator")) {
+    const isDrift = parent?.isUIEditorMode?.() || hd?.isLastLapDrift;
+    if (!isDrift) return "";
+    return (
+      anchorCfg?.driftText ||
+      settings.driftText ||
+      parent?.translationService?.translate?.("RD_DRIFT_LAP") ||
+      "DRIFT"
+    );
+  }
   if (key === "averageScore" || key.startsWith("averageScore")) {
     if (raw === null || raw === undefined) return "--";
+    const insetLapDec =
+      anchorCfg?.lapDecimalPlaces !== undefined
+        ? anchorCfg.lapDecimalPlaces
+        : 2;
     return Number(raw).toFixed(insetLapDec);
   }
   return formatAdjustedLapValue(raw, hd, key);
@@ -824,6 +847,8 @@ export function resolveLaneColumnFormattedValue(
   }
 
   if (parent?.formatValue) {
+    const effectiveColDef =
+      colDef || parent.columns?.find((c: any) => c.propertyName === columnKey);
     return parent.formatValue(
       columnKey,
       RacedayFormatUtils.getPropertyValue(
@@ -835,7 +860,7 @@ export function resolveLaneColumnFormattedValue(
         parent,
       ),
       hd,
-      colDef,
+      effectiveColDef,
       "center-center",
       settings,
     );
@@ -862,6 +887,18 @@ export function resolveLaneColumnFormattedValue(
     undefined,
     parent,
   );
+  if (
+    columnKey === "driftIndicator" ||
+    columnKey.startsWith("driftIndicator")
+  ) {
+    const isDrift = parent?.isUIEditorMode?.() || hd?.isLastLapDrift;
+    if (!isDrift) return "";
+    return (
+      settings.driftText ||
+      parent?.translationService?.translate?.("RD_DRIFT_LAP") ||
+      "DRIFT"
+    );
+  }
   if (columnKey === "averageScore" || columnKey.startsWith("averageScore")) {
     if (raw === null || raw === undefined) return "--";
     return Number(raw).toFixed(settings.lapDecimalPlaces ?? 2);

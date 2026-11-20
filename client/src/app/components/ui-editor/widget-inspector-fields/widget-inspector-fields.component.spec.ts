@@ -26,6 +26,8 @@ describe("WidgetInspectorFieldsComponent", () => {
     const mockDataService = {
       getDrivers: () => new BehaviorSubject([]).asObservable(),
       getTracks: () => new BehaviorSubject([]).asObservable(),
+      listAssets: () => new BehaviorSubject([]).asObservable(),
+      resolveAssetUrl: (url: string) => url,
     };
 
     const mockCustomWidgetService = {

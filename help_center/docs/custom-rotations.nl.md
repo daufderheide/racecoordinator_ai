@@ -108,6 +108,7 @@ Om een nieuw aangepast rotatieset-asset aan te maken:
 ### Heats Toevoegen en Herschikken {: #adding-heats }
 
 - **Heat Toevoegen:** Klik op het `+`-icoon in de rotatiekop om extra heats toe te voegen.
+- **Oorspronkelijk Heatnummer:** Elke heatkaartsubkop toont een badge **Oorspronkelijke heat** met het initiële volgnummer (`Oorspronkelijke heat: 1`, `Oorspronkelijke heat: 2`). Wanneer heats via slepen en neerzetten worden herschikt of verplaatst, blijft deze badge vaststaan om de oorspronkelijke volgorde te volgen; nieuw toegevoegde heats tonen `--`.
 - **Heats Herschikken:** Versleep heatkaarten binnen het raster om de volgorde van heats te wijzigen.
 - **Heat Verwijderen:** Klik op het prullenbakicoon van een heatkaart om deze te verwijderen.
 
@@ -115,9 +116,10 @@ Om een nieuw aangepast rotatieset-asset aan te maken:
 
 - **Pool van Virtuele Rijders:** Het linkerpaneel biedt een verzameling virtuele rijders (`Rijder 1`, `Rijder 2`, enz.). U kunt het aantal rijders in de pool aanpassen om zoveel plaatsingen te maken als nodig is.
 - **Pool van Promotiecoureurs:** Bevindt zich direct onder de virtuele rijders; biedt dynamische doorstroomfiches voor Step Up races (zie [Step Up Races & Promotieladders](#step-up-races) hieronder).
+- **Rijder Markeren:** Klik op een rijdersnaam in de rijderspool, promotiepool of op een heatbaan om de visuele markering in of uit te schakelen. Gemarkeerde rijders krijgen een unieke accentkleur uit een dynamisch palet, stippen en indicatorstippen (pips) in de koppen van deelnemende heats. Niet-deelnemende heats en niet-gemarkeerde rijders worden gedimd om rustintervallen en beurtverdelingen in één oogopslag te controleren. Meerdere rijders kunnen tegelijkertijd worden gemarkeerd; nogmaals klikken of kiezen voor **Markeringen wissen** herstelt de standaardweergave.
 - **Slepen en Neerzetten:** Sleep rijdersfiches vanuit de pool direct naar de baanposities van een heatkaart.
 - **Banen Wisselen:** Sleep een rijdersfiche van de ene baan naar de andere om hun toewijzingen om te wisselen.
-- **Baan Legen:** Sleep een rijder uit een baan om deze onbezet (leeg) te laten.
+- **Baan Legen:** Dubbelklik op een geplaatste rijder in een heatbaan om deze positie direct te wissen en leeg te maken. U kunt een rijder ook uit een baan slepen om deze onbezet te laten.
 
 ### Groepstoewijzingen {: #group-assignments }
 

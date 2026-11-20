@@ -23,4 +23,8 @@ export abstract class TextInfoInspectorHarnessBase {
   abstract getValueTextColor(): Promise<string>;
   abstract setValueTextColor(val: string): Promise<void>;
   abstract clickResetValueTextColor(): Promise<void>;
+
+  abstract getBackgroundColor(): Promise<string>;
+  abstract setBackgroundColor(val: string): Promise<void>;
+  abstract clickResetBackgroundColor(): Promise<void>;
 }

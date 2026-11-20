@@ -67,8 +67,6 @@ jobs:
         id: check
         run: |
           node scripts/determine_release_version.js
-          COMMIT_SHA=$(git rev-parse HEAD)
-          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == "schedule" ]; then
             git fetch --all --prune
             SYNC_STATUS=$(node -e "const s = require('./scripts/sync_release_branch').checkSyncStatus(); process.stdout.write(s.status);")
@@ -118,6 +116,8 @@ jobs:
               fi
             fi
           fi
+          COMMIT_SHA=$(git rev-parse HEAD)
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "should_run=true" >> $GITHUB_OUTPUT
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}

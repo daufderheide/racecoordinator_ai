@@ -11,6 +11,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("grid");
     expect(keys).toContain("lane-view");
     expect(keys).toContain("lane-column");
+    expect(keys).toContain("drift-indicator");
     expect(keys).toContain("on-deck");
     expect(keys).toContain("next-heat");
     expect(keys).toContain("heat-list");
@@ -22,6 +23,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("season-leaderboard");
     expect(keys).toContain("season-race-leaderboard");
     expect(keys).toContain("track-name");
+    expect(keys).toContain("menu-bar");
     expect(keys).toContain("action-start-resume");
     expect(keys).toContain("action-pause");
     expect(keys).toContain("action-next-heat");
@@ -66,6 +68,14 @@ describe("WIDGET_REGISTRY", () => {
     const leaderboardSettings =
       WIDGET_REGISTRY["leaderboard"].defaultSettings!();
     expect(leaderboardSettings["decimalPlaces"]).toBe(3);
+    expect(leaderboardSettings["backgroundColor"]).toBe("");
+
+    const driftSettings = WIDGET_REGISTRY["drift-indicator"].defaultSettings!();
+    expect(driftSettings["columnKey"]).toBe("driftIndicator");
+    expect(driftSettings["displayMode"]).toBe("text");
+    expect(driftSettings["driftText"]).toBe("DRIFT");
+    expect(driftSettings["backgroundColor"]).toBe("#ef4444");
+    expect(driftSettings["textColor"]).toBe("#ffffff");
 
     const actionSettings =
       WIDGET_REGISTRY["action-start-resume"].defaultSettings!();
@@ -76,6 +86,13 @@ describe("WIDGET_REGISTRY", () => {
     expect(recordsSettings["showRaceRecordScore"]).toBe(true);
     expect(recordsSettings["showCurrentRaceBest"]).toBe(true);
     expect(recordsSettings["showHeatBest"]).toBe(true);
+    expect(recordsSettings["backgroundColor"]).toBe("");
+
+    const heatInfoSettings = WIDGET_REGISTRY["heat-info"].defaultSettings!();
+    expect(heatInfoSettings["backgroundColor"]).toBe("");
+
+    const menuBarSettings = WIDGET_REGISTRY["menu-bar"].defaultSettings!();
+    expect(menuBarSettings["backgroundColor"]).toBe("");
 
     const heatListSettings = WIDGET_REGISTRY["heat-list"].defaultSettings!();
     expect(heatListSettings["showHeader"]).toBe(true);

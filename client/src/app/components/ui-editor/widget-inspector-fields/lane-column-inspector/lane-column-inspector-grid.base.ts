@@ -668,7 +668,48 @@ export abstract class LaneColumnInspectorGridBase {
     this.onFieldChange();
   }
 
+  get isDriftIndicatorColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return RacedayLayoutUtils.isDriftIndicatorProperty(key);
+  }
+
+  get driftDisplayMode(): "text" | "image" {
+    return this.currentSettings["displayMode"] === "image" ? "image" : "text";
+  }
+
+  set driftDisplayMode(value: "text" | "image") {
+    this.currentSettings["displayMode"] = value;
+    this.onFieldChange();
+  }
+
+  get driftText(): string {
+    return this.currentSettings["driftText"] !== undefined
+      ? this.currentSettings["driftText"]
+      : "DRIFT";
+  }
+
+  set driftText(value: string) {
+    this.currentSettings["driftText"] = value;
+    this.onFieldChange();
+  }
+
+  get driftImageUrl(): string {
+    return this.currentSettings["imageUrl"] || "";
+  }
+
+  set driftImageUrl(value: string) {
+    this.currentSettings["imageUrl"] = value;
+    this.onFieldChange();
+  }
+
+  onDriftImageUrlChange(newUrl: string | undefined): void {
+    this.driftImageUrl = newUrl || "";
+  }
+
   get isImageColumn(): boolean {
+    if (this.isDriftIndicatorColumn) {
+      return this.driftDisplayMode === "image";
+    }
     return RacedayLayoutUtils.isImageProperty(
       this.currentSettings["columnKey"] || "",
     );

@@ -1514,54 +1514,6 @@ describe("raceday-lane-column.utils", () => {
       expect(txt.style.whiteSpace).toBe("nowrap");
     });
 
-    it("should scale font size down when isDriftLap is true to leave room for the drift badge", () => {
-      const cardWithoutDrift = document.createElement("div");
-      fitColumnTextValue(
-        cardWithoutDrift,
-        "12.345",
-        { gridId: "g1", showHeader: false } as any,
-        "auto",
-        "vertical",
-        false,
-        false,
-        () => false,
-        14,
-        200,
-        100,
-        1,
-        false,
-        "lastLapTime",
-        false,
-      );
-      const fontWithoutDrift = parseFloat(
-        cardWithoutDrift.style.getPropertyValue("--lane-col-value-font-size"),
-      );
-
-      const cardWithDrift = document.createElement("div");
-      fitColumnTextValue(
-        cardWithDrift,
-        "12.345",
-        { gridId: "g1", showHeader: false } as any,
-        "auto",
-        "vertical",
-        false,
-        false,
-        () => false,
-        14,
-        200,
-        100,
-        1,
-        false,
-        "lastLapTime",
-        true,
-      );
-      const fontWithDrift = parseFloat(
-        cardWithDrift.style.getPropertyValue("--lane-col-value-font-size"),
-      );
-
-      expect(fontWithDrift).toBeLessThan(fontWithoutDrift);
-    });
-
     it("should choose largest font size within [minFontSize, maxFontSize] range that fits the space", () => {
       fitColumnTextValue(
         cardEl,

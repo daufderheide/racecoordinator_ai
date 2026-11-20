@@ -47,6 +47,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "crashes",
       "crashPenalty",
       "rankHeat",
+      "points",
     ],
   },
   {
@@ -55,6 +56,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
     columnKeys: [
       "lastLapTime",
       "lastLaps",
+      "driftIndicator",
       "bestLapTime",
       "segmentTime",
       "reactionTime",

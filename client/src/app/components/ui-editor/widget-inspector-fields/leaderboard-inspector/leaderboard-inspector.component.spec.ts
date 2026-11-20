@@ -38,6 +38,7 @@ describe("LeaderboardInspectorComponent", () => {
       restFontFamily: "",
       restFontSize: 16,
       restTextColor: "",
+      backgroundColor: "",
     });
 
     changeSpy = spyOn(component.change, "emit");
@@ -69,6 +70,25 @@ describe("LeaderboardInspectorComponent", () => {
     component.settings().titleTextColor = "#ffffff";
     component.resetColor("titleTextColor");
     expect(component.settings().titleTextColor).toBe("");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should update backgroundColor and emit change on onColorChange", () => {
+    const event = {
+      target: {
+        value: "#123456",
+      },
+    } as any;
+
+    component.onColorChange("backgroundColor", event);
+    expect(component.settings().backgroundColor).toBe("#123456");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should reset backgroundColor to empty string and emit change on resetColor", () => {
+    component.settings().backgroundColor = "#123456";
+    component.resetColor("backgroundColor");
+    expect(component.settings().backgroundColor).toBe("");
     expect(changeSpy).toHaveBeenCalled();
   });
 

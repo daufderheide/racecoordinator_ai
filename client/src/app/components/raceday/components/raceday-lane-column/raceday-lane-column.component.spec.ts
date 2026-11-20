@@ -926,28 +926,153 @@ describe("RacedayLaneColumnComponent", () => {
     );
   });
 
-  it("should detect drift lap on lastLapTime when driver has isLastLapDrift", () => {
+  it("should render drift indicator column in text mode when driver has isLastLapDrift", () => {
     fixture.componentRef.setInput("parent", mockParent);
-    // driver-1 has isLastLapDrift = false
-    fixture.componentRef.setInput(
-      "widget",
-      createWidget({ targetIndex: 0, columnKey: "lastLapTime" }),
-    );
-    fixture.detectChanges();
-    expect(component.isDriftLap()).toBeFalse();
-
     // driver-2 has isLastLapDrift = true
     fixture.componentRef.setInput(
       "widget",
-      createWidget({ targetIndex: 1, columnKey: "lastLapTime" }),
+      createWidget({
+        targetIndex: 1,
+        columnKey: "driftIndicator",
+        displayMode: "text",
+        driftText: "DRIFT LAP!",
+      }),
     );
     fixture.detectChanges();
-    expect(component.isDriftLap()).toBeTrue();
-    const driftBadge = fixture.nativeElement.querySelector(
-      ".lane-col-value .drift-indicator",
+    expect(component.isDriftIndicatorColumn).toBeTrue();
+    expect(component.isDriftActive()).toBeTrue();
+    expect(component.isDriftImageMode).toBeFalse();
+    expect(component.driftDisplayText).toBe("DRIFT LAP!");
+
+    const textEl = fixture.nativeElement.querySelector(".drift-indicator");
+    expect(textEl).toBeTruthy();
+    expect(textEl.getAttribute("data-testid")).toBe("drift-badge");
+    expect(textEl.textContent.trim()).toBe("DRIFT LAP!");
+
+    // driver-1 has isLastLapDrift = false
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        targetIndex: 0,
+        columnKey: "driftIndicator",
+        displayMode: "text",
+      }),
     );
-    expect(driftBadge).toBeTruthy();
-    expect(driftBadge.textContent.trim()).toBe("RD_DRIFT_LAP");
+    fixture.detectChanges();
+    expect(component.isDriftActive()).toBeFalse();
+    const card = fixture.nativeElement.querySelector(
+      ".raceday-lane-column-card",
+    );
+    expect(card.classList.contains("drift-inactive")).toBeTrue();
+  });
+
+  it("should render drift indicator column in image mode when driver has isLastLapDrift", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        targetIndex: 1,
+        columnKey: "driftIndicator",
+        displayMode: "image",
+        imageUrl: "assets/images/drift.svg",
+      }),
+    );
+    fixture.detectChanges();
+    expect(component.isDriftIndicatorColumn).toBeTrue();
+    expect(component.isDriftActive()).toBeTrue();
+    expect(component.isDriftImageMode).toBeTrue();
+    expect(component.driftImageUrl).toContain("assets/images/drift.svg");
+
+    const img = fixture.nativeElement.querySelector(".lane-col-image");
+    expect(img).toBeTruthy();
+    expect(img.getAttribute("src")).toContain("assets/images/drift.svg");
+  });
+
+  it("should render drift indicator in inset slots when driver has isLastLapDrift", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        targetIndex: 1,
+        columnKey: "lastLapTime",
+        insets: { "top-left": "driftIndicator" },
+        insetsConfig: {
+          "top-left": {
+            displayMode: "text",
+            driftText: "DRIFT",
+          },
+        },
+      }),
+    );
+    fixture.detectChanges();
+    expect(component.isDriftIndicatorProperty("driftIndicator")).toBeTrue();
+    expect(component.isInsetDriftImageMode("top-left")).toBeFalse();
+    expect(component.getInsetDriftDisplayText("top-left")).toBe("DRIFT");
+
+    const insetText = fixture.nativeElement.querySelector(
+      ".inset-cell.tl .drift-indicator",
+    );
+    expect(insetText).toBeTruthy();
+    expect(insetText.getAttribute("data-testid")).toBe("drift-badge");
+    expect(insetText.textContent.trim()).toBe("DRIFT");
+
+    // Switch inset to image mode
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        targetIndex: 1,
+        columnKey: "lastLapTime",
+        insets: { "top-left": "driftIndicator" },
+        insetsConfig: {
+          "top-left": {
+            displayMode: "image",
+            imageUrl: "assets/drift-icon.png",
+          },
+        },
+      }),
+    );
+    fixture.detectChanges();
+    expect(component.isInsetDriftImageMode("top-left")).toBeTrue();
+    const insetImg = fixture.nativeElement.querySelector(
+      ".inset-cell.tl .lane-col-inset-image",
+    );
+    expect(insetImg).toBeTruthy();
+    expect(insetImg.getAttribute("src")).toContain("assets/drift-icon.png");
+  });
+
+  it("should render drift indicator badge in bottom-center inset on lastLapTime when isLastLapDrift is true", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    // driver-2 has isLastLapDrift = true
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        targetIndex: 1,
+        columnKey: "lastLapTime",
+        insets: { "bottom-center": "driftIndicator" },
+      }),
+    );
+    fixture.detectChanges();
+    const badge = fixture.nativeElement.querySelector(
+      ".inset-cell.bc .drift-indicator",
+    );
+    expect(badge).toBeTruthy();
+    expect(badge.getAttribute("data-testid")).toBe("drift-badge");
+    expect(badge.textContent.trim()).toBe("RD_DRIFT_LAP");
+
+    // driver-1 has isLastLapDrift = false
+    fixture.componentRef.setInput(
+      "widget",
+      createWidget({
+        targetIndex: 0,
+        columnKey: "lastLapTime",
+        insets: { "bottom-center": "driftIndicator" },
+      }),
+    );
+    fixture.detectChanges();
+    const badgeInactive = fixture.nativeElement.querySelector(
+      ".inset-cell.bc .drift-indicator",
+    );
+    expect(badgeInactive).toBeNull();
   });
 
   it("should map pacing properties to benchmark types", () => {
@@ -2680,6 +2805,159 @@ describe("RacedayLaneColumnComponent", () => {
       expect(component.getEffectiveInsetTextColor("bottom-right")).toBe(
         "#ffffff",
       );
+    });
+
+    it("should resolve per-anchor fontSize from insetsConfig even when scaleMode is auto", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget(
+        {
+          columnKey: "lastLapTime",
+          insets: { "bottom-center": "driftIndicator" },
+          insetsConfig: {
+            "bottom-center": {
+              fontSize: 26,
+              fontFamily: "CustomDriftFont",
+            },
+          },
+        },
+        { scaleMode: "auto" },
+      );
+      fixture.componentRef.setInput("widget", widget);
+
+      expect(component.getEffectiveInsetFontSize("bottom-center")).toBe(26);
+      expect(component.getInsetFontFamily("bottom-center")).toBe(
+        "CustomDriftFont",
+      );
+    });
+
+    it("should apply configured font-size and font-family to drift indicator badge in template", () => {
+      fixture.componentRef.setInput("parent", {
+        ...mockParent,
+        isUIEditorMode: () => true,
+      });
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        insets: { "bottom-center": "driftIndicator" },
+        insetsConfig: {
+          "bottom-center": {
+            fontSize: 28,
+            fontFamily: "DriftCustomFont",
+            driftText: "DRIFTING",
+          },
+        },
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const badge = fixture.nativeElement.querySelector(
+        ".inset-cell.bc [data-testid='drift-badge']",
+      );
+      expect(badge).toBeTruthy();
+      expect(badge.style.fontSize).toBe("28px");
+      expect(badge.style.fontFamily).toContain("DriftCustomFont");
+      expect(badge.textContent?.trim()).toBe("DRIFTING");
+    });
+
+    it("should apply valueFontSize and valueFontFamily to standalone drift indicator column badge", () => {
+      fixture.componentRef.setInput("parent", {
+        ...mockParent,
+        isUIEditorMode: () => true,
+      });
+      const widget = createWidget({
+        columnKey: "driftIndicator",
+        valueFontSize: 32,
+        valueFontFamily: "StandaloneDriftFont",
+        driftText: "DRIFT-COL",
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const badge = fixture.nativeElement.querySelector(
+        ".lane-col-main-content [data-testid='drift-badge']",
+      );
+      expect(badge).toBeTruthy();
+      expect(badge.style.fontSize).toBe("32px");
+      expect(badge.style.fontFamily).toContain("StandaloneDriftFont");
+      expect(badge.textContent?.trim()).toBe("DRIFT-COL");
+    });
+
+    it("should respect minFontSize and maxFontSize for center driftIndicator in auto scale mode", () => {
+      fixture.componentRef.setInput("parent", {
+        ...mockParent,
+        isUIEditorMode: () => true,
+      });
+      const widget = createWidget(
+        {
+          columnKey: "driftIndicator",
+          minFontSize: 20,
+          maxFontSize: 30,
+          driftText: "DRIFT",
+        },
+        { scaleMode: "auto" },
+      );
+      fixture.componentRef.setInput("widget", widget);
+      const cardEl = component.cardRef()?.nativeElement;
+      if (cardEl) {
+        Object.defineProperty(cardEl, "clientWidth", {
+          value: 300,
+          configurable: true,
+        });
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 120,
+          configurable: true,
+        });
+      }
+      component.fitContent(true);
+      fixture.detectChanges();
+
+      expect(component.effectiveMainDriftFontSize).toBeNull();
+      const fontSizeVar = cardEl?.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(fontSizeVar).toBeTruthy();
+      const numSize = parseInt(fontSizeVar || "0", 10);
+      expect(numSize).toBeLessThanOrEqual(30);
+      expect(numSize).toBeGreaterThanOrEqual(20);
+
+      const badge = fixture.nativeElement.querySelector(
+        ".lane-col-main-content [data-testid='drift-badge']",
+      );
+      expect(badge).toBeTruthy();
+      expect(badge.style.fontSize).toBe("");
+    });
+
+    it("should clamp center driftIndicator font size to minFontSize in tight layout", () => {
+      fixture.componentRef.setInput("parent", {
+        ...mockParent,
+        isUIEditorMode: () => true,
+      });
+      const widget = createWidget(
+        {
+          columnKey: "driftIndicator",
+          minFontSize: 18,
+          maxFontSize: 50,
+          driftText: "VERY LONG DRIFT TEXT",
+        },
+        { scaleMode: "auto" },
+      );
+      fixture.componentRef.setInput("widget", widget);
+      const cardEl = component.cardRef()?.nativeElement;
+      if (cardEl) {
+        Object.defineProperty(cardEl, "clientWidth", {
+          value: 40,
+          configurable: true,
+        });
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 20,
+          configurable: true,
+        });
+      }
+      component.fitContent(true);
+
+      const fontSizeVar = cardEl?.style.getPropertyValue(
+        "--lane-col-value-font-size",
+      );
+      expect(fontSizeVar).toBe("18px");
     });
 
     it("should apply insetsConfig options to insetSettings in getInsetValue", () => {

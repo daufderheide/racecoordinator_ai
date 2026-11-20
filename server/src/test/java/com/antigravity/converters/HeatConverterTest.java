@@ -87,6 +87,7 @@ public class HeatConverterTest {
     dhd.setAutoCalculatedLaps(0.5);
     dhd.setFinished(true);
     dhd.setTrackCalls(3);
+    dhd.setPoints(15.5);
 
     Set<String> sentObjectIds = new HashSet<>();
 
@@ -117,6 +118,7 @@ public class HeatConverterTest {
     assertEquals(11.5, proto.getAverageTop5(), 0.001);
     assertEquals(21.0, proto.getTop2Consecutive(), 0.001);
     assertEquals(34.5, proto.getTop3Consecutive(), 0.001);
+    assertEquals(15.5, proto.getPoints(), 0.001);
   }
 
   @Test

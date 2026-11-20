@@ -4,10 +4,18 @@ import {
   adjustHeatLanes,
   buildHeatDropListIds,
   calculateMaxDriverAndStepUp,
+  calculateWindowScale,
   generateStepUpDrivers,
   generateUniqueRotationAssetName,
   generateVirtualDrivers,
+  getOriginalHeatDisplay,
+  getRotationUnsavedReasons,
   handleRotationDrop,
+  initializeRotationOriginalHeatNumbers,
+  insertRotationSorted,
+  isRotationNameUnique,
+  restoreRotationsWithExpandedState,
+  syncRotationDriverCounts,
 } from "./rotation-editor.utils";
 import { LocalRotation } from "./rotation-export.utils";
 
@@ -148,6 +156,135 @@ describe("rotation-editor.utils", () => {
       const result = calculateMaxDriverAndStepUp(rotations);
       expect(result.maxDriverId).toBe(9);
       expect(result.maxStepUpId).toBe(3);
+    });
+
+    it("should initialize original heat numbers sequentially when undefined", () => {
+      const rotations: LocalRotation[] = [
+        {
+          heats: [
+            { driverIndices: [1, 2] },
+            { driverIndices: [3, 4], originalHeatNumber: 5 },
+            { driverIndices: [0, 0] },
+          ] as any[],
+        },
+      ];
+
+      initializeRotationOriginalHeatNumbers(rotations);
+      expect((rotations[0].heats?.[0] as any).originalHeatNumber).toBe(1);
+      expect((rotations[0].heats?.[1] as any).originalHeatNumber).toBe(5);
+      expect((rotations[0].heats?.[2] as any).originalHeatNumber).toBe(3);
+    });
+
+    it("should display original heat number or double dash", () => {
+      expect(getOriginalHeatDisplay(null)).toBe("--");
+      expect(getOriginalHeatDisplay({ driverIndices: [] })).toBe("--");
+      expect(
+        getOriginalHeatDisplay({
+          driverIndices: [],
+          originalHeatNumber: 3,
+        } as any),
+      ).toBe("3");
+    });
+
+    it("should sync rotation driver counts based on highest driver ID in heats", () => {
+      const rotations: LocalRotation[] = [
+        {
+          numDrivers: 4,
+          heats: [{ driverIndices: [1, 2, 7, 0] }],
+        },
+      ];
+
+      syncRotationDriverCounts(rotations);
+      expect(rotations[0].numDrivers).toBe(7);
+    });
+
+    it("should restore rotations preserving expanded state", () => {
+      const stateRotations = [
+        { numDrivers: 4, heats: [] },
+        { numDrivers: 6, heats: [] },
+      ];
+      const currentRotations: LocalRotation[] = [
+        { numDrivers: 4, isExpanded: false },
+        { numDrivers: 6, isExpanded: true },
+      ];
+
+      const restored = restoreRotationsWithExpandedState(
+        stateRotations,
+        currentRotations,
+      );
+      expect(restored[0].isExpanded).toBeFalse();
+      expect(restored[1].isExpanded).toBeTrue();
+    });
+
+    it("should validate rotation name uniqueness", () => {
+      const assets = [
+        {
+          type: "custom_rotation",
+          name: "Club Rotation",
+          model: { entityId: "a1" },
+        },
+      ] as any[];
+
+      expect(isRotationNameUnique("", assets)).toBeFalse();
+      expect(isRotationNameUnique("Club Rotation", assets)).toBeFalse();
+      expect(isRotationNameUnique("Club Rotation", assets, "a1")).toBeTrue();
+      expect(isRotationNameUnique("Unique Name", assets)).toBeTrue();
+    });
+
+    it("should generate unsaved reasons", () => {
+      expect(
+        getRotationUnsavedReasons("", true, [], false, false, false),
+      ).toContain("DISCARD_REASON_ROTATION_NAME_EMPTY");
+
+      expect(
+        getRotationUnsavedReasons("Name", false, [], false, false, false),
+      ).toContain("DISCARD_REASON_ROTATION_NAME_DUPLICATE");
+
+      expect(
+        getRotationUnsavedReasons("Name", true, [], false, false, false),
+      ).toContain("DISCARD_REASON_ROTATION_EMPTY");
+
+      expect(
+        getRotationUnsavedReasons(
+          "Name",
+          true,
+          [{ heats: [] }],
+          true,
+          false,
+          false,
+        ),
+      ).toContain("DISCARD_REASON_ROTATION_ERRORS");
+
+      expect(
+        getRotationUnsavedReasons(
+          "Name",
+          true,
+          [{ heats: [] }],
+          false,
+          true,
+          false,
+        ),
+      ).toContain("DISCARD_REASON_SAVING");
+
+      expect(
+        getRotationUnsavedReasons(
+          "Name",
+          true,
+          [{ heats: [] }],
+          false,
+          false,
+          true,
+        ),
+      ).toContain("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    });
+
+    it("should calculate window scale and insert rotation sorted", () => {
+      expect(calculateWindowScale(1600, 900)).toBe(1);
+      expect(calculateWindowScale(800, 450)).toBe(0.5);
+
+      const rotations: LocalRotation[] = [{ numDrivers: 4 }, { numDrivers: 8 }];
+      insertRotationSorted(rotations, { numDrivers: 6 });
+      expect(rotations.map((r) => r.numDrivers)).toEqual([4, 6, 8]);
     });
   });
 });

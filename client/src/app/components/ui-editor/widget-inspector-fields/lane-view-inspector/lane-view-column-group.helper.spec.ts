@@ -65,6 +65,9 @@ describe("LaneViewColumnGroupHelper", () => {
       expect(LaneViewColumnGroupHelper.getGroupIdForColumn("trackCalls")).toBe(
         "laps-standings",
       );
+      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("points")).toBe(
+        "laps-standings",
+      );
       expect(LaneViewColumnGroupHelper.getGroupIdForColumn("crashes")).toBe(
         "laps-standings",
       );

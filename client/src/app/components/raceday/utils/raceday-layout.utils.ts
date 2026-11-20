@@ -345,6 +345,63 @@ export class RacedayLayoutUtils {
     );
   }
 
+  static isDriftIndicatorProperty(prop: string | undefined): boolean {
+    if (!prop) return false;
+    const base = prop.split("_")[0];
+    return base === "driftIndicator" || base === "drift-indicator";
+  }
+
+  static hasDriftIndicatorWidget(
+    layout: LayoutConfig | undefined,
+    columns?: string[],
+  ): boolean {
+    if (
+      Array.isArray(columns) &&
+      columns.some((c) => c && c.split("_")[0] === "driftIndicator")
+    ) {
+      return true;
+    }
+    if (!layout?.widgets || !Array.isArray(layout.widgets)) {
+      return false;
+    }
+    for (const w of layout.widgets) {
+      if (!w) continue;
+      if (w.widgetType === "drift-indicator") return true;
+      if (w.widgetType === "lane-column") {
+        if (
+          w.customSettings?.["columnKey"] &&
+          w.customSettings["columnKey"].split("_")[0] === "driftIndicator"
+        ) {
+          return true;
+        }
+        const insets = w.customSettings?.["insets"];
+        if (insets && typeof insets === "object") {
+          for (const key of Object.values(insets)) {
+            if (
+              typeof key === "string" &&
+              key.split("_")[0] === "driftIndicator"
+            ) {
+              return true;
+            }
+          }
+        }
+      }
+      if (w.widgetType === "lane-view") {
+        const laneViewCols = w.customSettings?.["columns"];
+        if (
+          Array.isArray(laneViewCols) &&
+          laneViewCols.some(
+            (c: any) =>
+              typeof c === "string" && c.split("_")[0] === "driftIndicator",
+          )
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   static shouldShowLaneColor(col: ColumnDefinition): boolean {
     if (!col) return false;
     const nameKeys = ["driver.name", "driver.nickname"];
@@ -361,10 +418,12 @@ export class RacedayLayoutUtils {
     physicalLapCount: "UI_EDITOR_COL_LAP_COUNT",
     lapsLed: "RD_COL_LAPS_LED",
     trackCalls: "RD_COL_TRACK_CALLS",
+    points: "RD_COL_POINTS",
     crashes: "RD_COL_CRASHES",
     crashPenalty: "RD_COL_CRASH_PENALTY",
     lastLapTime: "RD_COL_LAP_TIME",
     lastLaps: "RD_COL_LAST_LAPS",
+    driftIndicator: "RD_COL_DRIFT_INDICATOR",
     medianLapTime: "RD_COL_MEDIAN_LAP",
     averageLapTime: "RD_COL_AVG_LAP",
     averageScore: "RD_COL_AVERAGE_SCORE",
@@ -483,11 +542,13 @@ export class RacedayLayoutUtils {
     overallLapsLed: 216,
     overallTrackCalls: 216,
     overallPoints: 216,
+    points: 216,
     heatsRaced: 120,
     heatsRemaining: 120,
     reactionTime: 330,
     lastLapTime: 330,
     lastLaps: 1650,
+    driftIndicator: 330,
     medianLapTime: 330,
     averageLapTime: 330,
     bestLapTime: 330,

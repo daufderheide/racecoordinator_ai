@@ -151,6 +151,12 @@ export class RaceConnectionUtils {
               driverData.trackCalls =
                 u.trackCalls ?? (u as any).track_calls ?? 0;
             }
+            if (
+              u.points !== undefined ||
+              (u as any).heat_points !== undefined
+            ) {
+              driverData.points = u.points ?? (u as any).heat_points ?? 0;
+            }
           }
         }
       });

@@ -1116,6 +1116,69 @@
       </div>
     }
 
+    @if (isDriftIndicatorColumn) {
+      <hr class="inspector-divider" />
+      <div
+        class="inspector-geometry-title"
+        id="drift-indicator-inspector-section"
+      >
+        <span class="material-icons">navigation</span>
+        {{ "UE_INSPECTOR_DRIFT_INDICATOR_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DRIFT_DISPLAY_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="driftDisplayMode"
+            (ngModelChange)="driftDisplayMode = $event"
+          >
+            <app-custom-option value="text">
+              {{ "UE_INSPECTOR_DRIFT_MODE_TEXT" | translate }}
+            </app-custom-option>
+            <app-custom-option value="image">
+              {{ "UE_INSPECTOR_DRIFT_MODE_IMAGE" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (driftDisplayMode === "text") {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_DRIFT_TEXT" | translate
+          }}</label>
+          <input
+            type="text"
+            class="inspector-input"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="driftText"
+            (ngModelChange)="driftText = $event"
+            [placeholder]="'DRIFT'"
+          />
+        </div>
+      } @else {
+        <div
+          class="inspector-section"
+          style="display: flex; justify-content: center"
+        >
+          <app-image-selector
+            [imageUrl]="driftImageUrl"
+            (imageUrlChange)="onDriftImageUrlChange($event)"
+            [assets]="imageAssets"
+            [size]="'large'"
+          >
+          </app-image-selector>
+        </div>
+      }
+    }
+
     @if (isLastLapsColumn) {
       <hr class="inspector-divider" />
       <div class="inspector-geometry-title" id="last-laps-inspector-section">
@@ -3026,6 +3089,70 @@
       />
     }
 
+    <!-- Drift Indicator Options for Inset -->
+    @if (isInsetDriftIndicator(effectiveSelectedAnchor)) {
+      <div class="inspector-geometry-title">
+        <span class="material-icons">navigation</span>
+        {{ "UE_INSPECTOR_DRIFT_INDICATOR_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_DRIFT_DISPLAY_MODE" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetDriftDisplayMode(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetDriftDisplayMode(effectiveSelectedAnchor, $event)
+            "
+          >
+            <app-custom-option value="text">
+              {{ "UE_INSPECTOR_DRIFT_MODE_TEXT" | translate }}
+            </app-custom-option>
+            <app-custom-option value="image">
+              {{ "UE_INSPECTOR_DRIFT_MODE_IMAGE" | translate }}
+            </app-custom-option>
+          </app-custom-select>
+        </div>
+      </div>
+
+      @if (getInsetDriftDisplayMode(effectiveSelectedAnchor) === "text") {
+        <div class="inspector-section">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_DRIFT_TEXT" | translate
+          }}</label>
+          <input
+            type="text"
+            class="inspector-input"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="getInsetDriftText(effectiveSelectedAnchor)"
+            (ngModelChange)="setInsetDriftText(effectiveSelectedAnchor, $event)"
+            [placeholder]="'DRIFT'"
+          />
+        </div>
+      } @else {
+        <div
+          class="inspector-section"
+          style="display: flex; justify-content: center"
+        >
+          <app-image-selector
+            [imageUrl]="getInsetDriftImageUrl(effectiveSelectedAnchor)"
+            (imageUrlChange)="
+              setInsetDriftImageUrl(effectiveSelectedAnchor, $event)
+            "
+            [assets]="imageAssets"
+            [size]="'large'"
+          >
+          </app-image-selector>
+        </div>
+      }
+    }
+
     <!-- Total Time Options (e.g. totalTime, overallTotalTime) -->
     @if (isInsetTotalTime(effectiveSelectedAnchor)) {
       <div class="inspector-section">
@@ -3340,110 +3467,114 @@
       </div>
     }
 
-    <hr class="inspector-divider" />
+    @if (!isInsetDriftImage(effectiveSelectedAnchor)) {
+      <hr class="inspector-divider" />
 
-    <!-- Inset Typography Section -->
-    <div class="inspector-geometry-title">
-      {{ "UE_INSPECTOR_INSET_TYPOGRAPHY" | translate }}
-    </div>
-
-    <!-- Font Family -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_FAMILY" | translate
-      }}</label>
-      <div class="select-container select-sm">
-        <app-custom-select
-          [ngModel]="getInsetFontFamily(effectiveSelectedAnchor)"
-          (ngModelChange)="setInsetFontFamily(effectiveSelectedAnchor, $event)"
-          (click)="fontService.loadLocalFonts()"
-        >
-          <app-custom-option value="">
-            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
-          </app-custom-option>
-          @for (font of fontService.availableFonts(); track font) {
-            <app-custom-option [value]="font">{{ font }}</app-custom-option>
-          }
-        </app-custom-select>
+      <!-- Inset Typography Section -->
+      <div class="inspector-geometry-title">
+        {{ "UE_INSPECTOR_INSET_TYPOGRAPHY" | translate }}
       </div>
-    </div>
 
-    <!-- Font Size -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_FONT_SIZE" | translate
-      }}</label>
-      <div style="display: flex; gap: 8px; align-items: center">
-        <input
-          type="range"
-          min="8"
-          max="36"
-          step="1"
-          [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
-          (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
-          [disabled]="disableFontSizes()"
-          class="inspector-slider"
-          style="flex: 1"
-        />
-        <input
-          type="number"
-          min="8"
-          max="36"
-          step="1"
-          autocomplete="off"
-          data-dashlane-ignore="true"
-          data-1p-ignore="true"
-          data-lpignore="true"
-          data-bwignore="true"
-          data-form-type="other"
-          [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
-          (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
-          [disabled]="disableFontSizes()"
-          class="inspector-number-input"
-        />
-      </div>
-    </div>
-
-    <!-- Text Color -->
-    <div class="inspector-section">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_TEXT_COLOR" | translate
-      }}</label>
-      <div class="d-flex align-items-center gap-2">
-        <input
-          type="color"
-          [value]="
-            toValidHexColor(
-              getInsetTextColor(effectiveSelectedAnchor),
-              '#ffffff'
-            )
-          "
-          (input)="
-            setInsetTextColor(
-              effectiveSelectedAnchor,
-              $any($event.target).value
-            )
-          "
-          (change)="
-            setInsetTextColor(
-              effectiveSelectedAnchor,
-              $any($event.target).value
-            )
-          "
-          class="inspector-color-input"
-        />
-        @if (hasCustomInsetTextColor(effectiveSelectedAnchor)) {
-          <button
-            type="button"
-            class="color-reset-btn"
-            (click)="resetInsetCustomColor(effectiveSelectedAnchor)"
-            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+      <!-- Font Family -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_FAMILY" | translate
+        }}</label>
+        <div class="select-container select-sm">
+          <app-custom-select
+            [ngModel]="getInsetFontFamily(effectiveSelectedAnchor)"
+            (ngModelChange)="
+              setInsetFontFamily(effectiveSelectedAnchor, $event)
+            "
+            (click)="fontService.loadLocalFonts()"
           >
-            <span class="material-icons">restart_alt</span>
-          </button>
-        }
+            <app-custom-option value="">
+              {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+            </app-custom-option>
+            @for (font of fontService.availableFonts(); track font) {
+              <app-custom-option [value]="font">{{ font }}</app-custom-option>
+            }
+          </app-custom-select>
+        </div>
       </div>
-    </div>
+
+      <!-- Font Size -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <div style="display: flex; gap: 8px; align-items: center">
+          <input
+            type="range"
+            min="8"
+            max="36"
+            step="1"
+            [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
+            (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
+            [disabled]="disableFontSizes()"
+            class="inspector-slider"
+            style="flex: 1"
+          />
+          <input
+            type="number"
+            min="8"
+            max="36"
+            step="1"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [ngModel]="getInsetFontSize(effectiveSelectedAnchor)"
+            (ngModelChange)="setInsetFontSize(effectiveSelectedAnchor, $event)"
+            [disabled]="disableFontSizes()"
+            class="inspector-number-input"
+          />
+        </div>
+      </div>
+
+      <!-- Text Color -->
+      <div class="inspector-section">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TEXT_COLOR" | translate
+        }}</label>
+        <div class="d-flex align-items-center gap-2">
+          <input
+            type="color"
+            [value]="
+              toValidHexColor(
+                getInsetTextColor(effectiveSelectedAnchor),
+                '#ffffff'
+              )
+            "
+            (input)="
+              setInsetTextColor(
+                effectiveSelectedAnchor,
+                $any($event.target).value
+              )
+            "
+            (change)="
+              setInsetTextColor(
+                effectiveSelectedAnchor,
+                $any($event.target).value
+              )
+            "
+            class="inspector-color-input"
+          />
+          @if (hasCustomInsetTextColor(effectiveSelectedAnchor)) {
+            <button
+              type="button"
+              class="color-reset-btn"
+              (click)="resetInsetCustomColor(effectiveSelectedAnchor)"
+              [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+            >
+              <span class="material-icons">restart_alt</span>
+            </button>
+          }
+        </div>
+      </div>
+    }
 
     <hr class="inspector-divider" />
 

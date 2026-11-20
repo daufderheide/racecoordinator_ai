@@ -970,6 +970,14 @@ describe("UIEditorComponent", () => {
         .toBe(keys.length);
     });
 
+    it("should include driftIndicator in BASE_AVAILABLE_COLUMNS with RD_COL_DRIFT_INDICATOR", () => {
+      const col = BASE_AVAILABLE_COLUMNS.find(
+        (c) => c.key === "driftIndicator",
+      );
+      expect(col).toBeDefined();
+      expect(col?.label).toBe("RD_COL_DRIFT_INDICATOR");
+    });
+
     it("should include all Settings.DEFAULT_COLUMNS in BASE_AVAILABLE_COLUMNS", () => {
       Settings.DEFAULT_COLUMNS.forEach((defaultCol) => {
         const found = BASE_AVAILABLE_COLUMNS.some((c) => c.key === defaultCol);

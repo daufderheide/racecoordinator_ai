@@ -34,4 +34,8 @@ export abstract class LeaderboardInspectorHarnessBase {
   abstract getRestTextColor(): Promise<string>;
   abstract setRestTextColor(val: string): Promise<void>;
   abstract clickResetRestTextColor(): Promise<void>;
+
+  abstract getBackgroundColor(): Promise<string>;
+  abstract setBackgroundColor(val: string): Promise<void>;
+  abstract clickResetBackgroundColor(): Promise<void>;
 }

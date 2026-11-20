@@ -108,6 +108,7 @@ So erstellen Sie ein neues Asset für ein benutzerdefiniertes Rotationsset:
 ### Heats hinzufügen und anordnen {: #adding-heats }
 
 - **Heat hinzufügen:** Klicken Sie im Rotationskopf auf das `+`-Symbol, um weitere Heats anzuhängen.
+- **Ursprüngliche Heat-Nummer:** Jede Heat-Kartenunterzeile zeigt ein **Ursprünglicher Heat**-Badge mit der anfänglichen Sequenznummer an (`Ursprünglicher Heat: 1`, `Ursprünglicher Heat: 2`). Werden Heats per Drag-and-Drop neu angeordnet oder verschoben, bleibt dieses Badge fixiert, um die ursprüngliche Position nachzuverfolgen. Neu hinzugefügte Heats zeigen `--`.
 - **Heats neu anordnen:** Ziehen Sie Heat-Karten per Drag-and-Drop im Raster an die gewünschte Position.
 - **Heat löschen:** Klicken Sie auf das Mülleimer-Symbol einer Heat-Karte, um sie zu entfernen.
 
@@ -115,9 +116,10 @@ So erstellen Sie ein neues Asset für ein benutzerdefiniertes Rotationsset:
 
 - **Pool virtueller Fahrer:** Der linke Bereich bietet einen Pool virtueller Fahrer (`Fahrer 1`, `Fahrer 2` usw.). Sie können die Anzahl der Fahrer im Pool anpassen, um beliebig viele Startplätze bereitzustellen.
 - **Pool der Aufsteiger:** Direkt unter dem Pool der virtuellen Fahrer angeordnet; stellt dynamische Aufsteiger-Chips für Step Up Rennen bereit (siehe [Step Up Rennen & Aufstiegsstufen](#step-up-races) weiter unten).
+- **Fahrer-Hervorhebung:** Klicken Sie auf einen Fahrernamen im Fahrerpool, Aufsteigerpool oder auf einer Heat-Spur, um die visuelle Hervorhebung umzuschalten. Hervorgehobene Fahrer erhalten unverwechselbare Akzentfarben aus einer Palette, pulsierende Punkte und Farbpunkte (Pips) in den Kopfzeilen teilnehmender Heats. Nicht teilnehmende Heats und nicht hervorgehobene Fahrer werden abgedunkelt, um Pausenzeiten und Turnusabstände auf einen Blick zu prüfen. Mehrere Fahrer können gleichzeitig hervorgehoben werden; ein erneuter Klick oder das Leeren der Hervorhebungen setzt die Ansicht zurück.
 - **Drag-and-Drop:** Ziehen Sie Fahrerchips aus dem Pool direkt in die Spurplätze einer Heat-Karte.
 - **Spurtausch:** Ziehen Sie einen Fahrerchip von einer Spur auf eine andere, um deren Zuweisungen zu tauschen.
-- **Spur leeren:** Ziehen Sie einen Fahrer aus einer Spur heraus oder entfernen Sie ihn, um die Spur unbesetzt zu lassen.
+- **Spur leeren:** Doppelklicken Sie auf einen zugewiesenen Fahrer in einer Heat-Spur, um diesen Platz sofort zu leeren. Alternativ können Sie einen Fahrer aus einer Spur herausziehen, um sie unbesetzt zu lassen.
 
 ### Gruppenzuweisungen {: #group-assignments }
 

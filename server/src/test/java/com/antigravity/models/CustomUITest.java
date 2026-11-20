@@ -139,6 +139,18 @@ public class CustomUITest {
     assertTrue(fuelUi.getLayoutJson().contains("\"baseHeight\":1080"));
     assertTrue(fuelUi.getLayoutJson().contains("\"aspectRatio\":\"16:9\""));
     assertTrue(fuelUi.getLayoutJson().contains("\"scaleMode\":\"stretch\""));
+
+    assertTrue(defaultUi.getColumnLayoutsJson().contains("\"bottom-center\":\"driftIndicator\""));
+    assertTrue(practiceUi.getColumnLayoutsJson().contains("\"bottom-center\":\"driftIndicator\""));
+    assertTrue(fuelUi.getColumnLayoutsJson().contains("\"bottom-center\":\"driftIndicator\""));
+    assertTrue(
+        driverStationUi
+            .getLayoutJson()
+            .contains("\"insets\":{\"bottom-center\":\"driftIndicator\"}"));
+
+    assertTrue(defaultUi.getLayoutJson().contains("\"bottom-center\":\"driftIndicator\""));
+    assertTrue(practiceUi.getLayoutJson().contains("\"bottom-center\":\"driftIndicator\""));
+    assertTrue(fuelUi.getLayoutJson().contains("\"bottom-center\":\"driftIndicator\""));
   }
 
   @Test
@@ -348,5 +360,51 @@ public class CustomUITest {
     assertTrue(result.contains("\"borderColor\":\"#38bdf8\""));
     assertTrue(result.contains("\"textColor\":\"#f59e0b\""));
     assertTrue(result.contains("\"fillColor\":\"#ef4444\""));
+  }
+
+  @Test
+  public void testEnsureDriftIndicatorInsets() {
+    assertNull(CustomUI.ensureDriftIndicatorInsets(null));
+    assertEquals("", CustomUI.ensureDriftIndicatorInsets(""));
+    assertEquals("not json", CustomUI.ensureDriftIndicatorInsets("not json"));
+
+    String inputWithoutInsets =
+        "{\"widgets\":["
+            + "{\"id\":\"w1\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"lastLapTime\"}},"
+            + "{\"id\":\"w2\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"lapTime\"}},"
+            + "{\"id\":\"w3\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"lapCount\"}}"
+            + "]}";
+
+    String result = CustomUI.ensureDriftIndicatorInsets(inputWithoutInsets);
+    assertTrue(result.contains("\"bottom-center\":\"driftIndicator\""));
+
+    String inputWithExistingInsets =
+        "{\"widgets\":["
+            + "{\"id\":\"w1\",\"widgetType\":\"lane-column\",\"customSettings\":{\"columnKey\":\"lastLapTime\",\"insets\":{\"bottom-right\":\"bestLapTime\"}}}"
+            + "]}";
+
+    String result2 = CustomUI.ensureDriftIndicatorInsets(inputWithExistingInsets);
+    assertTrue(result2.contains("\"bottom-center\":\"driftIndicator\""));
+    assertTrue(result2.contains("\"bottom-right\":\"bestLapTime\""));
+  }
+
+  @Test
+  public void testEnsureDriftIndicatorColumnLayouts() {
+    assertNull(CustomUI.ensureDriftIndicatorColumnLayouts(null));
+    assertEquals("", CustomUI.ensureDriftIndicatorColumnLayouts(""));
+    assertEquals("not json", CustomUI.ensureDriftIndicatorColumnLayouts("not json"));
+
+    String inputWithoutInset =
+        "{\"lastLapTime\":{\"center-center\":\"lastLapTime\",\"bottom-right\":\"bestLapTime\"},"
+            + "\"lapTime\":{\"center-center\":\"lapTime\"}}";
+    String result = CustomUI.ensureDriftIndicatorColumnLayouts(inputWithoutInset);
+    assertTrue(result.contains("\"lastLapTime\":{"));
+    assertTrue(result.contains("\"lapTime\":{"));
+    assertTrue(result.contains("\"bottom-center\":\"driftIndicator\""));
+
+    String inputAlreadyHas =
+        "{\"lastLapTime\":{\"center-center\":\"lastLapTime\",\"bottom-center\":\"driftIndicator\"}}";
+    String resultAlready = CustomUI.ensureDriftIndicatorColumnLayouts(inputAlreadyHas);
+    assertEquals(inputAlreadyHas, resultAlready);
   }
 }

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ListAssetsResponse } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { AssetManagerHarnessE2e } from "./testing/asset-manager.harness.e2e";
@@ -659,6 +660,119 @@ test.describe("Asset Manager Visuals", () => {
 
     await expect(page).toHaveScreenshot(
       "asset-manager-custom-rotation-zoomed-in.png",
+      {
+        maxDiffPixelRatio: 0.1,
+        threshold: 0.2,
+      },
+    );
+  });
+
+  test("should show highlighted drivers across heats and driver pools in custom rotation editor", async ({
+    page,
+  }) => {
+    const populatedAsset = {
+      model: { entityId: "rotation_highlighted" },
+      name: "Speedway Custom Rotation",
+      type: "custom_rotation",
+      size: "10 KB",
+      numLanes: 4,
+      customRotations: [
+        {
+          numDrivers: 6,
+          heats: [
+            { driverIndices: [1, 2, 3, 4] },
+            { driverIndices: [3, 1, 4, 2] },
+            { driverIndices: [3, 4, 5, 6] },
+          ],
+        },
+      ],
+    };
+
+    await page.route(
+      (url) =>
+        url.pathname.endsWith("/api/assets/list") ||
+        url.pathname.includes("/api/assets/list"),
+      async (route) => {
+        const response = ListAssetsResponse.create({
+          assets: [populatedAsset],
+        });
+        const buffer = ListAssetsResponse.encode(response).finish();
+        await route.fulfill({
+          status: 200,
+          contentType: "application/octet-stream",
+          body: Buffer.from(buffer),
+        });
+      },
+    );
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/custom-rotation-editor?id=rotation_highlighted"),
+    );
+
+    await page
+      .locator("app-custom-rotation-editor .page-container")
+      .waitFor({ state: "visible" });
+
+    // Wait for the rotation card and heat cards to be rendered
+    await page
+      .locator("app-custom-rotation-editor .rotation-expander-card")
+      .first()
+      .waitFor({ state: "visible" });
+
+    await page
+      .locator("app-custom-rotation-editor .heat-card")
+      .nth(2)
+      .waitFor({ state: "visible" });
+
+    // Wait for populated driver items in heat 1 to be visible
+    await page
+      .locator("#rot-0-heat-0-lane-0 .driver-item.populated")
+      .waitFor({ state: "visible" });
+
+    // Highlight Driver 1 in driver pool
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(0)
+      .locator(".clickable-driver-name")
+      .click();
+
+    // Highlight Driver 2 in driver pool
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(1)
+      .locator(".clickable-driver-name")
+      .click();
+
+    // Wait for driver highlight chips to appear in the pool
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(0)
+      .locator(".driver-highlight-chip")
+      .waitFor({ state: "visible", timeout: 5000 });
+    await page
+      .locator("#driver-pool .driver-item")
+      .nth(1)
+      .locator(".driver-highlight-chip")
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    // Wait for lane highlight indicators in Heat 1
+    await page
+      .locator("#rot-0-heat-0-lane-0 .driver-item.populated.driver-highlighted")
+      .waitFor({ state: "visible", timeout: 5000 });
+    await page
+      .locator("#rot-0-heat-0-lane-1 .driver-item.populated.driver-highlighted")
+      .waitFor({ state: "visible", timeout: 5000 });
+    await page
+      .locator("#rot-0-heat-0-lane-0 .driver-highlight-badge")
+      .waitFor({ state: "visible", timeout: 5000 });
+    await page
+      .locator("#rot-0-heat-0-lane-1 .driver-highlight-badge")
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    await expect(page).toHaveScreenshot(
+      "asset-manager-custom-rotation-highlighted-drivers.png",
       {
         maxDiffPixelRatio: 0.1,
         threshold: 0.2,

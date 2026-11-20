@@ -78,6 +78,10 @@ public class PointsScoringCalculatorTest {
 
     assertEquals(6.0, p1.getTotalPoints(), 0.001);
     assertEquals(6.0, p2.getTotalPoints(), 0.001);
+    assertEquals(4.0, h1.getDrivers().get(0).getPoints(), 0.001);
+    assertEquals(2.0, h1.getDrivers().get(1).getPoints(), 0.001);
+    assertEquals(2.0, h2.getDrivers().get(0).getPoints(), 0.001);
+    assertEquals(4.0, h2.getDrivers().get(1).getPoints(), 0.001);
   }
 
   @Test
@@ -114,6 +118,8 @@ public class PointsScoringCalculatorTest {
     // P2: 2nd place heat points (3.0) + fastest lap bonus (1.5) = 4.5
     assertEquals(5.0, p1.getTotalPoints(), 0.001);
     assertEquals(4.5, p2.getTotalPoints(), 0.001);
+    assertEquals(5.0, h1.getDrivers().get(0).getPoints(), 0.001);
+    assertEquals(4.5, h1.getDrivers().get(1).getPoints(), 0.001);
   }
 
   @Test

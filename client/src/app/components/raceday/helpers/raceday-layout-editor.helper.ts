@@ -241,10 +241,19 @@ export class RacedayLayoutEditorHelper {
       height = 80;
     }
 
-    const isLaneColumn = draggedType?.startsWith("lane-col:");
+    const isLaneColumn =
+      draggedType?.startsWith("lane-col:") ||
+      draggedType === "drift-indicator" ||
+      draggedType === "average-score";
     let laneColumnKey: string | undefined = undefined;
     if (isLaneColumn) {
-      laneColumnKey = draggedType?.substring("lane-col:".length);
+      if (draggedType === "drift-indicator") {
+        laneColumnKey = "driftIndicator";
+      } else if (draggedType === "average-score") {
+        laneColumnKey = "averageScore";
+      } else {
+        laneColumnKey = draggedType?.substring("lane-col:".length);
+      }
       width = laneColumnKey === "lastLaps" ? 280 : 200;
       height = laneColumnKey === "lastLaps" ? 200 : 90;
     }
@@ -267,10 +276,22 @@ export class RacedayLayoutEditorHelper {
     if (draggedType === "image") {
       newWidget.customSettings = { imageUrl: "" };
     } else if (isLaneColumn) {
-      const registryEntry = WIDGET_REGISTRY["lane-column"];
-      newWidget.customSettings = registryEntry?.defaultSettings
-        ? registryEntry.defaultSettings()
-        : {};
+      if (laneColumnKey === "driftIndicator") {
+        const driftRegistry = WIDGET_REGISTRY["drift-indicator"];
+        newWidget.customSettings = driftRegistry?.defaultSettings
+          ? driftRegistry.defaultSettings()
+          : {};
+      } else if (laneColumnKey === "averageScore") {
+        const avgRegistry = WIDGET_REGISTRY["average-score"];
+        newWidget.customSettings = avgRegistry?.defaultSettings
+          ? avgRegistry.defaultSettings()
+          : {};
+      } else {
+        const registryEntry = WIDGET_REGISTRY["lane-column"];
+        newWidget.customSettings = registryEntry?.defaultSettings
+          ? registryEntry.defaultSettings()
+          : {};
+      }
       newWidget.customSettings.columnKey = laneColumnKey;
     } else if (actualWidgetType.startsWith("custom:")) {
       const def =

@@ -134,4 +134,17 @@ export class LeaderboardInspectorHarnessE2e implements LeaderboardInspectorHarne
     const restWrapper = this.locator.locator(".color-picker-wrapper").nth(2);
     await restWrapper.locator(".color-reset-btn").click();
   }
+
+  async getBackgroundColor(): Promise<string> {
+    return await this.colorPickers.nth(3).inputValue();
+  }
+
+  async setBackgroundColor(val: string): Promise<void> {
+    await this.colorPickers.nth(3).fill(val);
+  }
+
+  async clickResetBackgroundColor(): Promise<void> {
+    const bgWrapper = this.locator.locator(".color-picker-wrapper").nth(3);
+    await bgWrapper.locator(".color-reset-btn").click();
+  }
 }

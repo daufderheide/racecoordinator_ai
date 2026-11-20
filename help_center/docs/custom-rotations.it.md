@@ -108,6 +108,7 @@ Per creare una nuova entità di set di rotazioni personalizzate:
 ### Aggiunta e Riordino delle Manche {: #adding-heats }
 
 - **Aggiungi Manche:** Fare clic sull'icona `+` nell'intestazione della rotazione per inserire ulteriori manche.
+- **Numero Originale della Manche:** Il sottotitolo di ogni manche mostra un contrassegno **Manche originale** indicante la sua posizione iniziale (`Manche originale: 1`, `Manche originale: 2`). Quando le manche vengono riordinate o spostate tramite trascinamento, il contrassegno originale rimane fisso per tracciarne la cronologia, mentre le nuove manche mostrano `--`.
 - **Riordina Manche:** Trascinare e rilasciare le schede delle manche nella griglia per modificare la sequenza di gara.
 - **Elimina Manche:** Fare clic sull'icona del cestino di una manche per rimuoverla.
 
@@ -115,9 +116,10 @@ Per creare una nuova entità di set di rotazioni personalizzate:
 
 - **Gruppo Piloti Virtuali:** Il pannello di sinistra mette a disposizione un gruppo di piloti virtuali (`Pilota 1`, `Pilota 2`, ecc.). È possibile regolare il numero di piloti nel gruppo per generare tutte le teste di serie necessarie.
 - **Pool dei Piloti di Avanzamento:** Posizionato subito sotto il gruppo dei piloti virtuali; fornisce pedine di promozione dinamica per le gare Step Up (vedere [Gare Step Up e Gradini di Progressione](#step-up-races) di seguito).
+- **Evidenziazione Pilota:** Fare clic sul nome di un pilota nel gruppo piloti, nel pool di avanzamento o nella corsia di una manche per attivare/disattivare l'evidenziazione visiva. I piloti evidenziati ricevono colori distintivi da una palette animata, badge a punto e indicatori (pip) nelle intestazioni delle manche partecipanti. Le manche non partecipanti e gli altri piloti vengono attenuati per verificare a colpo d'occhio i tempi di riposo e la cadenza dei turni. È possibile evidenziare più piloti contemporaneamente; fare clic nuovamente o premere **Azzera evidenziazioni** ripristina la visualizzazione normale.
 - **Trascina e Rilascia:** Trascinare le pedine dei piloti dal gruppo direttamente nelle caselle delle corsie di qualsiasi manche.
 - **Scambio di Corsia:** Trascinare la pedina di un pilota da una corsia all'altra per scambiarne le posizioni.
-- **Svuota Corsia:** Trascinare un pilota fuori da una corsia per lasciarla libera.
+- **Svuota Corsia:** Fare doppio clic su un pilota presente in una corsia per rimuoverlo all'istante e liberare lo slot. È inoltre possibile trascinare il pilota fuori dalla corsia per lasciarla libera.
 
 ### Assegnazione dei Gruppi {: #group-assignments }
 

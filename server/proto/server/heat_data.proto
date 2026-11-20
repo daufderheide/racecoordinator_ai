@@ -61,5 +61,6 @@ message DriverHeatData {
   bool is_disqualified = 41;
   double penalty_time = 42;
   double dq_score_percentage = 43;
+  double points = 44;
 }
 

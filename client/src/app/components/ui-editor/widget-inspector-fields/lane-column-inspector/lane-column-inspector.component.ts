@@ -4,18 +4,23 @@ import {
   effect,
   inject,
   input,
+  OnDestroy,
+  OnInit,
   output,
   signal,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Subscription } from "rxjs";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { CustomWidgetInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/custom-widget-inspector/custom-widget-inspector.component";
 import { WidgetBorderInspectorComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-border-inspector/widget-border-inspector.component";
+import { DataService } from "@app/data.service";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { AbsoluteWidgetNode, InsetConfig } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -45,11 +50,15 @@ import { LaneColumnInspectorGridBase } from "./lane-column-inspector-grid.base";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
+    ImageSelectorComponent,
     CustomWidgetInspectorComponent,
     WidgetBorderInspectorComponent,
   ],
 })
-export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
+export class LaneColumnInspectorComponent
+  extends LaneColumnInspectorGridBase
+  implements OnInit, OnDestroy
+{
   settings = input.required<any>();
   widget = input<AbsoluteWidgetNode>();
   availableColumns = input<{ key: string; label: string }[]>([]);
@@ -74,6 +83,9 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
   fontService = inject(FontService);
   translationService = inject(TranslationService);
   customWidgetService = inject(CustomWidgetService, { optional: true });
+  private dataService = inject(DataService, { optional: true });
+  private assetSub: Subscription | null = null;
+  imageAssets: any[] = [];
   showReplicateModal = signal<boolean>(false);
   activeScope = signal<"widget" | "grid" | "column" | "inset">("widget");
   activeInspectorAnchor = signal<string | null>(null);
@@ -114,6 +126,27 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
         }
       }
     });
+  }
+
+  ngOnInit(): void {
+    if (this.dataService && typeof this.dataService.listAssets === "function") {
+      this.assetSub = this.dataService.listAssets().subscribe({
+        next: (assets) => {
+          this.imageAssets = (assets || []).filter(
+            (a) => a && a.type === "image",
+          );
+        },
+        error: () => {
+          this.imageAssets = [];
+        },
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.assetSub) {
+      this.assetSub.unsubscribe();
+    }
   }
 
   getValidScope(
@@ -700,6 +733,70 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
     this.onFieldChange();
   }
 
+  isInsetDriftIndicator(anchor: string): boolean {
+    return LaneColumnInsetHelper.isInsetDriftIndicatorColumn(
+      this.getAnchorValue(anchor),
+    );
+  }
+
+  isInsetDriftImage(anchor: string): boolean {
+    return (
+      this.isInsetDriftIndicator(anchor) &&
+      LaneColumnInsetHelper.getInsetDriftDisplayMode(
+        this.currentSettings,
+        anchor,
+      ) === "image"
+    );
+  }
+
+  getInsetDriftDisplayMode(anchor: string): "text" | "image" {
+    return LaneColumnInsetHelper.getInsetDriftDisplayMode(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetDriftDisplayMode(anchor: string, val: "text" | "image"): void {
+    LaneColumnInsetHelper.setInsetDriftDisplayMode(
+      this.currentSettings,
+      anchor,
+      val,
+      () => this.onFieldChange(),
+    );
+  }
+
+  getInsetDriftText(anchor: string): string {
+    return LaneColumnInsetHelper.getInsetDriftText(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetDriftText(anchor: string, val: string): void {
+    LaneColumnInsetHelper.setInsetDriftText(
+      this.currentSettings,
+      anchor,
+      val,
+      () => this.onFieldChange(),
+    );
+  }
+
+  getInsetDriftImageUrl(anchor: string): string {
+    return LaneColumnInsetHelper.getInsetDriftImageUrl(
+      this.currentSettings,
+      anchor,
+    );
+  }
+
+  setInsetDriftImageUrl(anchor: string, val: string | undefined): void {
+    LaneColumnInsetHelper.setInsetDriftImageUrl(
+      this.currentSettings,
+      anchor,
+      val,
+      () => this.onFieldChange(),
+    );
+  }
+
   get isMasterCell(): boolean {
     return LaneColumnGridHelper.isMasterCell(
       this.currentSettings,
@@ -826,6 +923,14 @@ export class LaneColumnInspectorComponent extends LaneColumnInspectorGridBase {
       key.startsWith("averageScore") ||
       this.widget()?.widgetType === "average-score" ||
       this.widget()?.widgetType === "averageScore"
+    );
+  }
+
+  override get isDriftIndicatorColumn(): boolean {
+    const key = this.currentSettings["columnKey"] || "";
+    return (
+      RacedayLayoutUtils.isDriftIndicatorProperty(key) ||
+      this.widget()?.widgetType === "drift-indicator"
     );
   }
 

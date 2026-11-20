@@ -1,10 +1,9 @@
-import { ICustomHeat, ICustomRotation } from "@app/proto/antigravity";
+import { ICustomHeat } from "@app/proto/antigravity";
 
-import { assignCustomRotationStepNumbers } from "./rotation-export.utils";
-
-export interface LocalRotation extends ICustomRotation {
-  isExpanded?: boolean;
-}
+import {
+  assignCustomRotationStepNumbers,
+  LocalRotation,
+} from "./rotation-export.utils";
 
 export interface ImportResult {
   success: boolean;

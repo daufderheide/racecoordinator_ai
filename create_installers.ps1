@@ -217,7 +217,10 @@ else
 fi
 
 echo "Starting Race Coordinator..."
-"$JAVA_CMD" -jar RaceCoordinator.jar "$@"
+BIN_DIR="$DIR/bin"
+mkdir -p "$BIN_DIR"
+ln -sf "$JAVA_CMD" "$BIN_DIR/Race Coordinator AI"
+"$BIN_DIR/Race Coordinator AI" -Xdock:name="Race Coordinator AI" -Dapple.awt.application.name="Race Coordinator AI" -jar RaceCoordinator.jar "$@"
 '@
     $MacScript | Out-File -FilePath "$Dest\start_mac.command" -Encoding ascii
 

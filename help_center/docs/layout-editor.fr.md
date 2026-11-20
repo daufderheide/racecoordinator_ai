@@ -115,6 +115,9 @@ Race Coordinator AI comprend une collection complète de widgets intégrés :
 11. **Widgets Personnalisés (Custom Widgets)** :
     - **Rôle** : Charge dynamiquement des composants web externes et jauges de télémétrie depuis votre dossier de widgets personnalisés.
     - **Options de Configuration** : Propriétés personnalisées (couleurs, seuils, bascules, libellés) définies dans le manifeste.
+12. **Widget Indicateur de Drift** :
+    - **Rôle** : Affiche un indicateur lorsqu'un pilote réalise un tour de drift pendant la manche. Lorsqu'il est présent sur la disposition (en tant que widget autonome, colonne de tableau ou emplacement d'encadré/inset), il remplace automatiquement le badge "DRIFT" par défaut affiché sous le temps au tour.
+    - **Options de Configuration** : Mode d'affichage (**Texte statique** avec texte personnalisable, typographie et couleur de texte, ou **Image de ressource** sélectionnée dans votre bibliothèque d'images), liaison de voie, couleur d'arrière-plan (avec héritage facultatif de la couleur de voie), bordures et disposition en encart (inset).
 
 Pour plus de détails sur le style des widgets et la création de widgets personnalisés, consultez le [Guide de l'Éditeur d'Interface](ui-editor.fr.md) et le [Guide des Widgets Personnalisés](custom-widgets.fr.md).
 

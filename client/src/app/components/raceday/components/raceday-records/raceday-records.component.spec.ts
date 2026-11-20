@@ -338,4 +338,20 @@ describe("RacedayRecordsComponent", () => {
       done();
     }, 50);
   });
+
+  it("should apply background color when configured in customSettings or widget", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "widget-records",
+      widgetType: "records",
+      customSettings: {
+        backgroundColor: "#223344",
+      },
+    } as any);
+    fixture.detectChanges();
+
+    const panelEl: HTMLElement =
+      fixture.nativeElement.querySelector(".record-panel");
+    expect(panelEl.style.backgroundColor).toBe("rgb(34, 51, 68)");
+    expect(component.effectiveBackgroundColor()).toBe("#223344");
+  });
 });

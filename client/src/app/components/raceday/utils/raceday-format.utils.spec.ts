@@ -1,4 +1,5 @@
 import { AllowFinish } from "@app/models/heat_scoring";
+import { OverallRanking } from "@app/models/overall_scoring";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
 import { DriverHeatData } from "../../../race/driver_heat_data";
@@ -2459,6 +2460,170 @@ describe("RacedayFormatUtils", () => {
           ctx,
         ),
       ).toBe("--");
+    });
+  });
+
+  describe("formatValue & getPropertyValue - Points and Heat Points", () => {
+    let mockDriverHd: any;
+    let emptyHd: any;
+
+    beforeEach(() => {
+      mockDriverHd = {
+        objectId: "hd-points-1",
+        laneIndex: 0,
+        actualDriver: { name: "Points Driver" },
+        points: 25,
+        participant: {
+          objectId: "p-points-1",
+          totalPoints: 100,
+        },
+      };
+      emptyHd = { isEmptyLane: true };
+    });
+
+    it("should resolve heat points via getPropertyValue", () => {
+      expect(RacedayFormatUtils.getPropertyValue(mockDriverHd, "points")).toBe(
+        25,
+      );
+      expect(
+        RacedayFormatUtils.getPropertyValue(mockDriverHd, "heatPoints"),
+      ).toBe(25);
+    });
+
+    it("should format heat points as -- for empty driver", () => {
+      expect(
+        RacedayFormatUtils.formatValue("points", 25, emptyHd, undefined, ctx),
+      ).toBe("--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatPoints",
+          25,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+    });
+
+    it("should format heat points and overall points as -- in a non-points race", () => {
+      const nonPointsCtx = {
+        ...ctx,
+        getRace: () =>
+          ({
+            overall_scoring: { rankingMethod: OverallRanking.OR_LAP_COUNT },
+          }) as any,
+      };
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "points",
+          25,
+          mockDriverHd,
+          undefined,
+          nonPointsCtx,
+        ),
+      ).toBe("--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatPoints",
+          25,
+          mockDriverHd,
+          undefined,
+          nonPointsCtx,
+        ),
+      ).toBe("--");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallPoints",
+          100,
+          mockDriverHd,
+          undefined,
+          nonPointsCtx,
+        ),
+      ).toBe("--");
+    });
+
+    it("should format heat points and overall points correctly in a points race", () => {
+      const pointsCtx = {
+        ...ctx,
+        getRace: () =>
+          ({
+            overall_scoring: { rankingMethod: OverallRanking.OR_POINTS },
+          }) as any,
+      };
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "points",
+          25,
+          mockDriverHd,
+          undefined,
+          pointsCtx,
+        ),
+      ).toBe("25");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "heatPoints",
+          25,
+          mockDriverHd,
+          undefined,
+          pointsCtx,
+        ),
+      ).toBe("25");
+      expect(
+        RacedayFormatUtils.formatValue(
+          "overallPoints",
+          100,
+          mockDriverHd,
+          undefined,
+          pointsCtx,
+        ),
+      ).toBe("100");
+    });
+
+    it("should handle decimal points in a points race", () => {
+      mockDriverHd.points = 12.5;
+      const pointsCtx = {
+        ...ctx,
+        getRace: () =>
+          ({
+            overall_scoring: { rankingMethod: "POINTS" },
+          }) as any,
+      };
+
+      expect(
+        RacedayFormatUtils.formatValue(
+          "points",
+          12.5,
+          mockDriverHd,
+          undefined,
+          pointsCtx,
+        ),
+      ).toBe("12.5");
+    });
+
+    it("should correctly identify points race via isPointsRace", () => {
+      expect(RacedayFormatUtils.isPointsRace(undefined)).toBeFalse();
+      expect(
+        RacedayFormatUtils.isPointsRace({
+          overall_scoring: { rankingMethod: OverallRanking.OR_LAP_COUNT },
+        }),
+      ).toBeFalse();
+      expect(
+        RacedayFormatUtils.isPointsRace({
+          overall_scoring: { rankingMethod: OverallRanking.OR_POINTS },
+        }),
+      ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isPointsRace({
+          overall_scoring: { ranking_method: "POINTS" },
+        }),
+      ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isPointsRace({
+          overallScoring: { rankingMethod: 4 },
+        }),
+      ).toBeTrue();
     });
   });
 

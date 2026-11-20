@@ -502,6 +502,15 @@
   white-space: nowrap;
 }
 
+.body-cell [class*="anchor-"] .drift-indicator {
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+  font-size: inherit;
+  font-family: inherit;
+}
+
 .record-lap-content,
 .best-race-lap-content {
   display: flex;

@@ -1,7 +1,20 @@
 import { CdkDragDrop } from "@angular/cdk/drag-drop";
-import { IAssetMessage } from "@app/proto/antigravity";
+import {
+  IAssetMessage,
+  ICustomHeat,
+  ICustomRotation,
+} from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
+import { deepCopy } from "@app/utils/clone.utils";
 
-import { LocalRotation } from "./rotation-export.utils";
+import {
+  buildRotationsAssetExportJson,
+  buildSingleRotationExportJson,
+  downloadJsonFile,
+  findSortedInsertionIndex,
+  LocalRotation,
+  sortRotationsByDrivers,
+} from "./rotation-export.utils";
 
 export interface VirtualDriver {
   id: number;
@@ -187,4 +200,169 @@ export function handleRotationDrop(
     }
   }
   return false;
+}
+
+export function initializeRotationOriginalHeatNumbers(
+  rotations: (ICustomRotation | LocalRotation)[],
+): void {
+  rotations.forEach((rot) => {
+    rot.heats?.forEach((heat: any, hIdx: number) => {
+      if (
+        heat.originalHeatNumber === undefined ||
+        heat.originalHeatNumber === null
+      ) {
+        heat.originalHeatNumber = hIdx + 1;
+      }
+    });
+  });
+}
+
+export function getOriginalHeatDisplay(
+  heat: ICustomHeat | null | undefined,
+): string {
+  if (!heat) return "--";
+  const orig = (heat as any).originalHeatNumber;
+  return orig !== undefined && orig !== null ? `${orig}` : "--";
+}
+
+export function syncRotationDriverCounts(rotations: LocalRotation[]): void {
+  rotations.forEach((rot) => {
+    let maxDriverInHeats = 0;
+    rot.heats?.forEach((heat) => {
+      heat.driverIndices?.forEach((id) => {
+        if (id && id > maxDriverInHeats) {
+          maxDriverInHeats = id;
+        }
+      });
+    });
+    if (maxDriverInHeats > (rot.numDrivers || 0)) {
+      rot.numDrivers = maxDriverInHeats;
+    }
+  });
+}
+
+export function restoreRotationsWithExpandedState(
+  stateRotations: ICustomRotation[],
+  currentRotations: LocalRotation[],
+): LocalRotation[] {
+  const oldMap = new Map<number, boolean>();
+  currentRotations.forEach((r) => {
+    if (r.numDrivers !== undefined && r.numDrivers !== null) {
+      oldMap.set(r.numDrivers, !!r.isExpanded);
+    }
+  });
+
+  return deepCopy(stateRotations).map((r: any) => ({
+    ...r,
+    isExpanded:
+      r.numDrivers !== undefined && r.numDrivers !== null
+        ? oldMap.has(r.numDrivers)
+          ? oldMap.get(r.numDrivers)
+          : true
+        : true,
+  }));
+}
+
+export function isRotationNameUnique(
+  name: string,
+  allAssets: IAssetMessage[],
+  currentAssetId?: string,
+): boolean {
+  const trimmed = (name || "").trim();
+  if (!trimmed) {
+    return false;
+  }
+  return !allAssets.some(
+    (a) =>
+      a.type === "custom_rotation" &&
+      a.name?.trim().toLowerCase() === trimmed.toLowerCase() &&
+      a.model?.entityId !== currentAssetId,
+  );
+}
+
+export function getRotationUnsavedReasons(
+  assetName: string,
+  isNameUnique: boolean,
+  rotations: LocalRotation[],
+  hasValidationErrors: boolean,
+  isSaving: boolean,
+  isDirty: boolean,
+): string[] {
+  const reasons: string[] = [];
+  const nameTrimmed = (assetName || "").trim();
+  if (!nameTrimmed) {
+    reasons.push("DISCARD_REASON_ROTATION_NAME_EMPTY");
+  } else if (!isNameUnique) {
+    reasons.push("DISCARD_REASON_ROTATION_NAME_DUPLICATE");
+  }
+
+  if (rotations.length === 0) {
+    reasons.push("DISCARD_REASON_ROTATION_EMPTY");
+  } else if (hasValidationErrors) {
+    reasons.push("DISCARD_REASON_ROTATION_ERRORS");
+  }
+
+  if (isSaving) {
+    reasons.push("DISCARD_REASON_SAVING");
+  } else if (reasons.length === 0 && isDirty) {
+    reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+  }
+
+  return reasons;
+}
+
+export function calculateWindowScale(
+  windowWidth: number,
+  windowHeight: number,
+  targetWidth = 1600,
+  targetHeight = 900,
+): number {
+  const scaleX = windowWidth / targetWidth;
+  const scaleY = windowHeight / targetHeight;
+  return Math.min(scaleX, scaleY);
+}
+
+export function insertRotationSorted(
+  rotations: LocalRotation[],
+  newRot: LocalRotation,
+): void {
+  const insertIdx = findSortedInsertionIndex(rotations, newRot.numDrivers || 0);
+  if (insertIdx === -1) {
+    rotations.push(newRot);
+  } else {
+    rotations.splice(insertIdx, 0, newRot);
+  }
+}
+
+export async function exportSingleRotationHelper(
+  assetName: string,
+  numLanes: number,
+  rotation: LocalRotation,
+  logger: LoggerService,
+): Promise<void> {
+  const { fileName, jsonContent } = buildSingleRotationExportJson(
+    assetName,
+    numLanes,
+    rotation,
+  );
+  await downloadJsonFile(fileName, jsonContent);
+  logger.info(
+    `Exported rotation for ${rotation.numDrivers || 0} drivers completed`,
+  );
+}
+
+export async function exportRotationsAssetHelper(
+  assetName: string,
+  numLanes: number,
+  rotations: LocalRotation[],
+  logger: LoggerService,
+): Promise<void> {
+  const sortedRotations = sortRotationsByDrivers([...rotations]);
+  const { fileName, jsonContent } = buildRotationsAssetExportJson(
+    assetName,
+    numLanes,
+    sortedRotations,
+  );
+  await downloadJsonFile(fileName, jsonContent);
+  logger.info("Export asset process completed");
 }

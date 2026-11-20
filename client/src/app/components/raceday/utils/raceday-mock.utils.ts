@@ -386,6 +386,10 @@ function createMockHeatDrivers(
     (hd as any).fuelCapacity = 100;
     hd.lapsLed = [12, 5, 0, 0][index] ?? 0;
     hd.trackCalls = [2, 1, 0, 0][index] ?? 0;
+    hd.points = [25, 18, 15, 12][index] ?? 10;
+    if (hd.participant) {
+      (hd.participant as any).totalPoints = [75, 60, 50, 42][index] ?? 20;
+    }
 
     return hd;
   });

@@ -3,6 +3,7 @@ import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { BehaviorSubject } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
+import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
@@ -17,6 +18,7 @@ describe("RacedayLaneViewComponent", () => {
   let harness: RacedayLaneViewHarness;
   let mockParent: any;
   let roleSubject: BehaviorSubject<Role>;
+  let layoutEntriesMap: Map<string, any[]>;
 
   beforeEach(async () => {
     mockTranslationService.translate.and.callFake((key: string) => key);
@@ -26,7 +28,7 @@ describe("RacedayLaneViewComponent", () => {
       { entity_id: "d1", name: "Alice", nickname: "Rocket" },
       { entity_id: "d2", name: "Charlie", nickname: "Chuck" },
     ];
-    const layoutEntriesMap = new Map<string, any[]>();
+    layoutEntriesMap = new Map<string, any[]>();
 
     mockParent = {
       columns: [
@@ -83,6 +85,8 @@ describe("RacedayLaneViewComponent", () => {
         col.propertyName === "driver.nickname",
       isLapCountColumnClickable: (hd: any, col: any) =>
         col.propertyName === "lapCount",
+      isDriftIndicatorProperty: (prop: any) =>
+        RacedayLayoutUtils.isDriftIndicatorProperty(prop),
       isLapTimeColumn: (col: any) => col.propertyName === "lapCount",
       getLayoutEntries: (col: any) => {
         if (!layoutEntriesMap.has(col.propertyName)) {
@@ -155,9 +159,62 @@ describe("RacedayLaneViewComponent", () => {
     expect(await harness.getRowCount()).toBe(2);
   });
 
-  it("should display drift indicator on drift row", async () => {
+  it("should display drift indicator when column layout includes driftIndicator property", async () => {
+    layoutEntriesMap.set("lapCount", [
+      { anchor: "center-center", property: "lapCount" },
+      { anchor: "bottom-center", property: "driftIndicator" },
+    ]);
+    fixture.detectChanges();
     expect(await harness.hasDriftIndicator(0)).toBeFalse();
     expect(await harness.hasDriftIndicator(1)).toBeTrue();
+  });
+
+  it("should render driftIndicator layout entry badge when placed in column layout", () => {
+    expect(component.isDriftIndicatorProperty("driftIndicator")).toBeTrue();
+    expect(component.isDriftActive(mockParent.sortedHeatDrivers[1])).toBeTrue();
+    expect(
+      component.isDriftActive(mockParent.sortedHeatDrivers[0]),
+    ).toBeFalse();
+
+    const mockCol = {
+      propertyName: "lastLapTime",
+      layout: { "bottom-center": "driftIndicator" },
+    };
+    expect(component.isDriftImageMode(mockCol, "bottom-center")).toBeFalse();
+    expect(component.getDriftImageUrl(mockCol, "bottom-center")).toBe("");
+  });
+
+  it("should resolve drift indicator font size and font family in lane view", () => {
+    const mockCol = {
+      propertyName: "lastLapTime",
+      layout: { "bottom-center": "driftIndicator" },
+    };
+    fixture.componentRef.setInput("widget", {
+      widgetType: "lane-view",
+      scaleMode: "fixed",
+      customSettings: {
+        insetFontSize: 18,
+        insetFontFamily: "ViewInsetFont",
+        insetsConfig: {
+          "bottom-center": {
+            fontSize: 22,
+            fontFamily: "CustomDriftViewFont",
+          },
+        },
+      },
+    });
+    fixture.detectChanges();
+
+    expect(component.getDriftInsetFontSize(mockCol, "bottom-center")).toBe(22);
+    expect(component.getDriftInsetFontFamily(mockCol, "bottom-center")).toBe(
+      "CustomDriftViewFont",
+    );
+
+    // Fallback when anchor not in insetsConfig
+    expect(component.getDriftInsetFontSize(mockCol, "top-left")).toBe(18);
+    expect(component.getDriftInsetFontFamily(mockCol, "top-left")).toBe(
+      "ViewInsetFont",
+    );
   });
 
   it("should display teammate select dropdown and trigger parent method on change", async () => {

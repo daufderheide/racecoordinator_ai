@@ -37,6 +37,7 @@ describe("RecordsInspectorComponent", () => {
       valueFontFamily: "",
       valueFontSize: 19,
       valueTextColor: "",
+      backgroundColor: "",
     });
 
     harness = await TestbedHarnessEnvironment.harnessForFixture(
@@ -73,6 +74,36 @@ describe("RecordsInspectorComponent", () => {
     component.settings().headerTextColor = "#ffffff";
     component.resetColor("headerTextColor");
     expect(component.settings().headerTextColor).toBe("");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should update backgroundColor and emit change on onColorChange", () => {
+    const event = {
+      target: {
+        value: "#0000ff",
+      },
+    } as any;
+
+    component.onColorChange("backgroundColor", event);
+    expect(component.settings().backgroundColor).toBe("#0000ff");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should reset backgroundColor to empty string and emit change on resetColor", () => {
+    component.settings().backgroundColor = "#0000ff";
+    component.resetColor("backgroundColor");
+    expect(component.settings().backgroundColor).toBe("");
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should read and write backgroundColor via harness", async () => {
+    expect(await harness.getBackgroundColor()).toBe("#0f172a");
+    await harness.setBackgroundColor("#123456");
+    expect(component.settings().backgroundColor).toBe("#123456");
+    expect(changeSpy).toHaveBeenCalled();
+
+    await harness.clickResetBackgroundColor();
+    expect(component.settings().backgroundColor).toBe("");
     expect(changeSpy).toHaveBeenCalled();
   });
 

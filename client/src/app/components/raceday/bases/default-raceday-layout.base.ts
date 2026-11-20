@@ -668,6 +668,10 @@ export abstract class DefaultRacedayLayoutBase {
     return RacedayLayoutUtils.isPacingProperty(prop);
   }
 
+  public isDriftIndicatorProperty(prop: string | undefined): boolean {
+    return RacedayLayoutUtils.isDriftIndicatorProperty(prop);
+  }
+
   public shouldShowLaneColor(col: ColumnDefinition): boolean {
     return RacedayLayoutUtils.shouldShowLaneColor(col);
   }

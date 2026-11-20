@@ -27,57 +27,26 @@ const pbtsPath = path.join(
   "pbts",
 );
 
-const protoFiles = [
-  "../server/proto/client/model.proto",
-  "../server/proto/client/driver_model.proto",
-  "../server/proto/client/rotation_model.proto",
-  "../server/proto/client/asset_model.proto",
-  "../server/proto/client/asset_management.proto",
-  "../server/proto/client/demo_config.proto",
-  "../server/proto/client/initialize_race.proto",
-  "../server/proto/client/initialize_interface.proto",
-  "../server/proto/client/update_interface_config.proto",
-  "../server/proto/client/set_interface_pin_state.proto",
-  "../server/proto/client/set_interface_rgb_led_state.proto",
-  "../server/proto/client/interface_event.proto",
-  "../server/proto/client/start_race.proto",
-  "../server/proto/client/pause_race.proto",
-  "../server/proto/client/next_heat.proto",
-  "../server/proto/client/restart_heat.proto",
-  "../server/proto/client/skip_heat.proto",
-  "../server/proto/client/skip_race.proto",
-  "../server/proto/client/defer_heat.proto",
-  "../server/proto/client/modify_heats.proto",
-  "../server/proto/client/end_race.proto",
-  "../server/proto/client/race_subscription.proto",
-  "../server/proto/client/arduino_config.proto",
-  "../server/proto/client/trackmate_config.proto",
-  "../server/proto/client/phidget_config.proto",
-  "../server/proto/client/bart_config.proto",
-  "../server/proto/client/get_phidget_devices.proto",
-  "../server/proto/client/lane_model.proto",
-  "../server/proto/client/track_model.proto",
-  "../server/proto/client/race_model.proto",
-  "../server/proto/client/team_model.proto",
-  "../server/proto/client/audio_config.proto",
-  "../server/proto/server/race_state.proto",
-  "../server/proto/server/asset_management_response.proto",
-  "../server/proto/server/race_time.proto",
-  "../server/proto/server/lap.proto",
-  "../server/proto/server/race_data.proto",
-  "../server/proto/server/race.proto",
-  "../server/proto/server/race_participant.proto",
-  "../server/proto/server/heat_data.proto",
-  "../server/proto/server/heat.proto",
-  "../server/proto/server/standings_update.proto",
-  "../server/proto/server/overall_standings_update.proto",
-  "../server/proto/server/group_standings_update.proto",
-  "../server/proto/server/record_data.proto",
-  "../server/proto/server/demo.proto",
-  "../server/proto/server/full_update.proto",
-  "../server/proto/server/system_state.proto",
-  "../server/proto/server/season_standing.proto",
-];
+const serverProtoDir = path.resolve(__dirname, "..", "..", "server", "proto");
+const clientProtos = fs.existsSync(path.join(serverProtoDir, "client"))
+  ? fs
+      .readdirSync(path.join(serverProtoDir, "client"))
+      .filter((f) => f.endsWith(".proto"))
+      .sort()
+      .map((f) => `../server/proto/client/${f}`)
+  : [];
+const serverProtos = fs.existsSync(path.join(serverProtoDir, "server"))
+  ? fs
+      .readdirSync(path.join(serverProtoDir, "server"))
+      .filter((f) => f.endsWith(".proto"))
+      .sort()
+      .map((f) => `../server/proto/server/${f}`)
+  : [];
+const rootProtos = ["../server/proto/message.proto"].filter((f) =>
+  fs.existsSync(path.join(__dirname, "..", f)),
+);
+
+const protoFiles = [...clientProtos, ...serverProtos, ...rootProtos];
 
 const jsOutputFile = path.join(protoOutputDir, "message.js");
 const tsOutputFile = path.join(protoOutputDir, "message.d.ts");

@@ -48,7 +48,22 @@ describe("ToolboxGroupHelper", () => {
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(131);
+    const heatDataSg = rcAiGroup.subgroups.find((sg) => sg.id === "heat-data");
+    const lapsStandingsSg = heatDataSg?.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-laps-standings",
+    );
+    expect(
+      lapsStandingsSg?.widgets.find((w) => w.type === "lane-col:points"),
+    ).toBeDefined();
+
+    const lapTimesSg = heatDataSg?.subgroups?.find(
+      (sg) => sg.id === "heat-data-sg-lap-times",
+    );
+    expect(
+      lapTimesSg?.widgets.find((w) => w.type === "lane-col:driftIndicator"),
+    ).toBeDefined();
+
+    expect(rcAiGroup.totalCount).toBe(133);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -87,7 +102,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(131);
+    expect(rcAiGroup.totalCount).toBe(133);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
