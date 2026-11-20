@@ -1,5 +1,6 @@
 package com.antigravity.service;
 
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
@@ -191,23 +192,39 @@ public class RaceCompatibilityEvaluator {
       JsonNode hsNode =
           root.has("heat_scoring") ? root.get("heat_scoring") : root.get("heatScoring");
       if (hsNode.has("finish_method") || hsNode.has("finishMethod")) {
-        HeatScoring hs = race.getHeatScoring();
-        if (hs == null || hs.getFinishMethod() == null) {
-          String rawVal =
-              hsNode.has("finish_method")
-                  ? hsNode.get("finish_method").asText()
-                  : hsNode.get("finishMethod").asText();
+        String rawVal =
+            hsNode.has("finish_method")
+                ? hsNode.get("finish_method").asText()
+                : hsNode.get("finishMethod").asText();
+        if (!isValidFinishMethod(rawVal)) {
           blockingFeatures.add("Unsupported finish method: " + rawVal);
         }
       }
       if (hsNode.has("heat_ranking") || hsNode.has("heatRanking")) {
-        HeatScoring hs = race.getHeatScoring();
-        if (hs == null || hs.getHeatRanking() == null) {
-          String rawVal =
-              hsNode.has("heat_ranking")
-                  ? hsNode.get("heat_ranking").asText()
-                  : hsNode.get("heatRanking").asText();
+        String rawVal =
+            hsNode.has("heat_ranking")
+                ? hsNode.get("heat_ranking").asText()
+                : hsNode.get("heatRanking").asText();
+        if (!isValidHeatRanking(rawVal)) {
           blockingFeatures.add("Unsupported heat ranking method: " + rawVal);
+        }
+      }
+      if (hsNode.has("heat_ranking_tiebreaker") || hsNode.has("heatRankingTiebreaker")) {
+        String rawVal =
+            hsNode.has("heat_ranking_tiebreaker")
+                ? hsNode.get("heat_ranking_tiebreaker").asText()
+                : hsNode.get("heatRankingTiebreaker").asText();
+        if (!isValidHeatRankingTiebreaker(rawVal)) {
+          blockingFeatures.add("Unsupported heat tiebreaker: " + rawVal);
+        }
+      }
+      if (hsNode.has("allow_finish") || hsNode.has("allowFinish")) {
+        String rawVal =
+            hsNode.has("allow_finish")
+                ? hsNode.get("allow_finish").asText()
+                : hsNode.get("allowFinish").asText();
+        if (!isValidAllowFinish(rawVal)) {
+          blockingFeatures.add("Unsupported allow finish: " + rawVal);
         }
       }
     }
@@ -217,14 +234,30 @@ public class RaceCompatibilityEvaluator {
       JsonNode osNode =
           root.has("overall_scoring") ? root.get("overall_scoring") : root.get("overallScoring");
       if (osNode.has("ranking_method") || osNode.has("rankingMethod")) {
-        OverallScoring os = race.getOverallScoring();
-        if (os == null || os.getRankingMethod() == null) {
-          String rawVal =
-              osNode.has("ranking_method")
-                  ? osNode.get("ranking_method").asText()
-                  : osNode.get("rankingMethod").asText();
+        String rawVal =
+            osNode.has("ranking_method")
+                ? osNode.get("ranking_method").asText()
+                : osNode.get("rankingMethod").asText();
+        if (!isValidRankingMethod(rawVal)) {
           blockingFeatures.add("Unsupported overall ranking method: " + rawVal);
         }
+      }
+      if (osNode.has("tiebreaker")) {
+        String rawVal = osNode.get("tiebreaker").asText();
+        if (!isValidOverallTiebreaker(rawVal)) {
+          blockingFeatures.add("Unsupported overall tiebreaker: " + rawVal);
+        }
+      }
+    }
+
+    // Check heat rotation type
+    if (root.has("heat_rotation_type") || root.has("heatRotationType")) {
+      String rawVal =
+          root.has("heat_rotation_type")
+              ? root.get("heat_rotation_type").asText()
+              : root.get("heatRotationType").asText();
+      if (!isValidHeatRotationType(rawVal)) {
+        blockingFeatures.add("Unsupported heat rotation type: " + rawVal);
       }
     }
   }
@@ -265,15 +298,13 @@ public class RaceCompatibilityEvaluator {
         target.remove("_compat_meta");
       }
 
-      // 2. Remove unrecognized blocking top-level fields (like points_scoring)
+      // 2. Remove all unrecognized top-level fields
       List<String> toRemove = new ArrayList<>();
       Iterator<String> fieldNames = target.fieldNames();
       while (fieldNames.hasNext()) {
         String field = fieldNames.next();
         if (!KNOWN_RACE_FIELDS.contains(field)) {
-          if (field.toLowerCase().contains("scoring") || field.toLowerCase().contains("points")) {
-            toRemove.add(field);
-          }
+          toRemove.add(field);
         }
       }
       for (String field : toRemove) {
@@ -322,6 +353,20 @@ public class RaceCompatibilityEvaluator {
       if (hs.has("heatRanking") && !isValidHeatRanking(hs.get("heatRanking").asText())) {
         hs.put("heatRanking", "LAP_COUNT");
       }
+      if (hs.has("heat_ranking_tiebreaker")
+          && !isValidHeatRankingTiebreaker(hs.get("heat_ranking_tiebreaker").asText())) {
+        hs.put("heat_ranking_tiebreaker", "AVERAGE_LAP_TIME");
+      }
+      if (hs.has("heatRankingTiebreaker")
+          && !isValidHeatRankingTiebreaker(hs.get("heatRankingTiebreaker").asText())) {
+        hs.put("heatRankingTiebreaker", "AVERAGE_LAP_TIME");
+      }
+      if (hs.has("allow_finish") && !isValidAllowFinish(hs.get("allow_finish").asText())) {
+        hs.put("allow_finish", "None");
+      }
+      if (hs.has("allowFinish") && !isValidAllowFinish(hs.get("allowFinish").asText())) {
+        hs.put("allowFinish", "None");
+      }
     }
 
     // Check overall_scoring
@@ -334,10 +379,26 @@ public class RaceCompatibilityEvaluator {
       if (os.has("rankingMethod") && !isValidRankingMethod(os.get("rankingMethod").asText())) {
         os.put("rankingMethod", "LAP_COUNT");
       }
+      if (os.has("tiebreaker") && !isValidOverallTiebreaker(os.get("tiebreaker").asText())) {
+        os.put("tiebreaker", "AVERAGE_LAP_TIME");
+      }
+    }
+
+    // Check heat_rotation_type
+    if (root.has("heat_rotation_type")
+        && !isValidHeatRotationType(root.get("heat_rotation_type").asText())) {
+      root.put("heat_rotation_type", "RoundRobin");
+    }
+    if (root.has("heatRotationType")
+        && !isValidHeatRotationType(root.get("heatRotationType").asText())) {
+      root.put("heatRotationType", "RoundRobin");
     }
   }
 
   private boolean isValidFinishMethod(String val) {
+    if (val == null) {
+      return false;
+    }
     for (HeatScoring.FinishMethod m : HeatScoring.FinishMethod.values()) {
       if (m.name().equalsIgnoreCase(val)) {
         return true;
@@ -347,6 +408,9 @@ public class RaceCompatibilityEvaluator {
   }
 
   private boolean isValidHeatRanking(String val) {
+    if (val == null) {
+      return false;
+    }
     for (HeatScoring.HeatRanking r : HeatScoring.HeatRanking.values()) {
       if (r.name().equalsIgnoreCase(val)) {
         return true;
@@ -355,9 +419,61 @@ public class RaceCompatibilityEvaluator {
     return false;
   }
 
+  private boolean isValidHeatRankingTiebreaker(String val) {
+    if (val == null) {
+      return false;
+    }
+    for (HeatScoring.HeatRankingTiebreaker t : HeatScoring.HeatRankingTiebreaker.values()) {
+      if (t.name().equalsIgnoreCase(val)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isValidAllowFinish(String val) {
+    if (val == null) {
+      return false;
+    }
+    for (HeatScoring.AllowFinish a : HeatScoring.AllowFinish.values()) {
+      if (a.name().equalsIgnoreCase(val)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private boolean isValidRankingMethod(String val) {
+    if (val == null) {
+      return false;
+    }
     for (OverallScoring.OverallRanking m : OverallScoring.OverallRanking.values()) {
       if (m.name().equalsIgnoreCase(val)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isValidOverallTiebreaker(String val) {
+    if (val == null) {
+      return false;
+    }
+    for (OverallScoring.OverallRankingTiebreaker t :
+        OverallScoring.OverallRankingTiebreaker.values()) {
+      if (t.name().equalsIgnoreCase(val)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isValidHeatRotationType(String val) {
+    if (val == null) {
+      return false;
+    }
+    for (HeatRotationType t : HeatRotationType.values()) {
+      if (t.name().equalsIgnoreCase(val)) {
         return true;
       }
     }

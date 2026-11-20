@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.antigravity.handlers.DatabaseHandlerUtils;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceCompatibility;
@@ -132,6 +133,52 @@ public class RaceCompatibilityEvaluatorTest {
 
     // Evaluate compatibility of the copy
     Race copyRace = objectMapper.readValue(copyJson, Race.class);
+    RaceCompatibility copyCompat = evaluator.evaluate(copyRace, copyJson);
+    assertEquals(Status.COMPATIBLE, copyCompat.getStatus());
+    assertTrue(copyCompat.isCanRun());
+    assertFalse(copyCompat.isReadOnly());
+  }
+
+  @Test
+  public void testUnsupportedTiebreakerProducesIncompatible() {
+    Race race = new Race.Builder().withName("Fixed Distance").withEntityId("2").build();
+    String rawJson =
+        "{\"entity_id\":\"2\",\"name\":\"Fixed Distance\","
+            + "\"overall_scoring\":{\"dropped_heats\":0,\"ranking_method\":\"AVERAGE_LAP\",\"tiebreaker\":\"LAP_COUNT\"}}";
+
+    RaceCompatibility compat = evaluator.evaluate(race, rawJson);
+    assertEquals(Status.INCOMPATIBLE, compat.getStatus());
+    assertFalse(compat.isCanRun());
+    assertTrue(compat.isReadOnly());
+    assertEquals(1, compat.getBlockingFeatures().size());
+    assertTrue(compat.getBlockingFeatures().get(0).contains("LAP_COUNT"));
+  }
+
+  @Test
+  public void testCreateCompatibleCopyJson_WithUnsupportedTiebreakerAndUnrecognizedFields()
+      throws Exception {
+    String rawJson =
+        "{\"entity_id\":\"2\",\"name\":\"Fixed Distance\",\"track_entity_id\":\"1\","
+            + "\"overall_scoring\":{\"dropped_heats\":0,\"ranking_method\":\"AVERAGE_LAP\",\"tiebreaker\":\"LAP_COUNT\"},"
+            + "\"crash_and_learn_options\":{\"enabled\":false,\"max_crashes\":3},"
+            + "\"step_up\":0,"
+            + "\"points_scoring\":{\"enabled\":false}}";
+
+    String copyJson =
+        evaluator.createCompatibleCopyJson(rawJson, "Fixed Distance (Copy)", "copy_3");
+    assertNotNull(copyJson);
+    assertFalse(copyJson.contains("crash_and_learn_options"));
+    assertFalse(copyJson.contains("step_up"));
+    assertFalse(copyJson.contains("points_scoring"));
+    assertTrue(copyJson.contains("\"tiebreaker\":\"AVERAGE_LAP_TIME\""));
+
+    Race copyRace = DatabaseHandlerUtils.bodyAsClassWithId(copyJson, Race.class);
+    assertNotNull(copyRace);
+    assertEquals("Fixed Distance (Copy)", copyRace.getName());
+    assertEquals(
+        OverallScoring.OverallRankingTiebreaker.AVERAGE_LAP_TIME,
+        copyRace.getOverallScoring().getTiebreaker());
+
     RaceCompatibility copyCompat = evaluator.evaluate(copyRace, copyJson);
     assertEquals(Status.COMPATIBLE, copyCompat.getStatus());
     assertTrue(copyCompat.isCanRun());

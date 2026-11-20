@@ -545,4 +545,57 @@ public class RaceHeatTaskHandlerTest {
       }
     }
   }
+
+  @Test
+  public void
+      testHandleCopyRace_IncompatibleRaceWithInvalidTiebreakerAndExtraFields_CreatesRunnableCopy()
+          throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_copy2").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_copy_db2", null, rootDir);
+    Javalin app = mock(Javalin.class);
+    RaceHeatTaskHandler realHandler = new RaceHeatTaskHandler(dbCtx, app);
+
+    try {
+      String rawJson =
+          "{\"entity_id\":\"race_2\",\"name\":\"Fixed Distance\",\"track_entity_id\":\"1\","
+              + "\"overall_scoring\":{\"dropped_heats\":0,\"ranking_method\":\"AVERAGE_LAP\",\"tiebreaker\":\"LAP_COUNT\"},"
+              + "\"crash_and_learn_options\":{\"enabled\":false,\"max_crashes\":3},"
+              + "\"step_up\":0,"
+              + "\"points_scoring\":{\"enabled\":false}}";
+
+      String sql = "INSERT INTO races (entity_id, json_data) VALUES ('race_2', ?)";
+      try (java.sql.PreparedStatement pstmt = dbCtx.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, rawJson);
+        pstmt.executeUpdate();
+      }
+
+      Context ctx = mock(Context.class);
+      when(ctx.pathParam("id")).thenReturn("race_2");
+      when(ctx.status(201)).thenReturn(ctx);
+
+      org.mockito.ArgumentCaptor<DatabaseTaskHandler.RaceResponse> captor =
+          org.mockito.ArgumentCaptor.forClass(DatabaseTaskHandler.RaceResponse.class);
+
+      realHandler.handleCopyRace(ctx);
+      verify(ctx).status(201);
+      verify(ctx).json(captor.capture());
+
+      DatabaseTaskHandler.RaceResponse response = captor.getValue();
+      assertNotNull(response);
+      assertEquals("Fixed Distance (Copy)", response.race.getName());
+      assertEquals(
+          com.antigravity.models.OverallScoring.OverallRankingTiebreaker.AVERAGE_LAP_TIME,
+          response.race.getOverallScoring().getTiebreaker());
+      assertEquals(
+          com.antigravity.models.RaceCompatibility.Status.COMPATIBLE,
+          response.compatibility.getStatus());
+      assertTrue(response.compatibility.isCanRun());
+      assertFalse(response.compatibility.isReadOnly());
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
 }
