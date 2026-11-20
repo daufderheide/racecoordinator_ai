@@ -592,6 +592,39 @@ describe("DefaultRacedayComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("uses the active theme's saved lane view on race day", () => {
+    const widget = {
+      id: "custom-lane-view",
+      widgetType: "lane-view",
+      x: 123,
+      y: 45,
+      width: 800,
+      height: 400,
+      zIndex: 7,
+      customSettings: { isVertical: true },
+    };
+    const ui = {
+      entity_id: "club-layout",
+      layoutJson: JSON.stringify({ widgets: [widget] }),
+    };
+    (
+      TestBed.inject(ThemeService).getActiveTheme as jasmine.Spy
+    ).and.returnValue({
+      entity_id: "club-theme",
+      uiId: ui.entity_id,
+    });
+    (
+      TestBed.inject(CustomUiService).getCustomUI as jasmine.Spy
+    ).and.returnValue(ui);
+
+    expect(component.currentRacedayLayout?.widgets).toEqual([
+      jasmine.objectContaining({
+        ...widget,
+        customSettings: jasmine.objectContaining(widget.customSettings),
+      }),
+    ]);
+  });
+
   describe("isPracticeLayout", () => {
     it("should return true if it is practice layout editor", () => {
       spyOn(component, "isPracticeLayoutEditor").and.returnValue(true);
@@ -2734,7 +2767,6 @@ describe("DefaultRacedayComponent", () => {
       const legacyLayout = JSON.parse(
         JSON.stringify(Settings.LEGACY_DEFAULT_LAYOUT),
       );
-      legacyLayout.preserveLegacyHeatView = true;
       mockSettings.racedayLayout = legacyLayout;
       component.layout = legacyLayout;
       component.invalidateGridCache();
@@ -2776,7 +2808,6 @@ describe("DefaultRacedayComponent", () => {
       const legacyLayout = JSON.parse(
         JSON.stringify(Settings.LEGACY_DEFAULT_LAYOUT),
       );
-      legacyLayout.preserveLegacyHeatView = true;
       mockSettings.racedayLayout = legacyLayout;
       component.layout = legacyLayout;
       component.invalidateGridCache();
@@ -3264,6 +3295,36 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("loadColumns", () => {
+    it("uses saved legacy anchor names to position native lane-view contents", () => {
+      const gauge = "imageset_fuel-gauge-builtin";
+      const savedLayouts = {
+        [gauge]: { CenterCenter: gauge },
+        lapCount: {
+          TopLeft: "segmentTime",
+          BottomRight: "segmentTime",
+          "bottom-right": "lastLapTime",
+        },
+      };
+      mockSettings.racedayColumns = [gauge, "lapCount", "driver.nickname"];
+      Object.assign(mockSettings.columnAnchors, {
+        [gauge]: "Center",
+        "driver.nickname": "Right",
+      });
+      Object.assign(mockSettings, { columnLayouts: savedLayouts });
+
+      (component as any).loadColumns();
+
+      const [fuelColumn, lapsColumn, nameColumn] = component["columns"];
+      expect(fuelColumn.layout).toEqual({ [AnchorPoint.CenterCenter]: gauge });
+      expect(fuelColumn.anchor).toBe(AnchorPoint.CenterCenter);
+      expect(lapsColumn.layout).toEqual({
+        [AnchorPoint.TopLeft]: "segmentTime",
+        [AnchorPoint.BottomRight]: "lastLapTime",
+      });
+      expect(nameColumn.anchor).toBe(AnchorPoint.CenterRight);
+      expect(savedLayouts[gauge]).toEqual({ CenterCenter: gauge });
+    });
+
     it("should load all configured columns regardless of race fuel settings", () => {
       const mockRace = { fuel_options: { enabled: false } };
       mockRaceService.getRace.and.returnValue(mockRace);

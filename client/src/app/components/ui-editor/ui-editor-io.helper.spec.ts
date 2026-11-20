@@ -8,29 +8,41 @@ import {
   executeSelectFolder,
   executeSelectWidgetFolder,
   executeTemplateFileSelected,
-  exportMigrationDiagnostics,
   formatImportErrorMessage,
   getDefaultLayoutResetData,
   parseLayoutImport,
   parseLayoutImportDetailed,
-  preMigrationLayoutCache,
-  restorePreMigrationLayout,
-  upgradePreservedHeatViewLayout,
 } from "./ui-editor-io.helper";
 
 describe("ui-editor-io.helper", () => {
   it("should get default layout reset data for raceday, practice, fuel, and driver station", () => {
     const racedayData = getDefaultLayoutResetData(false, 1920, 1080);
-    expect(racedayData.defaultLayout).toBeDefined();
-    expect(racedayData.columns).toBeDefined();
+    expect(racedayData.columns).toEqual(Settings.DEFAULT_COLUMNS);
 
     const practiceData = getDefaultLayoutResetData(true, 1920, 1080);
-    expect(practiceData.defaultLayout).toBeDefined();
-    expect(practiceData.columns).toBeDefined();
+    expect(practiceData.columns).toEqual(Settings.DEFAULT_PRACTICE_COLUMNS);
 
     const fuelData = getDefaultLayoutResetData(false, 1920, 1080, false, true);
-    expect(fuelData.defaultLayout).toBeDefined();
     expect(fuelData.columns).toContain("imageset_fuel-gauge-builtin");
+
+    for (const [layout, template] of [
+      [racedayData.defaultLayout, Settings.DEFAULT_LAYOUT],
+      [practiceData.defaultLayout, Settings.DEFAULT_PRACTICE_LAYOUT],
+      [fuelData.defaultLayout, Settings.DEFAULT_FUEL_LAYOUT],
+    ]) {
+      expect(layout.widgets).not.toBe(template.widgets);
+      expect(layout.widgets.map((w) => w.id)).toEqual(
+        template.widgets.map((w) => w.id),
+      );
+      expect(
+        layout.widgets.some((w) => w.widgetType === "lane-view"),
+      ).toBeFalse();
+      expect(
+        layout.widgets.some(
+          (w) => w.widgetType === "lane-column" && w.customSettings?.["gridId"],
+        ),
+      ).toBeTrue();
+    }
 
     const dsData = getDefaultLayoutResetData(false, 1080, 1920, true);
     expect(dsData.defaultLayout).toBeDefined();
@@ -74,6 +86,62 @@ describe("ui-editor-io.helper", () => {
     expect(parsed?.columnWidths).toEqual({ lapCount: 200 });
   });
 
+  it("preserves native gap columns and insets alongside a modular gap widget", () => {
+    const columns = ["gapLeader", "gapPositionF1"];
+    const columnWidths = { gapLeader: 110, gapPositionF1: 245 };
+    const columnLayouts = {
+      gapLeader: {
+        "center-center": "gapLeader",
+        "top-right": "overallGapPositionF1",
+      },
+      gapPositionF1: {
+        "center-center": "gapPositionF1",
+        "top-right": "gapLeader",
+      },
+    };
+    const nativeSettings = {
+      highlightLapStyle: "classic",
+      insets: { "top-right": "gapPositionF1" },
+      insetsConfig: { "top-right": { columnKey: "gapPositionF1" } },
+    };
+    const raw = {
+      layout: {
+        widgets: [
+          {
+            id: "table",
+            widgetType: "lane-view",
+            customSettings: nativeSettings,
+          },
+          {
+            id: "card",
+            widgetType: "lane-column",
+            customSettings: { columnKey: "gapPositionF1" },
+          },
+        ],
+      },
+      columns,
+      columnWidths,
+      columnLayouts,
+      columnAnchors: { gapPositionF1: "top-right" },
+    };
+    const result = parseLayoutImportDetailed(JSON.stringify(raw), false);
+    expect(result.success).toBeTrue();
+    expect(result.data?.columns).toEqual(columns);
+    expect(result.data?.columnWidths).toEqual(columnWidths);
+    expect(result.data?.columnLayouts).toEqual(columnLayouts);
+    expect(result.data?.columnAnchors).toEqual(raw.columnAnchors);
+    expect(result.data?.layout.widgets[0].customSettings).toEqual(
+      nativeSettings,
+    );
+    expect(result.data?.layout.widgets[1].customSettings).toEqual(
+      jasmine.objectContaining({
+        columnKey: "gap",
+        gapTarget: "position",
+        gapMode: "laps_and_time",
+      }),
+    );
+  });
+
   it("should parse plain LayoutConfig JSON as fallback", () => {
     const layoutOnlyJson = JSON.stringify({
       baseWidth: 1600,
@@ -94,6 +162,9 @@ describe("ui-editor-io.helper", () => {
     const parsed = parseLayoutImport(layoutOnlyJson, false);
     expect(parsed).not.toBeNull();
     expect(parsed?.layout.baseWidth).toBe(1600);
+    expect(parsed?.layout.widgets).toEqual([
+      jasmine.objectContaining(JSON.parse(layoutOnlyJson).widgets[0]),
+    ]);
     expect(parsed?.columns).toBeDefined();
   });
 
@@ -419,147 +490,6 @@ describe("ui-editor-io.helper", () => {
       executeTemplateFileSelected(event, settings, onLoaded);
       expect(onLoaded).not.toHaveBeenCalled();
       expect(settings.customExportTemplateBase64).toBeUndefined();
-    });
-  });
-
-  describe("migration actions", () => {
-    it("should restore pre-migration layout and set preserveLegacyHeatView", () => {
-      const ui: CustomUI = {
-        entity_id: "ui_1",
-        name: "My Custom Heat Layout",
-        is_default: false,
-        layoutJson: '{"widgets":[{"widgetType":"lane-column"}]}',
-      };
-      const customUIs: CustomUI[] = [
-        ui,
-        {
-          entity_id: "backup_1",
-          name: "My Custom Heat Layout (Pre-Migration Backup)",
-          is_default: false,
-          layoutJson: '{"widgets":[{"widgetType":"lane-view"}]}',
-          columnsJson: '["driver.nickname"]',
-        },
-      ];
-
-      const res = restorePreMigrationLayout(ui, customUIs);
-      expect(res.restored).toBeTrue();
-      expect(res.layout?.preserveLegacyHeatView).toBeTrue();
-      expect(res.layout?.widgets[0].widgetType).toBe("lane-view");
-      expect(ui.columnsJson).toBe('["driver.nickname"]');
-
-      const parsed = JSON.parse(ui.layoutJson!);
-      expect(parsed.preserveLegacyHeatView).toBeTrue();
-      expect(parsed.widgets[0].widgetType).toBe("lane-view");
-    });
-
-    it("should restore from _preMigrationLayout if backup entity does not exist", () => {
-      const ui: CustomUI = {
-        entity_id: "ui_2",
-        name: "Quick Layout",
-        is_default: false,
-        layoutJson: '{"widgets":[{"widgetType":"lane-column"}]}',
-      };
-      (ui as any)._preMigrationLayout = {
-        widgets: [{ id: "w-old", widgetType: "lane-view" }],
-      };
-
-      const res = restorePreMigrationLayout(ui, [ui]);
-      expect(res.restored).toBeTrue();
-      expect(res.layout?.preserveLegacyHeatView).toBeTrue();
-      expect(res.layout?.widgets[0].widgetType).toBe("lane-view");
-    });
-
-    it("should restore from preMigrationLayoutCache if backup entity and _preMigrationLayout are absent", () => {
-      const ui: CustomUI = {
-        entity_id: "ui_cache",
-        name: "Cached Layout",
-        is_default: false,
-        layoutJson: '{"widgets":[{"widgetType":"lane-column"}]}',
-      };
-      preMigrationLayoutCache.set("ui_cache", {
-        widgets: [{ id: "w-cached", widgetType: "lane-view" } as any],
-      });
-
-      const res = restorePreMigrationLayout(ui, [ui]);
-      expect(res.restored).toBeTrue();
-      expect(res.layout?.preserveLegacyHeatView).toBeTrue();
-      expect(res.layout?.widgets[0].widgetType).toBe("lane-view");
-    });
-
-    it("should restore from Settings.DEFAULT_LAYOUT for default UI when backup entity is absent", () => {
-      const ui: CustomUI = {
-        entity_id: "default_ui_layout_rc_ai",
-        name: "RC AI",
-        is_default: true,
-        layoutJson: '{"widgets":[{"widgetType":"lane-column"}]}',
-      };
-
-      const res = restorePreMigrationLayout(ui, [ui]);
-      expect(res.restored).toBeTrue();
-      expect(res.layout?.preserveLegacyHeatView).toBeTrue();
-      expect(
-        res.layout?.widgets.some((w) => w.widgetType === "lane-view"),
-      ).toBeTrue();
-    });
-
-    it("should return restored false if no backup or pre-migration layout exists for custom layout", () => {
-      const ui: CustomUI = {
-        entity_id: "ui_3",
-        name: "No Backup Layout",
-        is_default: false,
-        layoutJson: '{"widgets":[]}',
-      };
-
-      const res = restorePreMigrationLayout(ui, [ui]);
-      expect(res.restored).toBeFalse();
-    });
-
-    it("should upgrade preserved legacy heat-view layout", () => {
-      const ui: CustomUI = {
-        entity_id: "ui_4",
-        name: "Preserved Layout",
-        is_default: false,
-        layoutJson: JSON.stringify({
-          preserveLegacyHeatView: true,
-          widgets: [
-            {
-              id: "w-lane",
-              widgetType: "lane-view",
-              x: 0,
-              y: 0,
-              width: 800,
-              height: 400,
-              zIndex: 100,
-            },
-          ],
-        }),
-      };
-
-      const res = upgradePreservedHeatViewLayout(ui, false);
-      expect(res.upgraded).toBeTrue();
-      expect(res.layout?.preserveLegacyHeatView).toBeUndefined();
-      expect(
-        res.layout?.widgets.some((w) => w.widgetType === "lane-column"),
-      ).toBeTrue();
-      const parsed = JSON.parse(ui.layoutJson!);
-      expect(parsed.preserveLegacyHeatView).toBeUndefined();
-    });
-
-    it("should export migration diagnostics", () => {
-      const ui: CustomUI = {
-        entity_id: "ui_5",
-        name: "Diag Layout",
-        is_default: false,
-        layoutJson: '{"widgets":[]}',
-      };
-      (ui as any)._wasMigrated = true;
-      (ui as any)._preMigrationLayout = {
-        widgets: [{ widgetType: "lane-view" }],
-      };
-
-      expect(() =>
-        exportMigrationDiagnostics(ui, { widgets: [] }),
-      ).not.toThrow();
     });
   });
 });

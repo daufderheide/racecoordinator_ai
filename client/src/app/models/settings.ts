@@ -1,5 +1,6 @@
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { IDemoConfig } from "@app/proto/antigravity";
+import { deepCopy } from "@app/utils/clone.utils";
 import {
   TimerDisplayFormat,
   TimerSubsecondMode,
@@ -246,7 +247,6 @@ export interface LayoutConfig {
   collapsedToolboxSubgroups?: Record<string, boolean> | string[];
   toolboxGroupExpandedStates?: Record<string, boolean>;
   toolboxSubgroupExpandedStates?: Record<string, boolean>;
-  preserveLegacyHeatView?: boolean;
 }
 
 export class Settings {
@@ -701,4 +701,73 @@ export class Settings {
     aspectRatio: "9:16",
     scaleMode: "stretch",
   };
+}
+
+const raceColumnSettings = [
+  "racedayColumns",
+  "columnWidths",
+  "columnLayouts",
+  "columnAnchors",
+  "columnVisibility",
+] as const;
+const practiceColumnSettings = [
+  "practiceRacedayColumns",
+  "practiceColumnWidths",
+  "practiceColumnLayouts",
+  "practiceColumnAnchors",
+  "practiceColumnVisibility",
+] as const;
+
+function serializeColumnSetting(value: unknown): string {
+  // Column order matters, but the order of keys in widths and inset maps does not.
+  return JSON.stringify(value, (_key, item) =>
+    item && typeof item === "object" && !Array.isArray(item)
+      ? Object.fromEntries(
+          Object.keys(item)
+            .sort()
+            .map((key) => [key, item[key]]),
+        )
+      : item,
+  );
+}
+
+const factoryColumnSettings = new Settings();
+const factoryColumnValues = new Map(
+  [...raceColumnSettings, ...practiceColumnSettings].map(
+    (key) => [key, serializeColumnSetting(factoryColumnSettings[key])] as const,
+  ),
+);
+
+export function getRacedayLayoutForSettings(
+  settings: Settings,
+  isPractice: boolean,
+): LayoutConfig {
+  const saved = isPractice
+    ? settings.practiceRacedayLayout
+    : settings.racedayLayout;
+  if (saved) return saved;
+
+  const keys = isPractice ? practiceColumnSettings : raceColumnSettings;
+  const customized = keys.some(
+    (key) =>
+      settings[key] != null &&
+      serializeColumnSetting(settings[key]) !== factoryColumnValues.get(key),
+  );
+  if (!customized) {
+    return deepCopy(
+      isPractice ? Settings.DEFAULT_PRACTICE_LAYOUT : Settings.DEFAULT_LAYOUT,
+    );
+  }
+
+  // Settings-only layouts need a table that reads their per-column configuration.
+  const layout = deepCopy(
+    isPractice
+      ? Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT
+      : Settings.LEGACY_DEFAULT_LAYOUT,
+  );
+  const table = layout.widgets.find(
+    (widget) => widget.widgetType === "lane-view",
+  );
+  if (table?.customSettings) delete table.customSettings["columnWidths"];
+  return layout;
 }

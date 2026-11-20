@@ -22,7 +22,6 @@ import {
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
-import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -92,7 +91,6 @@ import { NewLayoutModalComponent } from "./new-layout-modal/new-layout-modal.com
     CustomOptionComponent,
     WidgetInspectorFieldsComponent,
     ReplicateLaneDialogComponent,
-    ReviewStackedColumnsModalComponent,
     NewLayoutModalComponent,
   ],
 })

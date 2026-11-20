@@ -236,113 +236,6 @@
         </div>
       </div>
 
-      <!-- Migration / Stacked Columns Banners -->
-      @if (isMigratedLayout()) {
-        <div class="migration-notice-banner">
-          <div class="migration-notice-info">
-            <span class="material-icons migration-icon">auto_awesome</span>
-            <div class="migration-notice-text">
-              <span class="migration-notice-title">{{
-                "UE_MIGRATION_BANNER_TITLE" | translate
-              }}</span>
-              <span class="migration-notice-desc">{{
-                "UE_MIGRATION_BANNER_DESC" | translate
-              }}</span>
-            </div>
-          </div>
-          <div class="migration-notice-actions">
-            <button
-              type="button"
-              class="migration-btn"
-              (click)="restorePreMigrationBackup()"
-            >
-              <span class="material-icons">restore</span>
-              {{ "UE_MIGRATION_RESTORE_BACKUP_BTN" | translate }}
-            </button>
-            <button
-              type="button"
-              class="migration-btn"
-              (click)="exportMigrationDiagnostics()"
-            >
-              <span class="material-icons">bug_report</span>
-              {{ "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN" | translate }}
-            </button>
-          </div>
-        </div>
-      }
-
-      @if (canUpgradeLegacyHeatView()) {
-        <div class="migration-notice-banner legacy-preserved-banner">
-          <div class="migration-notice-info">
-            <span class="material-icons migration-icon warning-icon"
-              >schedule</span
-            >
-            <div class="migration-notice-text">
-              <span class="migration-notice-title">{{
-                "UE_MIGRATION_PRESERVED_TITLE" | translate
-              }}</span>
-              <span class="migration-notice-desc">{{
-                "UE_MIGRATION_PRESERVED_DESC" | translate
-              }}</span>
-            </div>
-          </div>
-          <div class="migration-notice-actions">
-            <button
-              type="button"
-              class="migration-btn migration-btn-upgrade"
-              (click)="upgradeLegacyHeatView()"
-            >
-              <span class="material-icons">upgrade</span>
-              {{ "UE_MIGRATION_UPGRADE_BTN" | translate }}
-            </button>
-            <button
-              type="button"
-              class="migration-btn"
-              (click)="exportMigrationDiagnostics()"
-            >
-              <span class="material-icons">bug_report</span>
-              {{ "UE_MIGRATION_EXPORT_DIAGNOSTICS_BTN" | translate }}
-            </button>
-          </div>
-        </div>
-      }
-
-      @if (hasStackedColumns()) {
-        <div class="migration-notice-banner">
-          <div class="migration-notice-info">
-            <span class="material-icons migration-icon warning-icon"
-              >layers_clear</span
-            >
-            <div class="migration-notice-text">
-              <span class="migration-notice-title">{{
-                "UE_STACKED_COLUMNS_BANNER_TITLE" | translate
-              }}</span>
-              <span class="migration-notice-desc">{{
-                getStackedColumnsBannerDesc()
-              }}</span>
-            </div>
-          </div>
-          <div class="migration-notice-actions">
-            <button
-              type="button"
-              class="migration-btn"
-              (click)="openReviewStackedColumnsModal()"
-            >
-              <span class="material-icons">visibility</span>
-              {{ "UE_STACKED_COLUMNS_REVIEW_BTN" | translate }}
-            </button>
-            <button
-              type="button"
-              class="migration-btn"
-              (click)="quickFixStackedColumns()"
-            >
-              <span class="material-icons">auto_fix_high</span>
-              {{ "UE_STACKED_COLUMNS_QUICK_FIX_BTN" | translate }}
-            </button>
-          </div>
-        </div>
-      }
-
       <!-- Workspace with Canvas and Inspector -->
       <div class="raceday-editor-workspace raceday-layout-section">
         <div
@@ -620,17 +513,6 @@
     (cancel)="showReplicateModal = false"
   >
   </app-replicate-lane-dialog>
-
-  <!-- Review Stacked Columns Modal -->
-  <app-review-stacked-columns-modal
-    [visible]="showReviewStackedColumnsModal"
-    [issues]="detectedStackedIssues"
-    [layoutName]="editingLayout?.name || ''"
-    [availableColumns]="availableColumns"
-    (fix)="quickFixStackedColumns()"
-    (cancel)="showReviewStackedColumnsModal = false"
-  >
-  </app-review-stacked-columns-modal>
 
   <!-- New Layout Template Modal -->
   <app-new-layout-modal

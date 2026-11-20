@@ -76,7 +76,6 @@ The canvas serves as an authentic live preview of your layout exactly as drivers
   - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 10px.
   - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget.
 - **Replicate Lanes**: Replicate a selected lane column card across all active track lanes, heat positions, overall standings, or driver seeds.
-- **Stacked Columns Detection & Repair**: The editor automatically detects duplicate or overlapping columns across lane grids. An alert banner provides one-click **Quick Fix** or **Review Issues** in an interactive dialog.
 
 ### Available Widgets & Configuration Options
 
@@ -123,8 +122,7 @@ For complete widget styling details, formulas, and custom widget development, se
 
 ---
 
-## Import, Export & Migration
+## Import and Export
 
 - **Import Layout**: Import an existing layout JSON file via the file input.
 - **Export Layout**: Download the active layout as a standalone JSON file.
-- **Pre-Migration Backups**: For layouts upgraded from legacy versions, restore pre-migration backup snapshots or export migration diagnostics for troubleshooting.

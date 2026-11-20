@@ -30,7 +30,6 @@ test.describe("Raceday Ghost Pacing Visuals", () => {
         ghostPacing: 200,
       },
       racedayLayout: {
-        preserveLegacyHeatView: true,
         widgets: [
           {
             id: "widget-lane-view",
@@ -240,7 +239,6 @@ test.describe("Raceday Ghost Pacing Visuals", () => {
         overallGhostPacingPB: 200,
       },
       racedayLayout: {
-        preserveLegacyHeatView: true,
         widgets: [
           {
             id: "widget-lane-view",

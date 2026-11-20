@@ -29,14 +29,25 @@ function resolveHostCurrentHeat(host: any): any {
   return host.currentHeat || host.raceService?.getCurrentHeat?.() || host.heat;
 }
 
+function resolveColumnWidgetSettings(
+  host: any,
+  settings?: Record<string, any>,
+) {
+  return (
+    settings ??
+    host.currentRacedayLayout?.widgets?.find(
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
+    )?.customSettings
+  );
+}
+
 export class RacedayColumnLayoutHelper {
   static loadColumns(host: any): void {
     const settings =
       host.editingSettings() || host.settingsService.getSettings();
     let selectedColumns = host.currentRacedayColumns;
-    if (!selectedColumns || selectedColumns.length === 0) {
-      selectedColumns = Settings.DEFAULT_COLUMNS;
-    }
+    if (!selectedColumns?.length) selectedColumns = Settings.DEFAULT_COLUMNS;
 
     const { calculatedWidths, zeroWidthColumnKeys } =
       RacedayColumnLayoutHelper.resolveColumnLayout(
@@ -45,10 +56,11 @@ export class RacedayColumnLayoutHelper {
         settings,
       );
 
+    const columnLayouts = host.currentColumnLayouts || {};
     host.columns = selectedColumns.map((key: string) => {
-      const layout = (host.currentColumnLayouts || {})[key] || {
-        [AnchorPoint.CenterCenter]: key,
-      };
+      const layout = RacedayLayoutUtils.normalizeColumnLayout(
+        columnLayouts[key] || { [AnchorPoint.CenterCenter]: key },
+      );
       const primaryProp =
         layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
 
@@ -58,15 +70,26 @@ export class RacedayColumnLayoutHelper {
       );
       const isResizing = zeroWidthColumnKeys.has(key);
       const width = calculatedWidths[key] ?? 275;
-      const anchor = host.currentColumnAnchors[key] || AnchorPoint.CenterCenter;
+      const anchor =
+        RacedayLayoutUtils.normalizeColumnAnchor(
+          host.currentColumnAnchors[key],
+        ) ?? AnchorPoint.CenterCenter;
 
       const renderer = (
         v: any,
         hd: DriverHeatData,
         col: ColumnDefinition,
         anchorParam?: string,
+        widgetSettings?: Record<string, any>,
       ) => {
-        return host.formatValue(primaryProp, v, hd, col, anchorParam);
+        return host.formatValue(
+          primaryProp,
+          v,
+          hd,
+          col,
+          anchorParam,
+          widgetSettings,
+        );
       };
 
       if (key.startsWith("imageset_")) {
@@ -146,10 +169,11 @@ export class RacedayColumnLayoutHelper {
     const widgetWidths = laneViewWidget?.customSettings?.["columnWidths"] || {};
     const currentWidths = host.currentColumnWidths || {};
 
+    const columnLayouts = host.currentColumnLayouts || {};
     selectedColumns.forEach((key) => {
-      const layout = (host.currentColumnLayouts || {})[key] || {
-        [AnchorPoint.CenterCenter]: key,
-      };
+      const layout = RacedayLayoutUtils.normalizeColumnLayout(
+        columnLayouts[key] || { [AnchorPoint.CenterCenter]: key },
+      );
       let width: number | undefined = undefined;
       if (widgetWidths[key] !== undefined && widgetWidths[key] !== null) {
         width = Number(widgetWidths[key]);
@@ -492,11 +516,8 @@ export class RacedayColumnLayoutHelper {
     column?: ColumnDefinition,
     propertyName?: string,
     anchor?: string,
+    widgetSettings?: Record<string, any>,
   ): string {
-    const laneViewWidget = host.currentRacedayLayout?.widgets?.find(
-      (w: any) =>
-        w.widgetType === "lane-view" || w.widgetType === "lane-column",
-    );
     const ctx: FormatContext = {
       translate: (key) => host.translationService.translate(key),
       getRace: () => host.raceService.getRace(),
@@ -506,7 +527,7 @@ export class RacedayColumnLayoutHelper {
       getFlagUrl: (flag) => host.getFlagUrl(flag),
       getFullUrl: (url) => host.getFullUrl(url),
       getImageSetUrl: (hd, prop) => host.getImageUrl(prop, hd),
-      laneViewWidgetSettings: laneViewWidget?.customSettings,
+      laneViewWidgetSettings: resolveColumnWidgetSettings(host, widgetSettings),
       getParticipant: (hd) => host.getDriverParticipant(hd),
       getDriverOverallRanking: (hd) => host.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => host.getDriverGroupRanking(hd),
@@ -546,16 +567,13 @@ export class RacedayColumnLayoutHelper {
     column: ColumnDefinition,
     anchor?: string,
     countOverride?: number,
+    widgetSettings?: Record<string, any>,
   ): LapDisplayInfo[] {
     if (!heatDriver) return [];
     const laps = heatDriver.lapTimes || [];
     const lapsDetails = heatDriver.lapsWithDetails || [];
     const n = laps.length;
     const result: LapDisplayInfo[] = [];
-    const laneViewWidget = host.currentRacedayLayout?.widgets?.find(
-      (w: any) =>
-        w.widgetType === "lane-view" || w.widgetType === "lane-column",
-    );
     const ctx: FormatContext = {
       translate: (key) => host.translationService.translate(key),
       getRace: () => host.raceService.getRace(),
@@ -565,7 +583,7 @@ export class RacedayColumnLayoutHelper {
       getFlagUrl: (flag) => host.getFlagUrl(flag),
       getFullUrl: (url) => host.getFullUrl(url),
       getImageSetUrl: (hd, prop) => host.getImageUrl(prop, hd),
-      laneViewWidgetSettings: laneViewWidget?.customSettings,
+      laneViewWidgetSettings: resolveColumnWidgetSettings(host, widgetSettings),
       getParticipant: (hd) => host.getDriverParticipant(hd),
       getDriverOverallRanking: (hd) => host.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => host.getDriverGroupRanking(hd),

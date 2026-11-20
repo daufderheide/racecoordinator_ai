@@ -76,7 +76,6 @@ El lienzo actúa como una vista previa auténtica y en vivo de su diseño, exact
   - <kbd>Shift</kbd> + Teclas de flecha: Desplaza el widget seleccionado 10px.
   - <kbd>Supr</kbd> o <kbd>Retroceso</kbd>: Elimina el widget seleccionado.
 - **Replicar Carriles**: Replica una tarjeta de columna de carril seleccionada en todos los carriles activos, posiciones, clasificaciones generales o cabezas de serie de pilotos.
-- **Detección y Reparación de Columnas Apiladas**: El editor detecta automáticamente columnas duplicadas o superpuestas en las cuadrículas de carriles. Un banner de alerta ofrece **Corrección Rápida** con un solo clic o **Revisar Problemas** en un diálogo interactivo.
 
 ### Widgets Disponibles y Opciones de Configuración
 
@@ -123,8 +122,7 @@ Para obtener detalles completos sobre estilo de widgets y desarrollo de widgets 
 
 ---
 
-## Importación, Exportación y Migración
+## Importación y exportación
 
 - **Importar Diseño**: Importe un archivo JSON de diseño existente mediante la selección de archivos.
 - **Exportar Diseño**: Descargue el diseño activo como un archivo JSON independiente.
-- **Copias de Seguridad Previas a la Migración**: Para diseños actualizados desde versiones heredadas, restaure copias de seguridad de instantáneas previas a la migración o exporte diagnósticos de migración para resolución de problemas.

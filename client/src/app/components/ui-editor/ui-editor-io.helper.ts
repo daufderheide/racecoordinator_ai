@@ -295,9 +295,8 @@ export function parseLayoutImportDetailed(
     };
   }
 
-  const { layout: rawLayout, reasonKey } =
-    extractImportedLayoutDetailed(layoutData);
-  if (!rawLayout) {
+  const { layout, reasonKey } = extractImportedLayoutDetailed(layoutData);
+  if (!layout) {
     return {
       success: false,
       errorKey: "UE_ERROR_IMPORT_NO_LAYOUT",
@@ -331,25 +330,18 @@ export function parseLayoutImportDetailed(
     "columnWidthsJson",
   );
 
-  const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-    layout: rawLayout,
+  LaneViewMigrationHelper.migrateGapWidgets(layout);
+  LaneViewMigrationHelper.migrateLayoutColumns(
+    layout,
     columns,
     columnLayouts,
-    columnVisibility,
-    columnAnchors,
     columnWidths,
-    isPractice,
-  });
-  const finalLayout = migration.migrated ? migration.layout : rawLayout;
-  LaneViewMigrationHelper.migrateGapWidgets(finalLayout);
-  LaneViewMigrationHelper.migrateColumnList(columns);
-  LaneViewMigrationHelper.migrateColumnLayouts(columnLayouts);
-  LaneViewMigrationHelper.migrateColumnWidths(columnWidths);
+  );
 
   return {
     success: true,
     data: {
-      layout: finalLayout,
+      layout,
       columns,
       columnLayouts,
       columnVisibility,
@@ -508,23 +500,16 @@ export function getDefaultLayoutResetData(
     columnAnchors,
   } = colConfig;
 
-  const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-    layout: defaultLayout,
+  LaneViewMigrationHelper.migrateGapWidgets(defaultLayout);
+  LaneViewMigrationHelper.migrateLayoutColumns(
+    defaultLayout,
     columns,
     columnLayouts,
-    columnVisibility,
     columnWidths,
-    columnAnchors,
-    isPractice,
-  });
-  const finalLayout = migration.migrated ? migration.layout : defaultLayout;
-  LaneViewMigrationHelper.migrateGapWidgets(finalLayout);
-  LaneViewMigrationHelper.migrateColumnList(columns);
-  LaneViewMigrationHelper.migrateColumnLayouts(columnLayouts);
-  LaneViewMigrationHelper.migrateColumnWidths(columnWidths);
+  );
 
   return {
-    defaultLayout: finalLayout,
+    defaultLayout,
     columns,
     columnLayouts,
     columnVisibility,
@@ -661,162 +646,4 @@ export function handleTestExport(comp: any): void {
   }).catch((err: any) => {
     comp.logger.error("Error generating test Excel export", err);
   });
-}
-
-export function exportMigrationDiagnostics(
-  ui: CustomUI,
-  currentLayout: any,
-): void {
-  const diag = {
-    uiName: ui.name,
-    entityId: ui.entity_id,
-    timestamp: new Date().toISOString(),
-    wasMigrated: (ui as any)._wasMigrated,
-    preMigrationLayout: (ui as any)._preMigrationLayout || null,
-    currentLayout,
-    columnsJson: ui.columnsJson,
-    columnLayoutsJson: ui.columnLayoutsJson,
-    columnWidthsJson: ui.columnWidthsJson,
-    columnVisibilityJson: ui.columnVisibilityJson,
-    columnAnchorsJson: ui.columnAnchorsJson,
-  };
-  const safeName = (ui.name || "layout").replace(/[^a-zA-Z0-9_-]/g, "_");
-  downloadJsonFile(diag, `${safeName}_migration_diagnostics.json`);
-}
-
-export const preMigrationLayoutCache = new Map<string, LayoutConfig>();
-
-export function restorePreMigrationLayout(
-  ui: CustomUI,
-  customUIs: CustomUI[],
-): { restored: boolean; layout?: LayoutConfig } {
-  let layoutToRestore: LayoutConfig | undefined;
-  const backupName =
-    `${(ui.name || "").trim()} (Pre-Migration Backup)`.toLowerCase();
-  const backup = (customUIs || []).find(
-    (u) => (u.name || "").trim().toLowerCase() === backupName,
-  );
-
-  if (backup?.layoutJson) {
-    try {
-      layoutToRestore = JSON.parse(backup.layoutJson);
-    } catch {
-      // ignore
-    }
-  }
-
-  if (!layoutToRestore && (ui as any)._preMigrationLayout) {
-    layoutToRestore = JSON.parse(
-      JSON.stringify((ui as any)._preMigrationLayout),
-    );
-  }
-
-  if (
-    !layoutToRestore &&
-    ui.entity_id &&
-    preMigrationLayoutCache.has(ui.entity_id)
-  ) {
-    layoutToRestore = JSON.parse(
-      JSON.stringify(preMigrationLayoutCache.get(ui.entity_id)),
-    );
-  }
-
-  if (!layoutToRestore) {
-    if (
-      ui.entity_id === "default_ui_layout_rc_ai" ||
-      (ui.name && ui.name.trim().toLowerCase() === "racecoordinator ai") ||
-      (ui.name && ui.name.trim().toLowerCase() === "rc ai")
-    ) {
-      layoutToRestore = JSON.parse(
-        JSON.stringify(Settings.LEGACY_DEFAULT_LAYOUT),
-      );
-    } else if (
-      ui.entity_id === "practice_ui_layout_rc_ai" ||
-      (ui.name && ui.name.trim().toLowerCase().includes("practice"))
-    ) {
-      layoutToRestore = JSON.parse(
-        JSON.stringify(Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT),
-      );
-    }
-  }
-
-  if (!layoutToRestore) {
-    return { restored: false };
-  }
-
-  layoutToRestore.preserveLegacyHeatView = true;
-  ui.layoutJson = JSON.stringify(layoutToRestore);
-  delete (ui as any)._wasMigrated;
-  if (ui.entity_id) {
-    preMigrationLayoutCache.delete(ui.entity_id);
-  }
-
-  if (backup) {
-    if (backup.columnsJson) ui.columnsJson = backup.columnsJson;
-    if (backup.columnLayoutsJson)
-      ui.columnLayoutsJson = backup.columnLayoutsJson;
-    if (backup.columnWidthsJson) ui.columnWidthsJson = backup.columnWidthsJson;
-    if (backup.columnVisibilityJson)
-      ui.columnVisibilityJson = backup.columnVisibilityJson;
-    if (backup.columnAnchorsJson)
-      ui.columnAnchorsJson = backup.columnAnchorsJson;
-  }
-
-  return { restored: true, layout: layoutToRestore };
-}
-
-export function upgradePreservedHeatViewLayout(
-  ui: CustomUI,
-  isPractice: boolean,
-): { upgraded: boolean; layout?: LayoutConfig } {
-  let layout: LayoutConfig | undefined;
-  try {
-    if (ui.layoutJson) {
-      layout = JSON.parse(ui.layoutJson);
-    }
-  } catch {
-    // ignore
-  }
-  if (!layout) {
-    return { upgraded: false };
-  }
-  let columns: string[] | undefined;
-  let columnLayouts: any;
-  let columnVisibility: any;
-  let columnWidths: any;
-  let columnAnchors: any;
-  try {
-    if (ui.columnsJson) columns = JSON.parse(ui.columnsJson);
-    if (ui.columnLayoutsJson) columnLayouts = JSON.parse(ui.columnLayoutsJson);
-    if (ui.columnVisibilityJson)
-      columnVisibility = JSON.parse(ui.columnVisibilityJson);
-    if (ui.columnWidthsJson) columnWidths = JSON.parse(ui.columnWidthsJson);
-    if (ui.columnAnchorsJson) columnAnchors = JSON.parse(ui.columnAnchorsJson);
-  } catch {
-    // ignore
-  }
-
-  const result = LaneViewMigrationHelper.upgradeLegacyHeatViewLayout({
-    layout,
-    columns,
-    columnLayouts,
-    columnVisibility,
-    columnWidths,
-    columnAnchors,
-    isPractice,
-  });
-
-  if (result.migrated) {
-    if (ui.entity_id) {
-      preMigrationLayoutCache.set(
-        ui.entity_id,
-        JSON.parse(JSON.stringify(layout)),
-      );
-    }
-    (ui as any)._preMigrationLayout = JSON.parse(JSON.stringify(layout));
-    (ui as any)._wasMigrated = true;
-    ui.layoutJson = JSON.stringify(result.layout);
-    return { upgraded: true, layout: result.layout };
-  }
-  return { upgraded: false };
 }

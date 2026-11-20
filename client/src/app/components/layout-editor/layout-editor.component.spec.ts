@@ -1907,19 +1907,6 @@ describe("LayoutEditorComponent", () => {
       expect(component.getUnsavedReasons().length).toBeGreaterThan(0);
     });
 
-    it("should handle stacked columns checks and migration helpers", () => {
-      expect(component.hasStackedColumns()).toBeFalse();
-      expect(typeof component.getStackedColumnsBannerDesc()).toBe("string");
-      expect(component.isMigratedLayout()).toBeFalse();
-
-      component.restorePreMigrationBackup();
-      component.openReviewStackedColumnsModal();
-      expect(component.showReviewStackedColumnsModal).toBeTrue();
-
-      component.quickFixStackedColumns();
-      expect(component.editingLayout).toBeTruthy();
-    });
-
     it("should calculate preview scale and dimensions to use available editor width", () => {
       const width = component.getPreviewContainerWidth();
       const height = component.getPreviewContainerHeight();
@@ -2241,65 +2228,31 @@ describe("LayoutEditorComponent", () => {
       ).toBe("w2");
     });
 
-    describe("Legacy Lane View Migration & Undo/Redo", () => {
-      it("should migrate legacy lane-view on loadData, show migration notice, allow restore and re-upgrade", async () => {
-        const legacyUi = {
-          entity_id: "legacy_custom_ui",
-          name: "Legacy Heat View",
-          is_default: false,
-          layoutJson: JSON.stringify({
-            widgets: [
-              {
-                id: "old-lane-view",
-                widgetType: "lane-view",
-                x: 0,
-                y: 0,
-                width: 800,
-                height: 400,
-              },
-            ],
-          }),
-        };
-        mockDataService.getCustomUIs.and.returnValue(of([legacyUi]));
-        await component.loadData();
+    it("keeps a saved lane view when opening it in the layout editor", async () => {
+      const legacyUi = {
+        entity_id: "legacy_custom_ui",
+        name: "Legacy Heat View",
+        is_default: false,
+        layoutJson: JSON.stringify({
+          widgets: [
+            {
+              id: "old-lane-view",
+              widgetType: "lane-view",
+              x: 0,
+              y: 0,
+              width: 800,
+              height: 400,
+            },
+          ],
+        }),
+      };
+      const savedWidget = JSON.parse(legacyUi.layoutJson).widgets[0];
+      mockDataService.getCustomUIs.and.returnValue(of([legacyUi]));
+      await component.loadData();
 
-        component.selectLayoutById("legacy_custom_ui");
-        expect(component.isMigratedLayout()).toBeTrue();
-        expect(component.canUpgradeLegacyHeatView()).toBeFalse();
-
-        // Check that layout was converted to data grid
-        const parsed = JSON.parse(component.editingLayout!.layoutJson!);
-        expect(
-          parsed.widgets.some((w: any) => w.widgetType === "lane-view"),
-        ).toBeFalse();
-        expect(
-          parsed.widgets.some((w: any) => w.widgetType === "lane-column"),
-        ).toBeTrue();
-
-        // Undo: restore pre-migration backup
-        component.restorePreMigrationBackup();
-        expect(component.isMigratedLayout()).toBeFalse();
-        expect(component.canUpgradeLegacyHeatView()).toBeTrue();
-
-        const reverted = JSON.parse(component.editingLayout!.layoutJson!);
-        expect(
-          reverted.widgets.some((w: any) => w.widgetType === "lane-view"),
-        ).toBeTrue();
-        expect(reverted.preserveLegacyHeatView).toBeTrue();
-
-        // Redo: upgrade legacy heat view back to grid
-        component.upgradeLegacyHeatView();
-        expect(component.isMigratedLayout()).toBeTrue();
-        expect(component.canUpgradeLegacyHeatView()).toBeFalse();
-
-        const reUpgraded = JSON.parse(component.editingLayout!.layoutJson!);
-        expect(
-          reUpgraded.widgets.some((w: any) => w.widgetType === "lane-view"),
-        ).toBeFalse();
-        expect(
-          reUpgraded.widgets.some((w: any) => w.widgetType === "lane-column"),
-        ).toBeTrue();
-      });
+      component.selectLayoutById("legacy_custom_ui");
+      const widgets = JSON.parse(component.editingLayout!.layoutJson!).widgets;
+      expect(widgets).toEqual([jasmine.objectContaining(savedWidget)]);
     });
 
     describe("Last edited widget and tab per layout", () => {

@@ -2734,11 +2734,41 @@ describe("UIEditorComponent", () => {
         );
       });
 
-      it("should import raceday layout", () => {
+      it("should import a raceday layout with overlapping columns intact", () => {
         spyOn(component.undoManager, "captureState");
         spyOn(component, "refreshDisplayProperties");
 
-        const mockLayout = { layout: { widgets: [] }, columns: ["col1"] };
+        const column = {
+          widgetType: "lane-column",
+          x: 20,
+          y: 100,
+          width: 300,
+          height: 80,
+          customSettings: {
+            columnKey: "driver.name",
+            gridLane: 0,
+            highlightLapStyle: "classic",
+            minFontSize: 0,
+            maxFontSize: 60,
+          },
+        };
+        const mockLayout = {
+          layout: {
+            widgets: [
+              { ...column, id: "first", zIndex: 1 },
+              {
+                ...column,
+                id: "overlay",
+                zIndex: 2,
+                customSettings: {
+                  ...column.customSettings,
+                  insets: { "bottom-right": "photo" },
+                },
+              },
+            ],
+          },
+          columns: ["driver.name"],
+        };
         const file = new File([JSON.stringify(mockLayout)], "test.json", {
           type: "application/json",
         });
@@ -5040,233 +5070,33 @@ describe("UIEditorComponent", () => {
     });
   });
 
-  describe("migration banner lifecycle and confirmation modals", () => {
-    let testUi: CustomUI;
-
-    beforeEach(() => {
-      testUi = {
-        entity_id: "test_ui_migration",
-        name: "Test Layout",
+  describe("Theme Driver Audio Overrides", () => {
+    it("should handle onDriverAudioOverrideChange and onResetDriverAudioOverrides", () => {
+      const theme: Theme = {
+        entity_id: "test_theme",
+        name: "Test Theme",
         is_default: false,
-        layoutJson: JSON.stringify({
-          baseWidth: 1920,
-          baseHeight: 1080,
-          widgets: [
-            {
-              id: "w-grid-header",
-              widgetType: "heat-header",
-              x: 0,
-              y: 0,
-              width: 800,
-              height: 50,
-            },
-          ],
-        }),
+        slots: {},
+        audio_slots: {},
       };
-      component.displayCustomUIs = [testUi];
-      component.dismissedMigrationUis.clear();
-      localStorage.removeItem("rc_dismissed_migration_uis");
-    });
-
-    it("should correctly identify if a layout has a pre-migration backup available", () => {
-      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeFalse();
-
-      (testUi as any)._wasMigrated = true;
-      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeTrue();
-      expect(component.isMigratedLayout(testUi)).toBeTrue();
-
-      delete (testUi as any)._wasMigrated;
-      const backupUi: CustomUI = {
-        entity_id: "test_ui_backup",
-        name: "Test Layout (Pre-Migration Backup)",
-        is_default: false,
-        layoutJson: "{}",
+      component.editingState = {
+        settings: component.editingSettings,
+        themes: [theme],
       };
-      component.displayCustomUIs = [testUi, backupUi];
-      expect(component.hasAvailablePreMigrationBackup(testUi)).toBeTrue();
-      expect(component.isMigratedLayout(testUi)).toBeTrue();
 
-      expect(component.hasAvailablePreMigrationBackup(backupUi)).toBeFalse();
-      expect(component.isMigratedLayout(backupUi)).toBeFalse();
-    });
-
-    it("should recognize default and practice layouts as having available pre-migration backup", () => {
-      const defaultUi: CustomUI = {
-        entity_id: "default_ui_layout_rc_ai",
-        name: "Default UI",
-        is_default: true,
-        layoutJson: JSON.stringify({ widgets: [] }),
-      };
-      expect(component.hasAvailablePreMigrationBackup(defaultUi)).toBeTrue();
-      expect(component.isMigratedLayout(defaultUi)).toBeTrue();
-    });
-
-    it("should dismiss and reopen migration banners", () => {
-      (testUi as any)._wasMigrated = true;
-      expect(component.isMigratedLayout(testUi)).toBeTrue();
-      expect(component.canReopenMigrationBanner(testUi)).toBeFalse();
-
-      component.dismissMigrationBanner(testUi);
-      expect(component.dismissedMigrationUis.has(testUi.entity_id)).toBeTrue();
-      expect(component.isMigratedLayout(testUi)).toBeFalse();
-      expect(component.canReopenMigrationBanner(testUi)).toBeTrue();
-
-      component.reopenMigrationBanner(testUi);
-      expect(component.dismissedMigrationUis.has(testUi.entity_id)).toBeFalse();
-      expect(component.isMigratedLayout(testUi)).toBeTrue();
-      expect(component.canReopenMigrationBanner(testUi)).toBeFalse();
-    });
-
-    it("should handle restore pre-migration backup confirmation modal workflow", () => {
-      expect(component.showRestoreBackupConfirm).toBeFalse();
-      expect(component.pendingRestoreBackupUi).toBeNull();
-
-      component.restorePreMigrationBackup(testUi);
-      expect(component.showRestoreBackupConfirm).toBeTrue();
-      expect(component.pendingRestoreBackupUi).toBe(testUi);
-
-      component.cancelRestorePreMigrationBackup();
-      expect(component.showRestoreBackupConfirm).toBeFalse();
-      expect(component.pendingRestoreBackupUi).toBeNull();
-
-      component.restorePreMigrationBackup(testUi);
-      expect(component.showRestoreBackupConfirm).toBeTrue();
-
-      component.confirmRestorePreMigrationBackup();
-      expect(component.showRestoreBackupConfirm).toBeFalse();
-      expect(component.pendingRestoreBackupUi).toBeNull();
-    });
-
-    it("should handle upgrade legacy heat view confirmation modal workflow", () => {
-      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
-      expect(component.pendingUpgradeHeatViewUi).toBeNull();
-
-      component.upgradeLegacyHeatView(testUi);
-      expect(component.showUpgradeHeatViewConfirm).toBeTrue();
-      expect(component.pendingUpgradeHeatViewUi).toBe(testUi);
-
-      component.cancelUpgradeLegacyHeatView();
-      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
-      expect(component.pendingUpgradeHeatViewUi).toBeNull();
-
-      component.upgradeLegacyHeatView(testUi);
-      expect(component.showUpgradeHeatViewConfirm).toBeTrue();
-
-      component.confirmUpgradeLegacyHeatView();
-      expect(component.showUpgradeHeatViewConfirm).toBeFalse();
-      expect(component.pendingUpgradeHeatViewUi).toBeNull();
-    });
-
-    describe("stacked columns detection and repair", () => {
-      let stackedUi: CustomUI;
-
-      beforeEach(() => {
-        stackedUi = {
-          entity_id: "custom_ui_stacked_test",
-          name: "Stacked Test UI",
-          layoutJson: JSON.stringify({
-            widgets: [
-              {
-                id: "w1",
-                widgetType: "lane-column",
-                x: 20,
-                y: 100,
-                width: 300,
-                height: 80,
-                zIndex: 100,
-                customSettings: {
-                  gridId: "grid-1",
-                  columnKey: "driver.name",
-                  gridLane: 0,
-                  insets: { "bottom-left": "flag" },
-                },
-              },
-              {
-                id: "w1_grid_lane_1",
-                widgetType: "lane-column",
-                x: 20,
-                y: 100,
-                width: 300,
-                height: 80,
-                zIndex: 100,
-                customSettings: {
-                  gridId: "grid-1",
-                  columnKey: "driver.name",
-                  gridLane: 0,
-                  insets: { "bottom-right": "photo" },
-                },
-              },
-            ],
-          }),
-        } as CustomUI;
+      component.onDriverAudioOverrideChange(theme, {
+        key: "lapAudio",
+        config: { type: "preset", url: "override_lap.wav", text: "" },
       });
 
-      it("should detect stacked columns and toggle banner visibility", () => {
-        expect(component.hasStackedColumns(stackedUi)).toBeTrue();
-        expect(component.getStackedColumnsIssueCount(stackedUi)).toBe(1);
-        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeFalse();
-
-        component.dismissStackedColumnsBanner(stackedUi);
-        expect(component.hasStackedColumns(stackedUi)).toBeFalse();
-        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeTrue();
-
-        component.reopenStackedColumnsBanner(stackedUi);
-        expect(component.hasStackedColumns(stackedUi)).toBeTrue();
-        expect(component.canReopenStackedColumnsBanner(stackedUi)).toBeFalse();
+      expect(theme.driver_audio_overrides?.["lapAudio"]).toEqual({
+        type: "preset",
+        url: "override_lap.wav",
+        text: "",
       });
 
-      it("should open review stacked columns modal", () => {
-        expect(component.showReviewStackedColumnsModal).toBeFalse();
-        component.openReviewStackedColumnsModal(stackedUi);
-        expect(component.showReviewStackedColumnsModal).toBeTrue();
-        expect(component.pendingRepairStackedUi).toBe(stackedUi);
-        expect(component.detectedStackedIssues.length).toBe(1);
-      });
-
-      it("should quick-fix stacked columns and display success modal", () => {
-        component.quickFixStackedColumns(stackedUi);
-        expect(component.showSuccessModal).toBeTrue();
-        expect(component.successModalTitle).toBe(
-          "UE_STACKED_COLUMNS_MODAL_TITLE",
-        );
-
-        const parsed = JSON.parse(stackedUi.layoutJson || "{}");
-        expect(parsed.widgets.length).toBe(1);
-        expect(parsed.widgets[0].customSettings.insets).toEqual({
-          "bottom-left": "flag",
-          "bottom-right": "photo",
-        });
-      });
-    });
-
-    describe("Theme Driver Audio Overrides", () => {
-      it("should handle onDriverAudioOverrideChange and onResetDriverAudioOverrides", () => {
-        const theme: Theme = {
-          entity_id: "test_theme",
-          name: "Test Theme",
-          is_default: false,
-          slots: {},
-          audio_slots: {},
-        };
-        component.editingState = {
-          settings: component.editingSettings,
-          themes: [theme],
-        };
-
-        component.onDriverAudioOverrideChange(theme, {
-          key: "lapAudio",
-          config: { type: "preset", url: "override_lap.wav", text: "" },
-        });
-
-        expect(theme.driver_audio_overrides?.["lapAudio"]).toEqual({
-          type: "preset",
-          url: "override_lap.wav",
-          text: "",
-        });
-
-        component.onResetDriverAudioOverrides(theme);
-        expect(theme.driver_audio_overrides).toEqual({});
-      });
+      component.onResetDriverAudioOverrides(theme);
+      expect(theme.driver_audio_overrides).toEqual({});
     });
   });
 });

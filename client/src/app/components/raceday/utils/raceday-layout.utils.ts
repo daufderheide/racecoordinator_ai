@@ -152,6 +152,30 @@ export class RacedayLayoutUtils {
     return anchor === AnchorPoint.CenterCenter ? 45 : 20;
   }
 
+  static normalizeColumnAnchor(anchor?: string): AnchorPoint | undefined {
+    const normalized = anchor?.toLowerCase().replaceAll("-", "");
+    if (normalized === "left") return AnchorPoint.CenterLeft;
+    if (normalized === "center") return AnchorPoint.CenterCenter;
+    if (normalized === "right") return AnchorPoint.CenterRight;
+    return Object.values(AnchorPoint).find(
+      (point) => point.replaceAll("-", "") === normalized,
+    );
+  }
+
+  static normalizeColumnLayout(
+    layout: ColumnDefinition["layout"],
+  ): ColumnDefinition["layout"] {
+    const normalized = { ...layout };
+    for (const [key, property] of Object.entries(layout)) {
+      const anchor = this.normalizeColumnAnchor(key);
+      if (anchor && anchor !== key) {
+        normalized[anchor] ??= property;
+        delete normalized[key as AnchorPoint];
+      }
+    }
+    return normalized;
+  }
+
   static getLayoutEntries(
     column: ColumnDefinition,
   ): { anchor: string; property: string }[] {

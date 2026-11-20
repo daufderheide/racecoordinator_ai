@@ -74,20 +74,6 @@ public class CustomUI extends Model {
         || "rc ai (driver station)".equals(n);
   }
 
-  public static final String PRE_MIGRATION_BACKUP_SUFFIX = " (Pre-Migration Backup)";
-
-  public static boolean hasLaneView(String layoutJson) {
-    if (layoutJson == null || layoutJson.isEmpty()) {
-      return false;
-    }
-    if (layoutJson.contains("\"preserveLegacyHeatView\":true")
-        || layoutJson.contains("\"preserveLegacyHeatView\": true")) {
-      return false;
-    }
-    return layoutJson.contains("\"widgetType\":\"lane-view\"")
-        || layoutJson.contains("\"widgetType\": \"lane-view\"");
-  }
-
   private final String name;
   private final boolean isDefault;
   private final String layoutJson;

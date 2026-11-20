@@ -76,7 +76,6 @@ Il canvas funge da anteprima dal vivo autentica del layout, esattamente come pil
   - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Sposta il widget selezionato di 10px.
   - <kbd>Canc</kbd> o <kbd>Backspace</kbd>: Rimuove il widget selezionato.
 - **Replica Corsie**: Replica una scheda di colonna corsia selezionata su tutte le corsie attive, posizioni della manche, classifiche generali o teste di serie dei piloti.
-- **Rilevamento e Riparazione Colonne Sovrapposte**: L'editor rileva automaticamente colonne duplicate o sovrapposte nelle griglie di corsia. Un banner di avviso fornisce una **Correzione Rapida** in un clic o l'opzione **Esamina Problemi** in una finestra di dialogo interattiva.
 
 ### Widget Disponibili e Opzioni di Configurazione
 
@@ -123,8 +122,7 @@ Per informazioni dettagliate sullo stile dei widget, formule e sviluppo di widge
 
 ---
 
-## Importazione, Esportazione e Migrazione
+## Importazione ed esportazione
 
 - **Importa Layout**: Importare un file JSON di layout esistente tramite selezione file.
 - **Esporta Layout**: Scaricare il layout attivo come file JSON autonomo.
-- **Backup Pre-Migrazione**: Per i layout aggiornati da versioni precedenti, ripristinare snapshot di backup pre-migrazione o esportare la diagnostica di migrazione per la risoluzione dei problemi.

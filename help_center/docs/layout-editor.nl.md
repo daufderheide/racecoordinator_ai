@@ -76,7 +76,6 @@ Het canvas fungeert als een levensechte preview van uw lay-out, precies zoals co
   - <kbd>Shift</kbd> + <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Verplaatst de geselecteerde widget met 10px.
   - <kbd>Delete</kbd> of <kbd>Backspace</kbd>: Verwijdert de geselecteerde widget.
 - **Banen Repliceren**: Repliceer een geselecteerde baankolomkaart over alle actieve banen, posities, tussenstanden of coureurkwalificaties.
-- **Gestapelde Kolommen Detectie & Reparatie**: De editor detecteert automatisch dubbele of overlappende kolommen in baangrids. Een waarschuwingsbalk biedt een **Snelle Oplossing** met één klik of **Problemen Beoordelen** in een interactief venster.
 
 ### Beschikbare Widgets & Configuratieopties
 
@@ -123,8 +122,7 @@ Voor volledige details over widgetstijlen, formules en de ontwikkeling van aange
 
 ---
 
-## Importeren, Exporteren & Migratie
+## Importeren en exporteren
 
 - **Lay-out Importeren**: Importeer een bestaand lay-out JSON-bestand via bestandsselectie.
 - **Lay-out Exporteren**: Download de actieve lay-out als een zelfstandig JSON-bestand.
-- **Back-ups Vóór Migratie**: Herstel back-upsnapshots van vóór migratie voor lay-outs die vanuit eerdere versies zijn bijgewerkt, of exporteer migratiediagnostiek.

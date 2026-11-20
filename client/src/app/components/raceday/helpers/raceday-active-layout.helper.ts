@@ -5,7 +5,12 @@ import {
   isLegacyDriverStationUiName,
 } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { CustomUI } from "@app/models/custom-ui";
-import { LayoutConfig, Settings } from "@app/models/settings";
+import {
+  getRacedayLayoutForSettings,
+  LayoutConfig,
+  Settings,
+} from "@app/models/settings";
+import { deepCopy } from "@app/utils/clone.utils";
 
 export class RacedayActiveLayoutHelper {
   static isDriverStationLayout(host: any): boolean {
@@ -212,7 +217,6 @@ export class RacedayActiveLayoutHelper {
     const isPractice = Boolean(host.isPracticeLayout);
     const themeId = activeTheme?.entity_id || "";
     const themeUiId = activeTheme?.uiId || "";
-    const lanesCount = host.track?.lanes?.length || 4;
 
     const memo = host._memoizedLayoutInfo;
     if (
@@ -221,8 +225,7 @@ export class RacedayActiveLayoutHelper {
       memo.themeId === themeId &&
       memo.themeUiId === themeUiId &&
       memo.isDriverStation === isDriverStation &&
-      memo.isPractice === isPractice &&
-      memo.lanesCount === lanesCount
+      memo.isPractice === isPractice
     ) {
       return memo.layout;
     }
@@ -244,39 +247,15 @@ export class RacedayActiveLayoutHelper {
           : undefined;
     }
     const fallbackLayout = isDriverStation
-      ? JSON.parse(JSON.stringify(Settings.DEFAULT_DRIVER_STATION_LAYOUT))
-      : isPractice
-        ? settings.practiceRacedayLayout ||
-          Settings.LEGACY_DEFAULT_PRACTICE_LAYOUT
-        : settings.racedayLayout || Settings.LEGACY_DEFAULT_LAYOUT;
+      ? deepCopy(Settings.DEFAULT_DRIVER_STATION_LAYOUT)
+      : getRacedayLayoutForSettings(settings, isPractice);
     const resolvedLayout = RacedayActiveLayoutHelper.getParsedCustomUiProperty(
       host,
       customUI,
       "layoutJson",
       fallbackLayout,
     );
-    let finalLayout = resolvedLayout;
-    if (
-      !host.isUIEditorMode?.() &&
-      LaneViewMigrationHelper.hasLegacyLaneView(resolvedLayout)
-    ) {
-      const migration = LaneViewMigrationHelper.convertLegacyLaneViewLayout({
-        layout: resolvedLayout,
-        columns: host.currentRacedayColumns,
-        columnLayouts: host.currentColumnLayouts,
-        columnWidths: host.currentColumnWidths,
-        columnAnchors: host.currentColumnAnchors,
-        totalLanes: lanesCount,
-        isPractice,
-      });
-      if (migration.migrated) {
-        LaneViewMigrationHelper.migrateGapWidgets(migration.layout);
-        finalLayout = migration.layout;
-      }
-    }
-    if (finalLayout === resolvedLayout) {
-      LaneViewMigrationHelper.migrateGapWidgets(resolvedLayout);
-    }
+    LaneViewMigrationHelper.migrateGapWidgets(resolvedLayout);
 
     host._memoizedLayoutInfo = {
       settings,
@@ -284,10 +263,9 @@ export class RacedayActiveLayoutHelper {
       themeUiId,
       isDriverStation,
       isPractice,
-      lanesCount,
-      layout: finalLayout,
+      layout: resolvedLayout,
     };
-    return finalLayout;
+    return resolvedLayout;
   }
 
   static setCurrentRacedayLayout(

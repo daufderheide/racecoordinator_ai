@@ -76,7 +76,6 @@ Die Arbeitsfläche dient als authentische Live-Vorschau Ihres Layouts, genau so,
   - <kbd>Shift</kbd> + Pfeiltasten: Verschiebt das Widget um 10 Pixel.
   - <kbd>Entf</kbd> oder <kbd>Rücktaste</kbd>: Entfernt das ausgewählte Widget.
 - **Spuren replizieren**: Replizieren Sie eine ausgewählte Spurenspaltenkarte über alle aktiven Spuren, Positionen, Gesamtwertungen oder Fahrer-Startnummern.
-- **Erkennung & Reparatur gestapelter Spalten**: Der Editor erkennt automatisch doppelte oder überlappende Spalten in Spurgittern. Ein Warnbanner bietet eine Ein-Klick-Schnellkorrektur oder eine Prüfung im Dialog an.
 
 ### Verfügbare Widgets & Konfigurationsoptionen
 
@@ -123,8 +122,7 @@ Ausführliche Informationen zur Widget-Gestaltung und Entwicklung eigener Widget
 
 ---
 
-## Import, Export & Migration
+## Import und Export
 
 - **Layout importieren**: Importieren Sie eine vorhandene Layout-JSON-Datei.
 - **Layout exportieren**: Laden Sie das aktive Layout als JSON-Datei herunter.
-- **Backups vor Migration**: Stellen Sie für Layouts aus älteren Versionen Sicherungs-Snapshots wieder her oder exportieren Sie Migrationsdiagnosen zur Fehlerbehebung.
