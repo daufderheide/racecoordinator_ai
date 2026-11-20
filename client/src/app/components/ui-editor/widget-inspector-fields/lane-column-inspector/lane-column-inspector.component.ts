@@ -27,6 +27,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
+import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 import { LaneColumnGridHelper } from "./lane-column-grid.helper";
@@ -191,9 +192,11 @@ export class LaneColumnInspectorComponent
         ? colKey
         : this.widget()?.widgetType;
     return (
-      this.customWidgetDefinition?.manifest?.name ||
-      type?.replace(/^custom:/, "") ||
-      "Custom Widget"
+      resolveCustomWidgetName(
+        type,
+        this.customWidgetDefinition?.manifest,
+        this.translationService,
+      ) || "Custom Widget"
     );
   }
 
@@ -209,7 +212,11 @@ export class LaneColumnInspectorComponent
         if (!base.some((b) => b.key === key)) {
           base.push({
             key,
-            label: cw.manifest?.name || cw.manifest?.id || key,
+            label: resolveCustomWidgetName(
+              key,
+              cw.manifest,
+              this.translationService,
+            ),
           });
         }
       }

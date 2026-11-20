@@ -1,6 +1,7 @@
 {
   "id": "sample-telemetry-gauge",
   "name": "Telemetry Gauge",
+  "nameKey": "UE_WIDGET_SAMPLE_TELEMETRY_GAUGE",
   "version": "1.0.0",
   "description": "Live speedometer and telemetry gauge with configurable colors and thresholds",
   "author": "Race Coordinator AI",

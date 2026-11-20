@@ -222,6 +222,8 @@ export class RacedayToolboxHelper {
       host.toolboxGroupExpandedStates,
       host.toolboxSubgroupExpandedStates,
       (key) => host.translationService?.translate(key) || key,
+      undefined,
+      host.translationService,
     );
   }
 

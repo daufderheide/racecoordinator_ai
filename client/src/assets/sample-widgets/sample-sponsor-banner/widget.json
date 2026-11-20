@@ -1,6 +1,7 @@
 {
   "id": "sample-sponsor-banner",
   "name": "Sponsor Banner",
+  "nameKey": "UE_WIDGET_SAMPLE_SPONSOR_BANNER",
   "version": "1.0.0",
   "description": "Animated sponsor ticker and announcement banner for event branding",
   "author": "Race Coordinator AI",

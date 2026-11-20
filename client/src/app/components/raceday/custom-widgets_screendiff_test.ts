@@ -31,6 +31,85 @@ function loadSampleWidgetFiles(): Record<string, Record<string, string>> {
 
 const SAMPLE_WIDGET_FILES = loadSampleWidgetFiles();
 
+test.describe("Custom Widget Names", () => {
+  for (const [language, sampleName] of [
+    ["en", "Lap Time Delta"],
+    ["nl", "Rondetijdverschil"],
+  ]) {
+    test(`shows sample and community widget names in ${language}`, async ({
+      page,
+    }) => {
+      await TestSetupHelper.setupStandardMocks(page);
+      await TestSetupHelper.setupRaceWebSocketMocks(page);
+      await TestSetupHelper.setupAssetMocks(page);
+      await TestSetupHelper.setupThemeMocks(page);
+      await TestSetupHelper.setupCustomUiMocks(page);
+      await TestSetupHelper.setupCustomWidgets(page, {
+        "sample-lap-delta": SAMPLE_WIDGET_FILES["sample-lap-delta"],
+        "community-split-times": {
+          "widget.json": JSON.stringify({
+            id: "community-split-times",
+            name: "Club Split Times",
+          }),
+          "widget.html": "<div>Club timing</div>",
+        },
+      });
+      await TestSetupHelper.setupSettings(page, {
+        language,
+        layoutEditorHelpShown: true,
+        uiEditorHelpShown: true,
+        racedayLayout: {
+          baseWidth: 1600,
+          baseHeight: 900,
+          widgets: [
+            {
+              id: "w-delta",
+              widgetType: "custom:sample-lap-delta",
+              x: 200,
+              y: 150,
+              width: 350,
+              height: 200,
+              zIndex: 1,
+            },
+          ],
+        },
+      });
+      await TestSetupHelper.disableAnimations(page);
+      await page.setViewportSize({ width: 1600, height: 900 });
+      await TestSetupHelper.waitForLocalization(
+        page,
+        language,
+        page.goto("/layout-editor"),
+      );
+      await page.locator("#edit-track-btn").click();
+
+      const toolbox = page.locator(".layout-customizer-toolbox");
+      await toolbox
+        .getByText("Club Split Times", { exact: true })
+        .waitFor({ state: "visible" });
+      await toolbox
+        .getByText(sampleName, { exact: true })
+        .scrollIntoViewIfNeeded();
+
+      await page
+        .locator(".raceday-preview-container .widget-wrapper")
+        .first()
+        .dispatchEvent("pointerdown");
+      const inspector = page.locator(".widget-inspector-panel");
+      await inspector
+        .locator(".inspector-widget-subtitle")
+        .getByText(sampleName, { exact: true })
+        .waitFor({ state: "visible" });
+      await TestSetupHelper.blurActiveElement(page);
+      await page.mouse.move(0, 0);
+
+      await expect(page).toHaveScreenshot(
+        `custom-widget-names-${language}.png`,
+      );
+    });
+  }
+});
+
 const MOCK_RACE_DATA = {
   race: {
     race: {
