@@ -211,7 +211,10 @@
 /* Selected state outline */
 .widget-wrapper.edit-mode.selected {
   outline: 2px solid #38bdf8 !important;
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6) !important;
+  /* keeps the widget's own shadow visible while it is selected */
+  box-shadow:
+    var(--widget-shadow, 0 0 0 transparent),
+    0 0 14px rgba(56, 189, 248, 0.6) !important;
   z-index: 1050 !important;
 }
 
@@ -456,6 +459,13 @@
 
 /* Support custom background color on widgets */
 .widget-wrapper.has-custom-bg {
+  border-radius: var(--widget-border-radius, 0px);
+}
+
+/* Shadow option (customSettings.shadow): drawn on the wrapper, with the
+   widget's corner radius so it follows rounded cards. */
+.widget-wrapper.has-widget-shadow {
+  box-shadow: var(--widget-shadow);
   border-radius: var(--widget-border-radius, 0px);
 }
 

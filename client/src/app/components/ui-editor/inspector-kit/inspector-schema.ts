@@ -283,6 +283,9 @@ export function fieldKeys(field: InspectorField): string[] {
 export function registryDefaults(widgetType: string): Record<string, any> {
   return {
     backgroundColor: "",
+    // frame options from the shared wrapper (widget-style.utils)
+    backgroundOpacity: 100,
+    shadow: "none",
     ...getDefaultBorderConfigForWidget(widgetType),
     ...(WIDGET_REGISTRY[widgetType]?.defaultSettings?.() || {}),
   };

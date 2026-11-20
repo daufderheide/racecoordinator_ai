@@ -424,6 +424,43 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component.effectiveBackgroundColor).toBe("#123456");
   });
 
+  it("applies the background opacity to an own background colour", () => {
+    mockWidget.backgroundColor = undefined as any;
+    mockWidget.customSettings = {
+      backgroundColor: "#c81e1e",
+      backgroundOpacity: 50,
+    };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    expect(component.effectiveBackgroundColor).toBe("rgba(200, 30, 30, 0.5)");
+  });
+
+  it("draws the shadow option on the wrapper, but not for the see-through Countdown", () => {
+    mockWidget.customSettings = { shadow: "soft" };
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("has-widget-shadow")).toBeTrue();
+    expect(wrapper.style.getPropertyValue("--widget-shadow")).toContain(
+      "rgba(0, 0, 0, 0.45)",
+    );
+
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      widgetType: "countdown",
+    });
+    fixture.detectChanges();
+    expect(component.effectiveShadow).toBeNull();
+  });
+
+  it("has no shadow without the setting (layouts look as before)", () => {
+    mockWidget.customSettings = {};
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("has-widget-shadow")).toBeFalse();
+  });
+
   it("should render on-deck widget", () => {
     mockWidget.widgetType = "on-deck";
     fixture.componentRef.setInput("widget", { ...mockWidget });

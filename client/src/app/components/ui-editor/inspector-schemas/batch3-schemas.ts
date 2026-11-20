@@ -109,10 +109,12 @@ const countdownSchema: InspectorSchema = {
     },
     {
       id: "frame",
-      // no Fill group: the Countdown is always drawn without a background
+      // no Fill or Shadow group: the Countdown is always drawn see-through
       groups: [
         ...frameFolder().groups.filter(
-          (g) => g.titleKey !== "UE_KIT_GROUP_FILL",
+          (g) =>
+            g.titleKey !== "UE_KIT_GROUP_FILL" &&
+            g.titleKey !== "UE_KIT_GROUP_SHADOW",
         ),
         {
           titleKey: "UE_INSPECTOR_COUNTDOWN_GLOW",

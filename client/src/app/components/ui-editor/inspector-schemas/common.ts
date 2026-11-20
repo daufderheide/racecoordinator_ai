@@ -23,6 +23,19 @@ export function frameFolder(): InspectorFolder {
             placeholder: "#000022",
             searchTerms: "background fill colour color",
           },
+          {
+            id: "backgroundOpacity",
+            type: "stepper",
+            key: "backgroundOpacity",
+            labelKey: "UE_KIT_BG_OPACITY",
+            min: 0,
+            max: 100,
+            step: 5,
+            unit: "%",
+            searchTerms: "opacity transparent see-through background",
+            // only an own colour can be made transparent
+            visibleWhen: (s) => !!s["backgroundColor"],
+          },
         ],
       },
       {
@@ -84,6 +97,27 @@ export function frameFolder(): InspectorFolder {
             placeholder: "#ffffff",
             searchTerms: "border colour color outline",
             visibleWhen: (s) => s["showBorder"] !== false,
+          },
+        ],
+      },
+      {
+        titleKey: "UE_KIT_GROUP_SHADOW",
+        fields: [
+          {
+            id: "shadow",
+            type: "tiles",
+            key: "shadow",
+            labelKey: "UE_KIT_SHADOW",
+            searchTerms: "shadow depth glow raised",
+            tiles: [
+              { value: "none", labelKey: "UE_KIT_SHADOW_NONE", demo: "shadow" },
+              { value: "soft", labelKey: "UE_KIT_SHADOW_SOFT", demo: "shadow" },
+              {
+                value: "raised",
+                labelKey: "UE_KIT_SHADOW_RAISED",
+                demo: "shadow",
+              },
+            ],
           },
         ],
       },

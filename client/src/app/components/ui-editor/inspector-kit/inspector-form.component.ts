@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, inject, input, output } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
+import { shadowFor } from "@app/utils/widget-style.utils";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
@@ -448,7 +449,10 @@ export class InspectorFormComponent {
         ? { border: "0" }
         : { border: `2px ${value} currentColor` };
     }
-    return {};
+    const shadow = shadowFor(value);
+    return shadow
+      ? { boxShadow: shadow, background: "currentColor", opacity: "0.85" }
+      : { border: "1px solid currentColor" };
   }
 
   trackField = (_: number, f: InspectorField) => f.id;

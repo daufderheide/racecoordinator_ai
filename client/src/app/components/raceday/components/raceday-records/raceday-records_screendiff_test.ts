@@ -39,6 +39,9 @@ async function setupRecordsTest(
     showRaceRecordScore?: boolean;
     showCurrentRaceBest?: boolean;
     showHeatBest?: boolean;
+    backgroundColor?: string;
+    backgroundOpacity?: number;
+    shadow?: string;
   },
 ) {
   if (customSettings) {
@@ -116,5 +119,29 @@ test.describe("Raceday Records Visuals", () => {
       showHeatBest: false,
     });
     await expect(records).toHaveScreenshot("raceday-records-one-metric.png");
+  });
+
+  test("should draw the frame options: background opacity and shadow", async ({
+    page,
+  }) => {
+    await setupRecordsTest(page, {
+      backgroundColor: "#c81e1e",
+      backgroundOpacity: 60,
+      shadow: "raised",
+    });
+    // the shadow falls outside the widget, so capture a margin around it
+    const wrapper = page
+      .locator(".widget-wrapper")
+      .filter({ has: page.locator("app-raceday-records") })
+      .first();
+    const box = (await wrapper.boundingBox())!;
+    await expect(page).toHaveScreenshot("raceday-records-frame-options.png", {
+      clip: {
+        x: Math.max(0, box.x - 24),
+        y: Math.max(0, box.y - 24),
+        width: box.width + 48,
+        height: box.height + 48,
+      },
+    });
   });
 });
