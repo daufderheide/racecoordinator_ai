@@ -593,4 +593,73 @@ describe("RacedayTimerComponent", () => {
       expect(timeSub.unsubscribe).toHaveBeenCalled();
     }
   });
+
+  describe("status text options (#1197)", () => {
+    const show = (customSettings: any, key = "RD_AUTO_ADVANCING") => {
+      fixture.componentRef.setInput("widget", { customSettings });
+      fixture.componentRef.setInput("formattedTime", "00:45");
+      fixture.componentRef.setInput("autoStatusLabel", key);
+      fixture.componentRef.setInput("showCountdownOverlay", false);
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector(
+        ".status-label",
+      ) as HTMLElement | null;
+    };
+
+    it("shows the default translated text in uppercase when nothing is set", () => {
+      const label = show({});
+      expect(label?.textContent?.trim()).toBe("RD_AUTO_ADVANCING");
+      expect(label?.classList).not.toContain("status-label-as-typed");
+    });
+
+    it("shows the user's own Auto-Advancing and Auto-Starting text", () => {
+      expect(
+        show({ autoAdvancingText: "  Next heat soon  " })?.textContent?.trim(),
+      ).toBe("Next heat soon");
+      expect(
+        show(
+          { autoStartingText: "Get ready" },
+          "RD_AUTO_STARTING",
+        )?.textContent?.trim(),
+      ).toBe("Get ready");
+    });
+
+    it("keeps other status keys translated", () => {
+      expect(
+        show({ autoAdvancingText: "x" }, "RD_PAUSED")?.textContent?.trim(),
+      ).toBe("RD_PAUSED");
+    });
+
+    it("hides the status text when switched off", () => {
+      expect(show({ showStatusText: false })).toBeNull();
+    });
+
+    it("shows the text as typed when Uppercase is off", () => {
+      const label = show({ statusUppercase: false, autoAdvancingText: "soon" });
+      expect(label?.classList).toContain("status-label-as-typed");
+    });
+
+    it("applies the status font family, size and colour", () => {
+      const label = show({
+        statusFontFamily: "Inter",
+        statusFontSize: 30,
+        statusTextColor: "#ff0000",
+      });
+      expect(label?.style.fontFamily).toContain("Inter");
+      expect(label?.style.fontSize).toBe("30px");
+      expect(label?.style.color).toBe("rgb(255, 0, 0)");
+      const container = fixture.nativeElement.querySelector(
+        ".top-label",
+      ) as HTMLElement;
+      expect(container.style.height).toBe("42px");
+    });
+
+    it("keeps the 24px label row without a custom size", () => {
+      show({});
+      const container = fixture.nativeElement.querySelector(
+        ".top-label",
+      ) as HTMLElement;
+      expect(container.style.height).toBe("24px");
+    });
+  });
 });

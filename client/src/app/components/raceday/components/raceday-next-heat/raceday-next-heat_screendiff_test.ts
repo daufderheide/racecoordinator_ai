@@ -1112,3 +1112,93 @@ test.describe("Raceday Next Heat Visuals", () => {
     await expect(widget).toHaveScreenshot("raceday-next-heat-8-lanes.png");
   });
 });
+
+test.describe("Raceday Next Heat Custom Font Size (#1196)", () => {
+  test("should keep row depth when the lane font size is made bigger", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
+    await TestSetupHelper.setupAssetMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "widget-next-heat",
+            widgetType: "next-heat",
+            x: 100,
+            y: 100,
+            width: 384,
+            height: 300,
+            zIndex: 100,
+            scaleMode: "auto",
+            customSettings: { laneFontSize: 25 },
+          },
+        ],
+      },
+    });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const people = [
+      ["d1", "Alice", "Ali"],
+      ["d2", "Bob", "Bobby"],
+      ["d3", "Charlie", "Speedy"],
+      ["d4", "Dave", "Noob"],
+    ];
+    const heatDrivers = people.map(([id, name, nickname], i) => ({
+      objectId: `hd${i + 1}`,
+      driver: {
+        objectId: `rp${i + 1}`,
+        driver: { model: { entityId: id }, name, nickname },
+      },
+    }));
+    await TestSetupHelper.mockRaceData(page, {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Screendiff Race",
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: ["#550000", "#000055", "#005500", "#555500"].map(
+              (backgroundColor, i) => ({
+                objectId: `l${i + 1}`,
+                length: 10,
+                backgroundColor,
+                foregroundColor: "#ffffff",
+              }),
+            ),
+          },
+        },
+        drivers: people.map(([id, name, nickname], i) => ({
+          objectId: `rp${i + 1}`,
+          driver: { model: { entityId: id }, name, nickname },
+        })),
+        currentHeat: { objectId: "h1", heatNumber: 1, heatDrivers: [] },
+        heats: [
+          { objectId: "h1", heatNumber: 1, heatDrivers: [] },
+          { objectId: "h2", heatNumber: 2, heatDrivers },
+        ],
+      },
+    });
+
+    const rows = page.locator(".next-heat-item");
+    await expect(rows).toHaveCount(4);
+    // All four rows fit: the list does not need to scroll.
+    const scrolls = await page
+      .locator(".next-heat-list")
+      .evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+    expect(scrolls).toBe(false);
+
+    await expect(page.locator("app-raceday-next-heat")).toHaveScreenshot(
+      "raceday-next-heat-custom-font-size.png",
+    );
+  });
+});

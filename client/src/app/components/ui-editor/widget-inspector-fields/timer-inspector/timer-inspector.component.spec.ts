@@ -216,4 +216,50 @@ describe("TimerInspectorComponent", () => {
     ) as HTMLInputElement;
     expect(slider.value).toBe("90");
   });
+
+  describe("status text section (#1197)", () => {
+    const el = (sel: string) =>
+      fixture.nativeElement.querySelector(sel) as HTMLInputElement | null;
+
+    it("shows the status options with the show checkbox ticked by default", () => {
+      expect(el("#timer-show-status-text")?.checked).toBeTrue();
+      expect(el("#timer-auto-starting-text")).not.toBeNull();
+      expect(el("#timer-auto-advancing-text")).not.toBeNull();
+      expect(el("#timer-status-uppercase")?.checked).toBeTrue();
+      expect(el("#timer-status-preview")?.textContent?.trim()).toBe(
+        "RD_AUTO_ADVANCING",
+      );
+    });
+
+    it("hides the other status options when the text is switched off", async () => {
+      const box = el("#timer-show-status-text")!;
+      box.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(component.settings().showStatusText).toBeFalse();
+      expect(changeSpy).toHaveBeenCalled();
+      expect(el("#timer-auto-advancing-text")).toBeNull();
+    });
+
+    it("stores the typed text and shows it in the preview", async () => {
+      const input = el("#timer-auto-advancing-text")!;
+      input.value = "Next heat soon";
+      input.dispatchEvent(new Event("input"));
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(component.settings().autoAdvancingText).toBe("Next heat soon");
+      expect(el("#timer-status-preview")?.textContent?.trim()).toBe(
+        "Next heat soon",
+      );
+    });
+
+    it("stores Uppercase off", async () => {
+      el("#timer-status-uppercase")!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(component.settings().statusUppercase).toBeFalse();
+    });
+  });
 });
