@@ -162,6 +162,34 @@ describe("RaceEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should map the race format conflict choices to import resolutions", () => {
+    const resolve = spyOn(component, "onResolveConfigConflict");
+    component.onFormatConflictChoice("USE_MINE");
+    component.onFormatConflictChoice("SAVE_COPY");
+    component.onFormatConflictChoice("REPLACE_MINE");
+    expect(resolve.calls.allArgs()).toEqual([
+      ["CANCEL"],
+      ["AUTO_RENAME"],
+      ["OVERWRITE"],
+    ]);
+  });
+
+  it("should show the shared race format conflict popup instead of the unstyled one", () => {
+    component.showConfigConflictModal = true;
+    component.configConflictExistingName = "Club Sprint";
+    component.configConflictSuggestedName = "Club Sprint (1)";
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(
+      el.querySelector("app-format-conflict-modal .fcm-dialog"),
+    ).toBeTruthy();
+    // only the shared popup is left
+    expect(el.querySelectorAll("#config-conflict-modal-content").length).toBe(
+      1,
+    );
+    expect(el.querySelector(".modal-backdrop")).toBeNull();
+  });
+
   it("should render page container without hardcoded transform scaling", () => {
     fixture.detectChanges();
     const container = fixture.nativeElement.querySelector(".page-container");

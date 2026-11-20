@@ -117,419 +117,360 @@ describe("RacePackageModalComponent", () => {
     fixture.detectChanges();
   });
 
-  it("should create and fetch local drivers on init", () => {
+  const open = (preview: RacePackagePreview = mockPreview): void => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("preview", preview);
+    fixture.detectChanges();
+  };
+
+  const lastRequest = (): RacePackageCommitRequest =>
+    mockDataService.commitRacePackage.calls.mostRecent().args[0];
+
+  const q = (selector: string): HTMLElement | null =>
+    fixture.nativeElement.querySelector(selector);
+
+  const dupPreview: RacePackagePreview = {
+    ...mockPreview,
+    duplicate_race: true,
+    existing_race_id: "existing-1",
+    existing_race_name: "Friday Night Grand Prix",
+  };
+
+  const conflictPreview: RacePackagePreview = {
+    ...mockPreview,
+    config_conflict: true,
+    existing_config_name: "Friday Night Grand Prix",
+    suggested_config_name: "Friday Night Grand Prix (1)",
+  };
+
+  const allMatchedPreview: RacePackagePreview = {
+    ...mockPreview,
+    driver_mappings: [
+      mockPreview.driver_mappings[0],
+      {
+        source_driver_id: "sd-2",
+        source_driver_name: "Bob Local",
+        source_driver_nickname: "Bobby",
+        matched_local_driver_id: "ld-2",
+        matched_local_driver_name: "Bob Local",
+        match_type: "EXACT_NAME",
+        suggested_action: "LINK",
+      },
+    ],
+  };
+
+  it("should create and fetch local drivers and teams on init", () => {
     expect(component).toBeTruthy();
     expect(mockDataService.getDrivers).toHaveBeenCalled();
-    expect(component.localDrivers.length).toBe(2);
-    expect(component.isCommitting).toBeFalse();
-    expect(component.duplicateAction).toBe("CREATE_COPY");
+    expect(mockDataService.getTeams).toHaveBeenCalled();
+    expect(component.localDrivers).toEqual(mockDrivers);
+    expect(component.localTeams).toEqual(mockTeams);
   });
 
-  it("should handle error when fetching local drivers gracefully", () => {
+  it("should handle errors when fetching local drivers gracefully", () => {
     mockDataService.getDrivers.and.returnValue(
-      throwError(() => new Error("Network error")),
+      throwError(() => new Error("fail")),
     );
-    const newFixture = TestBed.createComponent(RacePackageModalComponent);
-    const newComp = newFixture.componentInstance;
-    newComp.ngOnInit();
-    expect(newComp.localDrivers).toEqual([]);
+    component.ngOnInit();
+    expect(component.localDrivers).toEqual([]);
   });
 
-  it("should not render modal backdrop when visible is false", () => {
-    fixture.componentRef.setInput("visible", false);
+  it("should not render when visible is false", () => {
     fixture.componentRef.setInput("preview", mockPreview);
     fixture.detectChanges();
-
-    const backdrop = fixture.nativeElement.querySelector(".rpm-backdrop");
-    expect(backdrop).toBeNull();
+    expect(q(".rpm-backdrop")).toBeNull();
   });
 
-  it("should render modal when visible is true and preview is set", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    const backdrop = fixture.nativeElement.querySelector(".rpm-backdrop");
-    expect(backdrop).not.toBeNull();
-    const raceName = fixture.nativeElement.querySelector(".rpm-race-name");
-    expect(raceName?.textContent?.trim()).toBe("Friday Night Grand Prix");
-
-    // Resolutions initialized
-    expect(component.driverResolutions["sd-1"]).toEqual({
-      source_driver_id: "sd-1",
-      action: "LINK",
-      target_driver_id: "ld-1",
-      new_driver_name: "Alice Source",
-    });
-    expect(component.driverResolutions["sd-2"]).toEqual({
-      source_driver_id: "sd-2",
-      action: "CREATE_NEW",
-      target_driver_id: "",
-      new_driver_name: "Charlie Source",
-    });
-  });
-
-  it("should render duplicate callout and configure new config when duplicate_race is true", () => {
-    const dupPreview: RacePackagePreview = {
-      ...mockPreview,
-      duplicate_race: true,
-      existing_race_name: "Existing Grand Prix",
-      config_conflict: true,
-      existing_config_name: "Friday Night Grand Prix",
-      suggested_config_name: "Friday Night Grand Prix (1)",
-    };
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", dupPreview);
-    fixture.detectChanges();
-
-    const dupCallout = fixture.nativeElement.querySelector(
-      ".rpm-duplicate-callout",
+  it("should render one screen with the race summary and no stepper", () => {
+    open();
+    expect(q(".rpm-backdrop")).not.toBeNull();
+    expect(q(".rpm-meta-name")?.textContent).toContain(
+      "Friday Night Grand Prix",
     );
-    expect(dupCallout).not.toBeNull();
-    expect(component.duplicateAction).toBe("CREATE_COPY");
-    expect(component.configAction).toBe("CREATE_NEW");
-    expect(component.customConfigName).toBe("Friday Night Grand Prix (1)");
-
-    const configCard = fixture.nativeElement.querySelector(".rpm-config-card");
-    expect(configCard).not.toBeNull();
+    expect(q(".rpm-stepper")).toBeNull();
+    expect(q(".rpm-duplicate-callout")).toBeNull();
+    expect(q("#rpm-save-format")).not.toBeNull();
+    expect(component.raceName).toBe("Friday Night Grand Prix");
   });
 
-  it("should allow editing custom config name or setting configAction to SKIP", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    expect(component.configAction).toBe("CREATE_NEW");
-    expect(component.customConfigName).toBe("Friday Night Grand Prix");
-
-    // Edit config name
-    component.customConfigName = "My Custom Cup";
-    expect(component.customConfigName).toBe("My Custom Cup");
-
-    // Change action to SKIP
-    component.onConfigActionChange("SKIP");
-    expect(component.configAction).toBe("SKIP");
-
-    // Change duplicate action to SKIP
-    component.onDuplicateActionChange("SKIP");
-    expect(component.duplicateAction).toBe("SKIP");
-    expect(component.configAction).toBe("SKIP");
+  it("should preselect matched drivers and New driver for unmatched ones", () => {
+    open();
+    expect(component.picks["sd-1"]).toBe("ld-1");
+    expect(component.picks["sd-2"]).toBe(component.NEW_PARTICIPANT);
+    expect(component.newNames["sd-2"]).toBe("Charlie Source");
+    expect(component.linkedCount).toBe(1);
+    expect(component.newCount).toBe(1);
   });
 
-  it("should render clean race configuration card when config_conflict is false", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    const configCard = fixture.nativeElement.querySelector(".rpm-config-card");
-    expect(configCard).not.toBeNull();
-    expect(configCard.classList.contains("has-conflict")).toBeFalse();
-
-    const badge = configCard.querySelector(".rpm-config-badge.clean");
-    expect(badge).not.toBeNull();
-    expect(component.configAction).toBe("CREATE_NEW");
+  it("should open the driver list by itself when a driver is not an exact name match", () => {
+    open();
+    expect(component.showDrivers).toBeTrue();
+    expect(
+      fixture.nativeElement.querySelectorAll(".rpm-driver-row").length,
+    ).toBe(2);
   });
 
-  it("should render race configuration conflict card and allow overwrite when config_conflict is true", () => {
-    const configConflictPreview: RacePackagePreview = {
-      ...mockPreview,
-      config_conflict: true,
-      existing_config_name: "Friday Night Grand Prix",
-      suggested_config_name: "Friday Night Grand Prix (1)",
-    };
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", configConflictPreview);
-    fixture.detectChanges();
-
-    const configCard = fixture.nativeElement.querySelector(
-      ".rpm-config-card.has-conflict",
+  it("should keep the driver list closed when every driver matches by name, and toggle it", () => {
+    open(allMatchedPreview);
+    expect(component.showDrivers).toBeFalse();
+    expect(q(".rpm-driver-row")).toBeNull();
+    expect(q(".rpm-driver-summary")?.textContent).toContain(
+      "RPM_DRIVERS_ALL_KNOWN",
     );
-    expect(configCard).not.toBeNull();
-    expect(component.configAction).toBe("CREATE_NEW");
-    expect(component.customConfigName).toBe("Friday Night Grand Prix (1)");
+
+    (q(".btn-toggle-drivers") as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelectorAll(".rpm-driver-row").length,
+    ).toBe(2);
+  });
+
+  it("should default a duplicate race to Replace my copy (OVERWRITE)", async () => {
+    open(dupPreview);
+    expect(q(".rpm-duplicate-callout")).not.toBeNull();
+    expect(component.duplicateChoice).toBe("REPLACE");
+
+    await component.onCommit();
+    expect(lastRequest().duplicate_action).toBe("OVERWRITE");
+  });
+
+  it("should send CREATE_COPY when Keep both is chosen", async () => {
+    open(dupPreview);
+    (q("#rpm-dup-keep") as HTMLInputElement).dispatchEvent(new Event("change"));
+    fixture.detectChanges();
+    expect(component.duplicateChoice).toBe("KEEP_BOTH");
+
+    await component.onCommit();
+    expect(lastRequest().duplicate_action).toBe("CREATE_COPY");
+  });
+
+  it("should send CREATE_COPY for a race that is not a duplicate", async () => {
+    open();
+    await component.onCommit();
+    expect(lastRequest().duplicate_action).toBe("CREATE_COPY");
+  });
+
+  it("should save the race format by default when there is no name clash", async () => {
+    open();
+    await component.onCommit();
+    expect(lastRequest().config_action).toBe("CREATE_NEW");
+    expect(lastRequest().race_name).toBe("Friday Night Grand Prix");
+    expect(lastRequest().custom_config_name).toBe("Friday Night Grand Prix");
+  });
+
+  it("should skip the race format when the checkbox is cleared", async () => {
+    open();
+    component.saveFormat = false;
+    await component.onCommit();
+    expect(lastRequest().config_action).toBe("SKIP");
+  });
+
+  it("should show the three race format choices on a name clash, defaulting to Use mine", async () => {
+    open(conflictPreview);
+    expect(q("#rpm-save-format")).toBeNull();
+    expect(q("#rpm-format-mine")).not.toBeNull();
+    expect(q("#rpm-format-copy")).not.toBeNull();
+    expect(q("#rpm-format-replace")).not.toBeNull();
+    expect(component.formatChoice).toBe("USE_MINE");
+    expect(component.isNameLocked).toBeTrue();
+    expect((q("#rpm-race-name-input") as HTMLInputElement).readOnly).toBeTrue();
+
+    await component.onCommit();
+    expect(lastRequest().config_action).toBe("USE_EXISTING");
+    expect(lastRequest().race_name).toBe("Friday Night Grand Prix");
+  });
+
+  it("should use the suggested name and allow editing for Save as a copy", async () => {
+    open(conflictPreview);
+    (q("#rpm-format-copy") as HTMLInputElement).dispatchEvent(
+      new Event("change"),
+    );
+    fixture.detectChanges();
+    expect(component.formatChoice).toBe("SAVE_COPY");
+    expect(component.isNameLocked).toBeFalse();
     expect(component.raceName).toBe("Friday Night Grand Prix (1)");
 
-    component.onConfigActionChange("OVERWRITE");
-    fixture.detectChanges();
-    const conflictBadge = configCard.querySelector(
-      ".rpm-config-badge.conflict",
-    );
-    expect(conflictBadge).not.toBeNull();
-  });
-
-  it("should render target season banner when targetSeasonId is provided", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.componentRef.setInput("targetSeasonId", "season-1");
-    fixture.detectChanges();
-
-    const banner = fixture.nativeElement.querySelector(
-      ".rpm-season-target-banner",
-    );
-    expect(banner).not.toBeNull();
-    expect(component.selectedSeasonId).toBe("season-1");
-  });
-
-  it("should render season picker when seasons are provided and no targetSeasonId", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.componentRef.setInput("targetSeasonId", undefined);
-    fixture.componentRef.setInput("seasons", mockSeasons);
-    fixture.detectChanges();
-
-    const picker = fixture.nativeElement.querySelector(
-      ".rpm-season-picker-row",
-    );
-    expect(picker).not.toBeNull();
-  });
-
-  it("should handle driver resolution changes correctly", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    // Change action of sd-1 from LINK to CREATE_NEW
-    component.onActionChange("sd-1", "CREATE_NEW");
-    expect(component.driverResolutions["sd-1"].action).toBe("CREATE_NEW");
-
-    // Change action of sd-2 from CREATE_NEW to LINK (should link to first local driver since no match)
-    component.onActionChange("sd-2", "LINK");
-    expect(component.driverResolutions["sd-2"].action).toBe("LINK");
-    expect(component.driverResolutions["sd-2"].target_driver_id).toBe("ld-1");
-
-    // Change target driver
-    component.onTargetDriverChange("sd-2", "ld-2");
-    expect(component.driverResolutions["sd-2"].target_driver_id).toBe("ld-2");
-
-    // Change new name
-    component.onNewNameChange("sd-1", "Alice Modified");
-    expect(component.driverResolutions["sd-1"].new_driver_name).toBe(
-      "Alice Modified",
-    );
-
-    // getResolution helper
-    expect(component.getResolution("sd-1")?.new_driver_name).toBe(
-      "Alice Modified",
-    );
-  });
-
-  it("should close modal when close button or backdrop is clicked", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    let closed = false;
-    component.close.subscribe(() => (closed = true));
-
-    const closeBtn = fixture.nativeElement.querySelector(".rpm-btn-close");
-    closeBtn.click();
-    expect(closed).toBeTrue();
-  });
-
-  it("should not close modal while committing", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    component.isCommitting = true;
-    fixture.detectChanges();
-
-    let closed = false;
-    component.close.subscribe(() => (closed = true));
-
-    component.onClose();
-    expect(closed).toBeFalse();
-  });
-
-  it("should commit race package successfully and emit result", async () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.componentRef.setInput("targetSeasonId", "season-1");
-    fixture.detectChanges();
-
-    let committedResult: RacePackageResult | undefined;
-    let closed = false;
-    component.committed.subscribe((res) => (committedResult = res));
-    component.close.subscribe(() => (closed = true));
-
+    component.raceName = "  Club Night Copy  ";
     await component.onCommit();
-
-    expect(mockDataService.commitRacePackage).toHaveBeenCalled();
-    const reqArg: RacePackageCommitRequest =
-      mockDataService.commitRacePackage.calls.mostRecent().args[0];
-    expect(reqArg.temp_package_token).toBe("token-123");
-    expect(reqArg.duplicate_action).toBe("CREATE_COPY");
-    expect(reqArg.config_action).toBe("CREATE_NEW");
-    expect(reqArg.custom_config_name).toBe("Friday Night Grand Prix");
-    expect(reqArg.season_id).toBe("season-1");
-    expect(reqArg.driver_resolutions.length).toBe(2);
-
-    expect(committedResult).toBeDefined();
-    expect(committedResult?.imported_race_id).toBe("imported-race-1");
-    expect(closed).toBeTrue();
-    expect(component.isCommitting).toBeFalse();
+    expect(lastRequest().config_action).toBe("CREATE_NEW");
+    expect(lastRequest().race_name).toBe("Club Night Copy");
+    expect(lastRequest().custom_config_name).toBe("Club Night Copy");
   });
 
-  it("should display error banner on commit failure", async () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    mockDataService.commitRacePackage.and.returnValue(
-      throwError(() => ({
-        error: { message: "Package corrupted or invalid" },
-      })),
-    );
-
+  it("should send OVERWRITE for Replace mine", async () => {
+    open(conflictPreview);
+    component.onFormatChoiceChange("REPLACE_MINE");
+    expect(component.raceName).toBe("Friday Night Grand Prix");
     await component.onCommit();
-
-    expect(component.isCommitting).toBeFalse();
-    expect(component.errorMessage).toBe("Package corrupted or invalid");
-
-    fixture.detectChanges();
-    const errorBanner = fixture.nativeElement.querySelector(
-      ".rpm-alert-banner.error",
-    );
-    expect(errorBanner).not.toBeNull();
+    expect(lastRequest().config_action).toBe("OVERWRITE");
   });
 
-  it("should return early in onCommit if preview is null", async () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", null);
-    fixture.detectChanges();
+  it("should not let two package drivers use the same local driver", async () => {
+    open();
+    component.onPickChange("sd-2", "ld-1");
+
+    expect(component.usedBy("ld-1", "sd-2")).toBe("Alice Source");
+    expect(component.usedBy("ld-1", "sd-1")).toBe("Charlie Source");
+    expect(component.unresolvedCount).toBe(2);
+    expect(component.canImport).toBeFalse();
 
     await component.onCommit();
     expect(mockDataService.commitRacePackage).not.toHaveBeenCalled();
   });
 
-  it("should navigate to step 2 and render driver mapping table when drivers need review", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
+  it("should count a row without a choice as still to pick", () => {
+    open();
+    component.onPickChange("sd-2", "");
     fixture.detectChanges();
-
-    expect(component.currentStep).toBe(1);
-    expect(component.allDriversMatched).toBeFalse();
-    expect(component.matchedDriversCount).toBe(1);
-    expect(component.newDriversCount).toBe(1);
-
-    component.goToStep(2);
-    fixture.detectChanges();
-
-    expect(component.currentStep).toBe(2);
-    const warningSummary = fixture.nativeElement.querySelector(
-      ".rpm-drivers-summary.warning",
-    );
-    expect(warningSummary).not.toBeNull();
-
-    const tableWrapper =
-      fixture.nativeElement.querySelector(".rpm-table-wrapper");
-    expect(tableWrapper).not.toBeNull();
-
-    const rows = fixture.nativeElement.querySelectorAll(".rpm-table tbody tr");
-    expect(rows.length).toBe(2);
+    expect(component.unresolvedCount).toBe(1);
+    expect(q(".badge-problem")).not.toBeNull();
+    expect(q(".rpm-footer-note")).not.toBeNull();
+    expect((q("#rpm-btn-import") as HTMLButtonElement).disabled).toBeTrue();
   });
 
-  it("should display success summary and toggle driver table when all drivers match", () => {
-    const allMatchedPreview: RacePackagePreview = {
+  it("should block import when a new driver has an empty name", () => {
+    open();
+    component.onNewNameChange("sd-2", "   ");
+    expect(component.unresolvedCount).toBe(1);
+    expect(component.canImport).toBeFalse();
+  });
+
+  it("should update the counts live when a pick changes", () => {
+    open();
+    component.onPickChange("sd-2", "ld-2");
+    expect(component.linkedCount).toBe(2);
+    expect(component.newCount).toBe(0);
+    component.onPickChange("sd-1", component.NEW_PARTICIPANT);
+    expect(component.linkedCount).toBe(1);
+    expect(component.newCount).toBe(1);
+  });
+
+  it("should build LINK and CREATE_NEW resolutions from the picks", async () => {
+    open();
+    component.onNewNameChange("sd-2", "  Charlie New  ");
+    await component.onCommit();
+    expect(lastRequest().driver_resolutions).toEqual([
+      { source_driver_id: "sd-1", action: "LINK", target_driver_id: "ld-1" },
+      {
+        source_driver_id: "sd-2",
+        action: "CREATE_NEW",
+        new_driver_name: "Charlie New",
+      },
+    ]);
+  });
+
+  it("should list teams with the t_ prefix for team rows", () => {
+    expect(component.isTeam("t_123")).toBeTrue();
+    expect(component.isTeam("sd-1")).toBeFalse();
+    expect(component.localOptions("t_src").map((o) => o.value)).toEqual([
+      "t_lt-1",
+      "t_lt-2",
+    ]);
+    expect(component.localOptions("sd-1")[0]).toEqual({
+      value: "ld-1",
+      label: "Alice Local (Ali)",
+    });
+  });
+
+  it("should prefix a matched team id that comes without t_", () => {
+    open({
       ...mockPreview,
       driver_mappings: [
         {
-          source_driver_id: "sd-1",
-          source_driver_name: "Alice Source",
-          source_driver_nickname: "Ali",
-          matched_local_driver_id: "ld-1",
-          matched_local_driver_name: "Alice Local",
+          source_driver_id: "t_src-team",
+          source_driver_name: "Scuderia",
+          source_driver_nickname: "",
+          matched_local_driver_id: "lt-1",
           match_type: "EXACT_NAME",
           suggested_action: "LINK",
         },
       ],
-    };
-
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", allMatchedPreview);
-    fixture.detectChanges();
-
-    expect(component.allDriversMatched).toBeTrue();
-
-    component.goToStep(2);
-    fixture.detectChanges();
-
-    const successSummary = fixture.nativeElement.querySelector(
-      ".rpm-drivers-summary.success",
-    );
-    expect(successSummary).not.toBeNull();
-    expect(component.showDriverDetails).toBeFalse();
-    expect(
-      fixture.nativeElement.querySelector(".rpm-table-wrapper"),
-    ).toBeNull();
-
-    component.toggleDriverDetails();
-    fixture.detectChanges();
-
-    expect(component.showDriverDetails).toBeTrue();
-    expect(
-      fixture.nativeElement.querySelector(".rpm-table-wrapper"),
-    ).not.toBeNull();
+    });
+    expect(component.picks["t_src-team"]).toBe("t_lt-1");
   });
 
-  it("should block step 2 and commit empty driver resolutions when duplicateAction is SKIP", async () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
+  it("should map match types to badge keys", () => {
+    const [exact, none] = mockPreview.driver_mappings;
+    expect(component.matchBadgeKey(exact)).toBe("RPM_MATCH_SAME_NAME");
+    expect(component.matchBadgeKey(none)).toBe("RPM_MATCH_NOT_FOUND");
+    expect(
+      component.matchBadgeKey({ ...exact, match_type: "EXACT_NICKNAME" }),
+    ).toBe("RPM_MATCH_SAME_NICKNAME");
+  });
 
-    component.onDuplicateActionChange("SKIP");
-    fixture.detectChanges();
+  it("should show the season banner and send the target season", async () => {
+    fixture.componentRef.setInput("targetSeasonId", "season-1");
+    open();
+    expect(q(".rpm-season-target")).not.toBeNull();
+    expect(q(".rpm-season-select")).toBeNull();
+    await component.onCommit();
+    expect(lastRequest().season_id).toBe("season-1");
+  });
 
-    expect(component.duplicateAction).toBe("SKIP");
-    expect(component.configAction).toBe("SKIP");
+  it("should show the season picker when seasons are given and no target season", async () => {
+    fixture.componentRef.setInput("seasons", mockSeasons);
+    open();
+    expect(q(".rpm-season-select")).not.toBeNull();
+    await component.onCommit();
+    expect(lastRequest().season_id).toBeUndefined();
 
-    // Attempt to navigate to step 2 should be blocked
-    component.goToStep(2);
-    expect(component.currentStep).toBe(1);
+    component.selectedSeasonId = "season-2";
+    await component.onCommit();
+    expect(lastRequest().season_id).toBe("season-2");
+  });
 
-    const skipBanner = fixture.nativeElement.querySelector(".rpm-skip-banner");
-    expect(skipBanner).not.toBeNull();
+  it("should emit the result and close after a successful import", async () => {
+    open();
+    let result: RacePackageResult | undefined;
+    let closed = false;
+    component.committed.subscribe((r) => (result = r));
+    component.close.subscribe(() => (closed = true));
 
     await component.onCommit();
 
-    expect(mockDataService.commitRacePackage).toHaveBeenCalled();
-    const reqArg: RacePackageCommitRequest =
-      mockDataService.commitRacePackage.calls.mostRecent().args[0];
-    expect(reqArg.duplicate_action).toBe("SKIP");
-    expect(reqArg.config_action).toBe("SKIP");
-    expect(reqArg.driver_resolutions).toEqual([]);
+    expect(result?.imported_race_id).toBe("imported-race-1");
+    expect(closed).toBeTrue();
+    expect(component.isCommitting).toBeFalse();
   });
 
-  it("should allow navigating back from step 2 to step 1", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
+  it("should show the error banner when the import fails", async () => {
+    mockDataService.commitRacePackage.and.returnValue(
+      throwError(() => ({ error: { message: "Server says no" } })),
+    );
+    open();
+    await component.onCommit();
     fixture.detectChanges();
-
-    component.goToStep(2);
-    expect(component.currentStep).toBe(2);
-
-    component.goToStep(1);
-    expect(component.currentStep).toBe(1);
+    expect(component.errorMessage).toBe("Server says no");
+    expect(q(".rpm-alert-banner.error")?.textContent).toContain(
+      "Server says no",
+    );
   });
 
-  it("should update both raceName and customConfigName onRaceNameChange", () => {
-    fixture.componentRef.setInput("visible", true);
-    fixture.componentRef.setInput("preview", mockPreview);
-    fixture.detectChanges();
-
-    component.onRaceNameChange("Custom Race Title");
-    expect(component.raceName).toBe("Custom Race Title");
-    expect(component.customConfigName).toBe("Custom Race Title");
+  it("should return early in onCommit if there is no preview", async () => {
+    await component.onCommit();
+    expect(mockDataService.commitRacePackage).not.toHaveBeenCalled();
   });
 
-  it("should correctly identify team source IDs using isTeam()", () => {
-    expect(component.isTeam("t_team-1")).toBeTrue();
-    expect(component.isTeam("t_12345")).toBeTrue();
-    expect(component.isTeam("driver-1")).toBeFalse();
-    expect(component.isTeam("")).toBeFalse();
+  it("should close from the close button but not while importing", () => {
+    open();
+    let closed = 0;
+    component.close.subscribe(() => closed++);
+    (q(".rpm-btn-close") as HTMLButtonElement).click();
+    expect(closed).toBe(1);
+
+    component.isCommitting = true;
+    component.onClose();
+    expect(closed).toBe(1);
   });
 
-  it("should load local teams along with local drivers on ngOnInit", () => {
-    expect(component.localDrivers.length).toBe(2);
-    expect(component.localTeams.length).toBe(2);
-    expect(component.localTeams[0].name).toBe("Scuderia Local");
+  it("should reset all choices when a new preview arrives", () => {
+    open(conflictPreview);
+    component.onFormatChoiceChange("REPLACE_MINE");
+    component.saveFormat = false;
+    open(dupPreview);
+    expect(component.formatChoice).toBe("USE_MINE");
+    expect(component.saveFormat).toBeTrue();
+    expect(component.duplicateChoice).toBe("REPLACE");
+    expect(component.errorMessage).toBeNull();
   });
 });
