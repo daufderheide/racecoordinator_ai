@@ -21,6 +21,8 @@
       [style.font-family]="
         widget()?.customSettings?.['titleFontFamily'] || null
       "
+      [partTextStyle]="widget()?.customSettings"
+      partPrefix="title"
       [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
       [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
     >
@@ -51,6 +53,8 @@
             [style.font-family]="
               widget()?.customSettings?.['heatNumberFontFamily'] || null
             "
+            [partTextStyle]="widget()?.customSettings"
+            partPrefix="heatNumber"
             [style.font-size.px]="
               scaleToWindow()
                 ? null
@@ -116,6 +120,8 @@
                       widget()?.customSettings?.['summaryHeaderFontFamily'] ||
                       null
                     "
+                    [partTextStyle]="widget()?.customSettings"
+                    partPrefix="summaryHeader"
                     [style.font-size.px]="
                       scaleToWindow()
                         ? null
@@ -189,6 +195,8 @@
                         widget()?.customSettings?.['summaryRowFontFamily'] ||
                         null
                       "
+                      [partTextStyle]="widget()?.customSettings"
+                      partPrefix="summaryRow"
                       [style.font-size.px]="
                         scaleToWindow()
                           ? null
@@ -282,6 +290,8 @@
                   [style.font-family]="
                     widget()?.customSettings?.['laneFontFamily'] || null
                   "
+                  [partTextStyle]="widget()?.customSettings"
+                  partPrefix="lane"
                   [style.font-size.px]="
                     scaleToWindow()
                       ? null

@@ -3,6 +3,7 @@ import { Component, computed, input, ViewEncapsulation } from "@angular/core";
 import { SeasonStandingItem } from "@app/models/season";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,
@@ -10,7 +11,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   templateUrl: "./raceday-season-leaderboard.component.html",
   styleUrls: ["./raceday-season-leaderboard.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, TranslatePipe],
+  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
 })
 export class RacedaySeasonLeaderboardComponent {
   seasonStandings = input<SeasonStandingItem[] | any[]>([]);

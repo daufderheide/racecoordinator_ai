@@ -624,6 +624,14 @@ app-inspector-shell {
   min-width: 0;
 }
 
+/* weight / case options show a sample letter (the word is the tooltip) */
+.kit-sample-letter {
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* note: a short paragraph, e.g. a custom widget's description */
 .kit-note {
   margin: 0;

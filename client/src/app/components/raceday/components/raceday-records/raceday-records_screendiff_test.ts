@@ -42,6 +42,9 @@ async function setupRecordsTest(
     backgroundColor?: string;
     backgroundOpacity?: number;
     shadow?: string;
+    headerFontWeight?: string;
+    headerLetterSpacing?: number;
+    headerTextTransform?: string;
   },
 ) {
   if (customSettings) {
@@ -119,6 +122,17 @@ test.describe("Raceday Records Visuals", () => {
       showHeatBest: false,
     });
     await expect(records).toHaveScreenshot("raceday-records-one-metric.png");
+  });
+
+  test("should draw the header text style: bold, letter spacing, uppercase", async ({
+    page,
+  }) => {
+    const records = await setupRecordsTest(page, {
+      headerFontWeight: "bold",
+      headerLetterSpacing: 2,
+      headerTextTransform: "uppercase",
+    });
+    await expect(records).toHaveScreenshot("raceday-records-header-style.png");
   });
 
   test("should draw the frame options: background opacity and shadow", async ({

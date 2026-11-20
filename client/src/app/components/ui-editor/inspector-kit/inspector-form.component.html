@@ -398,6 +398,13 @@
                           $any(field).defaultColor ||
                           null
                         "
+                        [style.font-weight]="
+                          partValue($any(field), 'weight') || null
+                        "
+                        [style.letter-spacing]="partSpacing($any(field))"
+                        [style.text-transform]="
+                          partValue($any(field), 'case') || null
+                        "
                         >{{ partSample($any(field)) }}</span
                       >
                       <span class="material-icons kit-muted">{{
@@ -519,6 +526,115 @@
                                     <span class="material-icons"
                                       >format_align_{{ a }}</span
                                     >
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                        }
+                        @if ($any(field).keys.weight) {
+                          <div class="kit-row" data-part-row="weight">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_WEIGHT" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <div class="kit-seg">
+                                @for (
+                                  o of [
+                                    { v: "", k: "UE_KIT_AUTO" },
+                                    { v: "normal", k: "UE_KIT_WEIGHT_REGULAR" },
+                                    { v: "bold", k: "UE_KIT_WEIGHT_BOLD" },
+                                  ];
+                                  track o.v
+                                ) {
+                                  <button
+                                    type="button"
+                                    [attr.aria-pressed]="
+                                      (partValue($any(field), 'weight') ||
+                                        '') === o.v
+                                    "
+                                    (click)="
+                                      setPart($any(field), 'weight', o.v)
+                                    "
+                                    [title]="o.k | translate"
+                                    [attr.aria-label]="o.k | translate"
+                                  >
+                                    @if (o.v) {
+                                      <!-- a sample letter in that weight -->
+                                      <span
+                                        class="kit-sample-letter"
+                                        [style.font-weight]="o.v"
+                                        >A</span
+                                      >
+                                    } @else {
+                                      {{ o.k | translate }}
+                                    }
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                        }
+                        @if ($any(field).keys.spacing) {
+                          <div class="kit-row" data-part-row="spacing">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_LETTER_SPACING" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <app-kit-stepper
+                                [inputId]="'kit-' + field.id + '-spacing'"
+                                [value]="partValue($any(field), 'spacing') || 0"
+                                [min]="0"
+                                [max]="8"
+                                unit="px"
+                                [ariaLabel]="
+                                  'UE_KIT_LETTER_SPACING' | translate
+                                "
+                                (valueChange)="
+                                  setPart($any(field), 'spacing', $event)
+                                "
+                              ></app-kit-stepper>
+                            </div>
+                          </div>
+                        }
+                        @if ($any(field).keys.case) {
+                          <div class="kit-row" data-part-row="case">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_CASE" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <div class="kit-seg">
+                                @for (
+                                  o of [
+                                    { v: "", k: "UE_KIT_AUTO" },
+                                    { v: "none", k: "UE_KIT_CASE_AS_TYPED" },
+                                    { v: "uppercase", k: "UE_KIT_CASE_UPPER" },
+                                  ];
+                                  track o.v
+                                ) {
+                                  <button
+                                    type="button"
+                                    [attr.aria-pressed]="
+                                      (partValue($any(field), 'case') || '') ===
+                                      o.v
+                                    "
+                                    (click)="setPart($any(field), 'case', o.v)"
+                                    [title]="o.k | translate"
+                                    [attr.aria-label]="o.k | translate"
+                                  >
+                                    @if (o.v === "none") {
+                                      <span class="kit-sample-letter">Aa</span>
+                                    } @else if (o.v === "uppercase") {
+                                      <span class="kit-sample-letter">AA</span>
+                                    } @else {
+                                      {{ o.k | translate }}
+                                    }
                                   </button>
                                 }
                               </div>

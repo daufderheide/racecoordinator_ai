@@ -168,13 +168,26 @@ export function layoutFolder(): InspectorFolder {
   };
 }
 
-/** A text part using the usual <prefix>FontFamily / FontSize / TextColor keys. */
+/**
+ * A text part using the usual <prefix>FontFamily / FontSize / TextColor keys.
+ * `styled: true` adds weight, letter spacing and case (<prefix>FontWeight,
+ * <prefix>LetterSpacing, <prefix>TextTransform) for widgets whose template
+ * draws them with PartTextStyleDirective.
+ */
 export function textPart(
   id: string,
   labelKey: string,
   prefix: string,
-  options: Partial<TextPartField> = {},
+  options: Partial<TextPartField> & { styled?: boolean } = {},
 ): TextPartField {
+  const { styled, ...rest } = options;
+  const styleKeys = styled
+    ? {
+        weight: `${prefix}FontWeight`,
+        spacing: `${prefix}LetterSpacing`,
+        case: `${prefix}TextTransform`,
+      }
+    : {};
   return {
     id,
     type: "textPart",
@@ -183,8 +196,22 @@ export function textPart(
       font: `${prefix}FontFamily`,
       size: `${prefix}FontSize`,
       color: `${prefix}TextColor`,
+      ...styleKeys,
     },
-    searchTerms: "font size colour color text typography",
-    ...options,
+    searchTerms: styled
+      ? "font size colour color text typography weight bold spacing uppercase case"
+      : "font size colour color text typography",
+    ...rest,
+    // nothing stored = the part's own look (see PartTextStyleDirective)
+    ...(styled
+      ? {
+          keyDefaults: {
+            weight: "",
+            spacing: 0,
+            case: "",
+            ...(rest.keyDefaults || {}),
+          },
+        }
+      : {}),
   };
 }

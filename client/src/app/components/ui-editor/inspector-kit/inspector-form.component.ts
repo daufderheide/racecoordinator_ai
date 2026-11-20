@@ -37,6 +37,9 @@ export interface GeometryChange {
   value: number;
 }
 
+/** The settings a text part can have. */
+export type TextPartKey = keyof TextPartField["keys"];
+
 export interface ResetEvent {
   /** Translation key of what was reset (field label or folder name). */
   labelKey: string;
@@ -239,10 +242,14 @@ export class InspectorFormComponent {
       : v;
   }
 
-  partValue(
-    field: TextPartField,
-    part: "font" | "size" | "color" | "align",
-  ): any {
+  /** Letter spacing for the sample chip, or nothing when not set. */
+  partSpacing(field: TextPartField): string | null {
+    if (!field.keys.spacing) return null;
+    const v = this.partValue(field, "spacing");
+    return v === undefined || v === null || v === "" ? null : `${v}px`;
+  }
+
+  partValue(field: TextPartField, part: TextPartKey): any {
     const key = field.keys[part];
     if (!key) return undefined;
     const v = this.source(field)?.[key];
@@ -324,11 +331,7 @@ export class InspectorFormComponent {
     this.settingsChange.emit();
   }
 
-  setPart(
-    field: TextPartField,
-    part: "font" | "size" | "color" | "align",
-    value: any,
-  ): void {
+  setPart(field: TextPartField, part: TextPartKey, value: any): void {
     const key = field.keys[part];
     if (key) this.setKey(field, key, value);
   }

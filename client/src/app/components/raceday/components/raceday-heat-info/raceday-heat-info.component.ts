@@ -15,6 +15,7 @@ import { Race } from "@app/models/race";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,
@@ -22,7 +23,7 @@ import { Heat } from "@app/race/heat";
   templateUrl: "./raceday-heat-info.component.html",
   styleUrls: ["./raceday-heat-info.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, TranslatePipe],
+  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
 })
 export class RacedayHeatInfoComponent implements AfterViewInit, OnDestroy {
   heat = input<Heat | undefined>(undefined);

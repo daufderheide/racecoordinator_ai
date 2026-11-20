@@ -14,6 +14,7 @@ import { TextInfoFitHelper } from "@app/components/raceday/utils/text-info-fit.h
 import { Race } from "@app/models/race";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,
@@ -21,7 +22,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   templateUrl: "./raceday-race-name.component.html",
   styleUrls: ["./raceday-race-name.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, TranslatePipe],
+  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
 })
 export class RacedayRaceNameComponent implements AfterViewInit, OnDestroy {
   race = input<Race | undefined>(undefined);
