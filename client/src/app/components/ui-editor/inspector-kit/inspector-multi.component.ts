@@ -45,28 +45,6 @@ export interface MultiSelectItem {
           <h2 class="kit-head-title">{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
           <button
             type="button"
-            class="kit-icon-btn"
-            id="kit-copy-style"
-            [title]="'UE_STYLE_COPY' | translate"
-            [attr.aria-label]="'UE_STYLE_COPY' | translate"
-            (click)="copyStyle.emit()"
-          >
-            <span class="material-icons">format_paint</span>
-          </button>
-          <button
-            type="button"
-            class="kit-icon-btn"
-            id="kit-paste-style"
-            [class.kit-has-dot]="canPasteStyle()"
-            [disabled]="!canPasteStyle()"
-            [title]="'UE_STYLE_PASTE_ALL' | translate"
-            [attr.aria-label]="'UE_STYLE_PASTE_ALL' | translate"
-            (click)="pasteStyle.emit()"
-          >
-            <span class="material-icons">content_paste</span>
-          </button>
-          <button
-            type="button"
             class="kit-icon-btn kit-danger"
             id="kit-multi-delete"
             [title]="'UE_MULTI_DELETE_TITLE' | translate"
@@ -85,6 +63,42 @@ export interface MultiSelectItem {
               "UE_MULTI_COUNT" | translate: { count: items().length }
             }}</span>
             <small>{{ "UE_MULTI_HINT" | translate }}</small>
+          </div>
+          <div class="kit-head-nav">
+            <button
+              type="button"
+              class="kit-icon-btn"
+              id="kit-copy-style"
+              [title]="'UE_STYLE_COPY' | translate"
+              [attr.aria-label]="'UE_STYLE_COPY' | translate"
+              (click)="copyStyle.emit()"
+            >
+              <span class="material-icons">format_paint</span>
+            </button>
+            <button
+              type="button"
+              class="kit-icon-btn"
+              id="kit-paste-style"
+              [class.kit-has-dot]="canPasteStyle()"
+              [disabled]="!canPasteStyle()"
+              [title]="'UE_STYLE_PASTE_ALL' | translate"
+              [attr.aria-label]="'UE_STYLE_PASTE_ALL' | translate"
+              (click)="pasteStyle.emit()"
+            >
+              <span class="material-icons">content_paste</span>
+            </button>
+            @if (canDuplicate()) {
+              <button
+                type="button"
+                class="kit-icon-btn"
+                id="kit-duplicate"
+                [title]="'UE_DUPLICATE' | translate"
+                [attr.aria-label]="'UE_DUPLICATE' | translate"
+                (click)="duplicate.emit()"
+              >
+                <span class="material-icons">library_add</span>
+              </button>
+            }
           </div>
         </div>
       </div>
@@ -192,6 +206,8 @@ export class InspectorMultiComponent {
   deleteAll = output<void>();
   arrange = output<ArrangeAction>();
   canPasteStyle = input(false);
+  canDuplicate = input(false);
+  duplicate = output<void>();
   copyStyle = output<void>();
   pasteStyle = output<void>();
 

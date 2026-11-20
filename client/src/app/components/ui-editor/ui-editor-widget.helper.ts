@@ -1,3 +1,4 @@
+import { duplicateWidgets } from "@app/components/ui-editor/duplicate.utils";
 import {
   pasteStyle,
   StyleCopy,
@@ -696,6 +697,38 @@ export function handlePasteStyle(
   comp.captureState();
   comp.cdr?.markForCheck();
   return changed;
+}
+
+/**
+ * Duplicate the given widgets (phase 5c), as one undo step. Returns the new
+ * ids in the order of the widgets that could be duplicated.
+ */
+export function handleDuplicateWidgets(
+  comp: any,
+  ids: string[],
+  ui?: CustomUI,
+): string[] {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return [];
+  const newIds = duplicateWidgets(
+    layout.widgets,
+    ids,
+    comp.getLayoutBaseWidth(targetUi),
+    comp.getLayoutBaseHeight(targetUi),
+  );
+  if (!newIds.length) return [];
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+  return newIds;
 }
 
 export function isWidgetHeightAutoCalculated(

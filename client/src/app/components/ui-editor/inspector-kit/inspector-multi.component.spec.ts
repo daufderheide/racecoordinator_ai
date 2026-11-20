@@ -95,4 +95,14 @@ describe("InspectorMultiComponent", () => {
     paste.click();
     expect(events).toEqual(["copy", "paste"]);
   });
+
+  it("offers duplicate only when something can be duplicated (phase 5c)", () => {
+    expect(q("#kit-duplicate")).toBeNull();
+    fixture.componentRef.setInput("canDuplicate", true);
+    fixture.detectChanges();
+    let asked = 0;
+    fixture.componentInstance.duplicate.subscribe(() => asked++);
+    (q("#kit-duplicate") as HTMLButtonElement).click();
+    expect(asked).toBe(1);
+  });
 });

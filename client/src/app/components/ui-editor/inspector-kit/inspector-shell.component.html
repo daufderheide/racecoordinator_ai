@@ -6,6 +6,18 @@
   <div class="kit-head">
     <div class="kit-head-top">
       <h2 class="kit-head-title">{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+      @if (canDuplicate()) {
+        <button
+          type="button"
+          class="kit-icon-btn"
+          id="kit-duplicate"
+          [title]="'UE_DUPLICATE' | translate"
+          [attr.aria-label]="'UE_DUPLICATE' | translate"
+          (click)="duplicate.emit()"
+        >
+          <span class="material-icons">library_add</span>
+        </button>
+      }
       <button
         type="button"
         class="kit-icon-btn"

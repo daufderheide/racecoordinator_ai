@@ -80,6 +80,8 @@ export class InspectorShellComponent implements OnDestroy {
   canNavigate = input(true);
   /** Something is copied, so Paste style can be used (phase 5a). */
   canPasteStyle = input(false);
+  /** The widget can be duplicated (not a grid column, menu bar or countdown). */
+  canDuplicate = input(false);
 
   /** Emits the widget whose settings were changed (the same object the form edited). */
   widgetChange = output<any>();
@@ -90,6 +92,7 @@ export class InspectorShellComponent implements OnDestroy {
   undo = output<void>();
   copyStyle = output<void>();
   pasteStyle = output<void>();
+  duplicate = output<void>();
 
   private translation = inject(TranslationService);
   private searchInput = viewChild<ElementRef<HTMLInputElement>>("search");

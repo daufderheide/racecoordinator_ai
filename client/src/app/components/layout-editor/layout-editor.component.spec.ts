@@ -1451,6 +1451,52 @@ describe("LayoutEditorComponent", () => {
         });
       });
 
+      describe("duplicate (phase 5c)", () => {
+        beforeEach(() => component["initUndoManager"]());
+
+        it("Ctrl+D duplicates the selected widget and selects the copy", () => {
+          const capture = spyOn(component, "captureState").and.callThrough();
+          component.handleKeyboardEvent(
+            new KeyboardEvent("keydown", { code: "KeyD", ctrlKey: true }),
+          );
+          const ws = component.getLayoutWidgets();
+          expect(ws.length).toBe(5);
+          const copy = ws[4];
+          expect(copy.widgetType).toBe("timer");
+          expect([copy.x, copy.y]).toEqual([20, 20]);
+          expect(component.selectedWidgetIds).toEqual([copy.id]);
+          expect(capture).toHaveBeenCalledTimes(1);
+        });
+
+        it("duplicates several at once; the main widget's copy is main", () => {
+          component.onBoxSelected({ ids: ["a", "b"], additive: false });
+          component.makeMainSelected("b");
+          component.duplicateSelection();
+          const ws = component.getLayoutWidgets();
+          expect(ws.length).toBe(6);
+          // copy of b sits at b + 20 px; it is the main one
+          const copies = ws.slice(4);
+          const copyB = copies.find((w: any) => w.x === 220)!;
+          const copyA = copies.find((w: any) => w.x === 20)!;
+          expect(component.selectedWidgetId).toBe(copyB.id);
+          expect([...component.selectedWidgetIds].sort()).toEqual(
+            [copyA.id, copyB.id].sort(),
+          );
+        });
+
+        it("says so for a grid column and changes nothing", () => {
+          component.onWidgetSelected("g");
+          const note = jasmine.createSpy("showCanvasNote");
+          (component as any).racedayComp = { showCanvasNote: note };
+          expect(component.canDuplicateSelection).toBeFalse();
+          // (selecting a grid column lets the editor fill in its lanes)
+          const before = component.getLayoutWidgets().length;
+          component.duplicateSelection();
+          expect(note).toHaveBeenCalledWith("UE_DUPLICATE_NOT_POSSIBLE");
+          expect(component.getLayoutWidgets().length).toBe(before);
+        });
+      });
+
       it("shows the several-widgets panel instead of the widget panel", () => {
         component.isWidgetConfigVisible = true;
         component.onSelectionToggled("b");

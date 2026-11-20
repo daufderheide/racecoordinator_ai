@@ -1,3 +1,4 @@
+import { canDuplicate } from "@app/components/ui-editor/duplicate.utils";
 import { StyleClipboardService } from "@app/components/ui-editor/style-clipboard.service";
 import {
   copyStyle as copyWidgetStyle,
@@ -56,6 +57,7 @@ import {
 import {
   findDefaultWidgetId,
   handleArrange,
+  handleDuplicateWidgets,
   handleLayerOrder,
   handlePasteStyle,
   handleRemoveWidgets,
@@ -364,6 +366,37 @@ export class LayoutEditorComponent
     this.cdr.markForCheck();
   }
 
+  /** Whether any selected widget can be duplicated (not grid columns, menu bar, countdown). */
+  get canDuplicateSelection(): boolean {
+    const byId = new Map<string, any>(
+      this.getLayoutWidgets().map((w: any) => [w.id, w]),
+    );
+    return this.selectedWidgetIds.some((id) => canDuplicate(byId.get(id)));
+  }
+
+  /**
+   * Duplicate the selection (panel button, Ctrl+D), as one undo step. The
+   * copies are selected afterwards; the copy of the main widget is main.
+   */
+  duplicateSelection(): void {
+    const ids = this.selectedWidgetIds;
+    if (!ids.length || !this.editingLayout) return;
+    const byId = new Map<string, any>(
+      this.getLayoutWidgets().map((w: any) => [w.id, w]),
+    );
+    const sources = ids.filter((id) => canDuplicate(byId.get(id)));
+    if (!sources.length) {
+      this.racedayComp?.showCanvasNote?.("UE_DUPLICATE_NOT_POSSIBLE");
+      return;
+    }
+    const newIds = handleDuplicateWidgets(this, sources, this.editingLayout);
+    if (!newIds.length) return;
+    const mainIndex = Math.max(0, sources.indexOf(this.selectedWidgetId!));
+    const main = newIds[mainIndex];
+    this.applySelection({ main, extras: newIds.filter((id) => id !== main) });
+    this.racedayComp?.showCanvasNote?.("UE_DUPLICATED");
+  }
+
   /** Align / distribute / same size from the several-widgets panel (phase 4c-3). */
   onArrange(action: ArrangeAction): void {
     handleArrange(this, action, this.editingLayout ?? undefined);
@@ -607,6 +640,27 @@ export class LayoutEditorComponent
         event.preventDefault();
         if (event.code === "KeyC") this.copyStyle();
         else this.pasteStyle();
+        return;
+      }
+    }
+    // Ctrl+D: duplicate (phase 5c); the browser's bookmark shortcut is
+    // stopped inside the editor, not while typing in a field
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      event.code === "KeyD"
+    ) {
+      const t = event.target as HTMLElement | null;
+      const typing =
+        !!t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable);
+      if (!typing && this.selectedWidgetIds.length) {
+        event.preventDefault();
+        this.duplicateSelection();
         return;
       }
     }
