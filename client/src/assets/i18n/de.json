@@ -3025,7 +3025,7 @@
   "UE_GRID_SORT_ORDER_SEED": "Fahrer-Setzung",
   "UE_GRID_SORT_ORDER_HOST_LANE": "Stationsspur (aus URL)",
   "UE_GRID_SORT_ORDER_HOST_DRIVER": "Stations-Fahrer (aus URL)",
-  "UE_GRID_EMPTY_ROWS": "Zusätzliche Zeilen",
+  "UE_GRID_EMPTY_ROWS": "Leere / Zusätzliche Zeilen",
   "UE_GRID_EMPTY_ROWS_REMOVE": "Entfernen",
   "UE_GRID_EMPTY_ROWS_SHOW_EMPTY": "Leer anzeigen",
   "UE_GRID_EMPTY_ROWS_SHOW_BLANK": "Blank anzeigen",

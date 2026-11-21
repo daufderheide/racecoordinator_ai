@@ -53,4 +53,43 @@ public class OverallScoringTest {
     OverallScoring nullTiebreaker = new OverallScoring(0, null, null);
     assertEquals(TiebreakerMethod.AVERAGE_LAP_TIME, nullTiebreaker.toTiebreakerMethod());
   }
+
+  @Test
+  public void testJacksonDeserializationSnakeCase() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String json =
+        "{\"dropped_heats\":2,\"ranking_method\":\"FASTEST_LAP\",\"tiebreaker\":\"MEDIAN_LAP_TIME\"}";
+    OverallScoring scoring = mapper.readValue(json, OverallScoring.class);
+    assertEquals(2, scoring.getDroppedHeats());
+    assertEquals(OverallRanking.FASTEST_LAP, scoring.getRankingMethod());
+    assertEquals(OverallRankingTiebreaker.MEDIAN_LAP_TIME, scoring.getTiebreaker());
+  }
+
+  @Test
+  public void testJacksonDeserializationCamelCase() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String json =
+        "{\"droppedHeats\":1,\"rankingMethod\":\"TOTAL_TIME\",\"tiebreaker\":\"FASTEST_LAP_TIME\"}";
+    OverallScoring scoring = mapper.readValue(json, OverallScoring.class);
+    assertEquals(1, scoring.getDroppedHeats());
+    assertEquals(OverallRanking.TOTAL_TIME, scoring.getRankingMethod());
+    assertEquals(OverallRankingTiebreaker.FASTEST_LAP_TIME, scoring.getTiebreaker());
+  }
+
+  @Test
+  public void testJacksonDeserializationUnknownEnumFallbacks() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper()
+            .configure(
+                com.fasterxml.jackson.databind.DeserializationFeature
+                    .READ_UNKNOWN_ENUM_VALUES_AS_NULL,
+                true);
+    String json =
+        "{\"dropped_heats\":0,\"ranking_method\":\"FUTURE_RANKING\",\"tiebreaker\":\"FUTURE_TIEBREAKER\"}";
+    OverallScoring scoring = mapper.readValue(json, OverallScoring.class);
+    assertEquals(OverallRanking.LAP_COUNT, scoring.getRankingMethod());
+    assertEquals(OverallRankingTiebreaker.AVERAGE_LAP_TIME, scoring.getTiebreaker());
+  }
 }

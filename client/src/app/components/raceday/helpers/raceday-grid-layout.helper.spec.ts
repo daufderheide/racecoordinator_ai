@@ -594,5 +594,232 @@ describe("RacedayGridLayoutHelper", () => {
 
       expect(result).toBe(widgets);
     });
+
+    describe("normalizeGridColumnBoundaries & partitionGridWidgets", () => {
+      it("should clamp overlapping adjacent columns in vertical grid to prevent column width shifts", () => {
+        const session: LaneGridSession = {
+          gridId: "grid-test",
+          bounds: { x: 100, y: 50, width: 400, height: 300 },
+          totalLanes: 2,
+          sourceLaneIndex: 0,
+          direction: "vertical",
+          bindingMode: "overallPosition",
+          gridType: "overall",
+        };
+
+        const col1: AbsoluteWidgetNode = {
+          id: "col1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 100,
+          width: 150, // Ends at 250, overlaps col2 by 30px
+          height: 48,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+            columnKey: "overallTotalTime",
+          },
+        };
+        const col2: AbsoluteWidgetNode = {
+          id: "col2",
+          widgetType: "lane-column",
+          x: 220, // Starts at 220
+          y: 100,
+          width: 100,
+          height: 48,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+            columnKey: "overallGap",
+          },
+        };
+
+        const normalized =
+          RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+            session,
+            [col1, col2],
+            true,
+          );
+
+        expect(normalized.length).toBe(2);
+        expect(normalized[0].width).toBe(120); // Clamped from 150 to 120 (220 - 100)
+        expect(normalized[1].width).toBe(100);
+      });
+
+      it("should clamp overlapping adjacent rows in horizontal grid", () => {
+        const session: LaneGridSession = {
+          gridId: "grid-test",
+          bounds: { x: 100, y: 50, width: 400, height: 300 },
+          totalLanes: 2,
+          sourceLaneIndex: 0,
+          direction: "horizontal",
+          bindingMode: "lane",
+          gridType: "heat",
+        };
+
+        const row1: AbsoluteWidgetNode = {
+          id: "row1",
+          widgetType: "lane-column",
+          x: 100,
+          y: 50,
+          width: 200,
+          height: 80, // Ends at 130, overlaps row2 by 20px
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+          },
+        };
+        const row2: AbsoluteWidgetNode = {
+          id: "row2",
+          widgetType: "lane-column",
+          x: 100,
+          y: 110, // Starts at 110
+          width: 200,
+          height: 60,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+          },
+        };
+
+        const normalized =
+          RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+            session,
+            [row1, row2],
+            false,
+          );
+
+        expect(normalized.length).toBe(2);
+        expect(normalized[0].height).toBe(60); // Clamped from 80 to 60 (110 - 50)
+        expect(normalized[1].height).toBe(60);
+      });
+
+      it("should clamp the rightmost column if it exceeds grid bounds", () => {
+        const session: LaneGridSession = {
+          gridId: "grid-test",
+          bounds: { x: 100, y: 50, width: 300, height: 200 }, // right is 400
+          totalLanes: 1,
+          sourceLaneIndex: 0,
+          direction: "vertical",
+          bindingMode: "lane",
+        };
+
+        const col: AbsoluteWidgetNode = {
+          id: "col1",
+          widgetType: "lane-column",
+          x: 250,
+          y: 100,
+          width: 200, // 250 + 200 = 450 > 400
+          height: 48,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+          },
+        };
+
+        const normalized =
+          RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+            session,
+            [col],
+            true,
+          );
+
+        expect(normalized[0].width).toBe(150); // Clamped from 200 to 150 (400 - 250)
+      });
+
+      it("should seamlessly align and clamp both header and cell widgets in partitionGridWidgets", () => {
+        const session: LaneGridSession = {
+          gridId: "grid-test",
+          bounds: { x: 100, y: 50, width: 500, height: 300 },
+          totalLanes: 2,
+          sourceLaneIndex: 0,
+          direction: "vertical",
+          headerPlacement: "top",
+          headerHeight: 40,
+          bindingMode: "overallPosition",
+          gridType: "overall",
+        };
+
+        const cellTotalTime: AbsoluteWidgetNode = {
+          id: "tt",
+          widgetType: "lane-column",
+          x: 100,
+          y: 90,
+          width: 150, // Overlaps gap at 220
+          height: 48,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+            columnKey: "overallTotalTime",
+          },
+        };
+        const cellGap: AbsoluteWidgetNode = {
+          id: "gap",
+          widgetType: "lane-column",
+          x: 220,
+          y: 90,
+          width: 100,
+          height: 48,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            gridLane: 0,
+            columnKey: "overallGap",
+          },
+        };
+        const headerTotalTime: AbsoluteWidgetNode = {
+          id: "tt_grid_header",
+          widgetType: "lane-column",
+          x: 100,
+          y: 50,
+          width: 150,
+          height: 40,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            isHeaderWidget: true,
+            gridMasterId: "tt",
+          },
+        };
+        const headerGap: AbsoluteWidgetNode = {
+          id: "gap_grid_header",
+          widgetType: "lane-column",
+          x: 220,
+          y: 50,
+          width: 100,
+          height: 40,
+          zIndex: 10,
+          customSettings: {
+            gridId: "grid-test",
+            isHeaderWidget: true,
+            gridMasterId: "gap",
+          },
+        };
+
+        const result = RacedayGridDescriptorHelper.partitionGridWidgets(
+          session,
+          [cellTotalTime, cellGap, headerTotalTime, headerGap],
+          "top",
+          true,
+        );
+
+        expect(result.cellWidgets.length).toBe(2);
+        expect(result.headerWidgets.length).toBe(2);
+
+        // Both cells and headers clamped to 120 so Total Time and Gap touch without overlap
+        const ttCell = result.cellWidgets.find((w) => w.id === "tt");
+        const ttHeader = result.headerWidgets.find(
+          (w) => w.id === "tt_grid_header",
+        );
+        expect(ttCell?.width).toBe(120);
+        expect(ttHeader?.width).toBe(120);
+      });
+    });
   });
 });

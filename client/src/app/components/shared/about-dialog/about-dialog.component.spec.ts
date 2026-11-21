@@ -99,6 +99,7 @@ describe("AboutDialogComponent", () => {
     expect(creditNames).toContain("mark h");
     expect(creditNames).toContain("Rinkrat99");
     expect(creditNames).toContain("Slot'n 77");
+    expect(creditNames).toContain("theDutchmanJames");
   });
 
   it("should toggle play/pause, speed, and rewind for credits", fakeAsync(() => {

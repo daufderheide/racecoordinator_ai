@@ -470,12 +470,23 @@ export class RacedayGridDescriptorHelper {
       const rawHeaders = normalizedGridWidgets.filter(
         (w) => w.customSettings?.["isHeaderWidget"],
       );
-      const cellWidgets = normalizedGridWidgets.filter(
+      const rawCells = normalizedGridWidgets.filter(
         (w) => !w.customSettings?.["isHeaderWidget"],
       );
-      const headerWidgets = RacedayGridDescriptorHelper.alignTopHeaderWidgets(
+      const cellWidgets =
+        RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+          sessionLike,
+          rawCells,
+          isVertical,
+        );
+      let headerWidgets = RacedayGridDescriptorHelper.alignTopHeaderWidgets(
         rawHeaders,
         cellWidgets,
+      );
+      headerWidgets = RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+        sessionLike,
+        headerWidgets,
+        isVertical,
       );
       return { headerWidgets, cellWidgets };
     }
@@ -483,19 +494,115 @@ export class RacedayGridDescriptorHelper {
       const rawHeaders = normalizedGridWidgets.filter(
         (w) => w.customSettings?.["isHeaderWidget"],
       );
-      const cellWidgets = normalizedGridWidgets.filter(
+      const rawCells = normalizedGridWidgets.filter(
         (w) => !w.customSettings?.["isHeaderWidget"],
       );
-      const headerWidgets = RacedayGridDescriptorHelper.alignLeftHeaderWidgets(
+      const cellWidgets =
+        RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+          sessionLike,
+          rawCells,
+          isVertical,
+        );
+      let headerWidgets = RacedayGridDescriptorHelper.alignLeftHeaderWidgets(
         rawHeaders,
         cellWidgets,
+      );
+      headerWidgets = RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+        sessionLike,
+        headerWidgets,
+        isVertical,
       );
       return { headerWidgets, cellWidgets };
     }
     return {
       headerWidgets: [],
-      cellWidgets: normalizedGridWidgets,
+      cellWidgets: RacedayGridDescriptorHelper.normalizeGridColumnBoundaries(
+        sessionLike,
+        normalizedGridWidgets,
+        isVertical,
+      ),
     };
+  }
+
+  static normalizeGridColumnBoundaries(
+    session: LaneGridSession,
+    widgets: AbsoluteWidgetNode[],
+    isVertical: boolean,
+  ): AbsoluteWidgetNode[] {
+    if (!widgets || widgets.length === 0) return widgets;
+
+    const groups = new Map<number, AbsoluteWidgetNode[]>();
+    for (const w of widgets) {
+      const lane = Number(
+        w.customSettings?.["gridLane"] ??
+          w.customSettings?.["targetIndex"] ??
+          0,
+      );
+      let list = groups.get(lane);
+      if (!list) {
+        list = [];
+        groups.set(lane, list);
+      }
+      list.push(w);
+    }
+
+    const result: AbsoluteWidgetNode[] = [];
+    for (const group of groups.values()) {
+      RacedayGridDescriptorHelper.clampGroupBoundaries(
+        session,
+        group,
+        isVertical,
+        result,
+      );
+    }
+    return result;
+  }
+
+  private static clampGroupBoundaries(
+    session: LaneGridSession,
+    group: AbsoluteWidgetNode[],
+    isVertical: boolean,
+    out: AbsoluteWidgetNode[],
+  ): void {
+    if (isVertical) {
+      const sorted = [...group].sort((a, b) => a.x - b.x);
+      for (let i = 0; i < sorted.length; i++) {
+        const curr = sorted[i];
+        let clampedW = curr.width;
+        if (i < sorted.length - 1) {
+          const next = sorted[i + 1];
+          if (next.x > curr.x && curr.x + clampedW > next.x) {
+            clampedW = next.x - curr.x;
+          }
+        } else if (session?.bounds) {
+          const gridRight = session.bounds.x + session.bounds.width;
+          if (curr.x < gridRight && curr.x + clampedW > gridRight) {
+            clampedW = gridRight - curr.x;
+          }
+        }
+        out.push(clampedW !== curr.width ? { ...curr, width: clampedW } : curr);
+      }
+    } else {
+      const sorted = [...group].sort((a, b) => a.y - b.y);
+      for (let i = 0; i < sorted.length; i++) {
+        const curr = sorted[i];
+        let clampedH = curr.height;
+        if (i < sorted.length - 1) {
+          const next = sorted[i + 1];
+          if (next.y > curr.y && curr.y + clampedH > next.y) {
+            clampedH = next.y - curr.y;
+          }
+        } else if (session?.bounds) {
+          const gridBottom = session.bounds.y + session.bounds.height;
+          if (curr.y < gridBottom && curr.y + clampedH > gridBottom) {
+            clampedH = gridBottom - curr.y;
+          }
+        }
+        out.push(
+          clampedH !== curr.height ? { ...curr, height: clampedH } : curr,
+        );
+      }
+    }
   }
 
   static extractGridLabelSettings(

@@ -1,5 +1,6 @@
 package com.antigravity.models;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -22,9 +23,11 @@ public class OverallScoring {
   }
 
   @JsonProperty("dropped_heats")
+  @JsonAlias("droppedHeats")
   private final int droppedHeats;
 
   @JsonProperty("ranking_method")
+  @JsonAlias("rankingMethod")
   private final OverallRanking rankingMethod;
 
   @JsonProperty("tiebreaker")
@@ -38,12 +41,12 @@ public class OverallScoring {
 
   @JsonCreator
   public OverallScoring(
-      @JsonProperty("dropped_heats") int droppedHeats,
-      @JsonProperty("ranking_method") OverallRanking rankingMethod,
+      @JsonProperty("dropped_heats") @JsonAlias("droppedHeats") int droppedHeats,
+      @JsonProperty("ranking_method") @JsonAlias("rankingMethod") OverallRanking rankingMethod,
       @JsonProperty("tiebreaker") OverallRankingTiebreaker tiebreaker) {
     this.droppedHeats = droppedHeats;
-    this.rankingMethod = rankingMethod;
-    this.tiebreaker = tiebreaker;
+    this.rankingMethod = rankingMethod != null ? rankingMethod : OverallRanking.LAP_COUNT;
+    this.tiebreaker = tiebreaker != null ? tiebreaker : OverallRankingTiebreaker.AVERAGE_LAP_TIME;
   }
 
   public int getDroppedHeats() {
