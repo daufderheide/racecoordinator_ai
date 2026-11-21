@@ -291,3 +291,84 @@ test.describe("Raceday Timer Visuals", () => {
     );
   });
 });
+
+test.describe("Raceday Timer Status Text Options (#1197)", () => {
+  const raceData = {
+    race: {
+      race: {
+        model: { entityId: "r1" },
+        name: "Screendiff Race",
+        autoAdvanceTime: 10,
+        track: {
+          model: { entityId: "t1" },
+          name: "Test Track",
+          lanes: [{ objectId: "l1", length: 10 }],
+        },
+      },
+      drivers: [],
+      currentHeat: { objectId: "h1", heatNumber: 1, heatDrivers: [] },
+    },
+    raceTime: { time: 5, autoAdvanceRemaining: 5 },
+  };
+
+  const openWithTimer = async (page: any, customSettings: any) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
+    await TestSetupHelper.setupAssetMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "widget-timer",
+            widgetType: "timer",
+            x: 100,
+            y: 100,
+            width: 420,
+            height: 220,
+            zIndex: 100,
+            scaleMode: "auto",
+            customSettings,
+          },
+        ],
+      },
+    });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+    await TestSetupHelper.mockRaceData(page, raceData);
+    const timer = page.locator("app-raceday-timer");
+    await expect(timer).toBeVisible();
+    return timer;
+  };
+
+  test("should show the user's own status text as typed, in its own style", async ({
+    page,
+  }) => {
+    const timer = await openWithTimer(page, {
+      autoAdvancingText: "Next heat in a moment",
+      statusUppercase: false,
+      statusFontSize: 22,
+      statusTextColor: "#38bdf8",
+    });
+    await expect(timer.locator(".status-label")).toHaveText(
+      "Next heat in a moment",
+    );
+    await expect(timer).toHaveScreenshot(
+      "raceday-timer-status-text-custom.png",
+    );
+  });
+
+  test("should hide the status text when switched off", async ({ page }) => {
+    const timer = await openWithTimer(page, { showStatusText: false });
+    await expect(timer.locator(".timer-text")).toBeVisible();
+    await expect(timer.locator(".status-label")).toHaveCount(0);
+    await expect(timer).toHaveScreenshot(
+      "raceday-timer-status-text-hidden.png",
+    );
+  });
+});

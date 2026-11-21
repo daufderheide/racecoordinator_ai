@@ -266,6 +266,195 @@
     </div>
   </div>
 
+  <!-- Status Text (Auto-Starting / Auto-Advancing above the clock) -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_TIMER_STATUS" | translate }}
+  </div>
+  <div class="inspector-section" style="margin-bottom: 8px">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        id="timer-show-status-text"
+        [ngModel]="settings().showStatusText !== false"
+        (ngModelChange)="settings().showStatusText = $event; onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_TIMER_SHOW_STATUS" | translate }}</span>
+    </label>
+  </div>
+  @if (settings().showStatusText !== false) {
+    <div class="inspector-section">
+      <label class="inspector-label" for="timer-auto-starting-text">{{
+        "UE_INSPECTOR_TIMER_AUTO_STARTING_TEXT" | translate
+      }}</label>
+      <input
+        type="text"
+        class="inspector-input"
+        id="timer-auto-starting-text"
+        maxlength="40"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [placeholder]="'RD_AUTO_STARTING' | translate"
+        [ngModel]="settings().autoStartingText || ''"
+        (ngModelChange)="
+          settings().autoStartingText = $event; onSettingsChange()
+        "
+      />
+    </div>
+    <div class="inspector-section">
+      <label class="inspector-label" for="timer-auto-advancing-text">{{
+        "UE_INSPECTOR_TIMER_AUTO_ADVANCING_TEXT" | translate
+      }}</label>
+      <input
+        type="text"
+        class="inspector-input"
+        id="timer-auto-advancing-text"
+        maxlength="40"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        [placeholder]="'RD_AUTO_ADVANCING' | translate"
+        [ngModel]="settings().autoAdvancingText || ''"
+        (ngModelChange)="
+          settings().autoAdvancingText = $event; onSettingsChange()
+        "
+      />
+      <small class="inspector-hint">{{
+        "UE_INSPECTOR_TIMER_STATUS_HINT" | translate
+      }}</small>
+    </div>
+    <div class="inspector-section" style="margin-bottom: 8px">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          id="timer-status-uppercase"
+          [ngModel]="settings().statusUppercase !== false"
+          (ngModelChange)="
+            settings().statusUppercase = $event; onSettingsChange()
+          "
+        />
+        <span>{{ "UE_INSPECTOR_TIMER_STATUS_UPPERCASE" | translate }}</span>
+      </label>
+    </div>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().statusFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_SIZE" | translate
+      }}</label>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="range"
+          min="8"
+          max="60"
+          step="1"
+          [ngModel]="settings().statusFontSize || 16"
+          (ngModelChange)="
+            settings().statusFontSize = $event; onSettingsChange()
+          "
+          [disabled]="disableFontSizes()"
+          class="inspector-slider"
+          style="flex: 1"
+        />
+        <input
+          type="number"
+          min="8"
+          max="60"
+          step="1"
+          id="timer-status-font-size"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="settings().statusFontSize || 16"
+          (ngModelChange)="
+            settings().statusFontSize = $event; onSettingsChange()
+          "
+          [disabled]="disableFontSizes()"
+          class="inspector-number-input"
+        />
+      </div>
+    </div>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().statusTextColor"
+      >
+        <input
+          type="color"
+          [value]="settings().statusTextColor || '#ffaa00'"
+          (change)="onColorChange('statusTextColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().statusTextColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().statusTextColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('statusTextColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            <span class="material-icons" style="font-size: 14px"
+              >restart_alt</span
+            >
+          </button>
+        }
+      </div>
+    </div>
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TIMER_PREVIEW" | translate
+      }}</label>
+      <div class="timer-status-preview" id="timer-status-preview">
+        <span
+          [style.font-family]="settings().statusFontFamily || null"
+          [style.color]="settings().statusTextColor || null"
+          [style.text-transform]="
+            settings().statusUppercase === false ? 'none' : 'uppercase'
+          "
+          >{{
+            (settings().autoAdvancingText || "").trim() ||
+              ("RD_AUTO_ADVANCING" | translate)
+          }}</span
+        >
+      </div>
+    </div>
+  }
+
   <!-- Card & Border Styling -->
   <app-widget-border-inspector
     [settings]="settings()"

@@ -966,6 +966,59 @@ describe("RacedayLaneColumnComponent", () => {
     expect(card.classList.contains("drift-inactive")).toBeTrue();
   });
 
+  it("should align the drift badge with the value alignment setting", () => {
+    fixture.componentRef.setInput("parent", mockParent);
+    const badge = (valueAlignment?: "start" | "end" | "center") => {
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          targetIndex: 1,
+          columnKey: "driftIndicator",
+          displayMode: "text",
+          valueAlignment,
+        }),
+      );
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector(
+        ".drift-indicator",
+      ) as HTMLElement;
+    };
+
+    let el = badge("end");
+    expect(el.style.marginLeft).toBe("auto");
+    expect(el.style.marginRight).toBe("");
+
+    el = badge("start");
+    expect(el.style.marginLeft).toBe("");
+    expect(el.style.marginRight).toBe("auto");
+
+    el = badge("center");
+    expect(el.style.marginLeft).toBe("");
+    expect(el.style.marginRight).toBe("");
+  });
+
+  ["driver.avatarUrl", "flag", "ghostPacingLeaderBest"].forEach((columnKey) => {
+    it(`should re-fit only the header in ngAfterViewChecked for ${columnKey} columns`, () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ targetIndex: 0, columnKey, headerFontSize: 40 }),
+      );
+      fixture.detectChanges();
+      const helper = (component as any).fitHelper;
+      const headerSpy = spyOn(helper, "fitHeaderOnly").and.callThrough();
+      const fullSpy = spyOn(helper, "fitContent");
+
+      component.ngAfterViewChecked();
+
+      expect(headerSpy).toHaveBeenCalledTimes(1);
+      const ctx = headerSpy.calls.mostRecent().args[1] as any;
+      expect(ctx.settings.headerFontSize).toBe(40);
+      expect(ctx.isHeaderWidget).toBeFalse();
+      expect(fullSpy).not.toHaveBeenCalled();
+    });
+  });
+
   it("should render drift indicator column in image mode when driver has isLastLapDrift", () => {
     fixture.componentRef.setInput("parent", mockParent);
     fixture.componentRef.setInput(

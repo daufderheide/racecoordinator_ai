@@ -989,6 +989,54 @@ describe("ui-editor-widget.helper", () => {
     expect(LaneGridAnimationHelper.reset).toHaveBeenCalledWith("grid-empty");
   });
 
+  it("should store filled-in defaults on the active layout and refresh the preview when selected without a ui", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const activeCustomUi: any = {
+      entity_id: "ui-1",
+      layoutJson: JSON.stringify({
+        widgets: [{ id: "w-menu", widgetType: "menu-bar", scaleMode: "auto" }],
+      }),
+    };
+    const comp: any = {
+      activeCustomUi,
+      activeCustomUiId: "ui-1",
+      countdownPreviewActiveByUi: {},
+      getLayout: (ui?: any) => JSON.parse((ui || activeCustomUi).layoutJson),
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-menu");
+
+    const stored = JSON.parse(activeCustomUi.layoutJson).widgets[0];
+    expect(stored.fontSize).toBe(24);
+    expect(comp.syncRacedayPreview).toHaveBeenCalledTimes(1);
+    const synced = comp.syncRacedayPreview.calls.mostRecent().args[0];
+    expect(synced.widgets[0].fontSize).toBe(24);
+  });
+
+  it("should not refresh the preview when the selected widget already has its defaults", () => {
+    const { handleWidgetSelection } = require("./ui-editor-widget.helper");
+    const widget: any = {
+      id: "w-menu",
+      widgetType: "menu-bar",
+      scaleMode: "auto",
+    };
+    applyWidgetDefaultSettings(widget);
+    const activeCustomUi: any = {
+      layoutJson: JSON.stringify({ widgets: [widget] }),
+    };
+    const comp: any = {
+      activeCustomUi,
+      getLayout: (ui?: any) => JSON.parse((ui || activeCustomUi).layoutJson),
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetSelection(comp, "w-menu");
+    expect(comp.syncRacedayPreview).not.toHaveBeenCalled();
+  });
+
   it("should automatically activate countdown preview when countdown widget is selected in handleWidgetSelection", () => {
     const { handleWidgetSelection } = require("./ui-editor-widget.helper");
     const countdownWidget = { id: "w-countdown", widgetType: "countdown" };

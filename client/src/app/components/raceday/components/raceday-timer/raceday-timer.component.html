@@ -5,10 +5,28 @@
 >
   <div class="timer-wrapper">
     <!-- Top area for auto-advance label (always rendered to reserve space) -->
-    <div class="label-container top-label">
-      @if (displayAutoStatusLabel() && !showCountdownOverlay()) {
-        <div class="status-label">
-          {{ displayAutoStatusLabel() | translate }}
+    <div
+      class="label-container top-label"
+      [style.height.px]="statusLabelHeight()"
+    >
+      @if (
+        displayAutoStatusLabel() && !showCountdownOverlay() && showStatusText()
+      ) {
+        <div
+          class="status-label"
+          [class.status-label-as-typed]="!statusUppercase()"
+          [style.font-family]="
+            widget()?.customSettings?.['statusFontFamily'] || null
+          "
+          [style.font-size.px]="
+            widget()?.customSettings?.['statusFontSize'] || null
+          "
+          [style.color]="widget()?.customSettings?.['statusTextColor'] || null"
+        >
+          {{
+            customStatusText(displayAutoStatusLabel()) ||
+              (displayAutoStatusLabel() | translate)
+          }}
         </div>
       }
     </div>
