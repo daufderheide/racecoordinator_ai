@@ -1,3 +1,4 @@
+import { emptyValue } from "@app/utils/empty-value.utils";
 import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
@@ -41,6 +42,16 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
   private decimals(key: string): number {
     const v = Number(this.widget()?.customSettings?.[key]);
     return Number.isInteger(v) && v >= 0 && v <= 3 ? v : 3;
+  }
+
+  /** Placeholder where a value is missing: own, blank or own text (phase 3c). */
+  empty(fallback: string): string {
+    return emptyValue(this.widget()?.customSettings, fallback);
+  }
+
+  /** A record holder's name; the race day page sends "---" when there is none. */
+  holder(name: string | null | undefined): string {
+    return !name || name === "---" ? this.empty("---") : name;
   }
 
   lapFormat = computed(() => {

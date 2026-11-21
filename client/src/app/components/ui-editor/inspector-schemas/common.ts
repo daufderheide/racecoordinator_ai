@@ -1,5 +1,6 @@
 import { hasFixedLayer } from "@app/components/raceday/utils/layer-order.utils";
 import {
+  InspectorField,
   InspectorFolder,
   InspectorGroup,
   TextPartField,
@@ -143,6 +144,70 @@ function borderGroup(): InspectorGroup {
         placeholder: "#ffffff",
         searchTerms: "border colour color outline",
         visibleWhen: (s) => s["showBorder"] !== false,
+      },
+    ],
+  };
+}
+
+/**
+ * What the widget shows where it has no value (phase 3c): its own
+ * placeholder, nothing, or your own text; optionally the same for the
+ * "Empty Lane" label. See utils/empty-value.utils.ts.
+ */
+export function emptyStateFolder(
+  options: { lane?: boolean } = {},
+): InspectorFolder {
+  const pair = (
+    modeKey: string,
+    textKey: string,
+    labelKey: string,
+    ownLabelKey: string,
+  ): InspectorField[] => [
+    {
+      id: modeKey,
+      type: "segment",
+      key: modeKey,
+      labelKey,
+      default: "",
+      searchTerms: "empty no data dashes placeholder blank missing",
+      options: [
+        { value: "", labelKey: ownLabelKey },
+        { value: "blank", labelKey: "UE_KIT_EMPTY_BLANK" },
+        { value: "text", labelKey: "UE_KIT_EMPTY_OWN_TEXT" },
+      ],
+    },
+    {
+      id: textKey,
+      type: "text",
+      key: textKey,
+      labelKey: "UE_KIT_EMPTY_TEXT",
+      maxLength: 40,
+      default: "",
+      searchTerms: "empty text placeholder",
+      visibleWhen: (s) => s[modeKey] === "text",
+    },
+  ];
+  return {
+    id: "behaviour",
+    groups: [
+      {
+        titleKey: "UE_KIT_EMPTY_STATES",
+        fields: [
+          ...pair(
+            "emptyValueMode",
+            "emptyValueText",
+            "UE_KIT_EMPTY_VALUE",
+            "UE_KIT_EMPTY_DASHES",
+          ),
+          ...(options.lane
+            ? pair(
+                "emptyLaneMode",
+                "emptyLaneText",
+                "UE_KIT_EMPTY_LANE",
+                "UE_KIT_EMPTY_LANE_OWN",
+              )
+            : []),
+        ],
       },
     ],
   };

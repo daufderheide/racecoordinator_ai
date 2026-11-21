@@ -231,8 +231,8 @@
                                 {{
                                   lane.isOccupied
                                     ? lane.driverNickname ||
-                                      ("RD_EMPTY_LANE" | translate)
-                                    : ("RD_EMPTY_LANE" | translate)
+                                      emptyLane("RD_EMPTY_LANE" | translate)
+                                    : emptyLane("RD_EMPTY_LANE" | translate)
                                 }}
                               </span>
                             }
@@ -310,8 +310,9 @@
                     >
                       {{
                         lane.isOccupied
-                          ? lane.driverNickname || ("RD_EMPTY_LANE" | translate)
-                          : ("RD_EMPTY_LANE" | translate)
+                          ? lane.driverNickname ||
+                            emptyLane("RD_EMPTY_LANE" | translate)
+                          : emptyLane("RD_EMPTY_LANE" | translate)
                       }}
                     </span>
                     @if (lane.isTeam && lane.teamName) {

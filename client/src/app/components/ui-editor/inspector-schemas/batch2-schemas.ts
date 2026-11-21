@@ -4,7 +4,12 @@ import {
   InspectorSchema,
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
-import { frameFolder, layoutFolder, textPart } from "./common";
+import {
+  emptyStateFolder,
+  frameFolder,
+  layoutFolder,
+  textPart,
+} from "./common";
 
 /**
  * Phase 2, batch 2: Next Heat / On Deck, the leaderboards, Heat List and
@@ -482,6 +487,7 @@ const heatListSchema: InspectorSchema = {
       ],
     },
     layoutFolder(),
+    emptyStateFolder({ lane: true }),
   ],
 };
 
@@ -732,6 +738,7 @@ const progressGaugeSchema: InspectorSchema = {
       ],
     },
     layoutFolder(),
+    emptyStateFolder(),
   ],
 };
 

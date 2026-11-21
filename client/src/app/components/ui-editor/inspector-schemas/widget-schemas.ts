@@ -2,9 +2,14 @@ import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspect
 
 import { BATCH2_SCHEMAS } from "./batch2-schemas";
 import { BATCH3_SCHEMAS } from "./batch3-schemas";
-import { frameFolder, layoutFolder, textPart } from "./common";
 import { LANE_COLUMN_SCHEMAS } from "./lane-column-schema";
 import { laneViewSchema } from "./lane-view-schema";
+import {
+  emptyStateFolder,
+  frameFolder,
+  layoutFolder,
+  textPart,
+} from "./common";
 
 /**
  * Widgets that use the redesigned panel. Every other widget keeps its
@@ -102,6 +107,7 @@ const recordsSchema: InspectorSchema = {
     },
     frameFolder(),
     layoutFolder(),
+    emptyStateFolder(),
   ],
 };
 
@@ -190,24 +196,6 @@ const timerSchema: InspectorSchema = {
                 { value: 2, label: "2" },
                 { value: 3, label: "3" },
               ],
-            },
-            // digit glow and inner shadow (#1212)
-            {
-              id: "timerGlow",
-              type: "switch",
-              key: "timerGlow",
-              labelKey: "UE_INSPECTOR_TIMER_GLOW",
-              default: true,
-              searchTerms: "glow digits shine neon",
-            },
-            {
-              id: "timerInnerShadow",
-              type: "switch",
-              key: "timerInnerShadow",
-              labelKey: "UE_INSPECTOR_TIMER_INNER_SHADOW",
-              helpKey: "UE_INSPECTOR_TIMER_INNER_SHADOW_HINT",
-              default: true,
-              searchTerms: "inner shadow edge flat",
             },
           ],
         },

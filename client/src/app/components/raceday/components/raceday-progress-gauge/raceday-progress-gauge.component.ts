@@ -1,3 +1,4 @@
+import { emptyValue } from "@app/utils/empty-value.utils";
 import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
@@ -158,10 +159,13 @@ export class RacedayProgressGaugeComponent {
 
   get labelText(): string {
     if (this.effectiveGaugeType === "fuel") {
-      return this.isEmptyDriver ? "--%" : `${Math.round(this.percentage)}%`;
+      return this.isEmptyDriver
+        ? emptyValue(this.widget()?.customSettings, "--%")
+        : `${Math.round(this.percentage)}%`;
     }
 
-    if (this.isEmptyDriver) return "--";
+    if (this.isEmptyDriver)
+      return emptyValue(this.widget()?.customSettings, "--");
 
     const parent = this.parent();
     const finishValue =

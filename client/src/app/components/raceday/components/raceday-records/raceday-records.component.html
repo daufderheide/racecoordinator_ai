@@ -43,7 +43,7 @@
             widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-          >{{ raceRecordLapNickname() || "---" }}</span
+          >{{ holder(raceRecordLapNickname()) }}</span
         >
         <span
           #recordValue
@@ -60,7 +60,7 @@
           >{{
             raceRecordLapTime() > 0 && raceRecordLapTime() < 1000000
               ? (raceRecordLapTime() | number: lapFormat())
-              : "--.---"
+              : empty("--.---")
           }}</span
         >
       </div>
@@ -97,7 +97,7 @@
             widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-          >{{ raceRecordScoreNickname() || "---" }}</span
+          >{{ holder(raceRecordScoreNickname()) }}</span
         >
         <span
           #recordValue
@@ -114,7 +114,7 @@
           >{{
             raceRecordScore() > 0
               ? (raceRecordScore() | number: scoreFormat())
-              : "--"
+              : empty("--")
           }}</span
         >
       </div>
@@ -151,7 +151,7 @@
             widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-          >{{ currentRaceBestNickname() || "---" }}</span
+          >{{ holder(currentRaceBestNickname()) }}</span
         >
         <span
           #recordValue
@@ -168,7 +168,7 @@
           >{{
             currentRaceBestTime() > 0 && currentRaceBestTime() < 1000000
               ? (currentRaceBestTime() | number: lapFormat())
-              : "--.---"
+              : empty("--.---")
           }}</span
         >
       </div>
@@ -205,7 +205,7 @@
             widget()?.customSettings?.['valueFontSize'] || null
           "
           [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-          >{{ heatBestNickname() || "---" }}</span
+          >{{ holder(heatBestNickname()) }}</span
         >
         <span
           #recordValue
@@ -222,7 +222,7 @@
           >{{
             heatBestTime() > 0 && heatBestTime() < 1000000
               ? (heatBestTime() | number: lapFormat())
-              : "--.---"
+              : empty("--.---")
           }}</span
         >
       </div>
