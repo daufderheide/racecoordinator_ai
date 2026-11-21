@@ -4,7 +4,7 @@
   height: 100vh;
   background-color: #000;
   color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--app-font-family);
   overflow: hidden;
   position: relative;
   z-index: 5000;

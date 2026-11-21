@@ -1717,10 +1717,10 @@ describe("raceday-lane-column.utils", () => {
       expect(family).toBe("Impact, fantasy");
     });
 
-    it("should fallback to 'Inter', sans-serif when no custom family is set", () => {
+    it("should fall back to the browser's sans-serif font for a detached card", () => {
       const card = document.createElement("div");
       const family = resolveCardFontFamily(card, {} as any);
-      expect(family).toContain("Inter");
+      expect(family).toBe("sans-serif");
     });
 
     it("should respect inline card style fontFamily if set", () => {

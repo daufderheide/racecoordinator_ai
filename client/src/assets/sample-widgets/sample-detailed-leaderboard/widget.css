@@ -19,7 +19,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   overflow: hidden;
   color: #f8fafc;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  font-family: var(--app-font-family, sans-serif);
 }
 
 .leaderboard-header-bar {
@@ -110,7 +110,7 @@
 
 .col-driver {
   text-align: left !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif !important;
+  font-family: var(--app-font-family, sans-serif) !important;
   font-weight: 600;
   padding-left: 10px !important;
   overflow: hidden;

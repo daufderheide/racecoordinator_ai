@@ -159,7 +159,7 @@ import { IDemoConfig } from "@app/proto/antigravity";
         font-size: 1.25rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        font-family: "Orbitron", sans-serif;
+        font-family: var(--app-font-family);
       }
       .close-btn {
         background: none;

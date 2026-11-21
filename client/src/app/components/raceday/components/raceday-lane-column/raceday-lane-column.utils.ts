@@ -658,8 +658,8 @@ export function resolveCardFontFamily(
       // Fallback if element is disconnected or inaccessible
     }
   }
-  cardFontFamilyCache.set(cardEl, "Inter, sans-serif");
-  return "Inter, sans-serif";
+  cardFontFamilyCache.set(cardEl, "sans-serif");
+  return "sans-serif";
 }
 
 function resolveColumnBaseFontSize(

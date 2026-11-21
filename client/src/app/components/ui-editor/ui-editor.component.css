@@ -11,7 +11,7 @@
   /* Slate 900 */
   color: #e2e8f0;
   /* Slate 200 */
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--app-font-family);
   overflow: hidden;
 }
 

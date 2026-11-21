@@ -188,6 +188,62 @@ test.describe("Raceday Timer Visuals", () => {
     await expect(timer).toHaveScreenshot("raceday-timer-auto-advance.png");
   });
 
+  test("should display a selected clock font alongside system status text", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        baseWidth: 1600,
+        baseHeight: 900,
+        widgets: [
+          {
+            id: "timer-custom-font",
+            widgetType: "timer",
+            x: 100,
+            y: 100,
+            width: 500,
+            height: 200,
+            zIndex: 1,
+            customSettings: { timeFontFamily: "Courier New" },
+          },
+        ],
+      },
+    });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    await TestSetupHelper.mockRaceData(page, {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Screendiff Race",
+          autoStartTime: 10,
+          autoStartWarmupTime: 3,
+          track: {
+            model: { entityId: "t1" },
+            name: "Test Track",
+            lanes: [{ objectId: "l1", length: 10 }],
+          },
+        },
+        drivers: [],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [],
+        },
+      },
+      raceTime: { time: 8, autoStartRemaining: 8 },
+    });
+
+    const timer = page.locator("app-raceday-timer");
+    await timer.locator(".status-label").waitFor();
+    await expect(timer).toHaveScreenshot("raceday-timer-custom-clock-font.png");
+  });
+
   test("should display timer widget in auto advance with warmup", async ({
     page,
   }) => {

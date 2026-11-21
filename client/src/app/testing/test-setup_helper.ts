@@ -224,133 +224,6 @@ export class TestSetupHelper {
       });
     });
 
-    const fs = require("fs");
-    const path = require("path");
-
-    // Helper to find the fonts directory in both source and isolated test runner path
-    const getFontFilePath = (filename: string) => {
-      const paths = [
-        path.resolve(process.cwd(), "src/app/testing/fonts", filename),
-        path.resolve(process.cwd(), "client/src/app/testing/fonts", filename),
-        path.resolve(process.cwd(), "src/assets/fonts", filename),
-        path.resolve(process.cwd(), "client/src/assets/fonts", filename),
-        path.resolve(__dirname, "fonts", filename),
-      ];
-      for (const p of paths) {
-        if (fs.existsSync(p)) return p;
-      }
-      return "";
-    };
-
-    // Serve local Material Icons font file for both local assets and Google Fonts CDN URLs
-    await page.route("**/*materialicons*.woff2*", async (route) => {
-      const filePath = getFontFilePath("materialicons.woff2");
-      if (filePath) {
-        await route.fulfill({
-          status: 200,
-          contentType: "font/woff2",
-          body: fs.readFileSync(filePath),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // Serve local Rajdhani font files for both local assets and Google Fonts CDN URLs
-    await page.route("**/*rajdhani*.woff2*", async (route) => {
-      const url = route.request().url();
-      let filename = "rajdhani-500.woff2";
-      if (url.includes("L0x5DFM4tM2s7KCDQIm32C5yXg") || url.includes("-300")) {
-        filename = "rajdhani-300.woff2";
-      } else if (
-        url.includes("L0x5DFM4tM2s7KCDQIm3Bx5yXg") ||
-        url.includes("-700")
-      ) {
-        filename = "rajdhani-700.woff2";
-      }
-      const filePath = getFontFilePath(filename);
-      if (filePath) {
-        await route.fulfill({
-          status: 200,
-          contentType: "font/woff2",
-          body: fs.readFileSync(filePath),
-        });
-      } else {
-        await route.continue();
-      }
-    });
-
-    // Mock Google Fonts and Material Icons CSS requests to return local fallbacks and original URLs
-    // to avoid hitting external networks that block/hang visual tests, but allowing real fonts when online.
-    await page.route("**/icon?family=Material+Icons*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "text/css",
-        body: `@font-face {
-          font-family: 'Material Icons';
-          font-style: normal;
-          font-weight: 400;
-          src: local('Material Icons'),
-               local('MaterialIcons-Regular'),
-               url('https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2') format('woff2');
-        }
-        .material-icons {
-          font-family: 'Material Icons';
-          font-weight: normal;
-          font-style: normal;
-          font-size: 24px;
-          line-height: 1;
-          letter-spacing: normal;
-          text-transform: none;
-          display: inline-block;
-          white-space: nowrap;
-          word-wrap: normal;
-          direction: ltr;
-          -webkit-font-feature-settings: 'liga';
-          -webkit-font-smoothing: antialiased;
-        }`,
-      });
-    });
-
-    await page.route("**/css2?family=Rajdhani*", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "text/css",
-        body: `@font-face {
-          font-family: 'Rajdhani';
-          font-style: normal;
-          font-weight: 300;
-          src: local('Rajdhani'),
-               local('Rajdhani-Light'),
-               url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm32C5yXg.woff2') format('woff2'),
-               local('sans-serif');
-        }
-        @font-face {
-          font-family: 'Rajdhani';
-          font-style: normal;
-          font-weight: 500;
-          src: local('Rajdhani'),
-               local('Rajdhani-Medium'),
-               url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm3Fh5yXg.woff2') format('woff2'),
-               local('sans-serif');
-        }
-        @font-face {
-          font-family: 'Rajdhani';
-          font-style: normal;
-          font-weight: 700;
-          src: local('Rajdhani'),
-               local('Rajdhani-Bold'),
-               url('https://fonts.gstatic.com/s/rajdhani/v15/L0x5DFM4tM2s7KCDQIm3Bx5yXg.woff2') format('woff2'),
-                local('sans-serif');
-        }`,
-      });
-    });
-
-    // Force load fonts only during tests to prevent flakiness without changing app code
-    await page.addStyleTag({
-      url: "https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;700&display=swap",
-    });
-
     // Handle skip intro
     if (options.skipIntro) {
       await page.addInitScript(() => {
@@ -1163,14 +1036,7 @@ export class TestSetupHelper {
     const fontsEvaluatePromise = page
       .evaluate(async () => {
         try {
-          await Promise.all([
-            document.fonts.load("16px Rajdhani"),
-            document.fonts.load("24px Rajdhani"),
-            document.fonts.load("700 16px Rajdhani"),
-            document.fonts.load("24px 'Material Icons'", "delete"),
-            document.fonts.load("24px 'Material Icons'"),
-            document.fonts.load("16px 'Material Icons'"),
-          ]);
+          await document.fonts.load("24px 'Material Icons'", "delete");
           await document.fonts.ready;
         } catch (e) {
           // Ignore font loading errors/stalls
