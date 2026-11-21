@@ -34,6 +34,25 @@ export class RacedayRecordsComponent implements AfterViewInit, OnDestroy {
   heatBestNickname = input<string>("");
   heatBestTime = input<number>(0);
 
+  /**
+   * Number format for the lap times and the score (phase 3c): 0-3 decimals,
+   * 3 when nothing is stored (as before).
+   */
+  private decimals(key: string): number {
+    const v = Number(this.widget()?.customSettings?.[key]);
+    return Number.isInteger(v) && v >= 0 && v <= 3 ? v : 3;
+  }
+
+  lapFormat = computed(() => {
+    const d = this.decimals("lapDecimalPlaces");
+    return `1.${d}-${d}`;
+  });
+
+  scoreFormat = computed(() => {
+    const d = this.decimals("scoreDecimalPlaces");
+    return `1.${d}-${d}`;
+  });
+
   effectiveBackgroundColor = computed(() => {
     return (
       this.widget()?.customSettings?.["backgroundColor"] ||

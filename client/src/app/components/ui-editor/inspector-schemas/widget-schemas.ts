@@ -51,6 +51,35 @@ const recordsSchema: InspectorSchema = {
             },
           ],
         },
+        {
+          titleKey: "UE_KIT_NUMBERS",
+          fields: [
+            {
+              id: "lapDecimalPlaces",
+              type: "segment",
+              key: "lapDecimalPlaces",
+              labelKey: "UE_KIT_LAP_DECIMALS",
+              default: 3,
+              options: [0, 1, 2, 3].map((v) => ({
+                value: v,
+                label: String(v),
+              })),
+              searchTerms: "lap time decimals precision number format",
+            },
+            {
+              id: "scoreDecimalPlaces",
+              type: "segment",
+              key: "scoreDecimalPlaces",
+              labelKey: "UE_KIT_SCORE_DECIMALS",
+              default: 3,
+              options: [0, 1, 2, 3].map((v) => ({
+                value: v,
+                label: String(v),
+              })),
+              searchTerms: "score points decimals precision number format",
+            },
+          ],
+        },
       ],
     },
     {

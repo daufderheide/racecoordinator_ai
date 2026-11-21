@@ -354,4 +354,28 @@ describe("RacedayRecordsComponent", () => {
     expect(panelEl.style.backgroundColor).toBe("rgb(34, 51, 68)");
     expect(component.effectiveBackgroundColor()).toBe("#223344");
   });
+
+  it("formats lap times and the score with the chosen decimals (phase 3c)", () => {
+    fixture.componentRef.setInput("widget", {
+      id: "r",
+      widgetType: "records",
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 200,
+    } as any);
+    expect(component.lapFormat()).toBe("1.3-3");
+    expect(component.scoreFormat()).toBe("1.3-3");
+    fixture.componentRef.setInput("widget", {
+      id: "r",
+      widgetType: "records",
+      x: 0,
+      y: 0,
+      width: 300,
+      height: 200,
+      customSettings: { lapDecimalPlaces: 1, scoreDecimalPlaces: 0 },
+    } as any);
+    expect(component.lapFormat()).toBe("1.1-1");
+    expect(component.scoreFormat()).toBe("1.0-0");
+  });
 });

@@ -45,6 +45,8 @@ async function setupRecordsTest(
     headerFontWeight?: string;
     headerLetterSpacing?: number;
     headerTextTransform?: string;
+    lapDecimalPlaces?: number;
+    scoreDecimalPlaces?: number;
   },
 ) {
   if (customSettings) {
@@ -157,5 +159,15 @@ test.describe("Raceday Records Visuals", () => {
         height: box.height + 48,
       },
     });
+  });
+
+  test("should show lap times and the score with the chosen decimals", async ({
+    page,
+  }) => {
+    const records = await setupRecordsTest(page, {
+      lapDecimalPlaces: 1,
+      scoreDecimalPlaces: 0,
+    });
+    await expect(records).toHaveScreenshot("raceday-records-decimals.png");
   });
 });
