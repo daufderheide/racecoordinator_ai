@@ -552,6 +552,18 @@ export class DataService {
   deleteCar(id: string): Observable<any> {
     return this.crudHelper.deleteCar(id);
   }
+  getCarFields(): Observable<any[]> {
+    return this.crudHelper.getCarFields();
+  }
+  createCarField(field: any): Observable<any> {
+    return this.crudHelper.createCarField(field);
+  }
+  updateCarField(id: string, field: any): Observable<any> {
+    return this.crudHelper.updateCarField(id, field);
+  }
+  deleteCarField(id: string): Observable<any> {
+    return this.crudHelper.deleteCarField(id);
+  }
   getCustomUIs(): Observable<any[]> {
     return this.crudHelper.getCustomUIs();
   }

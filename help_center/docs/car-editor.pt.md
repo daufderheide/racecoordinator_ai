@@ -46,3 +46,14 @@ O painel direito mostra como o carro está preparado. Cada campo é texto livre,
 - **Chassi**, **Relação** (por exemplo 9/27) e **Pneus**.
 - **Modificado**: marque se o carro foi alterado em relação à versão de fábrica; deixe vazio para um carro de série.
 - **Notas**: qualquer outra coisa sobre o carro.
+
+## Seus campos {: #car-custom-fields }
+
+Abaixo da configuração você pode adicionar seus próprios campos, para tudo o que o seu clube acompanha (por exemplo peso, pinhão ou guia). No modo de edição, clique em **Gerenciar campos**:
+
+- **Novo campo**: dê um nome e escolha um tipo: **Texto**, **Número**, **Sim / não** ou **Escolha de uma lista** (uma opção por linha).
+- **Editar**: renomeie um campo ou mude as opções. O tipo não pode ser alterado depois que o campo é adicionado.
+- **Mover para cima / baixo**: muda a ordem dos campos.
+- **Excluir**: remove o campo, e o seu valor de todos os carros, após a confirmação.
+
+Todos os carros têm os mesmos campos e guardam seus próprios valores. Um campo deixado vazio continua vazio.
