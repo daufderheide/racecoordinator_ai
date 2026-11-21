@@ -74,6 +74,8 @@ jobs:
         run: cd client && npx ng test --no-watch --no-progress --browsers=ChromeHeadlessWithCustomConfig --code-coverage
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+          # The coverage build of the unit tests needs more than the ~2 GB default heap
+          NODE_OPTIONS: --max-old-space-size=4096
       - name: Upload client test coverage
         if: always()
         uses: actions/upload-artifact@v4
