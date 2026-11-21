@@ -278,7 +278,7 @@ public class RaceHeatManager {
         oldHeat.setStepUpBoundary(protoHeat.getIsStepUpBoundary());
         newHeats.add(oldHeat);
       } else {
-        newHeats.add(createNewHeat(request, protoHeat));
+        newHeats.add(createNewHeat(request, protoHeat, oldHeat));
       }
     }
     this.race.setHeats(newHeats);
@@ -317,7 +317,9 @@ public class RaceHeatManager {
   }
 
   private com.antigravity.race.Heat createNewHeat( // fqn-collision
-      ModifyHeatsRequest request, com.antigravity.proto.Heat protoHeat) { // fqn-collision
+      ModifyHeatsRequest request,
+      com.antigravity.proto.Heat protoHeat, // fqn-collision
+      com.antigravity.race.Heat oldHeat) { // fqn-collision
     List<DriverHeatData> newHeatDrivers = new ArrayList<>();
     for (int i = 0; i < protoHeat.getHeatDriversCount(); i++) {
       com.antigravity.proto.DriverHeatData protoDhd = // fqn-collision
@@ -339,7 +341,7 @@ public class RaceHeatManager {
             sIdx = 1;
           }
         }
-        p = RaceParticipant.createStepUpParticipant(sIdx);
+        p = RaceParticipant.createStepUpParticipant(Math.max(0, sIdx - 1));
       } else {
         p = findParticipantByObjectId(protoDhd.getDriver().getObjectId());
         if (p == null) {
@@ -357,6 +359,15 @@ public class RaceHeatManager {
       dhd.setObjectId(protoDhd.getObjectId());
       if (isStepUpProto) {
         dhd.setStepUpLaneIndex(p.getStepUpIndex());
+      } else if (oldHeat != null) {
+        for (DriverHeatData oldDhd : oldHeat.getDrivers()) {
+          if (oldDhd.getStepUpLaneIndex() > 0
+              && oldDhd.getDriver() != null
+              && oldDhd.getDriver().getObjectId().equals(p.getObjectId())) {
+            dhd.setStepUpLaneIndex(oldDhd.getStepUpLaneIndex());
+            break;
+          }
+        }
       }
       newHeatDrivers.add(dhd);
     }
@@ -580,6 +591,37 @@ public class RaceHeatManager {
     return false;
   }
 
+  private boolean isPreviousStepCompleted(
+      List<com.antigravity.proto.Heat> groupHeats, int currentStep) { // fqn-collision
+    TreeSet<Integer> steps = new TreeSet<>();
+    for (com.antigravity.proto.Heat h : groupHeats) { // fqn-collision
+      steps.add(h.getStep() > 0 ? h.getStep() : 1);
+    }
+    Integer prevStep = steps.lower(currentStep);
+    if (prevStep == null) {
+      return false;
+    }
+    boolean foundPrevStepHeat = false;
+    for (com.antigravity.proto.Heat h : groupHeats) { // fqn-collision
+      int step = h.getStep() > 0 ? h.getStep() : 1;
+      if (step == prevStep.intValue()) {
+        foundPrevStepHeat = true;
+        com.antigravity.race.Heat serverHeat = findHeatByObjectId(h.getObjectId()); // fqn-collision
+        boolean isStarted =
+            h.getStarted()
+                || (serverHeat != null
+                    && (serverHeat.isStarted()
+                        || (serverHeat.getDrivers() != null
+                            && serverHeat.getDrivers().stream()
+                                .anyMatch(d -> d.getLapCount() > 0))));
+        if (!isStarted) {
+          return false;
+        }
+      }
+    }
+    return foundPrevStepHeat;
+  }
+
   private String validateGroupStepUp( // fqn-collision
       ModifyHeatsRequest request,
       List<com.antigravity.proto.Heat> groupHeats, // fqn-collision
@@ -626,7 +668,10 @@ public class RaceHeatManager {
         inHigherStep = true;
       }
 
-      if (inHigherStep && !isCustom && stepUpCount != stepUp) {
+      int stepNum = h.getStep() > 0 ? h.getStep() : 1;
+      boolean isPrevStepCompleted = isPreviousStepCompleted(groupHeats, stepNum);
+
+      if (inHigherStep && !isCustom && !isPrevStepCompleted && stepUpCount != stepUp) {
         return "RD_ERR_STEP_UP_COUNT_MISMATCH";
       }
 
