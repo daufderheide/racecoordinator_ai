@@ -345,6 +345,40 @@ describe("raceday-lane-column.utils", () => {
   });
 
   describe("resolveColumnHeaderLabel", () => {
+    it("should keep the deliberately unlabelled flag column header empty instead of showing RD_COL_FLAG", () => {
+      expect(resolveColumnHeaderLabel("flag", {} as any, null, (k) => k)).toBe(
+        "",
+      );
+      const parent = {
+        columns: [],
+        getColumnLabel: (c: any) => c.labelKey,
+      } as any;
+      expect(
+        resolveColumnHeaderLabel("flag", {} as any, parent, (k) => k),
+      ).toBe("");
+    });
+
+    it("should still use a custom header label on the flag column", () => {
+      expect(
+        resolveColumnHeaderLabel(
+          "flag",
+          { customLabel: "FLAG" } as any,
+          null,
+          (k) => k,
+        ),
+      ).toBe("FLAG");
+    });
+
+    it("should keep a parent's own non-empty column label key", () => {
+      const parent = {
+        columns: [{ propertyName: "lastLapTime", labelKey: "RD_COL_LAP_TIME" }],
+        getColumnLabel: (c: any) => c.labelKey,
+      } as any;
+      expect(
+        resolveColumnHeaderLabel("lastLapTime", {} as any, parent, (k) => k),
+      ).toBe("RD_COL_LAP_TIME");
+    });
+
     it("should resolve custom widget label from service manifest", () => {
       const mockParent = {
         customWidgetService: {

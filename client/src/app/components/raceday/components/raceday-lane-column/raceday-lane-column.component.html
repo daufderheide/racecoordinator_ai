@@ -792,6 +792,12 @@
             <div
               class="lane-col-value"
               [class.allow-wrap]="shouldAllowValueWrap()"
+              [style.padding-left]="
+                settings.valueAlignment === 'start' ? '6px' : null
+              "
+              [style.padding-right]="
+                settings.valueAlignment === 'end' ? '6px' : null
+              "
               [style.font-family]="settings.valueFontFamily || null"
               [style.color]="effectiveValueTextColor"
               [style.justify-content]="

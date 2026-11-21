@@ -230,6 +230,11 @@ export function resolveColumnHeaderLabel(
     return key.substring("custom:".length);
   }
   const labelKey = RacedayLayoutUtils.getLabelKeyForColumn(key);
+  if (labelKey === "") {
+    // Deliberately unlabelled column (e.g. the driver flag): keep the header
+    // empty everywhere, as on race day, instead of showing a raw RD_COL_ key.
+    return "";
+  }
   const resolvedLabelKey =
     labelKey && labelKey !== "UNKNOWN"
       ? labelKey

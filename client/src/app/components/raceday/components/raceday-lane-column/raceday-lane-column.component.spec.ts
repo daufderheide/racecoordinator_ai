@@ -935,7 +935,32 @@ describe("RacedayLaneColumnComponent", () => {
     );
     fixture.detectChanges();
     expect(component.isDriftLap()).toBeFalse();
+  });
 
+  ["driver.avatarUrl", "flag", "ghostPacingLeaderBest"].forEach((columnKey) => {
+    it(`should re-fit only the header in ngAfterViewChecked for ${columnKey} columns`, () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ targetIndex: 0, columnKey, headerFontSize: 40 }),
+      );
+      fixture.detectChanges();
+      const helper = (component as any).fitHelper;
+      const headerSpy = spyOn(helper, "fitHeaderOnly").and.callThrough();
+      const fullSpy = spyOn(helper, "fitContent");
+
+      component.ngAfterViewChecked();
+
+      expect(headerSpy).toHaveBeenCalledTimes(1);
+      const ctx = headerSpy.calls.mostRecent().args[1] as any;
+      expect(ctx.settings.headerFontSize).toBe(40);
+      expect(ctx.isHeaderWidget).toBeFalse();
+      expect(fullSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  it("should render drift indicator badge in bottom-center inset on lastLapTime when isLastLapDrift is true", () => {
+    fixture.componentRef.setInput("parent", mockParent);
     // driver-2 has isLastLapDrift = true
     fixture.componentRef.setInput(
       "widget",

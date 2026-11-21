@@ -186,6 +186,66 @@ describe("RacedayHeatDriversComponent", () => {
     );
   });
 
+  describe("row depth with a custom lane font size (#1196)", () => {
+    const px = (el: HTMLElement, name: string) =>
+      parseFloat(el.style.getPropertyValue(name));
+
+    const setupSizedPanel = (customSettings: any) => {
+      componentRef.setInput("type", "next-heat");
+      componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+      componentRef.setInput("heats", [
+        { heatNumber: 1, heatDrivers: [] },
+        {
+          heatNumber: 2,
+          heatDrivers: ["A", "B", "C", "D"].map((name, i) => ({
+            driver: { name, isEmpty: () => false },
+            laneIndex: i,
+          })),
+        },
+      ]);
+      componentRef.setInput("widget", { scaleMode: "auto", customSettings });
+      fixture.detectChanges();
+      const panelEl = fixture.nativeElement.querySelector(
+        ".panel-card",
+      ) as HTMLElement;
+      panelEl.style.width = "384px";
+      panelEl.style.height = "300px";
+      (component as any).fitText();
+      return panelEl;
+    };
+
+    it("keeps the auto-fit row depth and gap when the text is made bigger", () => {
+      const auto = setupSizedPanel({});
+      const autoSize = px(auto, "--heat-drivers-font-size");
+      const autoRow =
+        1.1 * autoSize + 2 * px(auto, "--heat-drivers-item-padding-y");
+      const autoGap = px(auto, "--heat-drivers-gap");
+
+      const custom = setupSizedPanel({ laneFontSize: autoSize + 4 });
+      expect(px(custom, "--heat-drivers-font-size")).toBe(autoSize + 4);
+      expect(px(custom, "--heat-drivers-gap")).toBeCloseTo(autoGap, 5);
+      const customRow =
+        1.1 * (autoSize + 4) + 2 * px(custom, "--heat-drivers-item-padding-y");
+      expect(customRow).toBeCloseTo(autoRow, 5);
+    });
+
+    it("never lets the row padding drop below 2px", () => {
+      const panel = setupSizedPanel({ laneFontSize: 80 });
+      expect(px(panel, "--heat-drivers-item-padding-y")).toBe(2);
+      expect(px(panel, "--heat-drivers-font-size")).toBe(80);
+    });
+
+    it("leaves the spacing unchanged when no custom size is set", () => {
+      const panel = setupSizedPanel({});
+      const size = px(panel, "--heat-drivers-font-size");
+      expect(px(panel, "--heat-drivers-item-padding-y")).toBeCloseTo(
+        size * 0.5,
+        5,
+      );
+      expect(px(panel, "--heat-drivers-gap")).toBeCloseTo(size * 0.5, 5);
+    });
+  });
+
   it("should apply custom font sizes for on-deck in auto scale mode", () => {
     componentRef.setInput("type", "on-deck");
     componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });

@@ -64,6 +64,12 @@
   pointer-events: none;
 }
 
-.browser-nav-btn .material-icons {
+/* The icon follows the button's Font Size setting (inherited from the button);
+   without a setting it keeps the original 20px. */
+.browser-nav-btn {
   font-size: 20px;
+}
+
+.browser-nav-btn .material-icons {
+  font-size: 1em;
 }

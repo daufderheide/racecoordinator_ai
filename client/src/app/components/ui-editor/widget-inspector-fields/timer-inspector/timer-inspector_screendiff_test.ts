@@ -103,4 +103,44 @@ test.describe("Timer Inspector Visuals", () => {
       },
     );
   });
+
+  test("should display the status text options (#1197)", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/layout-editor?edit=true"),
+    );
+    await page.locator(".layout-editor-content").waitFor({ state: "visible" });
+    await page
+      .locator(".widget-wrapper")
+      .filter({ has: page.locator("app-raceday-timer") })
+      .first()
+      .dispatchEvent("pointerdown");
+    const inspectorPanel = page.locator(".widget-inspector-panel");
+    await inspectorPanel.waitFor({ state: "visible" });
+
+    const text = page.locator("#timer-auto-advancing-text");
+    await text.fill("Next heat in a moment");
+    await page.locator("#timer-status-uppercase").uncheck();
+    await expect(page.locator("#timer-status-preview")).toHaveText(
+      "Next heat in a moment",
+    );
+
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      document
+        .querySelector("#timer-show-status-text")
+        ?.closest(".inspector-section")
+        ?.previousElementSibling?.scrollIntoView({
+          block: "start",
+          inline: "nearest",
+        });
+    });
+    await page.mouse.move(0, 0);
+
+    await expect(inspectorPanel).toHaveScreenshot(
+      "timer-inspector-status-text.png",
+      { animations: "disabled" },
+    );
+  });
 });

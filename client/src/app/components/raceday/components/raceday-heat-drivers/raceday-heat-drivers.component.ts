@@ -158,31 +158,6 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const customLaneSize = Number(widgetData?.customSettings?.["laneFontSize"]);
-    const customTitleSize = Number(
-      widgetData?.customSettings?.["titleFontSize"],
-    );
-
-    if (
-      (customLaneSize && customLaneSize > 0) ||
-      (customTitleSize && customTitleSize > 0)
-    ) {
-      const targetLaneFontSize =
-        customLaneSize && customLaneSize > 0
-          ? customLaneSize
-          : customTitleSize && customTitleSize > 0
-            ? Math.floor(customTitleSize / 1.125)
-            : 16;
-      const targetTitleFontSize =
-        customTitleSize && customTitleSize > 0
-          ? customTitleSize
-          : customLaneSize && customLaneSize > 0
-            ? Math.floor(customLaneSize * 1.125)
-            : 18;
-      this.applyCSSProperties(panelEl, targetLaneFontSize, targetTitleFontSize);
-      return;
-    }
-
     const titleText = this.translationService.translate(
       this.type() === "on-deck" ? "RD_WIN_ON_DECK" : "RD_WIN_NEXT_HEAT",
     );
@@ -250,6 +225,27 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     );
 
     const targetTitleFontSize = Math.floor(targetLaneFontSize * 1.125);
+
+    const customLaneSize = Number(widgetData?.customSettings?.["laneFontSize"]);
+    const customTitleSize = Number(
+      widgetData?.customSettings?.["titleFontSize"],
+    );
+    if (customLaneSize > 0 || customTitleSize > 0) {
+      // A custom font size only changes the text: the rows keep the depth the
+      // auto-fit chose for this widget size, and bigger text uses up the row
+      // padding instead of making every row taller (#1196).
+      const laneSize =
+        customLaneSize > 0
+          ? customLaneSize
+          : Math.floor(customTitleSize / 1.125);
+      const titleSize =
+        customTitleSize > 0 ? customTitleSize : Math.floor(laneSize * 1.125);
+      this.applyCSSProperties(panelEl, laneSize, titleSize, {
+        spacingBase: targetLaneFontSize,
+        hasTeams,
+      });
+      return;
+    }
 
     // Apply via CSS custom properties
     this.applyCSSProperties(panelEl, targetLaneFontSize, targetTitleFontSize);
@@ -322,43 +318,40 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     return maxWidth;
   }
 
+  /**
+   * Sets the font sizes and spacing as CSS custom properties.
+   * Spacing normally scales with the lane font size. When `spacing` is given
+   * (a custom font size), the gaps follow the auto-fit size `spacingBase`
+   * instead, and the row padding shrinks or grows so each row stays as deep
+   * as it would be at the auto-fit size (minimum 2px).
+   */
   private applyCSSProperties(
     panelEl: HTMLElement,
     targetLaneFontSize: number,
     targetTitleFontSize: number,
+    spacing?: { spacingBase: number; hasTeams: boolean },
   ) {
-    panelEl.style.setProperty(
-      "--heat-drivers-font-size",
-      `${targetLaneFontSize}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-title-size",
-      `${targetTitleFontSize}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-padding-x",
-      `${targetLaneFontSize * 0.75}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-padding-y",
-      `${targetLaneFontSize * 0.75}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-gap",
-      `${targetLaneFontSize * 0.5}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-item-padding-x",
-      `${targetLaneFontSize * 0.75}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-item-padding-y",
-      `${targetLaneFontSize * 0.5}px`,
-    );
-    panelEl.style.setProperty(
-      "--heat-drivers-title-margin",
-      `${targetLaneFontSize * 0.75}px`,
-    );
+    const base = spacing?.spacingBase ?? targetLaneFontSize;
+    // Row content height in font sizes: one line (1.1) or name + team line.
+    const contentFactor = spacing?.hasTeams ? 1.87 : 1.1;
+    const itemPaddingY = spacing
+      ? Math.max(
+          2,
+          (contentFactor * base + base - contentFactor * targetLaneFontSize) /
+            2,
+        )
+      : targetLaneFontSize * 0.5;
+
+    const set = (name: string, px: number) =>
+      panelEl.style.setProperty(name, `${px}px`);
+    set("--heat-drivers-font-size", targetLaneFontSize);
+    set("--heat-drivers-title-size", targetTitleFontSize);
+    set("--heat-drivers-padding-x", base * 0.75);
+    set("--heat-drivers-padding-y", base * 0.75);
+    set("--heat-drivers-gap", base * 0.5);
+    set("--heat-drivers-item-padding-x", targetLaneFontSize * 0.75);
+    set("--heat-drivers-item-padding-y", itemPaddingY);
+    set("--heat-drivers-title-margin", base * 0.75);
   }
 
   nextHeatNumber = computed<number>(() => {

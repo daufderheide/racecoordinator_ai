@@ -189,9 +189,54 @@ describe("RacedayTimerComponent", () => {
     const timerTextEl = fixture.nativeElement.querySelector(".timer-text");
     const timerPanelEl = fixture.nativeElement.querySelector(".timer-panel");
     expect(timerTextEl.style.fontSize).toBe("85px");
-    expect(timerPanelEl.style.getPropertyValue("--timer-font-size")).toBe(
-      "85px",
+    // the custom size is the maximum; it may only shrink to fit the panel
+    const applied = parseInt(
+      timerPanelEl.style.getPropertyValue("--timer-font-size"),
+      10,
     );
+    expect(applied).toBeGreaterThan(0);
+    expect(applied).toBeLessThanOrEqual(85);
+  });
+
+  it("should keep the custom time font size when it fits and shrink it when it does not (auto)", () => {
+    const panelEl = () =>
+      fixture.nativeElement.querySelector(".timer-panel") as HTMLElement;
+    const run = (w: number, h: number) => {
+      fixture.componentRef.setInput("widget", {
+        widgetType: "timer",
+        scaleMode: "auto",
+        customSettings: { timeFontSize: 60 },
+      } as any);
+      fixture.detectChanges();
+      Object.defineProperty(panelEl(), "clientWidth", {
+        value: w,
+        configurable: true,
+      });
+      Object.defineProperty(panelEl(), "clientHeight", {
+        value: h,
+        configurable: true,
+      });
+      (component as any).lastFittedWidth = -1;
+      (component as any).fitText();
+      return parseInt(
+        panelEl().style.getPropertyValue("--timer-font-size"),
+        10,
+      );
+    };
+    expect(run(2000, 600)).toBe(60);
+    expect(run(120, 90)).toBeLessThan(60);
+  });
+
+  it("should use the custom time font size as-is in fixed scale mode", () => {
+    fixture.componentRef.setInput("widget", {
+      widgetType: "timer",
+      scaleMode: "fixed",
+      customSettings: { timeFontSize: 70 },
+    } as any);
+    fixture.detectChanges();
+    (component as any).fitText();
+    const panel = fixture.nativeElement.querySelector(".timer-panel");
+    expect(panel.style.getPropertyValue("--timer-font-size")).toBe("70px");
   });
 
   describe("editor mode mock time formatting", () => {
@@ -405,5 +450,105 @@ describe("RacedayTimerComponent", () => {
     expect(await localHarness.getStatusLabel()).toBe("RD_AUTO_ADVANCING");
     expect(await localHarness.getWarmupLabel()).toBe("RD_COOLDOWN");
     expect(await localHarness.getCooldownLabel()).toBe("RD_COOLDOWN");
+  });
+
+  it("should skip fitText layout calculations when text length and container dimensions are unchanged", () => {
+    const textEl = fixture.nativeElement.querySelector(".timer-text");
+    const panelEl = fixture.nativeElement.querySelector(".timer-panel");
+    spyOnProperty(panelEl, "clientWidth", "get").and.returnValue(200);
+    spyOnProperty(panelEl, "clientHeight", "get").and.returnValue(100);
+
+    const setPropertySpy = spyOn(
+      panelEl.style,
+      "setProperty",
+    ).and.callThrough();
+
+    // First fitting
+    textEl.textContent = "01:23.45";
+    (component as any).fitText();
+    const firstCallCount = setPropertySpy.calls.count();
+    expect(firstCallCount).toBeGreaterThan(0);
+
+    // Second fitting with identical length and dimensions ("01:23.46")
+    textEl.textContent = "01:23.46";
+    (component as any).fitText();
+
+    // setProperty should not be called again because of cache hit
+    expect(setPropertySpy.calls.count()).toBe(firstCallCount);
+
+    // Third fitting with different length ("1:23.46")
+    textEl.textContent = "1:23.46";
+    (component as any).fitText();
+
+    expect(setPropertySpy.calls.count()).toBeGreaterThan(firstCallCount);
+  });
+
+  describe("status text options (#1197)", () => {
+    const show = (customSettings: any, key = "RD_AUTO_ADVANCING") => {
+      fixture.componentRef.setInput("widget", { customSettings });
+      fixture.componentRef.setInput("formattedTime", "00:45");
+      fixture.componentRef.setInput("autoStatusLabel", key);
+      fixture.componentRef.setInput("showCountdownOverlay", false);
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector(
+        ".status-label",
+      ) as HTMLElement | null;
+    };
+
+    it("shows the default translated text in uppercase when nothing is set", () => {
+      const label = show({});
+      expect(label?.textContent?.trim()).toBe("RD_AUTO_ADVANCING");
+      expect(label?.classList).not.toContain("status-label-as-typed");
+    });
+
+    it("shows the user's own Auto-Advancing and Auto-Starting text", () => {
+      expect(
+        show({ autoAdvancingText: "  Next heat soon  " })?.textContent?.trim(),
+      ).toBe("Next heat soon");
+      expect(
+        show(
+          { autoStartingText: "Get ready" },
+          "RD_AUTO_STARTING",
+        )?.textContent?.trim(),
+      ).toBe("Get ready");
+    });
+
+    it("keeps other status keys translated", () => {
+      expect(
+        show({ autoAdvancingText: "x" }, "RD_PAUSED")?.textContent?.trim(),
+      ).toBe("RD_PAUSED");
+    });
+
+    it("hides the status text when switched off", () => {
+      expect(show({ showStatusText: false })).toBeNull();
+    });
+
+    it("shows the text as typed when Uppercase is off", () => {
+      const label = show({ statusUppercase: false, autoAdvancingText: "soon" });
+      expect(label?.classList).toContain("status-label-as-typed");
+    });
+
+    it("applies the status font family, size and colour", () => {
+      const label = show({
+        statusFontFamily: "Inter",
+        statusFontSize: 30,
+        statusTextColor: "#ff0000",
+      });
+      expect(label?.style.fontFamily).toContain("Inter");
+      expect(label?.style.fontSize).toBe("30px");
+      expect(label?.style.color).toBe("rgb(255, 0, 0)");
+      const container = fixture.nativeElement.querySelector(
+        ".top-label",
+      ) as HTMLElement;
+      expect(container.style.height).toBe("42px");
+    });
+
+    it("keeps the 24px label row without a custom size", () => {
+      show({});
+      const container = fixture.nativeElement.querySelector(
+        ".top-label",
+      ) as HTMLElement;
+      expect(container.style.height).toBe("24px");
+    });
   });
 });
