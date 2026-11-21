@@ -1,0 +1,255 @@
+<div
+  class="page-container"
+  [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'"
+>
+  <app-editor-title
+    titleKey="CE_TITLE"
+    [items]="carSelectItems"
+    [selectedId]="selectedCarId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
+    [showCopy]="true"
+    [showDelete]="true"
+    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledDelete]="!selectedCar || isSaving"
+    [copyDisabledTooltipKey]="'CE_TOOLTIP_COPY_DISABLED'"
+    [showHelp]="true"
+    [helpSteps]="getHelpSteps()"
+    [helpRecordName]="'carEditorHelpShown'"
+    [selectorTooltipKey]="'CE_TOOLTIP_SELECTOR'"
+    [isSaving]="isSaving"
+    [undoManager]="undoManager"
+    (selectedIdChange)="onSelectCarById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewCar()"
+    (copy)="onCopyCar()"
+    (delete)="onDeleteCar()"
+  >
+  </app-editor-title>
+
+  @if (editingCar) {
+    <div class="content-split">
+      <!-- LEFT: picture, name, brand, class, scale -->
+      <div class="editor-panel" id="car-profile-panel">
+        <div class="sections-wrapper">
+          <div class="config-section">
+            <div class="config-form">
+              <div
+                id="car-image-selector"
+                class="avatar-column"
+                [title]="'CE_TOOLTIP_IMAGE' | translate"
+              >
+                <app-image-selector
+                  [(imageUrl)]="editingCar.avatarUrl"
+                  (imageUrlChange)="captureState()"
+                  [assets]="imageAssets"
+                  [disabled]="!isEditMode"
+                  [title]="'CE_TOOLTIP_IMAGE' | translate"
+                >
+                </app-image-selector>
+              </div>
+
+              <div class="editor-section" [class.invalid]="isNameInvalid">
+                <label for="car-name-input">{{
+                  "CE_LABEL_NAME" | translate
+                }}</label>
+                <input
+                  id="car-name-input"
+                  type="text"
+                  [disabled]="!isEditMode"
+                  [(ngModel)]="editingCar.name"
+                  [appAutoSelectDefault]="defaultCarName"
+                  (ngModelChange)="onInputChange()"
+                  class="dm-input"
+                  (focus)="onInputFocus()"
+                  (blur)="onInputBlur()"
+                  [title]="'CE_TOOLTIP_NAME' | translate"
+                  autocomplete="off"
+                  data-dashlane-ignore="true"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                />
+              </div>
+
+              <div class="editor-section">
+                <label for="car-brand-input">{{
+                  "CE_LABEL_BRAND" | translate
+                }}</label>
+                <input
+                  id="car-brand-input"
+                  type="text"
+                  class="dm-input"
+                  [disabled]="!isEditMode"
+                  [(ngModel)]="editingCar.brand"
+                  (ngModelChange)="onInputChange()"
+                  (focus)="onInputFocus()"
+                  (blur)="onInputBlur()"
+                  [placeholder]="
+                    isEditMode ? ('CE_PLACEHOLDER_BRAND' | translate) : ''
+                  "
+                  autocomplete="off"
+                />
+              </div>
+
+              <div class="editor-section">
+                <label for="car-class-input">{{
+                  "CE_LABEL_CLASS" | translate
+                }}</label>
+                <input
+                  id="car-class-input"
+                  type="text"
+                  class="dm-input"
+                  list="car-class-options"
+                  [disabled]="!isEditMode"
+                  [(ngModel)]="editingCar.carClass"
+                  (ngModelChange)="onInputChange()"
+                  (focus)="onInputFocus()"
+                  (blur)="onInputBlur()"
+                  [title]="'CE_TOOLTIP_CLASS' | translate"
+                  [placeholder]="
+                    isEditMode ? ('CE_PLACEHOLDER_CLASS' | translate) : ''
+                  "
+                  autocomplete="off"
+                />
+                <datalist id="car-class-options">
+                  @for (cls of knownClasses; track cls) {
+                    <option [value]="cls"></option>
+                  }
+                </datalist>
+              </div>
+
+              <div class="editor-section" id="car-scale-section">
+                <label for="car-scale-select">{{
+                  "CE_LABEL_SCALE" | translate
+                }}</label>
+                <app-custom-select
+                  id="car-scale-select"
+                  name="carScaleSelect"
+                  [disabled]="!isEditMode"
+                  [ngModel]="editingCar.scale"
+                  (ngModelChange)="onScaleChange($event)"
+                >
+                  @for (opt of scaleOptions; track opt.value) {
+                    <app-custom-option [value]="opt.value">{{
+                      opt.labelKey | translate
+                    }}</app-custom-option>
+                  }
+                </app-custom-select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <div class="spacer"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: setup -->
+      <div class="preview-panel">
+        <div id="car-setup-section" class="config-section">
+          <div class="section-header">
+            <h1>{{ "CE_HEADER_SETUP" | translate }}</h1>
+          </div>
+          <div class="setup-grid">
+            @for (field of setupFields; track field.key) {
+              <div class="editor-section">
+                <label [for]="'car-' + field.key + '-input'">{{
+                  field.labelKey | translate
+                }}</label>
+                <input
+                  [id]="'car-' + field.key + '-input'"
+                  type="text"
+                  class="dm-input"
+                  [disabled]="!isEditMode"
+                  [(ngModel)]="editingCar[field.key]"
+                  (ngModelChange)="onInputChange()"
+                  (focus)="onInputFocus()"
+                  (blur)="onInputBlur()"
+                  [placeholder]="
+                    isEditMode ? (field.placeholderKey | translate) : ''
+                  "
+                  autocomplete="off"
+                />
+              </div>
+            }
+
+            <div class="editor-section modified-section">
+              <label
+                id="car-modified-toggle"
+                class="checkbox-container"
+                [class.disabled]="!isEditMode"
+                [title]="'CE_TOOLTIP_MODIFIED' | translate"
+              >
+                <input
+                  id="car-modified-input"
+                  type="checkbox"
+                  [disabled]="!isEditMode"
+                  [ngModel]="editingCar.modified"
+                  (ngModelChange)="onModifiedChange($event)"
+                />
+                <span class="checkmark"></span>
+                <span class="checkbox-label">{{
+                  "CE_LABEL_MODIFIED" | translate
+                }}</span>
+              </label>
+              <span class="modified-hint">{{
+                (editingCar.modified ? "CE_MODIFIED_YES" : "CE_MODIFIED_NO")
+                  | translate
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="car-notes-section" class="config-section">
+          <div class="editor-section">
+            <label for="car-notes-input">{{
+              "CE_LABEL_NOTES" | translate
+            }}</label>
+            <textarea
+              id="car-notes-input"
+              class="dm-input notes-input"
+              rows="5"
+              [disabled]="!isEditMode"
+              [(ngModel)]="editingCar.notes"
+              (ngModelChange)="onInputChange()"
+              (focus)="onInputFocus()"
+              (blur)="onInputBlur()"
+              [placeholder]="
+                isEditMode ? ('CE_PLACEHOLDER_NOTES' | translate) : ''
+              "
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+@if (isLoading || (isSaving && !isAutoSaving)) {
+  <div class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+}
+
+<app-confirmation-modal
+  [visible]="showDiscardConfirm"
+  title="UE_CONFIRM_DISCARD_TITLE"
+  [message]="discardMessage"
+  (confirm)="onConfirmDiscard()"
+  (cancel)="onCancelDiscard()"
+>
+</app-confirmation-modal>
+
+<app-confirmation-modal
+  [visible]="showDeleteConfirm"
+  title="CE_CONFIRM_DELETE_TITLE"
+  message="CE_CONFIRM_DELETE"
+  confirmText="CD_YES"
+  cancelText="CD_NO"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+>
+</app-confirmation-modal>

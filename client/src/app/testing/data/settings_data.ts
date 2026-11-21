@@ -12,6 +12,7 @@ export function createDefaultSettings(
   s.driverManagerHelpShown = true;
   s.teamManagerHelpShown = true;
   s.teamEditorHelpShown = true;
+  s.carEditorHelpShown = true;
   s.assetManagerHelpShown = true;
   s.raceManagerHelpShown = true;
   s.raceEditorHelpShown = true;

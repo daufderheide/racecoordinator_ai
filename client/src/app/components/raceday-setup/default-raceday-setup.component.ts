@@ -932,6 +932,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
     RacedaySetupNavigationHelper.openTeamManager(this);
   }
 
+  openCarManager() {
+    RacedaySetupNavigationHelper.openCarManager(this);
+  }
+
   openTrackManager() {
     RacedaySetupNavigationHelper.openTrackManager(this);
   }

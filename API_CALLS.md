@@ -110,6 +110,15 @@ Entities (Drivers, Tracks, Teams, Races) and Database Management.
 | `PUT` | `/api/teams/{id}` | `DIRECTOR` | Team JSON | Updated Team JSON | Updates a team. |
 | `DELETE` | `/api/teams/{id}` | `DIRECTOR` | None | None (status `204`) | Deletes a team. |
 
+### Slotcars (Viewer / Director Roles)
+
+| Method | Path | Allowed Role | Request Body | Response Body | Description |
+|:---|:---|:---|:---|:---|:---|
+| `GET` | `/api/cars` | `VIEWER` | None | Array of Car JSON | Lists all slotcars. |
+| `POST` | `/api/cars` | `DIRECTOR` | Car JSON | Created Car JSON (status `201`) | Creates a slotcar. `400` when the name is empty, `409` when another car has the name. |
+| `PUT` | `/api/cars/{id}` | `DIRECTOR` | Car JSON | Updated Car JSON | Updates a slotcar. Same `400` / `409` rules as create. |
+| `DELETE` | `/api/cars/{id}` | `DIRECTOR` | None | None (status `204`) | Deletes a slotcar. |
+
 ### Tracks (Viewer / Director Roles)
 
 | Method | Path | Allowed Role | Request Body | Response Body | Description |
