@@ -134,11 +134,15 @@ Run Jasmine / Karma client unit tests:
 
 *Note: This script automatically uses a local Playwright text-to-speech compatible Chromium instance.*
 
+On Windows, set `CHROME_BIN` to use a specific browser. Otherwise the unit test runner checks the Playwright browser cache and installs only the Chromium headless shell if needed.
+
 ### Client Visual Regression Tests (Docker)
 Visual regression tests use Playwright inside an isolated Docker container to ensure identical cross-platform rendering:
 
 - **Linux / macOS**: `./run_client_screendiff_tests.sh`
 - **Windows**: `.\run_client_screendiff_tests.ps1`
+
+The Windows Docker runner uses a separate Linux volume per checkout for dependencies and the Angular build. It rebuilds when the application, assets, protobuf definitions, or build configuration change. The runner prints the Windows report directory, which is also used by `--sync-only`.
 
 **Common Options:**
 - **Run only changed components**:

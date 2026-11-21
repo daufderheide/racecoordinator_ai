@@ -54,6 +54,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   isDeferHeatDisabled = input<boolean>(false);
   isSkipHeatDisabled = input<boolean>(false);
   isSkipRaceDisabled = input<boolean>(false);
+  isRaceAgainDisabled = input<boolean>(true);
   isAddLapDisabled = input<boolean>(false);
   isModifyDisabled = input<boolean>(false);
   isDisallowLapRecordsDisabled = input<boolean>(false);
@@ -384,6 +385,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
 
   onFileMenuSelect(action: string) {
     if (action === "BACK" && this.isBackActionDisabled()) return;
+    if (action === "RACE_AGAIN" && this.isRaceAgainDisabled()) return;
     this.fileMenuSelect.emit(action);
     this.closeAll();
   }

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday Action Button Visuals", () => {
@@ -254,6 +255,94 @@ test.describe("Raceday Action Button Visuals", () => {
       {
         maxDiffPixelRatio: 0.05,
       },
+    );
+  });
+});
+
+// https://github.com/daufderheide/racecoordinator_ai/issues/679
+test.describe("Raceday Race Again Action Button Visuals", () => {
+  const raceAgainLayout = {
+    racedayLayout: {
+      widgets: [
+        {
+          id: "w-race-again",
+          widgetType: "action-race-again",
+          x: 100,
+          y: 100,
+          width: 220,
+          height: 80,
+          scaleMode: "auto",
+          customSettings: { backgroundColor: "", fontSize: 24 },
+        },
+      ],
+    },
+  };
+  const raceData = (event?: { index: number; total: number }) => ({
+    race: {
+      race: {
+        model: { entityId: "r1" },
+        name: "Screendiff Race",
+        track: {
+          model: { entityId: "t1" },
+          name: "Test Track",
+          lanes: [{ objectId: "l1", length: 10 }],
+        },
+      },
+      ...(event
+        ? {
+            isEvent: true,
+            eventName: "Club Event",
+            currentEventRaceIndex: event.index,
+            totalEventRaces: event.total,
+          }
+        : {}),
+    },
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.setupRaceWebSocketMocks(page);
+    await TestSetupHelper.setupAssetMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    await TestSetupHelper.setupSettings(page, raceAgainLayout);
+  });
+
+  test("should display the Race Again button enabled once the race is over", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+    await TestSetupHelper.mockRaceData(page, raceData());
+    await TestSetupHelper.sendRaceState(page, RaceState.RACE_OVER);
+
+    const button = page.locator("app-raceday-action-button button");
+    await expect(button).toBeEnabled();
+    await expect(button).toHaveScreenshot(
+      "raceday-action-race-again-enabled.png",
+    );
+  });
+
+  test("should display the Race Again button disabled before the last race of an event", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+    await TestSetupHelper.mockRaceData(page, raceData({ index: 0, total: 3 }));
+    await TestSetupHelper.sendRaceState(page, RaceState.RACE_OVER);
+
+    const button = page.locator("app-raceday-action-button button");
+    await expect(button).toBeDisabled();
+    await expect(button).toHaveScreenshot(
+      "raceday-action-race-again-disabled-mid-event.png",
     );
   });
 });

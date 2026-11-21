@@ -31,6 +31,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("action-defer-heat");
     expect(keys).toContain("action-skip-heat");
     expect(keys).toContain("action-skip-race");
+    expect(keys).toContain("action-race-again");
     expect(keys).toContain("action-add-lap");
     expect(keys).toContain("action-modify-heats");
     expect(keys).toContain("action-export-pdf");

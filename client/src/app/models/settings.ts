@@ -53,6 +53,7 @@ export type WidgetType =
   | "action-defer-heat"
   | "action-skip-heat"
   | "action-skip-race"
+  | "action-race-again"
   | "action-add-lap"
   | "action-modify-heats"
   | "action-export-pdf"
@@ -280,6 +281,8 @@ export class Settings {
   selectedSeasonId: string = "";
   selectedDriverIds: string[] = [];
   demoConfig?: IDemoConfig;
+  /** Whether the last race started from Race Day Setup was a demo race (used by "Race Again"). */
+  lastStartIsDemo: boolean = false;
 
   serverIp: string = "";
   serverPort: number = 7070;

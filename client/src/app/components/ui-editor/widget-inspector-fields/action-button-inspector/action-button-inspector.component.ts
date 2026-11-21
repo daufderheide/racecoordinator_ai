@@ -54,6 +54,8 @@ export class ActionButtonInspectorComponent {
         return "RD_MENU_SKIP_HEAT";
       case "action-skip-race":
         return "RD_MENU_SKIP_RACE";
+      case "action-race-again":
+        return "RD_MENU_RACE_AGAIN";
       case "action-add-lap":
         return "RD_MENU_ADD_LAP";
       case "action-modify-heats":

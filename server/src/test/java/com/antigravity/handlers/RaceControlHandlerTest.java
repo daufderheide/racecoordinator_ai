@@ -3,7 +3,9 @@ package com.antigravity.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
@@ -20,6 +22,7 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.repository.SqliteRepository;
 import java.io.File;
 import java.nio.file.Path;
@@ -115,6 +118,137 @@ public class RaceControlHandlerTest {
     assertEquals(1, participants.size());
     assertEquals(driverId, participants.get(0).getDriver().getEntityId());
     assertNull(participants.get(0).getTeam());
+  }
+
+  private InitializeRaceRequest insertRaceAgainFixture() {
+    Race race =
+        new Race.Builder()
+            .withName("Again Race")
+            .withTrackEntityId("track-again")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withEntityId("race-again")
+            .build();
+    Driver driver = new Driver("Again Driver", "AD", "driver-again", null);
+    Track track =
+        new Track.Builder()
+            .name("Again Track")
+            .lanes(Arrays.asList(new Lane("red", "black", 100)))
+            .entityId("track-again")
+            .build();
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+    return InitializeRaceRequest.newBuilder()
+        .setRaceId("race-again")
+        .addDriverIds("d_driver-again")
+        .setIsDemoMode(true)
+        .setRaceAgain(true)
+        .build();
+  }
+
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  @Test
+  public void testHandleInitializeRace_RaceAgainWithoutRace_Returns409() throws Exception {
+    InitializeRaceRequest request = insertRaceAgainFixture();
+    ClientSubscriptionManager.getInstance().setRace(null);
+
+    TaskResult result = handler.handleInitializeRace(request);
+
+    assertEquals(409, result.status);
+    assertNull(ClientSubscriptionManager.getInstance().getRace());
+  }
+
+  @Test
+  public void testHandleInitializeRace_RaceAgainWhileRaceNotOver_Returns409() throws Exception {
+    InitializeRaceRequest request = insertRaceAgainFixture();
+    InitializeRaceRequest firstStart = request.toBuilder().setRaceAgain(false).build();
+    assertEquals(200, handler.handleInitializeRace(firstStart).status);
+    com.antigravity.race.Race running = ClientSubscriptionManager.getInstance().getRace();
+    assertFalse(running.getState() instanceof RaceOver);
+
+    TaskResult result = handler.handleInitializeRace(request);
+
+    assertEquals(409, result.status);
+    assertSame(running, ClientSubscriptionManager.getInstance().getRace());
+  }
+
+  @Test
+  public void testHandleInitializeRace_RaceAgainWhenRaceOver_StartsNewRace() throws Exception {
+    InitializeRaceRequest request = insertRaceAgainFixture();
+    InitializeRaceRequest firstStart = request.toBuilder().setRaceAgain(false).build();
+    assertEquals(200, handler.handleInitializeRace(firstStart).status);
+    com.antigravity.race.Race finished = ClientSubscriptionManager.getInstance().getRace();
+    finished.changeState(new RaceOver());
+
+    TaskResult result = handler.handleInitializeRace(request);
+
+    assertEquals(200, result.status);
+    com.antigravity.race.Race again = ClientSubscriptionManager.getInstance().getRace();
+    assertNotSame(finished, again);
+    assertFalse(again.getState() instanceof RaceOver);
+  }
+
+  /** Puts the event manager on race {@code index} of a two-race event. */
+  private static void setActiveEventOnRace(int index) throws Exception {
+    com.antigravity.race.EventExecutionManager mgr = // fqn-collision
+        com.antigravity.race.EventExecutionManager.getInstance(); // fqn-collision
+    com.antigravity.models.Event event = // fqn-collision
+        new com.antigravity.models.Event( // fqn-collision
+            "Two Race Event",
+            "",
+            0.0,
+            Arrays.asList(
+                new com.antigravity.models.Event.EventRaceItem("race-again", 0), // fqn-collision
+                new com.antigravity.models.Event.EventRaceItem("race-again", 0)), // fqn-collision
+            "event-again",
+            null);
+    java.lang.reflect.Field active =
+        com.antigravity.race.EventExecutionManager.class // fqn-collision
+            .getDeclaredField("activeEvent");
+    active.setAccessible(true);
+    active.set(mgr, event);
+    java.lang.reflect.Field idx =
+        com.antigravity.race.EventExecutionManager.class // fqn-collision
+            .getDeclaredField("currentRaceIndex");
+    idx.setAccessible(true);
+    idx.set(mgr, index);
+  }
+
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  @Test
+  public void testHandleInitializeRace_RaceAgainBetweenEventRaces_Returns409() throws Exception {
+    InitializeRaceRequest request = insertRaceAgainFixture();
+    InitializeRaceRequest firstStart = request.toBuilder().setRaceAgain(false).build();
+    assertEquals(200, handler.handleInitializeRace(firstStart).status);
+    com.antigravity.race.Race finished = ClientSubscriptionManager.getInstance().getRace();
+    finished.changeState(new RaceOver());
+    setActiveEventOnRace(0);
+    try {
+      TaskResult result = handler.handleInitializeRace(request);
+
+      assertEquals(409, result.status);
+      assertSame(finished, ClientSubscriptionManager.getInstance().getRace());
+    } finally {
+      com.antigravity.race.EventExecutionManager.getInstance().cancelEvent(); // fqn-collision
+    }
+  }
+
+  @Test
+  public void testHandleInitializeRace_RaceAgainAfterLastEventRace_IsAllowed() throws Exception {
+    InitializeRaceRequest request = insertRaceAgainFixture();
+    InitializeRaceRequest firstStart = request.toBuilder().setRaceAgain(false).build();
+    assertEquals(200, handler.handleInitializeRace(firstStart).status);
+    com.antigravity.race.Race finished = ClientSubscriptionManager.getInstance().getRace();
+    finished.changeState(new RaceOver());
+    setActiveEventOnRace(1);
+    try {
+      TaskResult result = handler.handleInitializeRace(request);
+
+      assertEquals(200, result.status);
+      assertNotSame(finished, ClientSubscriptionManager.getInstance().getRace());
+    } finally {
+      com.antigravity.race.EventExecutionManager.getInstance().cancelEvent(); // fqn-collision
+    }
   }
 
   @Test

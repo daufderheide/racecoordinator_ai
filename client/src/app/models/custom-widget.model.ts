@@ -29,6 +29,7 @@ export interface CustomWidgetSettingField {
 export interface CustomWidgetManifest {
   id: string;
   name: string;
+  nameKey?: string;
   description?: string;
   author?: string;
   version?: string;

@@ -158,6 +158,32 @@ describe("RacedayMenuBarComponent", () => {
     expect(component.fileMenuSelect.emit).toHaveBeenCalledWith("RACE_HISTORY");
   });
 
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  it("should grey out Race Again and ignore clicks while it is disabled", async () => {
+    roleSubject.next(Role.DIRECTOR);
+    spyOn(component.fileMenuSelect, "emit");
+    await harness.clickMenuButton("RD_MENU_FILE");
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector(".race-again-item");
+    expect(item.classList).toContain("disabled");
+    component.onFileMenuSelect("RACE_AGAIN");
+    expect(component.fileMenuSelect.emit).not.toHaveBeenCalled();
+  });
+
+  it("should emit RACE_AGAIN when Race Again is enabled", async () => {
+    roleSubject.next(Role.DIRECTOR);
+    fixture.componentRef.setInput("isRaceAgainDisabled", false);
+    spyOn(component.fileMenuSelect, "emit");
+    await harness.clickMenuButton("RD_MENU_FILE");
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector(".race-again-item");
+    expect(item.classList).not.toContain("disabled");
+    await harness.clickMenuItem("RD_MENU_RACE_AGAIN");
+    expect(component.fileMenuSelect.emit).toHaveBeenCalledWith("RACE_AGAIN");
+  });
+
   it("should emit menuSelect with DISALLOW_LAP_RECORDS when Disallow Lap Records item is clicked", async () => {
     roleSubject.next(Role.DIRECTOR);
     spyOn(component.menuSelect, "emit");

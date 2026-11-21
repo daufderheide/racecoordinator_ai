@@ -5,9 +5,11 @@ import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-repli
 import { exportMigrationDiagnostics as exportDiagnosticsHelper } from "@app/components/ui-editor/ui-editor-io.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, LayoutScaleMode } from "@app/models/settings";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
+import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
 
 import {
   clearLastEditedWidgetForLayout,
@@ -96,6 +98,7 @@ export abstract class LayoutEditorBase {
   abstract logger: LoggerService;
   abstract cdr: ChangeDetectorRef;
   abstract translationService: TranslationService;
+  protected customWidgetService?: CustomWidgetService | null;
 
   showResetConfirm = false;
   showClearConfirm = false;
@@ -409,6 +412,9 @@ export abstract class LayoutEditorBase {
   }
 
   getWidgetDisplayName(widget: any): string {
+    if (isCustomWidget(widget?.widgetType)) {
+      return this.getWidgetTypeDisplayName(widget.widgetType);
+    }
     return getWidgetDisplayName(
       widget,
       this.translationService,
@@ -416,8 +422,15 @@ export abstract class LayoutEditorBase {
     );
   }
 
-  getWidgetTypeLabelKey(type: string): string {
-    return getWidgetTypeLabelKey(type);
+  getWidgetTypeDisplayName(type: string): string {
+    if (isCustomWidget(type)) {
+      return resolveCustomWidgetName(
+        type,
+        this.customWidgetService?.getWidgetDefinition(type)?.manifest,
+        this.translationService,
+      );
+    }
+    return this.translationService.translate(getWidgetTypeLabelKey(type));
   }
 
   // --- Grids & Columns ---

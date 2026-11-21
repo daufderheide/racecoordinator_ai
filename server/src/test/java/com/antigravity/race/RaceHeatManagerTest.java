@@ -1320,4 +1320,96 @@ public class RaceHeatManagerTest {
       stepRace.stop();
     }
   }
+
+  @Test
+  public void testUserScenario_TwelveDriversSingleHeatStepUp() {
+    com.antigravity.race.Race stepRace = createStepUpRace(4, 12, 1, HeatRotationType.SingleHeat);
+    try {
+      List<Heat> heats = stepRace.getHeats();
+
+      // Convert to proto as client would do - swap lane 1 (idx 0) and lane 4 (idx 3)
+      ModifyHeatsRequest.Builder reqBuilder = ModifyHeatsRequest.newBuilder();
+      for (Heat h : heats) {
+        List<DriverHeatData> swappedDrivers = new ArrayList<>(h.getDrivers());
+        DriverHeatData d0 = swappedDrivers.get(0);
+        DriverHeatData d3 = swappedDrivers.get(3);
+        swappedDrivers.set(0, d3);
+        swappedDrivers.set(3, d0);
+        Heat swappedHeat =
+            new Heat(
+                h.getHeatNumber(), swappedDrivers, stepRace.getRaceModel().getHeatScoring(), false);
+        swappedHeat.setStep(h.getStep());
+        swappedHeat.setStepUpBoundary(h.isStepUpBoundary());
+        swappedHeat.setObjectId(h.getObjectId());
+        reqBuilder.addHeats(HeatConverter.toProto(swappedHeat, new HashSet<>()));
+      }
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+
+      ModifyHeatsResponse response = stepRace.getHeatManager().modifyHeats(reqBuilder.build());
+      assertTrue(response.getSuccess());
+
+      // Verify that after first modify, StepUp drivers remain Step-Up 1 (index 1), not Step-Up 2
+      for (int i = 1; i < stepRace.getHeats().size(); i++) {
+        Heat h = stepRace.getHeats().get(i);
+        DriverHeatData dhd = h.getDrivers().get(0);
+        assertTrue(dhd.isStepUpLane());
+        assertNotNull(dhd.getDriver());
+        assertTrue(dhd.getDriver().isStepUpParticipant());
+        assertEquals(1, dhd.getDriver().getStepUpIndex());
+        assertEquals("Step-Up 1", dhd.getDriver().getDriver().getName());
+      }
+
+      // Modify a second time before race starts to ensure step-up index does not increment
+      ModifyHeatsRequest.Builder reqBuilder2 = ModifyHeatsRequest.newBuilder();
+      for (Heat h : stepRace.getHeats()) {
+        reqBuilder2.addHeats(HeatConverter.toProto(h, new HashSet<>()));
+      }
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder2.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+      ModifyHeatsResponse response2 = stepRace.getHeatManager().modifyHeats(reqBuilder2.build());
+      assertTrue(response2.getSuccess());
+
+      for (int i = 1; i < stepRace.getHeats().size(); i++) {
+        Heat h = stepRace.getHeats().get(i);
+        DriverHeatData dhd = h.getDrivers().get(0);
+        assertTrue(dhd.isStepUpLane());
+        assertNotNull(dhd.getDriver());
+        assertTrue(dhd.getDriver().isStepUpParticipant());
+        assertEquals(1, dhd.getDriver().getStepUpIndex());
+        assertEquals("Step-Up 1", dhd.getDriver().getDriver().getName());
+      }
+
+      // Heat 1 runs and finishes
+      Heat h1 = stepRace.getHeats().get(0);
+      stepRace.setCurrentHeat(h1);
+      h1.getDrivers().get(3).addLap(10.0, false, true); // Driver in lane 4 laps and wins
+      h1.getDrivers().get(3).addLap(10.0, false, true);
+      stepRace.changeState(new com.antigravity.race.states.HeatOver());
+      com.antigravity.race.states.Common.advanceToNextHeat(stepRace);
+
+      // Verify that Heat 1 winner (Driver 10) advanced to Heat 2 on Lane 1
+      Heat h2 = stepRace.getHeats().get(1);
+      DriverHeatData h2Lane1 = h2.getDrivers().get(0);
+      assertNotNull(h2Lane1.getDriver());
+      assertFalse(h2Lane1.getDriver().isStepUpParticipant());
+      assertEquals("Driver 10", h2Lane1.getDriver().getDriver().getName());
+      assertEquals(1, h2Lane1.getStepUpLaneIndex());
+
+      // Modifying heats after Heat 1 finishes must succeed without step-up count mismatch in step 2
+      ModifyHeatsRequest.Builder reqBuilder3 = ModifyHeatsRequest.newBuilder();
+      for (Heat h : stepRace.getHeats()) {
+        reqBuilder3.addHeats(HeatConverter.toProto(h, new HashSet<>()));
+      }
+      for (RaceParticipant p : stepRace.getDrivers()) {
+        reqBuilder3.addParticipants(RaceParticipantConverter.toProto(p, new HashSet<>()));
+      }
+      ModifyHeatsResponse response3 = stepRace.getHeatManager().modifyHeats(reqBuilder3.build());
+      assertTrue(response3.getErrorMessage(), response3.getSuccess());
+    } finally {
+      stepRace.stop();
+    }
+  }
 }

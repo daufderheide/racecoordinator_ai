@@ -146,6 +146,7 @@ export function validateStepUpHeats(
   localHeats: Heat[],
   race: Race,
   translationService: TranslationService,
+  isHeatStarted?: (h: Heat) => boolean,
 ): string | null {
   const isCustom = race?.heat_rotation_type === "Custom";
   const hasStepUp =
@@ -195,6 +196,18 @@ export function validateStepUpHeats(
 
   if (!isCustom && stepUp > 0) {
     for (let sIdx = 1; sIdx < sortedSteps.length; sIdx++) {
+      const prevStepNum = sortedSteps[sIdx - 1];
+      const prevStepHeats = stepMap.get(prevStepNum) || [];
+      const isPrevStepCompleted =
+        prevStepHeats.length > 0 &&
+        prevStepHeats.every((h) =>
+          isHeatStarted ? isHeatStarted(h) : !!h.started,
+        );
+
+      if (isPrevStepCompleted) {
+        continue;
+      }
+
       const stepNum = sortedSteps[sIdx];
       const stepHeats = stepMap.get(stepNum) || [];
       for (const h of stepHeats) {
@@ -246,6 +259,7 @@ export function getModifyHeatsValidationError(
       localHeats,
       race,
       translationService,
+      isHeatStarted,
     );
     if (stepUpError) return stepUpError;
   }

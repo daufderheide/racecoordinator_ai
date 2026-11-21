@@ -66,7 +66,9 @@ MyCustomWidgetsRoot/
 
 ### 1. `widget.json` (Manifest)
 
-The manifest defines widget metadata, default dimensions, and custom property schemas displayed in the UI Editor Inspector:
+The manifest defines widget metadata, default dimensions, and custom property schemas displayed in the UI Editor Inspector.
+
+The `name` field is the display name and fallback. Bundled samples also set an optional `nameKey` from RCAI's translation catalogs so their names follow the selected language. Use **Update Sample Widgets** in the UI Editor to refresh older copies of the bundled samples.
 
 ```json
 {

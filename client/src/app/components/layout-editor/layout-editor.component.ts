@@ -37,6 +37,7 @@ import { LayoutConfig, Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -171,6 +172,9 @@ export class LayoutEditorComponent
     optional: true,
   });
   public customUiService = inject(CustomUiService, { optional: true });
+  protected override customWidgetService = inject(CustomWidgetService, {
+    optional: true,
+  });
   public helpService = inject(HelpService, { optional: true });
 
   constructor(

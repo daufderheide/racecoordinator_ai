@@ -466,4 +466,36 @@ public class EventExecutionManagerTest {
     ses.submit(() -> isDaemon.set(Thread.currentThread().isDaemon())).get();
     assertTrue("EventExecutionManager scheduler thread must be daemon", isDaemon.get());
   }
+
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  @Test
+  public void testIsOnLastRace_OnlyTrueForTheLastRaceOfAnActiveEvent() throws Exception {
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    manager.cancelEvent();
+    assertFalse(manager.isOnLastRace());
+
+    Event event =
+        new Event(
+            "Event1",
+            "Test Event",
+            0.0,
+            Arrays.asList(new EventRaceItem("r1", 0), new EventRaceItem("r2", 0)),
+            "e1",
+            null);
+    java.lang.reflect.Field activeEventField =
+        EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(manager, event);
+    java.lang.reflect.Field currentIndexField =
+        EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+
+    currentIndexField.set(manager, 0);
+    assertFalse(manager.isOnLastRace());
+    currentIndexField.set(manager, 1);
+    assertTrue(manager.isOnLastRace());
+
+    manager.cancelEvent();
+    assertFalse(manager.isOnLastRace());
+  }
 }

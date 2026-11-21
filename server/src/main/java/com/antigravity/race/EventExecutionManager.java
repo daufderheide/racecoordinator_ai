@@ -61,6 +61,15 @@ public class EventExecutionManager {
         && currentRaceIndex < activeEvent.getRaces().size();
   }
 
+  /**
+   * True while an event is active and its current race is the last one. Race Again is only allowed
+   * for an event once its last race is over, and then restarts the whole event.
+   * https://github.com/daufderheide/racecoordinator_ai/issues/679
+   */
+  public synchronized boolean isOnLastRace() {
+    return isEventActive() && currentRaceIndex == activeEvent.getRaces().size() - 1;
+  }
+
   public synchronized Event getActiveEvent() {
     return activeEvent;
   }

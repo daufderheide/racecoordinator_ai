@@ -718,6 +718,49 @@ describe("modify-heats-modal.utils", () => {
       expect(error).toBe("RD_ERR_STEP_UP_COUNT_MISMATCH");
     });
 
+    it("should allow higher step heat with no step-up driver if previous step is already completed", () => {
+      const race = { step_up: 1 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const p2 = createParticipantFromDriver(
+        new Driver("d2", "Driver 2", "D2"),
+      );
+      const p3 = createParticipantFromDriver(
+        new Driver("d3", "Driver 3", "D3"),
+      );
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", p1, 0), new DriverHeatData("dhd2", p2, 1)],
+        [],
+        true,
+      );
+      h1.step = 1;
+
+      // Higher step heat has no step-up placeholder because p1 already stepped up into it
+      const h2 = new Heat(
+        "h2",
+        2,
+        [new DriverHeatData("dhd3", p3, 0), new DriverHeatData("dhd4", p1, 1)],
+        [],
+        false,
+      );
+      h2.step = 2;
+
+      // isHeatStarted returns true for h1 (step 1 completed)
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [p1, p2, p3],
+        race,
+        (h) => h.objectId === "h1",
+        mockTranslationService,
+      );
+      expect(error).toBeNull();
+    });
+
     it("should return null for valid multi-step configuration", () => {
       const race = { step_up: 1 } as any;
       const p1 = createParticipantFromDriver(

@@ -604,6 +604,14 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
     RacedayActionsMenuHelper.onSkipRaceCancel(this);
   }
 
+  onRaceAgainConfirm(): void {
+    RacedayActionsMenuHelper.onRaceAgainConfirm(this);
+  }
+
+  onRaceAgainCancel(): void {
+    RacedayActionsMenuHelper.onRaceAgainCancel(this);
+  }
+
   onRestartHeatConfirm(): void {
     RacedayActionsMenuHelper.onRestartHeatConfirm(this);
   }
@@ -803,6 +811,10 @@ export abstract class DefaultRacedayActionsBase extends DefaultRacedayAudioEvent
 
   get isSkipRaceDisabled(): boolean {
     return RacedayRaceStatusHelper.isSkipRaceDisabled(this);
+  }
+
+  get isRaceAgainDisabled(): boolean {
+    return RacedayRaceStatusHelper.isRaceAgainDisabled(this);
   }
 
   get isAddLapDisabled(): boolean {

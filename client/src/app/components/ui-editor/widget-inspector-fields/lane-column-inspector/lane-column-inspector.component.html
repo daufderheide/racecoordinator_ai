@@ -1038,7 +1038,9 @@
         >
           @for (col of allAvailableColumns; track col.key) {
             <app-custom-option [value]="col.key">
-              {{ col.label | translate }}
+              {{
+                isCustomWidgetKey(col.key) ? col.label : (col.label | translate)
+              }}
             </app-custom-option>
           }
         </app-custom-select>

@@ -356,6 +356,10 @@ export class RacedayKeyboardHelper {
       case "action-skip-race":
         if (!host.isSkipRaceDisabled) host.onMenuSelect("SKIP_RACE");
         break;
+      case "action-race-again":
+        // File-menu action: asks for confirmation, then restarts the race/event.
+        if (!host.isRaceAgainDisabled) host.onFileMenuSelect("RACE_AGAIN");
+        break;
       case "action-add-lap":
         if (!host.isAddLapDisabled) host.onMenuSelect("ADD_LAP");
         break;

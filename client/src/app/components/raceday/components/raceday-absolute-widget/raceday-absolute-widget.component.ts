@@ -47,6 +47,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
+import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
 import { resolveWidgetBorderStyles } from "@app/utils/widget-border.utils";
 
 @Component({
@@ -440,6 +441,9 @@ export class RacedayAbsoluteWidgetComponent
     }
     const el = this.wrapperRef()?.nativeElement;
     el?.classList.remove("grid-animating");
+    if (el) {
+      el.style.zIndex = "";
+    }
   }
 
   private calculateResizedBounds(
@@ -795,19 +799,11 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   getCustomWidgetName(type: string | undefined): string {
-    if (
-      this.customWidgetService &&
-      typeof this.customWidgetService.getWidgetDefinition === "function"
-    ) {
-      const def = this.customWidgetService.getWidgetDefinition(type);
-      if (def?.manifest?.name) {
-        return def.manifest.name;
-      }
-    }
-    if (type?.startsWith("custom:")) {
-      return type.substring("custom:".length);
-    }
-    return type || "";
+    return resolveCustomWidgetName(
+      type,
+      this.customWidgetService?.getWidgetDefinition?.(type)?.manifest,
+      this.translationService,
+    );
   }
 
   getCustomWidgetError(type: string | undefined): string | undefined {
@@ -906,6 +902,7 @@ export class RacedayAbsoluteWidgetComponent
 
     this.isGridAnimating = true;
     el.classList.add("grid-animating");
+    el.style.zIndex = String(this.computedZIndex + 1000);
     el.style.transition = "none";
     el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
     void el.offsetHeight;
@@ -915,6 +912,7 @@ export class RacedayAbsoluteWidgetComponent
     this.gridAnimTimer = setTimeout(() => {
       if (el) {
         el.classList.remove("grid-animating");
+        el.style.zIndex = "";
         el.style.transition = "";
         el.style.transform = "";
       }

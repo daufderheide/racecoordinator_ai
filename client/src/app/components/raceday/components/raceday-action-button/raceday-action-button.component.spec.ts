@@ -601,4 +601,56 @@ describe("RacedayActionButtonComponent", () => {
       );
     });
   });
+  // https://github.com/daufderheide/racecoordinator_ai/issues/679
+  describe("action-race-again button widget", () => {
+    const raceAgainWidget: AbsoluteWidgetNode = {
+      ...mockWidget,
+      widgetType: "action-race-again",
+    };
+    const parentWith = (disabled: boolean) => ({
+      isUIEditorMode: () => false,
+      isRaceAgainDisabled: disabled,
+      onFileMenuSelect: jasmine.createSpy("onFileMenuSelect"),
+    });
+
+    it("should use the Race Again label", () => {
+      fixture.componentRef.setInput("widget", raceAgainWidget);
+      fixture.componentRef.setInput("parent", parentWith(false));
+      fixture.detectChanges();
+      expect(component.actionLabelKey).toBe("RD_MENU_RACE_AGAIN");
+    });
+
+    it("should follow the parent's Race Again availability", () => {
+      fixture.componentRef.setInput("widget", raceAgainWidget);
+      fixture.componentRef.setInput("parent", parentWith(true));
+      fixture.detectChanges();
+      expect(component.isActionDisabled).toBeTrue();
+
+      fixture.componentRef.setInput("parent", parentWith(false));
+      fixture.detectChanges();
+      expect(component.isActionDisabled).toBeFalse();
+    });
+
+    it("should open the File menu Race Again action when clicked and enabled", () => {
+      const parent = parentWith(false);
+      fixture.componentRef.setInput("widget", raceAgainWidget);
+      fixture.componentRef.setInput("parent", parent);
+      fixture.detectChanges();
+
+      component.onClick(new Event("click"));
+
+      expect(parent.onFileMenuSelect).toHaveBeenCalledWith("RACE_AGAIN");
+    });
+
+    it("should do nothing when clicked while Race Again is not available", () => {
+      const parent = parentWith(true);
+      fixture.componentRef.setInput("widget", raceAgainWidget);
+      fixture.componentRef.setInput("parent", parent);
+      fixture.detectChanges();
+
+      component.onClick(new Event("click"));
+
+      expect(parent.onFileMenuSelect).not.toHaveBeenCalled();
+    });
+  });
 });

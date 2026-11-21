@@ -13,6 +13,8 @@ import {
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
+import { TranslationService } from "@app/services/translation.service";
+import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
 
 @Component({
   standalone: true,
@@ -33,6 +35,7 @@ export class CustomWidgetInspectorComponent {
   change = output<AbsoluteWidgetNode>();
 
   private customWidgetService = inject(CustomWidgetService);
+  private translationService = inject(TranslationService);
 
   get settings(): any {
     const w = this.widget();
@@ -58,9 +61,10 @@ export class CustomWidgetInspectorComponent {
   }
 
   get widgetName(): string {
-    return (
-      this.definition?.manifest?.name ||
-      this.widget().widgetType.replace(/^custom:/, "")
+    return resolveCustomWidgetName(
+      this.widget().widgetType,
+      this.definition?.manifest,
+      this.translationService,
     );
   }
 

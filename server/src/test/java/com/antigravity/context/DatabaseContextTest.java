@@ -12,7 +12,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -383,5 +386,43 @@ public class DatabaseContextTest {
 
     databaseContext.setSystemInfo("test_version", "1.2.0");
     assertEquals("1.2.0", databaseContext.getSystemInfo("test_version"));
+  }
+
+  @Test
+  public void testExportAndImportWithSystemInfo() throws Exception {
+    databaseContext.setSystemInfo("backfill_version", "1.1.0");
+    databaseContext.setSystemInfo("custom_key", "custom_val");
+
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    databaseContext.exportDatabase("test_db", baos);
+    byte[] zipData = baos.toByteArray();
+    assertNotNull(zipData);
+    assertTrue(zipData.length > 0);
+
+    try (InputStream in = new ByteArrayInputStream(zipData)) {
+      databaseContext.importDatabase("imported_sys_db", in);
+    }
+
+    databaseContext.switchDatabase("imported_sys_db");
+    assertEquals("1.1.0", databaseContext.getSystemInfo("backfill_version"));
+    assertEquals("custom_val", databaseContext.getSystemInfo("custom_key"));
+  }
+
+  @Test
+  public void testImportDatabaseWithLegacySystemInfoLine() throws Exception {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+      ZipEntry entry = new ZipEntry("data/system_info.json");
+      zos.putNextEntry(entry);
+      zos.write("1.1.0\n".getBytes(StandardCharsets.UTF_8));
+      zos.closeEntry();
+    }
+
+    try (InputStream in = new ByteArrayInputStream(baos.toByteArray())) {
+      databaseContext.importDatabase("imported_legacy_sys_db", in);
+    }
+
+    databaseContext.switchDatabase("imported_legacy_sys_db");
+    assertEquals("1.1.0", databaseContext.getSystemInfo("backfill_version"));
   }
 }
