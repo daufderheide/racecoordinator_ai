@@ -240,9 +240,14 @@ export function textPart(
   id: string,
   labelKey: string,
   prefix: string,
-  options: Partial<TextPartField> & { styled?: boolean } = {},
+  options: Partial<TextPartField> & {
+    styled?: boolean;
+    aligned?: boolean;
+  } = {},
 ): TextPartField {
-  const { styled, ...rest } = options;
+  const { styled, aligned, ...rest } = options;
+  // alignment per part (phase 3c): <prefix>Alignment, "Auto" = the widget's own
+  const alignKeys = aligned ? { align: `${prefix}Alignment` } : {};
   const styleKeys = styled
     ? {
         weight: `${prefix}FontWeight`,
@@ -259,18 +264,18 @@ export function textPart(
       size: `${prefix}FontSize`,
       color: `${prefix}TextColor`,
       ...styleKeys,
+      ...alignKeys,
     },
     searchTerms: styled
       ? "font size colour color text typography weight bold spacing uppercase case"
       : "font size colour color text typography",
     ...rest,
     // nothing stored = the part's own look (see PartTextStyleDirective)
-    ...(styled
+    ...(styled || aligned
       ? {
           keyDefaults: {
-            weight: "",
-            spacing: 0,
-            case: "",
+            ...(styled ? { weight: "", spacing: 0, case: "" } : {}),
+            ...(aligned ? { align: "" } : {}),
             ...(rest.keyDefaults || {}),
           },
         }

@@ -59,6 +59,7 @@ const recordsSchema: InspectorSchema = {
         {
           fields: [
             textPart("header", "UE_KIT_PART_HEADER", "header", {
+              aligned: true,
               styled: true,
               sampleKey: "RD_RECORD_RACE_LAP",
             }),
@@ -236,12 +237,14 @@ const timerSchema: InspectorSchema = {
         {
           fields: [
             textPart("time", "UE_KIT_PART_TIME", "time", {
+              aligned: true,
               styled: true,
               sample: "2:03",
               defaultColor: "#32cd32",
               sizeMax: 200,
             }),
             textPart("status", "UE_KIT_PART_STATUS", "status", {
+              aligned: true,
               styled: true,
               sampleKey: "RD_AUTO_ADVANCING",
               defaultColor: "#ffaa00",
@@ -278,6 +281,21 @@ function textInfoSchema(widgetType: string, icon: string): InspectorSchema {
                 styled: true,
                 sample: "Test Track",
               }),
+              // label and value are one line: it aligns as a whole (phase 3c)
+              {
+                id: "lineAlignment",
+                type: "segment",
+                key: "lineAlignment",
+                labelKey: "UE_KIT_ALIGN",
+                default: "",
+                searchTerms: "align alignment left centre center right",
+                options: [
+                  { value: "", labelKey: "UE_KIT_AUTO" },
+                  { value: "left", labelKey: "UE_KIT_ALIGN_LEFT" },
+                  { value: "center", labelKey: "UE_KIT_ALIGN_CENTRE" },
+                  { value: "right", labelKey: "UE_KIT_ALIGN_RIGHT" },
+                ],
+              },
             ],
           },
         ],

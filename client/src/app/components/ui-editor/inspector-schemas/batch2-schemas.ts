@@ -43,6 +43,7 @@ function upcomingSchema(widgetType: "next-heat" | "on-deck"): InspectorSchema {
           {
             fields: [
               textPart("title", "UE_KIT_PART_TITLE", "title", {
+                aligned: true,
                 styled: true,
                 sizeMin: 10,
                 sizeMax: 120,
@@ -82,6 +83,7 @@ function leaderboardSchema(
 ): InspectorSchema {
   const parts = [
     textPart("title", "UE_KIT_PART_TITLE", "title", {
+      aligned: true,
       styled: true,
       sizeMin: 10,
       sizeMax: 120,
@@ -90,6 +92,7 @@ function leaderboardSchema(
     ...(withSubtitle
       ? [
           textPart("subtitle", "UE_KIT_PART_SUBTITLE", "subtitle", {
+            aligned: true,
             styled: true,
             sizeMin: 10,
             sizeMax: 120,
@@ -401,6 +404,7 @@ const heatListSchema: InspectorSchema = {
         {
           fields: [
             textPart("title", "UE_KIT_PART_TITLE", "title", {
+              aligned: true,
               styled: true,
               sizeMin: 10,
               sizeMax: 120,

@@ -538,12 +538,24 @@
                             </div>
                             <div class="kit-ctrl">
                               <div class="kit-seg">
+                                @if ($any(field).keyDefaults?.align === "") {
+                                  <button
+                                    type="button"
+                                    [attr.aria-pressed]="
+                                      !partValue($any(field), 'align')
+                                    "
+                                    (click)="setPart($any(field), 'align', '')"
+                                  >
+                                    {{ "UE_KIT_AUTO" | translate }}
+                                  </button>
+                                }
                                 @for (
                                   a of ["left", "center", "right"];
                                   track a
                                 ) {
                                   <button
                                     type="button"
+                                    [attr.data-align]="a"
                                     [attr.aria-pressed]="
                                       partValue($any(field), 'align') === a
                                     "
