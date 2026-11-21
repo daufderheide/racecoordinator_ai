@@ -61,6 +61,19 @@ export class RacedayProgressGaugeComponent {
     return this.targetIndex() ?? this.effectiveSettings["targetIndex"] ?? 0;
   }
 
+  /**
+   * Lane-colour background (phase 3c): the colour of the lane the gauge
+   * follows, or nothing (the frame's own background shows).
+   */
+  get laneBackground(): string | null {
+    if (this.effectiveSettings["laneColorBackground"] !== true) return null;
+    const driver = this.targetDriver;
+    const parent: any = this.parent();
+    return driver && parent?.getLaneColor
+      ? parent.getLaneColor(driver, "background_color") || null
+      : null;
+  }
+
   get targetDriver(): DriverHeatData | undefined {
     const parent = this.parent();
     const mode = this.effectiveBindingMode;

@@ -3038,6 +3038,8 @@
   "UE_KIT_PART_HEADER": "Kop",
   "UE_KIT_PART_VALUE": "Waarde",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_KIT_LANE_COLOUR_BG": "Baankleur als achtergrond",
+  "UE_KIT_LANE_COLOUR_BG_HELP": "Gebruikt de kleur van de baan die deze widget volgt in plaats van de eigen achtergrond.",
   "UE_KIT_EMPTY_STATES": "Als er geen gegevens zijn",
   "UE_KIT_EMPTY_VALUE": "Ontbrekende waarde",
   "UE_KIT_EMPTY_LANE": "Lege baan",

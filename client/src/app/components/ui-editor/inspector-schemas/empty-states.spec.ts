@@ -25,4 +25,17 @@ describe("empty states folder", () => {
     expect(text.visibleWhen({}, {} as any)).toBeFalse();
     expect(text.visibleWhen({ emptyValueMode: "text" }, {} as any)).toBeTrue();
   });
+
+  it("offers a lane-colour background on the Flag and Progress Gauge only (phase 3c)", () => {
+    const has = (type: string) =>
+      getInspectorSchema(type)!
+        .folders.find((f) => f.id === "frame")!
+        .groups.some((g) =>
+          g.fields.some((f) => f.id === "laneColorBackground"),
+        );
+    expect(has("flag")).toBeTrue();
+    expect(has("progress-gauge")).toBeTrue();
+    expect(has("qr")).toBeFalse();
+    expect(has("branding")).toBeFalse();
+  });
 });

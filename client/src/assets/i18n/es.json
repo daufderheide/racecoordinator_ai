@@ -3038,6 +3038,8 @@
   "UE_KIT_PART_HEADER": "Encabezado",
   "UE_KIT_PART_VALUE": "Valor",
   "UE_KIT_PART_LABEL": "Etiqueta",
+  "UE_KIT_LANE_COLOUR_BG": "Fondo con el color del carril",
+  "UE_KIT_LANE_COLOUR_BG_HELP": "Usa el color del carril que sigue este widget en lugar de su propio fondo.",
   "UE_KIT_EMPTY_STATES": "Cuando no hay datos",
   "UE_KIT_EMPTY_VALUE": "Valor que falta",
   "UE_KIT_EMPTY_LANE": "Carril vacío",

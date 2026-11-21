@@ -213,6 +213,22 @@ export function emptyStateFolder(
   };
 }
 
+/**
+ * Lane-colour background (phase 3c): for widgets that follow one lane (Flag,
+ * Progress Gauge), the lane's colour instead of the widget's own background.
+ */
+export function laneColourField(): InspectorField {
+  return {
+    id: "laneColorBackground",
+    type: "switch",
+    key: "laneColorBackground",
+    labelKey: "UE_KIT_LANE_COLOUR_BG",
+    helpKey: "UE_KIT_LANE_COLOUR_BG_HELP",
+    default: false,
+    searchTerms: "lane colour color background",
+  };
+}
+
 export function layoutFolder(): InspectorFolder {
   return {
     id: "layout",

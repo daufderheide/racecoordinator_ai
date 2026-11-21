@@ -76,6 +76,18 @@ const WIDGETS = [
     scaleMode: "auto",
     customSettings: { text: "Pit lane", shadow: "raised" },
   },
+  {
+    id: "w-progress-gauge",
+    widgetType: "progress-gauge",
+    x: 80,
+    y: 560,
+    width: 320,
+    height: 160,
+    zIndex: 100,
+    scaleMode: "auto",
+    // phase 3c: the colour of the lane it follows (lane 1 in the sample data)
+    customSettings: { laneColorBackground: true },
+  },
 ];
 
 async function openEditor(page: Page) {
@@ -153,5 +165,10 @@ test.describe("Widget style options on more widgets", () => {
   test("label: raised shadow", async ({ page }) => {
     await openEditor(page);
     await shotOf(page, "label", "style-label-shadow.png");
+  });
+
+  test("progress gauge: lane-colour background", async ({ page }) => {
+    await openEditor(page);
+    await shotOf(page, "progress-gauge", "style-gauge-lane-colour.png");
   });
 });

@@ -7,6 +7,7 @@ import {
 import {
   emptyStateFolder,
   frameFolder,
+  laneColourField,
   layoutFolder,
   textPart,
 } from "./common";
@@ -732,6 +733,7 @@ const progressGaugeSchema: InspectorSchema = {
               labelKey: "UE_INSPECTOR_GAUGE_FILL_COLOR",
               searchTerms: "fill gauge level colour color",
             },
+            laneColourField(),
           ],
         },
         ...frameFolder().groups.slice(1),

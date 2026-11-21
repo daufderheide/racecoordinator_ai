@@ -3038,6 +3038,8 @@
   "UE_KIT_PART_HEADER": "En-tête",
   "UE_KIT_PART_VALUE": "Valeur",
   "UE_KIT_PART_LABEL": "Libellé",
+  "UE_KIT_LANE_COLOUR_BG": "Fond couleur du couloir",
+  "UE_KIT_LANE_COLOUR_BG_HELP": "Utilise la couleur du couloir suivi par ce widget au lieu de son propre fond.",
   "UE_KIT_EMPTY_STATES": "Quand il n'y a pas de données",
   "UE_KIT_EMPTY_VALUE": "Valeur manquante",
   "UE_KIT_EMPTY_LANE": "Couloir vide",

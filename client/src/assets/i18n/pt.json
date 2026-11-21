@@ -3038,6 +3038,8 @@
   "UE_KIT_PART_HEADER": "Cabeçalho",
   "UE_KIT_PART_VALUE": "Valor",
   "UE_KIT_PART_LABEL": "Rótulo",
+  "UE_KIT_LANE_COLOUR_BG": "Fundo com a cor da pista",
+  "UE_KIT_LANE_COLOUR_BG_HELP": "Usa a cor da pista que este widget segue em vez do seu próprio fundo.",
   "UE_KIT_EMPTY_STATES": "Quando não há dados",
   "UE_KIT_EMPTY_VALUE": "Valor em falta",
   "UE_KIT_EMPTY_LANE": "Pista vazia",

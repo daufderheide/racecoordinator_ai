@@ -7,6 +7,7 @@ import { laneViewSchema } from "./lane-view-schema";
 import {
   emptyStateFolder,
   frameFolder,
+  laneColourField,
   layoutFolder,
   textPart,
 } from "./common";
@@ -323,6 +324,18 @@ function textInfoSchema(widgetType: string, icon: string): InspectorSchema {
   };
 }
 
+/** Adds the lane-colour background switch to the Colours & frame folder. */
+function withLaneColour(schema: InspectorSchema): InspectorSchema {
+  return {
+    ...schema,
+    folders: schema.folders.map((f) =>
+      f.id === "frame"
+        ? { ...f, groups: [...f.groups, { fields: [laneColourField()] }] }
+        : f,
+    ),
+  };
+}
+
 /** Widgets with only colours, frame and layout (Branding Image, QR Code, Flag). */
 function frameOnlySchema(widgetType: string, icon: string): InspectorSchema {
   return { widgetType, icon, folders: [frameFolder(), layoutFolder()] };
@@ -507,7 +520,7 @@ export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
   "track-name": textInfoSchema("track-name", "route"),
   branding: frameOnlySchema("branding", "branding_watermark"),
   qr: frameOnlySchema("qr", "qr_code_2"),
-  flag: frameOnlySchema("flag", "flag"),
+  flag: withLaneColour(frameOnlySchema("flag", "flag")),
   image: imageSchema,
   label: labelSchema,
   ...Object.fromEntries(

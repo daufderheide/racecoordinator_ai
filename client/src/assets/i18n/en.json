@@ -2712,6 +2712,8 @@
   "UE_KIT_PART_HEADER": "Header",
   "UE_KIT_PART_VALUE": "Value",
   "UE_KIT_PART_LABEL": "Label",
+  "UE_KIT_LANE_COLOUR_BG": "Lane colour background",
+  "UE_KIT_LANE_COLOUR_BG_HELP": "Uses the colour of the lane this widget follows instead of its own background.",
   "UE_KIT_EMPTY_STATES": "When there's no data",
   "UE_KIT_EMPTY_VALUE": "Missing value",
   "UE_KIT_EMPTY_LANE": "Empty lane",
