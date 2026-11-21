@@ -1,3 +1,35 @@
+/** The user's own fields, used by unit tests and screendiffs. */
+export const MOCK_CAR_FIELDS = [
+  {
+    entity_id: "f-weight",
+    name: "Weight (g)",
+    type: "number",
+    options: [],
+    position: 0,
+  },
+  {
+    entity_id: "f-compound",
+    name: "Tyre compound",
+    type: "choice",
+    options: ["Soft", "Medium", "Hard"],
+    position: 1,
+  },
+  {
+    entity_id: "f-pinion",
+    name: "Pinion",
+    type: "text",
+    options: [],
+    position: 2,
+  },
+  {
+    entity_id: "f-lights",
+    name: "Lights",
+    type: "boolean",
+    options: [],
+    position: 3,
+  },
+];
+
 /** Slotcars used by unit tests and screendiffs. */
 export const MOCK_CARS = [
   {
@@ -14,6 +46,11 @@ export const MOCK_CARS = [
     tyres: "Ortmann urethane",
     modified: true,
     notes: "Lowered body, weight in the nose.",
+    customValues: [
+      { fieldId: "f-weight", value: "82" },
+      { fieldId: "f-compound", value: "Soft" },
+      { fieldId: "f-lights", value: "true" },
+    ],
   },
   {
     entity_id: "c2",

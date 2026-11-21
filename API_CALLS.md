@@ -119,6 +119,17 @@ Entities (Drivers, Tracks, Teams, Races) and Database Management.
 | `PUT` | `/api/cars/{id}` | `DIRECTOR` | Car JSON | Updated Car JSON | Updates a slotcar. Same `400` / `409` rules as create. |
 | `DELETE` | `/api/cars/{id}` | `DIRECTOR` | None | None (status `204`) | Deletes a slotcar. |
 
+Car JSON includes `customValues`: a list of `{ "fieldId": "...", "value": "..." }` for the user's own fields (a list, not an object, so a removed value stays removed).
+
+### Slotcar Fields (Viewer / Director Roles)
+
+| Method | Path | Allowed Role | Request Body | Response Body | Description |
+|:---|:---|:---|:---|:---|:---|
+| `GET` | `/api/car-fields` | `VIEWER` | None | Array of Car Field JSON | Lists the user's own slotcar fields, in editor order. |
+| `POST` | `/api/car-fields` | `DIRECTOR` | Car Field JSON (`name`, `type`: `text` / `number` / `boolean` / `choice`, `options`) | Created Car Field JSON (status `201`) | Adds a field at the end. `400` for an empty name, an unknown type or a choice field without choices; `409` for a duplicate name. |
+| `PUT` | `/api/car-fields/{id}` | `DIRECTOR` | Car Field JSON | Updated Car Field JSON | Renames a field, changes its choices or its `position`. `400` when the type would change, `404` for an unknown field. |
+| `DELETE` | `/api/car-fields/{id}` | `DIRECTOR` | None | None (status `204`) | Deletes a field and removes its value from every car. |
+
 ### Tracks (Viewer / Director Roles)
 
 | Method | Path | Allowed Role | Request Body | Response Body | Description |

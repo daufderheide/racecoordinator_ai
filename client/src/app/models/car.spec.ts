@@ -1,4 +1,9 @@
-import { Car, CAR_SCALE_OPTIONS, CAR_TEXT_FIELDS } from "./car";
+import {
+  Car,
+  CAR_SCALE_OPTIONS,
+  CAR_TEXT_FIELDS,
+  parseCustomValues,
+} from "./car";
 
 describe("Car", () => {
   it("defaults every optional field to empty", () => {
@@ -77,6 +82,43 @@ describe("Car", () => {
       const car = Car.fromJSON(null);
       expect(car.entity_id).toBe("");
       expect(car.name).toBe("");
+    });
+  });
+
+  describe("custom values", () => {
+    it("reads the server's list of {fieldId, value}", () => {
+      const car = Car.fromJSON({
+        entity_id: "1",
+        name: "A",
+        customValues: [
+          { fieldId: "f1", value: "82" },
+          { field_id: "f2", value: 9 },
+          { fieldId: "f3", value: null },
+          { value: "no id" },
+        ],
+      });
+      expect(car.customValues).toEqual({ f1: "82", f2: "9" });
+    });
+
+    it("also reads an object of values", () => {
+      expect(parseCustomValues({ f1: "1", f2: null })).toEqual({ f1: "1" });
+      expect(parseCustomValues(undefined)).toEqual({});
+    });
+
+    it("sends the values as a list", () => {
+      const car = new Car("1", "A", { customValues: { f1: "82" } });
+      const json = JSON.parse(JSON.stringify(car));
+      expect(json.customValues).toEqual([{ fieldId: "f1", value: "82" }]);
+      expect(json.name).toBe("A");
+      expect(json.entity_id).toBe("1");
+      expect(json.objectId).toBeUndefined();
+    });
+
+    it("copies the given values", () => {
+      const values = { f1: "1" };
+      const car = new Car("1", "A", { customValues: values });
+      values.f1 = "2";
+      expect(car.customValues["f1"]).toBe("1");
     });
   });
 

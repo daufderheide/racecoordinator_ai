@@ -1,5 +1,6 @@
 import { getEditorToolbarHelpStep } from "@app/components/shared/toolbar/toolbar.component";
 import { Car, CAR_TEXT_FIELDS } from "@app/models/car";
+import { CarField } from "@app/models/car-field";
 import { GuideStep } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
 import { isEntityNameUnique } from "@app/utils/editor-utils";
@@ -18,6 +19,7 @@ export function cloneCar(car: Car): Car {
     tyres: car.tyres,
     modified: car.modified,
     notes: car.notes,
+    customValues: { ...(car.customValues || {}) },
   });
 }
 
@@ -26,7 +28,55 @@ export function areCarsEqual(a: Car, b: Car): boolean {
   if ((a.avatarUrl || "") !== (b.avatarUrl || "")) return false;
   if (a.scale !== b.scale) return false;
   if (a.modified !== b.modified) return false;
-  return CAR_TEXT_FIELDS.every((f) => a[f] === b[f]);
+  if (!CAR_TEXT_FIELDS.every((f) => a[f] === b[f])) return false;
+  return areValuesEqual(a.customValues, b.customValues);
+}
+
+function areValuesEqual(
+  a: Record<string, string> = {},
+  b: Record<string, string> = {},
+): boolean {
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every((k) => a[k] === b[k]);
+}
+
+/**
+ * Sets one custom value; an empty value removes it. Numbers are kept as
+ * typed (the input already only allows numbers).
+ */
+export function setCustomValue(
+  car: Car,
+  fieldId: string,
+  value: string | number | boolean | null | undefined,
+): void {
+  const text =
+    value === null || value === undefined ? "" : String(value).trim();
+  const next = { ...car.customValues };
+  if (text === "" || value === false) {
+    delete next[fieldId];
+  } else {
+    next[fieldId] = text;
+  }
+  car.customValues = next;
+}
+
+/** The choices to offer for a choice field: its options, plus the car's current value if it is no longer one of them. */
+export function choiceOptions(field: CarField, current: string): string[] {
+  return current && !field.options.includes(current)
+    ? [...field.options, current]
+    : field.options;
+}
+
+/** A car without the value of a deleted field. */
+export function withoutField(car: Car, fieldId: string): Car {
+  const copy = cloneCar(car);
+  if (fieldId in copy.customValues) {
+    const next = { ...copy.customValues };
+    delete next[fieldId];
+    copy.customValues = next;
+  }
+  return copy;
 }
 
 /** "Base", or "Base_1", "Base_2" ... when the name is taken (or forced). */
@@ -132,6 +182,13 @@ export function getCarEditorHelpSteps(
       selector: "#car-setup-section",
       title: t.translate("CE_HELP_SETUP_TITLE"),
       content: t.translate("CE_HELP_SETUP_CONTENT"),
+      position: "left",
+    },
+    {
+      targetId: "car-custom-section",
+      selector: "#car-custom-section",
+      title: t.translate("CE_HELP_CUSTOM_TITLE"),
+      content: t.translate("CE_HELP_CUSTOM_CONTENT"),
       position: "left",
     },
   ];

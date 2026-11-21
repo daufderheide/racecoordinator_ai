@@ -1,0 +1,239 @@
+@if (visible()) {
+  <div class="cfm-backdrop" id="car-field-modal-backdrop" (click)="onClose()">
+    <div
+      class="cfm-dialog"
+      id="car-field-modal-dialog"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">tune</span>
+          <h2 class="modal-title">{{ "CFM_TITLE" | translate }}</h2>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          id="btn-close-car-field-modal"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="cfm-intro">{{ "CFM_INTRO" | translate }}</p>
+
+        @if (isFormOpen) {
+          <div class="cfm-form" id="car-field-form">
+            <h3 class="form-title">
+              {{
+                (editingId ? "CFM_EDIT_TITLE" : "CFM_CREATE_TITLE") | translate
+              }}
+            </h3>
+
+            <div class="form-field">
+              <label class="field-label" for="car-field-name-input">{{
+                "CFM_LABEL_NAME" | translate
+              }}</label>
+              <input
+                type="text"
+                id="car-field-name-input"
+                class="dm-input"
+                [placeholder]="'CFM_PLACEHOLDER_NAME' | translate"
+                [(ngModel)]="formName"
+                (keydown.enter)="saveForm()"
+                autocomplete="off"
+                data-1p-ignore="true"
+                data-lpignore="true"
+              />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label" for="car-field-type-select">{{
+                "CFM_LABEL_TYPE" | translate
+              }}</label>
+              <app-custom-select
+                id="car-field-type-select"
+                name="carFieldType"
+                [disabled]="!!editingId"
+                [(ngModel)]="formType"
+              >
+                @for (t of types; track t.value) {
+                  <app-custom-option [value]="t.value">{{
+                    t.labelKey | translate
+                  }}</app-custom-option>
+                }
+              </app-custom-select>
+              @if (editingId) {
+                <span class="field-hint">{{
+                  "CFM_TYPE_FIXED" | translate
+                }}</span>
+              }
+            </div>
+
+            @if (formType === "choice") {
+              <div class="form-field">
+                <label class="field-label" for="car-field-choices-input">{{
+                  "CFM_LABEL_CHOICES" | translate
+                }}</label>
+                <textarea
+                  id="car-field-choices-input"
+                  class="dm-input"
+                  rows="4"
+                  [placeholder]="'CFM_PLACEHOLDER_CHOICES' | translate"
+                  [(ngModel)]="formChoices"
+                ></textarea>
+                <span class="field-hint">{{
+                  "CFM_CHOICES_HINT" | translate
+                }}</span>
+              </div>
+            }
+
+            @if (formError) {
+              <div class="alert-banner" id="car-field-form-error">
+                <span class="material-icons">error</span>
+                <span>{{ formError | translate }}</span>
+              </div>
+            }
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="btn-secondary"
+                id="btn-cancel-car-field"
+                (click)="cancelForm()"
+              >
+                {{ "CFM_BTN_CANCEL" | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn-primary"
+                id="btn-save-car-field"
+                [disabled]="isSaving"
+                (click)="saveForm()"
+              >
+                {{ (editingId ? "CFM_BTN_SAVE" : "CFM_BTN_ADD") | translate }}
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="toolbar-row">
+            <button
+              type="button"
+              class="btn-primary btn-new-field"
+              id="btn-new-car-field"
+              (click)="openCreateForm()"
+            >
+              <span class="material-icons">add</span>
+              <span>{{ "CFM_BTN_NEW_FIELD" | translate }}</span>
+            </button>
+          </div>
+        }
+
+        <div class="cfm-list" id="car-field-list">
+          @for (field of sortedFields; track field.entity_id) {
+            @if (deletingId === field.entity_id) {
+              <div
+                class="cfm-delete-row"
+                [id]="'car-field-delete-' + field.entity_id"
+              >
+                <div class="delete-message">
+                  <span class="material-icons warn-icon">warning</span>
+                  <span>{{
+                    "CFM_CONFIRM_DELETE" | translate: { name: field.name }
+                  }}</span>
+                </div>
+                <div class="delete-actions">
+                  <button
+                    type="button"
+                    class="btn-cancel-delete"
+                    (click)="cancelDelete()"
+                  >
+                    {{ "CFM_BTN_CANCEL" | translate }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-danger-delete"
+                    [disabled]="isSaving"
+                    (click)="executeDelete(field)"
+                  >
+                    {{ "CFM_BTN_DELETE" | translate }}
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <div class="cfm-row" [id]="'car-field-row-' + field.entity_id">
+                <div class="cfm-row-main">
+                  <span class="cfm-name">{{ field.name }}</span>
+                  <span class="cfm-type">{{
+                    typeLabelKey(field.type) | translate
+                  }}</span>
+                  @if (field.type === "choice") {
+                    <span class="cfm-choices">{{
+                      field.options.join(", ")
+                    }}</span>
+                  }
+                </div>
+                <div class="cfm-row-actions">
+                  <button
+                    type="button"
+                    class="btn-ghost-action"
+                    [disabled]="!canMove(field, -1) || isSaving"
+                    (click)="move(field, -1)"
+                    [title]="'CFM_MOVE_UP' | translate"
+                  >
+                    <span class="material-icons">arrow_upward</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-ghost-action"
+                    [disabled]="!canMove(field, 1) || isSaving"
+                    (click)="move(field, 1)"
+                    [title]="'CFM_MOVE_DOWN' | translate"
+                  >
+                    <span class="material-icons">arrow_downward</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-ghost-action edit"
+                    (click)="openEditForm(field)"
+                    [title]="'CFM_EDIT_TITLE' | translate"
+                  >
+                    <span class="material-icons">edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-ghost-action delete"
+                    (click)="confirmDelete(field)"
+                    [title]="'CFM_BTN_DELETE' | translate"
+                  >
+                    <span class="material-icons">delete</span>
+                  </button>
+                </div>
+              </div>
+            }
+          }
+          @if (sortedFields.length === 0) {
+            <div class="cfm-empty">
+              <span class="material-icons">tune</span>
+              <p>{{ "CFM_EMPTY" | translate }}</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          id="btn-done-car-field-modal"
+          (click)="onClose()"
+        >
+          {{ "COMMON_DONE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

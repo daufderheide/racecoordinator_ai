@@ -204,6 +204,97 @@
           </div>
         </div>
 
+        <div id="car-custom-section" class="config-section">
+          <div class="section-header custom-header">
+            <h1>{{ "CE_HEADER_CUSTOM" | translate }}</h1>
+            @if (isEditMode) {
+              <button
+                type="button"
+                id="car-manage-fields-btn"
+                class="btn-manage-fields"
+                (click)="openFieldManager()"
+                [title]="'CE_MANAGE_FIELDS_TOOLTIP' | translate"
+              >
+                <span class="material-icons">tune</span>
+                <span>{{ "CE_MANAGE_FIELDS" | translate }}</span>
+              </button>
+            }
+          </div>
+          @if (carFields.length === 0) {
+            <p class="custom-empty" id="car-custom-empty">
+              {{
+                (isEditMode ? "CE_CUSTOM_EMPTY_EDIT" : "CE_CUSTOM_EMPTY")
+                  | translate
+              }}
+            </p>
+          } @else {
+            <div class="setup-grid">
+              @for (field of carFields; track field.entity_id) {
+                <div
+                  class="editor-section"
+                  [attr.data-field-id]="field.entity_id"
+                >
+                  @switch (field.type) {
+                    @case ("boolean") {
+                      <label
+                        class="checkbox-container custom-check"
+                        [class.disabled]="!isEditMode"
+                      >
+                        <input
+                          type="checkbox"
+                          [id]="'car-custom-' + field.entity_id"
+                          [disabled]="!isEditMode"
+                          [ngModel]="isChecked(field)"
+                          (ngModelChange)="onCustomPick(field, $event)"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">{{ field.name }}</span>
+                      </label>
+                    }
+                    @case ("choice") {
+                      <label [for]="'car-custom-' + field.entity_id">{{
+                        field.name
+                      }}</label>
+                      <app-custom-select
+                        [id]="'car-custom-' + field.entity_id"
+                        [name]="'carCustom' + field.entity_id"
+                        [disabled]="!isEditMode"
+                        [ngModel]="customValue(field)"
+                        (ngModelChange)="onCustomPick(field, $event)"
+                      >
+                        <app-custom-option value="">{{
+                          "CE_SCALE_NONE" | translate
+                        }}</app-custom-option>
+                        @for (choice of choicesFor(field); track choice) {
+                          <app-custom-option [value]="choice">{{
+                            choice
+                          }}</app-custom-option>
+                        }
+                      </app-custom-select>
+                    }
+                    @default {
+                      <label [for]="'car-custom-' + field.entity_id">{{
+                        field.name
+                      }}</label>
+                      <input
+                        [id]="'car-custom-' + field.entity_id"
+                        [type]="field.type === 'number' ? 'number' : 'text'"
+                        class="dm-input"
+                        [disabled]="!isEditMode"
+                        [ngModel]="customValue(field)"
+                        (ngModelChange)="onCustomInput(field, $event)"
+                        (focus)="onInputFocus()"
+                        (blur)="onInputBlur()"
+                        autocomplete="off"
+                      />
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
         <div id="car-notes-section" class="config-section">
           <div class="editor-section">
             <label for="car-notes-input">{{
@@ -254,3 +345,12 @@
   (cancel)="onCancelDelete()"
 >
 </app-confirmation-modal>
+
+<app-car-field-manager
+  [visible]="isFieldManagerOpen"
+  [fields]="carFields"
+  (fieldsChange)="onFieldsChange($event)"
+  (fieldDeleted)="onFieldDeleted($event)"
+  (close)="closeFieldManager()"
+>
+</app-car-field-manager>

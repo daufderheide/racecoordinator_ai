@@ -290,6 +290,25 @@ export class DataEntityCrudHelper {
     return this.http.delete<any>(`${this.getBaseUrl()}/api/cars/${id}`);
   }
 
+  getCarFields(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.getBaseUrl()}/api/car-fields`);
+  }
+
+  createCarField(field: any): Observable<any> {
+    return this.http.post<any>(`${this.getBaseUrl()}/api/car-fields`, field);
+  }
+
+  updateCarField(id: string, field: any): Observable<any> {
+    return this.http.put<any>(
+      `${this.getBaseUrl()}/api/car-fields/${id}`,
+      field,
+    );
+  }
+
+  deleteCarField(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.getBaseUrl()}/api/car-fields/${id}`);
+  }
+
   getCustomUIs(): Observable<any[]> {
     return this.http.get<any[]>(`${this.getBaseUrl()}/api/custom-ui`);
   }

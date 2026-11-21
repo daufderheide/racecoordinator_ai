@@ -301,3 +301,48 @@
 .checkbox-container input:disabled ~ .checkmark {
   opacity: 0.7;
 }
+
+/* Your own fields (step 2) */
+.custom-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.btn-manage-fields {
+  background: transparent;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.btn-manage-fields:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.btn-manage-fields .material-icons {
+  font-size: 16px;
+}
+
+.custom-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.custom-check {
+  min-height: 38px;
+  margin-top: 22px;
+}
