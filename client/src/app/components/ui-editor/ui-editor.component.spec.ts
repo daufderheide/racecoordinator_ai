@@ -284,6 +284,7 @@ describe("UIEditorComponent", () => {
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
       "getTranslationsLoaded",
+      "findTranslation",
     ]);
     mockTranslationService.getTranslationsLoaded.and.returnValue(of(true));
     const mockActivatedRoute = {
@@ -555,10 +556,19 @@ describe("UIEditorComponent", () => {
     expect(component.updateSampleWidgets).toHaveBeenCalled();
   });
 
-  it("should format widget label keys correctly for standard and custom widgets", () => {
+  it("should display custom names without sending literal text through required translation", () => {
     mockCustomWidgetService.getWidgetDefinition.and.callFake((key: string) => {
       if (key === "custom:telemetry") {
-        return { manifest: { name: "Live Telemetry Gauge" } };
+        return { manifest: { id: "telemetry", name: "Live Telemetry Gauge" } };
+      }
+      if (key === "custom:sample-lap-delta") {
+        return {
+          manifest: {
+            id: "sample-lap-delta",
+            name: "Lap Time Delta",
+            nameKey: "UE_WIDGET_SAMPLE_LAP_DELTA",
+          },
+        };
       }
       return undefined;
     });
@@ -569,11 +579,37 @@ describe("UIEditorComponent", () => {
     expect(component.getWidgetTypeLabelKey("lane-column")).toBe(
       "UE_WIDGET_TYPE_LANE_COLUMN",
     );
-    expect(component.getWidgetTypeLabelKey("custom:telemetry")).toBe(
+    const widget = {
+      id: "sample",
+      widgetType: "custom:sample-lap-delta",
+      x: 0,
+      y: 0,
+      width: 350,
+      height: 200,
+      zIndex: 1,
+    } as const;
+    expect(component.getWidgetDisplayName(widget)).toBe("Lap Time Delta");
+    mockTranslationService.findTranslation.and.callFake((key: string) =>
+      key === "UE_WIDGET_SAMPLE_LAP_DELTA" ? "Rondetijdverschil" : undefined,
+    );
+    expect(component.getWidgetDisplayName(widget)).toBe("Rondetijdverschil");
+    expect(
+      component.getWidgetDisplayName({
+        ...widget,
+        widgetType: "custom:telemetry",
+      }),
+    ).toBe("Live Telemetry Gauge");
+    expect(
+      component.getWidgetDisplayName({
+        ...widget,
+        widgetType: "custom:unknown-widget",
+      }),
+    ).toBe("unknown-widget");
+    expect(mockTranslationService.translate).not.toHaveBeenCalledWith(
       "Live Telemetry Gauge",
     );
-    expect(component.getWidgetTypeLabelKey("custom:unknown-widget")).toBe(
-      "unknown-widget",
+    expect(mockTranslationService.translate).not.toHaveBeenCalledWith(
+      "Lap Time Delta",
     );
     expect(component.isCustomWidget("custom:telemetry")).toBeTrue();
     expect(component.isCustomWidget("leaderboard")).toBeFalse();

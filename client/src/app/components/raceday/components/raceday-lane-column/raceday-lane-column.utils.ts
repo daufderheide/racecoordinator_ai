@@ -6,6 +6,10 @@ import {
 } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { GhostBenchmarkType } from "@app/services/ghost-pacing.service";
+import {
+  resolveCustomWidgetName,
+  WidgetNameTranslations,
+} from "@app/utils/custom-widget-name.utils";
 
 import {
   applyValueWrapStyles,
@@ -215,6 +219,7 @@ export function resolveColumnHeaderLabel(
   settings: LaneColumnWidgetSettings,
   parent: any,
   translate: (k: string) => string,
+  widgetNameTranslations?: WidgetNameTranslations,
 ): string {
   if (settings.customLabel && settings.customLabel.trim()) {
     return settings.customLabel;
@@ -224,10 +229,11 @@ export function resolveColumnHeaderLabel(
   }
   if (isCustomWidgetKey(key)) {
     const customDef = parent?.customWidgetService?.getWidgetDefinition?.(key);
-    if (customDef?.manifest?.name) {
-      return customDef.manifest.name;
-    }
-    return key.substring("custom:".length);
+    return resolveCustomWidgetName(
+      key,
+      customDef?.manifest,
+      widgetNameTranslations,
+    );
   }
   const labelKey = RacedayLayoutUtils.getLabelKeyForColumn(key);
   if (labelKey === "") {

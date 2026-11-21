@@ -113,41 +113,57 @@ public class RaceConverter {
 
   private static com.antigravity.proto.HeatScoring buildHeatScoring( // fqn-collision
       HeatScoring scoring) {
+    HeatScoring.FinishMethod fm =
+        scoring.getFinishMethod() != null
+            ? scoring.getFinishMethod()
+            : HeatScoring.FinishMethod.Lap;
+    HeatScoring.HeatRanking hr =
+        scoring.getHeatRanking() != null
+            ? scoring.getHeatRanking()
+            : HeatScoring.HeatRanking.LAP_COUNT;
+    HeatScoring.HeatRankingTiebreaker hrt =
+        scoring.getHeatRankingTiebreaker() != null
+            ? scoring.getHeatRankingTiebreaker()
+            : HeatScoring.HeatRankingTiebreaker.AVERAGE_LAP_TIME;
+    HeatScoring.AllowFinish af =
+        scoring.getAllowFinish() != null ? scoring.getAllowFinish() : HeatScoring.AllowFinish.None;
+
     return com.antigravity.proto.HeatScoring.newBuilder() // fqn-collision
         .setFinishMethod(
             com.antigravity.proto.HeatScoring.FinishMethod // fqn-collision
-                .valueOf(scoring.getFinishMethod().name()))
+                .valueOf(fm.name()))
         .setFinishValue(scoring.getFinishValue())
         .setHeatRanking(
             com.antigravity.proto.HeatScoring.HeatRanking // fqn-collision
-                .valueOf("HR_" + scoring.getHeatRanking().name()))
+                .valueOf("HR_" + hr.name()))
         .setHeatRankingTiebreaker(
             com.antigravity.proto.HeatScoring.HeatRankingTiebreaker // fqn-collision
-                .valueOf("HRT_" + scoring.getHeatRankingTiebreaker().name()))
+                .valueOf("HRT_" + hrt.name()))
         .setAllowFinish(
             com.antigravity.proto.HeatScoring.AllowFinish // fqn-collision
-                .valueOf(
-                "AF_"
-                    + (scoring.getAllowFinish() != null
-                        ? scoring
-                            .getAllowFinish()
-                            .name()
-                            .replaceAll("([a-z])([A-Z])", "$1_$2")
-                            .toUpperCase()
-                        : "NONE")))
+                .valueOf("AF_" + af.name().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase()))
         .build();
   }
 
   private static com.antigravity.proto.OverallScoring buildOverallScoring( // fqn-collision
       OverallScoring scoring) {
+    OverallScoring.OverallRanking rm =
+        scoring.getRankingMethod() != null
+            ? scoring.getRankingMethod()
+            : OverallScoring.OverallRanking.LAP_COUNT;
+    OverallScoring.OverallRankingTiebreaker tb =
+        scoring.getTiebreaker() != null
+            ? scoring.getTiebreaker()
+            : OverallScoring.OverallRankingTiebreaker.AVERAGE_LAP_TIME;
+
     return com.antigravity.proto.OverallScoring.newBuilder() // fqn-collision
         .setDroppedHeats(scoring.getDroppedHeats())
         .setRankingMethod(
             com.antigravity.proto.OverallScoring.OverallRanking // fqn-collision
-                .valueOf("OR_" + scoring.getRankingMethod().name()))
+                .valueOf("OR_" + rm.name()))
         .setTiebreaker(
             com.antigravity.proto.OverallScoring.OverallRankingTiebreaker // fqn-collision
-                .valueOf("ORT_" + scoring.getTiebreaker().name()))
+                .valueOf("ORT_" + tb.name()))
         .build();
   }
 

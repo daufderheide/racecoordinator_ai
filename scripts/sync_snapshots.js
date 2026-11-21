@@ -77,6 +77,8 @@ function syncSnapshots(options = {}) {
                         // If the path is from the Docker container, map it back to the host filesystem
                         if (actualPath.startsWith('/work/')) {
                             actualPath = actualPath.replace('/work', isolatedDir);
+                        } else if (actualPath.startsWith('/report/')) {
+                            actualPath = path.join(isolatedDir, actualPath.slice('/report/'.length));
                         }
 
                         if (!fs.existsSync(actualPath)) {

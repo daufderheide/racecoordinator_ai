@@ -857,10 +857,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.displayThemes.some((t) => this.isThemeNameInvalid(t));
   }
   getWidgetTypeLabelKey(w: string) {
-    if (w?.startsWith("custom:")) {
-      const def = this.customWidgetService?.getWidgetDefinition(w);
-      return def?.manifest?.name || w.substring("custom:".length);
-    }
     return "UE_WIDGET_TYPE_" + w.toUpperCase().replace(/-/g, "_");
   }
   isCustomWidget(w: string | undefined): boolean {

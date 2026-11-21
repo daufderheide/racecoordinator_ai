@@ -108,6 +108,7 @@
             [isDeferHeatDisabled]="parentComponent().isDeferHeatDisabled"
             [isSkipHeatDisabled]="parentComponent().isSkipHeatDisabled"
             [isSkipRaceDisabled]="parentComponent().isSkipRaceDisabled"
+            [isRaceAgainDisabled]="parentComponent().isRaceAgainDisabled"
             [isAddLapDisabled]="parentComponent().isAddLapDisabled"
             [isModifyDisabled]="parentComponent().isModifyDisabled"
             [isBackDisabled]="parentComponent().isBackDisabled"
@@ -329,6 +330,12 @@
           ></app-raceday-action-button>
         }
         @case ("action-skip-race") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-race-again") {
           <app-raceday-action-button
             [widget]="widget()"
             [parent]="parentComponent()"

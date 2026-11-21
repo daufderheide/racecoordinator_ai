@@ -10,6 +10,7 @@ import {
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
+import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
 
 import { handleGridWidgetInspectorSync } from "./ui-editor-grid-sync.helper";
 import { WIDGET_REGISTRY } from "./widget-registry";
@@ -111,6 +112,14 @@ export function computeWidgetDisplayName(
 
 export function resolveWidgetDisplayName(comp: any, widget: any): string {
   if (!widget) return "";
+  if (widget.widgetType?.startsWith("custom:")) {
+    return resolveCustomWidgetName(
+      widget.widgetType,
+      comp.customWidgetService?.getWidgetDefinition(widget.widgetType)
+        ?.manifest,
+      comp.translationService,
+    );
+  }
   const s = widget.customSettings;
   const currentLang =
     comp.translationService?.getCurrentLanguageValue?.() || "";

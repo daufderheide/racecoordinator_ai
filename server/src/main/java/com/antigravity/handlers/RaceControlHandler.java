@@ -89,6 +89,13 @@ public class RaceControlHandler {
   public TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
     DatabaseService dbService = DatabaseService.getInstance();
 
+    if (request.getRaceAgain() && !isCurrentRaceOver()) {
+      return TaskResult.error(409, "Race Again is only allowed once the race is over");
+    }
+    if (request.getRaceAgain() && isEventBetweenRaces()) {
+      return TaskResult.error(409, "Race Again is only allowed once the whole event is over");
+    }
+
     if (request.getEventId() != null && !request.getEventId().isEmpty()) {
       return handleInitializeEvent(request);
     }
@@ -169,6 +176,26 @@ public class RaceControlHandler {
     }
 
     return startRuntimeRace(raceModel, participants, raceTrack, raceTheme, request);
+  }
+
+  /**
+   * File → Race Again restarts the race that just finished, so it is only allowed while the current
+   * race is in the race over state. https://github.com/daufderheide/racecoordinator_ai/issues/679
+   */
+  private static boolean isCurrentRaceOver() {
+    com.antigravity.race.Race current = // fqn-collision
+        ClientSubscriptionManager.getInstance().getRace();
+    return current != null && current.getState() instanceof RaceOver;
+  }
+
+  /**
+   * In an event, Race Again restarts the whole event, so it is refused until the last race of the
+   * event is over. https://github.com/daufderheide/racecoordinator_ai/issues/679
+   */
+  private static boolean isEventBetweenRaces() {
+    com.antigravity.race.EventExecutionManager mgr = // fqn-collision
+        com.antigravity.race.EventExecutionManager.getInstance(); // fqn-collision
+    return mgr.isEventActive() && !mgr.isOnLastRace();
   }
 
   private TaskResult handleInitializeEvent(InitializeRaceRequest request) throws Exception {

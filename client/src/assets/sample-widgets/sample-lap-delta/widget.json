@@ -1,6 +1,7 @@
 {
   "id": "sample-lap-delta",
   "name": "Lap Time Delta",
+  "nameKey": "UE_WIDGET_SAMPLE_LAP_DELTA",
   "version": "1.0.0",
   "description": "Displays real-time lap time deltas and intervals between top race competitors",
   "author": "Race Coordinator AI",

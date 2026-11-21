@@ -1178,11 +1178,82 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       expect(component.isGridAnimating).toBeTrue();
       const el = component.wrapperRef()?.nativeElement;
       expect(el?.classList.contains("grid-animating")).toBeTrue();
+      expect(component.computedZIndex).toBe(100);
+      expect(el?.style.zIndex).toBe("1100");
 
       // Advance clock by 300ms
       jasmine.clock().tick(300);
       expect(component.isGridAnimating).toBeFalse();
       expect(el?.classList.contains("grid-animating")).toBeFalse();
+      expect(component.computedZIndex).toBe(100);
+      expect(el?.style.zIndex).toBe("");
+    });
+
+    it("should preserve relative z-index hierarchy between adjacent grid columns while animating", async () => {
+      // Simulate two overlapping adjacent columns: TotalTime (zIndex 620) and Gap (zIndex 617)
+      const totalTimeWidget: AbsoluteWidgetNode = {
+        id: "w-tt-0",
+        widgetType: "lane-column",
+        x: 100,
+        y: 200,
+        width: 115,
+        height: 50,
+        zIndex: 620,
+        customSettings: {
+          gridId: "grid-z-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "overallPosition",
+          columnKey: "overallTotalTime",
+        },
+      };
+
+      const gapWidget: AbsoluteWidgetNode = {
+        id: "w-gap-0",
+        widgetType: "lane-column",
+        x: 202,
+        y: 200,
+        width: 110,
+        height: 50,
+        zIndex: 617,
+        customSettings: {
+          gridId: "grid-z-test",
+          gridLane: 0,
+          targetIndex: 0,
+          bindingMode: "overallPosition",
+          columnKey: "overallGap",
+        },
+      };
+
+      fixture.componentRef.setInput("widget", totalTimeWidget);
+      fixture.detectChanges();
+      const elTT = component.wrapperRef()?.nativeElement;
+      const restTT = component.computedZIndex;
+      expect(restTT).toBe(620);
+
+      // TotalTime animating
+      (component as any).applyShiftAnimation(0, 50);
+      const animTTZ = Number(elTT?.style.zIndex);
+      expect(animTTZ).toBe(1620);
+
+      // Gap at rest vs animating
+      fixture.componentRef.setInput("widget", gapWidget);
+      fixture.detectChanges();
+      const elGap = component.wrapperRef()?.nativeElement;
+      const restGap = component.computedZIndex;
+      expect(restGap).toBe(617);
+
+      (component as any).applyShiftAnimation(0, 50);
+      const animGapZ = Number(elGap?.style.zIndex);
+      expect(animGapZ).toBe(1617);
+
+      // Relative order is preserved: TotalTime stays above Gap in both states
+      expect(restTT).toBeGreaterThan(restGap);
+      expect(animTTZ).toBeGreaterThan(animGapZ);
+
+      // After animation completes, style.zIndex is cleared
+      jasmine.clock().tick(300);
+      expect(elGap?.style.zIndex).toBe("");
     });
 
     it("should not animate in lane binding mode", () => {

@@ -585,50 +585,7 @@ public class DatabaseContext {
 
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(zos, StandardCharsets.UTF_8));
         Set<String> columns = getTableColumns(conn, tableName);
-
-        if (columns.contains("json_data")) {
-          String selectSql = "SELECT json_data FROM " + tableName;
-          try (Statement stmt = conn.createStatement();
-              ResultSet rs = stmt.executeQuery(selectSql)) {
-            while (rs.next()) {
-              String json = rs.getString("json_data");
-              if (json != null && !json.trim().isEmpty()) {
-                writer.println(json);
-              }
-            }
-          } catch (SQLException e) {
-            logger.error("Error reading json_data from table {}", tableName, e);
-          }
-        } else if ("counters".equalsIgnoreCase(tableName)
-            || (columns.contains("name") && columns.contains("seq"))) {
-          String selectSql = "SELECT name, seq FROM counters";
-          try (Statement stmt = conn.createStatement();
-              ResultSet rs = stmt.executeQuery(selectSql)) {
-            while (rs.next()) {
-              writer.println(
-                  "{\"_id\":\"" + rs.getString("name") + "\",\"seq\":" + rs.getInt("seq") + "}");
-            }
-          } catch (SQLException e) {
-            logger.error("Error reading counters from table {}", tableName, e);
-          }
-        } else if (columns.contains("race_id") && columns.contains("records_blob")) {
-          String selectSql = "SELECT race_id, records_blob FROM " + tableName;
-          try (Statement stmt = conn.createStatement();
-              ResultSet rs = stmt.executeQuery(selectSql)) {
-            while (rs.next()) {
-              String raceId = rs.getString("race_id");
-              byte[] blob = rs.getBytes("records_blob");
-              String base64 = blob != null ? Base64.getEncoder().encodeToString(blob) : "";
-              writer.println(
-                  "{\"race_id\":\"" + raceId + "\",\"records_blob\":\"" + base64 + "\"}");
-            }
-          } catch (SQLException e) {
-            logger.error("Error reading records_blob from table {}", tableName, e);
-          }
-        } else {
-          logger.warn(
-              "Skipping export of table {} with unsupported schema: {}", tableName, columns);
-        }
+        exportTableData(conn, tableName, columns, writer);
         writer.flush();
         zos.closeEntry();
       }
@@ -645,6 +602,84 @@ public class DatabaseContext {
           // Ignore
         }
       }
+    }
+  }
+
+  private void exportTableData(
+      Connection conn, String tableName, Set<String> columns, PrintWriter writer) {
+    if ("system_info".equalsIgnoreCase(tableName)) {
+      exportSystemInfoTable(conn, writer);
+    } else if (columns.contains("json_data")) {
+      exportStandardJsonTable(conn, tableName, writer);
+    } else if ("counters".equalsIgnoreCase(tableName)
+        || (columns.contains("name") && columns.contains("seq"))) {
+      exportCountersTable(conn, tableName, writer);
+    } else if (columns.contains("race_id") && columns.contains("records_blob")) {
+      exportRaceRecordsTable(conn, tableName, writer);
+    } else {
+      logger.warn("Skipping export of table {} with unsupported schema: {}", tableName, columns);
+    }
+  }
+
+  private void exportSystemInfoTable(Connection conn, PrintWriter writer) {
+    String selectSql = "SELECT entity_id, sequence_id, json_data FROM system_info";
+    try (Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(selectSql)) {
+      while (rs.next()) {
+        com.fasterxml.jackson.databind.node.ObjectNode sysNode = objectMapper.createObjectNode();
+        sysNode.put("entity_id", rs.getString("entity_id"));
+        String seqId = rs.getString("sequence_id");
+        if (seqId != null) {
+          sysNode.put("sequence_id", seqId);
+        }
+        sysNode.put("json_data", rs.getString("json_data"));
+        writer.println(objectMapper.writeValueAsString(sysNode));
+      }
+    } catch (Exception e) {
+      logger.error("Error reading system_info table", e);
+    }
+  }
+
+  private void exportStandardJsonTable(Connection conn, String tableName, PrintWriter writer) {
+    String selectSql = "SELECT json_data FROM " + tableName;
+    try (Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(selectSql)) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          writer.println(json);
+        }
+      }
+    } catch (SQLException e) {
+      logger.error("Error reading json_data from table {}", tableName, e);
+    }
+  }
+
+  private void exportCountersTable(Connection conn, String tableName, PrintWriter writer) {
+    String selectSql = "SELECT name, seq FROM counters";
+    try (Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(selectSql)) {
+      while (rs.next()) {
+        writer.println(
+            "{\"_id\":\"" + rs.getString("name") + "\",\"seq\":" + rs.getInt("seq") + "}");
+      }
+    } catch (SQLException e) {
+      logger.error("Error reading counters from table {}", tableName, e);
+    }
+  }
+
+  private void exportRaceRecordsTable(Connection conn, String tableName, PrintWriter writer) {
+    String selectSql = "SELECT race_id, records_blob FROM " + tableName;
+    try (Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery(selectSql)) {
+      while (rs.next()) {
+        String raceId = rs.getString("race_id");
+        byte[] blob = rs.getBytes("records_blob");
+        String base64 = blob != null ? Base64.getEncoder().encodeToString(blob) : "";
+        writer.println("{\"race_id\":\"" + raceId + "\",\"records_blob\":\"" + base64 + "\"}");
+      }
+    } catch (SQLException e) {
+      logger.error("Error reading records_blob from table {}", tableName, e);
     }
   }
 
@@ -731,6 +766,10 @@ public class DatabaseContext {
         continue;
       }
       try {
+        if ("system_info".equalsIgnoreCase(tableName)) {
+          importSystemInfoLine(line);
+          continue;
+        }
         JsonNode node = objectMapper.readTree(line);
         if ("counters".equalsIgnoreCase(tableName)) {
           importCounterNode(node);
@@ -742,6 +781,28 @@ public class DatabaseContext {
       } catch (Exception e) {
         logger.error("Failed to parse/import JSON line in table {}: {}", tableName, line, e);
       }
+    }
+  }
+
+  private void importSystemInfoLine(String line) {
+    try {
+      ensureTable("system_info");
+      JsonNode node = objectMapper.readTree(line);
+      if (node != null && node.isObject()) {
+        if (node.has("entity_id") && node.has("json_data")) {
+          setSystemInfo(node.get("entity_id").asText(), node.get("json_data").asText());
+          return;
+        }
+        if (node.has("created_at")) {
+          setSystemInfo("created_at", line);
+          return;
+        }
+      }
+    } catch (Exception ignored) {
+      // Line is not valid JSON (e.g. legacy export of raw version string like "1.1.0")
+    }
+    if (line != null && line.trim().matches("^\\d+\\.\\d+\\.\\d+.*$")) {
+      setSystemInfo("backfill_version", line.trim());
     }
   }
 

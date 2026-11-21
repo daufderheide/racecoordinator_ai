@@ -5,7 +5,6 @@
 
 .widget-wrapper.grid-animating {
   will-change: transform;
-  z-index: 1005 !important;
 }
 
 .widget-wrapper:has(.custom-select-container.open) {

@@ -22,6 +22,7 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -83,12 +84,16 @@ describe("LayoutEditorComponent", () => {
   let mockRaceConnectionService: any;
   let mockChildWindowManagerService: any;
   let mockCustomUiService: any;
+  let mockCustomWidgetService: jasmine.SpyObj<CustomWidgetService>;
   let mockHelpService: any;
 
   let testCustomUIs: CustomUI[];
   let testSettings: Settings;
 
   beforeEach(async () => {
+    mockCustomWidgetService = jasmine.createSpyObj("CustomWidgetService", [
+      "getWidgetDefinition",
+    ]);
     testCustomUIs = [
       {
         entity_id: "default_ui_layout_rc_ai",
@@ -277,6 +282,7 @@ describe("LayoutEditorComponent", () => {
           useValue: mockChildWindowManagerService,
         },
         { provide: CustomUiService, useValue: mockCustomUiService },
+        { provide: CustomWidgetService, useValue: mockCustomWidgetService },
         { provide: HelpService, useValue: mockHelpService },
       ],
     }).compileComponents();
@@ -308,6 +314,23 @@ describe("LayoutEditorComponent", () => {
     );
     expect(practiceLayout?.columnLayoutsJson).toBe(
       JSON.stringify(defaultSettings.practiceColumnLayouts),
+    );
+  });
+
+  it("should show manifest names for third-party widgets in the list and inspector", () => {
+    mockCustomWidgetService.getWidgetDefinition.and.returnValue({
+      folderName: "club",
+      manifest: { id: "club", name: "Club Split Times" },
+    });
+
+    expect(component.getWidgetDisplayName({ widgetType: "custom:club" })).toBe(
+      "Club Split Times",
+    );
+    expect(component.getWidgetTypeDisplayName("custom:club")).toBe(
+      "Club Split Times",
+    );
+    expect(mockTranslationService.translate).not.toHaveBeenCalledWith(
+      "UE_WIDGET_TYPE_CUSTOM:CLUB",
     );
   });
 

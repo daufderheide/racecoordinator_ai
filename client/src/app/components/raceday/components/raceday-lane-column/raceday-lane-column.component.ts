@@ -630,6 +630,7 @@ export class RacedayLaneColumnComponent
       this.settings,
       this.parent(),
       (k) => this.translationService.translate(k),
+      this.translationService,
     );
   }
 

@@ -27,7 +27,7 @@ describe("ToolboxGroupHelper", () => {
     ]);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
-    expect(actionsSg?.widgets.length).toBe(21);
+    expect(actionsSg?.widgets.length).toBe(22);
 
     const standingsSg = rcAiGroup.subgroups.find(
       (sg) => sg.id === "standings-heats",
@@ -63,7 +63,7 @@ describe("ToolboxGroupHelper", () => {
       lapTimesSg?.widgets.find((w) => w.type === "lane-col:driftIndicator"),
     ).toBeDefined();
 
-    expect(rcAiGroup.totalCount).toBe(133);
+    expect(rcAiGroup.totalCount).toBe(134);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -90,7 +90,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       actionsSg?.widgets.find((w) => w.type === "action-start-resume"),
     ).toBeDefined();
-    expect(actionsSg?.widgets.length).toBe(21);
+    expect(actionsSg?.widgets.length).toBe(22);
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
     expect(
@@ -102,7 +102,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(133);
+    expect(rcAiGroup.totalCount).toBe(134);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
@@ -201,6 +201,50 @@ describe("ToolboxGroupHelper", () => {
     expect(groups[3].subgroups[0].id).toBe("sample:timing");
     expect(groups[3].subgroups[0].nameKey).toBe("timing");
     expect(groups[3].subgroups[0].widgets[0].type).toBe("custom:sample-delta");
+  });
+
+  it("should find a localized sample and preserve literal custom names without required translations", () => {
+    const widgets: CustomWidgetDefinition[] = [
+      {
+        folderName: "sample-lap-delta",
+        manifest: {
+          id: "sample-lap-delta",
+          name: "Lap Time Delta",
+          nameKey: "UE_WIDGET_SAMPLE_LAP_DELTA",
+        },
+      },
+      {
+        folderName: "club",
+        manifest: { id: "club", name: "Club Split Times" },
+      },
+    ];
+    const translate = jasmine
+      .createSpy("translate")
+      .and.callFake((key: string) => key);
+    const optional = {
+      findTranslation: (key: string) =>
+        key === "UE_WIDGET_SAMPLE_LAP_DELTA" ? "Rondetijdverschil" : undefined,
+    };
+    const customLabels = (term: string) =>
+      ToolboxGroupHelper.buildToolboxGroups(
+        new Set(),
+        widgets,
+        term,
+        new Map(),
+        new Map(),
+        translate,
+        undefined,
+        optional,
+      )
+        .find((group) => group.id === ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID)
+        ?.rootWidgets.map((widget) => widget.labelKey);
+
+    expect(customLabels("rondetijdverschil")).toEqual(["Rondetijdverschil"]);
+    expect(customLabels("lap time delta")).toEqual(["Rondetijdverschil"]);
+    expect(customLabels("club split times")).toEqual(["Club Split Times"]);
+    expect(customLabels("unknown")).toBeUndefined();
+    expect(translate).not.toHaveBeenCalledWith("Lap Time Delta");
+    expect(translate).not.toHaveBeenCalledWith("Club Split Times");
   });
 
   it("should keep custom widgets in toolbox even when used so they can be placed multiple times", () => {

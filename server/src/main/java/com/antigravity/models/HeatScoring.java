@@ -78,7 +78,7 @@ public class HeatScoring {
       @JsonProperty("heat_ranking_tiebreaker") @JsonAlias("heatRankingTiebreaker")
           HeatRankingTiebreaker heatRankingTiebreaker,
       @JsonProperty("allow_finish") @JsonAlias("allowFinish") AllowFinish allowFinish) {
-    this.finishMethod = finishMethod;
+    this.finishMethod = finishMethod != null ? finishMethod : FinishMethod.Lap;
     this.finishValue = finishValue;
     this.heatRanking = heatRanking;
     this.heatRankingTiebreaker = heatRankingTiebreaker;

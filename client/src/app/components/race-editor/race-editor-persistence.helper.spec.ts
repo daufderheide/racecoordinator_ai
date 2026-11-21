@@ -1,4 +1,4 @@
-import { of, throwError } from "rxjs";
+import { of, Subject, throwError } from "rxjs";
 
 import {
   RaceEditorPersistenceHelper,
@@ -270,6 +270,98 @@ describe("RaceEditorPersistenceHelper", () => {
     it("should return false for canUpdate if race is read-only", () => {
       mockHost.editingRace.compatibility = { is_read_only: true } as any;
       expect(RaceEditorPersistenceHelper.canUpdate(mockHost)).toBeFalse();
+    });
+  });
+
+  describe("edits made while a save is in flight (#1195)", () => {
+    let first: Subject<any>;
+    let second: Subject<any>;
+    const sentWarmups = () =>
+      (mockHost.dataService.updateRace as jasmine.Spy).calls
+        .allArgs()
+        .map(([, payload]) => payload.auto_start_warmup_time);
+
+    beforeEach(() => {
+      first = new Subject<any>();
+      second = new Subject<any>();
+      (mockHost.dataService.updateRace as jasmine.Spy).and.returnValues(
+        first,
+        second,
+      );
+      mockHost.isEditMode = true;
+      mockHost.editingRace.auto_start_time = 60;
+      mockHost.editingRace.auto_start_warmup_time = 1;
+    });
+
+    const finish = (s: Subject<any>) => {
+      s.next({ entity_id: "r1" });
+      s.complete();
+    };
+
+    it("saves the digit typed during an auto-save instead of dropping it", () => {
+      RaceEditorPersistenceHelper.updateRace(mockHost, true); // "1" sent
+      mockHost.editingRace.auto_start_warmup_time = 10; // "0" typed
+      RaceEditorPersistenceHelper.updateRace(mockHost, true); // dropped: saving
+      expect(sentWarmups()).toEqual([1]);
+
+      finish(first);
+      expect(sentWarmups()).toEqual([1, 10]);
+      finish(second);
+      expect(mockHost.isSaving).toBeFalse();
+      expect(mockHost.originalRace.auto_start_warmup_time).toBe(10);
+    });
+
+    it("marks only what was sent as saved while newer edits are pending", () => {
+      RaceEditorPersistenceHelper.updateRace(mockHost, true);
+      mockHost.editingRace.auto_start_warmup_time = 10;
+      finish(first);
+
+      // Between the two saves, the tracked state is what the server has.
+      expect(mockHost.originalRace.auto_start_warmup_time).toBe(1);
+      expect(mockHost.selectedRace.auto_start_warmup_time).toBe(1);
+      expect(
+        (mockHost.undoManager.resetTracking as jasmine.Spy).calls.mostRecent()
+          .args[0].auto_start_warmup_time,
+      ).toBe(1);
+      expect(
+        mockHost.allRaces.find((r) => r.entity_id === "r1")
+          .auto_start_warmup_time,
+      ).toBe(1);
+      // The editor itself keeps the newer value.
+      expect(mockHost.editingRace.auto_start_warmup_time).toBe(10);
+    });
+
+    it("leaving edit mode during an auto-save stores the latest edits first", () => {
+      RaceEditorPersistenceHelper.updateRace(mockHost, true);
+      mockHost.editingRace.auto_start_warmup_time = 10;
+      mockHost.transitionToReadOnlyOnSave = true; // "leave edit mode" clicked
+
+      finish(first);
+      expect(mockHost.isEditMode).toBeTrue(); // not yet: 10 isn't stored
+      expect(sentWarmups()).toEqual([1, 10]);
+
+      finish(second);
+      expect(mockHost.isEditMode).toBeFalse();
+      expect(mockHost.transitionToReadOnlyOnSave).toBeFalse();
+    });
+
+    it("saves only once when nothing changed during the save", () => {
+      mockHost.transitionToReadOnlyOnSave = true;
+      RaceEditorPersistenceHelper.updateRace(mockHost, true);
+      finish(first);
+      expect(sentWarmups()).toEqual([1]);
+      expect(mockHost.isEditMode).toBeFalse();
+      expect(mockHost.originalRace.auto_start_warmup_time).toBe(1);
+    });
+
+    it("navigates back only after the follow-up save", () => {
+      mockHost.navigateBackOnSave = true;
+      RaceEditorPersistenceHelper.updateRace(mockHost, false);
+      mockHost.editingRace.auto_start_warmup_time = 10;
+      finish(first);
+      expect(mockHost.onBack).not.toHaveBeenCalled();
+      finish(second);
+      expect(mockHost.onBack).toHaveBeenCalledTimes(1);
     });
   });
 
