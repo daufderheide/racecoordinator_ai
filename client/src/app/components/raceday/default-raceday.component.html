@@ -243,21 +243,21 @@
           @for (gx of g.x; track $index) {
             <div
               class="snap-guide snap-guide-v"
-              [style.left.%]="(gx / (layout?.baseWidth || 1920)) * 100"
+              [style.left.%]="(gx / (layout.baseWidth || 1920)) * 100"
             ></div>
           }
           @for (gy of g.y; track $index) {
             <div
               class="snap-guide snap-guide-h"
-              [style.top.%]="(gy / (layout?.baseHeight || 1080)) * 100"
+              [style.top.%]="(gy / (layout.baseHeight || 1080)) * 100"
             ></div>
           }
         }
         @if (isLayoutCustomizing && dragReadout(); as r) {
           <div
             class="drag-readout"
-            [style.left.%]="(r.x / (layout?.baseWidth || 1920)) * 100"
-            [style.top.%]="((r.y + r.h) / (layout?.baseHeight || 1080)) * 100"
+            [style.left.%]="(r.x / (layout.baseWidth || 1920)) * 100"
+            [style.top.%]="((r.y + r.h) / (layout.baseHeight || 1080)) * 100"
           >
             {{ r.x }}, {{ r.y }} · {{ r.w }} × {{ r.h }}
           </div>
