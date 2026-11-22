@@ -1006,15 +1006,10 @@
 }
 
 .all-races-selector .custom-dropdown-container {
-  flex: 1 1 0;
+  flex: 2 1 0;
   min-width: 0;
   position: relative;
   z-index: 100;
-}
-
-.all-races-selector .search-wrapper {
-  flex: 1 1 0;
-  min-width: 0;
 }
 
 .all-races-selector .season-selection-wrapper {
@@ -1055,6 +1050,73 @@
   border-radius: 6px;
   backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+
+.race-dropdown-trigger {
+  width: 100%;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  height: 42px;
+}
+
+.race-dropdown-trigger:hover,
+.race-dropdown-trigger:focus-within {
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.race-dropdown-trigger .dropdown-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.race-dropdown-trigger .dropdown-search-input:focus {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.race-dropdown-trigger .dropdown-search-input.has-selection::placeholder {
+  color: #fff;
+  opacity: 1;
+  font-weight: 500;
+}
+
+.race-dropdown-trigger .dropdown-search-input:not(.has-selection)::placeholder {
+  color: #94a3b8;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+.race-dropdown-trigger .dropdown-arrow {
+  padding: 0 14px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .dropdown-trigger {
@@ -1127,6 +1189,7 @@
   font-size: 0.9rem;
 }
 
+.dropdown-item.highlighted,
 .dropdown-item:hover:not(.disabled) {
   background-color: #2563eb;
   color: #ffffff;

@@ -2054,20 +2054,19 @@ describe("DefaultRacedaySetupComponent", () => {
       );
     });
 
-    it("should render season selection in the same row as race selector without a season-label", () => {
+    it("should render season selection in the same row as combined race selector without a season-label", () => {
       const selectorRow = fixture.nativeElement.querySelector(
         ".all-races-selector",
       );
       expect(selectorRow).toBeTruthy();
 
       const children = Array.from(selectorRow.children) as HTMLElement[];
-      expect(children.length).toBe(3);
+      expect(children.length).toBe(2);
       expect(
         children[0].classList.contains("custom-dropdown-container"),
       ).toBeTrue();
-      expect(children[1].classList.contains("search-wrapper")).toBeTrue();
       expect(
-        children[2].classList.contains("season-selection-wrapper"),
+        children[1].classList.contains("season-selection-wrapper"),
       ).toBeTrue();
 
       const label = fixture.nativeElement.querySelector(
@@ -2079,6 +2078,91 @@ describe("DefaultRacedaySetupComponent", () => {
         ".season-selection-wrapper app-custom-select.season-select-input",
       );
       expect(select).toBeTruthy();
+    });
+
+    it("should combine race dropdown and search into a single input with default text and clear on selection", () => {
+      component.selectedRace = undefined;
+      component.selectedEvent = undefined;
+      component.isRaceSearchFocused = false;
+      fixture.detectChanges();
+
+      expect(component.raceDropdownPlaceholder).toBe("click to select or type to search");
+
+      // Type to search
+      component.raceSearchQuery = "Endurance";
+      component.onSearchChange();
+      expect(component.isDropdownOpen).toBeTrue();
+      expect(component.filteredRaces.length).toBe(1);
+
+      // Selecting a race clears search text and closes dropdown
+      const raceToSelect = component.filteredRaces[0];
+      component.selectRace(raceToSelect);
+
+      expect(component.selectedRace).toBe(raceToSelect);
+      expect(component.raceSearchQuery).toBe("");
+      expect(component.isDropdownOpen).toBeFalse();
+      expect(component.raceDropdownPlaceholder).toBe(raceToSelect.name);
+    });
+
+    it("should navigate race dropdown items using ArrowDown and ArrowUp and select with Enter", () => {
+      component.selectedRace = undefined;
+      component.selectedEvent = undefined;
+      component.isDropdownOpen = false;
+      component.raceSearchQuery = "";
+      fixture.detectChanges();
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      const upEvent = new KeyboardEvent("ArrowUp", { key: "ArrowUp" });
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+
+      // ArrowDown opens dropdown if closed
+      component.onRaceSearchKeydown(downEvent);
+      expect(component.isDropdownOpen).toBeTrue();
+      expect(component.highlightedDropdownIndex).toBe(0);
+
+      // ArrowDown moves to next item
+      component.onRaceSearchKeydown(downEvent);
+      expect(component.highlightedDropdownIndex).toBe(1);
+
+      // ArrowUp moves back
+      component.onRaceSearchKeydown(upEvent);
+      expect(component.highlightedDropdownIndex).toBe(0);
+
+      // Enter selects highlighted item
+      const expectedRace = component.filteredRaces[0];
+      component.onRaceSearchKeydown(enterEvent);
+
+      expect(component.selectedRace).toBe(expectedRace);
+      expect(component.isDropdownOpen).toBeFalse();
+      expect(component.raceSearchQuery).toBe("");
+    });
+
+    it("should navigate across races and events using arrow keys and select an event with Enter", () => {
+      component.selectedRace = undefined;
+      component.selectedEvent = undefined;
+      component.isDropdownOpen = true;
+      component.raceSearchQuery = "";
+      component.highlightedDropdownIndex = -1;
+      fixture.detectChanges();
+
+      const totalItems = component.filteredRaces.length + component.filteredEvents.length;
+      expect(totalItems).toBeGreaterThan(component.filteredRaces.length);
+
+      const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+      const enterEvent = new KeyboardEvent("keydown", { key: "Enter" });
+
+      // ArrowUp from -1 wraps to bottom (last item, which is an event)
+      component.onRaceSearchKeydown(upEvent);
+      expect(component.highlightedDropdownIndex).toBe(totalItems - 1);
+
+      // Enter selects the event
+      const expectedEvent = component.filteredEvents[component.filteredEvents.length - 1];
+      component.onRaceSearchKeydown(enterEvent);
+
+      expect(component.selectedEvent).toBe(expectedEvent);
+      expect(component.selectedRace).toBeUndefined();
+      expect(component.isDropdownOpen).toBeFalse();
+      expect(component.raceSearchQuery).toBe("");
     });
 
     it("should save selectedSeasonId to settings when season changes", () => {

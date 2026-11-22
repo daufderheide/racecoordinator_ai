@@ -913,23 +913,45 @@
                 [title]="'RDS_TOOLTIP_RACE_SELECTOR' | translate"
               >
                 <div
-                  class="dropdown-trigger"
-                  (click)="toggleDropdown($event)"
+                  class="dropdown-trigger race-dropdown-trigger"
+                  (click)="onRaceDropdownTriggerClick($event)"
                   [title]="'RDS_TOOLTIP_RACE_SELECTOR' | translate"
                 >
-                  <span class="selected-value">{{
-                    selectedEvent?.name || selectedRace?.name || "Select a Race"
-                  }}</span>
-                  <div class="dropdown-arrow" [class.open]="isDropdownOpen">
+                  <input
+                    #raceSearchInput
+                    type="text"
+                    class="search-input race-search dropdown-search-input"
+                    [class.has-selection]="hasSelectedRaceOrEvent && !isRaceSearchFocused"
+                    [placeholder]="raceDropdownPlaceholder"
+                    [(ngModel)]="raceSearchQuery"
+                    (ngModelChange)="onSearchChange()"
+                    (click)="onRaceSearchInputClick($event)"
+                    (focus)="onRaceSearchFocus()"
+                    (blur)="onRaceSearchBlur()"
+                    (keydown)="onRaceSearchKeydown($event)"
+                    autocomplete="off"
+                    data-dashlane-ignore="true"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
+                  />
+                  <div
+                    class="dropdown-arrow"
+                    [class.open]="isDropdownOpen"
+                    (click)="toggleDropdown($event)"
+                  >
                     ▼
                   </div>
                 </div>
                 @if (isDropdownOpen) {
                   <div class="dropdown-menu">
-                    @for (race of filteredRaces; track race.entity_id) {
+                    @for (race of filteredRaces; track race.entity_id; let i = $index) {
                       <div
                         class="dropdown-item"
                         (click)="selectRace(race)"
+                        (mouseenter)="highlightedDropdownIndex = i"
+                        [class.highlighted]="highlightedDropdownIndex === i"
                         [class.selected]="
                           selectedRace?.entity_id === race.entity_id
                         "
@@ -959,10 +981,12 @@
                       <div class="dropdown-header">
                         {{ "RDS_MENU_EVENT" | translate }}
                       </div>
-                      @for (ev of filteredEvents; track ev.entity_id) {
+                      @for (ev of filteredEvents; track ev.entity_id; let j = $index) {
                         <div
                           class="dropdown-item event-item"
                           (click)="selectEvent(ev)"
+                          (mouseenter)="highlightedDropdownIndex = filteredRaces.length + j"
+                          [class.highlighted]="highlightedDropdownIndex === filteredRaces.length + j"
                           [class.selected]="
                             selectedEvent?.entity_id === ev.entity_id
                           "
@@ -988,34 +1012,6 @@
                     }
                   </div>
                 }
-              </div>
-
-              <div class="search-wrapper">
-                <input
-                  type="text"
-                  class="search-input race-search"
-                  [placeholder]="'RDS_SEARCH_RACES' | translate"
-                  [title]="'RDS_TOOLTIP_RACE_SEARCH' | translate"
-                  [(ngModel)]="raceSearchQuery"
-                  (ngModelChange)="onSearchChange()"
-                  autocomplete="off"
-                  data-dashlane-ignore="true"
-                  data-1p-ignore="true"
-                  data-lpignore="true"
-                  data-bwignore="true"
-                  data-form-type="other"
-                />
-                <svg
-                  class="search-icon"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                  />
-                </svg>
               </div>
 
               <div

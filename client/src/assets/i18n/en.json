@@ -959,6 +959,7 @@
   "RDS_SECTION_RACING": "Racing",
   "RDS_SELECTED_COUNT": "{{count}} Selected",
   "RDS_SELECT_EVENT": "Select Event",
+  "RDS_SELECT_OR_SEARCH_RACE": "click to select or type to search",
   "RDS_SELECT_RACE_TO_LOAD": "Select a race to load",
   "RDS_SERVER_CONFIG_TITLE": "Server Configuration",
   "RDS_SPLASH_WAIT_RACE": "Waiting for a race to start. You can also login as a director to manage the event.",

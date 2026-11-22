@@ -26,6 +26,7 @@ export class RacedaySetupLaunchHelper {
   static closeDropdown(host: any): void {
     host.isDropdownOpen = false;
     host.isEventDropdownOpen = false;
+    host.raceSearchQuery = "";
   }
 
   static toggleEventDropdown(host: any, e: MouseEvent): void {
@@ -45,6 +46,7 @@ export class RacedaySetupLaunchHelper {
   static selectEvent(host: any, event: EventModel): void {
     host.selectedEvent = event;
     host.selectedRace = undefined;
+    host.raceSearchQuery = "";
     host.saveSettings();
     host.closeDropdown();
     host.cdr.detectChanges();
@@ -53,6 +55,7 @@ export class RacedaySetupLaunchHelper {
   static selectRace(host: any, race: Race): void {
     host.selectedRace = race;
     host.selectedEvent = undefined;
+    host.raceSearchQuery = "";
     if (race?.entity_id) {
       if (host.themeService?.getTransientThemeId?.()) {
         host.themeService.clearTransientActiveTheme();

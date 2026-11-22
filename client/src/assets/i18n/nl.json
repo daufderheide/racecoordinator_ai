@@ -1182,6 +1182,7 @@
   "RDS_SECTION_RACING": "Racen",
   "RDS_SELECTED_COUNT": "{{count}} Geselecteerd",
   "RDS_SELECT_EVENT": "Selecteer Evenement",
+  "RDS_SELECT_OR_SEARCH_RACE": "klik om te selecteren of typ om te zoeken",
   "RDS_SELECT_RACE_TO_LOAD": "Selecteer een race om te laden",
   "RDS_SERVER_CONFIG_TITLE": "Server Configuratie",
   "RDS_SPLASH_WAIT_RACE": "Wachten tot een race start. U kunt ook inloggen als director om het evenement te beheren.",

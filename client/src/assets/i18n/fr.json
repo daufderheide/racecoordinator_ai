@@ -1182,6 +1182,7 @@
   "RDS_SECTION_RACING": "En Course",
   "RDS_SELECTED_COUNT": "{{count}} Sélectionné",
   "RDS_SELECT_EVENT": "Sélectionner un Événement",
+  "RDS_SELECT_OR_SEARCH_RACE": "cliquer pour sélectionner ou taper pour chercher",
   "RDS_SELECT_RACE_TO_LOAD": "Sélectionnez une course à charger",
   "RDS_SERVER_CONFIG_TITLE": "Configuration Serveur",
   "RDS_SPLASH_WAIT_RACE": "Attente du début d'une course. Vous pouvez également vous connecter en tant que directeur pour gérer l'événement.",

@@ -140,6 +140,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   @ViewChild("racingScrollContainer") racingScrollContainer?: ElementRef;
   @ViewChild("importSettingsInput")
   importSettingsInput?: ElementRef<HTMLInputElement>;
+  @ViewChild("raceSearchInput")
+  raceSearchInput?: ElementRef<HTMLInputElement>;
+  isRaceSearchFocused: boolean = false;
+  highlightedDropdownIndex: number = -1;
 
   private helpLinkService = inject(HelpLinkService);
 
@@ -617,12 +621,193 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   // --- Race Logic ---
 
+  get raceDropdownPlaceholder(): string {
+    if (this.isRaceSearchFocused) {
+      return (
+        this.translationService?.translate("RDS_SELECT_OR_SEARCH_RACE") ||
+        "click to select or type to search"
+      );
+    }
+    const selectedName = this.selectedEvent?.name || this.selectedRace?.name;
+    if (selectedName) {
+      return selectedName;
+    }
+    return (
+      this.translationService?.translate("RDS_SELECT_OR_SEARCH_RACE") ||
+      "click to select or type to search"
+    );
+  }
+
+  get hasSelectedRaceOrEvent(): boolean {
+    return !!(this.selectedEvent || this.selectedRace);
+  }
+
+  updateInitialDropdownHighlight() {
+    const raceIdx = this.filteredRaces.findIndex(
+      (r) => r.entity_id === this.selectedRace?.entity_id,
+    );
+    if (raceIdx !== -1) {
+      this.highlightedDropdownIndex = raceIdx;
+      return;
+    }
+    const eventIdx = this.filteredEvents.findIndex(
+      (e) => e.entity_id === this.selectedEvent?.entity_id,
+    );
+    if (eventIdx !== -1) {
+      this.highlightedDropdownIndex = this.filteredRaces.length + eventIdx;
+      return;
+    }
+    const total = this.filteredRaces.length + this.filteredEvents.length;
+    this.highlightedDropdownIndex = total > 0 ? 0 : -1;
+  }
+
+  scrollHighlightedItemIntoView() {
+    setTimeout(() => {
+      const highlightedEl = document.querySelector(
+        ".dropdown-menu .dropdown-item.highlighted",
+      ) as HTMLElement;
+      if (highlightedEl) {
+        highlightedEl.scrollIntoView({ block: "nearest" });
+      }
+    }, 0);
+  }
+
+  onRaceDropdownTriggerClick(event: MouseEvent) {
+    if (!this.isDropdownOpen) {
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.isDropdownOpen = true;
+      this.updateInitialDropdownHighlight();
+      this.cdr.detectChanges();
+    }
+    this.raceSearchInput?.nativeElement?.focus();
+  }
+
+  onRaceSearchInputClick(event: MouseEvent) {
+    event.stopPropagation();
+    if (!this.isDropdownOpen) {
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.isDropdownOpen = true;
+      this.updateInitialDropdownHighlight();
+      this.cdr.detectChanges();
+    }
+  }
+
+  onRaceSearchFocus() {
+    this.isRaceSearchFocused = true;
+    if (!this.isDropdownOpen) {
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.isDropdownOpen = true;
+      this.updateInitialDropdownHighlight();
+    }
+    this.cdr.detectChanges();
+  }
+
+  onRaceSearchBlur() {
+    this.isRaceSearchFocused = false;
+    this.cdr.detectChanges();
+  }
+
+  onRaceSearchKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      this.closeDropdown();
+      this.raceSearchInput?.nativeElement?.blur();
+      return;
+    }
+
+    const totalItems = this.filteredRaces.length + this.filteredEvents.length;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.isDropdownOpen) {
+        this.closeFileDropdown();
+        this.closeConfigDropdown();
+        this.closeOptionsDropdown();
+        this.closeHelpDropdown();
+        this.isDropdownOpen = true;
+        this.updateInitialDropdownHighlight();
+        this.cdr.detectChanges();
+        return;
+      }
+      if (totalItems === 0) return;
+      if (this.highlightedDropdownIndex < totalItems - 1) {
+        this.highlightedDropdownIndex++;
+      } else {
+        this.highlightedDropdownIndex = 0;
+      }
+      this.scrollHighlightedItemIntoView();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!this.isDropdownOpen) {
+        this.closeFileDropdown();
+        this.closeConfigDropdown();
+        this.closeOptionsDropdown();
+        this.closeHelpDropdown();
+        this.isDropdownOpen = true;
+        this.updateInitialDropdownHighlight();
+        this.cdr.detectChanges();
+        return;
+      }
+      if (totalItems === 0) return;
+      if (this.highlightedDropdownIndex > 0) {
+        this.highlightedDropdownIndex--;
+      } else {
+        this.highlightedDropdownIndex = totalItems - 1;
+      }
+      this.scrollHighlightedItemIntoView();
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      if (this.isDropdownOpen && totalItems > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        const indexToSelect =
+          this.highlightedDropdownIndex >= 0
+            ? this.highlightedDropdownIndex
+            : 0;
+        if (indexToSelect < this.filteredRaces.length) {
+          this.selectRace(this.filteredRaces[indexToSelect]);
+        } else {
+          const eventIndex = indexToSelect - this.filteredRaces.length;
+          if (eventIndex < this.filteredEvents.length) {
+            this.selectEvent(this.filteredEvents[eventIndex]);
+          }
+        }
+        return;
+      }
+    }
+  }
+
   toggleDropdown(event: Event) {
     RacedaySetupLaunchHelper.toggleDropdown(this, event);
+    if (this.isDropdownOpen) {
+      this.updateInitialDropdownHighlight();
+      this.raceSearchInput?.nativeElement?.focus();
+    } else {
+      this.highlightedDropdownIndex = -1;
+    }
   }
 
   closeDropdown() {
     RacedaySetupLaunchHelper.closeDropdown(this);
+    this.highlightedDropdownIndex = -1;
   }
 
   toggleEventDropdown(e: MouseEvent) {
@@ -1109,6 +1294,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     if (this.raceSearchQuery) {
       this.isDropdownOpen = true;
     }
+    const total = this.filteredRaces.length + this.filteredEvents.length;
+    this.highlightedDropdownIndex = total > 0 ? 0 : -1;
     this.cdr.detectChanges();
   }
 
