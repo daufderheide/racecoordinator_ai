@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Error al importar el paquete de carrera.",
   "RHD_BTN_EXPORT_PACKAGE": "Exportar paquete",
   "RHD_BTN_IMPORT_PACKAGE": "Importar carrera",
-  "SE_BTN_IMPORT_PACKAGE": "Importar paquete de carrera..."
+  "SE_BTN_IMPORT_PACKAGE": "Importar paquete de carrera...",
+  "PREVIEW_BADGE": "VISTA PREVIA",
+  "PREVIEW_BADGE_TOOLTIP": "Función en vista previa: todavía puede cambiar mucho o incluso desaparecer. ¡Nos encantaría conocer su opinión!"
 }

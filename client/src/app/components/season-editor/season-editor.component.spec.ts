@@ -1859,6 +1859,17 @@ describe("SeasonEditorComponent", () => {
       expect(component.showPackageAckModal).toBeFalse();
     });
 
+    it("should render preview badge on the import package button in add race modal", () => {
+      component.showAddRaceModal = true;
+      fixture.detectChanges();
+      const importBtn = fixture.nativeElement.querySelector(
+        ".btn-import-package",
+      );
+      expect(importBtn).toBeTruthy();
+      const badge = importBtn.querySelector("app-preview-badge");
+      expect(badge).toBeTruthy();
+    });
+
     it("should show skipped message when onSeasonPackageCommitted has action SKIPPED", () => {
       spyOn(component, "loadData");
       component.editingSeason = {

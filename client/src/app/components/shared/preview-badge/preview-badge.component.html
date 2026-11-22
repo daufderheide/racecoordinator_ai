@@ -1,0 +1,10 @@
+<span
+  class="preview-badge"
+  [class.large]="size() === 'large'"
+  role="note"
+  [title]="'PREVIEW_BADGE_TOOLTIP' | translate"
+  [attr.aria-label]="'PREVIEW_BADGE_TOOLTIP' | translate"
+>
+  <span class="material-icons" aria-hidden="true">science</span>
+  <span class="preview-badge-label">{{ "PREVIEW_BADGE" | translate }}</span>
+</span>

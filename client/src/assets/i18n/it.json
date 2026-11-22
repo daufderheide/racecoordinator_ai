@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Importazione del pacchetto gara non riuscita.",
   "RHD_BTN_EXPORT_PACKAGE": "Esporta pacchetto",
   "RHD_BTN_IMPORT_PACKAGE": "Importa gara",
-  "SE_BTN_IMPORT_PACKAGE": "Importa pacchetto gara..."
+  "SE_BTN_IMPORT_PACKAGE": "Importa pacchetto gara...",
+  "PREVIEW_BADGE": "ANTEPRIMA",
+  "PREVIEW_BADGE_TOOLTIP": "Funzione in anteprima: potrebbe ancora cambiare molto o persino essere rimossa. Il tuo parere ci interessa!"
 }

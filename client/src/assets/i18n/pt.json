@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Falha ao importar o pacote de corrida.",
   "RHD_BTN_EXPORT_PACKAGE": "Exportar pacote",
   "RHD_BTN_IMPORT_PACKAGE": "Importar corrida",
-  "SE_BTN_IMPORT_PACKAGE": "Importar pacote de corrida..."
+  "SE_BTN_IMPORT_PACKAGE": "Importar pacote de corrida...",
+  "PREVIEW_BADGE": "PRÉVIA",
+  "PREVIEW_BADGE_TOOLTIP": "Função em prévia: ainda pode mudar muito ou até ser removida. Adoraríamos receber sua opinião!"
 }

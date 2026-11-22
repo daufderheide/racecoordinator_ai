@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Échec de l'importation du package de course.",
   "RHD_BTN_EXPORT_PACKAGE": "Exporter le package",
   "RHD_BTN_IMPORT_PACKAGE": "Importer une course",
-  "SE_BTN_IMPORT_PACKAGE": "Importer un package de course..."
+  "SE_BTN_IMPORT_PACKAGE": "Importer un package de course...",
+  "PREVIEW_BADGE": "APERÇU",
+  "PREVIEW_BADGE_TOOLTIP": "Fonction en aperçu : elle peut encore beaucoup changer, voire être retirée. Vos retours sont les bienvenus !"
 }

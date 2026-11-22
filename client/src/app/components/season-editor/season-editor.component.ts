@@ -14,6 +14,7 @@ import { catchError } from "rxjs/operators";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
+import { PreviewBadgeComponent } from "@app/components/shared/preview-badge/preview-badge.component";
 import { RacePackageModalComponent } from "@app/components/shared/race-package-modal/race-package-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
@@ -69,6 +70,7 @@ import { SeasonEditorHelpHelper } from "./season-editor-help.helper";
     AcknowledgementModalComponent,
     DecimalPipe,
     RacePackageModalComponent,
+    PreviewBadgeComponent,
   ],
 })
 export class SeasonEditorComponent

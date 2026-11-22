@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Failed to import race package.",
   "RHD_BTN_EXPORT_PACKAGE": "Export Package",
   "RHD_BTN_IMPORT_PACKAGE": "Import Race",
-  "SE_BTN_IMPORT_PACKAGE": "Import Race Package..."
+  "SE_BTN_IMPORT_PACKAGE": "Import Race Package...",
+  "PREVIEW_BADGE": "PREVIEW",
+  "PREVIEW_BADGE_TOOLTIP": "Preview feature: it may still change a lot, or even be removed. We'd love your feedback!"
 }

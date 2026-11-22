@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Import des Rennpakets fehlgeschlagen.",
   "RHD_BTN_EXPORT_PACKAGE": "Paket exportieren",
   "RHD_BTN_IMPORT_PACKAGE": "Rennen importieren",
-  "SE_BTN_IMPORT_PACKAGE": "Rennpaket importieren..."
+  "SE_BTN_IMPORT_PACKAGE": "Rennpaket importieren...",
+  "PREVIEW_BADGE": "VORSCHAU",
+  "PREVIEW_BADGE_TOOLTIP": "Vorschau-Funktion: Sie kann sich noch stark ändern oder sogar wieder entfernt werden. Wir freuen uns über Ihr Feedback!"
 }

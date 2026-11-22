@@ -22,6 +22,7 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
+import { PreviewBadgeComponent } from "@app/components/shared/preview-badge/preview-badge.component";
 import { RacePackageModalComponent } from "@app/components/shared/race-package-modal/race-package-modal.component";
 import { DataService } from "@app/data.service";
 import {
@@ -66,6 +67,7 @@ export interface GroupedRaceHistory {
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
     RacePackageModalComponent,
+    PreviewBadgeComponent,
   ],
 })
 export class RaceHistoryDialogComponent implements OnInit, OnChanges {

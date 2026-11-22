@@ -3550,5 +3550,7 @@
   "RPM_ERR_COMMIT_FAILED": "Importeren van racepakket mislukt.",
   "RHD_BTN_EXPORT_PACKAGE": "Pakket exporteren",
   "RHD_BTN_IMPORT_PACKAGE": "Race importeren",
-  "SE_BTN_IMPORT_PACKAGE": "Racepakket importeren..."
+  "SE_BTN_IMPORT_PACKAGE": "Racepakket importeren...",
+  "PREVIEW_BADGE": "PREVIEW",
+  "PREVIEW_BADGE_TOOLTIP": "Preview-functie: deze kan nog flink veranderen of zelfs verdwijnen. We horen graag uw feedback!"
 }

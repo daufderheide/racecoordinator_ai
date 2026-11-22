@@ -909,6 +909,17 @@ describe("RaceHistoryDialogComponent", () => {
       );
     });
 
+    it("should render preview badge on the export package button", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+      const exportBtn = fixture.nativeElement.querySelector(
+        ".btn-export-package",
+      );
+      expect(exportBtn).toBeTruthy();
+      const badge = exportBtn.querySelector("app-preview-badge");
+      expect(badge).toBeTruthy();
+    });
+
     it("should return early if group is null or invalid in exportRacePackage", async () => {
       await component.exportRacePackage(null as any);
       expect(mockDataService.exportRacePackageBlob).not.toHaveBeenCalled();
