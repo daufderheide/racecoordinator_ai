@@ -144,6 +144,20 @@ public class DatabaseContextTest {
   }
 
   @Test
+  public void testGetDatabaseStatsCountsCars() {
+    DatabaseContext.DatabaseStats empty = databaseContext.getDatabaseStats("test_db");
+    assertEquals(0, empty.carCount);
+
+    SqliteRepository<com.antigravity.models.Car> carRepo =
+        new SqliteRepository<>(databaseContext, "cars", com.antigravity.models.Car.class);
+    carRepo.save(new com.antigravity.models.Car.Builder().withName("A").withEntityId("1").build());
+    carRepo.save(new com.antigravity.models.Car.Builder().withName("B").withEntityId("2").build());
+
+    DatabaseContext.DatabaseStats stats = databaseContext.getDatabaseStats("test_db");
+    assertEquals(2, stats.carCount);
+  }
+
+  @Test
   public void testResetDatabaseToFactory_LoadsFactoryDefaultZip() {
     databaseContext.resetDatabaseToFactory("factory_test_db");
     databaseContext.switchDatabase("factory_test_db");

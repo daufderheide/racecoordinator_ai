@@ -1,0 +1,40 @@
+:host {
+  display: inline-flex;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px 1px 5px;
+  border: 1px solid #f59e0b;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  font-family: var(--app-font-family);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  text-shadow: none;
+  white-space: nowrap;
+  cursor: help;
+  user-select: none;
+}
+
+.preview-badge .material-icons {
+  font-size: 0.85rem;
+}
+
+.preview-badge.large {
+  gap: 5px;
+  padding: 3px 12px 3px 9px;
+  font-size: 0.9rem;
+}
+
+.preview-badge.large .material-icons {
+  font-size: 1.15rem;
+}

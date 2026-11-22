@@ -17,6 +17,7 @@ import {
 import {} from "./data/assets_data";
 import { MOCK_DRIVER_LABELS, MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
+import { MOCK_CARS } from "./data/cars_data";
 import { MOCK_TEAMS } from "./data/teams_data";
 import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
 
@@ -29,6 +30,7 @@ export interface SetupOptions {
   driverEditorHelpShown?: boolean;
   teamManagerHelpShown?: boolean;
   teamEditorHelpShown?: boolean;
+  carEditorHelpShown?: boolean;
   assetManagerHelpShown?: boolean;
   raceManagerHelpShown?: boolean;
   raceEditorHelpShown?: boolean;
@@ -96,6 +98,7 @@ export class TestSetupHelper {
     await this.setupRaceRestMocks(page);
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
+    await this.setupCarMocks(page);
     await this.setupEventMocks(page);
     await this.setupSeasonMocks(page);
     await this.setupAssetMocks(page);
@@ -171,6 +174,7 @@ export class TestSetupHelper {
       driverEditorHelpShown: options.driverEditorHelpShown ?? true,
       teamManagerHelpShown: options.teamManagerHelpShown ?? true,
       teamEditorHelpShown: options.teamEditorHelpShown ?? true,
+      carEditorHelpShown: options.carEditorHelpShown ?? true,
       assetManagerHelpShown: options.assetManagerHelpShown ?? true,
       raceManagerHelpShown: options.raceManagerHelpShown ?? true,
       raceEditorHelpShown: options.raceEditorHelpShown ?? true,
@@ -407,6 +411,54 @@ export class TestSetupHelper {
           contentType: "application/json",
           body: JSON.stringify({ success: true }),
         });
+      } else {
+        await route.continue();
+      }
+    });
+  }
+
+  static async setupCarMocks(page: Page) {
+    let currentCars: any[] = MOCK_CARS.map((c) => ({ ...c }));
+    let nextId = currentCars.length + 1;
+
+    await page.route("**/api/cars", async (route) => {
+      if (route.request().method() === "POST") {
+        const newCar = {
+          ...route.request().postDataJSON(),
+          entity_id: `c${nextId++}`,
+        };
+        currentCars.push(newCar);
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify(newCar),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentCars),
+        });
+      }
+    });
+
+    await page.route("**/api/cars/*", async (route) => {
+      const method = route.request().method();
+      const id = route.request().url().split("/").pop();
+      if (method === "PUT") {
+        const postData = route.request().postDataJSON();
+        const index = currentCars.findIndex((c) => c.entity_id === id);
+        if (index !== -1) {
+          currentCars[index] = { ...currentCars[index], ...postData };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(postData),
+        });
+      } else if (method === "DELETE") {
+        currentCars = currentCars.filter((c) => c.entity_id !== id);
+        await route.fulfill({ status: 204, body: "" });
       } else {
         await route.continue();
       }

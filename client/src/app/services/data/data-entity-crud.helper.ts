@@ -9,7 +9,7 @@ import {
 import { DriverLabel } from "@app/models/driver-label";
 import { Event } from "@app/models/event";
 import { Season, SeasonStandingItem } from "@app/models/season";
-import { ITeamModel } from "@app/proto/antigravity";
+import { ICarModel, ITeamModel } from "@app/proto/antigravity";
 
 export class DataEntityCrudHelper {
   constructor(
@@ -272,6 +272,22 @@ export class DataEntityCrudHelper {
 
   deleteTeam(id: string): Observable<any> {
     return this.http.delete<any>(`${this.getBaseUrl()}/api/teams/${id}`);
+  }
+
+  getCars(): Observable<ICarModel[]> {
+    return this.http.get<ICarModel[]>(`${this.getBaseUrl()}/api/cars`);
+  }
+
+  createCar(car: any): Observable<any> {
+    return this.http.post<any>(`${this.getBaseUrl()}/api/cars`, car);
+  }
+
+  updateCar(id: string, car: any): Observable<any> {
+    return this.http.put<any>(`${this.getBaseUrl()}/api/cars/${id}`, car);
+  }
+
+  deleteCar(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.getBaseUrl()}/api/cars/${id}`);
   }
 
   getCustomUIs(): Observable<any[]> {

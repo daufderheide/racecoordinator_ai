@@ -2732,6 +2732,9 @@ describe("DefaultRacedaySetupComponent", () => {
       component.openTeamManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"]);
 
+      component.openCarManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/car-editor"]);
+
       (component as any).isRaceRunning = false;
       component.openTrackManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
@@ -3194,6 +3197,9 @@ describe("DefaultRacedaySetupComponent", () => {
         ),
       ).toBeTrue();
       expect(
+        itemTexts.some((text: string) => text.includes("RDS_MENU_CAR_MANAGER")),
+      ).toBeTrue();
+      expect(
         itemTexts.some((text: string) => text.includes("RDS_MENU_EVENT")),
       ).toBeTrue();
       expect(
@@ -3630,6 +3636,30 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"], {
         queryParams: { id: "t1" },
       });
+    });
+
+    it("opens the Slotcar editor from the Config menu, closing the menu", () => {
+      const team = new Team("t1", "Ferrari", undefined, ["d1"]);
+      component.selectParticipant(team);
+      component.isConfigDropdownOpen = true;
+      fixture.detectChanges();
+
+      fixture.nativeElement.querySelector("#setup-menu-slotcars").click();
+
+      expect(component.isConfigDropdownOpen).toBeFalse();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/car-editor"]);
+    });
+
+    it("marks Slotcars in the Config menu as a preview", () => {
+      component.isConfigDropdownOpen = true;
+      fixture.detectChanges();
+
+      const item = fixture.nativeElement.querySelector("#setup-menu-slotcars");
+      expect(item.querySelector("app-preview-badge")).not.toBeNull();
+      const others = fixture.nativeElement.querySelectorAll(
+        ".setup-menu-dropdown-item app-preview-badge",
+      );
+      expect(others.length).toBe(1);
     });
 
     it("should navigate without query params when no participant is selected", () => {

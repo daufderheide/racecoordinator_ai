@@ -19,6 +19,7 @@ import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-set
 import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
 import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
+import { CarEditorComponent } from "@app/components/car-editor/car-editor.component";
 import { ThemeEditorComponent } from "@app/components/theme-editor/theme-editor.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
@@ -145,6 +146,15 @@ export const routes: Routes = [
     runGuardsAndResolvers: "always",
     title: "Team Editor",
     data: { animation: "TeamEditorPage" },
+  },
+  {
+    path: "car-editor",
+    component: CarEditorComponent,
+    canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
+    title: "Slotcar Editor",
+    data: { animation: "CarEditorPage" },
   },
   {
     path: "track-manager",
