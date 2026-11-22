@@ -17,7 +17,7 @@ import {
 import {} from "./data/assets_data";
 import { MOCK_DRIVER_LABELS, MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
-import { MOCK_CARS } from "./data/cars_data";
+import { MOCK_CAR_FIELDS, MOCK_CARS } from "./data/cars_data";
 import { MOCK_TEAMS } from "./data/teams_data";
 import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
 
@@ -99,6 +99,7 @@ export class TestSetupHelper {
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
     await this.setupCarMocks(page);
+    await this.setupCarFieldMocks(page);
     await this.setupEventMocks(page);
     await this.setupSeasonMocks(page);
     await this.setupAssetMocks(page);
@@ -458,6 +459,54 @@ export class TestSetupHelper {
         });
       } else if (method === "DELETE") {
         currentCars = currentCars.filter((c) => c.entity_id !== id);
+        await route.fulfill({ status: 204, body: "" });
+      } else {
+        await route.continue();
+      }
+    });
+  }
+
+  static async setupCarFieldMocks(page: Page) {
+    let fields: any[] = MOCK_CAR_FIELDS.map((f) => ({ ...f }));
+    let nextId = 1;
+
+    await page.route("**/api/car-fields", async (route) => {
+      if (route.request().method() === "POST") {
+        const field = {
+          ...route.request().postDataJSON(),
+          entity_id: `f-new-${nextId++}`,
+          position: fields.length,
+        };
+        fields.push(field);
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify(field),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(fields),
+        });
+      }
+    });
+
+    await page.route("**/api/car-fields/*", async (route) => {
+      const method = route.request().method();
+      const id = route.request().url().split("/").pop();
+      if (method === "PUT") {
+        const data = route.request().postDataJSON();
+        fields = fields.map((f) =>
+          f.entity_id === id ? { ...f, ...data } : f,
+        );
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(fields.find((f) => f.entity_id === id)),
+        });
+      } else if (method === "DELETE") {
+        fields = fields.filter((f) => f.entity_id !== id);
         await route.fulfill({ status: 204, body: "" });
       } else {
         await route.continue();

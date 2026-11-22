@@ -36,6 +36,25 @@ export interface CarInit {
   tyres?: string;
   modified?: boolean;
   notes?: string;
+  customValues?: Record<string, string>;
+}
+
+/** The values of the user's own fields from server JSON: a list of {fieldId, value}. */
+export function parseCustomValues(raw: any): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (Array.isArray(raw)) {
+    for (const v of raw) {
+      const id = v?.fieldId ?? v?.field_id;
+      if (id && v.value !== undefined && v.value !== null) {
+        out[id] = String(v.value);
+      }
+    }
+  } else if (raw && typeof raw === "object") {
+    for (const [k, v] of Object.entries(raw)) {
+      if (v !== undefined && v !== null) out[k] = String(v);
+    }
+  }
+  return out;
 }
 
 /** A slotcar in the Slotcar database. Only the name is required. */
@@ -53,6 +72,8 @@ export class Car implements Model {
   tyres: string;
   modified: boolean;
   notes: string;
+  /** Values of the user's own fields, keyed by field id ("" values are left out). */
+  customValues: Record<string, string>;
 
   constructor(entity_id: string, name: string, init: CarInit = {}) {
     this.entity_id = entity_id;
@@ -68,6 +89,7 @@ export class Car implements Model {
     this.tyres = init.tyres ?? "";
     this.modified = init.modified === true;
     this.notes = init.notes ?? "";
+    this.customValues = { ...(init.customValues || {}) };
   }
 
   get objectId(): string {
@@ -89,6 +111,33 @@ export class Car implements Model {
       tyres: r.tyres,
       modified: r.modified,
       notes: r.notes,
+      customValues: parseCustomValues(r.customValues ?? r.custom_values),
     });
+  }
+
+  /**
+   * What is sent to the server. Custom values go as a list, because the
+   * server keeps object keys a save leaves out, so a cleared value would
+   * come back.
+   */
+  toJSON(): Record<string, unknown> {
+    return {
+      entity_id: this.entity_id,
+      name: this.name,
+      avatarUrl: this.avatarUrl,
+      brand: this.brand,
+      carClass: this.carClass,
+      scale: this.scale,
+      motor: this.motor,
+      magnet: this.magnet,
+      chassis: this.chassis,
+      gears: this.gears,
+      tyres: this.tyres,
+      modified: this.modified,
+      notes: this.notes,
+      customValues: Object.entries(this.customValues).map(
+        ([fieldId, value]) => ({ fieldId, value }),
+      ),
+    };
   }
 }

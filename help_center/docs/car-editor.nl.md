@@ -46,3 +46,14 @@ Het rechterpaneel bevat hoe de auto is afgesteld. Elk veld is vrije tekst, zodat
 - **Chassis**, **Overbrenging** (bijvoorbeeld 9/27) en **Banden**.
 - **Aangepast**: Vink aan als de auto anders is dan uit de doos; laat leeg voor een standaard auto.
 - **Notities**: Alles wat verder over de auto te zeggen is.
+
+## Je eigen velden {: #car-custom-fields }
+
+Onder de afstelling kun je eigen velden toevoegen, voor alles wat je club bijhoudt (bijvoorbeeld gewicht, rondsel of gids). Klik in de bewerkmodus op **Velden beheren**:
+
+- **Nieuw veld**: geef het een naam en kies een type: **Tekst**, **Getal**, **Ja / nee** of **Keuze uit een lijst** (één keuze per regel).
+- **Bewerken**: hernoem een veld of pas de keuzes aan. Het type kan niet meer veranderen nadat het veld is toegevoegd.
+- **Omhoog / omlaag**: verandert de volgorde van de velden.
+- **Verwijderen**: verwijdert het veld, en de waarde bij elke auto, na bevestiging.
+
+Elke auto krijgt dezelfde velden en houdt zijn eigen waarden. Een veld dat je leeg laat, blijft leeg.

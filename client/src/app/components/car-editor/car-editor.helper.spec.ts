@@ -2,14 +2,19 @@ import { Car } from "@app/models/car";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
 import enJson from "../../../assets/i18n/en.json";
+import { CarField } from "@app/models/car-field";
+
 import {
   areCarsEqual,
+  choiceOptions,
   cloneCar,
   generateUniqueCarName,
   getCarEditorHelpSteps,
   getCarUnsavedReasons,
   getKnownCarClasses,
   resolveCarImageUrl,
+  setCustomValue,
+  withoutField,
 } from "./car-editor.helper";
 
 function full(): Car {
@@ -25,6 +30,7 @@ function full(): Car {
     tyres: "Urethane",
     modified: true,
     notes: "Lowered",
+    customValues: { f1: "82" },
   });
 }
 
@@ -51,6 +57,9 @@ describe("car-editor.helper", () => {
       ["tyres", (c) => (c.tyres = "X")],
       ["modified", (c) => (c.modified = false)],
       ["notes", (c) => (c.notes = "X")],
+      ["a custom value", (c) => (c.customValues = { f1: "83" })],
+      ["a new custom value", (c) => (c.customValues = { f1: "82", f2: "x" })],
+      ["a removed custom value", (c) => (c.customValues = {})],
     ];
     for (const [what, change] of changes) {
       it(`sees a change in ${what}`, () => {
@@ -66,6 +75,56 @@ describe("car-editor.helper", () => {
       const b = new Car("c1", "A");
       b.avatarUrl = "";
       expect(areCarsEqual(a, b)).toBeTrue();
+    });
+  });
+
+  describe("custom values", () => {
+    it("clones the values into a new object", () => {
+      const a = full();
+      const b = cloneCar(a);
+      b.customValues["f1"] = "99";
+      expect(a.customValues["f1"]).toBe("82");
+    });
+
+    it("sets, trims and removes values", () => {
+      const car = new Car("c1", "A");
+      setCustomValue(car, "f1", " 9/27 ");
+      expect(car.customValues).toEqual({ f1: "9/27" });
+      setCustomValue(car, "f2", 82);
+      expect(car.customValues["f2"]).toBe("82");
+      setCustomValue(car, "f1", "  ");
+      setCustomValue(car, "f2", null);
+      expect(car.customValues).toEqual({});
+    });
+
+    it("stores yes as text and no as nothing", () => {
+      const car = new Car("c1", "A");
+      setCustomValue(car, "f1", true);
+      expect(car.customValues["f1"]).toBe("true");
+      setCustomValue(car, "f1", false);
+      expect("f1" in car.customValues).toBeFalse();
+    });
+
+    it("replaces the values object, so undo snapshots stay apart", () => {
+      const car = new Car("c1", "A", { customValues: { f1: "1" } });
+      const before = car.customValues;
+      setCustomValue(car, "f1", "2");
+      expect(before["f1"]).toBe("1");
+    });
+
+    it("offers a car's old choice that is no longer in the list", () => {
+      const f = new CarField("f", "Compound", "choice", ["Soft", "Hard"]);
+      expect(choiceOptions(f, "Soft")).toEqual(["Soft", "Hard"]);
+      expect(choiceOptions(f, "")).toEqual(["Soft", "Hard"]);
+      expect(choiceOptions(f, "Wet")).toEqual(["Soft", "Hard", "Wet"]);
+    });
+
+    it("drops the value of a deleted field from a copy", () => {
+      const car = new Car("c1", "A", { customValues: { f1: "1", f2: "2" } });
+      const copy = withoutField(car, "f1");
+      expect(copy.customValues).toEqual({ f2: "2" });
+      expect(car.customValues).toEqual({ f1: "1", f2: "2" });
+      expect(withoutField(car, "zz").customValues).toEqual(car.customValues);
     });
   });
 
@@ -172,14 +231,15 @@ describe("car-editor.helper", () => {
       mockTranslationService.translate.and.callFake((k: string) => k);
     });
 
-    it("has the five steps in order", () => {
+    it("has the six steps in order", () => {
       const steps = getCarEditorHelpSteps(mockTranslationService as any);
-      expect(steps.length).toBe(5);
+      expect(steps.length).toBe(6);
       expect(steps[0].title).toBe("CE_HELP_WELCOME_TITLE");
       expect(steps[0].position).toBe("center");
       expect(steps[1].selector).toBe("#editor-object-nav");
       expect(steps[3].selector).toBe("#car-profile-panel");
       expect(steps[4].selector).toBe("#car-setup-section");
+      expect(steps[5].selector).toBe("#car-custom-section");
     });
 
     it("uses keys that exist in en.json", () => {

@@ -46,3 +46,14 @@ Il pannello di destra indica come è preparata l'auto. Ogni campo è testo liber
 - **Telaio**, **Rapporto** (ad esempio 9/27) e **Pneumatici**.
 - **Modificata**: seleziona se l'auto è stata modificata rispetto alla versione di serie; lascia vuoto per un'auto di serie.
 - **Note**: qualsiasi altra cosa sull'auto.
+
+## I tuoi campi {: #car-custom-fields }
+
+Sotto l'assetto puoi aggiungere campi tuoi, per tutto ciò che segue il tuo club (ad esempio peso, pignone o guida). In modalità modifica, fai clic su **Gestisci campi**:
+
+- **Nuovo campo**: dagli un nome e scegli un tipo: **Testo**, **Numero**, **Sì / no** o **Scelta da un elenco** (una scelta per riga).
+- **Modifica**: rinomina un campo o cambia le scelte. Il tipo non può essere cambiato dopo aver aggiunto il campo.
+- **Sposta su / giù**: cambia l'ordine dei campi.
+- **Elimina**: rimuove il campo, e il suo valore da ogni auto, dopo la conferma.
+
+Ogni auto ha gli stessi campi e mantiene i propri valori. Un campo lasciato vuoto resta vuoto.

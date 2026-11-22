@@ -164,6 +164,60 @@ public class CarTest {
   }
 
   @Test
+  public void testCustomValues() throws Exception {
+    java.util.Map<String, String> values = new java.util.LinkedHashMap<>();
+    values.put("f1", "82");
+    values.put("f2", null);
+    values.put(null, "x");
+    Car car = new Car.Builder().withName("A").withCustomValues(values).build();
+    assertEquals(1, car.getCustomValues().size());
+    assertEquals("82", car.getCustomValues().get("f1"));
+
+    values.put("f3", "later");
+    assertFalse(car.getCustomValues().containsKey("f3"));
+
+    Car copy = Car.Builder.from(car).withName("B").build();
+    assertEquals("82", copy.getCustomValues().get("f1"));
+
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(car);
+    assertTrue(json.contains("\"customValues\":[{\"fieldId\":\"f1\",\"value\":\"82\"}]"));
+    assertFalse(json.contains("customValueList"));
+    assertEquals("82", mapper.readValue(json, Car.class).getCustomValues().get("f1"));
+  }
+
+  @Test
+  public void testCustomValuesCannotBeChangedFromOutside() {
+    Car car = new Car.Builder().withName("A").build();
+    try {
+      car.getCustomValues().put("f1", "x");
+      org.junit.Assert.fail("expected an unmodifiable map");
+    } catch (UnsupportedOperationException expected) {
+      assertTrue(car.getCustomValues().isEmpty());
+    }
+  }
+
+  @Test
+  public void testProtoCustomValues() {
+    CarModel proto =
+        CarModel.newBuilder()
+            .setName("P")
+            .addCustomValues(
+                com.antigravity.proto.CarCustomValue.newBuilder()
+                    .setFieldId("f1")
+                    .setValue("9/27")
+                    .build())
+            .setModel(com.antigravity.proto.Model.newBuilder().setEntityId("p").build())
+            .build();
+    assertEquals("9/27", new Car(proto).getCustomValues().get("f1"));
+  }
+
+  @Test
+  public void testOldCarsHaveNoCustomValues() {
+    assertTrue(fullCar().getCustomValues().isEmpty());
+  }
+
+  @Test
   public void testJsonAcceptsSnakeCaseClassAndMissingFields() throws Exception {
     Car car =
         com.antigravity.handlers.DatabaseHandlerUtils.bodyAsClassWithId(

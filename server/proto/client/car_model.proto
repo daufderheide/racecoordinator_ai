@@ -24,4 +24,13 @@ message CarModel {
   string tyres = 11;
   bool modified = 12;
   string notes = 13;
+  // Values of the user's own fields (CarFieldModel). A list, not a map: the
+  // database keeps keys that a saved object leaves out, so map keys could
+  // never be removed.
+  repeated CarCustomValue custom_values = 14;
+}
+
+message CarCustomValue {
+  string field_id = 1;
+  string value = 2;
 }
