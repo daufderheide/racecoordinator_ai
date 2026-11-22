@@ -4,7 +4,8 @@ import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/
 
 /**
  * The redesigned Widget Configuration panel for the widget types that have
- * no inspector screendiff of their own, and the dark panel theme.
+ * no inspector screendiff of their own, plus the Layout folder (lock and
+ * layer order) and the dark panel theme.
  */
 
 const W = (
@@ -97,6 +98,24 @@ test.describe("Widget Configuration panel: more widget types", () => {
       });
     });
   }
+
+  test("shows the Layout folder with lock and layer order", async ({
+    page,
+  }) => {
+    await openEditor(page);
+    await selectWidget(page, "w-label");
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    // close Content (open by default) so the Layout folder fits without
+    // scrolling: a scrolled panel didn't land on the same spot every run
+    await page.locator("#kit-folder-content").click();
+    await kit.openFolder("layout");
+    await kit.toggle("locked");
+    await kit.settle();
+    await expect(kit.panel).toHaveScreenshot("panel-layout-locked.png", {
+      animations: "disabled",
+    });
+  });
 
   test("shows the panel in the dark theme", async ({ page }) => {
     await openEditor(page);
