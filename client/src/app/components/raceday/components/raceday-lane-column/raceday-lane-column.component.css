@@ -620,6 +620,7 @@
 
 .lane-col-value {
   width: 100%;
+  box-sizing: border-box;
   font-weight: 700;
   line-height: 1.1;
   font-size: var(--lane-col-value-font-size, 36px);

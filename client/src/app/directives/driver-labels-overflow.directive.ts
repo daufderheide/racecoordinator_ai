@@ -25,7 +25,7 @@ export function measureChipWidth(labelName: string, maxChipWidth = 85): number {
   }
   if (canvasCtx) {
     canvasCtx.font =
-      '600 10px Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      '600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
     const textWidth = canvasCtx.measureText(labelName).width;
     return Math.min(maxChipWidth, Math.ceil(textWidth + 12));
   }

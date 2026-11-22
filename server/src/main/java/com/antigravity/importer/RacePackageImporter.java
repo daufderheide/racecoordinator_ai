@@ -391,37 +391,6 @@ public class RacePackageImporter {
     historyRepository.save(history);
   }
 
-  private void updateExistingHistoryDrivers(String raceId, ResolvedDrivers resolved) {
-    if (raceId == null || historyRepository == null) {
-      return;
-    }
-    RaceHistoryRecord existing = historyRepository.findByEntityId(raceId);
-    if (existing == null || existing.getDrivers() == null) {
-      return;
-    }
-    boolean updated = false;
-    for (RaceParticipant rp : existing.getDrivers()) {
-      if (rp.getDriver() != null && rp.getDriver().getEntityId() != null) {
-        String mappedId = resolved.getIdMap().get(rp.getDriver().getEntityId());
-        String mappedName = resolved.getNameMap().get(rp.getDriver().getEntityId());
-        boolean idChanged = mappedId != null && !mappedId.equals(rp.getDriver().getEntityId());
-        boolean nameChanged = mappedName != null && !mappedName.equals(rp.getDriver().getName());
-        if (idChanged || nameChanged) {
-          Driver updatedDriver =
-              Driver.Builder.from(rp.getDriver())
-                  .withEntityId(idChanged ? mappedId : rp.getDriver().getEntityId())
-                  .withName(nameChanged ? mappedName : rp.getDriver().getName())
-                  .build();
-          rp.setDriver(updatedDriver);
-          updated = true;
-        }
-      }
-    }
-    if (updated) {
-      historyRepository.save(existing);
-    }
-  }
-
   private void persistRaceDataPayloads(
       ExtractedContent content,
       String targetRaceId,
@@ -436,8 +405,7 @@ public class RacePackageImporter {
 
     if (content.getSaveData() != null) {
       RaceSaveData saveData = content.getSaveData();
-      remapSaveData(
-          saveData, targetRaceId, resolved.getIdMap(), resolved.getNameMap(), resolvedTeams);
+      remapSaveData(saveData, resolved.getIdMap(), resolved.getNameMap(), resolvedTeams);
       DatabaseService.getInstance().saveManualRace(databaseContext, saveData);
     }
   }
@@ -1037,7 +1005,6 @@ public class RacePackageImporter {
 
   private void remapSaveData(
       RaceSaveData saveData,
-      String targetRaceId,
       Map<String, String> idMap,
       Map<String, String> nameMap,
       Map<String, Team> resolvedTeams) {

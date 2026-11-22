@@ -11,7 +11,7 @@
   /* Slate 900 */
   color: #e2e8f0;
   /* Slate 200 */
-  font-family: 'Rajdhani', sans-serif;
+  font-family: var(--app-font-family);
   overflow: hidden;
 }
 
@@ -1706,6 +1706,37 @@
   font-weight: bold;
   font-family: 'SFMono-Regular', Consolas, monospace;
   color: var(--text-color, #000);
+}
+
+/* Timer status text preview: drawn like the race day label (dark, amber, Orbitron). */
+.timer-status-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 6px 8px;
+  background: #000022;
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.15));
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.timer-status-preview span {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ffaa00;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inspector-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted, rgba(0, 0, 0, 0.6));
 }
 
 /* Migration Notice Banners */

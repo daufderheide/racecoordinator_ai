@@ -570,7 +570,7 @@
   letter-spacing: 1px;
   line-height: 1.1;
   margin-bottom: 6px;
-  font-family: 'Inter', 'Tahoma', monospace;
+  font-family: 'Tahoma', monospace;
 }
 
 .record-value.cyan-text {
@@ -687,7 +687,7 @@
   border-radius: 6px;
   font-weight: 800;
   font-size: 18px;
-  font-family: 'Inter', 'Tahoma', monospace;
+  font-family: 'Tahoma', monospace;
   border: 1.5px solid currentColor;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   min-width: 70px;
@@ -729,7 +729,7 @@
 .lane-stat-value {
   font-size: 15px;
   font-weight: 800;
-  font-family: 'Inter', 'Tahoma', monospace;
+  font-family: 'Tahoma', monospace;
 }
 
 .lane-stat-holder {
@@ -755,7 +755,7 @@
   font-size: 8px;
   color: #475569;
   letter-spacing: 0.5px;
-  font-family: 'Inter', 'Tahoma', monospace;
+  font-family: 'Tahoma', monospace;
   opacity: 0.8;
 }
 

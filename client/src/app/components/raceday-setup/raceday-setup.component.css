@@ -160,7 +160,7 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   text-transform: uppercase;
   font-size: 14px;
   transition: all 0.3s ease;
@@ -173,7 +173,7 @@
 }
 
 .splash-status-message {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-size: 14px;
   padding: 10px 16px;
   border-radius: 4px;
@@ -233,7 +233,7 @@
 
 .quote-text {
   color: #fff;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-size: 14px;
   line-height: 1.4;
   margin: 0;
@@ -278,7 +278,7 @@
 .server-config-modal h3 {
   margin-top: 0;
   color: #00f0ff;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   margin-bottom: 20px;
 }
 
@@ -301,7 +301,7 @@
   border: 1px solid #444;
   color: #fff;
   border-radius: 4px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   box-sizing: border-box;
 }
 
@@ -330,7 +330,7 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   transition: all 0.3s ease;
 }
 
@@ -365,7 +365,7 @@
   align-items: center;
   justify-content: center;
   color: #ff3333;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   /* backdrop-filter: blur(5px); Removed to see UI clearly */
   pointer-events: all;
   /* Explicitly ensure interaction is blocked */
@@ -414,7 +414,7 @@
   font-size: 1.4rem;
   font-weight: bold;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
 }
 
 .password-input-wrapper {
@@ -464,7 +464,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   z-index: 30000;
   position: absolute;
   top: 10px;
@@ -515,7 +515,7 @@
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-weight: bold;
   text-decoration: none;
 }
@@ -531,7 +531,7 @@
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
 }
 
 .update-btn-secondary:hover {

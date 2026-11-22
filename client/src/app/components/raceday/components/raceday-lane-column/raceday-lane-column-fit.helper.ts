@@ -27,6 +27,17 @@ export interface LaneColumnFitContext {
   onFitPacingValue?: (cardEl: HTMLElement) => void;
 }
 
+/** The part of the fit context the header fit needs. */
+export type LaneColumnHeaderFitContext = Pick<
+  LaneColumnFitContext,
+  | "isHeaderWidget"
+  | "cachedWidth"
+  | "cachedHeight"
+  | "settings"
+  | "widget"
+  | "headerLabel"
+>;
+
 export class LaneColumnFitHelper {
   private lastInsetsRef: any = null;
   private lastInsetsKey = "";
@@ -81,10 +92,25 @@ export class LaneColumnFitHelper {
     }
   }
 
+  /**
+   * Re-fits only the column header (cached on size, font and label). Used for image,
+   * pacing and drift-image columns, whose value fit must not re-run on every view check
+   * but whose header font settings still need to apply when they change.
+   */
+  public fitHeaderOnly(
+    cardEl: HTMLElement | undefined,
+    ctx: LaneColumnHeaderFitContext,
+  ): void {
+    if (!cardEl || ctx.isHeaderWidget) return;
+    const explicitW = ctx.cachedWidth || cardEl.clientWidth;
+    const explicitH = ctx.cachedHeight || cardEl.clientHeight;
+    this.fitHeader(cardEl, false, ctx, explicitW, explicitH);
+  }
+
   private fitHeader(
     cardEl: HTMLElement,
     force: boolean,
-    ctx: LaneColumnFitContext,
+    ctx: LaneColumnHeaderFitContext,
     explicitW: number,
     explicitH: number,
   ): boolean {

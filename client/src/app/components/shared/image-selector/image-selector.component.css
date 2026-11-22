@@ -176,7 +176,7 @@
 .image-error-message {
     color: #ff4d4f;
     font-size: 0.8rem;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--app-font-family);
     letter-spacing: 0.5px;
     margin-top: 4px;
     animation: fadeIn 0.3s ease-in-out;

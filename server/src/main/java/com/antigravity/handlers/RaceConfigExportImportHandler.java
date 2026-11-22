@@ -35,7 +35,6 @@ public class RaceConfigExportImportHandler {
           .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
           .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
 
-  private final DatabaseContext databaseContext;
   private final SqliteRepository<Race> raceRepository;
   private final AssetService assetService;
 
@@ -150,7 +149,6 @@ public class RaceConfigExportImportHandler {
       SqliteRepository<Race> raceRepository,
       AssetService assetService,
       Javalin app) {
-    this.databaseContext = databaseContext;
     this.raceRepository = raceRepository;
     this.assetService = assetService != null ? assetService : resolveAssetService(databaseContext);
 

@@ -86,6 +86,34 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     return this.serviceAutoStatusLabel() || "";
   });
 
+  /** Auto-Starting / Auto-Advancing text is shown unless switched off (#1197). */
+  protected showStatusText = computed(
+    () => this.widget()?.customSettings?.["showStatusText"] !== false,
+  );
+
+  /** Uppercase is the original look and stays the default. */
+  protected statusUppercase = computed(
+    () => this.widget()?.customSettings?.["statusUppercase"] !== false,
+  );
+
+  /** Room for the status text: 24px as before, or more for a bigger custom size. */
+  protected statusLabelHeight = computed(() => {
+    const size = Number(this.widget()?.customSettings?.["statusFontSize"]);
+    return size > 0 ? Math.max(24, Math.ceil(size * 1.4)) : 24;
+  });
+
+  /** The user's own text for a status key, or "" to use the translated default. */
+  protected customStatusText(key: string): string {
+    const settings = this.widget()?.customSettings;
+    const custom =
+      key === "RD_AUTO_STARTING"
+        ? settings?.["autoStartingText"]
+        : key === "RD_AUTO_ADVANCING"
+          ? settings?.["autoAdvancingText"]
+          : "";
+    return typeof custom === "string" ? custom.trim() : "";
+  }
+
   protected displayIsWarmup = computed(() => {
     const custom = this.isWarmup();
     if (custom !== undefined) return custom;
@@ -112,8 +140,10 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
 
   private lastFittedTextLength = 0;
   private lastFittedScaleMode: string | null = null;
+  private lastFittedCustomSize = 0;
   private lastFittedWidth = 0;
   private lastFittedHeight = 0;
+  private lastFittedStatusHeight = 24;
 
   constructor() {
     effect(() => {
@@ -185,15 +215,14 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
 
     if (!textEl || !panelEl) return;
 
-    const customFontSize = Number(widgetData?.customSettings?.["timeFontSize"]);
-    if (customFontSize && customFontSize > 0) {
-      panelEl.style.setProperty("--timer-font-size", `${customFontSize}px`);
-      const textOffset = Math.max(0, Math.floor(customFontSize * 0.05));
-      panelEl.style.setProperty("--timer-text-offset", `-${textOffset}px`);
+    const rawCustomSize = Number(widgetData?.customSettings?.["timeFontSize"]);
+    const customFontSize = rawCustomSize > 0 ? rawCustomSize : 0;
+    const hasCustomSize = customFontSize > 0;
+    const isAuto = !widgetData || widgetData.scaleMode === "auto";
+    if (hasCustomSize && !isAuto) {
+      this.applyTimerFontSize(panelEl, customFontSize);
       return;
     }
-
-    const isAuto = !widgetData || widgetData.scaleMode === "auto";
     if (!isAuto) {
       panelEl.style.removeProperty("--timer-font-size");
       return;
@@ -210,16 +239,20 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     if (
       this.lastFittedTextLength === textString.length &&
       this.lastFittedScaleMode === scaleMode &&
+      this.lastFittedCustomSize === customFontSize &&
       Math.abs(this.lastFittedWidth - panelWidth) < 1 &&
-      Math.abs(this.lastFittedHeight - panelHeight) < 1
+      Math.abs(this.lastFittedHeight - panelHeight) < 1 &&
+      this.lastFittedStatusHeight === this.statusLabelHeight()
     ) {
       return;
     }
 
     this.lastFittedTextLength = textString.length;
     this.lastFittedScaleMode = scaleMode;
+    this.lastFittedCustomSize = customFontSize;
     this.lastFittedWidth = panelWidth;
     this.lastFittedHeight = panelHeight;
+    this.lastFittedStatusHeight = this.statusLabelHeight();
 
     const style = window.getComputedStyle(textEl);
     const fontFamily = style.fontFamily || "'Courier New', Courier, monospace";
@@ -238,7 +271,8 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     const textHeight = 100;
 
     // Always reserve space for both labels so timer size stays consistent
-    const reservedLabelHeight = 48;
+    // (the top one grows with a bigger custom status text size).
+    const reservedLabelHeight = this.statusLabelHeight() + 24;
 
     // Pad container bounds (12% horizontal margin, reserve label height vertically)
     const containerWidth = panelEl.clientWidth * 0.88;
@@ -252,13 +286,21 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     const scale = Math.min(scaleX, scaleY);
 
     const baseScaleFactor = widgetData?.textScaleFactor ?? 1;
-    const targetFontSize = Math.floor(100 * scale * baseScaleFactor);
+    const fittedFontSize = Math.floor(100 * scale * baseScaleFactor);
+    // In auto-scale mode a Time Font Size setting is the largest size; the text
+    // still shrinks when it would not fit (e.g. "02:03.45" in a small box).
+    const targetFontSize = hasCustomSize
+      ? Math.min(customFontSize, Math.floor(100 * scale))
+      : fittedFontSize;
 
+    this.applyTimerFontSize(panelEl, targetFontSize);
+  }
+
+  private applyTimerFontSize(panelEl: HTMLElement, fontSize: number): void {
     // Proportional vertical offset so text stays visually centered at any size
-    const textOffset = Math.max(0, Math.floor(targetFontSize * 0.05));
-
+    const textOffset = Math.max(0, Math.floor(fontSize * 0.05));
     // Apply via CSS custom property so children scale too
-    panelEl.style.setProperty("--timer-font-size", `${targetFontSize}px`);
+    panelEl.style.setProperty("--timer-font-size", `${fontSize}px`);
     panelEl.style.setProperty("--timer-text-offset", `-${textOffset}px`);
   }
 }

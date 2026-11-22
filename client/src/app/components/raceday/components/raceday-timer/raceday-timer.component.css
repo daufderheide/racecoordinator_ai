@@ -71,7 +71,7 @@
 }
 
 .status-label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-size: 16px;
   font-weight: 700;
   color: #ffaa00;
@@ -81,9 +81,15 @@
   white-space: nowrap;
 }
 
+/* "Uppercase" switched off in the Timer settings: show the text as typed. */
+.status-label.status-label-as-typed {
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+
 .warmup-label,
 .cooldown-label {
-  font-family: 'Orbitron', sans-serif;
+  font-family: var(--app-font-family);
   font-size: 20px;
   font-weight: 800;
   color: #00ffff;
