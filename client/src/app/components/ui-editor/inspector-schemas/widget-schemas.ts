@@ -155,6 +155,24 @@ const timerSchema: InspectorSchema = {
                 { value: 3, label: "3" },
               ],
             },
+            // digit glow and inner shadow (#1212)
+            {
+              id: "timerGlow",
+              type: "switch",
+              key: "timerGlow",
+              labelKey: "UE_INSPECTOR_TIMER_GLOW",
+              default: true,
+              searchTerms: "glow digits shine neon",
+            },
+            {
+              id: "timerInnerShadow",
+              type: "switch",
+              key: "timerInnerShadow",
+              labelKey: "UE_INSPECTOR_TIMER_INNER_SHADOW",
+              helpKey: "UE_INSPECTOR_TIMER_INNER_SHADOW_HINT",
+              default: true,
+              searchTerms: "inner shadow edge flat",
+            },
           ],
         },
         {
