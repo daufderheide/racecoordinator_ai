@@ -682,4 +682,46 @@ describe("RacedayTimerComponent", () => {
       expect(container.style.height).toBe("24px");
     });
   });
+
+  describe("glow and inner shadow options (#1212)", () => {
+    const render = (customSettings: any) => {
+      fixture.componentRef.setInput("widget", { customSettings });
+      fixture.componentRef.setInput("formattedTime", "0:11");
+      fixture.detectChanges();
+      const panel = fixture.nativeElement.querySelector(
+        ".timer-panel",
+      ) as HTMLElement;
+      const text = fixture.nativeElement.querySelector(
+        ".timer-text",
+      ) as HTMLElement;
+      return { panel, text };
+    };
+
+    it("keeps the glow and inner shadow by default", () => {
+      const { panel, text } = render({});
+      expect(getComputedStyle(text).textShadow).not.toBe("none");
+      expect(getComputedStyle(panel).boxShadow).not.toBe("none");
+    });
+
+    it("can switch off the glow around the digits", () => {
+      const { panel, text } = render({ timerGlow: false });
+      expect(text.classList).toContain("no-glow");
+      expect(getComputedStyle(text).textShadow).toBe("none");
+      expect(getComputedStyle(panel).boxShadow).not.toBe("none");
+    });
+
+    it("can switch off the glow in warm-up colours too", () => {
+      fixture.componentRef.setInput("isWarmup", true);
+      const { text } = render({ timerGlow: false });
+      expect(text.classList).toContain("timer-warmup");
+      expect(getComputedStyle(text).textShadow).toBe("none");
+    });
+
+    it("can switch off the inner shadow", () => {
+      const { panel, text } = render({ timerInnerShadow: false });
+      expect(panel.classList).toContain("no-inner-shadow");
+      expect(getComputedStyle(panel).boxShadow).toBe("none");
+      expect(getComputedStyle(text).textShadow).not.toBe("none");
+    });
+  });
 });
