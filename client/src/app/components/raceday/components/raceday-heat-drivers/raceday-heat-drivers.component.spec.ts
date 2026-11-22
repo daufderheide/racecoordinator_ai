@@ -778,4 +778,83 @@ describe("RacedayHeatDriversComponent", () => {
       done();
     }, 50);
   });
+
+  describe("title and row style options (#1213)", () => {
+    function render(customSettings: any, type = "next-heat") {
+      componentRef.setInput("type", type);
+      componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+      componentRef.setInput("heats", [
+        { heatNumber: 1, heatDrivers: [] },
+        {
+          heatNumber: 2,
+          heatDrivers: [
+            { driver: { name: "A", isEmpty: () => false }, laneIndex: 0 },
+            { driver: { name: "B", isEmpty: () => false }, laneIndex: 1 },
+          ],
+        },
+      ]);
+      componentRef.setInput("widget", { scaleMode: "fixed", customSettings });
+      fixture.detectChanges();
+      return fixture.nativeElement.querySelector(".panel-card") as HTMLElement;
+    }
+
+    it("keeps the title glow and capitals by default", () => {
+      const title = render({}).querySelector(".next-heat-title")!;
+      expect(title.classList).not.toContain("no-title-glow");
+      expect(title.classList).not.toContain("title-as-typed");
+      expect(getComputedStyle(title).textTransform).toBe("uppercase");
+      expect(getComputedStyle(title).textShadow).not.toBe("none");
+    });
+
+    it("can switch off the title glow and capitals", () => {
+      const title = render({
+        titleGlow: false,
+        titleUppercase: false,
+      }).querySelector(".next-heat-title")!;
+      expect(getComputedStyle(title).textTransform).toBe("none");
+      expect(getComputedStyle(title).textShadow).toBe("none");
+    });
+
+    it("applies the title options to On Deck too", () => {
+      const title = render({ titleUppercase: false }, "on-deck").querySelector(
+        ".on-deck-title",
+      )!;
+      expect(getComputedStyle(title).textTransform).toBe("none");
+    });
+
+    it("keeps the row shading by default on a light background", () => {
+      const panel = render({ backgroundColor: "#ffffff" });
+      expect(panel.style.getPropertyValue("--row-bg")).toBe(
+        "rgba(0, 0, 0, 0.03)",
+      );
+      expect(panel.style.getPropertyValue("--row-odd-bg")).toBe(
+        "rgba(0, 0, 0, 0.03)",
+      );
+    });
+
+    it("shows plain rows with row shading off and no contrast", () => {
+      const panel = render({ backgroundColor: "#ffffff", rowShading: false });
+      expect(panel.style.getPropertyValue("--row-bg")).toBe("transparent");
+      expect(panel.style.getPropertyValue("--row-odd-bg")).toBe("transparent");
+      const rows = panel.querySelectorAll(".next-heat-item");
+      expect(getComputedStyle(rows[0]).backgroundColor).toBe(
+        "rgba(0, 0, 0, 0)",
+      );
+      expect(getComputedStyle(rows[1]).backgroundColor).toBe(
+        "rgba(0, 0, 0, 0)",
+      );
+    });
+
+    it("still shades alternate rows when contrast is set without row shading", () => {
+      const panel = render({
+        backgroundColor: "#ffffff",
+        rowShading: false,
+        alternatingRowContrast: 80,
+      });
+      expect(panel.style.getPropertyValue("--row-bg")).toBe("transparent");
+      expect(panel.style.getPropertyValue("--row-odd-bg")).toBe(
+        "rgba(0, 0, 0, 0.230)",
+      );
+    });
+  });
 });

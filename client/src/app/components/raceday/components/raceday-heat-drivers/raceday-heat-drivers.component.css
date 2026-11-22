@@ -27,6 +27,16 @@ app-raceday-heat-drivers {
   flex-shrink: 0;
 }
 
+/* Title glow switched off in the widget settings (#1213). */
+.next-heat-title.no-title-glow, .on-deck-title.no-title-glow {
+  text-shadow: none;
+}
+
+/* "Uppercase" switched off in the widget settings: show the title as typed. */
+.next-heat-title.title-as-typed, .on-deck-title.title-as-typed {
+  text-transform: none;
+}
+
 .next-heat-list, .on-deck-list {
   display: flex;
   flex-direction: column;

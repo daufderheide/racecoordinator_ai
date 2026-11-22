@@ -59,8 +59,24 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     return bg ? isColorLight(bg) : false;
   });
 
+  /** Light shade behind each row. On by default, as before (#1213). */
+  rowShading = computed(
+    () => this.widget()?.customSettings?.["rowShading"] !== false,
+  );
+
+  /** The title glows by default; it can be switched off (#1213). */
+  titleGlow = computed(
+    () => this.widget()?.customSettings?.["titleGlow"] !== false,
+  );
+
+  /** The title is in capitals by default; it can be shown as typed (#1213). */
+  titleUppercase = computed(
+    () => this.widget()?.customSettings?.["titleUppercase"] !== false,
+  );
+
   rowBg = computed(() => {
     if (this.type() !== "next-heat") return null;
+    if (!this.rowShading()) return "transparent";
     const bg = this.panelBackgroundColor();
     if (bg && isColorLight(bg)) {
       return "rgba(0, 0, 0, 0.03)";
@@ -85,6 +101,7 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     const isLight = this.isLightBackground();
 
     if (isNaN(contrast) || contrast <= 0) {
+      if (!this.rowShading()) return "transparent";
       return isLight ? "rgba(0, 0, 0, 0.03)" : null;
     }
 

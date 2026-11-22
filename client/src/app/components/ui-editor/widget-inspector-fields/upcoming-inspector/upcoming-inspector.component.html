@@ -93,6 +93,31 @@
     </div>
   </div>
 
+  <div class="inspector-section" style="margin-bottom: 8px">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        id="upcoming-title-uppercase"
+        [ngModel]="settings().titleUppercase !== false"
+        (ngModelChange)="settings().titleUppercase = $event; onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_UPCOMING_TITLE_UPPERCASE" | translate }}</span>
+    </label>
+  </div>
+  <div class="inspector-section">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        id="upcoming-title-glow"
+        [ngModel]="settings().titleGlow !== false"
+        (ngModelChange)="settings().titleGlow = $event; onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_UPCOMING_TITLE_GLOW" | translate }}</span>
+    </label>
+  </div>
+
   <!-- Lanes Section -->
   <div class="inspector-geometry-title">
     {{ "UE_INSPECTOR_UPCOMING_LANES" | translate }}
@@ -225,6 +250,23 @@
           </button>
         }
       </div>
+    </div>
+
+    <!-- Row Shading -->
+    <div class="inspector-section">
+      <label class="form-check-label">
+        <input
+          type="checkbox"
+          class="form-checkbox"
+          id="upcoming-row-shading"
+          [ngModel]="settings().rowShading !== false"
+          (ngModelChange)="settings().rowShading = $event; onSettingsChange()"
+        />
+        <span>{{ "UE_INSPECTOR_UPCOMING_ROW_SHADING" | translate }}</span>
+      </label>
+      <small class="inspector-hint">{{
+        "UE_INSPECTOR_UPCOMING_ROW_SHADING_HINT" | translate
+      }}</small>
     </div>
 
     <!-- Alternating Row Contrast -->
