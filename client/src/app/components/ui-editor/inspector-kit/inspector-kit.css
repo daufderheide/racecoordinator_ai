@@ -626,7 +626,7 @@ app-inspector-shell {
 
 /* weight / case options show a sample letter (the word is the tooltip) */
 .kit-sample-letter {
-  font-family: "Inter", Arial, sans-serif;
+  font-family: var(--app-font-family);
   font-size: 13px;
   text-transform: none;
   letter-spacing: 0;
