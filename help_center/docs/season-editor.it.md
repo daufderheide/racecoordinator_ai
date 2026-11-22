@@ -67,3 +67,14 @@ La sezione di dettaglio offre schede per ogni gara inclusa nella stagione:
 - **Schede di Gara Espandibili**: Fai clic su una scheda per visualizzare la tabella dei risultati per pilota con punti di posizione e bonus.
 - **Rimuovi Gare**: In Modalità Modifica, fai clic sull'icona del cestino (<span class="material-icons">delete</span>) per rimuovere una gara dalla stagione.
 
+---
+
+## Importazione pacchetti gara tra computer (`.rcpack`) {: #race-package-ingestion }
+
+Per aggregare risultati di gare svolte su altri computer nella tua stagione di campionato:
+
+- **Esporta gare completate**: Sul PC sorgente, apri la finestra **Cronologia gare** dalla barra degli strumenti e fai clic su **Esporta pacchetto** (<span class="material-icons">file_download</span>) sulla gara completata. Viene creato un archivio `.rcpack` contenente cronologia, configurazione di gara, tempi sul giro, punti campionato calcolati e profili piloti.
+- **Importazione diretta in stagione**: Sul computer di destinazione, apri l'Editor stagioni, entra in Modalità Modifica e fai clic su **+ Aggiungi gara**. Nella finestra, fai clic su **Importa pacchetto gara...** (<span class="material-icons">file_upload</span>) e seleziona il file `.rcpack`.
+- **Configurazione di gara e risoluzione piloti**: Una finestra interattiva associa i piloti e risolve i conflitti di configurazione gara (**Rinomina automaticamente**, **Sovrascrivi** o **Usa esistente**).
+- **Integrazione automatica**: La configurazione di gara, i risultati e i punti vengono salvati nel database locale e aggiunti alla stagione, ricalcolando classifica, scarti e spareggi in tempo reale.
+

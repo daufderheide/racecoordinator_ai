@@ -14,6 +14,6 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   imports: [TranslatePipe],
 })
 export class PreviewBadgeComponent {
-  /** "small" for menu items, "large" next to a page title. */
+  /** "small" for menu items and buttons, "large" next to a page title. */
   size = input<"small" | "large">("small");
 }

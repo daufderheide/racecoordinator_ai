@@ -56,6 +56,7 @@ public class RaceHeatTaskHandler {
     app.post("/api/races/{id}/reset-records", this::handleResetRace, Role.ADMIN);
     app.post("/api/races/{id}/generate-heats", this::generateHeats, Role.DIRECTOR);
     app.post("/api/heats/preview", this::previewHeats, Role.DIRECTOR);
+    new RaceConfigExportImportHandler(databaseContext, raceRepository, app);
   }
 
   public void getRaces(Context ctx) {
