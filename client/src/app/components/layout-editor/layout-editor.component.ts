@@ -73,6 +73,7 @@ import {
 import {
   handleDeleteCurrentLayout,
   handleDuplicateCurrentLayout,
+  getWidgetTypeLabelKey,
   handleStartNewLayout,
   loadLayoutZoomFromStorage,
   parseLayoutConfig,
@@ -141,6 +142,11 @@ export class LayoutEditorComponent
   /** Redesigned panel schema for the widget, or null for its existing inspector. */
   getInspectorSchema(widget: any): InspectorSchema | null {
     return getInspectorSchema(widget?.widgetType);
+  }
+
+  /** Type name key for the redesigned panel's header. */
+  panelTypeLabelKey(widget: any): string {
+    return getWidgetTypeLabelKey(widget?.widgetType || "");
   }
 
   /** Position / size fields of the redesigned panel use the existing handlers. */
