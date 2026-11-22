@@ -287,7 +287,7 @@ describe("RacedayCountdownComponent", () => {
     fixture.detectChanges();
 
     const styles = component.blurBackdropStyles;
-    expect(styles["background"]).toBe("rgba(0, 0, 0, 0.95)");
+    expect(styles["background"]).toBe("rgba(0, 0, 0, 1)");
     expect(styles["backdrop-filter"]).toBeUndefined();
   });
 
