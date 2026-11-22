@@ -1,7 +1,7 @@
 import {
-  clampGroupDelta,
   GroupStart,
   movableIds,
+  moveGroup,
 } from "@app/components/ui-editor/multi-select.utils";
 import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 import { DragDropModule } from "@angular/cdk/drag-drop";
@@ -685,22 +685,7 @@ export class RacedayAbsoluteWidgetComponent
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
       this.clearSnapOverlay();
-      if (this.parentComponent().gridSession?.()) {
-        const session = this.parentComponent().gridSession();
-        if (
-          this.widget().customSettings?.["gridId"] === session.gridId &&
-          (Number(this.widget().customSettings?.["gridLane"]) ===
-            session.sourceLaneIndex ||
-            LaneGridReplicationHelper.isHeaderWidget(this.widget()))
-        ) {
-          this.parentComponent().onMasterWidgetModified?.(this.widget());
-        }
-      }
-      if (this.parentComponent().layoutChanged) {
-        this.parentComponent().layoutChanged.emit(
-          this.parentComponent().layout,
-        );
-      }
+      this.afterMoveOrResize();
     };
 
     document.addEventListener("pointermove", onPointerMove);
@@ -782,31 +767,21 @@ export class RacedayAbsoluteWidgetComponent
       }
       if (group.length) {
         // the others follow by the same amount; nobody leaves the canvas
-        const d = clampGroupDelta(
-          [
-            {
-              id: this.widget().id,
-              x: initialWidgetX,
-              y: initialWidgetY,
-              width: w,
-              height: h,
-            },
-            ...group,
-          ],
-          this.widget().x - initialWidgetX,
-          this.widget().y - initialWidgetY,
+        const lead = {
+          id: this.widget().id,
+          x: initialWidgetX,
+          y: initialWidgetY,
+          width: w,
+          height: h,
+        };
+        moveGroup(
+          lead,
+          this.widget(),
+          group,
+          (id) => this.findLayoutWidget(id),
           baseWidth,
           baseHeight,
         );
-        this.widget().x = initialWidgetX + d.dx;
-        this.widget().y = initialWidgetY + d.dy;
-        for (const g of group) {
-          const other = this.findLayoutWidget(g.id);
-          if (other) {
-            other.x = g.x + d.dx;
-            other.y = g.y + d.dy;
-          }
-        }
       }
       this.showReadout();
       this.cdr.detectChanges();
@@ -823,22 +798,7 @@ export class RacedayAbsoluteWidgetComponent
         this.parentComponent().soleSelected?.emit(this.widget().id);
         return;
       }
-      if (this.parentComponent().gridSession?.()) {
-        const session = this.parentComponent().gridSession();
-        if (
-          this.widget().customSettings?.["gridId"] === session.gridId &&
-          (Number(this.widget().customSettings?.["gridLane"]) ===
-            session.sourceLaneIndex ||
-            LaneGridReplicationHelper.isHeaderWidget(this.widget()))
-        ) {
-          this.parentComponent().onMasterWidgetModified?.(this.widget());
-        }
-      }
-      if (this.parentComponent().layoutChanged) {
-        this.parentComponent().layoutChanged.emit(
-          this.parentComponent().layout,
-        );
-      }
+      this.afterMoveOrResize();
     };
 
     document.addEventListener("pointermove", onPointerMove);
@@ -922,6 +882,24 @@ export class RacedayAbsoluteWidgetComponent
 
   /** Other selected widgets that move along while this one is dragged. */
   private snapIgnore: string[] = [];
+
+  /** After a move or resize: update the grid's other lanes, then save. */
+  private afterMoveOrResize(): void {
+    if (this.parentComponent().gridSession?.()) {
+      const session = this.parentComponent().gridSession();
+      if (
+        this.widget().customSettings?.["gridId"] === session.gridId &&
+        (Number(this.widget().customSettings?.["gridLane"]) ===
+          session.sourceLaneIndex ||
+          LaneGridReplicationHelper.isHeaderWidget(this.widget()))
+      ) {
+        this.parentComponent().onMasterWidgetModified?.(this.widget());
+      }
+    }
+    if (this.parentComponent().layoutChanged) {
+      this.parentComponent().layoutChanged.emit(this.parentComponent().layout);
+    }
+  }
 
   private findLayoutWidget(id: string): any {
     return (this.parentComponent()?.layout?.widgets || []).find(

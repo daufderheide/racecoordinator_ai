@@ -173,3 +173,35 @@ export function movableIds(widgets: any[], ids: string[]): string[] {
     return w && canMultiSelect(w) && w.customSettings?.["locked"] !== true;
   });
 }
+
+/**
+ * Moves the dragged widget and the others selected with it by the same
+ * amount, cut so nobody leaves the canvas (phase 4c-2). `lead` is where the
+ * dragged widget started, `widget` its live layout entry (already moved to
+ * where the pointer wants it), `find` gives the others' live entries.
+ */
+export function moveGroup(
+  lead: GroupStart,
+  widget: { x: number; y: number },
+  group: GroupStart[],
+  find: (id: string) => { x: number; y: number } | undefined,
+  baseWidth: number,
+  baseHeight: number,
+): void {
+  const d = clampGroupDelta(
+    [lead, ...group],
+    widget.x - lead.x,
+    widget.y - lead.y,
+    baseWidth,
+    baseHeight,
+  );
+  widget.x = lead.x + d.dx;
+  widget.y = lead.y + d.dy;
+  for (const g of group) {
+    const other = find(g.id);
+    if (other) {
+      other.x = g.x + d.dx;
+      other.y = g.y + d.dy;
+    }
+  }
+}
