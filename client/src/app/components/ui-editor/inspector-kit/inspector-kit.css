@@ -181,13 +181,7 @@ app-inspector-multi {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family:
-    "Inter",
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    Arial,
-    sans-serif;
+  font-family: var(--app-font-family);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -218,9 +212,7 @@ app-inspector-multi {
   margin: 0;
   flex: 1;
   min-width: 0;
-  font:
-    700 16px/1 "Rajdhani",
-    sans-serif;
+  font: 700 16px/1 var(--app-font-family);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--k-title);
@@ -256,9 +248,7 @@ app-inspector-multi {
 }
 
 .kit-panel .kit-head-name .inspector-widget-subtitle {
-  font:
-    700 18px/1.05 "Rajdhani",
-    sans-serif;
+  font: 700 18px/1.05 var(--app-font-family);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--k-title);
@@ -406,9 +396,7 @@ app-inspector-multi {
   border-radius: 4px;
   padding: 5px 9px;
   cursor: pointer;
-  font:
-    700 12px/1 "Rajdhani",
-    sans-serif !important;
+  font: 700 12px/1 var(--app-font-family) !important;
   letter-spacing: 1px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -429,9 +417,7 @@ app-inspector-multi {
   color: var(--k-badge-text);
   border-radius: 10px;
   padding: 0 6px;
-  font:
-    700 11px/16px "Inter",
-    sans-serif;
+  font: 700 11px/16px var(--app-font-family);
   letter-spacing: 0;
 }
 
@@ -500,9 +486,7 @@ app-inspector-multi {
 
 .kit-folder-title {
   display: block;
-  font:
-    700 14px/1.1 "Rajdhani",
-    sans-serif;
+  font: 700 14px/1.1 var(--app-font-family);
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--k-folder-text);
@@ -546,9 +530,7 @@ app-inspector-multi {
 }
 
 .kit-group-title {
-  font:
-    700 12.5px/1 "Rajdhani",
-    sans-serif;
+  font: 700 12.5px/1 var(--app-font-family);
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--k-grp);
@@ -601,9 +583,7 @@ app-inspector-multi {
   display: flex;
   align-items: center;
   gap: 5px;
-  font:
-    700 12.5px/1.15 "Rajdhani",
-    sans-serif;
+  font: 700 12.5px/1.15 var(--app-font-family);
   letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--k-label);
@@ -776,9 +756,7 @@ app-inspector-multi {
   padding: 5px 2px;
   min-height: 28px;
   cursor: pointer;
-  font:
-    700 12.5px/1 "Rajdhani",
-    sans-serif !important;
+  font: 700 12.5px/1 var(--app-font-family) !important;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   display: inline-grid;
@@ -931,9 +909,7 @@ app-inspector-multi {
 }
 
 .kit-hex.is-default {
-  font:
-    700 11.5px "Rajdhani",
-    sans-serif;
+  font: 700 11.5px var(--app-font-family);
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--k-placeholder);
@@ -1007,9 +983,7 @@ app-inspector-multi {
 }
 
 .kit-tile-label {
-  font:
-    700 11.5px/1 "Rajdhani",
-    sans-serif;
+  font: 700 11.5px/1 var(--app-font-family);
   letter-spacing: 0.5px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1037,9 +1011,7 @@ app-inspector-multi {
 .kit-xy-field b {
   padding: 0 8px;
   color: var(--k-placeholder);
-  font:
-    700 12px "Rajdhani",
-    sans-serif;
+  font: 700 12px var(--app-font-family);
 }
 
 .kit-xy-field input {
@@ -1089,9 +1061,7 @@ app-inspector-multi {
 }
 
 .kit-part-name {
-  font:
-    700 14px/1.1 "Rajdhani",
-    sans-serif;
+  font: 700 14px/1.1 var(--app-font-family);
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--k-folder-text);
@@ -1138,9 +1108,7 @@ app-inspector-multi {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font:
-    700 12px/1 "Rajdhani",
-    sans-serif !important;
+  font: 700 12px/1 var(--app-font-family) !important;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -1183,9 +1151,7 @@ app-inspector-multi {
   border: 1px solid #38bdf8;
   border-radius: 4px;
   padding: 4px 10px;
-  font:
-    700 12px "Rajdhani",
-    sans-serif !important;
+  font: 700 12px var(--app-font-family) !important;
   letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
