@@ -15,6 +15,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { PreviewBadgeComponent } from "@app/components/shared/preview-badge/preview-badge.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
@@ -32,12 +33,15 @@ import { GuideStep, HelpService } from "@app/services/help.service";
     BrowserNavigationComponent,
     CustomSelectComponent,
     CustomOptionComponent,
+    PreviewBadgeComponent,
   ],
 })
 export class EditorTitleComponent implements AfterViewChecked, OnDestroy {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   private helpService = inject(HelpService, { optional: true });
   titleKey = input("");
+  /** Marks the whole editor as a preview feature (see PreviewBadgeComponent). */
+  showPreviewBadge = input(false);
   selectorTooltipKey = input<string>("EDITOR_OBJECT_SELECTOR_TOOLTIP");
   itemName = input<string | undefined>(undefined);
   trimmedItemName = computed(() => {

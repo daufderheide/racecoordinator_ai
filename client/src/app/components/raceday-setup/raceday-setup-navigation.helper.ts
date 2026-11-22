@@ -207,6 +207,11 @@ export class RacedaySetupNavigationHelper {
     }
   }
 
+  static openCarManager(host: any): void {
+    host.closeConfigDropdown();
+    host.router.navigate(["/car-editor"]);
+  }
+
   static openTrackManager(host: any): void {
     host.closeConfigDropdown();
     if (host.isRaceRunning) {

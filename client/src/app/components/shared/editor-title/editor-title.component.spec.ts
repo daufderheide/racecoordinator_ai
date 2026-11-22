@@ -143,6 +143,22 @@ describe("EditorTitleComponent", () => {
     expect(component.isHeatsEqual()).toBeTrue();
   });
 
+  it("shows no preview badge by default", () => {
+    expect(
+      fixture.nativeElement.querySelector("#editor-preview-badge"),
+    ).toBeNull();
+  });
+
+  it("shows a large preview badge next to the title when asked", () => {
+    fixture.componentRef.setInput("showPreviewBadge", true);
+    fixture.detectChanges();
+    const badge = fixture.nativeElement.querySelector(
+      ".page-title #editor-preview-badge .preview-badge",
+    );
+    expect(badge).not.toBeNull();
+    expect(badge.classList).toContain("large");
+  });
+
   it("should contain app-browser-navigation element", () => {
     const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
     expect(navEl).toBeTruthy();

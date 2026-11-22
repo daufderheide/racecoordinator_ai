@@ -307,6 +307,7 @@ export class Settings {
   driverManagerHelpShown: boolean = false;
   teamManagerHelpShown: boolean = false;
   teamEditorHelpShown: boolean = false;
+  carEditorHelpShown: boolean = false;
   assetManagerHelpShown: boolean = false;
   raceManagerHelpShown: boolean = false;
   raceEditorHelpShown: boolean = false;

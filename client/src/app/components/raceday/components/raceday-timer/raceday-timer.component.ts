@@ -91,6 +91,16 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     () => this.widget()?.customSettings?.["showStatusText"] !== false,
   );
 
+  /** Glow around the digits: the original look and the default (#1212). */
+  protected digitGlow = computed(
+    () => this.widget()?.customSettings?.["timerGlow"] !== false,
+  );
+
+  /** Inner shadow on the panel edge: the original look and the default (#1212). */
+  protected innerShadow = computed(
+    () => this.widget()?.customSettings?.["timerInnerShadow"] !== false,
+  );
+
   /** Uppercase is the original look and stays the default. */
   protected statusUppercase = computed(
     () => this.widget()?.customSettings?.["statusUppercase"] !== false,

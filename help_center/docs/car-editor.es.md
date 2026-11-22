@@ -1,0 +1,48 @@
+# Editor de coches de slot
+
+El **editor de coches de slot** lleva una lista de tus coches de slot: qué son, la clase en la que corren, su escala y su configuración. Ábrelo desde Race Day Setup con **Administrar → Coches de slot**.
+
+!!! note
+    Este es el primer paso del soporte de coches. Los coches aún no están vinculados a pilotos ni carreras, así que el día de carrera no cambia nada.
+
+    La insignia **Vista previa** junto al título indica que esta función aún está tomando forma. Puede cambiar mucho, o incluso desaparecer, mientras recogemos opiniones. Dinos lo que piensas en GitHub o SlotForum.
+
+## Resumen
+
+El editor de coches de slot funciona como el editor de equipos:
+
+- **Selector de coche**: la lista junto al título de la página muestra todos tus coches, ordenados por nombre.
+- **Modo solo lectura**: al abrirlo, el coche elegido se muestra con todos los campos bloqueados.
+- **Modo edición**: haz clic en el icono **Editar** (lápiz) para desbloquear los campos. Mientras editas, el selector queda bloqueado.
+- **Guardado automático**: los cambios se guardan en segundo plano a medida que los haces.
+- **Descartar cambios**: si sales con cambios sin guardar o no válidos, se te pide confirmación. Descartar devuelve el coche a su última versión guardada.
+
+## Acciones de la barra de herramientas
+
+- **Atrás**: vuelve a Race Day Setup.
+- **Añadir coche (+)**: crea un coche nuevo y lo abre para editar.
+- **Duplicar**: copia el coche elegido con un nombre nuevo y único. Útil para un segundo coche del mismo tipo.
+- **Editar / Listo**: cambia entre solo lectura y edición.
+- **Eliminar**: elimina el coche elegido tras confirmarlo.
+- **Deshacer / Rehacer**: retrocede o avanza por tus cambios recientes.
+- **Ayuda (?)**: inicia la visita guiada.
+
+## El coche {: #car-profile }
+
+El panel izquierdo recoge qué es el coche:
+
+- **Foto**: elige una imagen o sube una foto del coche.
+- **Nombre**: obligatorio y único entre tus coches (por ejemplo «Porsche 911 RSR #92»).
+- **Marca / fabricante**: por ejemplo Scalextric, Carrera, Slot.it o NSR.
+- **Clase**: la clase en la que corre el coche, como GT3 o Classic. Mientras escribes se sugieren las clases de tus otros coches, para que la misma clase se escriba siempre igual.
+- **Escala**: 1/24, 1/32, 1/43, 1/64 (HO), Otra o Sin definir.
+
+## Configuración {: #car-setup }
+
+El panel derecho recoge cómo está preparado el coche. Cada campo es texto libre, para describirlo como lo hace tu club:
+
+- **Motor**: por ejemplo «Slot.it V12/4 21.5k», o pancake / inline en HO.
+- **Imán**: tipo y fuerza, o «ninguno» para carreras sin imán.
+- **Chasis**, **Relación** (por ejemplo 9/27) y **Neumáticos**.
+- **Modificado**: márcalo si el coche se ha cambiado respecto a la versión de fábrica; déjalo vacío para un coche de serie.
+- **Notas**: cualquier otra cosa sobre el coche.

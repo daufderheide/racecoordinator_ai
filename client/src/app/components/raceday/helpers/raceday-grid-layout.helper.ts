@@ -6,6 +6,11 @@ import {
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import {
+  SnapRect,
+  SnapResult,
+  snapRect,
+} from "@app/components/raceday/utils/snap-guides.utils";
 
 export class RacedayGridLayoutHelper {
   public static getGridDividers(host: any): number[] {
@@ -335,17 +340,8 @@ export class RacedayGridLayoutHelper {
     host.cdr.markForCheck();
   }
 
-  public static snapToEdges(
-    host: any,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    ignoreId: string,
-    handle: string,
-    layoutWidth: number = 1920,
-    layoutHeight: number = 1080,
-  ): { x: number; y: number; w: number; h: number } {
+  /** Grid bounds, label bounds and dividers that widgets also snap to. */
+  public static snapExtras(host: any): { extraX: number[]; extraY: number[] } {
     const extraX: number[] = [];
     const extraY: number[] = [];
     const s =
@@ -381,12 +377,49 @@ export class RacedayGridLayoutHelper {
       }
     }
 
+    return { extraX, extraY };
+  }
+
+  public static snapToEdges(
+    host: any,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    ignoreId: string,
+    handle: string,
+    layoutWidth: number = 1920,
+    layoutHeight: number = 1080,
+  ): { x: number; y: number; w: number; h: number } {
+    const { extraX, extraY } = RacedayGridLayoutHelper.snapExtras(host);
     return RacedayLayoutUtils.snapToEdges(
       host.layout?.widgets || [],
       x,
       y,
       w,
       h,
+      ignoreId,
+      handle,
+      layoutWidth,
+      layoutHeight,
+      extraX,
+      extraY,
+    );
+  }
+
+  /** Snapping with centres and guide lines (phase 4a); see snap-guides.utils. */
+  public static snapWithGuides(
+    host: any,
+    rect: SnapRect,
+    ignoreId: string,
+    handle: string,
+    layoutWidth: number = 1920,
+    layoutHeight: number = 1080,
+  ): SnapResult {
+    const { extraX, extraY } = RacedayGridLayoutHelper.snapExtras(host);
+    return snapRect(
+      host.layout?.widgets || [],
+      rect,
       ignoreId,
       handle,
       layoutWidth,

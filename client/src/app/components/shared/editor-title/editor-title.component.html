@@ -8,6 +8,12 @@
     <app-browser-navigation></app-browser-navigation>
     <h1 class="page-title">
       <span class="title-main">{{ titleKey() | translate }}</span>
+      @if (showPreviewBadge()) {
+        <app-preview-badge
+          id="editor-preview-badge"
+          size="large"
+        ></app-preview-badge>
+      }
       @if (items().length > 0) {
         <span class="item-separator">-</span>
         <div class="editor-object-nav" id="editor-object-nav">
