@@ -17,7 +17,7 @@
     class="label-text"
     #labelText
     [style.font-family]="widget()?.customSettings?.['labelFontFamily'] || null"
-    [partTextStyle]="widget()?.customSettings"
+    [appPartTextStyle]="widget()?.customSettings"
     partPrefix="label"
     [style.font-size.px]="
       widget()?.customSettings?.['labelFontSize'] ||
@@ -30,7 +30,7 @@
     class="value-text"
     #valueText
     [style.font-family]="widget()?.customSettings?.['valueFontFamily'] || null"
-    [partTextStyle]="widget()?.customSettings"
+    [appPartTextStyle]="widget()?.customSettings"
     partPrefix="value"
     [style.font-size.px]="
       widget()?.customSettings?.['valueFontSize'] ||

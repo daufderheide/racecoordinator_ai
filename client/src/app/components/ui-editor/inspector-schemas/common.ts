@@ -1,5 +1,6 @@
 import {
   InspectorFolder,
+  InspectorGroup,
   TextPartField,
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
@@ -38,68 +39,7 @@ export function frameFolder(): InspectorFolder {
           },
         ],
       },
-      {
-        titleKey: "UE_KIT_GROUP_BORDER",
-        fields: [
-          {
-            id: "showBorder",
-            type: "switch",
-            key: "showBorder",
-            labelKey: "UE_KIT_SHOW_BORDER",
-            searchTerms: "border outline card frame",
-          },
-          {
-            id: "borderStyle",
-            type: "tiles",
-            key: "borderStyle",
-            labelKey: "UE_KIT_BORDER_LINE",
-            searchTerms: "border style solid dashed dotted double line",
-            visibleWhen: (s) => s["showBorder"] !== false,
-            tiles: [
-              {
-                value: "solid",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_SOLID",
-                demo: "border",
-              },
-              {
-                value: "dashed",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_DASHED",
-                demo: "border",
-              },
-              {
-                value: "dotted",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_DOTTED",
-                demo: "border",
-              },
-              {
-                value: "double",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_DOUBLE",
-                demo: "border",
-              },
-            ],
-          },
-          {
-            id: "borderWidth",
-            type: "stepper",
-            key: "borderWidth",
-            labelKey: "UE_KIT_BORDER_WIDTH",
-            min: 0,
-            max: 10,
-            unit: "px",
-            searchTerms: "border width thickness",
-            visibleWhen: (s) => s["showBorder"] !== false,
-          },
-          {
-            id: "borderColor",
-            type: "color",
-            key: "borderColor",
-            labelKey: "UE_KIT_BORDER_COLOR",
-            placeholder: "#ffffff",
-            searchTerms: "border colour color outline",
-            visibleWhen: (s) => s["showBorder"] !== false,
-          },
-        ],
-      },
+      borderGroup(),
       {
         titleKey: "UE_KIT_GROUP_SHADOW",
         fields: [
@@ -136,6 +76,72 @@ export function frameFolder(): InspectorFolder {
             searchTerms: "corner radius rounded",
           },
         ],
+      },
+    ],
+  };
+}
+
+/** The Border group of Colours & frame: on / off, line, width and colour. */
+function borderGroup(): InspectorGroup {
+  return {
+    titleKey: "UE_KIT_GROUP_BORDER",
+    fields: [
+      {
+        id: "showBorder",
+        type: "switch",
+        key: "showBorder",
+        labelKey: "UE_KIT_SHOW_BORDER",
+        searchTerms: "border outline card frame",
+      },
+      {
+        id: "borderStyle",
+        type: "tiles",
+        key: "borderStyle",
+        labelKey: "UE_KIT_BORDER_LINE",
+        searchTerms: "border style solid dashed dotted double line",
+        visibleWhen: (s) => s["showBorder"] !== false,
+        tiles: [
+          {
+            value: "solid",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_SOLID",
+            demo: "border",
+          },
+          {
+            value: "dashed",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_DASHED",
+            demo: "border",
+          },
+          {
+            value: "dotted",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_DOTTED",
+            demo: "border",
+          },
+          {
+            value: "double",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_DOUBLE",
+            demo: "border",
+          },
+        ],
+      },
+      {
+        id: "borderWidth",
+        type: "stepper",
+        key: "borderWidth",
+        labelKey: "UE_KIT_BORDER_WIDTH",
+        min: 0,
+        max: 10,
+        unit: "px",
+        searchTerms: "border width thickness",
+        visibleWhen: (s) => s["showBorder"] !== false,
+      },
+      {
+        id: "borderColor",
+        type: "color",
+        key: "borderColor",
+        labelKey: "UE_KIT_BORDER_COLOR",
+        placeholder: "#ffffff",
+        searchTerms: "border colour color outline",
+        visibleWhen: (s) => s["showBorder"] !== false,
       },
     ],
   };

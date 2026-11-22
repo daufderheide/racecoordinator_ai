@@ -6,7 +6,9 @@ import { PartTextStyleDirective } from "./part-text-style.directive";
 @Component({
   standalone: true,
   imports: [PartTextStyleDirective],
-  template: `<span [partTextStyle]="settings" partPrefix="header">Text</span>`,
+  template: `<span [appPartTextStyle]="settings" partPrefix="header"
+    >Text</span
+  >`,
 })
 class HostComponent {
   settings: Record<string, any> | null = {};

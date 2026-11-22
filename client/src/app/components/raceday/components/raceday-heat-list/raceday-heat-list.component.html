@@ -21,7 +21,7 @@
       [style.font-family]="
         widget()?.customSettings?.['titleFontFamily'] || null
       "
-      [partTextStyle]="widget()?.customSettings"
+      [appPartTextStyle]="widget()?.customSettings"
       partPrefix="title"
       [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
       [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
@@ -53,7 +53,7 @@
             [style.font-family]="
               widget()?.customSettings?.['heatNumberFontFamily'] || null
             "
-            [partTextStyle]="widget()?.customSettings"
+            [appPartTextStyle]="widget()?.customSettings"
             partPrefix="heatNumber"
             [style.font-size.px]="
               scaleToWindow()
@@ -120,7 +120,7 @@
                       widget()?.customSettings?.['summaryHeaderFontFamily'] ||
                       null
                     "
-                    [partTextStyle]="widget()?.customSettings"
+                    [appPartTextStyle]="widget()?.customSettings"
                     partPrefix="summaryHeader"
                     [style.font-size.px]="
                       scaleToWindow()
@@ -195,7 +195,7 @@
                         widget()?.customSettings?.['summaryRowFontFamily'] ||
                         null
                       "
-                      [partTextStyle]="widget()?.customSettings"
+                      [appPartTextStyle]="widget()?.customSettings"
                       partPrefix="summaryRow"
                       [style.font-size.px]="
                         scaleToWindow()
@@ -290,7 +290,7 @@
                   [style.font-family]="
                     widget()?.customSettings?.['laneFontFamily'] || null
                   "
-                  [partTextStyle]="widget()?.customSettings"
+                  [appPartTextStyle]="widget()?.customSettings"
                   partPrefix="lane"
                   [style.font-size.px]="
                     scaleToWindow()
