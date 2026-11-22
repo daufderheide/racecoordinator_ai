@@ -2931,6 +2931,30 @@ describe("LaneColumnInspectorComponent", () => {
       expect(component.change.emit).toHaveBeenCalled();
     });
 
+    it("offers seed brackets for a seed column or a seed inset (#1214)", () => {
+      component.currentSettings["columnKey"] = "driver.name";
+      component.currentSettings["insets"] = {};
+      expect(component.hasSeedValue).toBeFalse();
+
+      component.currentSettings["insets"] = { "bottom-right": "seed" };
+      expect(component.hasSeedValue).toBeTrue();
+
+      component.currentSettings["insets"] = {};
+      component.currentSettings["columnKey"] = "seed";
+      expect(component.hasSeedValue).toBeTrue();
+    });
+
+    it("keeps brackets on by default and saves the choice (#1214)", () => {
+      spyOn(component.change, "emit");
+      delete component.currentSettings["seedBrackets"];
+      expect(component.seedBrackets).toBeTrue();
+
+      component.seedBrackets = false;
+      expect(component.currentSettings["seedBrackets"]).toBeFalse();
+      expect(component.seedBrackets).toBeFalse();
+      expect(component.change.emit).toHaveBeenCalled();
+    });
+
     it("should correctly classify drift indicator columns and toggle between text and image modes", () => {
       component.currentSettings["columnKey"] = "driftIndicator";
       component.currentSettings["displayMode"] = "text";

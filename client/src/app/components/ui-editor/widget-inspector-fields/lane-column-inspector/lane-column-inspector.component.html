@@ -1094,6 +1094,28 @@
       </div>
     }
 
+    @if (hasSeedValue) {
+      <hr class="inspector-divider" />
+      <div class="inspector-geometry-title" id="seed-inspector-section">
+        <span class="material-icons">format_list_numbered</span>
+        {{ "UE_INSPECTOR_SEED_SECTION" | translate }}
+      </div>
+      <div class="inspector-section">
+        <label class="form-check-label">
+          <input
+            type="checkbox"
+            id="seed-brackets-checkbox"
+            class="form-checkbox"
+            [(ngModel)]="seedBrackets"
+          />
+          <span>{{ "UE_INSPECTOR_SEED_BRACKETS" | translate }}</span>
+        </label>
+        <span class="inspector-hint-text">
+          {{ "UE_INSPECTOR_SEED_BRACKETS_DESC" | translate }}
+        </span>
+      </div>
+    }
+
     @if (isAverageScoreColumn) {
       <hr class="inspector-divider" />
       <div
