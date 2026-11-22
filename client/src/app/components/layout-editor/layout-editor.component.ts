@@ -1,9 +1,11 @@
-import { canDuplicate } from "@app/components/ui-editor/duplicate.utils";
 import { StyleClipboardService } from "@app/components/ui-editor/style-clipboard.service";
 import {
-  copyStyle as copyWidgetStyle,
-  pasteStyle as pasteWidgetStyle,
-} from "@app/components/ui-editor/style-copy.utils";
+  copyStyleInEditor,
+  duplicableIds,
+  duplicateInEditor,
+  editShortcut,
+  pasteStyleInEditor,
+} from "@app/components/layout-editor/layout-editor-style.helper";
 import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
 import {
   canMultiSelect,
@@ -57,9 +59,7 @@ import {
 import {
   findDefaultWidgetId,
   handleArrange,
-  handleDuplicateWidgets,
   handleLayerOrder,
-  handlePasteStyle,
   handleRemoveWidgets,
 } from "@app/components/ui-editor/ui-editor-widget.helper";
 import { layerState } from "@app/components/raceday/utils/layer-order.utils";
@@ -325,76 +325,24 @@ export class LayoutEditorComponent
 
   /** Copy the main selected widget's style (panel button, Ctrl+Alt+C). */
   copyStyle(): void {
-    const widget = this.currentSelectedWidget;
-    if (!widget) return;
-    const copy = copyWidgetStyle(this.getInspectorSchema(widget), widget);
-    if (!copy) return;
-    this.styleClipboard.set(copy);
-    this.racedayComp?.showCanvasNote?.("UE_STYLE_COPIED");
-    this.cdr.markForCheck();
+    copyStyleInEditor(this);
   }
 
-  /**
-   * Paste the copied style on the selection (panel button, Ctrl+Alt+V).
-   * One widget goes through the normal change path, so a grid column
-   * passes it on to every lane; several are one undo step.
-   */
+  /** Paste the copied style on the selection (panel button, Ctrl+Alt+V). */
   pasteStyle(): void {
-    const copy = this.styleClipboard.copied();
-    if (!copy) {
-      this.racedayComp?.showCanvasNote?.("UE_STYLE_NOTHING");
-      return;
-    }
-    const ids = this.selectedWidgetIds;
-    if (!ids.length) return;
-    let changed = 0;
-    if (ids.length === 1) {
-      const widget = this.currentSelectedWidget;
-      if (!widget) return;
-      changed = pasteWidgetStyle(copy, this.getInspectorSchema(widget), widget);
-      if (changed) this.onWidgetInspectorChange(widget);
-    } else {
-      changed = handlePasteStyle(
-        this,
-        copy,
-        ids,
-        (w) => this.getInspectorSchema(w),
-        this.editingLayout ?? undefined,
-      );
-    }
-    if (changed) this.racedayComp?.showCanvasNote?.("UE_STYLE_PASTED");
-    this.cdr.markForCheck();
+    pasteStyleInEditor(this);
   }
 
   /** Whether any selected widget can be duplicated (not grid columns, menu bar, countdown). */
   get canDuplicateSelection(): boolean {
-    const byId = new Map<string, any>(
-      this.getLayoutWidgets().map((w: any) => [w.id, w]),
+    return (
+      duplicableIds(this.getLayoutWidgets(), this.selectedWidgetIds).length > 0
     );
-    return this.selectedWidgetIds.some((id) => canDuplicate(byId.get(id)));
   }
 
-  /**
-   * Duplicate the selection (panel button, Ctrl+D), as one undo step. The
-   * copies are selected afterwards; the copy of the main widget is main.
-   */
+  /** Duplicate the selection (panel button, Ctrl+D), as one undo step. */
   duplicateSelection(): void {
-    const ids = this.selectedWidgetIds;
-    if (!ids.length || !this.editingLayout) return;
-    const byId = new Map<string, any>(
-      this.getLayoutWidgets().map((w: any) => [w.id, w]),
-    );
-    const sources = ids.filter((id) => canDuplicate(byId.get(id)));
-    if (!sources.length) {
-      this.racedayComp?.showCanvasNote?.("UE_DUPLICATE_NOT_POSSIBLE");
-      return;
-    }
-    const newIds = handleDuplicateWidgets(this, sources, this.editingLayout);
-    if (!newIds.length) return;
-    const mainIndex = Math.max(0, sources.indexOf(this.selectedWidgetId!));
-    const main = newIds[mainIndex];
-    this.applySelection({ main, extras: newIds.filter((id) => id !== main) });
-    this.racedayComp?.showCanvasNote?.("UE_DUPLICATED");
+    duplicateInEditor(this);
   }
 
   /** Align / distribute / same size from the several-widgets panel (phase 4c-3). */
@@ -621,48 +569,18 @@ export class LayoutEditorComponent
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent): void {
     if (!this.isEditMode) return;
-    // Ctrl+Alt+C / Ctrl+Alt+V: copy / paste style (phase 5a). AltGr reports
-    // Ctrl+Alt too, so it is skipped: typing é / ć must not trigger this.
+    // copy / paste style (phase 5a), duplicate (phase 5c); Ctrl+D is the
+    // browser's bookmark shortcut, stopped inside the editor
+    const shortcut = editShortcut(event);
     if (
-      (event.ctrlKey || event.metaKey) &&
-      event.altKey &&
-      !event.getModifierState?.("AltGraph") &&
-      (event.code === "KeyC" || event.code === "KeyV")
+      shortcut &&
+      (shortcut !== "duplicate" || this.selectedWidgetIds.length)
     ) {
-      const t = event.target as HTMLElement | null;
-      const typing =
-        !!t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.tagName === "SELECT" ||
-          t.isContentEditable);
-      if (!typing) {
-        event.preventDefault();
-        if (event.code === "KeyC") this.copyStyle();
-        else this.pasteStyle();
-        return;
-      }
-    }
-    // Ctrl+D: duplicate (phase 5c); the browser's bookmark shortcut is
-    // stopped inside the editor, not while typing in a field
-    if (
-      (event.ctrlKey || event.metaKey) &&
-      !event.altKey &&
-      !event.shiftKey &&
-      event.code === "KeyD"
-    ) {
-      const t = event.target as HTMLElement | null;
-      const typing =
-        !!t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.tagName === "SELECT" ||
-          t.isContentEditable);
-      if (!typing && this.selectedWidgetIds.length) {
-        event.preventDefault();
-        this.duplicateSelection();
-        return;
-      }
+      event.preventDefault();
+      if (shortcut === "copyStyle") this.copyStyle();
+      else if (shortcut === "pasteStyle") this.pasteStyle();
+      else this.duplicateSelection();
+      return;
     }
     // Escape: back to the main widget only (phase 4c-1)
     if (event.key === "Escape" && this.extraSelectedIds.length) {
