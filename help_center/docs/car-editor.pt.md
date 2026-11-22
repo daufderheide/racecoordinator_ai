@@ -5,6 +5,8 @@ O **editor de carros slot** mantém uma lista dos seus carros slot: o que são, 
 !!! note
     Este é o primeiro passo do suporte a carros. Os carros ainda não estão ligados a pilotos ou corridas, então nada muda no dia da corrida.
 
+    O selo **Prévia** ao lado do título indica que esta função ainda está tomando forma. Ela pode mudar muito, ou até ser removida, enquanto recolhemos opiniões. Conte o que acha no GitHub ou no SlotForum.
+
 ## Visão geral
 
 O editor de carros slot funciona como o editor de equipes:

@@ -3650,6 +3650,18 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/car-editor"]);
     });
 
+    it("marks Slotcars in the Config menu as a preview", () => {
+      component.isConfigDropdownOpen = true;
+      fixture.detectChanges();
+
+      const item = fixture.nativeElement.querySelector("#setup-menu-slotcars");
+      expect(item.querySelector("app-preview-badge")).not.toBeNull();
+      const others = fixture.nativeElement.querySelectorAll(
+        ".setup-menu-dropdown-item app-preview-badge",
+      );
+      expect(others.length).toBe(1);
+    });
+
     it("should navigate without query params when no participant is selected", () => {
       component.selectedParticipantItem = null;
 

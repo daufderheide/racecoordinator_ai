@@ -2328,6 +2328,8 @@
   "TME_STATUS_NO_DATA": "No Data",
   "TMM_DEFAULT_TEAM_NAME": "Nuova Squadra",
   "CE_TITLE": "EDITOR AUTO SLOT",
+  "PREVIEW_BADGE": "ANTEPRIMA",
+  "PREVIEW_BADGE_TOOLTIP": "Funzione in anteprima: potrebbe ancora cambiare molto o persino essere rimossa. Il tuo parere ci interessa!",
   "CE_DEFAULT_CAR_NAME": "Nuova auto slot",
   "CE_HEADER_SETUP": "Assetto",
   "CE_LABEL_NAME": "Nome",

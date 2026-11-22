@@ -2328,6 +2328,8 @@
   "TME_STATUS_NO_DATA": "No Data",
   "TMM_DEFAULT_TEAM_NAME": "Nouvelle Équipe",
   "CE_TITLE": "ÉDITEUR DE VOITURES SLOT",
+  "PREVIEW_BADGE": "APERÇU",
+  "PREVIEW_BADGE_TOOLTIP": "Fonction en aperçu : elle peut encore beaucoup changer, voire être retirée. Vos retours sont les bienvenus !",
   "CE_DEFAULT_CAR_NAME": "Nouvelle voiture slot",
   "CE_HEADER_SETUP": "Réglages",
   "CE_LABEL_NAME": "Nom",

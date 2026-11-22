@@ -5,6 +5,8 @@ The **Slotcar Editor** keeps a list of your slotcars: what they are, the class t
 !!! note
     This is the first step of car support. Cars are not linked to drivers or races yet, so nothing changes on race day.
 
+    The **Preview** badge next to the title means this feature is still taking shape. It may change a lot, or even be removed, while we collect feedback. Tell us what you think on GitHub or SlotForum.
+
 ## Overview
 
 The Slotcar Editor works like the Team Editor:

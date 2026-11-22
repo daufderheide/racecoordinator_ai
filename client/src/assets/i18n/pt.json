@@ -2328,6 +2328,8 @@
   "TME_STATUS_NO_DATA": "No Data",
   "TMM_DEFAULT_TEAM_NAME": "Nova Equipe",
   "CE_TITLE": "EDITOR DE CARROS SLOT",
+  "PREVIEW_BADGE": "PRÉVIA",
+  "PREVIEW_BADGE_TOOLTIP": "Função em prévia: ainda pode mudar muito ou até ser removida. Adoraríamos receber sua opinião!",
   "CE_DEFAULT_CAR_NAME": "Novo carro slot",
   "CE_HEADER_SETUP": "Configuração",
   "CE_LABEL_NAME": "Nome",

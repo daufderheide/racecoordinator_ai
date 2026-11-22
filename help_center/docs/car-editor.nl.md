@@ -5,6 +5,8 @@ De **Slotcar-editor** houdt een lijst bij van je slotcars: wat ze zijn, in welke
 !!! note
     Dit is de eerste stap van ondersteuning voor auto's. Auto's zijn nog niet gekoppeld aan coureurs of races, dus op de racedag verandert er niets.
 
+    Het label **Preview** naast de titel betekent dat deze functie nog vorm krijgt. Ze kan nog flink veranderen, of zelfs verdwijnen, terwijl we feedback verzamelen. Laat ons weten wat je ervan vindt op GitHub of SlotForum.
+
 ## Overzicht
 
 De Slotcar-editor werkt zoals de Team Editor:

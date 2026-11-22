@@ -32,10 +32,11 @@
               </div>
               <div
                 id="setup-menu-slotcars"
-                class="setup-menu-dropdown-item"
+                class="setup-menu-dropdown-item has-preview-badge"
                 (click)="openCarManager()"
               >
                 {{ "RDS_MENU_CAR_MANAGER" | translate }}
+                <app-preview-badge></app-preview-badge>
               </div>
               <hr class="setup-menu-dropdown-divider" />
               <div class="setup-menu-dropdown-item" (click)="openRaceManager()">

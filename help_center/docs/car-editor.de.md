@@ -5,6 +5,8 @@ Der **Slotcar-Editor** führt eine Liste Ihrer Slotcars: was sie sind, in welche
 !!! note
     Dies ist der erste Schritt der Unterstützung für Autos. Autos sind noch nicht mit Fahrern oder Rennen verknüpft, am Renntag ändert sich also nichts.
 
+    Das Abzeichen **Vorschau** neben dem Titel bedeutet, dass diese Funktion noch in Arbeit ist. Sie kann sich noch stark ändern oder sogar wieder entfernt werden, während wir Feedback sammeln. Sagen Sie uns Ihre Meinung auf GitHub oder SlotForum.
+
 ## Übersicht
 
 Der Slotcar-Editor funktioniert wie der Team-Editor:

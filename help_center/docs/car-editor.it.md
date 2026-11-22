@@ -5,6 +5,8 @@ L'**editor auto slot** tiene un elenco delle tue auto slot: cosa sono, la classe
 !!! note
     Questo è il primo passo del supporto alle auto. Le auto non sono ancora collegate a piloti o gare, quindi il giorno della gara non cambia nulla.
 
+    Il badge **Anteprima** accanto al titolo indica che questa funzione è ancora in via di definizione. Potrebbe cambiare molto, o persino essere rimossa, mentre raccogliamo i pareri. Dicci cosa ne pensi su GitHub o SlotForum.
+
 ## Panoramica
 
 L'editor auto slot funziona come l'editor delle squadre:

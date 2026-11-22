@@ -8,6 +8,7 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
@@ -51,6 +52,7 @@ class MockImageSelectorComponent {
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  showPreviewBadge = input<boolean>(false);
   items = input<{ id: string; name: string }[]>([]);
   selectedId = input<string | undefined>(undefined);
   isEditMode = input<boolean>(false);
@@ -168,6 +170,13 @@ describe("CarEditorComponent", () => {
       expect(await h.isModified()).toBeTrue();
       expect(await h.isNameEditable()).toBeFalse();
       expect(navigation.setLastEditedId).toHaveBeenCalledWith("car", "c1");
+    });
+
+    it("marks the editor as a preview feature", () => {
+      const title = fixture.debugElement.query(
+        By.directive(MockEditorTitleComponent),
+      ).componentInstance as MockEditorTitleComponent;
+      expect(title.showPreviewBadge()).toBeTrue();
     });
 
     it("lists the cars sorted by name", () => {

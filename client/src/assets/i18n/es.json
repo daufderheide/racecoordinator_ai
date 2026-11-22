@@ -2328,6 +2328,8 @@
   "TME_STATUS_NO_DATA": "No Data",
   "TMM_DEFAULT_TEAM_NAME": "Nuevo Equipo",
   "CE_TITLE": "EDITOR DE COCHES DE SLOT",
+  "PREVIEW_BADGE": "VISTA PREVIA",
+  "PREVIEW_BADGE_TOOLTIP": "Función en vista previa: todavía puede cambiar mucho o incluso desaparecer. ¡Nos encantaría conocer su opinión!",
   "CE_DEFAULT_CAR_NAME": "Nuevo coche de slot",
   "CE_HEADER_SETUP": "Configuración",
   "CE_LABEL_NAME": "Nombre",

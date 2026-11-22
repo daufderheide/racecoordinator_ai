@@ -5,6 +5,8 @@ L'**éditeur de voitures slot** tient la liste de vos voitures slot : ce qu'elle
 !!! note
     C'est la première étape de la prise en charge des voitures. Les voitures ne sont pas encore liées aux pilotes ni aux courses ; rien ne change le jour de course.
 
+    Le badge **Aperçu** à côté du titre signifie que cette fonction est encore en cours d'élaboration. Elle peut encore beaucoup changer, voire être retirée, pendant que nous recueillons vos retours. Donnez-nous votre avis sur GitHub ou SlotForum.
+
 ## Vue d'ensemble
 
 L'éditeur de voitures slot fonctionne comme l'éditeur d'équipes :

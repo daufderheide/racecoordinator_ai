@@ -2328,6 +2328,8 @@
   "TME_STATUS_NO_DATA": "No Data",
   "TMM_DEFAULT_TEAM_NAME": "Nieuw Team",
   "CE_TITLE": "SLOTCAR-EDITOR",
+  "PREVIEW_BADGE": "PREVIEW",
+  "PREVIEW_BADGE_TOOLTIP": "Preview-functie: deze kan nog flink veranderen of zelfs verdwijnen. We horen graag uw feedback!",
   "CE_DEFAULT_CAR_NAME": "Nieuwe slotcar",
   "CE_HEADER_SETUP": "Afstelling",
   "CE_LABEL_NAME": "Naam",
