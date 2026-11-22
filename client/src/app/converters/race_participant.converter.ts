@@ -1,6 +1,7 @@
 import { RaceParticipant } from "@app/models/race_participant";
 import { IRaceParticipant } from "@app/proto/antigravity";
 
+import { CarConverter } from "./car.converter";
 import { ConverterCache } from "./converter_cache";
 import { DriverConverter } from "./driver.converter";
 import { TeamConverter } from "./team.converter";
@@ -25,10 +26,11 @@ export class RaceParticipantConverter {
         return cached;
       }
       this.updateCachedParticipant(cached, proto);
+      this.applyCars(cached, proto);
       return cached;
     }
 
-    return this.cache.process(id, false, () => {
+    const created = this.cache.process(id, false, () => {
       // If driver is missing and not in cache, we have a problem, but let's try to handle it gracefully
       const driver = proto.driver
         ? DriverConverter.fromProto(proto.driver)
@@ -75,6 +77,8 @@ export class RaceParticipantConverter {
         proto.stepUpIndex || 0,
       );
     });
+    if (proto.driver) this.applyCars(created, proto);
+    return created;
   }
 
   static fromGroupProto(proto: IRaceParticipant): RaceParticipant {
@@ -128,6 +132,24 @@ export class RaceParticipantConverter {
       cached.groupRank = proto.rank;
     }
     return participant;
+  }
+
+  /**
+   * The racer's slotcar(s) (#1210). Only from a full participant (with a
+   * driver): a reference inside a heat carries no cars and must not wipe them.
+   */
+  private static applyCars(p: RaceParticipant, proto: IRaceParticipant): void {
+    p.car = CarConverter.fromProto(proto.car);
+    p.carPerDriver = proto.carPerDriver === true;
+    p.driverCars = (proto.driverCars || [])
+      .map((dc) => ({
+        driverId: dc.driverId || "",
+        car: CarConverter.fromProto(dc.car),
+      }))
+      .filter(
+        (dc): dc is { driverId: string; car: NonNullable<typeof dc.car> } =>
+          !!dc.driverId && !!dc.car,
+      );
   }
 
   private static updateCachedParticipant(

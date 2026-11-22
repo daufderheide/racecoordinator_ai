@@ -1193,3 +1193,54 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Slotcar picked for a roster entry (#1210) */
+.driver-car {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #38bdf8;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-top: 1px;
+}
+
+.driver-car .material-icons {
+  font-size: 12px;
+}
+
+.driver-car-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.car-pick-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 4px;
+  padding: 0;
+  color: #64748b;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.car-pick-btn .material-icons {
+  font-size: 17px;
+}
+
+.car-pick-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.car-pick-btn.has-car {
+  color: #38bdf8;
+}
+

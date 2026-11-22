@@ -1,3 +1,4 @@
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
@@ -573,6 +574,29 @@ describe("modify-heats-modal.utils", () => {
       expect(protos.length).toBe(1);
       expect(protos[0].isStepUp).toBeTrue();
       expect(protos[0].stepUpIndex).toBe(1);
+    });
+
+    it("sends the racer's slotcars as whole cars (#1210)", () => {
+      const p = createParticipantFromDriver(new Driver("d1", "Ann", "A"));
+      p.car = new Car("c1", "Audi R8", { tyres: "Soft" });
+      p.carPerDriver = true;
+      p.driverCars = [{ driverId: "d1", car: new Car("c2", "Ford GT40") }];
+
+      const proto = convertParticipantsToProto([p])[0];
+      expect(proto.car?.model?.entityId).toBe("c1");
+      expect(proto.car?.tyres).toBe("Soft");
+      expect(proto.carPerDriver).toBeTrue();
+      expect(proto.driverCars?.[0]?.driverId).toBe("d1");
+      expect(proto.driverCars?.[0]?.car?.name).toBe("Ford GT40");
+    });
+
+    it("sends no car for a racer without one (#1210)", () => {
+      const proto = convertParticipantsToProto([
+        createParticipantFromDriver(new Driver("d2", "Bob", "B")),
+      ])[0];
+      expect(proto.car).toBeUndefined();
+      expect(proto.carPerDriver).toBeFalse();
+      expect(proto.driverCars).toEqual([]);
     });
 
     it("should return correct step-up participant name without off-by-one", () => {

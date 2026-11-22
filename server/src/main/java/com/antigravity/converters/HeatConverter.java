@@ -1,5 +1,6 @@
 package com.antigravity.converters;
 
+import com.antigravity.proto.CarModel;
 import com.antigravity.proto.DriverHeatData;
 import com.antigravity.proto.DriverModel;
 import com.antigravity.proto.Heat;
@@ -79,6 +80,11 @@ public class HeatConverter {
                           .setCountTowardsRecords(l.isCountTowardsRecords())
                           .build())
               .collect(Collectors.toList()));
+    }
+
+    CarModel carProto = CarConverter.toProto(data.getCar());
+    if (carProto != null) {
+      builder.setCar(carProto);
     }
 
     return builder

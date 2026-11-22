@@ -57,6 +57,8 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   isRaceAgainDisabled = input<boolean>(true);
   isAddLapDisabled = input<boolean>(false);
   isModifyDisabled = input<boolean>(false);
+  /** Race day "Slotcars…" (#1210): shown only when the Slotcar database has cars. */
+  hasSlotcars = input<boolean>(false);
   isDisallowLapRecordsDisabled = input<boolean>(false);
   isBackDisabled = input<boolean | undefined>(undefined);
 

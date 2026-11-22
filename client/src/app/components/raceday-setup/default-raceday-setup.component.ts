@@ -20,6 +20,10 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import {
+  CarPickDialogComponent,
+  CarPickDriver,
+} from "@app/components/shared/car-pick-dialog/car-pick-dialog.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
@@ -35,6 +39,8 @@ import { SeasonSummaryComponent } from "@app/components/shared/season-summary/se
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { DataService } from "@app/data.service";
 import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
+import { Car } from "@app/models/car";
+import { CarChoice, emptyCarChoice } from "@app/models/car-choice";
 import { Driver } from "@app/models/driver";
 import { DriverLabel } from "@app/models/driver-label";
 import { Event as EventModel } from "@app/models/event";
@@ -60,6 +66,7 @@ import { UpdateChannel } from "@app/services/update.service";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
+import { RacedaySetupCarsHelper } from "./raceday-setup-cars.helper";
 import {
   formatEnumDisplay,
   getContrastColor,
@@ -133,6 +140,7 @@ import { RacedaySetupUiHelper } from "./raceday-setup-ui.helper";
     RaceHistoryDialogComponent,
     DriverLabelsOverflowDirective,
     PreviewBadgeComponent,
+    CarPickDialogComponent,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
@@ -153,6 +161,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
   clickedParticipantItem: Participant | null = null;
   public allDrivers: Driver[] = [];
   public allTeams: Team[] = [];
+  /** Slotcars (#1210): the database, the pick per entry, the entry being picked for. */
+  public allCars: Car[] = [];
+  public carChoices: Record<string, CarChoice> = {};
+  public carPickTarget: Participant | null = null;
+  public readonly emptyChoice: CarChoice = emptyCarChoice();
   public driverLabels: DriverLabel[] = [];
   public selectedAvailableLabelIds: string[] = [];
   public selectedRacingLabelIds: string[] = [];
@@ -314,6 +327,27 @@ export class DefaultRacedaySetupComponent implements OnInit {
     });
 
     this.initSystemSubscriptions();
+    RacedaySetupCarsHelper.loadCars(this);
+  }
+
+  carSummary(participant: Participant): string {
+    return RacedaySetupCarsHelper.summary(this, participant);
+  }
+
+  carChoiceFor(participant: Participant): CarChoice {
+    return RacedaySetupCarsHelper.choiceFor(this, participant);
+  }
+
+  carTeamDrivers(participant: Participant): CarPickDriver[] {
+    return RacedaySetupCarsHelper.teamDrivers(this, participant);
+  }
+
+  openCarPick(participant: Participant, event?: Event): void {
+    RacedaySetupCarsHelper.open(this, participant, event);
+  }
+
+  onCarPicked(choice: CarChoice): void {
+    RacedaySetupCarsHelper.save(this, choice);
   }
 
   private initInitialData(result: any) {

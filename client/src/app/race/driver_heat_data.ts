@@ -1,3 +1,4 @@
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import { LapType } from "@app/proto/antigravity";
 
@@ -19,6 +20,8 @@ export class DriverHeatData {
   readonly objectId: string;
   readonly participant: RaceParticipant;
   readonly actualDriver?: Driver;
+  /** The slotcar in this heat (#1210): the copy the server saved with the heat. */
+  car?: Car;
 
   private laps!: number[];
   private _currentLapSegments: number[] = [];

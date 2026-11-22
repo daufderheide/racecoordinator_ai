@@ -133,6 +133,16 @@
         >
           {{ "RD_MENU_MODIFY" | translate }}
         </div>
+        @if (hasSlotcars()) {
+          <div
+            class="menu-item"
+            id="rd-menu-slotcars"
+            [class.disabled]="isModifyDisabled()"
+            (click)="onMenuSelect('SLOTCARS')"
+          >
+            {{ "RD_MENU_SLOTCARS" | translate }}
+          </div>
+        }
         @if ((authService.currentRole$ | async) !== Role.VIEWER) {
           <div
             class="menu-item"

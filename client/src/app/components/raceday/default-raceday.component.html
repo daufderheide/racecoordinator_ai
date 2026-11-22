@@ -1119,6 +1119,16 @@
   ></app-disallow-lap-records-dialog>
 }
 
+<app-raceday-slotcars-dialog
+  [visible]="showSlotcarsDialog"
+  [heat]="heat"
+  [track]="track"
+  [cars]="raceCars"
+  [locked]="isSlotcarSwapLocked"
+  (swap)="onSlotcarSwap($event)"
+  (close)="showSlotcarsDialog = false"
+></app-raceday-slotcars-dialog>
+
 <app-race-history-dialog
   [visible]="showRaceHistoryDialog"
   (close)="showRaceHistoryDialog = false"

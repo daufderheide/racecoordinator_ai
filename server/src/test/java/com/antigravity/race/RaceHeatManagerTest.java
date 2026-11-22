@@ -1412,4 +1412,45 @@ public class RaceHeatManagerTest {
       stepRace.stop();
     }
   }
+
+  // Slotcars changed in Modify Heats (#1210)
+  @Test
+  public void testModifyHeats_TakesTheCarsAndRefreshesTheCurrentHeat() {
+    testRace.setCurrentHeat(testRace.getHeats().get(0));
+    ModifyHeatsRequest base = createRequest(participants, testRace.getHeats());
+    com.antigravity.proto.CarModel audi = // fqn-collision
+        com.antigravity.converters.CarConverter.toProto( // fqn-collision
+            new com.antigravity.models.Car.Builder() // fqn-collision
+                .withName("Audi R8")
+                .withEntityId("c1")
+                .build());
+    ModifyHeatsRequest request =
+        base.toBuilder()
+            .setParticipants(0, base.getParticipants(0).toBuilder().setCar(audi))
+            .build();
+
+    ModifyHeatsResponse response = testRace.modifyHeats(request);
+
+    assertTrue(response.getErrorMessage(), response.getSuccess());
+    RaceParticipant p1 =
+        testRace.getDrivers().stream()
+            .filter(p -> base.getParticipants(0).getObjectId().equals(p.getObjectId()))
+            .findFirst()
+            .orElseThrow(AssertionError::new);
+    assertEquals("Audi R8", p1.getCar().getName());
+    DriverHeatData inHeat =
+        testRace.getCurrentHeat().getDrivers().stream()
+            .filter(d -> d.getDriver() == p1)
+            .findFirst()
+            .orElse(null);
+    assertNotNull("p1 races in the current heat", inHeat);
+    assertEquals("c1", inHeat.getCar().getEntityId());
+    assertNull(
+        "a racer sent without a car has none",
+        testRace.getDrivers().stream()
+            .filter(p -> base.getParticipants(1).getObjectId().equals(p.getObjectId()))
+            .findFirst()
+            .orElseThrow(AssertionError::new)
+            .getCar());
+  }
 }

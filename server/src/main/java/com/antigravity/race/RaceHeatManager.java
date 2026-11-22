@@ -1,7 +1,9 @@
 package com.antigravity.race;
 
+import com.antigravity.converters.CarConverter;
 import com.antigravity.converters.DriverConverter;
 import com.antigravity.converters.HeatConverter;
+import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.Team;
@@ -248,6 +250,7 @@ public class RaceHeatManager {
       }
       if (p != null) {
         p.setSeed(protoP.getSeed());
+        applyCars(p, protoP);
         newDrivers.add(p);
       }
     }
@@ -260,6 +263,20 @@ public class RaceHeatManager {
         this.race.getDrivers().add(new RaceParticipant(Driver.EMPTY_DRIVER));
       }
     }
+  }
+
+  /** The racer's slotcar(s) as Modify Heats sends them (#1210): the whole car, as a copy. */
+  private static void applyCars(
+      RaceParticipant p, com.antigravity.proto.RaceParticipant protoP) { // fqn-collision
+    p.setCar(protoP.hasCar() ? CarConverter.fromProto(protoP.getCar()) : null);
+    p.setCarPerDriver(protoP.getCarPerDriver());
+    List<ParticipantDriverCar> cars = new ArrayList<>();
+    for (com.antigravity.proto.ParticipantDriverCar dc : // fqn-collision
+        protoP.getDriverCarsList()) {
+      Car car = CarConverter.fromProto(dc.getCar());
+      if (car != null) cars.add(new ParticipantDriverCar(dc.getDriverId(), car));
+    }
+    p.setDriverCars(cars);
   }
 
   private String updateHeats(ModifyHeatsRequest request) {
@@ -396,6 +413,8 @@ public class RaceHeatManager {
         }
       }
     }
+    // The current heat may be a new object now: give it the racers' cars (#1210).
+    this.race.refreshCarSnapshots();
 
     if (this.race.getState() instanceof NotStarted
         && this.race.getCurrentHeat() != null
@@ -429,6 +448,7 @@ public class RaceHeatManager {
           p = new RaceParticipant(d, protoP.getObjectId());
           p.setSeed(protoP.getSeed());
         }
+        applyCars(p, protoP);
         newDrivers.add(p);
       }
       driversToUse = newDrivers;

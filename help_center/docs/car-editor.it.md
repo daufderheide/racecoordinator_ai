@@ -3,7 +3,7 @@
 L'**editor auto slot** tiene un elenco delle tue auto slot: cosa sono, la classe in cui corrono, la scala e l'assetto. Aprilo da Race Day Setup con **Gestisci → Auto slot**.
 
 !!! note
-    Questo è il primo passo del supporto alle auto. Le auto non sono ancora collegate a piloti o gare, quindi il giorno della gara non cambia nulla.
+    Scegli un'auto per ogni pilota in Race Day Setup e cambia le auto tra una manche e l'altra. Ogni manche salva l'auto così com'era in pista, quindi i risultati mantengono l'auto giusta anche se la modifichi dopo.
 
     Il badge **Anteprima** accanto al titolo indica che questa funzione è ancora in via di definizione. Potrebbe cambiare molto, o persino essere rimossa, mentre raccogliamo i pareri. Dicci cosa ne pensi su GitHub o SlotForum.
 
@@ -57,3 +57,12 @@ Sotto l'assetto puoi aggiungere campi tuoi, per tutto ciò che segue il tuo club
 - **Elimina**: rimuove il campo, e il suo valore da ogni auto, dopo la conferma.
 
 Ogni auto ha gli stessi campi e mantiene i propri valori. Un campo lasciato vuoto resta vuoto.
+
+## Auto slot in gara {: #car-in-race }
+
+- **Race Day Setup**: nell'elenco dei piloti in gara, fai clic sull'icona dell'auto di una riga per scegliere un'auto slot. Una squadra sceglie **Un'auto per la squadra** o **Un'auto per pilota**. RC AI ricorda la tua scelta per la gara successiva.
+- **Cambiare tra le manche**: il giorno della gara, apri **Direttore Gara → Auto slot…**. Mostra la prossima manche corsia per corsia; scegli un'altra auto e cambia subito. Durante una manche gli elenchi sono bloccati.
+- **Modifica manche**: l'icona dell'auto di un pilota cambia la sua auto per tutte le manche non ancora corse.
+- **Risultati**: ogni manche conserva una copia dell'auto così come ha corso, quindi modificare o eliminare un'auto in seguito non cambia i risultati passati.
+
+L'icona dell'auto e la voce Auto slot… compaiono solo quando ci sono auto slot nel database.

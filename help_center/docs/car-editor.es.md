@@ -3,7 +3,7 @@
 El **editor de coches de slot** lleva una lista de tus coches de slot: qué son, la clase en la que corren, su escala y su configuración. Ábrelo desde Race Day Setup con **Administrar → Coches de slot**.
 
 !!! note
-    Este es el primer paso del soporte de coches. Los coches aún no están vinculados a pilotos ni carreras, así que el día de carrera no cambia nada.
+    Elige un coche para cada piloto en Race Day Setup y cambia coches entre mangas. Cada manga guarda el coche tal como estaba en la pista, así que los resultados conservan el coche correcto aunque lo edites después.
 
     La insignia **Vista previa** junto al título indica que esta función aún está tomando forma. Puede cambiar mucho, o incluso desaparecer, mientras recogemos opiniones. Dinos lo que piensas en GitHub o SlotForum.
 
@@ -57,3 +57,12 @@ Debajo de la configuración puedes añadir tus propios campos, para todo lo que 
 - **Eliminar**: quita el campo, y su valor de todos los coches, tras confirmarlo.
 
 Todos los coches tienen los mismos campos y guardan sus propios valores. Un campo que dejas vacío se queda vacío.
+
+## Coches de slot en una carrera {: #car-in-race }
+
+- **Race Day Setup**: en la lista de pilotos que corren, haz clic en el icono del coche de una fila para elegir un coche de slot. Un equipo elige **Un coche para el equipo** o **Un coche por piloto**. RC AI recuerda tu elección para la próxima carrera.
+- **Cambiar entre mangas**: el día de carrera, abre **Director de Carrera → Coches de slot…**. Muestra la próxima manga carril por carril; elige otro coche y cambia al instante. Mientras una manga está en curso, las listas están bloqueadas.
+- **Modificar mangas**: el icono del coche de un piloto cambia su coche para todas las mangas que aún no se han corrido.
+- **Resultados**: cada manga guarda una copia del coche tal como corrió, así que editar o borrar un coche después no cambia los resultados anteriores.
+
+El icono del coche y la opción Coches de slot… solo aparecen cuando hay coches de slot en la base de datos.

@@ -22,6 +22,8 @@ import { MOCK_TEAMS } from "./data/teams_data";
 import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
 
 export interface SetupOptions {
+  /** Serve the mock Slotcar database (#1210); without it /api/cars is empty. */
+  cars?: boolean;
   skipIntro?: boolean;
   walkthroughSeen?: boolean;
   trackManagerHelpShown?: boolean;
@@ -98,7 +100,9 @@ export class TestSetupHelper {
     await this.setupRaceRestMocks(page);
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
-    await this.setupCarMocks(page);
+    // Cars only where a test asks for them: with cars, Race Day Setup, Modify
+    // Heats and the race day menu show their slotcar parts (#1210).
+    await this.setupCarMocks(page, options.cars ? undefined : []);
     await this.setupCarFieldMocks(page);
     await this.setupEventMocks(page);
     await this.setupSeasonMocks(page);
@@ -418,8 +422,8 @@ export class TestSetupHelper {
     });
   }
 
-  static async setupCarMocks(page: Page) {
-    let currentCars: any[] = MOCK_CARS.map((c) => ({ ...c }));
+  static async setupCarMocks(page: Page, cars: any[] = MOCK_CARS) {
+    let currentCars: any[] = cars.map((c) => ({ ...c }));
     let nextId = currentCars.length + 1;
 
     await page.route("**/api/cars", async (route) => {
@@ -2343,6 +2347,7 @@ export class TestSetupHelper {
     settings: {
       recentRaceIds?: string[];
       selectedDriverIds?: string[];
+      selectedCarChoices?: Record<string, unknown>;
       racedaySetupWalkthroughSeen?: boolean;
       shareAnalytics?: boolean;
       language?: string;

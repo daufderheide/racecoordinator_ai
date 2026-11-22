@@ -844,6 +844,14 @@
                         {{ getLocalizedTeamMembers(participant) }}
                       }
                     </div>
+                    @if (allCars.length > 0 && carSummary(participant)) {
+                      <div class="driver-car" [title]="carSummary(participant)">
+                        <span class="material-icons">directions_car</span>
+                        <span class="driver-car-name">{{
+                          carSummary(participant)
+                        }}</span>
+                      </div>
+                    }
                   </div>
                   @if (getParticipantLabels(participant).length > 0) {
                     <div
@@ -876,6 +884,20 @@
                         }
                       }
                     </div>
+                  }
+                  @if (allCars.length > 0) {
+                    <button
+                      type="button"
+                      class="car-pick-btn"
+                      [id]="'racing-car-btn-' + i"
+                      [class.has-car]="!!carSummary(participant)"
+                      [title]="'RDS_CAR_PICK_TOOLTIP' | translate"
+                      [attr.aria-label]="'RDS_CAR_PICK_TOOLTIP' | translate"
+                      (click)="openCarPick(participant, $event)"
+                      (dblclick)="$event.stopPropagation()"
+                    >
+                      <span class="material-icons">directions_car</span>
+                    </button>
                   }
                 </div>
               }
@@ -1556,6 +1578,16 @@
   (close)="closeRacingRosterDialog()"
 >
 </app-racing-roster-dialog>
+
+<app-car-pick-dialog
+  [visible]="!!carPickTarget"
+  [entryName]="carPickTarget ? getLocalizedName(carPickTarget) : ''"
+  [cars]="allCars"
+  [teamDrivers]="carPickTarget ? carTeamDrivers(carPickTarget) : []"
+  [choice]="carPickTarget ? carChoiceFor(carPickTarget) : emptyChoice"
+  (save)="onCarPicked($event)"
+  (close)="carPickTarget = null"
+></app-car-pick-dialog>
 
 <!-- Race History Dialog -->
 <app-race-history-dialog

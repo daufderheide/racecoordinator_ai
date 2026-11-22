@@ -1,8 +1,10 @@
 package com.antigravity.converters;
 
+import com.antigravity.proto.CarModel;
 import com.antigravity.proto.DriverModel;
 import com.antigravity.proto.RaceParticipant;
 import com.antigravity.proto.TeamModel;
+import com.antigravity.race.ParticipantDriverCar;
 import java.util.Set;
 
 public class RaceParticipantConverter {
@@ -26,6 +28,21 @@ public class RaceParticipantConverter {
     TeamModel teamProto = TeamConverter.toProto(participant.getTeam(), sentObjectIds);
     if (teamProto != null) {
       builder.setTeam(teamProto);
+    }
+
+    CarModel carProto = CarConverter.toProto(participant.getCar());
+    if (carProto != null) {
+      builder.setCar(carProto);
+    }
+    builder.setCarPerDriver(participant.isCarPerDriver());
+    for (ParticipantDriverCar dc : participant.getDriverCars()) {
+      CarModel dcProto = CarConverter.toProto(dc.getCar());
+      if (dc.getDriverId() != null && dcProto != null) {
+        builder.addDriverCars(
+            com.antigravity.proto.ParticipantDriverCar.newBuilder() // fqn-collision
+                .setDriverId(dc.getDriverId())
+                .setCar(dcProto));
+      }
     }
 
     return builder

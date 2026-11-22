@@ -3,7 +3,7 @@
 De **Slotcar-editor** houdt een lijst bij van je slotcars: wat ze zijn, in welke klasse ze rijden, hun schaal en hun afstelling. Open hem vanuit Race Day Setup met **Beheren → Slotcars**.
 
 !!! note
-    Dit is de eerste stap van ondersteuning voor auto's. Auto's zijn nog niet gekoppeld aan coureurs of races, dus op de racedag verandert er niets.
+    Kies in Race Day Setup een auto voor elke coureur en wissel auto's tussen de heats. Elke heat bewaart de auto zoals hij op de baan stond, dus de uitslagen houden de juiste auto, ook als je hem later aanpast.
 
     Het label **Preview** naast de titel betekent dat deze functie nog vorm krijgt. Ze kan nog flink veranderen, of zelfs verdwijnen, terwijl we feedback verzamelen. Laat ons weten wat je ervan vindt op GitHub of SlotForum.
 
@@ -57,3 +57,12 @@ Onder de afstelling kun je eigen velden toevoegen, voor alles wat je club bijhou
 - **Verwijderen**: verwijdert het veld, en de waarde bij elke auto, na bevestiging.
 
 Elke auto krijgt dezelfde velden en houdt zijn eigen waarden. Een veld dat je leeg laat, blijft leeg.
+
+## Slotcars in een race {: #car-in-race }
+
+- **Race Day Setup**: klik in de lijst met coureurs die meedoen op het auto-icoon van een rij om een slotcar te kiezen. Een team kiest **Eén auto voor het team** of **Een auto per coureur**. RC AI onthoudt je keuze voor de volgende race.
+- **Wisselen tussen de heats**: open op de racedag **Race Directeur → Slotcars…**. Daar staat de volgende heat baan voor baan; kies een andere auto en hij wordt meteen gewisseld. Tijdens een heat zijn de lijsten op slot.
+- **Heats wijzigen**: het auto-icoon bij een coureur verandert zijn auto voor alle heats die nog niet gereden zijn.
+- **Uitslagen**: elke heat bewaart een kopie van de auto zoals hij reed, dus een auto later aanpassen of verwijderen verandert oude uitslagen niet.
+
+Het auto-icoon en de menuoptie Slotcars… verschijnen pas als er slotcars in de database staan.

@@ -4,6 +4,7 @@ package com.antigravity;
 import "server/race_participant.proto";
 import "server/race_state.proto";
 import "client/driver_model.proto";
+import "client/car_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -63,5 +64,8 @@ message DriverHeatData {
   double dq_score_percentage = 43;
   double points = 44;
   bool can_refuel = 45;
+  // The car as it was when this heat ran (#1210). A copy, so editing the car
+  // later doesn't change the results.
+  CarModel car = 46;
 }
 

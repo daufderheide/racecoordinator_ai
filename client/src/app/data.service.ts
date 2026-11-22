@@ -385,24 +385,11 @@ export class DataService {
     return this.interfaceHelper.getPhidgetDevices();
   }
 
+  /** Same arguments as DataRaceControlHelper.initializeRace, raceAgain and car picks included. */
   initializeRace(
-    raceId: string,
-    driverIds: string[],
-    isDemoMode: boolean,
-    demoConfig?: IDemoConfig,
-    eventId?: string,
-    seasonId?: string,
-    themeId?: string,
+    ...args: Parameters<DataRaceControlHelper["initializeRace"]>
   ): Observable<InitializeRaceResponse> {
-    return this.raceControlHelper.initializeRace(
-      raceId,
-      driverIds,
-      isDemoMode,
-      demoConfig,
-      eventId,
-      seasonId,
-      themeId,
-    );
+    return this.raceControlHelper.initializeRace(...args);
   }
 
   initializeInterface(
@@ -519,6 +506,11 @@ export class DataService {
     driverId: string,
   ): Observable<boolean> {
     return this.raceControlHelper.changeActualDriver(lane, driverId);
+  }
+
+  /** Quick car swap on race day (#1210). */
+  public changeCar(lane: number, carId: string): Observable<boolean> {
+    return this.raceControlHelper.changeCar(lane, carId);
   }
 
   public changeActualDriverForHeat(

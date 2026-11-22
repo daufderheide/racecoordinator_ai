@@ -3,6 +3,7 @@ import {
   UndoEventType,
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { CarConverter } from "@app/converters/car.converter";
 import { Driver } from "@app/models/driver";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Team } from "@app/models/team";
@@ -404,6 +405,13 @@ export function convertParticipantsToProto(
       seed: p.seed,
       isStepUp: p.isStepUp || false,
       stepUpIndex: p.stepUpIndex || 0,
+      // The racer's slotcar(s) (#1210), whole cars: the server keeps what it gets.
+      car: CarConverter.toProto(p.car),
+      carPerDriver: p.carPerDriver === true,
+      driverCars: (p.driverCars || []).map((dc) => ({
+        driverId: dc.driverId,
+        car: CarConverter.toProto(dc.car),
+      })),
     };
     if (p.team) {
       proto.team = {

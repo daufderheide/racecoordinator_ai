@@ -3,7 +3,7 @@
 Der **Slotcar-Editor** führt eine Liste Ihrer Slotcars: was sie sind, in welcher Klasse sie fahren, ihr Maßstab und ihr Setup. Sie öffnen ihn im Race Day Setup über **Verwalten → Slotcars**.
 
 !!! note
-    Dies ist der erste Schritt der Unterstützung für Autos. Autos sind noch nicht mit Fahrern oder Rennen verknüpft, am Renntag ändert sich also nichts.
+    Wählen Sie in Race Day Setup für jeden Fahrer ein Auto und tauschen Sie Autos zwischen den Läufen. Jeder Lauf speichert das Auto so, wie es auf der Strecke war, sodass die Ergebnisse auch nach einer Änderung das richtige Auto behalten.
 
     Das Abzeichen **Vorschau** neben dem Titel bedeutet, dass diese Funktion noch in Arbeit ist. Sie kann sich noch stark ändern oder sogar wieder entfernt werden, während wir Feedback sammeln. Sagen Sie uns Ihre Meinung auf GitHub oder SlotForum.
 
@@ -57,3 +57,12 @@ Unter dem Setup können Sie eigene Felder hinzufügen, für alles, was Ihr Club 
 - **Löschen**: entfernt das Feld und seinen Wert bei jedem Auto, nach Bestätigung.
 
 Jedes Auto bekommt dieselben Felder und behält seine eigenen Werte. Ein leer gelassenes Feld bleibt leer.
+
+## Slotcars im Rennen {: #car-in-race }
+
+- **Race Day Setup**: Klicken Sie in der Liste der startenden Fahrer auf das Auto-Symbol einer Zeile, um ein Slotcar zu wählen. Ein Team wählt **Ein Auto für das Team** oder **Ein Auto pro Fahrer**. RC AI merkt sich Ihre Auswahl für das nächste Rennen.
+- **Tauschen zwischen den Läufen**: Öffnen Sie am Renntag **Rennleiter → Slotcars…**. Dort steht der nächste Lauf Spur für Spur; wählen Sie ein anderes Auto, und es wird sofort getauscht. Während ein Lauf läuft, sind die Listen gesperrt.
+- **Läufe ändern**: Das Auto-Symbol bei einem Fahrer ändert sein Auto für alle Läufe, die noch nicht gefahren sind.
+- **Ergebnisse**: Jeder Lauf behält eine Kopie des Autos, wie es gefahren ist. Spätere Änderungen oder das Löschen eines Autos ändern alte Ergebnisse nicht.
+
+Das Auto-Symbol und der Menüpunkt Slotcars… erscheinen erst, wenn es Slotcars in der Datenbank gibt.

@@ -1,3 +1,4 @@
+import { Car } from "./car";
 import { Driver } from "./driver";
 import { Team } from "./team";
 
@@ -42,4 +43,23 @@ export class RaceParticipant {
     public isStepUp: boolean = false,
     public stepUpIndex: number = 0,
   ) {}
+
+  /** Slotcar for this race (#1210): a solo driver's car or a team's shared car. */
+  car?: Car;
+  /** A team racing with a car per driver uses driverCars instead of car. */
+  carPerDriver?: boolean;
+  driverCars?: { driverId: string; car: Car }[];
+}
+
+/** The car on the track for the driver racing this entry (#1210). */
+export function participantCarFor(
+  p: Pick<RaceParticipant, "car" | "carPerDriver" | "driverCars"> | undefined,
+  actualDriverId?: string,
+): Car | undefined {
+  if (!p) return undefined;
+  if (p.carPerDriver) {
+    return (p.driverCars || []).find((dc) => dc.driverId === actualDriverId)
+      ?.car;
+  }
+  return p.car;
 }
