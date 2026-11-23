@@ -1,0 +1,27 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/model.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "CarModelProto";
+
+// A slotcar in the Slotcar database. All fields except name are optional
+// free text, so clubs can describe cars in their own words.
+message CarModel {
+  Model model = 1;
+  string name = 2;
+  string avatarUrl = 3;
+  string brand = 4;
+  string car_class = 5;
+  // "1/24", "1/32", "1/43", "1/64" (HO), "other" or empty
+  string scale = 6;
+  string motor = 7;
+  string magnet = 8;
+  string chassis = 9;
+  string gears = 10;
+  string tyres = 11;
+  bool modified = 12;
+  string notes = 13;
+}

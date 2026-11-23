@@ -1257,3 +1257,42 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
 
 
 
+
+
+/* Layout Editor: snap guide lines and position / size readout (phase 4a).
+   Above every widget (the countdown sits at 100000+), never in the way of
+   the mouse. */
+.snap-guide {
+  position: absolute;
+  pointer-events: none;
+  z-index: 200000;
+  background: #38bdf8;
+  box-shadow: 0 0 4px rgba(56, 189, 248, 0.8);
+}
+
+.snap-guide-v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.snap-guide-h {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.drag-readout {
+  position: absolute;
+  pointer-events: none;
+  z-index: 200001;
+  margin-top: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  color: #e2e8f0;
+  font: 600 11px/1.4 "Inter", Arial, sans-serif;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}

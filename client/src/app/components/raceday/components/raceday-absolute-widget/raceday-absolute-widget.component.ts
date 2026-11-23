@@ -511,19 +511,12 @@ export class RacedayAbsoluteWidgetComponent
       newX = this.resizeStartX;
     }
 
-    let snapped = { x: newX, y: newY, w: newW, h: newH };
-    if (this.parentComponent().snapToEdges) {
-      snapped = this.parentComponent().snapToEdges(
-        newX,
-        newY,
-        newW,
-        newH,
-        this.widget().id,
-        handle,
-        baseWidth,
-        baseHeight,
-      );
-    }
+    const snapped = this.snap(
+      { x: newX, y: newY, w: newW, h: newH },
+      handle,
+      baseWidth,
+      baseHeight,
+    );
 
     const clampedX = this.isWidthAutoCalculated
       ? this.resizeStartX
@@ -544,6 +537,71 @@ export class RacedayAbsoluteWidgetComponent
       width: clampedW,
       height: clampedH,
     };
+  }
+
+  /** Alt held while dragging / resizing: no snapping (phase 4a). */
+  private snapOff = false;
+
+  /**
+   * Snap a moved / resized rect: edges and centres with guide lines when the
+   * host has snapWithGuides (Layout Editor), else the older edge snapping.
+   */
+  private snap(
+    rect: { x: number; y: number; w: number; h: number },
+    handle: string,
+    baseWidth: number,
+    baseHeight: number,
+  ): { x: number; y: number; w: number; h: number } {
+    const host = this.parentComponent();
+    if (this.snapOff) {
+      host.snapGuides?.set(null);
+      return rect;
+    }
+    if (host.snapWithGuides) {
+      const r = host.snapWithGuides(
+        rect,
+        this.widget().id,
+        handle,
+        baseWidth,
+        baseHeight,
+      );
+      host.snapGuides?.set(
+        r.guidesX.length || r.guidesY.length
+          ? { x: r.guidesX, y: r.guidesY }
+          : null,
+      );
+      return r;
+    }
+    if (host.snapToEdges) {
+      return host.snapToEdges(
+        rect.x,
+        rect.y,
+        rect.w,
+        rect.h,
+        this.widget().id,
+        handle,
+        baseWidth,
+        baseHeight,
+      );
+    }
+    return rect;
+  }
+
+  /** Position and size next to the widget while it is dragged / resized. */
+  private showReadout(): void {
+    const w = this.widget();
+    this.parentComponent().dragReadout?.set({
+      x: Math.round(w.x),
+      y: Math.round(w.y),
+      w: Math.round(w.width),
+      h: Math.round(w.height),
+    });
+  }
+
+  private clearSnapOverlay(): void {
+    this.snapOff = false;
+    this.parentComponent().snapGuides?.set(null);
+    this.parentComponent().dragReadout?.set(null);
   }
 
   onResizeStart(event: PointerEvent, handle: string) {
@@ -568,6 +626,7 @@ export class RacedayAbsoluteWidgetComponent
       const baseWidth = this.parentComponent().layout?.baseWidth || 1920;
       const baseHeight = this.parentComponent().layout?.baseHeight || 1080;
 
+      this.snapOff = moveEvent.altKey;
       const bounds = this.calculateResizedBounds(
         handle,
         deltaX,
@@ -580,6 +639,7 @@ export class RacedayAbsoluteWidgetComponent
       this.widget().y = bounds.y;
       this.widget().width = bounds.width;
       this.widget().height = bounds.height;
+      this.showReadout();
 
       this.cdr.detectChanges();
     };
@@ -588,6 +648,7 @@ export class RacedayAbsoluteWidgetComponent
       this.isResizing = false;
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      this.clearSnapOverlay();
       if (this.parentComponent().gridSession?.()) {
         const session = this.parentComponent().gridSession();
         if (
@@ -649,24 +710,13 @@ export class RacedayAbsoluteWidgetComponent
         newX = initialWidgetX;
       }
 
-      let snapped = {
-        x: newX,
-        y: newY,
-        w: w,
-        h: h,
-      };
-      if (this.parentComponent().snapToEdges) {
-        snapped = this.parentComponent().snapToEdges(
-          newX,
-          newY,
-          w,
-          h,
-          this.widget().id,
-          "all",
-          baseWidth,
-          baseHeight,
-        );
-      }
+      this.snapOff = moveEvent.altKey;
+      const snapped = this.snap(
+        { x: newX, y: newY, w, h },
+        "all",
+        baseWidth,
+        baseHeight,
+      );
 
       this.widget().x = this.isWidthAutoCalculated
         ? initialWidgetX
@@ -674,12 +724,14 @@ export class RacedayAbsoluteWidgetComponent
       this.widget().y = this.isHeightAutoCalculated
         ? initialWidgetY
         : Math.max(0, Math.min(baseHeight - h, snapped.y));
+      this.showReadout();
       this.cdr.detectChanges();
     };
 
     const onPointerUp = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      this.clearSnapOverlay();
       if (this.parentComponent().gridSession?.()) {
         const session = this.parentComponent().gridSession();
         if (

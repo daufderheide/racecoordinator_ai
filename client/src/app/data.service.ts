@@ -39,6 +39,7 @@ import {
   ISegment,
   IStandingsUpdate,
   IStartRaceResponse,
+  ICarModel,
   ITeamModel,
   ModifyHeatsResponse,
   RaceFlag,
@@ -538,6 +539,18 @@ export class DataService {
   }
   deleteTeam(id: string): Observable<any> {
     return this.crudHelper.deleteTeam(id);
+  }
+  getCars(): Observable<ICarModel[]> {
+    return this.crudHelper.getCars();
+  }
+  createCar(car: any): Observable<any> {
+    return this.crudHelper.createCar(car);
+  }
+  updateCar(id: string, car: any): Observable<any> {
+    return this.crudHelper.updateCar(id, car);
+  }
+  deleteCar(id: string): Observable<any> {
+    return this.crudHelper.deleteCar(id);
   }
   getCustomUIs(): Observable<any[]> {
     return this.crudHelper.getCustomUIs();

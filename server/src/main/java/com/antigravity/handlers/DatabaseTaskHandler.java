@@ -69,6 +69,7 @@ public class DatabaseTaskHandler {
     this.raceHeatTaskHandler = new RaceHeatTaskHandler(databaseContext, app);
     new DriverImportTaskHandler(databaseContext, driverRepository, app);
     new DriverLabelTaskHandler(databaseContext, driverRepository, teamRepository, app);
+    new CarTaskHandler(databaseContext, app);
 
     // Driver Endpoints
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);

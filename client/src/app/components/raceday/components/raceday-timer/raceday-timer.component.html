@@ -1,6 +1,7 @@
 <div
   #timerPanel
   class="panel-card timer-panel"
+  [class.no-inner-shadow]="!innerShadow()"
   [style.background-color]="effectiveBackgroundColor()"
 >
   <div class="timer-wrapper">
@@ -35,6 +36,7 @@
     <div
       #timerText
       class="timer-text"
+      [class.no-glow]="!digitGlow()"
       [class.timer-warmup]="displayIsWarmup() || displayIsCooldown()"
       [class.timer-auto]="
         displayAutoStatusLabel() &&

@@ -70,6 +70,15 @@
   text-shadow: 0 0 24px rgba(255, 170, 0, 0.5);
 }
 
+/* Glow and inner shadow switched off in the Timer settings (#1212). */
+.timer-panel .timer-text.no-glow {
+  text-shadow: none;
+}
+
+.timer-panel.no-inner-shadow {
+  box-shadow: none;
+}
+
 .status-label {
   font-family: var(--app-font-family);
   font-size: 16px;

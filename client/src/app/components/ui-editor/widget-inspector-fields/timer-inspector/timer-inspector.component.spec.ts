@@ -262,4 +262,25 @@ describe("TimerInspectorComponent", () => {
       expect(component.settings().statusUppercase).toBeFalse();
     });
   });
+
+  describe("glow and inner shadow (#1212)", () => {
+    const el = (sel: string) =>
+      fixture.nativeElement.querySelector(sel) as HTMLInputElement | null;
+
+    it("shows both ticked by default", async () => {
+      await fixture.whenStable();
+      expect(el("#timer-digit-glow")?.checked).toBeTrue();
+      expect(el("#timer-inner-shadow")?.checked).toBeTrue();
+    });
+
+    it("stores both when unticked", async () => {
+      await fixture.whenStable();
+      el("#timer-digit-glow")!.click();
+      el("#timer-inner-shadow")!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(component.settings().timerGlow).toBeFalse();
+      expect(component.settings().timerInnerShadow).toBeFalse();
+    });
+  });
 });
