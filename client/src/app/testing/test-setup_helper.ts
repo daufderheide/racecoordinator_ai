@@ -15,9 +15,9 @@ import {
 } from "@app/proto/antigravity";
 
 import {} from "./data/assets_data";
+import { MOCK_CARS } from "./data/cars_data";
 import { MOCK_DRIVER_LABELS, MOCK_DRIVERS } from "./data/drivers_data";
 import { MOCK_RACES } from "./data/races_data";
-import { MOCK_CARS } from "./data/cars_data";
 import { MOCK_TEAMS } from "./data/teams_data";
 import { MOCK_FACTORY_SETTINGS, MOCK_TRACKS } from "./data/tracks_data";
 

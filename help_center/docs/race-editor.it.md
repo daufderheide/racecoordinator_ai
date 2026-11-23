@@ -377,3 +377,12 @@ Il pannello **Crash and Learn (CNL)** configura regole e penalità per uscite di
 - **Penalità giri per crash**: Giri dedotti dal punteggio di manche per ciascun crash.
 - **Penalità tempo per crash (secondi)**: Tempo di penalità in secondi aggiunto al tempo totale della manche.
 - **Percentuale punteggio per squalifica**: Percentuale del punteggio accreditata al pilota squalificato (predefinito `100%`). I piloti squalificati sono classificati dietro ai non squalificati.
+
+---
+
+## Esportazione e importazione configurazione gara {: #race-config-export-import }
+
+La barra degli strumenti dell'Editor gare consente di esportare e importare configurazioni:
+
+- **Esporta configurazione**: Esporta il modello di configurazione attuale (regole di punteggio, rotazioni, simulazioni carburante, opzioni di partenza e tabelle punti campionato) in un file `.rccfg.json`.
+- **Importa configurazione**: Consente di selezionare un file `.rccfg.json`. Se esiste già una gara con lo stesso nome, una finestra permette di **Sovrascrivere** il modello esistente o importarlo con un suffisso rinominato automaticamente (`<nome>_1`). Da notare che i pacchetti di gara completati (`.rcpack`) importati dall'Editor stagioni o dalla Cronologia gare importano e riconciliano automaticamente anche la rispettiva configurazione di gara con le medesime opzioni di risoluzione dei conflitti (**Rinomina automaticamente**, **Sovrascrivi** o **Usa esistente**).

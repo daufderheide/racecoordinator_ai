@@ -29,8 +29,8 @@ import {
   InspectorSchema,
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 import { InspectorShellComponent } from "@app/components/ui-editor/inspector-kit/inspector-shell.component";
-import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
 import { customWidgetSchemaFor } from "@app/components/ui-editor/inspector-schemas/custom-widget-schema";
+import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
 import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -75,9 +75,9 @@ import {
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
 import {
+  getWidgetTypeLabelKey,
   handleDeleteCurrentLayout,
   handleDuplicateCurrentLayout,
-  getWidgetTypeLabelKey,
   handleStartNewLayout,
   loadLayoutZoomFromStorage,
   parseLayoutConfig,

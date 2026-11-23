@@ -67,3 +67,14 @@ Het overzichtsgedeelte biedt kaarten voor elke race die in het seizoen is opgeno
 - **Uitklapbare Racekaarten**: Klik op een racekaart om de resultaten per coureur met positie- en bonuspunten te bekijken.
 - **Races Verwijderen**: Klik in de bewerkingsmodus op het prullenbakpictogram (<span class="material-icons">delete</span>) om een race uit het seizoen te verwijderen.
 
+---
+
+## Racepakketten van andere computers opnemen (`.rcpack`) {: #race-package-ingestion }
+
+Om resultaten van races op andere computers samen te voegen in uw kampioenschapsseizoen:
+
+- **Voltooide races exporteren**: Open op de broncomputer het dialoogvenster **Racegeschiedenis** in de werkbalk en klik bij de voltooide race op **Pakket exporteren** (<span class="material-icons">file_download</span>). Hiermee maakt u een `.rcpack`-archief aan met geschiedenis, raceconfiguratie, rondetijden, berekende seizoenspunten en coureursprofielen.
+- **Directe seizoensopname in één stap**: Open op de doelcomputer de Seizoenseditor, schakel over naar de bewerkingsmodus en klik op **+ Race toevoegen**. Klik in het dialoogvenster op **Racepakket importeren...** (<span class="material-icons">file_upload</span>) en selecteer het `.rcpack`-bestand.
+- **Raceconfiguratie en coureurresolutie**: Een interactief dialoogvenster koppelt coureurs en lost eventuele raceconfiguratieconflicten op (**Automatisch hernoemen**, **Overschrijven** of **Bestaande gebruiken**).
+- **Automatische integratie**: De raceconfiguratie, resultaten en punten worden in de lokale database opgeslagen en aan het seizoen toegevoegd, waarbij stand, schrapresultaten en tiebreakers direct opnieuw worden berekend.
+

@@ -381,3 +381,12 @@ La section **Crash and Learn (CNL)** configure les règles et pénalités relati
 - **Pénalité de tours par crash**: Nombre de tours déduits du score de la manche pour chaque crash.
 - **Pénalité de temps par crash (secondes)**: Temps de pénalité en secondes ajouté au temps total de la manche.
 - **Pourcentage du score en disqualification**: Pourcentage du score attribué au pilote disqualifié (par défaut `100%`). Les pilotes disqualifiés sont classés derrière les pilotes non disqualifiés.
+
+---
+
+## Exportation et importation de configuration de course {: #race-config-export-import }
+
+La barre d'outils de l'éditeur de course permet d'exporter et d'importer des configurations :
+
+- **Exporter la configuration**: Exporte le modèle de configuration actuel (règles de score, formats de rotation, simulations de carburant, options de départ et barèmes de points) vers un fichier `.rccfg.json`.
+- **Importer une configuration**: Permet de sélectionner un fichier `.rccfg.json`. Si une course avec le même nom existe déjà, une boîte de dialogue vous permet d'**Écraser** le modèle existant ou de l'importer avec un suffixe de renommage automatique (`<nom>_1`). Notez que les packages de course terminés (`.rcpack`) importés depuis l'Éditeur de saison ou l'Historique des courses importent et réconcilient également automatiquement leur configuration de course avec les mêmes options de résolution de conflit (**Renommer automatiquement**, **Écraser** ou **Utiliser existant**).

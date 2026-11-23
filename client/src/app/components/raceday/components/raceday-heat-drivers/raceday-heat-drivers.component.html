@@ -20,6 +20,7 @@
 >
   <div
     [ngClass]="type() === 'on-deck' ? 'on-deck-title' : 'next-heat-title'"
+    [class.no-title-glow]="!titleGlow()"
     [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
     [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"

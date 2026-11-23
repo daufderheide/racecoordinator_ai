@@ -83,6 +83,7 @@ describe("HeatConverter", () => {
           adjustedLapCount: 10.5,
           segments: [0.1, 0.2, 0.3],
           isRefueling: true,
+          canRefuel: true,
           currentLocation: 100,
           points: 18.5,
         } as any,
@@ -103,6 +104,7 @@ describe("HeatConverter", () => {
     expect(driverData.adjustedLapCount).toBe(10.5);
     expect(driverData.currentLapSegments).toEqual([0.1, 0.2, 0.3]);
     expect(driverData.isRefueling).toBe(true);
+    expect(driverData.canRefuel).toBe(true);
     expect(driverData.currentLocation).toBe(100);
     expect(driverData.points).toBe(18.5);
   });

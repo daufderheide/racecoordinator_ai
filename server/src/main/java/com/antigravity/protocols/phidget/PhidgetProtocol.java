@@ -607,13 +607,13 @@ public class PhidgetProtocol extends DefaultProtocol {
     int behavior = getDigitalOutputBehavior(channel);
     if (behavior == PinBehavior.BEHAVIOR_RELAY_VALUE) {
       boolean power = lastMainPower != null ? lastMainPower : false;
-      boolean state = isNormallyClosedRelays() ? power : !power;
+      boolean state = power != isNormallyClosedRelays();
       setOutputChannelPhysicalState(channel, state);
     } else if (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 64) {
       int lane = behavior - PinBehavior.BEHAVIOR_RELAY_BASE_VALUE;
       boolean power = lastLanePower.getOrDefault(lane, false);
-      boolean state = isNormallyClosedRelays() ? power : !power;
+      boolean state = power != isNormallyClosedRelays();
       setOutputChannelPhysicalState(channel, state);
     } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE) {
       boolean state = isActiveLowAnalogLeds() ? !isGreenFlagOn : isGreenFlagOn;
@@ -639,7 +639,7 @@ public class PhidgetProtocol extends DefaultProtocol {
     try {
       if (hasMainRelay()) {
         boolean power = lastMainPower != null ? lastMainPower : false;
-        boolean state = isNormallyClosedRelays() ? power : !power;
+        boolean state = power != isNormallyClosedRelays();
         setMainRelayPhysicalState(state);
       }
     } catch (PhidgetException e) {
@@ -648,7 +648,7 @@ public class PhidgetProtocol extends DefaultProtocol {
     for (Integer lane : relayOutputs.keySet()) {
       try {
         boolean power = lastLanePower.getOrDefault(lane, false);
-        boolean state = isNormallyClosedRelays() ? power : !power;
+        boolean state = power != isNormallyClosedRelays();
         setLaneRelayPhysicalState(lane, state);
       } catch (PhidgetException e) {
         logger.error("Error setting lane relay state for lane {} during syncPower", lane + 1, e);
@@ -935,13 +935,13 @@ public class PhidgetProtocol extends DefaultProtocol {
       if (isOutputChannelAttached(pin)) {
         int behavior = getDigitalOutputBehavior(pin);
         if (behavior == PinBehavior.BEHAVIOR_RELAY_VALUE) {
-          boolean state = isNormallyClosedRelays() ? isHigh : !isHigh;
+          boolean state = isHigh != isNormallyClosedRelays();
           setOutputChannelPhysicalState(pin, state);
           lastMainPower = isHigh;
         } else if (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE_VALUE
             && behavior < PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 64) {
           int lane = behavior - PinBehavior.BEHAVIOR_RELAY_BASE_VALUE;
-          boolean state = isNormallyClosedRelays() ? isHigh : !isHigh;
+          boolean state = isHigh != isNormallyClosedRelays();
           setOutputChannelPhysicalState(pin, state);
           lastLanePower.put(lane, isHigh);
         } else if (isAnalogLedBehavior(behavior)) {
@@ -1078,7 +1078,7 @@ public class PhidgetProtocol extends DefaultProtocol {
     this.lastMainPower = on;
     try {
       if (isMainRelayAttached()) {
-        boolean state = isNormallyClosedRelays() ? on : !on;
+        boolean state = on != isNormallyClosedRelays();
         setMainRelayPhysicalState(state);
       }
     } catch (PhidgetException e) {
@@ -1092,7 +1092,7 @@ public class PhidgetProtocol extends DefaultProtocol {
     this.lastLanePower.put(lane, on);
     try {
       if (isLaneRelayAttached(lane)) {
-        boolean state = isNormallyClosedRelays() ? on : !on;
+        boolean state = on != isNormallyClosedRelays();
         setLaneRelayPhysicalState(lane, state);
       }
     } catch (PhidgetException e) {
