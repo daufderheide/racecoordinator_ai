@@ -127,4 +127,39 @@ describe("UpcomingInspectorComponent", () => {
     expect(component.settings().alternatingRowContrast).toBe(45);
     expect(changeSpy).toHaveBeenCalled();
   });
+
+  describe("title and row style options (#1213)", () => {
+    const box = (id: string) =>
+      fixture.nativeElement.querySelector(`#${id}`) as HTMLInputElement;
+
+    async function toggle(id: string) {
+      box(id).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+
+    it("shows the title glow ticked by default", async () => {
+      await fixture.whenStable();
+      expect(box("upcoming-title-glow").checked).toBeTrue();
+    });
+
+    it("saves the title glow when unticked", async () => {
+      await fixture.whenStable();
+      await toggle("upcoming-title-glow");
+      expect(component.settings().titleGlow).toBeFalse();
+      expect(changeSpy).toHaveBeenCalled();
+    });
+
+    it("offers row shading for Next Heat only", async () => {
+      await fixture.whenStable();
+      expect(box("upcoming-row-shading").checked).toBeTrue();
+      await toggle("upcoming-row-shading");
+      expect(component.settings().rowShading).toBeFalse();
+
+      fixture.componentRef.setInput("widgetType", "on-deck");
+      fixture.detectChanges();
+      expect(box("upcoming-row-shading")).toBeNull();
+      expect(box("upcoming-title-glow")).not.toBeNull();
+    });
+  });
 });
