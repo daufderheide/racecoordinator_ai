@@ -71,9 +71,9 @@ import {
   syncLayoutSettingsWithDefaults,
 } from "./layout-editor.helper";
 import {
+  getWidgetTypeLabelKey,
   handleDeleteCurrentLayout,
   handleDuplicateCurrentLayout,
-  getWidgetTypeLabelKey,
   handleStartNewLayout,
   loadLayoutZoomFromStorage,
   parseLayoutConfig,
