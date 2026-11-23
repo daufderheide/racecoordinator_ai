@@ -1,0 +1,541 @@
+@for (vf of folders(); track vf.folder.id) {
+  <section
+    class="kit-folder"
+    [class.open]="vf.open"
+    [attr.data-folder]="vf.folder.id"
+  >
+    <button
+      type="button"
+      class="kit-folder-head"
+      [attr.aria-expanded]="vf.open"
+      [attr.id]="'kit-folder-' + vf.folder.id"
+      (click)="toggleFolder(vf.folder.id)"
+    >
+      <span class="kit-folder-icon"
+        ><span class="material-icons">{{ meta[vf.folder.id].icon }}</span></span
+      >
+      <span class="kit-folder-titles">
+        <span class="kit-folder-title">{{
+          meta[vf.folder.id].labelKey | translate
+        }}</span>
+        @if (!vf.open) {
+          <span class="kit-folder-summary">{{ summary(vf.folder) }}</span>
+        }
+      </span>
+      @if (vf.changed > 0) {
+        <span
+          class="kit-badge"
+          [title]="'UE_KIT_CHANGED_COUNT' | translate: { count: vf.changed }"
+          >{{ vf.changed }}</span
+        >
+      } @else {
+        <span></span>
+      }
+      <span class="material-icons kit-chev">expand_more</span>
+    </button>
+
+    @if (vf.open) {
+      <div class="kit-folder-body">
+        @for (group of vf.groups; track $index) {
+          <div class="kit-group">
+            @if (group.titleKey && vf.folder.groups.length > 1) {
+              <div class="kit-group-title">
+                {{ group.titleKey | translate }}
+              </div>
+            }
+            @for (field of group.fields; track field.id) {
+              <!-- shared label -->
+              <ng-template #label>
+                <div class="kit-label">
+                  @if (isChanged(field)) {
+                    <span
+                      class="kit-dot"
+                      [title]="'UE_KIT_CHANGED' | translate"
+                    ></span>
+                  }
+                  <span
+                    class="kit-label-text"
+                    [title]="field.labelKey | translate"
+                  >
+                    @for (p of labelParts(field.labelKey); track $index) {
+                      @if (p.hit) {
+                        <mark>{{ p.text }}</mark>
+                      } @else {
+                        {{ p.text }}
+                      }
+                    }
+                  </span>
+                  @if (field.helpKey) {
+                    <span
+                      class="material-icons kit-info"
+                      [title]="field.helpKey | translate"
+                      >info</span
+                    >
+                  }
+                  @if (isChanged(field)) {
+                    <button
+                      type="button"
+                      class="kit-reset"
+                      [attr.data-reset]="field.id"
+                      [title]="'UE_KIT_RESET_SETTING' | translate"
+                      (click)="resetOne(field)"
+                    >
+                      <span class="material-icons">restart_alt</span>
+                    </button>
+                  }
+                </div>
+              </ng-template>
+
+              @switch (field.type) {
+                @case ("switch") {
+                  <div
+                    class="kit-row kit-row-switch"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <button
+                        type="button"
+                        class="kit-switch"
+                        role="switch"
+                        [attr.id]="'kit-' + field.id"
+                        [attr.aria-checked]="value(field) !== false"
+                        [attr.aria-label]="field.labelKey | translate"
+                        (click)="
+                          toggle($any(field).key, value(field) !== false)
+                        "
+                      ></button>
+                    </div>
+                  </div>
+                }
+                @case ("segment") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <div
+                        class="kit-seg"
+                        role="radiogroup"
+                        [attr.aria-label]="field.labelKey | translate"
+                      >
+                        @for (o of $any(field).options; track o.value) {
+                          <button
+                            type="button"
+                            role="radio"
+                            [attr.aria-checked]="value(field) === o.value"
+                            [attr.aria-pressed]="value(field) === o.value"
+                            [title]="optionLabel(o)"
+                            (click)="set($any(field).key, o.value)"
+                          >
+                            @if (o.icon) {
+                              <span class="material-icons">{{ o.icon }}</span>
+                            } @else {
+                              {{ optionLabel(o) }}
+                            }
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+                @case ("select") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <select
+                        class="kit-select"
+                        [attr.id]="'kit-' + field.id"
+                        [attr.aria-label]="field.labelKey | translate"
+                        (change)="
+                          set(
+                            $any(field).key,
+                            $any(field).options[
+                              $any($event.target).selectedIndex
+                            ].value
+                          )
+                        "
+                      >
+                        @for (o of $any(field).options; track o.value) {
+                          <option [selected]="value(field) === o.value">
+                            {{ optionLabel(o) }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                }
+                @case ("stepper") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      @if ($any(field).icon) {
+                        <span class="material-icons kit-muted">{{
+                          $any(field).icon
+                        }}</span>
+                      }
+                      <app-kit-stepper
+                        [value]="value(field)"
+                        [min]="$any(field).min"
+                        [max]="$any(field).max"
+                        [step]="$any(field).step || 1"
+                        [unit]="$any(field).unit || ''"
+                        [inputId]="'kit-' + field.id"
+                        [ariaLabel]="field.labelKey | translate"
+                        (valueChange)="set($any(field).key, $event)"
+                      ></app-kit-stepper>
+                    </div>
+                  </div>
+                }
+                @case ("color") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <app-kit-color
+                        [value]="value(field)"
+                        [placeholder]="$any(field).placeholder || '#ffffff'"
+                        [inputId]="'kit-' + field.id"
+                        [ariaLabel]="field.labelKey | translate"
+                        (valueChange)="set($any(field).key, $event)"
+                      ></app-kit-color>
+                    </div>
+                  </div>
+                }
+                @case ("text") {
+                  <div
+                    class="kit-row kit-row-stack"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <input
+                        type="text"
+                        class="kit-input"
+                        [attr.id]="'kit-' + field.id"
+                        [attr.maxlength]="$any(field).maxLength || 60"
+                        [value]="value(field) || ''"
+                        [placeholder]="
+                          $any(field).placeholderKey
+                            ? ($any(field).placeholderKey | translate)
+                            : ''
+                        "
+                        [attr.aria-label]="field.labelKey | translate"
+                        (change)="
+                          set($any(field).key, $any($event.target).value)
+                        "
+                        autocomplete="off"
+                        data-dashlane-ignore="true"
+                        data-1p-ignore="true"
+                        data-lpignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                      />
+                    </div>
+                  </div>
+                }
+                @case ("tiles") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <div
+                        class="kit-tiles"
+                        role="radiogroup"
+                        [attr.aria-label]="field.labelKey | translate"
+                      >
+                        @for (o of $any(field).tiles; track o.value) {
+                          <button
+                            type="button"
+                            class="kit-tile"
+                            role="radio"
+                            [attr.aria-checked]="value(field) === o.value"
+                            [attr.aria-pressed]="value(field) === o.value"
+                            [title]="optionLabel(o)"
+                            (click)="set($any(field).key, o.value)"
+                          >
+                            <span
+                              class="kit-tile-demo"
+                              [ngStyle]="tileStyle(o.demo, o.value)"
+                            ></span>
+                            <span class="kit-tile-label">{{
+                              optionLabel(o)
+                            }}</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+                @case ("geometry") {
+                  <div
+                    class="kit-row"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <ng-container *ngTemplateOutlet="label"></ng-container>
+                    <div class="kit-ctrl">
+                      <div class="kit-xy">
+                        @for (i of [0, 1]; track i) {
+                          <label class="kit-xy-field">
+                            <b>{{
+                              $any(field).pair === "position"
+                                ? i === 0
+                                  ? "X"
+                                  : "Y"
+                                : i === 0
+                                  ? "W"
+                                  : "H"
+                            }}</b>
+                            <input
+                              type="number"
+                              [attr.id]="'kit-' + field.id + '-' + i"
+                              [value]="geometry(field, $any(i))"
+                              [disabled]="geometryDisabled(field, $any(i))"
+                              (change)="onGeometry(field, $any(i), $event)"
+                              (keydown.enter)="$any($event.target).blur()"
+                              autocomplete="off"
+                            />
+                          </label>
+                        }
+                        @if ($any(field).pair === "size") {
+                          <button
+                            type="button"
+                            class="kit-icon-btn"
+                            [attr.aria-pressed]="keepRatio"
+                            [title]="'UE_KIT_KEEP_RATIO' | translate"
+                            (click)="keepRatio = !keepRatio"
+                          >
+                            <span class="material-icons">{{
+                              keepRatio ? "link" : "link_off"
+                            }}</span>
+                          </button>
+                        } @else {
+                          <span class="kit-xy-spacer"></span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+                @case ("textPart") {
+                  <div
+                    class="kit-part"
+                    [class.hit]="isHit(field)"
+                    [attr.data-field]="field.id"
+                  >
+                    <button
+                      type="button"
+                      class="kit-part-head"
+                      [attr.aria-expanded]="isPartOpen($any(field))"
+                      (click)="togglePart($any(field))"
+                    >
+                      @if (isChanged(field)) {
+                        <span class="kit-dot"></span>
+                      }
+                      <span class="kit-part-names">
+                        <span class="kit-part-name">
+                          @for (p of labelParts(field.labelKey); track $index) {
+                            @if (p.hit) {
+                              <mark>{{ p.text }}</mark>
+                            } @else {
+                              {{ p.text }}
+                            }
+                          }
+                        </span>
+                        <span class="kit-part-meta">{{
+                          partMeta($any(field))
+                        }}</span>
+                      </span>
+                      <span
+                        class="kit-part-sample"
+                        [style.font-family]="
+                          partValue($any(field), 'font') || null
+                        "
+                        [style.color]="
+                          partValue($any(field), 'color') ||
+                          $any(field).defaultColor ||
+                          null
+                        "
+                        >{{ partSample($any(field)) }}</span
+                      >
+                      <span class="material-icons kit-muted">{{
+                        isPartOpen($any(field)) ? "expand_less" : "expand_more"
+                      }}</span>
+                    </button>
+                    @if (isPartOpen($any(field))) {
+                      <div class="kit-part-body">
+                        @if ($any(field).keys.font) {
+                          <div class="kit-row">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_FONT" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <select
+                                class="kit-select"
+                                [attr.id]="'kit-' + field.id + '-font'"
+                                (focus)="fontService.loadLocalFonts()"
+                                (change)="
+                                  setPart(
+                                    $any(field),
+                                    'font',
+                                    $any($event.target).value
+                                  )
+                                "
+                              >
+                                <option
+                                  value=""
+                                  [selected]="!partValue($any(field), 'font')"
+                                >
+                                  {{ "UE_KIT_THEME_FONT" | translate }}
+                                </option>
+                                @for (
+                                  font of fontService.availableFonts();
+                                  track font
+                                ) {
+                                  <option
+                                    [value]="font"
+                                    [selected]="
+                                      partValue($any(field), 'font') === font
+                                    "
+                                  >
+                                    {{ font }}
+                                  </option>
+                                }
+                              </select>
+                            </div>
+                          </div>
+                        }
+                        @if ($any(field).keys.size) {
+                          <div class="kit-row">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_SIZE" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <app-kit-stepper
+                                [value]="partValue($any(field), 'size')"
+                                [min]="$any(field).sizeMin ?? 6"
+                                [max]="$any(field).sizeMax ?? 200"
+                                unit="px"
+                                [inputId]="'kit-' + field.id + '-size'"
+                                [ariaLabel]="'UE_KIT_SIZE' | translate"
+                                (valueChange)="
+                                  setPart($any(field), 'size', $event)
+                                "
+                              ></app-kit-stepper>
+                            </div>
+                          </div>
+                        }
+                        @if ($any(field).keys.color) {
+                          <div class="kit-row">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_COLOR" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <app-kit-color
+                                [value]="partValue($any(field), 'color')"
+                                [placeholder]="
+                                  $any(field).defaultColor || '#ffffff'
+                                "
+                                [inputId]="'kit-' + field.id + '-color'"
+                                [ariaLabel]="'UE_KIT_COLOR' | translate"
+                                (valueChange)="
+                                  setPart($any(field), 'color', $event)
+                                "
+                              ></app-kit-color>
+                            </div>
+                          </div>
+                        }
+                        @if ($any(field).keys.align) {
+                          <div class="kit-row">
+                            <div class="kit-label">
+                              <span class="kit-label-text">{{
+                                "UE_KIT_ALIGN" | translate
+                              }}</span>
+                            </div>
+                            <div class="kit-ctrl">
+                              <div class="kit-seg">
+                                @for (
+                                  a of ["left", "center", "right"];
+                                  track a
+                                ) {
+                                  <button
+                                    type="button"
+                                    [attr.aria-pressed]="
+                                      partValue($any(field), 'align') === a
+                                    "
+                                    (click)="setPart($any(field), 'align', a)"
+                                  >
+                                    <span class="material-icons"
+                                      >format_align_{{ a }}</span
+                                    >
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                        }
+                        @if (isChanged(field)) {
+                          <button
+                            type="button"
+                            class="kit-link kit-part-reset"
+                            [attr.data-reset]="field.id"
+                            (click)="resetOne(field)"
+                          >
+                            <span class="material-icons">restart_alt</span>
+                            {{
+                              "UE_KIT_RESET_PART"
+                                | translate
+                                  : { name: (field.labelKey | translate) }
+                            }}
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            }
+          </div>
+        }
+        @if (vf.changed > 0 && !query().trim() && !onlyChanged()) {
+          <button
+            type="button"
+            class="kit-link kit-folder-reset"
+            [attr.data-folder-reset]="vf.folder.id"
+            (click)="resetFolder(vf.folder)"
+          >
+            <span class="material-icons">restart_alt</span>
+            {{
+              "UE_KIT_RESET_FOLDER"
+                | translate: { name: (meta[vf.folder.id].labelKey | translate) }
+            }}
+          </button>
+        }
+      </div>
+    }
+  </section>
+}

@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
-
-import { TimerInspectorHarnessE2e } from "./testing/timer-inspector.harness.e2e";
 
 test.describe("Timer Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -75,33 +74,16 @@ test.describe("Timer Inspector Visuals", () => {
       .first();
     await timerWidget.dispatchEvent("pointerdown");
 
-    // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
+    // The redesigned panel: open Text, then the Time part, and change its size
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.setPartSize("time", 120);
+    await kit.settle('[data-folder="text"]');
 
-    // Verify inspector contains timer-specific fields
-    const inspectorFields = page.locator("app-timer-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const harness = new TimerInspectorHarnessE2e(inspectorFields);
-    // Interact with options to show they work and are displayed properly
-    await harness.setTimeFontSize(120);
-
-    // Blur any active element, clear hover, and scroll inspector panel so timer fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-timer-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    await expect(kit.panel).toHaveScreenshot("timer-inspector-options.png", {
+      animations: "disabled",
     });
-    await page.mouse.move(0, 0);
-
-    // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
-      "timer-inspector-options.png",
-      {
-        animations: "disabled",
-      },
-    );
   });
 
   test("should display the status text options (#1197)", async ({ page }) => {
@@ -116,29 +98,18 @@ test.describe("Timer Inspector Visuals", () => {
       .filter({ has: page.locator("app-raceday-timer") })
       .first()
       .dispatchEvent("pointerdown");
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    const text = page.locator("#timer-auto-advancing-text");
-    await text.fill("Next heat in a moment");
-    await page.locator("#timer-status-uppercase").uncheck();
-    await expect(page.locator("#timer-status-preview")).toHaveText(
-      "Next heat in a moment",
+    // Status text lives in the Content folder (open by default)
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.fillText("autoAdvancingText", "Next heat in a moment");
+    await kit.toggle("statusUppercase");
+    await expect(page.locator("#kit-statusUppercase")).toHaveAttribute(
+      "aria-checked",
+      "false",
     );
+    await kit.settle('[data-field="showStatusText"]');
 
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      document
-        .querySelector("#timer-show-status-text")
-        ?.closest(".inspector-section")
-        ?.previousElementSibling?.scrollIntoView({
-          block: "start",
-          inline: "nearest",
-        });
-    });
-    await page.mouse.move(0, 0);
-
-    await expect(inspectorPanel).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "timer-inspector-status-text.png",
       { animations: "disabled" },
     );

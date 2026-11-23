@@ -1,0 +1,183 @@
+<div
+  id="help-widget-inspector"
+  class="widget-inspector-panel kit-panel"
+  [attr.data-panel-theme]="theme()"
+>
+  <div class="kit-head">
+    <div class="kit-head-top">
+      <h2 class="kit-head-title">{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+      <button
+        type="button"
+        class="kit-icon-btn"
+        id="kit-theme-toggle"
+        [attr.aria-pressed]="theme() === 'dark'"
+        [title]="
+          (theme() === 'dark' ? 'UE_KIT_THEME_YELLOW' : 'UE_KIT_THEME_DARK')
+            | translate
+        "
+        (click)="toggleTheme()"
+      >
+        <span class="material-icons">{{
+          theme() === "dark" ? "light_mode" : "dark_mode"
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="kit-icon-btn kit-danger inspector-delete-btn"
+        [title]="'UE_BTN_DELETE_WIDGET' | translate"
+        (click)="deleteWidget.emit()"
+      >
+        <span class="material-icons">delete</span>
+      </button>
+    </div>
+    <div class="kit-head-widget">
+      <span class="kit-head-icon"
+        ><span class="material-icons">{{
+          schema()?.icon || "widgets"
+        }}</span></span
+      >
+      <div class="kit-head-name">
+        <span class="inspector-widget-subtitle">{{ displayName() }}</span>
+        @if (typeLabelKey()) {
+          <small>{{ typeLabelKey() | translate }}</small>
+        }
+      </div>
+      @if (canNavigate()) {
+        <div class="kit-head-nav">
+          <button
+            type="button"
+            class="kit-icon-btn"
+            id="kit-prev-widget"
+            [title]="'UE_KIT_PREVIOUS_WIDGET' | translate"
+            (click)="previous.emit()"
+          >
+            <span class="material-icons">chevron_left</span>
+          </button>
+          <button
+            type="button"
+            class="kit-icon-btn"
+            id="kit-next-widget"
+            [title]="'UE_KIT_NEXT_WIDGET' | translate"
+            (click)="next.emit()"
+          >
+            <span class="material-icons">chevron_right</span>
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (schema()) {
+    <div class="kit-tools">
+      <label class="kit-search">
+        <span class="material-icons">search</span>
+        <input
+          #search
+          type="text"
+          id="kit-search"
+          [placeholder]="'UE_KIT_SEARCH_PLACEHOLDER' | translate"
+          [attr.aria-label]="'UE_KIT_SEARCH_PLACEHOLDER' | translate"
+          (input)="onSearch($any($event.target).value)"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+        />
+        @if (query()) {
+          <button
+            type="button"
+            class="kit-icon-btn kit-small"
+            [title]="'UE_KIT_CLEAR_SEARCH' | translate"
+            (click)="clearSearch()"
+          >
+            <span class="material-icons">close</span>
+          </button>
+        } @else {
+          <kbd>/</kbd>
+        }
+      </label>
+      <button
+        type="button"
+        class="kit-chip"
+        id="kit-only-changed"
+        [attr.aria-pressed]="onlyChanged()"
+        [title]="'UE_KIT_ONLY_CHANGED_HINT' | translate"
+        (click)="onlyChanged.set(!onlyChanged())"
+      >
+        {{ "UE_KIT_ONLY_CHANGED" | translate }}
+        @if (changedCount() > 0) {
+          <span class="kit-chip-count">{{ changedCount() }}</span>
+        }
+      </button>
+    </div>
+  }
+
+  <div class="kit-body inspector-body">
+    @if (schema(); as s) {
+      <app-inspector-form
+        #form
+        [schema]="s"
+        [settings]="widget().customSettings"
+        [widget]="widget()"
+        [query]="query()"
+        [onlyChanged]="onlyChanged()"
+        [widthLocked]="widthLocked()"
+        [heightLocked]="heightLocked()"
+        (settingsChange)="widgetChange.emit(widget())"
+        (geometryChange)="geometryChange.emit($event)"
+        (reset)="onReset($event)"
+      ></app-inspector-form>
+      @if ((query() || onlyChanged()) && !form.hasResults()) {
+        <div class="kit-empty">
+          {{
+            query()
+              ? ("UE_KIT_NO_MATCH" | translate: { query: query() })
+              : ("UE_KIT_NOTHING_CHANGED" | translate)
+          }}
+        </div>
+      }
+    } @else {
+      <!-- Not moved to the new form yet: the existing settings, unchanged. -->
+      <section
+        class="kit-folder kit-folder-legacy"
+        [class.open]="allSettingsOpen()"
+      >
+        <button
+          type="button"
+          class="kit-folder-head"
+          [attr.aria-expanded]="allSettingsOpen()"
+          (click)="allSettingsOpen.set(!allSettingsOpen())"
+        >
+          <span class="kit-folder-icon"
+            ><span class="material-icons">tune</span></span
+          >
+          <span class="kit-folder-titles">
+            <span class="kit-folder-title">{{
+              "UE_KIT_FOLDER_ALL" | translate
+            }}</span>
+          </span>
+          <span></span>
+          <span class="material-icons kit-chev">expand_more</span>
+        </button>
+        @if (allSettingsOpen()) {
+          <div class="kit-folder-body kit-legacy-body">
+            <ng-content></ng-content>
+          </div>
+        }
+      </section>
+    }
+  </div>
+
+  @if (toast(); as t) {
+    <div class="kit-toast" role="status">
+      <span>{{ t.message }}</span>
+      @if (t.undo) {
+        <button type="button" class="kit-toast-undo" (click)="onUndo()">
+          {{ "UE_KIT_UNDO" | translate }}
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
-
-import { RecordsInspectorHarnessE2e } from "./testing/records-inspector.harness.e2e";
 
 test.describe("Records Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -78,33 +77,16 @@ test.describe("Records Inspector Visuals", () => {
       .first();
     await recordsWidget.dispatchEvent("pointerdown");
 
-    // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
+    // The redesigned panel: open Text and change the Header and Value sizes
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.setPartSize("header", 22);
+    await kit.setPartSize("value", 26);
+    await kit.settle('[data-folder="text"]');
 
-    // Verify inspector contains records-specific fields
-    const inspectorFields = page.locator("app-records-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const harness = new RecordsInspectorHarnessE2e(inspectorFields);
-    // Interact with options to show they work and are displayed properly
-    await harness.setHeaderFontSize(22);
-    await harness.setValueFontSize(26);
-
-    // Blur any active element and scroll so records inspector fields are at top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-records-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
+    await expect(kit.panel).toHaveScreenshot("records-inspector-options.png", {
+      animations: "disabled",
     });
-    await page.mouse.move(0, 0);
-
-    // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
-      "records-inspector-options.png",
-      {
-        animations: "disabled",
-      },
-    );
   });
 });
