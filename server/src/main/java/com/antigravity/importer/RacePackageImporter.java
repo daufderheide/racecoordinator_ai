@@ -237,6 +237,7 @@ public class RacePackageImporter {
     if (request == null) {
       throw new IllegalArgumentException("Commit request cannot be null");
     }
+    validateUniqueLinkTargets(request.getDriverResolutions());
 
     byte[] zipBytes = resolveZipBytes(optionalZipStream, request.getTempPackageToken());
     ExtractedContent content = extractZipContent(new ByteArrayInputStream(zipBytes));
@@ -352,6 +353,27 @@ public class RacePackageImporter {
         resolvedConfig != null ? resolvedConfig.getAction() : "SKIPPED",
         "Race package imported successfully",
         action);
+  }
+
+  /**
+   * Two drivers (or teams) from the package must never be linked to the same local driver (or
+   * team): the race would then list that local driver twice.
+   */
+  static void validateUniqueLinkTargets(List<DriverResolution> resolutions) {
+    if (resolutions == null) {
+      return;
+    }
+    Set<String> targets = new HashSet<>();
+    for (DriverResolution r : resolutions) {
+      if (r != null
+          && "LINK".equalsIgnoreCase(r.getAction())
+          && r.getTargetDriverId() != null
+          && !r.getTargetDriverId().trim().isEmpty()
+          && !targets.add(r.getTargetDriverId().trim())) {
+        throw new IllegalArgumentException(
+            "Two drivers in the race package are linked to the same local driver");
+      }
+    }
   }
 
   private String resolveUnifiedRaceName(

@@ -2,6 +2,7 @@
   display: block;
 }
 
+/* Backdrop & dialog */
 .rpm-backdrop {
   position: fixed;
   top: 0;
@@ -23,9 +24,11 @@
   color: #e2e8f0;
   border: 1px solid #334155;
   border-radius: 14px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.6),
+    0 8px 10px -6px rgba(0, 0, 0, 0.6);
   width: 90vw;
-  max-width: 960px;
+  max-width: 860px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -36,26 +39,24 @@
 /* Header */
 .rpm-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 14px;
   padding: 14px 20px;
   border-bottom: 1px solid #334155;
   background: #252a33;
   flex-shrink: 0;
 }
 
-.rpm-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
 .rpm-header-icon {
   font-size: 28px;
   color: #38bdf8;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.rpm-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .rpm-title {
@@ -66,24 +67,40 @@
   letter-spacing: -0.01em;
 }
 
-.rpm-subtitle {
-  margin: 2px 0 0;
+.rpm-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+
+.rpm-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.85rem;
   color: #94a3b8;
 }
 
+.rpm-meta-item .material-icons {
+  font-size: 17px;
+  color: #38bdf8;
+}
+
+.rpm-meta-name {
+  color: #f8fafc;
+  font-weight: 700;
+}
+
 .rpm-btn-close {
+  margin-left: auto;
+  align-self: flex-start;
   background: transparent;
   border: 1px solid transparent;
   color: #94a3b8;
   border-radius: 6px;
   width: 34px;
   height: 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 0;
 }
 
 .rpm-btn-close:hover {
@@ -91,80 +108,7 @@
   color: #ef4444;
 }
 
-/* Stepper */
-.rpm-stepper {
-  display: flex;
-  align-items: center;
-  padding: 10px 24px;
-  background: #181d26;
-  border-bottom: 1px solid #334155;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.rpm-step-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.rpm-step-item.active {
-  color: #38bdf8;
-  font-weight: 600;
-}
-
-.rpm-step-item.completed {
-  color: #94a3b8;
-}
-
-.rpm-step-item.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.step-num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #334155;
-  color: #cbd5e1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  transition: all 0.15s ease;
-}
-
-.rpm-step-item.active .step-num {
-  background: #0284c7;
-  color: #ffffff;
-}
-
-.rpm-step-item.completed .step-num {
-  background: #10b981;
-  color: #ffffff;
-}
-
-.step-divider {
-  flex: 1;
-  height: 2px;
-  background: #334155;
-  border-radius: 1px;
-  transition: all 0.15s ease;
-}
-
-.step-divider.completed {
-  background: #10b981;
-}
-
-/* Alert Banner */
+/* Error banner */
 .rpm-alert-banner {
   display: flex;
   align-items: center;
@@ -187,58 +131,136 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-/* Summary Card */
-.rpm-summary-card {
-  background: #181d26;
-  border: 1px solid #2d3748;
-  border-radius: 10px;
-  padding: 10px 16px;
-}
-
-.rpm-summary-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.rpm-race-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #f1f5f9;
-}
-
-.rpm-summary-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: 14px;
 }
 
-.rpm-meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: #94a3b8;
+/* Sections: cyan uppercase headings like AVAILABLE / RACING on Race Day Setup */
+.rpm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.rpm-meta-item .material-icons {
-  font-size: 18px;
+.rpm-section-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #38bdf8;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rpm-count {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rpm-card {
+  background: #181d26;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rpm-field {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.rpm-field > label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.rpm-text-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: #1e2430;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #f8fafc;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.rpm-text-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+}
+
+.rpm-text-input.locked {
+  color: #94a3b8;
+  background: #161b24;
+  cursor: default;
+}
+
+.rpm-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rpm-hint-strong {
+  color: #cbd5e1;
+}
+
+.rpm-season-target .material-icons {
+  font-size: 16px;
   color: #38bdf8;
 }
 
-/* Duplicate Callout */
+.rpm-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #f8fafc;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rpm-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #38bdf8;
+}
+
+/* Duplicate callout */
 .rpm-duplicate-callout {
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: 10px;
-  padding: 10px 16px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .rpm-callout-header {
@@ -266,324 +288,127 @@
   line-height: 1.35;
 }
 
-.rpm-dup-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* Choice tiles: every option visible, one click */
+.rpm-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.rpm-dup-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #cbd5e1;
-  white-space: nowrap;
+.rpm-choices.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.rpm-dup-select {
-  flex: 1;
-  max-width: 320px;
-}
-
-/* Skip Banner */
-.rpm-skip-banner {
+.rpm-choice {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  background: rgba(148, 163, 184, 0.1);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 10px;
-  padding: 14px 18px;
-  color: #cbd5e1;
-}
-
-.rpm-skip-banner .material-icons {
-  color: #94a3b8;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.rpm-skip-banner strong {
-  font-size: 0.95rem;
-  color: #f1f5f9;
-}
-
-.rpm-skip-banner p {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  color: #94a3b8;
-  line-height: 1.4;
-}
-
-/* Unified Race Name Card */
-.rpm-field-card {
-  background: #181d26;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #0f172a;
   border: 1px solid #334155;
-  border-radius: 10px;
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.rpm-field-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.rpm-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.rpm-field-icon {
-  font-size: 20px;
-  color: #38bdf8;
+.rpm-choice .material-icons {
+  color: #94a3b8;
 }
 
-.rpm-field-title {
+.rpm-choice b {
+  display: block;
+  color: #f8fafc;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #f1f5f9;
-  cursor: pointer;
 }
 
-.rpm-text-input {
-  width: 100%;
-  box-sizing: border-box;
-  background: #1e2430;
-  border: 1px solid #334155;
-  border-radius: 6px;
-  color: #f8fafc;
-  padding: 8px 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  outline: none;
-  transition: all 0.15s ease;
+.rpm-choice small {
+  color: #94a3b8;
+  font-size: 0.78rem;
 }
 
-.rpm-text-input:focus {
+.rpm-choice:hover {
+  border-color: #475569;
+}
+
+.rpm-choice.selected {
   border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
 }
 
-.rpm-field-desc {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* Included Race Configuration Card */
-.rpm-config-card {
-  background: rgba(56, 189, 248, 0.06);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  border-radius: 10px;
-  padding: 10px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.rpm-config-card.has-conflict {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.35);
-}
-
-.rpm-config-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.rpm-config-card-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.rpm-config-icon {
-  font-size: 24px;
+.rpm-choice.selected .material-icons {
   color: #38bdf8;
 }
 
-.rpm-config-card.has-conflict .rpm-config-icon {
-  color: #f59e0b;
+.rpm-choice:has(input:focus-visible) {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
 }
 
-.rpm-config-card-info {
+/* Drivers */
+.rpm-driver-summary {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rpm-config-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #94a3b8;
-}
-
-.rpm-config-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #f8fafc;
-}
-
-.rpm-config-badge {
-  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.rpm-config-badge.clean {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.rpm-config-badge.conflict {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.rpm-config-badge .material-icons {
-  font-size: 15px;
-}
-
-.rpm-config-body {
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.rpm-config-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.rpm-config-name-input {
-  flex: 1;
-  max-width: 320px;
-  background: #181d26;
-  border: 1px solid #475569;
-  border-radius: 6px;
-  color: #f8fafc;
-  font-size: 0.875rem;
-  padding: 7px 12px;
-  outline: none;
-  transition: all 0.15s ease;
-}
-
-.rpm-config-name-input:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
-}
-
-.rpm-config-note {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-  line-height: 1.35;
-}
-
-/* Season Section */
-.rpm-season-target-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: #6ee7b7;
-}
-
-.rpm-season-target-banner .material-icons {
-  font-size: 20px;
-  color: #10b981;
-}
-
-.rpm-season-picker-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #181d26;
-  border: 1px solid #2d3748;
-  padding: 12px 18px;
-  border-radius: 8px;
-}
-
-.rpm-season-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #cbd5e1;
+.rpm-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid;
   white-space: nowrap;
+  justify-self: start;
 }
 
-.rpm-season-select {
-  flex: 1;
-  max-width: 340px;
+.badge-exact {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* Drivers Status Summary */
-.rpm-drivers-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 18px;
-  border-radius: 10px;
+.badge-nick {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
-.rpm-drivers-summary.success {
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #6ee7b7;
+.badge-new {
+  background: rgba(148, 163, 184, 0.15);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
-.rpm-drivers-summary.warning {
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: #fcd34d;
-}
-
-.summary-icon {
-  font-size: 26px;
-  flex-shrink: 0;
-}
-
-.summary-body {
-  flex: 1;
-}
-
-.summary-body strong {
-  font-size: 0.95rem;
-  display: block;
-}
-
-.summary-body p {
-  margin: 3px 0 0;
-  font-size: 0.85rem;
-  opacity: 0.9;
+.badge-problem {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .btn-toggle-drivers {
+  margin-left: auto;
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(148, 163, 184, 0.3);
   color: #f1f5f9;
   padding: 6px 14px;
   border-radius: 6px;
   font-size: 0.825rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+}
+
+.btn-toggle-drivers .material-icons {
+  font-size: 17px;
 }
 
 .btn-toggle-drivers:hover {
@@ -591,193 +416,76 @@
   border-color: #38bdf8;
 }
 
-/* Section Header */
-.rpm-section-header {
-  margin-top: 2px;
-}
-
-.rpm-section-title-row {
+.rpm-driver-rows {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
 }
 
-.rpm-driver-count-badge {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 12px;
-}
-
-.rpm-section-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #f1f5f9;
-}
-
-.rpm-section-header p {
-  margin: 2px 0 0;
-  font-size: 0.825rem;
-  color: #94a3b8;
-}
-
-/* Table */
-.rpm-table-wrapper {
-  border: 1px solid #334155;
-  border-radius: 8px;
-  overflow-x: auto;
-  overflow-y: auto;
-  flex: 1 1 auto;
-  min-height: 220px;
-  max-height: 420px;
-  background: #181d26;
-  position: relative;
-}
-
-.rpm-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.rpm-table thead tr {
-  background: #252a33;
-  border-bottom: 1px solid #334155;
-}
-
-.rpm-table th {
+.rpm-driver-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 132px minmax(200px, 1.4fr);
+  gap: 12px;
+  align-items: center;
   padding: 8px 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #94a3b8;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  position: sticky;
-  top: 0;
-  background: #252a33;
-  z-index: 10;
-  box-shadow: 0 1px 0 #334155;
-}
-
-.rpm-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #283141;
-  vertical-align: middle;
-}
-
-.rpm-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.rpm-table tbody tr:hover {
-  background: rgba(56, 189, 248, 0.04);
-}
-
-.cell-driver-source {
-  width: 25%;
-}
-
-.driver-name-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.driver-title-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.rpm-team-icon {
-  font-size: 18px;
-  color: #38bdf8;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.driver-name {
-  font-weight: 600;
-  color: #f1f5f9;
-}
-
-.driver-nickname {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  font-style: italic;
-}
-
-.cell-status {
-  width: 18%;
-}
-
-.rpm-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.badge-exact {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.badge-nick {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.badge-new {
-  background: rgba(148, 163, 184, 0.15);
-  color: #cbd5e1;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-.cell-action {
-  width: 22%;
-}
-
-.rpm-action-select {
-  width: 100%;
-}
-
-.cell-resolution {
-  width: 35%;
-}
-
-.rpm-target-driver-select {
-  width: 100%;
-}
-
-.rpm-new-driver-input {
-  width: 100%;
-  box-sizing: border-box;
-  background: #1e2430;
+  background: rgba(15, 23, 42, 0.55);
   border: 1px solid #334155;
   border-radius: 6px;
-  color: #f8fafc;
-  padding: 7px 10px;
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.15s ease;
 }
 
-.rpm-new-driver-input:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+.rpm-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rpm-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #475569;
+  background: radial-gradient(circle at 35% 30%, #3b4b63, #0f172a);
+  display: grid;
+  place-items: center;
+  color: #38bdf8;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.rpm-avatar .material-icons {
+  font-size: 18px;
+}
+
+.rpm-who-text {
+  min-width: 0;
+}
+
+.rpm-who-text b {
+  display: block;
+  color: #f8fafc;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rpm-who-text small {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.rpm-target {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rpm-row-error {
+  color: #fca5a5;
+  font-size: 0.78rem;
 }
 
 /* Footer */
@@ -792,30 +500,33 @@
   flex-shrink: 0;
 }
 
-/* Custom Scrollbars */
-.rpm-body::-webkit-scrollbar,
-.rpm-table-wrapper::-webkit-scrollbar {
+.rpm-footer-note {
+  margin-right: auto;
+  font-size: 0.85rem;
+  color: #fca5a5;
+}
+
+/* Custom scrollbars */
+.rpm-body::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-.rpm-body::-webkit-scrollbar-track,
-.rpm-table-wrapper::-webkit-scrollbar-track {
+.rpm-body::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.4);
   border-radius: 4px;
 }
 
-.rpm-body::-webkit-scrollbar-thumb,
-.rpm-table-wrapper::-webkit-scrollbar-thumb {
+.rpm-body::-webkit-scrollbar-thumb {
   background: rgba(56, 189, 248, 0.4);
   border-radius: 4px;
 }
 
-.rpm-body::-webkit-scrollbar-thumb:hover,
-.rpm-table-wrapper::-webkit-scrollbar-thumb:hover {
+.rpm-body::-webkit-scrollbar-thumb:hover {
   background: rgba(56, 189, 248, 0.7);
 }
 
+/* Buttons: cyan uppercase like SELECT / START RACE */
 button {
   font-family: inherit;
   font-size: 0.925rem;
@@ -830,37 +541,70 @@ button {
   transition: all 0.15s ease;
 }
 
+.btn-secondary,
+.btn-primary {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
 .btn-secondary {
-  background: #334155;
+  background: transparent;
   color: #cbd5e1;
-  border: 1px solid #475569;
+  border: 1px solid #334155;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #475569;
+  border-color: #64748b;
   color: #f8fafc;
 }
 
 .btn-primary {
-  background: #0284c7;
-  color: #ffffff;
-  border: 1px solid #0369a1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background: #38bdf8;
+  color: #04223a;
+  border: 1px solid #38bdf8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0369a1;
+  background: #7dd3fc;
 }
 
 .btn-primary:disabled,
 .btn-secondary:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .spin-icon {
   animation: spin 1s linear infinite;
   display: inline-block;
+}
+
+@media (max-width: 700px) {
+  .rpm-field {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .rpm-choices,
+  .rpm-choices.three {
+    grid-template-columns: 1fr;
+  }
+
+  .rpm-driver-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rpm-backdrop,
+  .rpm-dialog {
+    animation: none;
+  }
 }
 
 @keyframes spin {

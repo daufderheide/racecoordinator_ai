@@ -15,6 +15,7 @@ import {
 } from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import {
+  DriverImportMapping,
   DriverResolution,
   RacePackageCommitRequest,
   RacePackagePreview,
@@ -24,6 +25,27 @@ import { Season } from "@app/models/season";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
+/** What to do when the race is already in Race History. */
+export type DuplicateChoice = "REPLACE" | "KEEP_BOTH";
+/** What to do when a race format with the same name is already in the Race Editor. */
+export type FormatChoice = "USE_MINE" | "SAVE_COPY" | "REPLACE_MINE";
+
+/** Picker value that means "create a new driver/team" instead of linking. */
+export const NEW_PARTICIPANT = "__new__";
+
+interface LocalOption {
+  value: string;
+  label: string;
+}
+
+/**
+ * One-screen import dialog for a race package (.rcpack).
+ *
+ * Every decision is shown only when it matters: the duplicate choice only for a
+ * race that's already in Race History, the race format choice only when a format
+ * with that name exists, and the driver list opens by itself when a driver isn't
+ * matched by name. A local driver can only be used once.
+ */
 @Component({
   standalone: true,
   selector: "app-race-package-modal",
@@ -39,6 +61,8 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   ],
 })
 export class RacePackageModalComponent implements OnInit {
+  readonly NEW_PARTICIPANT = NEW_PARTICIPANT;
+
   visible = input(false);
   preview = input<RacePackagePreview | null>(null);
   targetSeasonId = input<string | undefined>(undefined);
@@ -47,20 +71,15 @@ export class RacePackageModalComponent implements OnInit {
   close = output<void>();
   committed = output<RacePackageResult>();
 
-  currentStep: 1 | 2 = 1;
-  showDriverDetails = false;
-
-  duplicateAction: "OVERWRITE" | "CREATE_COPY" | "SKIP" = "CREATE_COPY";
-  configAction:
-    | "CREATE_NEW"
-    | "AUTO_RENAME"
-    | "OVERWRITE"
-    | "USE_EXISTING"
-    | "SKIP" = "CREATE_NEW";
-  raceName: string = "";
-  customConfigName: string = "";
-  selectedSeasonId: string = "";
-  driverResolutions: { [sourceDriverId: string]: DriverResolution } = {};
+  duplicateChoice: DuplicateChoice = "REPLACE";
+  formatChoice: FormatChoice = "USE_MINE";
+  saveFormat = true;
+  raceName = "";
+  selectedSeasonId = "";
+  showDrivers = false;
+  /** Picker value per source driver: a local id, NEW_PARTICIPANT, or "" (not picked yet). */
+  picks: { [sourceDriverId: string]: string } = {};
+  newNames: { [sourceDriverId: string]: string } = {};
   localDrivers: any[] = [];
   localTeams: any[] = [];
   isCommitting = false;
@@ -73,7 +92,7 @@ export class RacePackageModalComponent implements OnInit {
     effect(() => {
       const p = this.preview();
       if (p) {
-        this.initResolutions(p);
+        this.initFromPreview(p);
       }
       const seasonId = this.targetSeasonId();
       if (seasonId) {
@@ -89,6 +108,7 @@ export class RacePackageModalComponent implements OnInit {
         .pipe(catchError(() => of([])))
         .subscribe((drivers) => {
           this.localDrivers = drivers || [];
+          this.cdr.markForCheck();
         });
     }
     if (typeof this.dataService?.getTeams === "function") {
@@ -97,194 +117,219 @@ export class RacePackageModalComponent implements OnInit {
         .pipe(catchError(() => of([])))
         .subscribe((teams) => {
           this.localTeams = teams || [];
+          this.cdr.markForCheck();
         });
     }
   }
+
+  initFromPreview(preview: RacePackagePreview): void {
+    this.duplicateChoice = "REPLACE";
+    this.formatChoice = "USE_MINE";
+    this.saveFormat = true;
+    this.errorMessage = null;
+    this.picks = {};
+    this.newNames = {};
+    for (const m of preview.driver_mappings || []) {
+      this.picks[m.source_driver_id] = m.matched_local_driver_id
+        ? this.localValue(m.source_driver_id, m.matched_local_driver_id)
+        : NEW_PARTICIPANT;
+      this.newNames[m.source_driver_id] = m.source_driver_name || "";
+    }
+    // Open the list when anything isn't an exact name match, so it gets a look.
+    this.showDrivers = (preview.driver_mappings || []).some(
+      (m) => m.match_type !== "EXACT_NAME",
+    );
+    this.raceName = this.defaultRaceName();
+    this.cdr.detectChanges();
+  }
+
+  // ---------- race and race format ----------
+
+  get hasDuplicate(): boolean {
+    return !!this.preview()?.duplicate_race;
+  }
+
+  get hasFormatConflict(): boolean {
+    return !!this.preview()?.config_conflict;
+  }
+
+  /** The name is taken from the existing race format when that format is used or replaced. */
+  get isNameLocked(): boolean {
+    return this.hasFormatConflict && this.formatChoice !== "SAVE_COPY";
+  }
+
+  private defaultRaceName(): string {
+    const p = this.preview();
+    if (!p) return "";
+    if (this.hasFormatConflict) {
+      return this.formatChoice === "SAVE_COPY"
+        ? p.suggested_config_name ||
+            (p.existing_config_name || p.manifest?.race_name || "") + " (1)"
+        : p.existing_config_name || p.manifest?.race_name || "";
+    }
+    return p.manifest?.race_name || "";
+  }
+
+  onFormatChoiceChange(choice: FormatChoice): void {
+    this.formatChoice = choice;
+    this.raceName = this.defaultRaceName();
+    this.cdr.detectChanges();
+  }
+
+  onDuplicateChoiceChange(choice: DuplicateChoice): void {
+    this.duplicateChoice = choice;
+    this.cdr.detectChanges();
+  }
+
+  // ---------- drivers ----------
 
   isTeam(sourceDriverId: string): boolean {
     return !!sourceDriverId && sourceDriverId.startsWith("t_");
   }
 
-  initResolutions(preview: RacePackagePreview): void {
-    this.driverResolutions = {};
-    this.duplicateAction = "CREATE_COPY";
-    this.configAction = "CREATE_NEW";
-    this.currentStep = 1;
-    this.showDriverDetails = false;
-
-    if (preview.duplicate_race || preview.config_conflict) {
-      this.raceName =
-        preview.suggested_config_name ||
-        (preview.existing_config_name
-          ? preview.existing_config_name + " (1)"
-          : (preview.manifest?.race_name || "") + " (1)");
-    } else {
-      this.raceName =
-        preview.existing_config_name || preview.manifest?.race_name || "";
+  /** Team targets are sent with the "t_" prefix the server expects. */
+  private localValue(sourceDriverId: string, localId: string): string {
+    if (!this.isTeam(sourceDriverId) || localId.startsWith("t_")) {
+      return localId;
     }
-    this.customConfigName = this.raceName;
+    return "t_" + localId;
+  }
 
-    if (preview.driver_mappings) {
-      for (const m of preview.driver_mappings) {
-        this.driverResolutions[m.source_driver_id] = {
-          source_driver_id: m.source_driver_id,
-          action: m.suggested_action || "CREATE_NEW",
-          target_driver_id: m.matched_local_driver_id || "",
-          new_driver_name: m.source_driver_name || "",
-        };
+  localOptions(sourceDriverId: string): LocalOption[] {
+    if (this.isTeam(sourceDriverId)) {
+      return this.localTeams.map((t) => ({
+        value: "t_" + (t.entity_id || t.id),
+        label: t.name,
+      }));
+    }
+    return this.localDrivers.map((d) => ({
+      value: d.entity_id || d.id,
+      label: d.nickname ? `${d.name} (${d.nickname})` : d.name,
+    }));
+  }
+
+  /** Name of the other package driver already linked to this local driver, or null. */
+  usedBy(localValue: string, sourceDriverId: string): string | null {
+    const mappings = this.preview()?.driver_mappings || [];
+    for (const m of mappings) {
+      if (
+        m.source_driver_id !== sourceDriverId &&
+        this.picks[m.source_driver_id] === localValue
+      ) {
+        return m.source_driver_name;
       }
     }
+    return null;
+  }
+
+  onPickChange(sourceDriverId: string, value: string): void {
+    this.picks[sourceDriverId] = value;
     this.cdr.detectChanges();
   }
 
-  goToStep(step: 1 | 2): void {
-    if (step === 2 && this.duplicateAction === "SKIP") {
-      return;
-    }
-    this.currentStep = step;
+  onNewNameChange(sourceDriverId: string, name: string): void {
+    this.newNames[sourceDriverId] = name;
+  }
+
+  toggleDrivers(): void {
+    this.showDrivers = !this.showDrivers;
     this.cdr.detectChanges();
   }
 
-  toggleDriverDetails(): void {
-    this.showDriverDetails = !this.showDriverDetails;
-    this.cdr.detectChanges();
+  matchBadgeKey(m: DriverImportMapping): string {
+    if (m.match_type === "EXACT_NAME") return "RPM_MATCH_SAME_NAME";
+    if (m.match_type === "EXACT_NICKNAME") return "RPM_MATCH_SAME_NICKNAME";
+    return "RPM_MATCH_NOT_FOUND";
   }
 
-  get allDriversMatched(): boolean {
-    const mappings = this.preview()?.driver_mappings;
-    if (!mappings || mappings.length === 0) return true;
-    return mappings.every(
-      (m) => m.match_type === "EXACT_NAME" || m.match_type === "EXACT_NICKNAME",
-    );
-  }
-
-  get matchedDriversCount(): number {
-    const mappings = this.preview()?.driver_mappings;
-    if (!mappings) return 0;
-    return mappings.filter(
-      (m) => m.match_type === "EXACT_NAME" || m.match_type === "EXACT_NICKNAME",
+  get linkedCount(): number {
+    return Object.values(this.picks).filter(
+      (v) => v !== "" && v !== NEW_PARTICIPANT,
     ).length;
   }
 
-  get newDriversCount(): number {
-    const mappings = this.preview()?.driver_mappings;
-    if (!mappings) return 0;
-    return mappings.length - this.matchedDriversCount;
+  get newCount(): number {
+    return Object.values(this.picks).filter((v) => v === NEW_PARTICIPANT)
+      .length;
   }
 
-  onDuplicateActionChange(action: "OVERWRITE" | "CREATE_COPY" | "SKIP"): void {
-    this.duplicateAction = action;
-    const p = this.preview();
-    if (action === "SKIP") {
-      this.configAction = "SKIP";
-    } else if (action === "CREATE_COPY") {
-      this.configAction = "CREATE_NEW";
-      if (p) {
-        this.raceName =
-          p.suggested_config_name ||
-          (p.existing_config_name
-            ? p.existing_config_name + " (1)"
-            : (p.manifest?.race_name || "") + " (1)");
-        this.customConfigName = this.raceName;
+  /** Rows still waiting for a choice, or using a local driver twice. */
+  get unresolvedCount(): number {
+    const mappings = this.preview()?.driver_mappings || [];
+    return mappings.filter((m) => {
+      const v = this.picks[m.source_driver_id];
+      if (!v) return true;
+      if (v === NEW_PARTICIPANT) {
+        return !(this.newNames[m.source_driver_id] || "").trim();
       }
-    } else if (action === "OVERWRITE") {
-      this.configAction = p?.config_conflict ? "OVERWRITE" : "CREATE_NEW";
-      if (p) {
-        this.raceName = p.existing_race_name || p.manifest?.race_name || "";
-        this.customConfigName = this.raceName;
-      }
+      return this.usedBy(v, m.source_driver_id) !== null;
+    }).length;
+  }
+
+  get canImport(): boolean {
+    return (
+      !this.isCommitting &&
+      this.unresolvedCount === 0 &&
+      this.raceName.trim().length > 0
+    );
+  }
+
+  // ---------- commit ----------
+
+  buildRequest(p: RacePackagePreview): RacePackageCommitRequest {
+    let configAction: RacePackageCommitRequest["config_action"];
+    if (this.hasFormatConflict) {
+      configAction =
+        this.formatChoice === "USE_MINE"
+          ? "USE_EXISTING"
+          : this.formatChoice === "REPLACE_MINE"
+            ? "OVERWRITE"
+            : "CREATE_NEW";
+    } else {
+      configAction = this.saveFormat ? "CREATE_NEW" : "SKIP";
     }
-    this.cdr.detectChanges();
-  }
 
-  onConfigActionChange(
-    action:
-      | "CREATE_NEW"
-      | "AUTO_RENAME"
-      | "OVERWRITE"
-      | "USE_EXISTING"
-      | "SKIP",
-  ): void {
-    this.configAction = action;
-    this.customConfigName = this.raceName;
-    this.cdr.detectChanges();
-  }
+    const resolutions: DriverResolution[] = (p.driver_mappings || []).map(
+      (m) => {
+        const v = this.picks[m.source_driver_id];
+        return v === NEW_PARTICIPANT
+          ? {
+              source_driver_id: m.source_driver_id,
+              action: "CREATE_NEW",
+              new_driver_name: (this.newNames[m.source_driver_id] || "").trim(),
+            }
+          : {
+              source_driver_id: m.source_driver_id,
+              action: "LINK",
+              target_driver_id: v,
+            };
+      },
+    );
 
-  onRaceNameChange(name: string): void {
-    this.raceName = name;
-    this.customConfigName = name;
-  }
-
-  onActionChange(sourceDriverId: string, action: "LINK" | "CREATE_NEW"): void {
-    if (this.driverResolutions[sourceDriverId]) {
-      this.driverResolutions[sourceDriverId].action = action;
-      if (
-        action === "LINK" &&
-        !this.driverResolutions[sourceDriverId].target_driver_id
-      ) {
-        const mapping = this.preview()?.driver_mappings.find(
-          (m) => m.source_driver_id === sourceDriverId,
-        );
-        if (mapping?.matched_local_driver_id) {
-          this.driverResolutions[sourceDriverId].target_driver_id =
-            mapping.matched_local_driver_id;
-        } else if (this.isTeam(sourceDriverId) && this.localTeams.length > 0) {
-          this.driverResolutions[sourceDriverId].target_driver_id =
-            this.localTeams[0].entity_id || this.localTeams[0].id;
-        } else if (this.localDrivers.length > 0) {
-          this.driverResolutions[sourceDriverId].target_driver_id =
-            this.localDrivers[0].entity_id || this.localDrivers[0].id;
-        }
-      }
-    }
-  }
-
-  onTargetDriverChange(sourceDriverId: string, targetDriverId: string): void {
-    if (this.driverResolutions[sourceDriverId]) {
-      this.driverResolutions[sourceDriverId].target_driver_id = targetDriverId;
-    }
-  }
-
-  onNewNameChange(sourceDriverId: string, newName: string): void {
-    if (this.driverResolutions[sourceDriverId]) {
-      this.driverResolutions[sourceDriverId].new_driver_name = newName;
-    }
-  }
-
-  getResolution(sourceDriverId: string): DriverResolution | undefined {
-    return this.driverResolutions[sourceDriverId];
+    const name = this.raceName.trim();
+    return {
+      temp_package_token: p.temp_package_token,
+      duplicate_action:
+        this.hasDuplicate && this.duplicateChoice === "REPLACE"
+          ? "OVERWRITE"
+          : "CREATE_COPY",
+      config_action: configAction,
+      race_name: name || undefined,
+      custom_config_name: name || undefined,
+      driver_resolutions: resolutions,
+      season_id: this.selectedSeasonId || undefined,
+    };
   }
 
   async onCommit(): Promise<void> {
     const p = this.preview();
-    if (!p) return;
+    if (!p || !this.canImport) return;
 
     this.isCommitting = true;
     this.errorMessage = null;
-
-    const resolutionsList: DriverResolution[] = Object.values(
-      this.driverResolutions,
-    );
-
-    const effectiveRaceName = (
-      this.raceName ||
-      this.customConfigName ||
-      ""
-    ).trim();
-    const request: RacePackageCommitRequest = {
-      temp_package_token: p.temp_package_token,
-      duplicate_action: this.duplicateAction,
-      config_action: this.configAction,
-      race_name: effectiveRaceName || undefined,
-      custom_config_name: effectiveRaceName || undefined,
-      driver_resolutions:
-        this.duplicateAction === "SKIP" ? [] : resolutionsList,
-      season_id: this.selectedSeasonId ? this.selectedSeasonId : undefined,
-    };
-
     try {
       const result = await firstValueFrom(
-        this.dataService.commitRacePackage(request),
+        this.dataService.commitRacePackage(this.buildRequest(p)),
       );
       this.isCommitting = false;
       this.committed.emit(result);

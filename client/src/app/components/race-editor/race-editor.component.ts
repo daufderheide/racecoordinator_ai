@@ -23,6 +23,10 @@ import {
   EditorTabsComponent,
 } from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
+import {
+  FormatConflictChoice,
+  FormatConflictModalComponent,
+} from "@app/components/shared/format-conflict-modal/format-conflict-modal.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
@@ -92,6 +96,7 @@ import {
     HeatListComponent,
     TranslatePipe,
     ConfirmationModalComponent,
+    FormatConflictModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
   ],
@@ -758,6 +763,17 @@ export class RaceEditorComponent
     resolution: "OVERWRITE" | "AUTO_RENAME" | "CANCEL",
   ): void {
     RaceEditorExportHelper.resolveConflict(this, resolution);
+  }
+
+  /** "Use mine" keeps the Race Editor as it is, so nothing is imported. */
+  onFormatConflictChoice(choice: FormatConflictChoice): void {
+    this.onResolveConfigConflict(
+      choice === "SAVE_COPY"
+        ? "AUTO_RENAME"
+        : choice === "REPLACE_MINE"
+          ? "OVERWRITE"
+          : "CANCEL",
+    );
   }
 
   isNameDuplicate(): boolean {

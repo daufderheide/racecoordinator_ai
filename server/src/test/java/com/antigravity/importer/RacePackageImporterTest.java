@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.importer.model.DriverImportMapping;
@@ -893,5 +894,43 @@ public class RacePackageImporterTest {
     DriverHeatData savedDhd = savedHist.getHeats().get(0).getDrivers().get(0);
     assertEquals("t_" + importedTeam.getEntityId(), savedDhd.getDriver().getObjectId());
     assertEquals(importedDriver.getEntityId(), savedDhd.getActualDriver().getEntityId());
+  }
+
+  @Test
+  public void testCommitPackage_TwoDriversLinkedToSameLocalDriver_IsRejected() throws Exception {
+    byte[] zipBytes =
+        createSamplePackage("hist-1", "GT3 Cup Round 1", 1700000000000L, "Dave Brown", "Bob Smith");
+    Driver localDave =
+        new Driver.Builder().withEntityId("local-dave-uuid").withName("Dave Brown").build();
+    driverRepository.save(localDave);
+    RacePackagePreview preview = importer.previewPackage(new ByteArrayInputStream(zipBytes));
+
+    RacePackageCommitRequest commitReq =
+        new RacePackageCommitRequest(
+            preview.getTempPackageToken(),
+            "CREATE_COPY",
+            Arrays.asList(
+                new DriverResolution("src-d1", "LINK", "local-dave-uuid", null),
+                new DriverResolution("src-d2", "LINK", "local-dave-uuid", null)),
+            null);
+
+    try {
+      importer.commitPackage(commitReq);
+      fail("Linking two package drivers to the same local driver must be rejected");
+    } catch (IllegalArgumentException expected) {
+      assertTrue(expected.getMessage().contains("same local driver"));
+    }
+    assertTrue(historyRepository.findAll().isEmpty());
+  }
+
+  @Test
+  public void testValidateUniqueLinkTargets_AllowsCreateNewAndDistinctLinks() {
+    RacePackageImporter.validateUniqueLinkTargets(null);
+    RacePackageImporter.validateUniqueLinkTargets(
+        Arrays.asList(
+            new DriverResolution("a", "LINK", "local-1", null),
+            new DriverResolution("b", "LINK", "local-2", null),
+            new DriverResolution("c", "CREATE_NEW", null, "New One"),
+            new DriverResolution("d", "CREATE_NEW", null, "New Two")));
   }
 }
