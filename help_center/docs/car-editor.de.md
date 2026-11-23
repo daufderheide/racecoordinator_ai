@@ -46,3 +46,14 @@ Der rechte Bereich enthält, wie das Auto aufgebaut ist. Jedes Feld ist Freitext
 - **Chassis**, **Übersetzung** (zum Beispiel 9/27) und **Reifen**.
 - **Modifiziert**: Ankreuzen, wenn das Auto gegenüber dem Auslieferungszustand verändert ist; bei einem Serienauto leer lassen.
 - **Notizen**: Alles Weitere zum Auto.
+
+## Eigene Felder {: #car-custom-fields }
+
+Unter dem Setup können Sie eigene Felder hinzufügen, für alles, was Ihr Club erfasst (zum Beispiel Gewicht, Ritzel oder Leitkiel). Klicken Sie im Bearbeitungsmodus auf **Felder verwalten**:
+
+- **Neues Feld**: Name vergeben und Typ wählen: **Text**, **Zahl**, **Ja / nein** oder **Auswahl aus einer Liste** (eine Auswahl pro Zeile).
+- **Bearbeiten**: Feld umbenennen oder Auswahlmöglichkeiten ändern. Der Typ kann nach dem Hinzufügen nicht mehr geändert werden.
+- **Nach oben / unten**: ändert die Reihenfolge der Felder.
+- **Löschen**: entfernt das Feld und seinen Wert bei jedem Auto, nach Bestätigung.
+
+Jedes Auto bekommt dieselben Felder und behält seine eigenen Werte. Ein leer gelassenes Feld bleibt leer.

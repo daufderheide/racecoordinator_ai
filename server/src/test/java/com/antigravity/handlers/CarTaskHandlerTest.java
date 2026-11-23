@@ -180,6 +180,35 @@ public class CarTaskHandlerTest {
   }
 
   @Test
+  public void testUpdateCar_StoresCustomValues() {
+    carRepository.insert(car("Porsche", "1"));
+    when(ctx.pathParam("id")).thenReturn("1");
+    when(ctx.body())
+        .thenReturn(
+            "{\"name\":\"Porsche\",\"customValues\":[{\"fieldId\":\"f1\",\"value\":\"82\"}]}");
+
+    handler.updateCar(ctx);
+
+    assertEquals("82", carRepository.findByEntityId("1").getCustomValues().get("f1"));
+  }
+
+  @Test
+  public void testUpdateCar_ARemovedValueStaysRemoved() {
+    java.util.Map<String, String> values = new java.util.LinkedHashMap<>();
+    values.put("f1", "82");
+    values.put("f2", "9/27");
+    carRepository.insert(
+        new Car.Builder().withName("Porsche").withCustomValues(values).withEntityId("1").build());
+    values.remove("f1");
+
+    handler.updateCar("1", new Car.Builder().withName("Porsche").withCustomValues(values).build());
+
+    java.util.Map<String, String> saved = carRepository.findByEntityId("1").getCustomValues();
+    assertNull(saved.get("f1"));
+    assertEquals("9/27", saved.get("f2"));
+  }
+
+  @Test
   public void testUpdateCar_SameNameOnItselfIsAllowed() {
     carRepository.insert(car("Porsche", "1"));
     Car updated = handler.updateCar("1", car("PORSCHE", "ignored"));

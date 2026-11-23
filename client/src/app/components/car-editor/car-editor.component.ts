@@ -22,6 +22,7 @@ import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Car, CAR_SCALE_OPTIONS } from "@app/models/car";
+import { CarField, sortCarFields } from "@app/models/car-field";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   ConnectionMonitorService,
@@ -38,13 +39,17 @@ import {
   mapToSelectItems,
 } from "@app/utils/editor-utils";
 
+import { CarFieldManagerComponent } from "./car-field-manager/car-field-manager.component";
 import {
   areCarsEqual,
+  choiceOptions,
   cloneCar,
   generateUniqueCarName,
   getCarEditorHelpSteps,
   getCarUnsavedReasons,
   getKnownCarClasses,
+  setCustomValue,
+  withoutField,
 } from "./car-editor.helper";
 
 /** Key for NavigationService's "last edited" memory. */
@@ -68,6 +73,7 @@ const NAV_KEY = "car";
     ConfirmationModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
+    CarFieldManagerComponent,
   ],
 })
 export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
@@ -156,6 +162,9 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   /** Classes used on other cars, offered as suggestions in the Class field. */
   knownClasses: string[] = [];
   imageAssets: any[] = [];
+  /** The user's own fields, in editor order. */
+  carFields: CarField[] = [];
+  isFieldManagerOpen = false;
 
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;
@@ -315,9 +324,13 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.dataSubscription = forkJoin({
       cars: this.dataService.getCars(),
       assets: this.dataService.listAssets(),
+      fields: this.dataService.getCarFields(),
     }).subscribe({
       next: (result) => {
         try {
+          this.carFields = sortCarFields(
+            ((result.fields as any[]) || []).map((f) => CarField.fromJSON(f)),
+          );
           this.setAllCars((result.cars as any[]) || []);
           this.imageAssets = (result.assets || []).filter(
             (a: any) => a && a.type === "image",
@@ -615,6 +628,76 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingCar) return;
     this.editingCar.modified = value === true;
     this.captureState();
+  }
+
+  /** A car's value for one of the user's fields ("" when not set). */
+  customValue(field: CarField): string {
+    return this.editingCar?.customValues[field.entity_id] ?? "";
+  }
+
+  isChecked(field: CarField): boolean {
+    return this.customValue(field) === "true";
+  }
+
+  choicesFor(field: CarField): string[] {
+    return choiceOptions(field, this.customValue(field));
+  }
+
+  /** Typing in a text or number field: part of the focus/blur undo step. */
+  onCustomInput(field: CarField, value: string | number | null) {
+    if (!this.editingCar) return;
+    setCustomValue(this.editingCar, field.entity_id, value);
+    this.onInputChange();
+  }
+
+  /** A yes/no or choice field: one undo step per change. */
+  onCustomPick(field: CarField, value: string | boolean | null) {
+    if (!this.editingCar) return;
+    setCustomValue(
+      this.editingCar,
+      field.entity_id,
+      value === true ? "true" : value,
+    );
+    this.captureState();
+  }
+
+  openFieldManager() {
+    // Leave the field being edited first, so typing can't change it behind the dialog.
+    (document.activeElement as HTMLElement | null)?.blur();
+    this.isFieldManagerOpen = true;
+  }
+
+  closeFieldManager() {
+    this.isFieldManagerOpen = false;
+  }
+
+  onFieldsChange(fields: CarField[]) {
+    this.carFields = sortCarFields(fields);
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * The server removed the field's values from every car; drop them here
+   * too, without counting that as an edit of this car.
+   */
+  onFieldDeleted(fieldId: string) {
+    this.allCars = this.allCars.map((c) => withoutField(c, fieldId));
+    if (this.originalCar)
+      this.originalCar = withoutField(this.originalCar, fieldId);
+    if (this.selectedCar)
+      this.selectedCar = withoutField(this.selectedCar, fieldId);
+    if (this.editingCar && fieldId in this.editingCar.customValues) {
+      const next = { ...this.editingCar.customValues };
+      delete next[fieldId];
+      this.editingCar.customValues = next;
+      // Without other edits, the car now matches what the server has:
+      // start undo from here, so it doesn't count as an unsaved change.
+      if (this.originalCar && areCarsEqual(this.editingCar, this.originalCar)) {
+        this.isDirty = false;
+        this.undoManager.resetTracking(this.editingCar);
+      }
+    }
+    this.cdr.detectChanges();
   }
 
   private autoSaveCar(): Promise<any> {

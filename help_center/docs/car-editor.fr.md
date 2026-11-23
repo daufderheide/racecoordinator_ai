@@ -46,3 +46,14 @@ Le panneau de droite indique comment la voiture est réglée. Chaque champ est u
 - **Châssis**, **Rapport** (par exemple 9/27) et **Pneus**.
 - **Modifiée** : cochez si la voiture a été modifiée par rapport à sa version d'origine ; laissez vide pour une voiture de série.
 - **Notes** : tout autre détail sur la voiture.
+
+## Vos champs {: #car-custom-fields }
+
+Sous les réglages, vous pouvez ajouter vos propres champs, pour tout ce que suit votre club (par exemple le poids, le pignon ou le guide). En mode édition, cliquez sur **Gérer les champs** :
+
+- **Nouveau champ** : donnez-lui un nom et choisissez un type : **Texte**, **Nombre**, **Oui / non** ou **Choix dans une liste** (un choix par ligne).
+- **Modifier** : renommez un champ ou changez ses choix. Le type ne peut plus être modifié une fois le champ ajouté.
+- **Monter / descendre** : change l'ordre des champs.
+- **Supprimer** : retire le champ, et sa valeur de chaque voiture, après confirmation.
+
+Chaque voiture a les mêmes champs et garde ses propres valeurs. Un champ laissé vide reste vide.

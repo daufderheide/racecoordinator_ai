@@ -467,6 +467,154 @@ describe("CarEditorComponent", () => {
     });
   });
 
+  describe("your fields", () => {
+    beforeEach(async () => setUp("c1"));
+
+    it("loads the fields in order", () => {
+      expect(dataService.getCarFields).toHaveBeenCalled();
+      expect(component.carFields.map((f) => f.name)).toEqual([
+        "Weight (g)",
+        "Tyre compound",
+        "Pinion",
+        "Lights",
+      ]);
+    });
+
+    it("shows the car's values", () => {
+      const [weight, compound, pinion, lights] = component.carFields;
+      expect(component.customValue(weight)).toBe("82");
+      expect(component.customValue(compound)).toBe("Soft");
+      expect(component.customValue(pinion)).toBe("");
+      expect(component.isChecked(lights)).toBeTrue();
+      const input = fixture.nativeElement.querySelector(
+        "#car-custom-f-weight",
+      ) as HTMLInputElement;
+      expect(input.type).toBe("number");
+      expect(input.disabled).toBeTrue();
+    });
+
+    it("takes the focus off the car's fields when the field manager opens", async () => {
+      component.onToggleEditMode();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const name = fixture.nativeElement.querySelector(
+        "#car-name-input",
+      ) as HTMLInputElement;
+      name.focus();
+      expect(document.activeElement).toBe(name);
+      component.openFieldManager();
+      expect(document.activeElement).not.toBe(name);
+    });
+
+    it("shows Manage fields only in edit mode", () => {
+      expect(
+        fixture.nativeElement.querySelector("#car-manage-fields-btn"),
+      ).toBeNull();
+      component.onToggleEditMode();
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector("#car-manage-fields-btn").click();
+      expect(component.isFieldManagerOpen).toBeTrue();
+      component.closeFieldManager();
+      expect(component.isFieldManagerOpen).toBeFalse();
+    });
+
+    it("saves a typed value as part of the car", fakeAsync(() => {
+      component.onToggleEditMode();
+      const pinion = component.carFields[2];
+      component.onInputFocus();
+      component.onCustomInput(pinion, "9");
+      component.onInputBlur();
+      tick(2000);
+      flush();
+      const sent = dataService.updateCar.calls.mostRecent().args[1];
+      expect(sent.customValues["f-pinion"]).toBe("9");
+      expect(sent.customValues["f-weight"]).toBe("82");
+    }));
+
+    it("removes a cleared value", fakeAsync(() => {
+      component.onToggleEditMode();
+      component.onInputFocus();
+      component.onCustomInput(component.carFields[0], null);
+      component.onInputBlur();
+      tick(2000);
+      flush();
+      const sent = dataService.updateCar.calls.mostRecent().args[1];
+      expect("f-weight" in sent.customValues).toBeFalse();
+    }));
+
+    it("saves a picked choice and a yes/no as their own undo steps", fakeAsync(() => {
+      component.onToggleEditMode();
+      const [, compound, , lights] = component.carFields;
+      component.onCustomPick(compound, "Hard");
+      component.onCustomPick(lights, false);
+      tick(2000);
+      flush();
+      expect(component.editingCar!.customValues["f-compound"]).toBe("Hard");
+      expect("f-lights" in component.editingCar!.customValues).toBeFalse();
+      component.undo();
+      expect(component.isChecked(lights)).toBeTrue();
+    }));
+
+    it("offers an old choice that is no longer in the list", () => {
+      component.editingCar!.customValues = { "f-compound": "Wet" };
+      expect(component.choicesFor(component.carFields[1])).toEqual([
+        "Soft",
+        "Medium",
+        "Hard",
+        "Wet",
+      ]);
+    });
+
+    it("keeps the new order from the field manager", () => {
+      const reversed = [...component.carFields].reverse().map((f, i) =>
+        Object.assign(Object.create(Object.getPrototypeOf(f)), f, {
+          position: i,
+        }),
+      );
+      component.onFieldsChange(reversed);
+      expect(component.carFields[0].name).toBe("Lights");
+    });
+
+    it("drops a deleted field's values without counting it as an edit", () => {
+      component.onFieldDeleted("f-weight");
+      expect("f-weight" in component.editingCar!.customValues).toBeFalse();
+      expect("f-weight" in component.originalCar!.customValues).toBeFalse();
+      expect(
+        component.allCars.some((c) => "f-weight" in c.customValues),
+      ).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.editingCar!.customValues["f-compound"]).toBe("Soft");
+    });
+
+    it("keeps other unsaved edits when a field is deleted", () => {
+      component.onToggleEditMode();
+      component.editingCar!.brand = "Changed";
+      component.onFieldDeleted("f-weight");
+      expect(component.editingCar!.brand).toBe("Changed");
+      expect(component.isDirtyState()).toBeTrue();
+    });
+
+    it("copies the values when a car is duplicated", async () => {
+      component.onCopyCar();
+      await fixture.whenStable();
+      const sent = dataService.createCar.calls.mostRecent().args[0];
+      expect(sent.customValues).toEqual({
+        "f-weight": "82",
+        "f-compound": "Soft",
+        "f-lights": "true",
+      });
+    });
+
+    it("shows a hint when there are no fields", async () => {
+      component.carFields = [];
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector("#car-custom-empty").textContent,
+      ).toContain("CE_CUSTOM_EMPTY");
+    });
+  });
+
   describe("help", () => {
     beforeEach(async () => setUp("c1"));
 

@@ -545,18 +545,16 @@ export class DataService {
   deleteTeam(id: string): Observable<any> {
     return this.crudHelper.deleteTeam(id);
   }
-  getCars(): Observable<ICarModel[]> {
-    return this.crudHelper.getCars();
-  }
-  createCar(car: any): Observable<any> {
-    return this.crudHelper.createCar(car);
-  }
-  updateCar(id: string, car: any): Observable<any> {
-    return this.crudHelper.updateCar(id, car);
-  }
-  deleteCar(id: string): Observable<any> {
-    return this.crudHelper.deleteCar(id);
-  }
+  // slotcars and your own slotcar fields (#1210)
+  getCars = (): Observable<ICarModel[]> => this.crudHelper.getCars();
+  createCar = (car: any) => this.crudHelper.createCar(car);
+  updateCar = (id: string, car: any) => this.crudHelper.updateCar(id, car);
+  deleteCar = (id: string) => this.crudHelper.deleteCar(id);
+  getCarFields = () => this.crudHelper.getCarFields();
+  createCarField = (field: any) => this.crudHelper.createCarField(field);
+  updateCarField = (id: string, f: any) =>
+    this.crudHelper.updateCarField(id, f);
+  deleteCarField = (id: string) => this.crudHelper.deleteCarField(id);
   getCustomUIs(): Observable<any[]> {
     return this.crudHelper.getCustomUIs();
   }

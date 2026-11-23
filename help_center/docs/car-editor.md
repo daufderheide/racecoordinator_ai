@@ -46,3 +46,14 @@ The right-hand panel holds how the car is set up. Every field is free text, so y
 - **Chassis**, **Gears** (for example 9/27) and **Tyres**.
 - **Modified**: Tick it when the car is changed from how it came out of the box; leave it empty for a stock car.
 - **Notes**: Anything else about the car.
+
+## Your Fields {: #car-custom-fields }
+
+Below the setup you can add fields of your own, for whatever your club keeps track of (for example weight, pinion or guide). In Edit Mode, click **Manage fields**:
+
+- **New field**: give it a name and pick a type: **Text**, **Number**, **Yes / no**, or **Choice from a list** (one choice per line).
+- **Edit**: rename a field or change its choices. The type can't be changed once the field is added.
+- **Move up / down**: changes the order in which the fields appear.
+- **Delete**: removes the field, and its value from every car, after you confirm.
+
+Every car gets the same fields and keeps its own values. A field you leave empty stays empty.
