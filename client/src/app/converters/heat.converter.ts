@@ -115,6 +115,7 @@ export class HeatConverter {
     }
     hd.reactionTime = dProto.reactionTime || 0;
     hd.isRefueling = !!dProto.isRefueling;
+    hd.canRefuel = !!dProto.canRefuel;
     hd.currentLocation = dProto.currentLocation ?? -1;
     hd.flag = dProto.flag || 0;
     hd.lapsLed = dProto.lapsLed || 0;

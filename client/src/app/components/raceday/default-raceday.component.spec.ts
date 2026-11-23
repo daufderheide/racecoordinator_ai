@@ -9626,6 +9626,72 @@ describe("DefaultRacedayComponent", () => {
       fixture.componentRef.setInput("isUIEditorMode", true);
       expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
     });
+
+    it("should return correct status for isDriverSwapDisabled based on race state, pit status, and canRefuel", () => {
+      const mockHd: any = {
+        laneIndex: 0,
+        currentLocation: 0,
+        canRefuel: false,
+      };
+      component.isLayoutCustomizing = false;
+      fixture.componentRef.setInput("isUIEditorMode", false);
+
+      // 1. require_pit_stop_change_driver is false -> should return false (not disabled)
+      ((component as any).raceService.getRace as jasmine.Spy).and.returnValue({
+        team_options: { require_pit_stop_change_driver: false },
+      } as any);
+      (component as any).raceState = RaceState.RACING;
+      expect(component.isDriverSwapDisabled(mockHd)).toBeFalse();
+
+      // 2. require_pit_stop_change_driver is true, but raceState is not RACING/STARTING -> false
+      ((component as any).raceService.getRace as jasmine.Spy).and.returnValue({
+        team_options: { require_pit_stop_change_driver: true },
+      } as any);
+      (component as any).raceState = RaceState.NOT_STARTED;
+      expect(component.isDriverSwapDisabled(mockHd)).toBeFalse();
+
+      (component as any).raceState = RaceState.PAUSED;
+      expect(component.isDriverSwapDisabled(mockHd)).toBeFalse();
+
+      // 3. require_pit_stop_change_driver is true, raceState is RACING:
+      (component as any).raceState = RaceState.RACING;
+
+      // On main track (location 0), cannot refuel -> should be disabled (true)
+      component["carLocations"].set(0, 0);
+      component["carCanRefuel"].set(0, false);
+      expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
+
+      // In pit row (location 1), but cannot refuel -> should be disabled (true)
+      component["carLocations"].set(0, 1);
+      component["carCanRefuel"].set(0, false);
+      expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
+
+      // In pit row (location 1) AND can refuel -> should be enabled (false)
+      component["carLocations"].set(0, 1);
+      component["carCanRefuel"].set(0, true);
+      expect(component.isDriverSwapDisabled(mockHd)).toBeFalse();
+
+      // In pit bay (location 2000) AND can refuel -> should be enabled (false)
+      component["carLocations"].set(0, 2000);
+      component["carCanRefuel"].set(0, true);
+      expect(component.isDriverSwapDisabled(mockHd)).toBeFalse();
+
+      // In pit bay (location 2000) but cannot refuel -> should be disabled (true)
+      component["carLocations"].set(0, 2000);
+      component["carCanRefuel"].set(0, false);
+      expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
+
+      // Fallback to hd properties if not in carLocations/carCanRefuel map
+      component["carLocations"].clear();
+      component["carCanRefuel"].clear();
+      mockHd.currentLocation = 0;
+      mockHd.canRefuel = false;
+      expect(component.isDriverSwapDisabled(mockHd)).toBeTrue();
+
+      mockHd.currentLocation = 1;
+      mockHd.canRefuel = true;
+      expect(component.isDriverSwapDisabled(mockHd)).toBeFalse();
+    });
   });
 
   describe("Menu option hover and document click behavior", () => {
