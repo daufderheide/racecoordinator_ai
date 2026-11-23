@@ -16,6 +16,7 @@ import {
 import { toSignal } from "@angular/core/rxjs-interop";
 import { of } from "rxjs";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -30,7 +31,6 @@ import {
   calculateOptimalSummaryHeaderFontSize,
   calculateOptimalSummaryRowFontSize,
 } from "./raceday-heat-list-scaler";
-import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 export interface ProcessedHeatLane {
   laneNumber: number;

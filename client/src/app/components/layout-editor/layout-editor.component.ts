@@ -1,16 +1,3 @@
-import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
-import {
-  canMultiSelect,
-  makeMain,
-  selectedIds,
-  Selection,
-  selectionFromBox,
-  toggleSelection,
-} from "@app/components/ui-editor/multi-select.utils";
-import {
-  InspectorMultiComponent,
-  MultiSelectItem,
-} from "@app/components/ui-editor/inspector-kit/inspector-multi.component";
 import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
@@ -25,8 +12,16 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { catchError, firstValueFrom, of, Subscription } from "rxjs";
+import {
+  copyStyleInEditor,
+  duplicableIds,
+  duplicateInEditor,
+  editShortcut,
+  pasteStyleInEditor,
+} from "@app/components/layout-editor/layout-editor-style.helper";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { LaneGridSession } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { layerState } from "@app/components/raceday/utils/layer-order.utils";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
@@ -34,9 +29,14 @@ import {
 } from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import { GeometryChange } from "@app/components/ui-editor/inspector-kit/inspector-form.component";
+import {
+  InspectorMultiComponent,
+  MultiSelectItem,
+} from "@app/components/ui-editor/inspector-kit/inspector-multi.component";
 import {
   InspectorActions,
   InspectorSchema,
@@ -44,6 +44,15 @@ import {
 import { InspectorShellComponent } from "@app/components/ui-editor/inspector-kit/inspector-shell.component";
 import { customWidgetSchemaFor } from "@app/components/ui-editor/inspector-schemas/custom-widget-schema";
 import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
+import {
+  canMultiSelect,
+  makeMain,
+  selectedIds,
+  Selection,
+  selectionFromBox,
+  toggleSelection,
+} from "@app/components/ui-editor/multi-select.utils";
+import { StyleClipboardService } from "@app/components/ui-editor/style-clipboard.service";
 import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -54,7 +63,6 @@ import {
   handleLayerOrder,
   handleRemoveWidgets,
 } from "@app/components/ui-editor/ui-editor-widget.helper";
-import { layerState } from "@app/components/raceday/utils/layer-order.utils";
 import { WidgetInspectorFieldsComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-inspector-fields.component";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
@@ -308,6 +316,35 @@ export class LayoutEditorComponent
     this.cdr.markForCheck();
   }
 
+  /** Copied widget style, shared across layouts for this session (phase 5a). */
+  private readonly styleClipboard = inject(StyleClipboardService);
+
+  get hasCopiedStyle(): boolean {
+    return !!this.styleClipboard.copied();
+  }
+
+  /** Copy the main selected widget's style (panel button, Ctrl+Alt+C). */
+  copyStyle(): void {
+    copyStyleInEditor(this);
+  }
+
+  /** Paste the copied style on the selection (panel button, Ctrl+Alt+V). */
+  pasteStyle(): void {
+    pasteStyleInEditor(this);
+  }
+
+  /** Whether any selected widget can be duplicated (not grid columns, menu bar, countdown). */
+  get canDuplicateSelection(): boolean {
+    return (
+      duplicableIds(this.getLayoutWidgets(), this.selectedWidgetIds).length > 0
+    );
+  }
+
+  /** Duplicate the selection (panel button, Ctrl+D), as one undo step. */
+  duplicateSelection(): void {
+    duplicateInEditor(this);
+  }
+
   /** Align / distribute / same size from the several-widgets panel (phase 4c-3). */
   onArrange(action: ArrangeAction): void {
     handleArrange(this, action, this.editingLayout ?? undefined);
@@ -532,6 +569,19 @@ export class LayoutEditorComponent
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent): void {
     if (!this.isEditMode) return;
+    // copy / paste style (phase 5a), duplicate (phase 5c); Ctrl+D is the
+    // browser's bookmark shortcut, stopped inside the editor
+    const shortcut = editShortcut(event);
+    if (
+      shortcut &&
+      (shortcut !== "duplicate" || this.selectedWidgetIds.length)
+    ) {
+      event.preventDefault();
+      if (shortcut === "copyStyle") this.copyStyle();
+      else if (shortcut === "pasteStyle") this.pasteStyle();
+      else this.duplicateSelection();
+      return;
+    }
     // Escape: back to the main widget only (phase 4c-1)
     if (event.key === "Escape" && this.extraSelectedIds.length) {
       event.preventDefault();

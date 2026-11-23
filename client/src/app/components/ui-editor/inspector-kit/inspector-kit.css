@@ -252,9 +252,14 @@ app-inspector-multi {
   letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--k-title);
-  white-space: nowrap;
+  /* up to two lines: the header row also holds copy / paste style and the
+     previous / next arrows (phase 5a), so one line cut common names short */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .kit-head-name small {
@@ -1520,4 +1525,30 @@ app-inspector-multi {
 
 .kit-arrange-note .material-icons {
   font-size: 15px;
+}
+
+/* paste style: a dot once a style is copied (phase 5a) */
+.kit-icon-btn.kit-has-dot {
+  position: relative;
+}
+
+.kit-icon-btn.kit-has-dot::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0 1.5px var(--k-panel, #000);
+}
+
+.kit-icon-btn:disabled .material-icons {
+  opacity: 0.6;
+}
+
+/* copy / paste style sit before the previous / next arrows, a little apart */
+.kit-head-nav #kit-paste-style {
+  margin-right: 6px;
 }

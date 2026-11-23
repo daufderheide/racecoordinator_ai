@@ -1,13 +1,3 @@
-import {
-  canMultiSelect,
-  clampGroupDelta,
-  movableIds,
-} from "@app/components/ui-editor/multi-select.utils";
-import {
-  arrange,
-  ArrangeAction,
-  ArrangeResult,
-} from "@app/components/ui-editor/arrange.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import {
   LaneGridReplicationHelper,
@@ -17,11 +7,27 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "@app/components/raceday/utils/lane-replication.helper";
+import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import {
   LayerMove,
   moveLayer,
 } from "@app/components/raceday/utils/layer-order.utils";
-import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
+import {
+  arrange,
+  ArrangeAction,
+  ArrangeResult,
+} from "@app/components/ui-editor/arrange.utils";
+import { duplicateWidgets } from "@app/components/ui-editor/duplicate.utils";
+import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
+import {
+  canMultiSelect,
+  clampGroupDelta,
+  movableIds,
+} from "@app/components/ui-editor/multi-select.utils";
+import {
+  pasteStyle,
+  StyleCopy,
+} from "@app/components/ui-editor/style-copy.utils";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";
@@ -656,6 +662,73 @@ export function handleArrange(
   comp.captureState();
   comp.cdr?.markForCheck();
   return result;
+}
+
+/**
+ * Paste a copied style on several selected widgets (phase 5a), as one undo
+ * step. `schemaFor` gives each widget's panel schema. Returns how many
+ * widgets changed.
+ */
+export function handlePasteStyle(
+  comp: any,
+  copy: StyleCopy | null,
+  ids: string[],
+  schemaFor: (widget: any) => InspectorSchema | null,
+  ui?: CustomUI,
+): number {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!copy || !layout?.widgets) return 0;
+  let changed = 0;
+  for (const id of ids) {
+    const w = layout.widgets.find((x: any) => x.id === id);
+    if (!w || !canMultiSelect(w)) continue;
+    if (pasteStyle(copy, schemaFor(w), w)) changed++;
+  }
+  if (!changed) return 0;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+  return changed;
+}
+
+/**
+ * Duplicate the given widgets (phase 5c), as one undo step. Returns the new
+ * ids in the order of the widgets that could be duplicated.
+ */
+export function handleDuplicateWidgets(
+  comp: any,
+  ids: string[],
+  ui?: CustomUI,
+): string[] {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets) return [];
+  const newIds = duplicateWidgets(
+    layout.widgets,
+    ids,
+    comp.getLayoutBaseWidth(targetUi),
+    comp.getLayoutBaseHeight(targetUi),
+  );
+  if (!newIds.length) return [];
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+  return newIds;
 }
 
 export function isWidgetHeightAutoCalculated(

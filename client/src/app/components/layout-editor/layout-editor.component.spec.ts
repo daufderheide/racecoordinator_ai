@@ -1335,6 +1335,168 @@ describe("LayoutEditorComponent", () => {
         ).toEqual([400, 400, 400]);
       });
 
+      describe("copy / paste style (phase 5a)", () => {
+        const layoutWidget = (id: string) =>
+          component.getLayoutWidgets().find((w: any) => w.id === id);
+        beforeEach(() => {
+          sessionStorage.removeItem("rcai.layoutEditor.styleClipboard");
+          component["initUndoManager"]();
+          component.editingLayout!.layoutJson = JSON.stringify({
+            widgets: [
+              {
+                id: "a",
+                widgetType: "records",
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 50,
+                customSettings: {
+                  headerFontFamily: "Orbitron",
+                  borderRadius: 9,
+                },
+              },
+              {
+                id: "b",
+                widgetType: "records",
+                x: 200,
+                y: 0,
+                width: 100,
+                height: 50,
+                customSettings: {},
+              },
+              {
+                id: "c",
+                widgetType: "timer",
+                x: 400,
+                y: 0,
+                width: 100,
+                height: 50,
+                customSettings: {},
+              },
+            ],
+          });
+          component.parsedLayouts.clear();
+          component.onWidgetSelected("a");
+        });
+        afterEach(() =>
+          sessionStorage.removeItem("rcai.layoutEditor.styleClipboard"),
+        );
+
+        it("copies and pastes on one widget, as one undo step", () => {
+          expect(component.hasCopiedStyle).toBeFalse();
+          component.copyStyle();
+          expect(component.hasCopiedStyle).toBeTrue();
+          component.onWidgetSelected("b");
+          const capture = spyOn(component, "captureState").and.callThrough();
+          component.pasteStyle();
+          expect(capture).toHaveBeenCalledTimes(1);
+          expect(layoutWidget("b").customSettings.headerFontFamily).toBe(
+            "Orbitron",
+          );
+          expect(layoutWidget("b").customSettings.borderRadius).toBe(9);
+        });
+
+        it("pastes on all selected with Ctrl+Alt+V, as one undo step", () => {
+          component.handleKeyboardEvent(
+            new KeyboardEvent("keydown", {
+              code: "KeyC",
+              ctrlKey: true,
+              altKey: true,
+            }),
+          );
+          component.onBoxSelected({ ids: ["b", "c"], additive: false });
+          const capture = spyOn(component, "captureState").and.callThrough();
+          component.handleKeyboardEvent(
+            new KeyboardEvent("keydown", {
+              code: "KeyV",
+              ctrlKey: true,
+              altKey: true,
+            }),
+          );
+          expect(layoutWidget("b").customSettings.borderRadius).toBe(9);
+          expect(layoutWidget("c").customSettings.borderRadius).toBe(9);
+          expect(capture).toHaveBeenCalledTimes(1);
+        });
+
+        it("ignores AltGr (Ctrl+Alt on some keyboards) and typing in a field", () => {
+          const altGr = new KeyboardEvent("keydown", {
+            code: "KeyC",
+            ctrlKey: true,
+            altKey: true,
+          });
+          spyOn(altGr, "getModifierState").and.callFake(
+            (k: string) => k === "AltGraph",
+          );
+          component.handleKeyboardEvent(altGr);
+          expect(component.hasCopiedStyle).toBeFalse();
+          const input = document.createElement("input");
+          document.body.appendChild(input);
+          const typed = new KeyboardEvent("keydown", {
+            code: "KeyC",
+            ctrlKey: true,
+            altKey: true,
+            bubbles: true,
+          });
+          Object.defineProperty(typed, "target", { value: input });
+          component.handleKeyboardEvent(typed);
+          input.remove();
+          expect(component.hasCopiedStyle).toBeFalse();
+        });
+
+        it("says so when pasting with nothing copied", () => {
+          const note = jasmine.createSpy("showCanvasNote");
+          (component as any).racedayComp = { showCanvasNote: note };
+          component.pasteStyle();
+          expect(note).toHaveBeenCalledWith("UE_STYLE_NOTHING");
+        });
+      });
+
+      describe("duplicate (phase 5c)", () => {
+        beforeEach(() => component["initUndoManager"]());
+
+        it("Ctrl+D duplicates the selected widget and selects the copy", () => {
+          const capture = spyOn(component, "captureState").and.callThrough();
+          component.handleKeyboardEvent(
+            new KeyboardEvent("keydown", { code: "KeyD", ctrlKey: true }),
+          );
+          const ws = component.getLayoutWidgets();
+          expect(ws.length).toBe(5);
+          const copy = ws[4];
+          expect(copy.widgetType).toBe("timer");
+          expect([copy.x, copy.y]).toEqual([20, 20]);
+          expect(component.selectedWidgetIds).toEqual([copy.id]);
+          expect(capture).toHaveBeenCalledTimes(1);
+        });
+
+        it("duplicates several at once; the main widget's copy is main", () => {
+          component.onBoxSelected({ ids: ["a", "b"], additive: false });
+          component.makeMainSelected("b");
+          component.duplicateSelection();
+          const ws = component.getLayoutWidgets();
+          expect(ws.length).toBe(6);
+          // copy of b sits at b + 20 px; it is the main one
+          const copies = ws.slice(4);
+          const copyB = copies.find((w: any) => w.x === 220)!;
+          const copyA = copies.find((w: any) => w.x === 20)!;
+          expect(component.selectedWidgetId).toBe(copyB.id);
+          expect([...component.selectedWidgetIds].sort()).toEqual(
+            [copyA.id, copyB.id].sort(),
+          );
+        });
+
+        it("says so for a grid column and changes nothing", () => {
+          component.onWidgetSelected("g");
+          const note = jasmine.createSpy("showCanvasNote");
+          (component as any).racedayComp = { showCanvasNote: note };
+          expect(component.canDuplicateSelection).toBeFalse();
+          // (selecting a grid column lets the editor fill in its lanes)
+          const before = component.getLayoutWidgets().length;
+          component.duplicateSelection();
+          expect(note).toHaveBeenCalledWith("UE_DUPLICATE_NOT_POSSIBLE");
+          expect(component.getLayoutWidgets().length).toBe(before);
+        });
+      });
+
       it("shows the several-widgets panel instead of the widget panel", () => {
         component.isWidgetConfigVisible = true;
         component.onSelectionToggled("b");

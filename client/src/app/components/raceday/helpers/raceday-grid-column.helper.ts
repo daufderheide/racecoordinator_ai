@@ -1,4 +1,3 @@
-import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
 import {
   AnchorPoint,
@@ -8,6 +7,7 @@ import {
   GridResizeHandle,
   LaneGridReplicationHelper,
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 
 export class RacedayGridColumnHelper {
   static onColumnDrop(host: any, event: CdkDragDrop<string[]>): void {

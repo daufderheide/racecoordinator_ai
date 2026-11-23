@@ -1,7 +1,3 @@
-import {
-  boxFromPoints,
-  widgetsInBox,
-} from "@app/components/ui-editor/multi-select.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridFactoryHelper } from "@app/components/raceday/utils/lane-grid-factory.helper";
 import { LaneGridHeaderHelper } from "@app/components/raceday/utils/lane-grid-header.helper";
@@ -14,6 +10,10 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "@app/components/raceday/utils/lane-replication.helper";
+import {
+  boxFromPoints,
+  widgetsInBox,
+} from "@app/components/ui-editor/multi-select.utils";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import {
   AbsoluteWidgetNode,

@@ -11,10 +11,10 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { TextInfoFitHelper } from "@app/components/raceday/utils/text-info-fit.helper";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 import { Race } from "@app/models/race";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,

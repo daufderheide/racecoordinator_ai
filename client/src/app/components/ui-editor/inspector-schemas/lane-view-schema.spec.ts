@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { of } from "rxjs";
 import {
   allFields,
   InspectorField,
@@ -9,7 +10,6 @@ import { DataService } from "@app/data.service";
 import { FontService } from "@app/services/font.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
-import { of } from "rxjs";
 
 import {
   LaneViewColumnsPartComponent,
