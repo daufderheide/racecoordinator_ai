@@ -177,7 +177,9 @@ test.describe("Layout Editor canvas tools", () => {
     });
   });
 
-  test("draws the selection box while dragging", async ({ page }) => {
+  test("draws the selection box, then outlines and the several-widgets panel", async ({
+    page,
+  }) => {
     await openEditor(page);
     // lock the image first: the panel then says it stays where it is
     await selectWidget(page, "w-c");
@@ -190,33 +192,11 @@ test.describe("Layout Editor canvas tools", () => {
     await expect(canvas(page)).toHaveScreenshot("tools-selection-box.png", {
       animations: "disabled",
     });
-  });
-
-  test("draws outlines around several selected widgets", async ({ page }) => {
-    await openEditor(page);
-    await selectWidget(page, "w-c");
-    await lockSelected(page);
-    const boxes = [
-      (await wrapperOf(page, "timer").boundingBox())!,
-      (await wrapperOf(page, "image").boundingBox())!,
-    ];
-    await boxSelect(page, boxes, true);
+    await page.mouse.up();
     await page.mouse.move(0, 0);
     await expect(canvas(page)).toHaveScreenshot("tools-multi-outlines.png", {
       animations: "disabled",
     });
-  });
-
-  test("displays the several-widgets panel", async ({ page }) => {
-    await openEditor(page);
-    await selectWidget(page, "w-c");
-    await lockSelected(page);
-    const boxes = [
-      (await wrapperOf(page, "timer").boundingBox())!,
-      (await wrapperOf(page, "image").boundingBox())!,
-    ];
-    await boxSelect(page, boxes, true);
-    await page.mouse.move(0, 0);
     await expect(
       page.locator("app-inspector-multi .kit-panel"),
     ).toHaveScreenshot("tools-multi-panel.png", { animations: "disabled" });

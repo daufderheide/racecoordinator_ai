@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { TestSetupHelper } from "@app/testing/test-setup_helper";
-
 import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
+import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Leaderboard Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {

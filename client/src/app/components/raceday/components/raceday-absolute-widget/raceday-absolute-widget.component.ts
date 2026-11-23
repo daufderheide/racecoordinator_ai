@@ -1,9 +1,3 @@
-import {
-  GroupStart,
-  movableIds,
-  moveGroup,
-} from "@app/components/ui-editor/multi-select.utils";
-import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { CommonModule, NgComponentOutlet } from "@angular/common";
 import {
@@ -48,6 +42,12 @@ import { RacedayTimerComponent } from "@app/components/raceday/components/raceda
 import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
+import {
+  GroupStart,
+  movableIds,
+  moveGroup,
+} from "@app/components/ui-editor/multi-select.utils";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";

@@ -1,9 +1,9 @@
 import {
   boxFromPoints,
-  clampGroupDelta,
-  movableIds,
   canMultiSelect,
+  clampGroupDelta,
   makeMain,
+  movableIds,
   selectedIds,
   selectionFromBox,
   toggleSelection,

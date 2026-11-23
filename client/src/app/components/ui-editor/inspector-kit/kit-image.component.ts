@@ -1,9 +1,9 @@
 import {
   Component,
   DestroyRef,
-  OnInit,
   inject,
   input,
+  OnInit,
   output,
   signal,
 } from "@angular/core";

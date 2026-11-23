@@ -16,11 +16,11 @@ import {
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { of, Subscription } from "rxjs";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceTimeService } from "@app/services/race-time.service";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
-import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,

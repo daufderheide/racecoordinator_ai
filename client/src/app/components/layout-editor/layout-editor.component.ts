@@ -1,24 +1,3 @@
-import { StyleClipboardService } from "@app/components/ui-editor/style-clipboard.service";
-import {
-  copyStyleInEditor,
-  duplicableIds,
-  duplicateInEditor,
-  editShortcut,
-  pasteStyleInEditor,
-} from "@app/components/layout-editor/layout-editor-style.helper";
-import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
-import {
-  canMultiSelect,
-  makeMain,
-  selectedIds,
-  Selection,
-  selectionFromBox,
-  toggleSelection,
-} from "@app/components/ui-editor/multi-select.utils";
-import {
-  InspectorMultiComponent,
-  MultiSelectItem,
-} from "@app/components/ui-editor/inspector-kit/inspector-multi.component";
 import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
@@ -33,8 +12,16 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { catchError, firstValueFrom, of, Subscription } from "rxjs";
+import {
+  copyStyleInEditor,
+  duplicableIds,
+  duplicateInEditor,
+  editShortcut,
+  pasteStyleInEditor,
+} from "@app/components/layout-editor/layout-editor-style.helper";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { LaneGridSession } from "@app/components/raceday/utils/lane-grid-replication.helper";
+import { layerState } from "@app/components/raceday/utils/layer-order.utils";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
@@ -42,9 +29,14 @@ import {
 } from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { ArrangeAction } from "@app/components/ui-editor/arrange.utils";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { ReviewStackedColumnsModalComponent } from "@app/components/ui-editor/components/review-stacked-columns-modal/review-stacked-columns-modal.component";
 import { GeometryChange } from "@app/components/ui-editor/inspector-kit/inspector-form.component";
+import {
+  InspectorMultiComponent,
+  MultiSelectItem,
+} from "@app/components/ui-editor/inspector-kit/inspector-multi.component";
 import {
   InspectorActions,
   InspectorSchema,
@@ -52,6 +44,15 @@ import {
 import { InspectorShellComponent } from "@app/components/ui-editor/inspector-kit/inspector-shell.component";
 import { customWidgetSchemaFor } from "@app/components/ui-editor/inspector-schemas/custom-widget-schema";
 import { getInspectorSchema } from "@app/components/ui-editor/inspector-schemas/widget-schemas";
+import {
+  canMultiSelect,
+  makeMain,
+  selectedIds,
+  Selection,
+  selectionFromBox,
+  toggleSelection,
+} from "@app/components/ui-editor/multi-select.utils";
+import { StyleClipboardService } from "@app/components/ui-editor/style-clipboard.service";
 import {
   handleUiEditorKeyboardShortcut,
   normalizeLoadedCustomUis,
@@ -62,7 +63,6 @@ import {
   handleLayerOrder,
   handleRemoveWidgets,
 } from "@app/components/ui-editor/ui-editor-widget.helper";
-import { layerState } from "@app/components/raceday/utils/layer-order.utils";
 import { WidgetInspectorFieldsComponent } from "@app/components/ui-editor/widget-inspector-fields/widget-inspector-fields.component";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";

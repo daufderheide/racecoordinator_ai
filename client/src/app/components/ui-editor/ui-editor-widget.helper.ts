@@ -1,19 +1,3 @@
-import { duplicateWidgets } from "@app/components/ui-editor/duplicate.utils";
-import {
-  pasteStyle,
-  StyleCopy,
-} from "@app/components/ui-editor/style-copy.utils";
-import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
-import {
-  canMultiSelect,
-  clampGroupDelta,
-  movableIds,
-} from "@app/components/ui-editor/multi-select.utils";
-import {
-  arrange,
-  ArrangeAction,
-  ArrangeResult,
-} from "@app/components/ui-editor/arrange.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import {
   LaneGridReplicationHelper,
@@ -23,11 +7,27 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "@app/components/raceday/utils/lane-replication.helper";
+import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import {
   LayerMove,
   moveLayer,
 } from "@app/components/raceday/utils/layer-order.utils";
-import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
+import {
+  arrange,
+  ArrangeAction,
+  ArrangeResult,
+} from "@app/components/ui-editor/arrange.utils";
+import { duplicateWidgets } from "@app/components/ui-editor/duplicate.utils";
+import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
+import {
+  canMultiSelect,
+  clampGroupDelta,
+  movableIds,
+} from "@app/components/ui-editor/multi-select.utils";
+import {
+  pasteStyle,
+  StyleCopy,
+} from "@app/components/ui-editor/style-copy.utils";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
 import { resolveCustomWidgetName } from "@app/utils/custom-widget-name.utils";

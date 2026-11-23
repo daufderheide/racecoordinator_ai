@@ -1,7 +1,3 @@
-import {
-  ArrangeAction,
-  MIN_TO_DISTRIBUTE,
-} from "@app/components/ui-editor/arrange.utils";
 import { CommonModule } from "@angular/common";
 import {
   Component,
@@ -11,6 +7,10 @@ import {
   signal,
   ViewEncapsulation,
 } from "@angular/core";
+import {
+  ArrangeAction,
+  MIN_TO_DISTRIBUTE,
+} from "@app/components/ui-editor/arrange.utils";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 import { PanelTheme, readPanelTheme } from "./inspector-shell.component";

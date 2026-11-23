@@ -17,13 +17,13 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
 import { isColorLight } from "@app/utils/color.utils";
-import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,

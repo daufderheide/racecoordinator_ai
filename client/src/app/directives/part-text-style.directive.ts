@@ -1,4 +1,4 @@
-import { Directive, computed, input } from "@angular/core";
+import { computed, Directive, input } from "@angular/core";
 
 /**
  * Text style per widget part, set in the redesigned Widget Configuration

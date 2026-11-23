@@ -2,10 +2,11 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, inject, input, output } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
-import { shadowFor } from "@app/utils/widget-style.utils";
 import { TranslationService } from "@app/services/translation.service";
+import { shadowFor } from "@app/utils/widget-style.utils";
 
 import {
+  ButtonsField,
   defaultFor,
   fieldKeys,
   fieldMatches,
@@ -13,7 +14,6 @@ import {
   FOLDER_META,
   FOLDER_ORDER,
   InspectorActions,
-  ButtonsField,
   InspectorContext,
   InspectorField,
   InspectorFolder,
