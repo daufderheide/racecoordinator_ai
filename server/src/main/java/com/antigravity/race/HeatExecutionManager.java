@@ -574,13 +574,18 @@ public class HeatExecutionManager {
           race.setFuelLevel(i, newFuel, capacity);
 
           // Broadcast fuel update using CarData instead of Lap
-          CarData fuelMsg =
+          CarLocation currentLoc = driverData.getCurrentLocation();
+          CarData.Builder fuelMsgBuilder =
               CarData.newBuilder()
                   .setLane(i)
                   .setFuelLevel(newFuel)
                   .setIsRefueling(true)
-                  .setFlag(race.getState().getLaneFlagType(race, i))
-                  .build();
+                  .setCanRefuel(true)
+                  .setFlag(race.getState().getLaneFlagType(race, i));
+          if (currentLoc != null) {
+            fuelMsgBuilder.setLocation(currentLoc.getValue());
+          }
+          CarData fuelMsg = fuelMsgBuilder.build();
           driverData.setFlag(fuelMsg.getFlag());
 
           RaceData fuelDataMsg = RaceData.newBuilder().setCarData(fuelMsg).build();
@@ -745,6 +750,7 @@ public class HeatExecutionManager {
                 && loc.getValue()
                     < CarLocation.PitBayBase.getValue() + race.getTrack().getLanes().size());
     boolean canRefuel = carData.getCanRefuel();
+    driverData.setCanRefuel(inPit && canRefuel);
 
     if (inPit && canRefuel) {
       if (!isRefueling[lane] && refuelDelayRemaining[lane] < 0) {
@@ -755,6 +761,7 @@ public class HeatExecutionManager {
       }
     } else {
       // Left pit or cannot refuel
+      driverData.setCanRefuel(false);
       if (isRefueling[lane] || refuelDelayRemaining[lane] >= 0) {
         isRefueling[lane] = false;
         driverData.setRefueling(false);

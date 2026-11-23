@@ -315,6 +315,7 @@ public class DriverHeatDataTest {
     dhd.setLapsLed(5);
     dhd.setCarryOverTime(3.5);
     dhd.setRefueling(true);
+    dhd.setCanRefuel(true);
     dhd.setCurrentLocation(com.antigravity.protocols.CarLocation.Main);
     dhd.setFlag(com.antigravity.proto.RaceFlag.YELLOW);
     dhd.setFinished(true);
@@ -325,6 +326,7 @@ public class DriverHeatDataTest {
     assertEquals(0, dhd.getLapsLed());
     assertEquals(0.0, dhd.getCarryOverTime(), 0.001);
     org.junit.Assert.assertFalse(dhd.isRefueling());
+    org.junit.Assert.assertFalse(dhd.isCanRefuel());
     org.junit.Assert.assertNull(dhd.getCurrentLocation());
     assertEquals(com.antigravity.proto.RaceFlag.UNKNOWN_FLAG, dhd.getFlag());
     org.junit.Assert.assertFalse(dhd.isFinished());
@@ -337,6 +339,11 @@ public class DriverHeatDataTest {
     Driver driverModel = new Driver("Test Driver", "Nickname");
     RaceParticipant driver = new RaceParticipant(driverModel);
     DriverHeatData dhd = new DriverHeatData(driver);
+    org.junit.Assert.assertFalse(dhd.isCanRefuel());
+    dhd.setCanRefuel(true);
+    org.junit.Assert.assertTrue(dhd.isCanRefuel());
+    dhd.setCanRefuel(false);
+    org.junit.Assert.assertFalse(dhd.isCanRefuel());
 
     for (int i = 0; i < 5; i++) {
       dhd.addLap(10.0, false, true);

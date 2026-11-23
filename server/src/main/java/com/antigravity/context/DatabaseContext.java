@@ -480,6 +480,7 @@ public class DatabaseContext {
 
     long driverCount = getTableCount(conn, "drivers");
     long teamCount = getTableCount(conn, "teams");
+    long carCount = getTableCount(conn, "cars");
     long trackCount = getTableCount(conn, "tracks");
     long raceCount = getTableCount(conn, "races");
     long eventCount = getTableCount(conn, "events");
@@ -504,20 +505,23 @@ public class DatabaseContext {
       }
     }
 
-    return new DatabaseStats(
-        dbName,
-        driverCount,
-        teamCount,
-        trackCount,
-        raceCount,
-        eventCount,
-        seasonCount,
-        assetCount,
-        sizeBytes,
-        raceRecordCount,
-        0,
-        savedRaceCount,
-        0);
+    DatabaseStats stats =
+        new DatabaseStats(
+            dbName,
+            driverCount,
+            teamCount,
+            trackCount,
+            raceCount,
+            eventCount,
+            seasonCount,
+            assetCount,
+            sizeBytes,
+            raceRecordCount,
+            0,
+            savedRaceCount,
+            0);
+    stats.carCount = carCount;
+    return stats;
   }
 
   private long getTableCount(Connection conn, String tableName) {
@@ -895,6 +899,10 @@ public class DatabaseContext {
     public String name;
     public long driverCount;
     public long teamCount;
+
+    /** Slotcars in the Slotcar database; set after construction. */
+    public long carCount;
+
     public long trackCount;
     public long raceCount;
     public long eventCount;

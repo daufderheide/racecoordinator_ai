@@ -143,7 +143,7 @@ export class RacedayCountdownComponent {
     const baseStyles: Record<string, string> = {
       background:
         amount >= 100
-          ? "rgba(0, 0, 0, 0.95)"
+          ? "rgba(0, 0, 0, 1)"
           : `radial-gradient(circle, rgba(0, 0, 0, ${innerAlpha.toFixed(2)}) 0%, rgba(0, 0, 0, ${outerAlpha.toFixed(2)}) 100%)`,
     };
 

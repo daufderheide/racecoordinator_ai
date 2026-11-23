@@ -150,7 +150,7 @@ public class DriverLaneHeatHandler {
                         && loc.getValue()
                             < CarLocation.PitBayBase.getValue()
                                 + race.getTrack().getLanes().size());
-            if (!inPit) {
+            if (!inPit || !dhd.isCanRefuel()) {
               ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
               return;
             }
@@ -256,7 +256,7 @@ public class DriverLaneHeatHandler {
                           && loc.getValue()
                               < CarLocation.PitBayBase.getValue()
                                   + race.getTrack().getLanes().size());
-              if (!inPit) {
+              if (!inPit || !dhd.isCanRefuel()) {
                 ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
                 return;
               }

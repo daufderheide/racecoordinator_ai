@@ -67,3 +67,14 @@ A seção de detalhamento fornece cartões para cada corrida incluída na tempor
 - **Cartões de Corrida Expansíveis**: Clique em qualquer cartão para ver a tabela de resultados por piloto com pontos de posição e bônus.
 - **Remover Corridas**: No Modo de Edição, clique no ícone da lixeira (<span class="material-icons">delete</span>) para remover uma corrida da temporada.
 
+---
+
+## Importação de pacotes de corrida entre computadores (`.rcpack`) {: #race-package-ingestion }
+
+Para consolidar resultados de corridas realizadas em outros computadores na sua temporada de campeonato:
+
+- **Exportar corridas concluídas**: No computador de origem, abra a janela **Histórico de corridas** na barra de ferramentas e clique em **Exportar pacote** (<span class="material-icons">file_download</span>) na corrida concluída. Isso cria um arquivo `.rcpack` contendo histórico, configuração de corrida, tempos de volta, pontos de temporada calculados e perfis de pilotos.
+- **Importação direta na temporada**: No computador de destino, abra o Editor de temporadas, entre no Modo de Edição e clique em **+ Adicionar corrida**. Na janela, clique em **Importar pacote de corrida...** (<span class="material-icons">file_upload</span>) e selecione o arquivo `.rcpack`.
+- **Configuração de corrida e resolução de pilotos**: Um diálogo interativo associa os pilotos e soluciona conflitos de configuração de corrida (**Renomear automaticamente**, **Substituir** ou **Usar existente**).
+- **Integração automática**: A configuração de corrida, os resultados e pontos são gravados no banco de dados local e inseridos na temporada, recalculando a classificação, descartes e desempates em tempo real.
+

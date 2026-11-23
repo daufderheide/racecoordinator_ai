@@ -41,10 +41,13 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
       .modal-content {
         background: #2b2b2b;
         color: #fff;
-        padding: 20px;
+        padding: 24px 20px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         min-width: 300px;
+        max-width: 480px;
+        margin: 20px;
+        box-sizing: border-box;
         text-align: center;
         border: 1px solid #444;
       }
@@ -53,8 +56,11 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
         color: #ffa500;
       }
       .modal-message {
-        margin: 20px 0;
-        font-size: 1.1em;
+        margin: 20px 0 24px;
+        font-size: 1.05em;
+        line-height: 1.5;
+        white-space: pre-line;
+        word-break: break-word;
       }
       .modal-actions {
         display: flex;

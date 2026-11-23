@@ -67,3 +67,14 @@ Der Bereich für Rennübersichten bietet detaillierte Karten für jedes in der S
 - **Aufklappbare Rennkarten**: Klicken Sie auf eine Karte, um die Ergebnisse, Platzierungen und Bonuspunkte pro Fahrer einzusehen.
 - **Rennen entfernen**: Klicken Sie im Bearbeitungsmodus auf das Papierkorb-Symbol (<span class="material-icons">delete</span>), um ein Rennen aus der Saison zu entfernen.
 
+---
+
+## Rennpakete von anderen Computern importieren (`.rcpack`) {: #race-package-ingestion }
+
+So führen Sie Rennergebnisse von anderen PCs oder Strecken in Ihrer Meisterschaftssaison zusammen:
+
+- **Abgeschlossene Rennen exportieren**: Öffnen Sie auf dem Quell-PC den Dialog **Rennverlauf** in der Symbolleiste und klicken Sie beim abgeschlossenen Rennen auf **Paket exportieren** (<span class="material-icons">file_download</span>). Dadurch wird ein `.rcpack`-Archiv mit Rennverlauf, Rennkonfiguration, Rundenrekorden, Saisonpunkten und Fahrerprofilen erstellt.
+- **Ein-Schritt-Saisonimport**: Öffnen Sie auf dem Zielcomputer den Saison-Editor, wechseln Sie in den Bearbeitungsmodus und klicken Sie auf **+ Rennen hinzufügen**. Klicken Sie im Dialog auf **Rennpaket importieren...** (<span class="material-icons">file_upload</span>) und wählen Sie die `.rcpack`-Datei.
+- **Rennkonfiguration & Fahrerauflösung**: Ein interaktiver Dialog gleicht Fahrer und Rennkonfigurationen ab. Bei Namenskonflikten der Rennkonfiguration können Sie zwischen **Automatisch umbenennen**, **Überschreiben** oder **Bestehende verwenden** wählen. Fahrer können verknüpft oder neu angelegt werden.
+- **Automatische Integration**: Rennkonfiguration, Rennergebnisse und Saisonpunkte werden in die lokale Datenbank übernommen und sofort zur Saison hinzugefügt, wobei Tabellenstand, Streichergebnisse und Tiebreaker in Echtzeit neu berechnet werden.
+

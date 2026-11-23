@@ -37,6 +37,7 @@ import com.antigravity.proto.RegenerateHeatsRequest;
 import com.antigravity.proto.RegenerateHeatsResponse;
 import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.ProtocolListener;
@@ -1031,13 +1032,18 @@ public class Race implements ProtocolListener {
         RaceFlag laneFlag = state != null ? state.getLaneFlagType(this, i) : RaceFlag.UNKNOWN_FLAG;
         driverData.setFlag(laneFlag);
 
-        com.antigravity.proto.CarData carData = // fqn-collision
+        CarLocation currentLoc = driverData.getCurrentLocation();
+        com.antigravity.proto.CarData.Builder carDataBuilder = // fqn-collision
             com.antigravity.proto.CarData.newBuilder() // fqn-collision
                 .setLane(i)
                 .setFuelLevel(participant.getFuelLevel())
                 .setIsRefueling(driverData.isRefueling())
-                .setFlag(laneFlag)
-                .build();
+                .setCanRefuel(driverData.isCanRefuel())
+                .setFlag(laneFlag);
+        if (currentLoc != null) {
+          carDataBuilder.setLocation(currentLoc.getValue());
+        }
+        com.antigravity.proto.CarData carData = carDataBuilder.build(); // fqn-collision
 
         broadcast(RaceData.newBuilder().setCarData(carData).build());
       }

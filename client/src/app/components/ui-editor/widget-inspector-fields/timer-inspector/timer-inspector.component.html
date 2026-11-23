@@ -242,6 +242,36 @@
   }
 
   <!-- Live Preview Section -->
+  <div class="inspector-section" style="margin-bottom: 8px">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        id="timer-digit-glow"
+        [ngModel]="settings().timerGlow !== false"
+        (ngModelChange)="settings().timerGlow = $event; onSettingsChange()"
+      />
+      <span>{{ "UE_INSPECTOR_TIMER_GLOW" | translate }}</span>
+    </label>
+  </div>
+  <div class="inspector-section">
+    <label class="form-check-label">
+      <input
+        type="checkbox"
+        class="form-checkbox"
+        id="timer-inner-shadow"
+        [ngModel]="settings().timerInnerShadow !== false"
+        (ngModelChange)="
+          settings().timerInnerShadow = $event; onSettingsChange()
+        "
+      />
+      <span>{{ "UE_INSPECTOR_TIMER_INNER_SHADOW" | translate }}</span>
+    </label>
+    <small class="inspector-hint">{{
+      "UE_INSPECTOR_TIMER_INNER_SHADOW_HINT" | translate
+    }}</small>
+  </div>
+
   <div class="inspector-section">
     <label class="inspector-label">{{
       "UE_INSPECTOR_TIMER_PREVIEW" | translate
