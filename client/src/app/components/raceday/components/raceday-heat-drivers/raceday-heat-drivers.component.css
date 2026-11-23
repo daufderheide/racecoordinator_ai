@@ -27,6 +27,11 @@ app-raceday-heat-drivers {
   flex-shrink: 0;
 }
 
+/* Title glow switched off in the widget settings (#1213). */
+.next-heat-title.no-title-glow, .on-deck-title.no-title-glow {
+  text-shadow: none;
+}
+
 .next-heat-list, .on-deck-list {
   display: flex;
   flex-direction: column;

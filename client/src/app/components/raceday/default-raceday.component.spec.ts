@@ -2809,10 +2809,10 @@ describe("DefaultRacedayComponent", () => {
       expect(imgOrSvg).toBeFalsy();
     });
 
-    it("should format seed in (#) format", () => {
+    it("should format the seed without brackets (#1214)", () => {
       mockHd.participant.seed = 5;
       const result = component.formatValue("seed", 5, mockHd);
-      expect(result).toBe("(5)");
+      expect(result).toBe("5");
     });
 
     it("should hide participant.team.name in practice races", () => {
