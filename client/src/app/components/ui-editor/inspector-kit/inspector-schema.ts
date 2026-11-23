@@ -74,6 +74,13 @@ export interface InspectorActions {
   deleteGrid?: (gridId: string) => void;
   reMirrorGrid?: (gridId: string) => void;
   bringGridToFront?: (gridId: string) => void;
+  /** Layer order (phase 4b): move the widget, or its grid, in the saved order. */
+  layerOrder?: (
+    widgetId: string,
+    move: "front" | "forward" | "backward" | "back",
+  ) => void;
+  /** Whether the widget, or its grid, is already front-most / back-most. */
+  layerState?: (widgetId: string) => { top: boolean; bottom: boolean } | null;
 }
 
 interface FieldBase {
@@ -228,6 +235,18 @@ export interface EmbedField extends FieldBase {
   component: Type<unknown>;
 }
 
+/** A row of icon buttons that run editor actions (no stored value). */
+export interface ButtonsField extends FieldBase {
+  type: "buttons";
+  buttons: {
+    id: string;
+    icon: string;
+    labelKey: string;
+    run: (context: InspectorContext) => void;
+    disabled?: (context: InspectorContext) => boolean;
+  }[];
+}
+
 /** Position or size on the widget itself (not in customSettings). */
 export interface GeometryField extends FieldBase {
   type: "geometry";
@@ -245,6 +264,7 @@ export type InspectorField =
   | TextPartField
   | ImageField
   | EmbedField
+  | ButtonsField
   | NoteField
   | GeometryField;
 
@@ -280,6 +300,7 @@ export function fieldKeys(field: InspectorField): string[] {
       return Object.values(field.keys).filter((k): k is string => !!k);
     case "geometry":
     case "embed":
+    case "buttons":
     case "note":
       return [];
     default:
@@ -298,6 +319,8 @@ export function registryDefaults(widgetType: string): Record<string, any> {
     // frame options from the shared wrapper (widget-style.utils)
     backgroundOpacity: 100,
     shadow: "none",
+    // Layout Editor lock (phase 4b)
+    locked: false,
     ...getDefaultBorderConfigForWidget(widgetType),
     ...(WIDGET_REGISTRY[widgetType]?.defaultSettings?.() || {}),
   };

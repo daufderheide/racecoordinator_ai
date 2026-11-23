@@ -1,3 +1,13 @@
+import {
+  canMultiSelect,
+  clampGroupDelta,
+  movableIds,
+} from "@app/components/ui-editor/multi-select.utils";
+import {
+  arrange,
+  ArrangeAction,
+  ArrangeResult,
+} from "@app/components/ui-editor/arrange.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import {
   LaneGridReplicationHelper,
@@ -7,6 +17,10 @@ import {
   LaneReplicationHelper,
   LaneReplicationOptions,
 } from "@app/components/raceday/utils/lane-replication.helper";
+import {
+  LayerMove,
+  moveLayer,
+} from "@app/components/raceday/utils/layer-order.utils";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import { CustomUI } from "@app/models/custom-ui";
 import { LayoutConfig, Settings } from "@app/models/settings";
@@ -586,6 +600,64 @@ export function handleRemoveSelectedWidget(comp: any, ui?: CustomUI): void {
   comp.onLayoutChanged(updatedLayout, targetUi);
 }
 
+/**
+ * Delete several selected widgets at once (phase 4c-2), as one undo step.
+ * Only plain widgets can be part of a multi-selection, so no grid clean-up
+ * is needed. Nothing stays selected afterwards.
+ */
+export function handleRemoveWidgets(
+  comp: any,
+  ids: string[],
+  ui?: CustomUI,
+): void {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets || !ids.length) return;
+  const newWidgets = layout.widgets.filter((w: any) => !ids.includes(w.id));
+  if (newWidgets.length === layout.widgets.length) return;
+  comp.selectedAnchor = null;
+  comp.selectedWidgetId = null;
+  comp.onLayoutChanged({ ...layout, widgets: newWidgets }, targetUi);
+}
+
+/**
+ * Align / distribute / same size for the selected widgets (phase 4c-3), as
+ * one undo step. Locked widgets are left as they are.
+ */
+export function handleArrange(
+  comp: any,
+  action: ArrangeAction,
+  ui?: CustomUI,
+): ArrangeResult {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  const none = { changed: 0, skipped: 0 };
+  if (!layout?.widgets) return none;
+  const byId = new Map<string, any>(layout.widgets.map((w: any) => [w.id, w]));
+  const selected = (comp.selectedWidgetIds || [])
+    .map((id: string) => byId.get(id))
+    .filter((w: any) => w && canMultiSelect(w));
+  if (selected.length < 2) return none;
+  const result = arrange(
+    selected,
+    action,
+    comp.getLayoutBaseWidth(targetUi),
+    comp.getLayoutBaseHeight(targetUi),
+  );
+  if (!result.changed) return result;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+  return result;
+}
+
 export function isWidgetHeightAutoCalculated(
   widget: any,
   session?: LaneGridSession | null,
@@ -620,6 +692,31 @@ export function isWidgetWidthAutoCalculated(
   return dir === "horizontal";
 }
 
+/**
+ * Layer buttons in the panel (phase 4b): move a widget, or its whole grid,
+ * in the saved order. One undo step.
+ */
+export function handleLayerOrder(
+  comp: any,
+  widgetId: string,
+  move: LayerMove,
+  ui?: CustomUI,
+): void {
+  const targetUi = ui || comp.activeCustomUi;
+  const layout = comp.getLayout(targetUi);
+  if (!layout?.widgets || !moveLayer(layout.widgets, widgetId, move)) return;
+  updateLayoutOnModel(
+    layout,
+    targetUi,
+    comp.editingSettings,
+    comp.isCustomUiPractice(targetUi),
+    comp.parsedLayouts,
+  );
+  comp.syncRacedayPreview?.(layout, targetUi);
+  comp.captureState();
+  comp.cdr?.markForCheck();
+}
+
 export function handleNudgeSelectedWidget(
   comp: any,
   dx: number,
@@ -631,10 +728,44 @@ export function handleNudgeSelectedWidget(
   const layout = comp.getLayout(targetUi);
   if (!layout?.widgets) return;
 
+  // several selected (phase 4c-2): move them all, as one undo step
+  const ids: string[] = comp.selectedWidgetIds || [];
+  if (ids.length > 1) {
+    const starts = movableIds(layout.widgets, ids).map((id) =>
+      layout.widgets.find((w: any) => w.id === id),
+    );
+    if (!starts.length) return;
+    const d = clampGroupDelta(
+      starts,
+      dx,
+      dy,
+      comp.getLayoutBaseWidth(targetUi),
+      comp.getLayoutBaseHeight(targetUi),
+    );
+    if (!d.dx && !d.dy) return;
+    for (const w of starts) {
+      w.x += d.dx;
+      w.y += d.dy;
+    }
+    updateLayoutOnModel(
+      layout,
+      targetUi,
+      comp.editingSettings,
+      comp.isCustomUiPractice(targetUi),
+      comp.parsedLayouts,
+    );
+    comp.syncRacedayPreview?.(layout, targetUi);
+    comp.captureState();
+    comp.cdr?.markForCheck();
+    return;
+  }
+
   const widget = layout.widgets.find(
     (w: any) => w.id === comp.selectedWidgetId,
   );
   if (!widget) return;
+  // a locked widget doesn't move with the arrow keys either
+  if (widget.customSettings?.["locked"] === true) return;
 
   const canNudgeX = !isWidgetWidthAutoCalculated(
     widget,

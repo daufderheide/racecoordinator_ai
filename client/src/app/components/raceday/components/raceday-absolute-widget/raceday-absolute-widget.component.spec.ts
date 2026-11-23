@@ -376,6 +376,206 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component.onDragStart).not.toHaveBeenCalled();
   });
 
+  describe("moving several together (phase 4c-2)", () => {
+    let other: any;
+    let locked: any;
+    beforeEach(() => {
+      other = { id: "other", x: 300, y: 300, width: 100, height: 100 };
+      locked = {
+        id: "locked",
+        x: 600,
+        y: 300,
+        width: 100,
+        height: 100,
+        customSettings: { locked: true },
+      };
+      mockParent.layout.widgets = [mockWidget, other, locked];
+      mockParent.isUIEditorMode = () => true;
+      mockParent.selectWidget = jasmine.createSpy("selectWidget");
+      mockParent.soleSelected = jasmine.createSpyObj("soleSelected", ["emit"]);
+      mockParent.snapWithGuides = jasmine
+        .createSpy("snapWithGuides")
+        .and.callFake((r: any) => ({ ...r, guidesX: [], guidesY: [] }));
+      fixture.componentRef.setInput("selectedWidgetIds", [
+        "test-widget",
+        "other",
+        "locked",
+      ]);
+      fixture.detectChanges();
+    });
+
+    const press = () => {
+      const e = new PointerEvent("pointerdown", { clientX: 50, clientY: 50 });
+      Object.defineProperty(e, "target", {
+        value: document.createElement("div"),
+      });
+      component.onDragStart(e);
+    };
+
+    it("drags the others along, keeps the selection, leaves locked ones", () => {
+      press();
+      expect(mockParent.selectWidget).not.toHaveBeenCalled();
+      document.dispatchEvent(
+        new PointerEvent("pointermove", { clientX: 70, clientY: 90 }),
+      );
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect([mockWidget.x, mockWidget.y]).toEqual([30, 60]);
+      expect([other.x, other.y]).toEqual([320, 340]);
+      expect([locked.x, locked.y]).toEqual([600, 300]);
+      // snapping ignores the group's own members
+      expect(mockParent.snapWithGuides.calls.mostRecent().args[5]).toEqual([
+        "other",
+      ]);
+      expect(mockParent.layoutChanged.emit).toHaveBeenCalled();
+      expect(mockParent.soleSelected.emit).not.toHaveBeenCalled();
+    });
+
+    it("a click without moving selects only this widget", () => {
+      press();
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(mockParent.soleSelected.emit).toHaveBeenCalledWith("test-widget");
+      expect(mockParent.layoutChanged.emit).not.toHaveBeenCalled();
+    });
+
+    it("stops the whole group at the canvas edge", () => {
+      other.x = 1800; // 20 px from the right edge
+      press();
+      document.dispatchEvent(
+        new PointerEvent("pointermove", { clientX: 150, clientY: 50 }),
+      );
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(other.x).toBe(1820);
+      expect(mockWidget.x).toBe(30);
+    });
+  });
+
+  describe("selecting several (phase 4c-1)", () => {
+    it("Shift- or Ctrl-click in the Layout Editor toggles instead of dragging", () => {
+      const toggled: string[] = [];
+      mockParent.isUIEditorMode = () => true;
+      mockParent.selectionToggled = { emit: (id: string) => toggled.push(id) };
+      spyOn(component, "onDragStart");
+      for (const init of [{ shiftKey: true }, { ctrlKey: true }]) {
+        const e = new PointerEvent("pointerdown", init);
+        Object.defineProperty(e, "target", {
+          value: document.createElement("div"),
+        });
+        component.onWidgetPointerDown(e);
+      }
+      expect(toggled).toEqual(["test-widget", "test-widget"]);
+      expect(component.onDragStart).not.toHaveBeenCalled();
+    });
+
+    it("outside the Layout Editor a Shift-press still drags", () => {
+      mockParent.isUIEditorMode = () => false;
+      spyOn(component, "onDragStart");
+      const e = new PointerEvent("pointerdown", { shiftKey: true });
+      Object.defineProperty(e, "target", {
+        value: document.createElement("div"),
+      });
+      component.onWidgetPointerDown(e);
+      expect(component.onDragStart).toHaveBeenCalled();
+    });
+
+    it("draws a dashed outline on the other selected widgets", () => {
+      fixture.componentRef.setInput("selectedWidgetId", "other");
+      fixture.componentRef.setInput("selectedWidgetIds", [
+        "other",
+        "test-widget",
+      ]);
+      fixture.detectChanges();
+      const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+      expect(component.isAlsoSelected).toBeTrue();
+      expect(wrapper.classList).toContain("also-selected");
+      expect(wrapper.classList).not.toContain("selected");
+    });
+  });
+
+  describe("layer order while dragging (phase 4b)", () => {
+    let lifted: Set<string>;
+    beforeEach(() => {
+      lifted = new Set();
+      const liftedIds: any = () => lifted;
+      liftedIds.set = (v: Set<string>) => (lifted = v);
+      mockParent.liftedIds = liftedIds;
+      mockParent.selectWidget = jasmine.createSpy("selectWidget");
+    });
+
+    it("selects without bringing to front, lifts while dragging, drops back after", () => {
+      const target = document.createElement("div");
+      const down = new PointerEvent("pointerdown", {
+        clientX: 50,
+        clientY: 50,
+      });
+      Object.defineProperty(down, "target", { value: target });
+      component.onDragStart(down);
+      expect(mockParent.selectWidget).toHaveBeenCalledWith("test-widget");
+      expect(mockParent.bringToFront).not.toHaveBeenCalled();
+      expect(component.computedZIndex).toBe(90000 + 100);
+
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(lifted.size).toBe(0);
+      expect(component.computedZIndex).toBe(100);
+      expect(mockWidget.zIndex).toBe(100);
+    });
+
+    it("a press on a widget that can't be dragged only selects it", () => {
+      spyOnProperty(component, "canModifyWidget", "get").and.returnValue(false);
+      const down = new PointerEvent("pointerdown");
+      Object.defineProperty(down, "target", {
+        value: document.createElement("div"),
+      });
+      component.onWidgetPointerDown(down);
+      expect(mockParent.selectWidget).toHaveBeenCalledWith("test-widget");
+      expect(mockParent.bringToFront).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("locked widget (phase 4b)", () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        customSettings: { locked: true },
+      });
+      fixture.detectChanges();
+    });
+
+    it("shows a lock instead of the grab icon and hides the resize handles", () => {
+      const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+      expect(component.isLocked).toBeTrue();
+      expect(wrapper.classList).toContain("is-locked");
+      expect(
+        fixture.nativeElement.querySelector(".widget-header-drag")?.textContent,
+      ).toContain("lock");
+      const handle = fixture.nativeElement.querySelector(".resize-handle");
+      if (handle) expect(getComputedStyle(handle).display).toBe("none");
+    });
+
+    it("can still be selected (brought to front) but not dragged or resized", () => {
+      const target = document.createElement("div");
+      const down = new PointerEvent("pointerdown", {
+        clientX: 50,
+        clientY: 50,
+      });
+      Object.defineProperty(down, "target", { value: target });
+      spyOn(down, "preventDefault");
+      component.onDragStart(down);
+      expect(mockParent.bringToFront).toHaveBeenCalledWith("test-widget");
+      expect(down.preventDefault).not.toHaveBeenCalled();
+      document.dispatchEvent(
+        new PointerEvent("pointermove", { clientX: 90, clientY: 90 }),
+      );
+      document.dispatchEvent(new PointerEvent("pointerup"));
+      expect(mockParent.snapToEdges).not.toHaveBeenCalled();
+      expect(mockParent.layoutChanged.emit).not.toHaveBeenCalled();
+
+      const r = new PointerEvent("pointerdown");
+      spyOn(r, "preventDefault");
+      component.onResizeStart(r, "se");
+      expect(r.preventDefault).not.toHaveBeenCalled();
+    });
+  });
+
   it("should handle removeWidget directly", () => {
     const fakeEvent = new Event("click");
     spyOn(fakeEvent, "stopPropagation");

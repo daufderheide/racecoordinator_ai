@@ -112,4 +112,56 @@ describe("batch 3 schemas", () => {
       expect(widget["fontSize"]).toBe(24);
     });
   });
+
+  describe("lock (phase 4b)", () => {
+    const { layoutFolder } = require("./common");
+    const lock = () =>
+      layoutFolder()
+        .groups.flatMap((g: any) => g.fields)
+        .find((f: any) => f.id === "locked");
+
+    it("has layer buttons that call the editor, not for the menu bar or countdown", () => {
+      const layer = layoutFolder()
+        .groups.flatMap((g: any) => g.fields)
+        .find((f: any) => f.id === "layer");
+      const calls: string[] = [];
+      const ctx: any = {
+        widget: { id: "w1", widgetType: "timer" },
+        actions: {
+          layerOrder: (id: string, move: string) => calls.push(`${id} ${move}`),
+          layerState: () => ({ top: true, bottom: false }),
+        },
+      };
+      expect(layer.buttons.map((b: any) => b.id)).toEqual([
+        "front",
+        "forward",
+        "backward",
+        "back",
+      ]);
+      expect(layer.visibleWhen({}, ctx)).toBeTrue();
+      expect(
+        layer.visibleWhen({}, { ...ctx, widget: { widgetType: "menu-bar" } }),
+      ).toBeFalse();
+      expect(
+        layer.visibleWhen({}, { ...ctx, widget: { widgetType: "countdown" } }),
+      ).toBeFalse();
+      expect(layer.visibleWhen({}, { widget: ctx.widget })).toBeFalse();
+      layer.buttons[3].run(ctx);
+      expect(calls).toEqual(["w1 back"]);
+      // already in front: front / forward greyed out, the others not
+      expect(layer.buttons.map((b: any) => b.disabled(ctx))).toEqual([
+        true,
+        true,
+        false,
+        false,
+      ]);
+    });
+
+    it("has a lock switch, off by default, hidden for grid columns", () => {
+      expect(lock().type).toBe("switch");
+      expect(registryDefaults("timer")["locked"]).toBeFalse();
+      expect(lock().visibleWhen({}, {} as any)).toBeTrue();
+      expect(lock().visibleWhen({ gridId: "g1" }, {} as any)).toBeFalse();
+    });
+  });
 });

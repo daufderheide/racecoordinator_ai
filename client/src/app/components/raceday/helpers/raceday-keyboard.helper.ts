@@ -69,7 +69,8 @@ export class RacedayKeyboardHelper {
       const selId = host.selectedWidgetId();
       if (selId && host.layout?.widgets) {
         const widget = host.layout.widgets.find((w: any) => w.id === selId);
-        if (widget) {
+        // a locked widget doesn't move with the arrow keys (phase 4b)
+        if (widget && widget.customSettings?.["locked"] !== true) {
           event.preventDefault();
           const step = event.shiftKey ? 10 : 1;
           const dx =

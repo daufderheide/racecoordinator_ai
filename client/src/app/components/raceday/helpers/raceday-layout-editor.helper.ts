@@ -1,3 +1,7 @@
+import {
+  boxFromPoints,
+  widgetsInBox,
+} from "@app/components/ui-editor/multi-select.utils";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridFactoryHelper } from "@app/components/raceday/utils/lane-grid-factory.helper";
 import { LaneGridHeaderHelper } from "@app/components/raceday/utils/lane-grid-header.helper";
@@ -450,6 +454,86 @@ export class RacedayLayoutEditorHelper {
         ...nonCountdown.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
       ) + 1
     );
+  }
+
+  /**
+   * Select a widget from the canvas without changing the saved layer order
+   * (phase 4b). Picks the same widget bringToFront would select: the grid
+   * master for a mirrored lane, else the widget itself.
+   */
+  /**
+   * Layout Editor (phase 4c-1): a press on the empty canvas starts a selection
+   * box. A plain click without dragging does nothing, as before.
+   */
+  public static onCanvasPointerDown(host: any, event: PointerEvent): void {
+    if (!host.isUIEditorMode?.() || !host.isLayoutCustomizing) return;
+    if (event.button !== 0 || event.target !== event.currentTarget) return;
+    const root = event.currentTarget as HTMLElement;
+    const rect = root.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const baseW = host.layout?.baseWidth || 1920;
+    const baseH = host.layout?.baseHeight || 1080;
+    const toLayout = (e: PointerEvent) => ({
+      x: ((e.clientX - rect.left) / rect.width) * baseW,
+      y: ((e.clientY - rect.top) / rect.height) * baseH,
+    });
+    const start = toLayout(event);
+    const additive = event.shiftKey || event.ctrlKey || event.metaKey;
+    let moved = false;
+    event.preventDefault();
+
+    const onMove = (e: PointerEvent) => {
+      const p = toLayout(e);
+      if (
+        !moved &&
+        Math.hypot(e.clientX - event.clientX, e.clientY - event.clientY) < 4
+      ) {
+        return;
+      }
+      moved = true;
+      host.selectionBox?.set(boxFromPoints(start.x, start.y, p.x, p.y));
+    };
+    const onUp = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      const box = host.selectionBox?.();
+      host.selectionBox?.set(null);
+      if (!moved || !box) return;
+      const countdownShown = host.isCountdownPreviewActive?.() === true;
+      const ids = widgetsInBox(
+        host.layout?.widgets || [],
+        box,
+        (w) => w.widgetType === "countdown" && !countdownShown,
+      );
+      host.boxSelected?.emit({ ids, additive });
+    };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+
+  public static selectWidget(host: any, id: string): void {
+    const target = host.layout?.widgets?.find((w: any) => w.id === id);
+    if (!target) return;
+    const s = target.customSettings;
+    const session = host.gridSession?.();
+    const isHoriz =
+      session?.direction === "horizontal" ||
+      session?.layoutOrientation === "horizontal" ||
+      s?.["gridDirection"] === "horizontal" ||
+      s?.["layoutOrientation"] === "horizontal";
+    const isLanesMirrored = isHoriz
+      ? s?.["linkColumns"] !== false && session?.linkColumns !== false
+      : s?.["mirrorRows"] !== false && session?.mirrorRows !== false;
+    const masterId = s?.["gridMasterId"];
+    if (
+      isLanesMirrored &&
+      masterId &&
+      host.layout.widgets.some((w: any) => w.id === masterId)
+    ) {
+      host.widgetSelected.emit(masterId);
+      return;
+    }
+    host.widgetSelected.emit(id);
   }
 
   public static bringToFront(host: any, id: string): void {

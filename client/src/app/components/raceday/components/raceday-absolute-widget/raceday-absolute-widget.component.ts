@@ -1,3 +1,9 @@
+import {
+  GroupStart,
+  movableIds,
+  moveGroup,
+} from "@app/components/ui-editor/multi-select.utils";
+import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 import { DragDropModule } from "@angular/cdk/drag-drop";
 import { CommonModule, NgComponentOutlet } from "@angular/common";
 import {
@@ -96,6 +102,8 @@ export class RacedayAbsoluteWidgetComponent
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
+  /** Layout Editor multi-select (phase 4c-1): every selected id, main first. */
+  selectedWidgetIds = input<string[]>([]);
   isCountdownPreviewActive = input<boolean>(false);
   gridContentOffset = input<{ x: number; y: number } | null>(null);
   showCountdownOverlay = input<boolean>(false);
@@ -113,6 +121,14 @@ export class RacedayAbsoluteWidgetComponent
 
   get isSelected(): boolean {
     return this.selectedWidgetId() === this.widget().id;
+  }
+
+  /** Selected along with others, but not the main widget (phase 4c-1). */
+  get isAlsoSelected(): boolean {
+    return (
+      !this.isSelected &&
+      (this.selectedWidgetIds() || []).includes(this.widget().id)
+    );
   }
 
   get isCountdownWidget(): boolean {
@@ -297,6 +313,11 @@ export class RacedayAbsoluteWidgetComponent
     return Boolean(session && session.gridId === gridId);
   }
 
+  /** Locked in the Layout Editor: can be selected, not moved or resized. */
+  get isLocked(): boolean {
+    return this.widget()?.customSettings?.["locked"] === true;
+  }
+
   get canModifyWidget(): boolean {
     if (!this.isCustomizing() || this.isCountdownGhost) return false;
     if (this.isWidgetInGrid && !this.isGridSelected) return false;
@@ -333,6 +354,10 @@ export class RacedayAbsoluteWidgetComponent
     }
     if (w.widgetType === "menu-bar") {
       return 99999;
+    }
+    // on top while dragged (phase 4b), below the menu bar and countdown
+    if (this.parentComponent()?.liftedIds?.()?.has(w.id)) {
+      return LIFTED_Z + (w.zIndex || 100);
     }
     return w.zIndex || 100;
   }
@@ -574,6 +599,7 @@ export class RacedayAbsoluteWidgetComponent
         handle,
         baseWidth,
         baseHeight,
+        this.snapIgnore,
       );
       host.snapGuides?.set(
         r.guidesX.length || r.guidesY.length
@@ -615,7 +641,7 @@ export class RacedayAbsoluteWidgetComponent
   }
 
   onResizeStart(event: PointerEvent, handle: string) {
-    if (!this.canModifyWidget) return;
+    if (!this.canModifyWidget || this.isLocked) return;
     event.preventDefault();
     event.stopPropagation();
 
@@ -659,22 +685,7 @@ export class RacedayAbsoluteWidgetComponent
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
       this.clearSnapOverlay();
-      if (this.parentComponent().gridSession?.()) {
-        const session = this.parentComponent().gridSession();
-        if (
-          this.widget().customSettings?.["gridId"] === session.gridId &&
-          (Number(this.widget().customSettings?.["gridLane"]) ===
-            session.sourceLaneIndex ||
-            LaneGridReplicationHelper.isHeaderWidget(this.widget()))
-        ) {
-          this.parentComponent().onMasterWidgetModified?.(this.widget());
-        }
-      }
-      if (this.parentComponent().layoutChanged) {
-        this.parentComponent().layoutChanged.emit(
-          this.parentComponent().layout,
-        );
-      }
+      this.afterMoveOrResize();
     };
 
     document.addEventListener("pointermove", onPointerMove);
@@ -684,6 +695,11 @@ export class RacedayAbsoluteWidgetComponent
   // Handle dragging manually to support snapping better than cdkDrag might out of the box
   onDragStart(event: PointerEvent) {
     if (!this.canModifyWidget) return;
+    if (this.isLocked) {
+      // a locked widget is only selected, never dragged
+      this.selectWidget();
+      return;
+    }
     const target = event.target as HTMLElement | null;
     // Don't drag if clicking a resize handle, button, or input
     if (target?.closest(".resize-handle")) return;
@@ -693,13 +709,22 @@ export class RacedayAbsoluteWidgetComponent
     event.preventDefault();
     event.stopPropagation();
 
-    this.bringToFront();
+    // Several selected (phase 4c-2): pressing one of them moves them all and
+    // keeps the selection; a click without moving selects only this one.
+    const group = this.groupDragStarts();
+    this.snapIgnore = group.map((g) => g.id);
+
+    // select, and lift on top only while dragging: the saved layer order
+    // changes only through the panel's layer buttons (phase 4b)
+    if (!group.length) this.selectWidget();
+    this.setLifted(true, this.snapIgnore);
 
     const scale = this.parentComponent().visualScale || 1;
     const startX = event.clientX;
     const startY = event.clientY;
     const initialWidgetX = this.widget().x;
     const initialWidgetY = this.widget().y;
+    let moved = false;
 
     const onPointerMove = (moveEvent: PointerEvent) => {
       const deltaX = (moveEvent.clientX - startX) / scale;
@@ -734,6 +759,30 @@ export class RacedayAbsoluteWidgetComponent
       this.widget().y = this.isHeightAutoCalculated
         ? initialWidgetY
         : Math.max(0, Math.min(baseHeight - h, snapped.y));
+      if (
+        Math.abs(moveEvent.clientX - startX) > 2 ||
+        Math.abs(moveEvent.clientY - startY) > 2
+      ) {
+        moved = true;
+      }
+      if (group.length) {
+        // the others follow by the same amount; nobody leaves the canvas
+        const lead = {
+          id: this.widget().id,
+          x: initialWidgetX,
+          y: initialWidgetY,
+          width: w,
+          height: h,
+        };
+        moveGroup(
+          lead,
+          this.widget(),
+          group,
+          (id) => this.findLayoutWidget(id),
+          baseWidth,
+          baseHeight,
+        );
+      }
       this.showReadout();
       this.cdr.detectChanges();
     };
@@ -742,22 +791,14 @@ export class RacedayAbsoluteWidgetComponent
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
       this.clearSnapOverlay();
-      if (this.parentComponent().gridSession?.()) {
-        const session = this.parentComponent().gridSession();
-        if (
-          this.widget().customSettings?.["gridId"] === session.gridId &&
-          (Number(this.widget().customSettings?.["gridLane"]) ===
-            session.sourceLaneIndex ||
-            LaneGridReplicationHelper.isHeaderWidget(this.widget()))
-        ) {
-          this.parentComponent().onMasterWidgetModified?.(this.widget());
-        }
+      this.setLifted(false);
+      this.snapIgnore = [];
+      if (group.length && !moved) {
+        // a click on one of several selected: select only that one
+        this.parentComponent().soleSelected?.emit(this.widget().id);
+        return;
       }
-      if (this.parentComponent().layoutChanged) {
-        this.parentComponent().layoutChanged.emit(
-          this.parentComponent().layout,
-        );
-      }
+      this.afterMoveOrResize();
     };
 
     document.addEventListener("pointermove", onPointerMove);
@@ -775,6 +816,19 @@ export class RacedayAbsoluteWidgetComponent
   onWidgetPointerDown(event: PointerEvent): void {
     if (!this.isCustomizing() || this.isCountdownGhost) return;
     const target = event.target as HTMLElement | null;
+    // Layout Editor: Shift / Ctrl-click adds or removes the widget (phase 4c-1)
+    const parent = this.parentComponent();
+    if (
+      (event.shiftKey || event.ctrlKey || event.metaKey) &&
+      parent?.isUIEditorMode?.() &&
+      parent?.selectionToggled &&
+      !target?.closest(".resize-handle, button, .widget-remove-btn")
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      parent.selectionToggled.emit(this.widget().id);
+      return;
+    }
     if (
       target?.closest(
         ".resize-handle, button, .widget-remove-btn, app-custom-select, select, input, textarea",
@@ -790,10 +844,87 @@ export class RacedayAbsoluteWidgetComponent
       return;
     }
     if (!this.canModifyWidget) {
-      this.bringToFront();
+      this.selectWidget();
       return;
     }
     this.onDragStart(event);
+  }
+
+  /**
+   * Select this widget (or its grid master) without changing the layer order.
+   * Hosts without selectWidget keep the old bring-to-front behaviour.
+   */
+  selectWidget(): void {
+    const parent = this.parentComponent();
+    if (parent?.selectWidget) {
+      parent.selectWidget(this.widget().id);
+    } else {
+      this.bringToFront();
+    }
+  }
+
+  /** Draw this widget (or its whole grid, or the group) on top while it's dragged. */
+  private setLifted(on: boolean, alsoIds: string[] = []): void {
+    const lifted = this.parentComponent()?.liftedIds;
+    if (!lifted?.set) return;
+    if (!on) {
+      lifted.set(new Set());
+      return;
+    }
+    const gridId = this.widget().customSettings?.["gridId"];
+    const ids = gridId
+      ? (this.parentComponent().layout?.widgets || [])
+          .filter((w: any) => w.customSettings?.["gridId"] === gridId)
+          .map((w: any) => w.id)
+      : [this.widget().id, ...alsoIds];
+    lifted.set(new Set(ids));
+  }
+
+  /** Other selected widgets that move along while this one is dragged. */
+  private snapIgnore: string[] = [];
+
+  /** After a move or resize: update the grid's other lanes, then save. */
+  private afterMoveOrResize(): void {
+    if (this.parentComponent().gridSession?.()) {
+      const session = this.parentComponent().gridSession();
+      if (
+        this.widget().customSettings?.["gridId"] === session.gridId &&
+        (Number(this.widget().customSettings?.["gridLane"]) ===
+          session.sourceLaneIndex ||
+          LaneGridReplicationHelper.isHeaderWidget(this.widget()))
+      ) {
+        this.parentComponent().onMasterWidgetModified?.(this.widget());
+      }
+    }
+    if (this.parentComponent().layoutChanged) {
+      this.parentComponent().layoutChanged.emit(this.parentComponent().layout);
+    }
+  }
+
+  private findLayoutWidget(id: string): any {
+    return (this.parentComponent()?.layout?.widgets || []).find(
+      (w: any) => w.id === id,
+    );
+  }
+
+  /**
+   * Start positions of the other selected widgets that move with this one
+   * (phase 4c-2): only in the Layout Editor, only when this widget is one of
+   * several selected. Locked widgets and grid columns stay put.
+   */
+  private groupDragStarts(): GroupStart[] {
+    const ids = this.selectedWidgetIds() || [];
+    const me = this.widget().id;
+    if (ids.length < 2 || !ids.includes(me)) return [];
+    if (!this.parentComponent()?.isUIEditorMode?.()) return [];
+    const widgets = this.parentComponent()?.layout?.widgets || [];
+    return movableIds(
+      widgets,
+      ids.filter((id) => id !== me),
+    ).map((id) => {
+      const w = this.findLayoutWidget(id);
+      return { id, x: w.x, y: w.y, width: w.width, height: w.height };
+    });
   }
 
   bringToFront() {

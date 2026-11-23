@@ -415,10 +415,15 @@ export class RacedayGridLayoutHelper {
     handle: string,
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
+    alsoIgnore: string[] = [],
   ): SnapResult {
     const { extraX, extraY } = RacedayGridLayoutHelper.snapExtras(host);
+    // a group being dragged doesn't snap to its own members (phase 4c-2)
+    const widgets = (host.layout?.widgets || []).filter(
+      (w: any) => !alsoIgnore.includes(w.id),
+    );
     return snapRect(
-      host.layout?.widgets || [],
+      widgets,
       rect,
       ignoreId,
       handle,

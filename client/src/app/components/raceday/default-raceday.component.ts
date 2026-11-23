@@ -495,6 +495,14 @@ export class DefaultRacedayComponent
   isCountdownPreviewActive = input<boolean>(false);
   gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
+  /** Layout Editor multi-select (phase 4c-1): all selected ids, main first. */
+  selectedWidgetIds = input<string[]>([]);
+  /** Shift / Ctrl-click on a widget. */
+  selectionToggled = output<string>();
+  /** Widgets fully inside a box drawn on the empty canvas (Shift = add). */
+  boxSelected = output<{ ids: string[]; additive: boolean }>();
+  /** A click (no drag) on a widget of a multi-selection: select only it. */
+  soleSelected = output<string>();
   anchorSelected = output<{ widgetId: string; anchor: string | null }>();
   finishGrid = output<void>();
   deleteGrid = output<string>();

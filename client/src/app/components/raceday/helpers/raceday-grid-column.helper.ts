@@ -1,3 +1,4 @@
+import { LIFTED_Z } from "@app/components/raceday/utils/layer-order.utils";
 import { CdkDragDrop, moveItemInArray } from "@angular/cdk/drag-drop";
 import {
   AnchorPoint,
@@ -347,11 +348,12 @@ export class RacedayGridColumnHelper {
     event.stopPropagation();
     const session = host.gridSession?.();
     if (!session) return;
-    if (host.bringGridToFront) {
-      host.bringGridToFront(session.gridId);
-    } else {
-      RacedayGridColumnHelper.bringGridToFront(host, session.gridId);
-    }
+    // on top only while dragging; the saved order changes only through the
+    // layer buttons (phase 4b)
+    const gridIds = (host.layout?.widgets || [])
+      .filter((w: any) => w.customSettings?.["gridId"] === session.gridId)
+      .map((w: any) => w.id);
+    host.liftedIds?.set(new Set(gridIds));
 
     const startX = event.clientX;
     const startY = event.clientY;
@@ -394,6 +396,7 @@ export class RacedayGridColumnHelper {
     const onPointerUp = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      host.liftedIds?.set(new Set());
       if (hasMoved && host.layout) {
         host.layoutChanged?.emit(host.layout);
       }
@@ -479,12 +482,7 @@ export class RacedayGridColumnHelper {
       return;
     }
 
-    if (host.bringGridToFront) {
-      host.bringGridToFront(gridId);
-    } else {
-      RacedayGridColumnHelper.bringGridToFront(host, gridId);
-    }
-
+    // selecting a grid doesn't change the saved layer order (phase 4b)
     const gridWidgets = (host.layout?.widgets || []).filter(
       (w: any) => w.customSettings?.["gridId"] === gridId,
     );
@@ -512,6 +510,9 @@ export class RacedayGridColumnHelper {
             ...gridWidgets.map((w: any) => (w.zIndex != null ? w.zIndex : 100)),
           )
         : 100;
-    return maxZ + 10;
+    // lifted while the grid is dragged (phase 4b): stay above its members
+    const lifted = host.liftedIds?.();
+    const isLifted = gridWidgets.some((w: any) => lifted?.has(w.id));
+    return maxZ + 10 + (isLifted ? LIFTED_Z : 0);
   }
 }

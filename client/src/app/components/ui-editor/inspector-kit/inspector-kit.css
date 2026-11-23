@@ -6,7 +6,8 @@
    One accent per theme; labels sit above their field like in every editor. */
 
 /* Same place and size as today's panel in the Layout Editor. */
-app-inspector-shell {
+app-inspector-shell,
+app-inspector-multi {
   display: block;
   width: 350px;
   height: 100%;
@@ -36,7 +37,8 @@ app-inspector-shell {
   --k-head: transparent;
   --k-border: 2px solid #ffd700;
   --k-border-top: 4px solid #ffd700;
-  --k-shadow: 0 0 20px rgba(255, 215, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7),
+  --k-shadow:
+    0 0 20px rgba(255, 215, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.7),
     inset 0 0 15px rgba(255, 215, 0, 0.2);
   --k-text: #000;
   --k-title: #000;
@@ -293,6 +295,24 @@ app-inspector-shell {
   outline: none;
 }
 
+.kit-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+  border-color: transparent;
+}
+
+/* a row of action buttons (layer order) */
+.kit-buttons {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.kit-buttons .kit-icon-btn {
+  border-color: var(--k-input-line);
+}
+
 .kit-icon-btn .material-icons {
   font-size: 19px;
 }
@@ -445,7 +465,8 @@ app-inspector-shell {
 }
 
 .kit-folder-head:hover {
-  background: linear-gradient(var(--k-folder-hover), var(--k-folder-hover)),
+  background:
+    linear-gradient(var(--k-folder-hover), var(--k-folder-hover)),
     var(--k-solid);
 }
 
@@ -852,7 +873,11 @@ app-inspector-shell {
     linear-gradient(45deg, transparent 75%, #ccc 75%),
     linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 8px 8px;
-  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+  background-position:
+    0 0,
+    0 4px,
+    4px -4px,
+    -4px 0;
   background-color: #fff;
   box-sizing: border-box;
 }
@@ -913,7 +938,9 @@ app-inspector-shell {
 }
 
 .kit-quick-default {
-  background: linear-gradient(135deg, transparent 45%, #c2410c 45% 55%, transparent 55%), #fff !important;
+  background:
+    linear-gradient(135deg, transparent 45%, #c2410c 45% 55%, transparent 55%),
+    #fff !important;
 }
 
 /* tiles */
@@ -1187,38 +1214,54 @@ app-inspector-shell {
 }
 
 /* Available Columns tree in the dark panel: the editor's section look */
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-header,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-header {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-group-header,
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-subgroup-header {
   background: var(--k-folder);
   border-color: var(--k-folder-line);
   color: var(--k-folder-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-content,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-content {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-group-content,
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-subgroup-content {
   background: var(--k-fbody);
   border-color: var(--k-fbody-line);
 }
 
 .kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-folder-icon,
 .kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-icon,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .drag-indicator-icon {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .drag-indicator-icon {
   color: var(--k-folder-icon);
 }
 
 .kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-badge,
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-badge {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-subgroup-badge {
   background: var(--k-badge-bg);
   color: var(--k-badge-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-item {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-widget-item {
   background: var(--k-seg);
   border-color: var(--k-seg-line);
   color: var(--k-seg-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-item:hover {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-widget-item:hover {
   border-color: var(--k-focus);
 }
 
@@ -1228,17 +1271,24 @@ app-inspector-shell {
   color: var(--k-folder-icon) !important;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-input {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-search-input {
   background: var(--k-input) !important;
   color: var(--k-input-text) !important;
   border-color: var(--k-input-line) !important;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-input:focus {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-search-input:focus {
   border-color: var(--k-focus) !important;
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-wrapper .toolbox-search-input::placeholder {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-view-columns
+  .toolbox-search-wrapper
+  .toolbox-search-input::placeholder {
   color: var(--k-placeholder);
 }
 
@@ -1249,7 +1299,9 @@ app-inspector-shell {
   color: var(--k-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(
     .inspector-label,
     .inspector-geometry-title,
     .inspector-group-title,
@@ -1259,10 +1311,9 @@ app-inspector-shell {
   color: var(--k-label);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
-    .inspector-geometry-title,
-    .inspector-group-title
-  )
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(.inspector-geometry-title, .inspector-group-title)
   .material-icons {
   color: var(--k-folder-icon);
 }
@@ -1308,10 +1359,9 @@ app-inspector-shell {
 }
 
 /* inputs, buttons and the inset map */
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
-    .inspector-input,
-    .inspector-number-input
-  ) {
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(.inspector-input, .inspector-number-input) {
   background: var(--k-input);
   color: var(--k-input-text);
   border-color: var(--k-input-line);
@@ -1338,11 +1388,136 @@ app-inspector-shell {
   color: var(--k-seg-text);
 }
 
-.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+.kit-panel[data-panel-theme="dark"]
+  .kit-lane-column
+  :is(
     .inset-map-label,
     .hero-widget-name,
     .hero-drop-title,
     .hero-widget-label
   ) {
   color: var(--k-text);
+}
+
+/* ---- several widgets selected (phase 4c-1) ---- */
+.kit-multi-list {
+  list-style: none;
+  margin: 0;
+  padding: 10px 12px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kit-multi-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--k-folder);
+  border: 1px solid var(--k-folder-line);
+  border-radius: 6px;
+  padding: 2px 4px 2px 2px;
+}
+
+.kit-multi-row.is-main {
+  border-color: var(--k-hit-line);
+  box-shadow: inset 3px 0 0 var(--k-hit-line);
+}
+
+.kit-multi-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--k-folder-text, var(--k-text));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 6px 6px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.kit-multi-name:hover,
+.kit-multi-name:focus-visible {
+  background: var(--k-folder-hover);
+  outline: none;
+}
+
+.kit-multi-name .material-icons {
+  font-size: 18px;
+  color: var(--k-folder-icon, var(--k-text));
+}
+
+.kit-multi-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kit-multi-name .kit-multi-lock {
+  font-size: 15px;
+  color: var(--k-muted);
+}
+
+.kit-multi-main {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--k-muted);
+  flex-shrink: 0;
+}
+
+.kit-multi-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 12px 12px;
+}
+
+/* align / distribute / same size (phase 4c-3) */
+.kit-arrange {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 12px 6px;
+  border-bottom: 1px solid var(--k-line);
+}
+
+.kit-arrange-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kit-arrange-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--k-text);
+}
+
+.kit-arrange .kit-buttons {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.kit-arrange-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--k-muted);
+}
+
+.kit-arrange-note .material-icons {
+  font-size: 15px;
 }

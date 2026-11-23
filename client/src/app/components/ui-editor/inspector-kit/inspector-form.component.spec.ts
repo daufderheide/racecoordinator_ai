@@ -379,4 +379,65 @@ describe("InspectorFormComponent", () => {
     expect((q("#kit-size-0") as HTMLInputElement).disabled).toBeTrue();
     expect((q("#kit-size-1") as HTMLInputElement).disabled).toBeFalse();
   });
+
+  it("disables position and size while the widget is locked, and says so on the folder", () => {
+    fixture.componentRef.setInput("settings", { ...settings, locked: true });
+    render();
+    expect(
+      q('[data-folder="layout"] .kit-folder-summary')!.textContent!.trim(),
+    ).toBe("100, 50 · 400 × 200 · UE_KIT_LOCKED");
+    q("#kit-folder-layout")!.click();
+    render();
+    for (const id of ["position-0", "position-1", "size-0", "size-1"]) {
+      expect((q(`#kit-${id}`) as HTMLInputElement).disabled).toBeTrue();
+    }
+  });
+
+  it("runs button actions and disables the ones that can't run (phase 4b)", () => {
+    const runs: string[] = [];
+    fixture.componentRef.setInput("schema", {
+      widgetType: "records",
+      folders: [
+        {
+          id: "layout",
+          groups: [
+            {
+              fields: [
+                {
+                  id: "layer",
+                  type: "buttons",
+                  labelKey: "LAYER",
+                  buttons: [
+                    {
+                      id: "front",
+                      icon: "flip_to_front",
+                      labelKey: "FRONT",
+                      run: (c: any) => runs.push(`front ${c.widget.id}`),
+                      disabled: () => true,
+                    },
+                    {
+                      id: "back",
+                      icon: "flip_to_back",
+                      labelKey: "BACK",
+                      run: (c: any) => runs.push(`back ${c.widget.id}`),
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    render();
+    q("#kit-folder-layout")?.click();
+    render();
+    const front = q('[data-button="front"]') as HTMLButtonElement;
+    const back = q('[data-button="back"]') as HTMLButtonElement;
+    expect(front.disabled).toBeTrue();
+    expect(back.getAttribute("aria-label")).toBe("BACK");
+    back.click();
+    expect(runs).toEqual(["back w1"]);
+    expect(changes).toBe(0);
+  });
 });

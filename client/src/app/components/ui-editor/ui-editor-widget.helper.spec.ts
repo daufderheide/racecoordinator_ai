@@ -879,6 +879,126 @@ describe("ui-editor-widget.helper", () => {
     );
   });
 
+  it("moves a widget in the layer order as one undo step (phase 4b)", () => {
+    const { handleLayerOrder } = require("./ui-editor-widget.helper");
+    const a: any = { id: "a", zIndex: 100 };
+    const b: any = { id: "b", zIndex: 101 };
+    const layout = { widgets: [a, b] };
+    const ui: any = { entity_id: "ui1" };
+    const comp = {
+      activeCustomUi: ui,
+      editingSettings: {},
+      parsedLayouts: new Map(),
+      getLayout: () => layout,
+      isCustomUiPractice: () => false,
+      syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+    handleLayerOrder(comp, "a", "front");
+    expect([a.zIndex, b.zIndex]).toEqual([101, 100]);
+    expect(JSON.parse(ui.layoutJson).widgets[0].zIndex).toBe(101);
+    expect(comp.syncRacedayPreview).toHaveBeenCalled();
+    expect(comp.captureState).toHaveBeenCalledTimes(1);
+
+    // already in front: nothing to save
+    handleLayerOrder(comp, "a", "front");
+    expect(comp.captureState).toHaveBeenCalledTimes(1);
+  });
+
+  describe("several selected (phase 4c-2)", () => {
+    const setup = () => {
+      const a: any = { id: "a", x: 10, y: 10, width: 100, height: 50 };
+      const b: any = { id: "b", x: 300, y: 10, width: 100, height: 50 };
+      const l: any = {
+        id: "l",
+        x: 600,
+        y: 10,
+        width: 100,
+        height: 50,
+        customSettings: { locked: true },
+      };
+      const layout: any = { widgets: [a, b, l] };
+      const ui: any = { entity_id: "ui1" };
+      const comp: any = {
+        selectedWidgetId: "a",
+        selectedWidgetIds: ["a", "b", "l"],
+        activeCustomUi: ui,
+        editingSettings: {},
+        parsedLayouts: new Map(),
+        getLayout: () => layout,
+        getLayoutBaseWidth: () => 1920,
+        getLayoutBaseHeight: () => 1080,
+        isCustomUiPractice: () => false,
+        syncRacedayPreview: jasmine.createSpy("syncRacedayPreview"),
+        captureState: jasmine.createSpy("captureState"),
+        onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+        onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+      };
+      return { a, b, l, comp, ui };
+    };
+
+    it("arrow keys move all unlocked selected widgets as one undo step", () => {
+      const {
+        handleNudgeSelectedWidget,
+      } = require("./ui-editor-widget.helper");
+      const { a, b, l, comp, ui } = setup();
+      handleNudgeSelectedWidget(comp, 5, -20);
+      // stopped at the top edge: -10, not -20
+      expect([a.x, a.y, b.x, b.y]).toEqual([15, 0, 305, 0]);
+      expect([l.x, l.y]).toEqual([600, 10]);
+      expect(comp.captureState).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(ui.layoutJson).widgets[1].x).toBe(305);
+      expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
+    });
+
+    it("aligns the selection as one undo step, locked ones stay (phase 4c-3)", () => {
+      const { handleArrange } = require("./ui-editor-widget.helper");
+      const { a, b, l, comp, ui } = setup();
+      a.y = 40;
+      const r = handleArrange(comp, "top");
+      expect(r).toEqual({ changed: 1, skipped: 1 });
+      expect([a.y, b.y, l.y]).toEqual([10, 10, 10]);
+      expect(comp.captureState).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(ui.layoutJson).widgets[0].y).toBe(10);
+      // nothing to change: no undo step
+      handleArrange(comp, "top");
+      expect(comp.captureState).toHaveBeenCalledTimes(1);
+    });
+
+    it("deletes several at once and leaves nothing selected", () => {
+      const { handleRemoveWidgets } = require("./ui-editor-widget.helper");
+      const { comp } = setup();
+      handleRemoveWidgets(comp, ["a", "b"]);
+      expect(comp.selectedWidgetId).toBeNull();
+      const [layout] = comp.onLayoutChanged.calls.mostRecent().args;
+      expect(layout.widgets.map((w: any) => w.id)).toEqual(["l"]);
+    });
+  });
+
+  it("does not nudge a locked widget", () => {
+    const { handleNudgeSelectedWidget } = require("./ui-editor-widget.helper");
+    const widget = {
+      id: "w1",
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 100,
+      customSettings: { locked: true },
+    };
+    const comp = {
+      selectedWidgetId: "w1",
+      activeCustomUi: { entity_id: "ui1" },
+      getLayout: () => ({ widgets: [widget] }),
+      getLayoutBaseWidth: () => 1920,
+      getLayoutBaseHeight: () => 1080,
+      onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+    };
+    handleNudgeSelectedWidget(comp, 5, -10);
+    expect([widget.x, widget.y]).toEqual([10, 20]);
+    expect(comp.onWidgetInspectorChange).not.toHaveBeenCalled();
+  });
+
   it("should clamp dimension and position changes", () => {
     const {
       handleWidgetXChange,

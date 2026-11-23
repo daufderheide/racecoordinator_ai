@@ -3,6 +3,7 @@
   class="widget-wrapper"
   [class.edit-mode]="isCustomizing() && !isCountdownGhost"
   [class.selected]="isSelected"
+  [class.also-selected]="isAlsoSelected"
   [class.same-grid-column]="isSameGridColumn"
   [class.same-grid-row]="isSameGridRow"
   [class.countdown-ghost]="isCountdownGhost"
@@ -53,6 +54,7 @@
   [style.color]="widget().textColor || null"
   [style.background-color]="effectiveBackgroundColor || null"
   [class.has-widget-shadow]="!!effectiveShadow"
+  [class.is-locked]="isLocked"
   [style.--widget-shadow]="effectiveShadow"
   [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
   [style.--widget-border-style]="borderStyles.borderStyle"
@@ -455,7 +457,9 @@
           title="Drag to reposition widget"
         >
           <span class="widget-label">{{ widgetLabel }}</span>
-          <span class="material-icons grab-icon">drag_indicator</span>
+          <span class="material-icons grab-icon">{{
+            isLocked ? "lock" : "drag_indicator"
+          }}</span>
         </div>
 
         <button

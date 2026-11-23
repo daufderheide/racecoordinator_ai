@@ -54,7 +54,10 @@ export function folderSummary(
   if (folder.id === "layout" && widget) {
     // positions can be fractions after scaling; the summary shows whole pixels
     const r = (v: any) => Math.round(Number(v) || 0);
-    return `${r(widget.x)}, ${r(widget.y)} · ${r(widget.width)} × ${r(widget.height)}`;
+    const where = `${r(widget.x)}, ${r(widget.y)} · ${r(widget.width)} × ${r(widget.height)}`;
+    return settings["locked"] === true
+      ? `${where} · ${t("UE_KIT_LOCKED")}`
+      : where;
   }
 
   // Content / behaviour: how many switches are on, plus the first choices.

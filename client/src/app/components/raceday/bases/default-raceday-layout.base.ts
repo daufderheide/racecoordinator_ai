@@ -343,6 +343,14 @@ export abstract class DefaultRacedayLayoutBase {
     RacedayLayoutEditorHelper.bringToFront(this, id);
   }
 
+  /** Select a widget on the canvas without changing the layer order (phase 4b). */
+  selectWidget(id: string): void {
+    RacedayLayoutEditorHelper.selectWidget(this, id);
+  }
+
+  /** Widgets drawn on top only while they're dragged (phase 4b). */
+  readonly liftedIds = signal<ReadonlySet<string>>(new Set());
+
   normalizeZIndices(): void {
     RacedayLayoutEditorHelper.normalizeZIndices(this);
   }
@@ -445,6 +453,7 @@ export abstract class DefaultRacedayLayoutBase {
     handle: string,
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
+    alsoIgnore: string[] = [],
   ): SnapResult {
     return RacedayGridLayoutHelper.snapWithGuides(
       this,
@@ -453,6 +462,7 @@ export abstract class DefaultRacedayLayoutBase {
       handle,
       layoutWidth,
       layoutHeight,
+      alsoIgnore,
     );
   }
 
@@ -495,7 +505,28 @@ export abstract class DefaultRacedayLayoutBase {
     RacedayLayoutEditorHelper.onMasterWidgetModified(this, widget);
   }
 
-  onCanvasPointerDown(_event: PointerEvent): void {}
+  /** Layout Editor: a press and drag on the empty canvas draws a selection box. */
+  onCanvasPointerDown(event: PointerEvent): void {
+    RacedayLayoutEditorHelper.onCanvasPointerDown(this, event);
+  }
+
+  /** The selection box while it's drawn (layout px), phase 4c-1. */
+  readonly selectionBox = signal<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
+
+  /** A short message on the canvas (translation key), e.g. why a click did nothing. */
+  readonly canvasNote = signal<string | null>(null);
+  private canvasNoteTimer?: ReturnType<typeof setTimeout>;
+
+  showCanvasNote(key: string, ms = 2500): void {
+    this.canvasNote.set(key);
+    clearTimeout(this.canvasNoteTimer);
+    this.canvasNoteTimer = setTimeout(() => this.canvasNote.set(null), ms);
+  }
 
   getDefaultLayout(): LayoutConfig {
     return RacedayLayoutEditorHelper.getDefaultLayout(this);
