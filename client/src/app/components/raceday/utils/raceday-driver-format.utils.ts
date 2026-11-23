@@ -31,11 +31,7 @@ export class RacedayDriverFormatUtils {
     }
     if (baseKey === "seed") {
       const seed = hd.participant?.seed ?? (hd.driver as any)?.seed;
-      if (!seed) return "--";
-      // Brackets are the original look; a widget can switch them off (#1214).
-      return ctx.laneViewWidgetSettings?.seedBrackets === false
-        ? String(seed)
-        : `(${seed})`;
+      return seed ? String(seed) : "--"; // no brackets (#1214)
     }
     if (baseKey.startsWith("rank")) {
       return this.formatRanks(baseKey, hd, ctx);

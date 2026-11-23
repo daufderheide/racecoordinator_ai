@@ -941,23 +941,6 @@ export class LaneColumnInspectorComponent
     );
   }
 
-  /** The seed is shown, as the column or as an inset (#1214). */
-  get hasSeedValue(): boolean {
-    if (this.currentSettings["columnKey"] === "seed") return true;
-    const insets = this.currentSettings["insets"];
-    return Boolean(insets && Object.values(insets).some((v) => v === "seed"));
-  }
-
-  /** Brackets around the seed, e.g. (18). On by default, as before. */
-  get seedBrackets(): boolean {
-    return this.currentSettings["seedBrackets"] !== false;
-  }
-
-  set seedBrackets(value: boolean) {
-    this.currentSettings["seedBrackets"] = value;
-    this.onFieldChange();
-  }
-
   get hasAnyInsets(): boolean {
     const insets = this.currentSettings["insets"];
     return Boolean(insets && Object.values(insets).some(Boolean));

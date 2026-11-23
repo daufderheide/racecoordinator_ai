@@ -145,8 +145,6 @@ export interface LaneColumnWidgetSettings {
   gapTarget?: "leader" | "position";
   gapMode?: "always_time" | "laps_and_time" | "always_laps";
   showPartialHeats?: boolean;
-  /** Brackets around the seed, e.g. (18). Default true. */
-  seedBrackets?: boolean;
   displayMode?: "text" | "image" | string;
   driftText?: string;
   imageUrl?: string;

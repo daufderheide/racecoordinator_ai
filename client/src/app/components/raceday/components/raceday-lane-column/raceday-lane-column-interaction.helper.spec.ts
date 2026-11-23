@@ -4,7 +4,6 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 
 import {
   applyLaneColumnLastLapsFit,
-  buildLaneColumnInsetSettings,
   deleteLaneColumnAnchor,
   fitLaneColumnHeaderText,
   formatLaneColumnInsetValue,
@@ -2264,25 +2263,6 @@ describe("raceday-lane-column-interaction.helper", () => {
         "overallPosition",
       );
       expect(res).toBe("--");
-    });
-  });
-
-  describe("buildLaneColumnInsetSettings", () => {
-    it("passes the widget's seed bracket choice to its insets (#1214)", () => {
-      expect(
-        buildLaneColumnInsetSettings(
-          { columnKey: "driver.name", seedBrackets: false } as any,
-          "bottom-right",
-          "seed",
-        ).seedBrackets,
-      ).toBeFalse();
-      expect(
-        buildLaneColumnInsetSettings(
-          { columnKey: "driver.name" } as any,
-          "bottom-right",
-          "seed",
-        ).seedBrackets,
-      ).toBeUndefined();
     });
   });
 });

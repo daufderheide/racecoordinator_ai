@@ -169,7 +169,6 @@ export function buildLaneColumnInsetSettings(
     gapTarget: anchorCfg?.gapTarget,
     gapMode: anchorCfg?.gapMode,
     showPartialHeats: anchorCfg?.showPartialHeats ?? settings.showPartialHeats,
-    seedBrackets: settings.seedBrackets,
     insetsConfig: settings.insetsConfig,
     insetTimeDecimalPlaces: insetTimeDec,
     insetLapDecimalPlaces: insetLapDec,

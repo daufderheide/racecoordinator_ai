@@ -3862,33 +3862,33 @@ describe("RacedayFormatUtils", () => {
     });
   });
 
-  describe("formatValue - seed brackets (#1214)", () => {
-    const seededHd: any = {
-      participant: { seed: 18, driver: { name: "Josh" } },
-      driver: { name: "Josh" },
-    };
-    const format = (settings?: any) =>
-      RacedayFormatUtils.formatValue("seed", undefined, seededHd, undefined, {
-        ...ctx,
-        laneViewWidgetSettings: settings,
-      } as any);
-
-    it("puts brackets around the seed by default", () => {
-      expect(format()).toBe("(18)");
-      expect(format({ seedBrackets: true })).toBe("(18)");
-    });
-
-    it("leaves the brackets out when the widget turns them off", () => {
-      expect(format({ seedBrackets: false })).toBe("18");
+  describe("formatValue - seed (#1214)", () => {
+    it("shows the seed without brackets", () => {
+      const seededHd: any = {
+        participant: { seed: 18, driver: { name: "Josh" } },
+        driver: { name: "Josh" },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "seed",
+          undefined,
+          seededHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("18");
     });
 
     it("still shows -- without a seed", () => {
       const noSeed: any = { participant: { driver: { name: "Ann" } } };
       expect(
-        RacedayFormatUtils.formatValue("seed", undefined, noSeed, undefined, {
-          ...ctx,
-          laneViewWidgetSettings: { seedBrackets: false },
-        } as any),
+        RacedayFormatUtils.formatValue(
+          "seed",
+          undefined,
+          noSeed,
+          undefined,
+          ctx,
+        ),
       ).toBe("--");
     });
   });
