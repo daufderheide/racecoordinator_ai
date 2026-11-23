@@ -349,6 +349,24 @@
         }
       </div>
       <div class="modal-actions">
+        <button
+          type="button"
+          class="btn-import-package"
+          (click)="seasonPackageFileInput.click()"
+          [disabled]="isImportingSeasonPackage"
+          [title]="'SE_BTN_IMPORT_PACKAGE' | translate"
+        >
+          <span class="material-icons">file_upload</span>
+          <span>{{ "SE_BTN_IMPORT_PACKAGE" | translate }}</span>
+          <app-preview-badge></app-preview-badge>
+        </button>
+        <input
+          #seasonPackageFileInput
+          type="file"
+          accept=".rcpack,application/zip"
+          style="display: none"
+          (change)="onSeasonPackageFileSelected($event)"
+        />
         <button class="btn-secondary" (click)="closeAddRaceModal()">
           {{ "CANCEL" | translate }}
         </button>
@@ -378,3 +396,19 @@
   (confirm)="onConfirmDelete()"
   (cancel)="onCancelDelete()"
 ></app-confirmation-modal>
+
+<app-race-package-modal
+  [visible]="showSeasonPackageModal"
+  [preview]="seasonPackagePreview"
+  [targetSeasonId]="editingSeason.entity_id"
+  (close)="closeSeasonPackageModal()"
+  (committed)="onSeasonPackageCommitted($event)"
+></app-race-package-modal>
+
+<app-acknowledgement-modal
+  [visible]="showPackageAckModal"
+  [title]="packageAckTitle"
+  [message]="packageAckMessage"
+  [messageParams]="packageAckParams"
+  (acknowledge)="closePackageAckModal()"
+></app-acknowledgement-modal>

@@ -60,6 +60,24 @@ test.describe("Race History Dialog Visuals", () => {
       animations: "disabled",
     });
   });
+
+  test("should display expanded race details with export package button", async ({
+    page,
+  }) => {
+    const dialog = await openRaceHistoryDialog(page);
+
+    const firstCard = dialog.locator(".race-card").first();
+    await firstCard.click();
+    await expect(firstCard.locator(".btn-export-package")).toBeVisible();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(dialog).toHaveScreenshot("race-history-dialog-expanded.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+    });
+  });
 });
 
 test.describe("Race History Dialog Visuals - German Locale", () => {

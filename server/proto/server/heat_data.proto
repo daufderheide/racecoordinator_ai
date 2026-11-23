@@ -62,5 +62,6 @@ message DriverHeatData {
   double penalty_time = 42;
   double dq_score_percentage = 43;
   double points = 44;
+  bool can_refuel = 45;
 }
 

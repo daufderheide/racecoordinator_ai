@@ -1133,4 +1133,47 @@ test.describe("Race Editor Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should display race config import conflict modal", async ({ page }) => {
+    await page.route("**/api/races/import-config**", async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: "application/json",
+        body: JSON.stringify({
+          conflict: true,
+          existing_name: "Grand Prix",
+          suggested_name: "Grand Prix (Copy)",
+        }),
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const fileInput = page.locator("#configFileInput");
+    await fileInput.setInputFiles({
+      name: "Grand_Prix.rccfg.json",
+      mimeType: "application/json",
+      buffer: Buffer.from("{}"),
+    });
+
+    const modal = page.locator("#config-conflict-modal-content");
+    await expect(modal).toBeVisible();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(modal).toHaveScreenshot(
+      "race-editor-config-conflict-modal.png",
+      {
+        timeout: 15000,
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
 });

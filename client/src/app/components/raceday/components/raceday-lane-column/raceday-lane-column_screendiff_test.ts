@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday Lane Column Standalone Widget Visuals", () => {
@@ -337,7 +338,15 @@ test.describe("Raceday Lane Column Team Driver Visuals", () => {
     });
   });
 
-  async function setupRacedayWithTeam(page: any): Promise<void> {
+  async function setupRacedayWithTeam(
+    page: any,
+    options: {
+      requirePitStop?: boolean;
+      raceState?: number;
+      currentLocation?: number;
+      canRefuel?: boolean;
+    } = {},
+  ): Promise<void> {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -345,6 +354,7 @@ test.describe("Raceday Lane Column Team Driver Visuals", () => {
     );
 
     const raceData = {
+      raceState: options.raceState ?? 0,
       race: {
         race: {
           model: { entityId: "r_team_visual" },
@@ -352,6 +362,8 @@ test.describe("Raceday Lane Column Team Driver Visuals", () => {
           teamOptions: {
             heat_lap_limit: 10,
             overall_lap_limit: 20,
+            requirePitStopChangeDriver: options.requirePitStop ?? false,
+            require_pit_stop_change_driver: options.requirePitStop ?? false,
           },
           track: {
             lanes: [
@@ -389,6 +401,8 @@ test.describe("Raceday Lane Column Team Driver Visuals", () => {
               lapCount: 8,
               lastLapTime: 5.123,
               bestLapTime: 5.012,
+              currentLocation: options.currentLocation ?? 0,
+              canRefuel: options.canRefuel ?? false,
               driver: {
                 objectId: "rp1",
                 team: {
@@ -427,6 +441,9 @@ test.describe("Raceday Lane Column Team Driver Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
+    if (options.raceState !== undefined) {
+      await TestSetupHelper.sendRaceState(page, options.raceState);
+    }
     await page.locator(".dashboard-wrapper").waitFor();
   }
 
@@ -485,6 +502,58 @@ test.describe("Raceday Lane Column Team Driver Visuals", () => {
 
     await expect(columnCard).toHaveScreenshot(
       "raceday-lane-column-team-name-center.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should not display team pulldown indicator when car is on track during race requiring pit stop", async ({
+    page,
+  }) => {
+    await setupRacedayWithTeam(page, {
+      requirePitStop: true,
+      raceState: RaceState.RACING,
+      currentLocation: 0,
+      canRefuel: false,
+    });
+
+    const columnCard = page.locator("app-raceday-lane-column").nth(0);
+    await columnCard.waitFor({ state: "visible" });
+    await columnCard
+      .locator(".team-name .team-name-text")
+      .waitFor({ state: "visible" });
+
+    await expect(columnCard).toHaveScreenshot(
+      "raceday-lane-column-team-pulldown-hidden-on-track.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display team pulldown indicator when car is pitting and able to refuel during race requiring pit stop", async ({
+    page,
+  }) => {
+    await setupRacedayWithTeam(page, {
+      requirePitStop: true,
+      raceState: RaceState.RACING,
+      currentLocation: 1,
+      canRefuel: true,
+    });
+
+    const columnCard = page.locator("app-raceday-lane-column").nth(0);
+    await columnCard.waitFor({ state: "visible" });
+    await columnCard
+      .locator(".team-name .team-pulldown-indicator")
+      .waitFor({ state: "visible" });
+
+    await expect(columnCard).toHaveScreenshot(
+      "raceday-lane-column-team-pulldown-visible-in-pit.png",
       {
         maxDiffPixelRatio: 0.05,
         maxDiffPixels: 5000,
