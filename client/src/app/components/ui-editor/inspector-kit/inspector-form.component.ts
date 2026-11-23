@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, inject, input, output } from "@angular/core";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
+import { shadowFor } from "@app/utils/widget-style.utils";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
@@ -35,6 +36,9 @@ export interface GeometryChange {
   prop: "x" | "y" | "width" | "height";
   value: number;
 }
+
+/** The settings a text part can have. */
+export type TextPartKey = keyof TextPartField["keys"];
 
 export interface ResetEvent {
   /** Translation key of what was reset (field label or folder name). */
@@ -238,10 +242,14 @@ export class InspectorFormComponent {
       : v;
   }
 
-  partValue(
-    field: TextPartField,
-    part: "font" | "size" | "color" | "align",
-  ): any {
+  /** Letter spacing for the sample chip, or nothing when not set. */
+  partSpacing(field: TextPartField): string | null {
+    if (!field.keys.spacing) return null;
+    const v = this.partValue(field, "spacing");
+    return v === undefined || v === null || v === "" ? null : `${v}px`;
+  }
+
+  partValue(field: TextPartField, part: TextPartKey): any {
     const key = field.keys[part];
     if (!key) return undefined;
     const v = this.source(field)?.[key];
@@ -323,11 +331,7 @@ export class InspectorFormComponent {
     this.settingsChange.emit();
   }
 
-  setPart(
-    field: TextPartField,
-    part: "font" | "size" | "color" | "align",
-    value: any,
-  ): void {
+  setPart(field: TextPartField, part: TextPartKey, value: any): void {
     const key = field.keys[part];
     if (key) this.setKey(field, key, value);
   }
@@ -448,7 +452,10 @@ export class InspectorFormComponent {
         ? { border: "0" }
         : { border: `2px ${value} currentColor` };
     }
-    return {};
+    const shadow = shadowFor(value);
+    return shadow
+      ? { boxShadow: shadow, background: "currentColor", opacity: "0.85" }
+      : { border: "1px solid currentColor" };
   }
 
   trackField = (_: number, f: InspectorField) => f.id;

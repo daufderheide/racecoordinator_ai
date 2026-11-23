@@ -19,6 +19,8 @@
           [style.font-family]="
             widget()?.customSettings?.['statusFontFamily'] || null
           "
+          [appPartTextStyle]="widget()?.customSettings"
+          partPrefix="status"
           [style.font-size.px]="
             widget()?.customSettings?.['statusFontSize'] || null
           "
@@ -45,6 +47,8 @@
         !displayIsCooldown()
       "
       [style.font-family]="widget()?.customSettings?.['timeFontFamily'] || null"
+      [appPartTextStyle]="widget()?.customSettings"
+      partPrefix="time"
       [style.font-size.px]="widget()?.customSettings?.['timeFontSize'] || null"
       [style.color]="widget()?.customSettings?.['timeTextColor'] || null"
     >

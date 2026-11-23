@@ -52,6 +52,8 @@
   [style.font-family]="widget().fontFamily || null"
   [style.color]="widget().textColor || null"
   [style.background-color]="effectiveBackgroundColor || null"
+  [class.has-widget-shadow]="!!effectiveShadow"
+  [style.--widget-shadow]="effectiveShadow"
   [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
   [style.--widget-border-style]="borderStyles.borderStyle"
   [style.--widget-border-color]="borderStyles.borderColor"

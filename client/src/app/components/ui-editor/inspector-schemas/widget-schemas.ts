@@ -59,9 +59,11 @@ const recordsSchema: InspectorSchema = {
         {
           fields: [
             textPart("header", "UE_KIT_PART_HEADER", "header", {
+              styled: true,
               sampleKey: "RD_RECORD_RACE_LAP",
             }),
             textPart("value", "UE_KIT_PART_VALUE", "value", {
+              styled: true,
               sample: "1.842",
             }),
           ],
@@ -234,11 +236,13 @@ const timerSchema: InspectorSchema = {
         {
           fields: [
             textPart("time", "UE_KIT_PART_TIME", "time", {
+              styled: true,
               sample: "2:03",
               defaultColor: "#32cd32",
               sizeMax: 200,
             }),
             textPart("status", "UE_KIT_PART_STATUS", "status", {
+              styled: true,
               sampleKey: "RD_AUTO_ADVANCING",
               defaultColor: "#ffaa00",
               sizeMin: 8,
@@ -267,9 +271,11 @@ function textInfoSchema(widgetType: string, icon: string): InspectorSchema {
           {
             fields: [
               textPart("label", "UE_KIT_PART_LABEL", "label", {
+                styled: true,
                 sample: "TRACK",
               }),
               textPart("value", "UE_KIT_PART_VALUE", "value", {
+                styled: true,
                 sample: "Test Track",
               }),
             ],

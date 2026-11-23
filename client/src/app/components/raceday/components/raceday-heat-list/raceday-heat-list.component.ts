@@ -30,6 +30,7 @@ import {
   calculateOptimalSummaryHeaderFontSize,
   calculateOptimalSummaryRowFontSize,
 } from "./raceday-heat-list-scaler";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 export interface ProcessedHeatLane {
   laneNumber: number;
@@ -72,7 +73,7 @@ export interface ProcessedHeat {
   styleUrls: ["./raceday-heat-list.component.css"],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslatePipe],
+  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
 })
 export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
   widget = input<AbsoluteWidgetNode | null>(null);

@@ -43,6 +43,11 @@ export function folderSummary(
         `${settings["borderRadius"]}px ${t("UE_KIT_SUMMARY_CORNERS")}`,
       );
     }
+    if (settings["shadow"] === "soft" || settings["shadow"] === "raised") {
+      parts.push(
+        `${t(settings["shadow"] === "soft" ? "UE_KIT_SHADOW_SOFT" : "UE_KIT_SHADOW_RAISED")} ${t("UE_KIT_SHADOW").toLowerCase()}`,
+      );
+    }
     return parts.join(" · ");
   }
 

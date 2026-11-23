@@ -25,6 +25,8 @@
   <div
     class="leaderboard-title"
     [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
+    [appPartTextStyle]="widget()?.customSettings"
+    partPrefix="title"
     [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
   >
@@ -40,6 +42,8 @@
       [style.font-family]="
         widget()?.customSettings?.['subtitleFontFamily'] || null
       "
+      [appPartTextStyle]="widget()?.customSettings"
+      partPrefix="subtitle"
       [style.font-size.px]="
         widget()?.customSettings?.['subtitleFontSize'] || null
       "
@@ -73,6 +77,8 @@
                 ? widget()?.customSettings?.['overallLeaderFontFamily'] || null
                 : widget()?.customSettings?.['restFontFamily'] || null
             "
+            [appPartTextStyle]="widget()?.customSettings"
+            [partPrefix]="i === 0 ? 'overallLeader' : 'rest'"
             [style.font-size.px]="
               i === 0
                 ? widget()?.customSettings?.['overallLeaderFontSize'] || null

@@ -43,11 +43,13 @@ function upcomingSchema(widgetType: "next-heat" | "on-deck"): InspectorSchema {
           {
             fields: [
               textPart("title", "UE_KIT_PART_TITLE", "title", {
+                styled: true,
                 sizeMin: 10,
                 sizeMax: 120,
                 sample: widgetType === "next-heat" ? "NEXT HEAT" : "ON DECK",
               }),
               textPart("lanes", "UE_KIT_PART_LANES", "lane", {
+                styled: true,
                 sizeMin: 10,
                 sizeMax: 120,
                 sample: "Lane 1  Mario",
@@ -80,6 +82,7 @@ function leaderboardSchema(
 ): InspectorSchema {
   const parts = [
     textPart("title", "UE_KIT_PART_TITLE", "title", {
+      styled: true,
       sizeMin: 10,
       sizeMax: 120,
       sample: "LEADER BOARD",
@@ -87,6 +90,7 @@ function leaderboardSchema(
     ...(withSubtitle
       ? [
           textPart("subtitle", "UE_KIT_PART_SUBTITLE", "subtitle", {
+            styled: true,
             sizeMin: 10,
             sizeMax: 120,
             sample: "Group A",
@@ -94,11 +98,13 @@ function leaderboardSchema(
         ]
       : []),
     textPart("leader", "UE_KIT_PART_LEADER", "overallLeader", {
+      styled: true,
       sizeMin: 10,
       sizeMax: 120,
       sample: "1 Mario  1.842",
     }),
     textPart("rest", "UE_KIT_PART_REST", "rest", {
+      styled: true,
       sizeMin: 10,
       sizeMax: 120,
       sample: "2 Luigi  1.955",
@@ -395,17 +401,20 @@ const heatListSchema: InspectorSchema = {
         {
           fields: [
             textPart("title", "UE_KIT_PART_TITLE", "title", {
+              styled: true,
               sizeMin: 10,
               sizeMax: 120,
               sample: "HEATS",
               visibleWhen: (s) => s["showHeader"] !== false,
             }),
             textPart("heatNumber", "UE_KIT_PART_HEAT_NUMBER", "heatNumber", {
+              styled: true,
               sizeMin: 10,
               sizeMax: 60,
               sample: "Heat 3",
             }),
             textPart("lanes", "UE_KIT_PART_LANES", "lane", {
+              styled: true,
               sizeMin: 8,
               sizeMax: 48,
               sample: "Mario",
@@ -415,6 +424,7 @@ const heatListSchema: InspectorSchema = {
               "UE_KIT_PART_SUMMARY_HEADER",
               "summaryHeader",
               {
+                styled: true,
                 sizeMin: 8,
                 sizeMax: 48,
                 sample: "POS  DRIVER  LAPS",
@@ -422,6 +432,7 @@ const heatListSchema: InspectorSchema = {
               },
             ),
             textPart("summaryRows", "UE_KIT_PART_SUMMARY_ROWS", "summaryRow", {
+              styled: true,
               sizeMin: 8,
               sizeMax: 48,
               sample: "1  Mario  12",

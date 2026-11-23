@@ -22,6 +22,8 @@
     [ngClass]="type() === 'on-deck' ? 'on-deck-title' : 'next-heat-title'"
     [class.no-title-glow]="!titleGlow()"
     [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
+    [appPartTextStyle]="widget()?.customSettings"
+    partPrefix="title"
     [style.font-size.px]="widget()?.customSettings?.['titleFontSize'] || null"
     [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
   >
@@ -38,6 +40,8 @@
         [style.font-family]="
           widget()?.customSettings?.['laneFontFamily'] || null
         "
+        [appPartTextStyle]="widget()?.customSettings"
+        partPrefix="lane"
         [style.font-size.px]="
           widget()?.customSettings?.['laneFontSize'] || null
         "
@@ -182,6 +186,8 @@
           [style.font-family]="
             widget()?.customSettings?.['laneFontFamily'] || null
           "
+          [appPartTextStyle]="widget()?.customSettings"
+          partPrefix="lane"
           style="flex-shrink: 0; margin-left: 0.5em"
         >
           {{ "HL_LANE_TAG" | translate: { lane: hd.laneIndex + 1 } }}
@@ -193,6 +199,8 @@
         [style.font-family]="
           widget()?.customSettings?.['laneFontFamily'] || null
         "
+        [appPartTextStyle]="widget()?.customSettings"
+        partPrefix="lane"
         [style.font-size.px]="
           widget()?.customSettings?.['laneFontSize'] || null
         "

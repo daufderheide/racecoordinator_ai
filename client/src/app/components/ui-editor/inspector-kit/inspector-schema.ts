@@ -177,7 +177,16 @@ export interface TextPartField extends FieldBase {
   sample?: string;
   /** Show the text stored in this setting as the sample (e.g. a Label's own text). */
   sampleSetting?: string;
-  keys: { font?: string; size?: string; color?: string; align?: string };
+  keys: {
+    font?: string;
+    size?: string;
+    color?: string;
+    align?: string;
+    /** Text style (phase 3b), drawn by PartTextStyleDirective in the widget. */
+    weight?: string;
+    spacing?: string;
+    case?: string;
+  };
   sizeMin?: number;
   sizeMax?: number;
   /** Hide just the colour row when the colour has no effect (e.g. lane colours win). */
@@ -190,6 +199,9 @@ export interface TextPartField extends FieldBase {
     size?: number;
     color?: string;
     align?: string;
+    weight?: string;
+    spacing?: number;
+    case?: string;
   };
 }
 
@@ -283,6 +295,9 @@ export function fieldKeys(field: InspectorField): string[] {
 export function registryDefaults(widgetType: string): Record<string, any> {
   return {
     backgroundColor: "",
+    // frame options from the shared wrapper (widget-style.utils)
+    backgroundOpacity: 100,
+    shadow: "none",
     ...getDefaultBorderConfigForWidget(widgetType),
     ...(WIDGET_REGISTRY[widgetType]?.defaultSettings?.() || {}),
   };

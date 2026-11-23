@@ -17,6 +17,8 @@
     class="label-text"
     #labelText
     [style.font-family]="widget()?.customSettings?.['labelFontFamily'] || null"
+    [appPartTextStyle]="widget()?.customSettings"
+    partPrefix="label"
     [style.font-size.px]="
       widget()?.customSettings?.['labelFontSize'] ||
       (widget()?.scaleMode !== 'auto' ? 13 : null)
@@ -28,6 +30,8 @@
     class="value-text"
     #valueText
     [style.font-family]="widget()?.customSettings?.['valueFontFamily'] || null"
+    [appPartTextStyle]="widget()?.customSettings"
+    partPrefix="value"
     [style.font-size.px]="
       widget()?.customSettings?.['valueFontSize'] ||
       (widget()?.scaleMode !== 'auto' ? 18 : null)

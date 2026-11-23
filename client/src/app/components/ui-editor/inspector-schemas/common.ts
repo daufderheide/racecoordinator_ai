@@ -1,5 +1,6 @@
 import {
   InspectorFolder,
+  InspectorGroup,
   TextPartField,
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
@@ -23,67 +24,40 @@ export function frameFolder(): InspectorFolder {
             placeholder: "#000022",
             searchTerms: "background fill colour color",
           },
+          {
+            id: "backgroundOpacity",
+            type: "stepper",
+            key: "backgroundOpacity",
+            labelKey: "UE_KIT_BG_OPACITY",
+            min: 0,
+            max: 100,
+            step: 5,
+            unit: "%",
+            searchTerms: "opacity transparent see-through background",
+            // only an own colour can be made transparent
+            visibleWhen: (s) => !!s["backgroundColor"],
+          },
         ],
       },
+      borderGroup(),
       {
-        titleKey: "UE_KIT_GROUP_BORDER",
+        titleKey: "UE_KIT_GROUP_SHADOW",
         fields: [
           {
-            id: "showBorder",
-            type: "switch",
-            key: "showBorder",
-            labelKey: "UE_KIT_SHOW_BORDER",
-            searchTerms: "border outline card frame",
-          },
-          {
-            id: "borderStyle",
+            id: "shadow",
             type: "tiles",
-            key: "borderStyle",
-            labelKey: "UE_KIT_BORDER_LINE",
-            searchTerms: "border style solid dashed dotted double line",
-            visibleWhen: (s) => s["showBorder"] !== false,
+            key: "shadow",
+            labelKey: "UE_KIT_SHADOW",
+            searchTerms: "shadow depth glow raised",
             tiles: [
+              { value: "none", labelKey: "UE_KIT_SHADOW_NONE", demo: "shadow" },
+              { value: "soft", labelKey: "UE_KIT_SHADOW_SOFT", demo: "shadow" },
               {
-                value: "solid",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_SOLID",
-                demo: "border",
-              },
-              {
-                value: "dashed",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_DASHED",
-                demo: "border",
-              },
-              {
-                value: "dotted",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_DOTTED",
-                demo: "border",
-              },
-              {
-                value: "double",
-                labelKey: "UE_INSPECTOR_BORDER_STYLE_DOUBLE",
-                demo: "border",
+                value: "raised",
+                labelKey: "UE_KIT_SHADOW_RAISED",
+                demo: "shadow",
               },
             ],
-          },
-          {
-            id: "borderWidth",
-            type: "stepper",
-            key: "borderWidth",
-            labelKey: "UE_KIT_BORDER_WIDTH",
-            min: 0,
-            max: 10,
-            unit: "px",
-            searchTerms: "border width thickness",
-            visibleWhen: (s) => s["showBorder"] !== false,
-          },
-          {
-            id: "borderColor",
-            type: "color",
-            key: "borderColor",
-            labelKey: "UE_KIT_BORDER_COLOR",
-            placeholder: "#ffffff",
-            searchTerms: "border colour color outline",
-            visibleWhen: (s) => s["showBorder"] !== false,
           },
         ],
       },
@@ -102,6 +76,72 @@ export function frameFolder(): InspectorFolder {
             searchTerms: "corner radius rounded",
           },
         ],
+      },
+    ],
+  };
+}
+
+/** The Border group of Colours & frame: on / off, line, width and colour. */
+function borderGroup(): InspectorGroup {
+  return {
+    titleKey: "UE_KIT_GROUP_BORDER",
+    fields: [
+      {
+        id: "showBorder",
+        type: "switch",
+        key: "showBorder",
+        labelKey: "UE_KIT_SHOW_BORDER",
+        searchTerms: "border outline card frame",
+      },
+      {
+        id: "borderStyle",
+        type: "tiles",
+        key: "borderStyle",
+        labelKey: "UE_KIT_BORDER_LINE",
+        searchTerms: "border style solid dashed dotted double line",
+        visibleWhen: (s) => s["showBorder"] !== false,
+        tiles: [
+          {
+            value: "solid",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_SOLID",
+            demo: "border",
+          },
+          {
+            value: "dashed",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_DASHED",
+            demo: "border",
+          },
+          {
+            value: "dotted",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_DOTTED",
+            demo: "border",
+          },
+          {
+            value: "double",
+            labelKey: "UE_INSPECTOR_BORDER_STYLE_DOUBLE",
+            demo: "border",
+          },
+        ],
+      },
+      {
+        id: "borderWidth",
+        type: "stepper",
+        key: "borderWidth",
+        labelKey: "UE_KIT_BORDER_WIDTH",
+        min: 0,
+        max: 10,
+        unit: "px",
+        searchTerms: "border width thickness",
+        visibleWhen: (s) => s["showBorder"] !== false,
+      },
+      {
+        id: "borderColor",
+        type: "color",
+        key: "borderColor",
+        labelKey: "UE_KIT_BORDER_COLOR",
+        placeholder: "#ffffff",
+        searchTerms: "border colour color outline",
+        visibleWhen: (s) => s["showBorder"] !== false,
       },
     ],
   };
@@ -134,13 +174,26 @@ export function layoutFolder(): InspectorFolder {
   };
 }
 
-/** A text part using the usual <prefix>FontFamily / FontSize / TextColor keys. */
+/**
+ * A text part using the usual <prefix>FontFamily / FontSize / TextColor keys.
+ * `styled: true` adds weight, letter spacing and case (<prefix>FontWeight,
+ * <prefix>LetterSpacing, <prefix>TextTransform) for widgets whose template
+ * draws them with PartTextStyleDirective.
+ */
 export function textPart(
   id: string,
   labelKey: string,
   prefix: string,
-  options: Partial<TextPartField> = {},
+  options: Partial<TextPartField> & { styled?: boolean } = {},
 ): TextPartField {
+  const { styled, ...rest } = options;
+  const styleKeys = styled
+    ? {
+        weight: `${prefix}FontWeight`,
+        spacing: `${prefix}LetterSpacing`,
+        case: `${prefix}TextTransform`,
+      }
+    : {};
   return {
     id,
     type: "textPart",
@@ -149,8 +202,22 @@ export function textPart(
       font: `${prefix}FontFamily`,
       size: `${prefix}FontSize`,
       color: `${prefix}TextColor`,
+      ...styleKeys,
     },
-    searchTerms: "font size colour color text typography",
-    ...options,
+    searchTerms: styled
+      ? "font size colour color text typography weight bold spacing uppercase case"
+      : "font size colour color text typography",
+    ...rest,
+    // nothing stored = the part's own look (see PartTextStyleDirective)
+    ...(styled
+      ? {
+          keyDefaults: {
+            weight: "",
+            spacing: 0,
+            case: "",
+            ...(rest.keyDefaults || {}),
+          },
+        }
+      : {}),
   };
 }

@@ -20,6 +20,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceTimeService } from "@app/services/race-time.service";
 import { formatTimerDisplay } from "@app/utils/timer-format.utils";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,
@@ -28,7 +29,7 @@ import { formatTimerDisplay } from "@app/utils/timer-format.utils";
   styleUrls: ["./raceday-timer.component.css"],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslatePipe],
+  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
 })
 export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
   widget = input<AbsoluteWidgetNode | null>(null);

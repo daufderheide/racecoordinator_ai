@@ -23,6 +23,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
 import { isColorLight } from "@app/utils/color.utils";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,
@@ -31,6 +32,7 @@ import { isColorLight } from "@app/utils/color.utils";
   styleUrls: ["./raceday-heat-drivers.component.css"],
   encapsulation: ViewEncapsulation.None,
   imports: [
+    PartTextStyleDirective,
     CommonModule,
     TranslatePipe,
     FormsModule,

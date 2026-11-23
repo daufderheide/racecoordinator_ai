@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, input, ViewEncapsulation } from "@angular/core";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 
 @Component({
   standalone: true,
@@ -9,7 +10,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   templateUrl: "./raceday-leaderboard.component.html",
   styleUrls: ["./raceday-leaderboard.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, TranslatePipe],
+  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
 })
 export class RacedayLeaderboardComponent {
   leaderboardEntries = input<any[]>([]);
