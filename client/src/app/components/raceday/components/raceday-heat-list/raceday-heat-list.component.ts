@@ -1,4 +1,3 @@
-import { emptyLaneLabel, emptyValue } from "@app/utils/empty-value.utils";
 import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
@@ -25,6 +24,7 @@ import { RaceState } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
+import { emptyLaneLabel, emptyValue } from "@app/utils/empty-value.utils";
 
 import {
   calculateCardDimensions,

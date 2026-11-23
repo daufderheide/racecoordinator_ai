@@ -1,4 +1,3 @@
-import { emptyValue } from "@app/utils/empty-value.utils";
 import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
@@ -15,6 +14,7 @@ import {
 import { PartTextStyleDirective } from "@app/directives/part-text-style.directive";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { emptyValue } from "@app/utils/empty-value.utils";
 
 @Component({
   standalone: true,

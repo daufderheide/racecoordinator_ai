@@ -1,4 +1,3 @@
-import { emptyValue } from "@app/utils/empty-value.utils";
 import { CommonModule } from "@angular/common";
 import { Component, input, ViewEncapsulation } from "@angular/core";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
@@ -6,6 +5,7 @@ import { FinishMethod } from "@app/models/heat_scoring";
 import { AbsoluteWidgetNode, HighlightLapStyle } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { isColorLight } from "@app/utils/color.utils";
+import { emptyValue } from "@app/utils/empty-value.utils";
 import {
   formatTimerDisplay,
   TimerFormatOptions,
