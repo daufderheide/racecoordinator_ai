@@ -67,3 +67,14 @@ La sección de desglose ofrece tarjetas detalladas para cada carrera incluida en
 - **Tarjetas de Carreras Desplegables**: Haga clic en cualquier tarjeta para ver la tabla de resultados de los pilotos con puntos de posición y bonificaciones.
 - **Eliminar Carreras**: En Modo de Edición, haga clic en el icono de papelera (<span class="material-icons">delete</span>) para quitar una carrera de la temporada.
 
+---
+
+## Ingesta de paquetes de carrera entre equipos (`.rcpack`) {: #race-package-ingestion }
+
+Para agregar resultados de carreras de otras computadoras a su temporada:
+
+- **Exportar carreras finalizadas**: En la PC de origen, abra el diálogo **Historial de carreras** en la barra de herramientas y haga clic en **Exportar paquete** (<span class="material-icons">file_download</span>) en la carrera completada. Esto empaqueta el historial, configuración de la carrera, tiempos de vuelta, puntos calculados de la temporada y perfiles de pilotos en un archivo `.rcpack`.
+- **Ingesta en un solo paso**: En la computadora de destino, abra el Editor de temporadas, entre en Modo de Edición y haga clic en **+ Agregar carrera**. En el diálogo, haga clic en **Importar paquete de carrera...** (<span class="material-icons">file_upload</span>) y seleccione el archivo `.rcpack`.
+- **Configuración de carrera y resolución de pilotos**: Un diálogo interactivo asigna pilotos y resuelve conflictos de configuración de carrera (**Renombrar automáticamente**, **Sobrescribir** o **Usar existente**).
+- **Integración automática**: La configuración de la carrera, los resultados y puntos de la temporada se guardan en la base de datos local y se agregan a la temporada, recalculando la clasificación, descartes y desempates en tiempo real.
+

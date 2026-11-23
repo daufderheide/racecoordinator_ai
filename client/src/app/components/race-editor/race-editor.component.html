@@ -22,6 +22,12 @@
     [showAdd]="true"
     [showCopy]="true"
     [showDelete]="true"
+    [showExport]="true"
+    [showImport]="true"
+    [disabledExport]="!selectedRace || isSaving"
+    [disabledImport]="isSaving"
+    [importTitleKey]="'RE_BTN_IMPORT_CONFIG'"
+    [exportTitleKey]="'RE_BTN_EXPORT_CONFIG'"
     [disabledCopy]="
       isSaving ||
       (!selectedRace?.compatibility?.is_read_only && !isConfigValid())
@@ -40,6 +46,8 @@
     (add)="onAddNewRace()"
     (copy)="saveAsNew()"
     (delete)="onDeleteRace()"
+    (export)="onExportRaceConfig()"
+    (import)="onImportRaceConfig()"
   >
   </app-editor-title>
 
@@ -3806,4 +3814,70 @@
     (cancel)="onCancelDelete()"
   >
   </app-confirmation-modal>
+
+  <!-- Hidden File Input for Importing Race Configuration -->
+  <input
+    type="file"
+    #configFileInput
+    id="configFileInput"
+    accept=".json,.rccfg.json"
+    (change)="onConfigFileSelected($event)"
+    style="display: none"
+  />
+
+  <!-- Import Conflict Modal -->
+  @if (showConfigConflictModal) {
+    <div id="config-conflict-modal-backdrop" class="modal-backdrop">
+      <div id="config-conflict-modal-content" class="modal-content">
+        <h2 class="modal-title">
+          {{ "RE_IMPORT_CONFLICT_TITLE" | translate }}
+        </h2>
+        <p class="modal-message">
+          {{
+            "RE_IMPORT_CONFLICT_MSG"
+              | translate
+                : {
+                    existingName: configConflictExistingName,
+                    suggestedName: configConflictSuggestedName,
+                  }
+          }}
+        </p>
+        <div
+          class="modal-actions"
+          style="
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 16px;
+          "
+        >
+          <button
+            type="button"
+            class="btn-cancel"
+            (click)="onResolveConfigConflict('CANCEL')"
+          >
+            {{ "CD_CANCEL" | translate }}
+          </button>
+          <button
+            type="button"
+            class="btn-confirm"
+            (click)="onResolveConfigConflict('AUTO_RENAME')"
+          >
+            {{
+              "RE_BTN_AUTO_RENAME"
+                | translate: { name: configConflictSuggestedName }
+            }}
+          </button>
+          <button
+            type="button"
+            class="btn-confirm btn-danger"
+            style="background: #dc2626"
+            (click)="onResolveConfigConflict('OVERWRITE')"
+          >
+            {{ "RE_BTN_OVERWRITE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

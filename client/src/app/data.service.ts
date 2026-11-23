@@ -8,6 +8,11 @@ import {
 } from "@app/models/driver-import.model";
 import { DriverLabel } from "@app/models/driver-label";
 import { Event } from "@app/models/event";
+import {
+  RacePackageCommitRequest,
+  RacePackagePreview,
+  RacePackageResult,
+} from "@app/models/race-package.model";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import {
   ArduinoConfig,
@@ -19,6 +24,7 @@ import {
 import {
   IAssetMessage,
   ICarData,
+  ICarModel,
   ICustomRotation,
   IDemoConfig,
   IGroupStandingsUpdate,
@@ -39,7 +45,6 @@ import {
   ISegment,
   IStandingsUpdate,
   IStartRaceResponse,
-  ICarModel,
   ITeamModel,
   ModifyHeatsResponse,
   RaceFlag,
@@ -55,6 +60,7 @@ import { DataEntityCrudHelper } from "@app/services/data/data-entity-crud.helper
 import { DataHistoryStatsHelper } from "@app/services/data/data-history-stats.helper";
 import { DataInterfaceHelper } from "@app/services/data/data-interface.helper";
 import { DataRaceControlHelper } from "@app/services/data/data-race-control.helper";
+import { DataServerConfigHelper } from "@app/services/data/data-server-config.helper";
 import { DataSocketHelper } from "@app/services/data/data-socket.helper";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -63,37 +69,35 @@ import { SettingsService } from "@app/services/settings.service";
   providedIn: "root",
 })
 export class DataService {
-  private serverIp =
-    typeof window !== "undefined" ? window.location.hostname : "localhost";
-  private serverPort = 7070;
+  private serverConfig: DataServerConfigHelper;
 
-  private get serverProtocol(): string {
-    return typeof window !== "undefined" &&
-      window.location.protocol === "https:"
-      ? "https"
-      : "http";
+  public get serverIp(): string {
+    return this.serverConfig.serverIp;
   }
-
-  private get wsProtocol(): string {
-    return typeof window !== "undefined" &&
-      window.location.protocol === "https:"
-      ? "wss"
-      : "ws";
+  public set serverIp(val: string) {
+    this.serverConfig.serverIp = val;
   }
-
-  private get baseUrl(): string {
-    return `${this.serverProtocol}://${this.serverIp}:${this.serverPort}`;
+  public get serverPort(): number {
+    return this.serverConfig.serverPort;
   }
-
+  public set serverPort(val: number) {
+    this.serverConfig.serverPort = val;
+  }
+  public get connectionIntent(): string {
+    return this.serverConfig.connectionIntent;
+  }
+  public set connectionIntent(val: string) {
+    this.serverConfig.connectionIntent = val;
+  }
+  public get baseUrl(): string {
+    return this.serverConfig.baseUrl;
+  }
   public get serverUrl(): string {
-    return this.baseUrl;
+    return this.serverConfig.baseUrl;
   }
-
   public getBaseUrl(): string {
-    return this.baseUrl;
+    return this.serverConfig.baseUrl;
   }
-
-  private connectionIntent = "";
 
   private assetHelper: DataAssetHelper;
   private interfaceHelper: DataInterfaceHelper;
@@ -111,26 +115,9 @@ export class DataService {
     private ngZone: NgZone,
     private logger: LoggerService,
   ) {
-    if (typeof window !== "undefined" && window.location.hostname) {
-      this.serverIp = window.location.hostname;
-      if (window.location.port && window.location.port !== "4200") {
-        this.serverPort = parseInt(window.location.port, 10);
-      }
-    }
-    const settings = this.settingsService.getSettings();
-    if (settings.serverIp) {
-      this.serverIp = settings.serverIp;
-    }
-    if (
-      settings.serverPort &&
-      (typeof window === "undefined" ||
-        !window.location.port ||
-        window.location.port === "4200")
-    ) {
-      this.serverPort = settings.serverPort;
-    }
-    this.logger.info(
-      `DataService initialized with Base Server URL: ${this.baseUrl}`,
+    this.serverConfig = new DataServerConfigHelper(
+      this.settingsService,
+      this.logger,
     );
 
     this.assetHelper = new DataAssetHelper(
@@ -157,9 +144,9 @@ export class DataService {
       this.ngZone,
       this.logger,
       () => ({
-        serverIp: this.serverIp,
-        serverPort: this.serverPort,
-        wsProtocol: this.wsProtocol,
+        serverIp: this.serverConfig.serverIp,
+        serverPort: this.serverConfig.serverPort,
+        wsProtocol: this.serverConfig.wsProtocol,
       }),
       this,
     );
@@ -167,16 +154,13 @@ export class DataService {
   }
 
   public setServerAddress(ip: string, port: number) {
-    if (this.serverIp === ip && this.serverPort === port) {
-      return;
+    if (this.serverConfig.setServerAddress(ip, port)) {
+      this.socketHelper.disconnectFromRaceDataSocket();
     }
-    this.serverIp = ip;
-    this.serverPort = port;
-    this.socketHelper.disconnectFromRaceDataSocket();
   }
 
   public setConnectionIntent(intent: string) {
-    this.connectionIntent = intent;
+    this.serverConfig.setConnectionIntent(intent);
   }
 
   getDrivers(): Observable<any[]> {
@@ -248,6 +232,27 @@ export class DataService {
   }
   deleteRace(id: string): Observable<any> {
     return this.crudHelper.deleteRace(id);
+  }
+  exportRaceConfigBlob(id: string): Observable<Blob> {
+    return this.crudHelper.exportRaceConfigBlob(id);
+  }
+  importRaceConfig(
+    file: File,
+    resolution?: string,
+    customName?: string,
+  ): Observable<any> {
+    return this.crudHelper.importRaceConfig(file, resolution, customName);
+  }
+  exportRacePackageBlob(id: string): Observable<Blob> {
+    return this.crudHelper.exportRacePackageBlob(id);
+  }
+  previewRacePackage(file: File): Observable<RacePackagePreview> {
+    return this.crudHelper.previewRacePackage(file);
+  }
+  commitRacePackage(
+    request: RacePackageCommitRequest,
+  ): Observable<RacePackageResult> {
+    return this.crudHelper.commitRacePackage(request);
   }
   getEvents(): Observable<Event[]> {
     return this.crudHelper.getEvents();
@@ -902,9 +907,12 @@ export class DataService {
     userTime?: number,
     crashes?: number,
   ): Observable<any> {
-    return crashes !== undefined
-      ? this.raceControlHelper.updateUserLaps(lane, userLaps, userTime, crashes)
-      : this.raceControlHelper.updateUserLaps(lane, userLaps, userTime);
+    return this.raceControlHelper.updateUserLaps(
+      lane,
+      userLaps,
+      userTime,
+      crashes,
+    );
   }
   updateHeatUserLaps(
     heatNumber: number,
@@ -913,20 +921,13 @@ export class DataService {
     userTime?: number,
     crashes?: number,
   ): Observable<any> {
-    return crashes !== undefined
-      ? this.raceControlHelper.updateHeatUserLaps(
-          heatNumber,
-          lane,
-          userLaps,
-          userTime,
-          crashes,
-        )
-      : this.raceControlHelper.updateHeatUserLaps(
-          heatNumber,
-          lane,
-          userLaps,
-          userTime,
-        );
+    return this.raceControlHelper.updateHeatUserLaps(
+      heatNumber,
+      lane,
+      userLaps,
+      userTime,
+      crashes,
+    );
   }
   updateBatchUserLaps(
     updates: {

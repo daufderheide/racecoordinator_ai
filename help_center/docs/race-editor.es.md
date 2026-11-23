@@ -396,3 +396,12 @@ El desplegable **Crash and Learn (CNL)** configura reglas y penalizaciones para 
 - **Penalización de vueltas por accidente**: Vueltas deducidas de la puntuación de la manga por cada accidente.
 - **Penalización de tiempo por accidente (segundos)**: Tiempo añadido al tiempo total de la manga por cada accidente.
 - **Porcentaje de puntuación en descalificación**: Porcentaje de vueltas acreditadas al piloto descalificado (predeterminado `100%`). Los pilotos descalificados se clasifican por debajo de los no descalificados.
+
+---
+
+## Exportación e importación de configuración de carrera {: #race-config-export-import }
+
+La barra de herramientas del Editor de carreras permite exportar e importar configuraciones:
+
+- **Exportar configuración**: Exporta la plantilla de configuración actual (reglas de puntuación, formatos de rotación, simulaciones de combustible, opciones de salida y esquemas de puntos de temporada) a un archivo `.rccfg.json`.
+- **Importar configuración**: Permite seleccionar un archivo `.rccfg.json`. Si ya existe una carrera con el mismo nombre, un diálogo le permite **Sobrescribir** la plantilla existente o importarla con un sufijo de cambio de nombre automático (`<nombre>_1`). Tenga en cuenta que los paquetes de carrera completos (`.rcpack`) importados desde el Editor de temporadas o la ventana de Historial de carreras también importan y reconcilian automáticamente su configuración de carrera con las mismas opciones de resolución de conflictos (**Renombrar automáticamente**, **Sobrescribir** o **Usar existente**).

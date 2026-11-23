@@ -373,3 +373,12 @@ Het uitvouwbare paneel **Crash and Learn (CNL)** configureert regels en straffen
 - **Rondestraf per crash**: Aantal ronden dat per crash in mindering wordt gebracht.
 - **Tijdstraf per crash (seconden)**: Straftijd in seconden die aan de totale heattijd wordt toegevoegd per crash.
 - **Scorepercentage bij diskwalificatie**: Percentage van de score dat behouden blijft bij diskwalificatie (standaard `100%`). Gediskwalificeerde rijders eindigen onder niet-gediskwalificeerde rijders.
+
+---
+
+## Raceconfiguratie exporteren & importeren {: #race-config-export-import }
+
+De werkbalk van de Race Editor biedt mogelijkheden om configuraties te exporteren en importeren:
+
+- **Configuratie exporteren**: Exporteert de huidige raceconfiguratie (puntentelling, rotatieformaten, brandstofsimulaties, startopties en seizoenspuntschema's) naar een `.rccfg.json`-bestand.
+- **Configuratie importeren**: Hiermee selecteert u een `.rccfg.json`-bestand. Als er al een race met dezelfde naam bestaat, kunt u de bestaande **Overschrijven** of importeren met een automatisch hernoemd achtervoegsel (`<naam>_1`). Let op: voltooide racepakketten (`.rcpack`) die via de Seizoenseditor of de Racegeschiedenis worden geïmporteerd, importeren en reconciliëren ook automatisch hun onderliggende raceconfiguratie met dezelfde conflictresolutie-opties (**Automatisch hernoemen**, **Overschrijven** of **Bestaande gebruiken**).

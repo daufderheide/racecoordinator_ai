@@ -67,3 +67,14 @@ La section de détail fournit des cartes pour chaque course incluse dans la sais
 - **Cartes de Course Dépliables** : Cliquez sur une carte pour afficher le tableau des résultats par pilote avec points de position et bonus.
 - **Retirer des Courses** : En Mode Édition, cliquez sur l'icône corbeille (<span class="material-icons">delete</span>) pour retirer une course de la saison.
 
+---
+
+## Importation de packages de course entre ordinateurs (`.rcpack`) {: #race-package-ingestion }
+
+Pour regrouper les résultats de courses d'autres ordinateurs dans votre saison de championnat :
+
+- **Exporter des courses terminées** : Sur le PC source, ouvrez la boîte de dialogue **Historique des courses** et cliquez sur **Exporter le package** (<span class="material-icons">file_download</span>) sur la course terminée. Cela regroupe l'historique, la configuration de course, les temps au tour, les points de saison calculés et les profils de pilotes dans une archive `.rcpack`.
+- **Importation directe en saison** : Sur l'ordinateur de destination, ouvrez l'Éditeur de saison, passez en Mode Édition et cliquez sur **+ Ajouter une course**. Dans le dialogue, cliquez sur **Importer un package de course...** (<span class="material-icons">file_upload</span>) et sélectionnez le fichier `.rcpack`.
+- **Configuration de course et résolution des pilotes** : Une boîte de dialogue interactive associe les pilotes et résout les conflits de configuration de course (**Renommer automatiquement**, **Écraser** ou **Utiliser existant**).
+- **Intégration automatique** : La configuration de course, les résultats et les points sont enregistrés dans la base locale et ajoutés à la saison, recalculant en direct le classement, les courses décomptées et les départages.
+

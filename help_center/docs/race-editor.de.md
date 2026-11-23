@@ -373,3 +373,12 @@ Der Expander **Crash and Learn (CNL)** konfiguriert Regeln und Strafen für Desl
 - **Rundenstrafe pro Crash**: Anzahl der Runden, die dem Fahrer pro Crash abgezogen werden.
 - **Zeitstrafe pro Crash (Sekunden)**: Strafzeit in Sekunden, die der Gesamtlaufzeit des Fahrers pro Crash hinzugefügt wird.
 - **Lauf-Punkteanteil bei Disqualifikation**: Prozentsatz der gewerteten Laufleistung für disqualifizierte Fahrer (Standard `100%`). Disqualifizierte Fahrer werden hinter allen nicht disqualifizierten Fahrern platziert.
+
+---
+
+## Rennkonfiguration exportieren & importieren {: #race-config-export-import }
+
+Die Symbolleiste des Renneditors bietet Funktionen zum Exportieren und Importieren von Rennkonfigurationen:
+
+- **Konfiguration exportieren**: Exportiert die aktuelle Rennkonfigurationsvorlage (Wertungsregeln, Rotationsformate, Treibstoffsimulationen, Startoptionen und Saisonpunkteschemata) in eine `.rccfg.json`-Datei.
+- **Konfiguration importieren**: Öffnet einen Dialog zur Auswahl einer `.rccfg.json`-Datei. Falls bereits ein Rennen mit demselben Namen existiert, können Sie das bestehende überschreiben oder mit einem automatisch umbenannten Suffix (`<name>_1`) importieren. Beachten Sie, dass vollständige Rennpakete (`.rcpack`), die über den Saison-Editor oder den Rennverlauf importiert werden, ebenfalls automatisch ihre zugrunde liegende Rennkonfiguration mit denselben Konfliktlösungsoptionen (**Automatisch umbenennen**, **Überschreiben** oder **Bestehende verwenden**) importieren.

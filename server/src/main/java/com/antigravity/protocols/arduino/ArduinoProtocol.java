@@ -282,7 +282,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
       byte opcode = rxBuffer.peek(0);
 
       if (!versionVerified && opcode != OPCODE_VERSION) {
-        logger.warn(
+        logger.debug(
             "Skipping byte 0x{} before version verification", String.format("%02X", opcode));
         rxBuffer.get();
         continue;
@@ -342,7 +342,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     byte opcode = message[0];
 
     if (!versionVerified && opcode != OPCODE_VERSION) {
-      logger.warn(
+      logger.debug(
           "Ignoring message (opcode: 0x{}) before version verification",
           String.format("%02X", opcode));
       return;

@@ -11,12 +11,19 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, of, Subscription } from "rxjs";
 import { catchError } from "rxjs/operators";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
+import { PreviewBadgeComponent } from "@app/components/shared/preview-badge/preview-badge.component";
+import { RacePackageModalComponent } from "@app/components/shared/race-package-modal/race-package-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
+import {
+  RacePackagePreview,
+  RacePackageResult,
+} from "@app/models/race-package.model";
 import {
   Season,
   SeasonRaceRecord,
@@ -38,10 +45,10 @@ import {
 
 import {
   areSeasonsEqual,
-  buildRaceRecordFromHistory,
-  calculateDriverHeatPointsMap,
+  buildSeasonPackageAckDetails,
   calculateSeasonStandings,
   cloneSeason,
+  collectAvailableFinishedRaces,
   extractDemoHistorySet,
   getDroppedPoints,
   tagSeasonRaces,
@@ -60,7 +67,10 @@ import { SeasonEditorHelpHelper } from "./season-editor-help.helper";
     LocalDatePipe,
     FormsModule,
     ConfirmationModalComponent,
+    AcknowledgementModalComponent,
     DecimalPipe,
+    RacePackageModalComponent,
+    PreviewBadgeComponent,
   ],
 })
 export class SeasonEditorComponent
@@ -113,6 +123,13 @@ export class SeasonEditorComponent
   showAddRaceModal = false;
   availableFinishedRaces: SeasonRaceRecord[] = [];
   selectedRaceToAddId = "";
+  showSeasonPackageModal = false;
+  seasonPackagePreview: RacePackagePreview | null = null;
+  isImportingSeasonPackage = false;
+  showPackageAckModal = false;
+  packageAckTitle = "";
+  packageAckMessage = "";
+  packageAckParams: any = {};
 
   isLoading = true;
   isSaving = false;
@@ -144,8 +161,8 @@ export class SeasonEditorComponent
   constructor() {
     this.undoManager = new UndoManager<Season>(
       {
-        clonner: (s) => this.cloneSeason(s),
-        equalizer: (a, b) => this.areSeasonsEqual(a, b),
+        clonner: (s) => cloneSeason(s),
+        equalizer: (a, b) => areSeasonsEqual(a, b),
         applier: (s) => {
           const currentId = this.editingSeason?.entity_id;
           this.editingSeason = s;
@@ -305,8 +322,8 @@ export class SeasonEditorComponent
   }
 
   selectSeason(season: Season): void {
-    this.editingSeason = this.cloneSeason(season);
-    this.originalSeason = this.cloneSeason(season);
+    this.editingSeason = cloneSeason(season);
+    this.originalSeason = cloneSeason(season);
     this.selectedSeasonId = season.entity_id || "";
     if (season.entity_id) {
       this.navigationService.setLastEditedId("season", season.entity_id);
@@ -470,93 +487,30 @@ export class SeasonEditorComponent
 
   openAddRaceModal(): void {
     this.selectedRaceToAddId = "";
-    const availableMap = new Map<string, SeasonRaceRecord>();
     const existingRaces = this.editingSeason?.races || [];
-
-    const isAlreadyInSeason = (candidate: SeasonRaceRecord): boolean => {
-      if (!existingRaces || existingRaces.length === 0) return false;
-      const candTs = Number(candidate.timestamp) || 0;
-      const candId = String(candidate.race_id || "").trim();
-      const candName = (candidate.race_name || "").trim().toLowerCase();
-
-      return existingRaces.some((r) => {
-        const rTs = Number(r.timestamp) || 0;
-        const rId = String(r.race_id || "").trim();
-        const rName = (r.race_name || "").trim().toLowerCase();
-
-        if (candTs > 0 && rTs > 0) {
-          return candTs === rTs;
-        }
-        if (rId && candId && rId === candId) {
-          return true;
-        }
-        if (rName && candName && rName === candName) {
-          return true;
-        }
-        return false;
-      });
-    };
-
-    const getRaceKey = (r: SeasonRaceRecord): string => {
-      const ts = Number(r.timestamp) || 0;
-      if (ts > 0) {
-        return `ts_${ts}`;
-      }
-      return `id_${r.race_id || ""}`;
-    };
-
-    for (const season of this.existingSeasons) {
-      if (!season.races) continue;
-      for (const raceRec of season.races) {
-        if (raceRec && (raceRec.race_id || raceRec.timestamp)) {
-          if (!isAlreadyInSeason(raceRec)) {
-            const key = getRaceKey(raceRec);
-            if (!availableMap.has(key)) {
-              availableMap.set(key, { ...raceRec });
-            }
-          }
-        }
-      }
-    }
 
     this.subscriptions.push(
       this.dataService.getAllFinishedRaceHistory().subscribe({
         next: (history) => {
-          if (Array.isArray(history)) {
-            for (const item of history) {
-              const rec = buildRaceRecordFromHistory(item);
-              if ((rec as any).is_event_race) {
-                continue;
-              }
-              if (!isAlreadyInSeason(rec)) {
-                const key = getRaceKey(rec);
-                if (availableMap.has(key)) {
-                  if (!rec.is_demo) {
-                    availableMap.get(key)!.is_demo = false;
-                  }
-                } else {
-                  availableMap.set(key, rec);
-                }
-              }
-            }
-          }
-          this.finalizeAvailableRaces(availableMap);
+          this.availableFinishedRaces = collectAvailableFinishedRaces(
+            existingRaces,
+            this.existingSeasons,
+            history,
+          );
+          this.showAddRaceModal = true;
+          this.cdr.detectChanges();
         },
         error: () => {
-          this.finalizeAvailableRaces(availableMap);
+          this.availableFinishedRaces = collectAvailableFinishedRaces(
+            existingRaces,
+            this.existingSeasons,
+            [],
+          );
+          this.showAddRaceModal = true;
+          this.cdr.detectChanges();
         },
       }),
     );
-  }
-
-  private finalizeAvailableRaces(
-    availableMap: Map<string, SeasonRaceRecord>,
-  ): void {
-    this.availableFinishedRaces = Array.from(availableMap.values()).sort(
-      (a, b) => (b.timestamp || 0) - (a.timestamp || 0),
-    );
-    this.showAddRaceModal = true;
-    this.cdr.detectChanges();
   }
 
   closeAddRaceModal(): void {
@@ -585,6 +539,64 @@ export class SeasonEditorComponent
       this.captureState();
     }
     this.closeAddRaceModal();
+  }
+
+  onSeasonPackageFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.isImportingSeasonPackage = true;
+    this.cdr.detectChanges();
+
+    this.dataService.previewRacePackage(file).subscribe({
+      next: (preview) => {
+        this.isImportingSeasonPackage = false;
+        this.seasonPackagePreview = preview;
+        this.showSeasonPackageModal = true;
+        input.value = "";
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isImportingSeasonPackage = false;
+        input.value = "";
+        this.logger.error("Failed to preview race package:", err);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  closeSeasonPackageModal(): void {
+    this.showSeasonPackageModal = false;
+    this.seasonPackagePreview = null;
+    this.cdr.detectChanges();
+  }
+
+  onSeasonPackageCommitted(result: RacePackageResult): void {
+    this.closeSeasonPackageModal();
+    this.closeAddRaceModal();
+    if (this.isEditMode) {
+      this.isPreservingEditModeOnNavigation = true;
+    }
+    if (this.editingSeason?.entity_id) {
+      this.loadData(this.editingSeason.entity_id);
+    }
+
+    const ack = buildSeasonPackageAckDetails(result, (key) =>
+      this.translationService.translate(key),
+    );
+    if (ack) {
+      this.packageAckTitle = ack.title;
+      this.packageAckMessage = ack.message;
+      this.packageAckParams = ack.params;
+      this.showPackageAckModal = true;
+      this.cdr.detectChanges();
+    }
+  }
+
+  closePackageAckModal(): void {
+    this.showPackageAckModal = false;
+    this.cdr.detectChanges();
   }
 
   generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
@@ -778,7 +790,7 @@ export class SeasonEditorComponent
 
     const uniqueName = this.generateUniqueName(this.editingSeason.name, true);
     const newCopy: Season = {
-      ...this.cloneSeason(this.editingSeason),
+      ...cloneSeason(this.editingSeason),
       entity_id: undefined,
       name: uniqueName,
     };
@@ -1005,23 +1017,6 @@ export class SeasonEditorComponent
 
   private cloneSeason(season: Season): Season {
     return cloneSeason(season);
-  }
-
-  private areSeasonsEqual(a: Season, b: Season): boolean {
-    return areSeasonsEqual(a, b);
-  }
-
-  private buildRaceRecordFromHistory(
-    item: any,
-  ): SeasonRaceRecord & { is_event_race?: boolean } {
-    return buildRaceRecordFromHistory(item);
-  }
-
-  private calculateDriverHeatPointsMap(
-    heats: any[],
-    heatPosPointsList: number[],
-  ): Map<string, number> {
-    return calculateDriverHeatPointsMap(heats, heatPosPointsList);
   }
 
   getHelpSteps(): GuideStep[] {

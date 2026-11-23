@@ -1,8 +1,8 @@
 import { TestBed } from "@angular/core/testing";
 import { ActivatedRouteSnapshot } from "@angular/router";
 
-import { CarEditorComponent } from "./components/car-editor/car-editor.component";
 import { racedayTitleResolver, routes } from "./app.routes";
+import { CarEditorComponent } from "./components/car-editor/car-editor.component";
 import { ThemeService } from "./services/theme.service";
 import { TranslationService } from "./services/translation.service";
 

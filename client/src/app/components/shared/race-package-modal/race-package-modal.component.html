@@ -1,0 +1,589 @@
+@if (visible() && preview(); as p) {
+  <div class="rpm-backdrop" (click)="onClose()">
+    <div class="rpm-dialog" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="rpm-header">
+        <div class="rpm-title-wrap">
+          <span class="material-icons rpm-header-icon">inventory_2</span>
+          <div>
+            <h2 class="rpm-title">{{ "RPM_MODAL_TITLE" | translate }}</h2>
+            <p class="rpm-subtitle">
+              {{
+                (currentStep === 1
+                  ? "RPM_STEP_1_SUBTITLE"
+                  : "RPM_STEP_2_SUBTITLE"
+                ) | translate
+              }}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="rpm-btn-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <!-- Stepper Nav Bar -->
+      <div class="rpm-stepper">
+        <div
+          class="rpm-step-item"
+          [class.active]="currentStep === 1"
+          [class.completed]="currentStep > 1"
+          (click)="goToStep(1)"
+        >
+          <span class="step-num">1</span>
+          <span class="step-title">{{ "RPM_STEP_1_LABEL" | translate }}</span>
+        </div>
+        <div class="step-divider" [class.completed]="currentStep > 1"></div>
+        <div
+          class="rpm-step-item"
+          [class.active]="currentStep === 2"
+          [class.disabled]="duplicateAction === 'SKIP'"
+          (click)="duplicateAction !== 'SKIP' && goToStep(2)"
+        >
+          <span class="step-num">2</span>
+          <span class="step-title">{{ "RPM_STEP_2_LABEL" | translate }}</span>
+        </div>
+      </div>
+
+      <!-- Error Banner -->
+      @if (errorMessage) {
+        <div class="rpm-alert-banner error">
+          <span class="material-icons">error</span>
+          <span>{{ errorMessage | translate }}</span>
+        </div>
+      }
+
+      <div class="rpm-body">
+        <!-- =================== STEP 1: RACE & CONFIGURATION =================== -->
+        @if (currentStep === 1) {
+          <!-- Package Summary Card -->
+          <div class="rpm-summary-card">
+            <div class="rpm-summary-main">
+              <span class="rpm-race-name">{{ p.manifest.race_name }}</span>
+              <div class="rpm-summary-meta">
+                <span class="rpm-meta-item">
+                  <span class="material-icons">event</span>
+                  {{ p.manifest.start_time | localDate: "short" }}
+                </span>
+                <span class="rpm-meta-item">
+                  <span class="material-icons">flag</span>
+                  {{
+                    "RPM_HEATS_COUNT"
+                      | translate: { count: p.manifest.heat_count }
+                  }}
+                </span>
+                <span class="rpm-meta-item">
+                  <span class="material-icons">group</span>
+                  {{
+                    "RPM_DRIVERS_COUNT"
+                      | translate: { count: p.manifest.driver_count }
+                  }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Duplicate Race Warning & Action Selector -->
+          @if (p.duplicate_race) {
+            <div class="rpm-duplicate-callout">
+              <div class="rpm-callout-header">
+                <span class="material-icons callout-icon">warning</span>
+                <div>
+                  <strong>{{ "RPM_DUP_DETECTED_TITLE" | translate }}</strong>
+                  <p>
+                    {{
+                      "RPM_DUP_DETECTED_MSG"
+                        | translate
+                          : {
+                              name:
+                                p.existing_race_name || p.manifest.race_name,
+                            }
+                    }}
+                  </p>
+                </div>
+              </div>
+              <div class="rpm-dup-actions">
+                <label class="rpm-dup-label"
+                  >{{ "RPM_DUP_ACTION_PROMPT" | translate }}:</label
+                >
+                <app-custom-select
+                  class="rpm-dup-select"
+                  [value]="duplicateAction"
+                  (change)="onDuplicateActionChange($event)"
+                >
+                  <app-custom-option value="CREATE_COPY">
+                    {{ "RPM_DUP_ACTION_COPY" | translate }}
+                  </app-custom-option>
+                  <app-custom-option value="OVERWRITE">
+                    {{ "RPM_DUP_ACTION_OVERWRITE" | translate }}
+                  </app-custom-option>
+                  <app-custom-option value="SKIP">
+                    {{ "RPM_DUP_ACTION_SKIP" | translate }}
+                  </app-custom-option>
+                </app-custom-select>
+              </div>
+            </div>
+          }
+
+          @if (duplicateAction === "SKIP") {
+            <div class="rpm-skip-banner">
+              <span class="material-icons">info</span>
+              <div>
+                <strong>{{ "RPM_DUP_SKIP_TITLE" | translate }}</strong>
+                <p>{{ "RPM_SKIP_EXPLANATION" | translate }}</p>
+              </div>
+            </div>
+          } @else {
+            <!-- Unified Race Name Card -->
+            <div class="rpm-field-card">
+              <div class="rpm-field-header">
+                <span class="material-icons rpm-field-icon">edit_note</span>
+                <label class="rpm-field-title" for="rpm-race-name-input">{{
+                  "RPM_RACE_NAME_LABEL" | translate
+                }}</label>
+              </div>
+              <input
+                id="rpm-race-name-input"
+                type="text"
+                class="rpm-text-input"
+                [ngModel]="raceName"
+                (ngModelChange)="onRaceNameChange($event)"
+                [placeholder]="'RPM_CONFIG_NAME_PLACEHOLDER' | translate"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
+              />
+              <p class="rpm-field-desc">
+                {{ "RPM_RACE_NAME_HELP" | translate }}
+              </p>
+            </div>
+
+            <!-- Included Race Configuration Card -->
+            <div
+              class="rpm-config-card"
+              [class.has-conflict]="p.config_conflict"
+            >
+              <div class="rpm-config-card-header">
+                <div class="rpm-config-card-left">
+                  <span class="material-icons rpm-config-icon">tune</span>
+                  <div class="rpm-config-card-info">
+                    <span class="rpm-config-label">{{
+                      "RPM_CONFIG_INCLUDED_LABEL" | translate
+                    }}</span>
+                    <span class="rpm-config-name">{{
+                      raceName || p.existing_config_name || p.manifest.race_name
+                    }}</span>
+                  </div>
+                </div>
+                @if (configAction === "SKIP") {
+                  <div class="rpm-config-badge clean">
+                    <span class="material-icons">block</span>
+                    <span>{{ "RPM_CONFIG_STATUS_SKIPPED" | translate }}</span>
+                  </div>
+                } @else if (configAction === "OVERWRITE") {
+                  <div class="rpm-config-badge conflict">
+                    <span class="material-icons">update</span>
+                    <span>{{ "RPM_CONFIG_ACTION_OVERWRITE" | translate }}</span>
+                  </div>
+                } @else {
+                  <div class="rpm-config-badge clean">
+                    <span class="material-icons">check_circle</span>
+                    <span>{{ "RPM_CONFIG_STATUS_SAVED" | translate }}</span>
+                  </div>
+                }
+              </div>
+
+              <div class="rpm-config-body">
+                <div class="rpm-config-row">
+                  <label class="rpm-dup-label"
+                    >{{ "RPM_CONFIG_ACTION_PROMPT" | translate }}:</label
+                  >
+                  <app-custom-select
+                    class="rpm-dup-select"
+                    [value]="configAction"
+                    (change)="onConfigActionChange($event)"
+                  >
+                    <app-custom-option value="CREATE_NEW">
+                      {{ "RPM_CONFIG_ACTION_IMPORT_NEW" | translate }}
+                    </app-custom-option>
+                    @if (p.config_conflict || p.duplicate_race) {
+                      <app-custom-option value="OVERWRITE">
+                        {{ "RPM_CONFIG_ACTION_OVERWRITE" | translate }}
+                      </app-custom-option>
+                    }
+                    <app-custom-option value="SKIP">
+                      {{ "RPM_CONFIG_ACTION_SKIP" | translate }}
+                    </app-custom-option>
+                  </app-custom-select>
+                </div>
+
+                @if (
+                  configAction === "CREATE_NEW" ||
+                  configAction === "AUTO_RENAME"
+                ) {
+                  <p class="rpm-config-note">
+                    {{ "RPM_CONFIG_NOTE_USES_RACE_NAME" | translate }}
+                  </p>
+                } @else if (configAction === "OVERWRITE") {
+                  <p class="rpm-config-note">
+                    {{
+                      "RPM_CONFIG_NOTE_OVERWRITE"
+                        | translate
+                          : {
+                              name:
+                                raceName ||
+                                p.existing_config_name ||
+                                p.manifest.race_name,
+                            }
+                    }}
+                  </p>
+                } @else if (configAction === "SKIP") {
+                  <p class="rpm-config-note">
+                    {{ "RPM_CONFIG_NOTE_SKIP" | translate }}
+                  </p>
+                }
+              </div>
+            </div>
+
+            <!-- Season Assignment (Optional or Presets) -->
+            @if (targetSeasonId()) {
+              <div class="rpm-season-target-banner">
+                <span class="material-icons">emoji_events</span>
+                <span>{{ "RPM_SEASON_AUTO_ADD" | translate }}</span>
+              </div>
+            } @else if (seasons().length > 0) {
+              <div class="rpm-season-picker-row">
+                <label class="rpm-season-label"
+                  >{{ "RPM_ADD_TO_SEASON_LABEL" | translate }}:</label
+                >
+                <app-custom-select
+                  class="rpm-season-select"
+                  [value]="selectedSeasonId"
+                  (change)="selectedSeasonId = $event"
+                >
+                  <app-custom-option value="">
+                    {{ "RPM_NO_SEASON_OPTION" | translate }}
+                  </app-custom-option>
+                  @for (
+                    season of seasons();
+                    track season.entity_id || season._id || season.name
+                  ) {
+                    <app-custom-option
+                      [value]="season.entity_id || season._id || ''"
+                    >
+                      {{ season.name }}
+                    </app-custom-option>
+                  }
+                </app-custom-select>
+              </div>
+            }
+          }
+        }
+
+        <!-- =================== STEP 2: DRIVERS =================== -->
+        @if (currentStep === 2) {
+          <!-- Drivers Status Card -->
+          @if (allDriversMatched) {
+            <div class="rpm-drivers-summary success">
+              <span class="material-icons summary-icon">check_circle</span>
+              <div class="summary-body">
+                <strong>{{
+                  "RPM_DRIVERS_ALL_MATCHED_TITLE" | translate
+                }}</strong>
+                <p>
+                  {{
+                    "RPM_DRIVERS_ALL_MATCHED_MSG"
+                      | translate: { count: p.driver_mappings.length }
+                  }}
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-toggle-drivers"
+                (click)="toggleDriverDetails()"
+              >
+                <span class="material-icons">{{
+                  showDriverDetails ? "expand_less" : "tune"
+                }}</span>
+                <span>{{
+                  (showDriverDetails
+                    ? "RPM_BTN_HIDE_DRIVER_DETAILS"
+                    : "RPM_BTN_SHOW_DRIVER_DETAILS"
+                  ) | translate
+                }}</span>
+              </button>
+            </div>
+          } @else {
+            <div class="rpm-drivers-summary warning">
+              <span class="material-icons summary-icon">group</span>
+              <div class="summary-body">
+                <strong>{{ "RPM_DRIVERS_REVIEW_TITLE" | translate }}</strong>
+                <p>
+                  {{
+                    "RPM_DRIVERS_REVIEW_MSG"
+                      | translate
+                        : {
+                            matchedCount: matchedDriversCount,
+                            totalCount: p.driver_mappings.length,
+                            newCount: newDriversCount,
+                          }
+                  }}
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- Driver Resolution Table (shown if review needed or toggled open) -->
+          @if (!allDriversMatched || showDriverDetails) {
+            <div class="rpm-table-wrapper">
+              <table class="rpm-table">
+                <thead>
+                  <tr>
+                    <th>{{ "RPM_COL_SOURCE_PARTICIPANT" | translate }}</th>
+                    <th>{{ "RPM_COL_STATUS" | translate }}</th>
+                    <th>{{ "RPM_COL_ACTION" | translate }}</th>
+                    <th>{{ "RPM_COL_RESOLUTION" | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of p.driver_mappings; track m.source_driver_id) {
+                    @if (getResolution(m.source_driver_id); as res) {
+                      <tr>
+                        <td class="cell-driver-source">
+                          <div class="driver-name-wrap">
+                            <div class="driver-title-row">
+                              @if (isTeam(m.source_driver_id)) {
+                                <span
+                                  class="material-icons rpm-team-icon"
+                                  [title]="'COMMON_TEAM' | translate"
+                                  >groups</span
+                                >
+                              }
+                              <span class="driver-name">{{
+                                m.source_driver_name
+                              }}</span>
+                            </div>
+                            @if (m.source_driver_nickname) {
+                              <span class="driver-nickname"
+                                >"{{ m.source_driver_nickname }}"</span
+                              >
+                            }
+                          </div>
+                        </td>
+                        <td class="cell-status">
+                          @if (isTeam(m.source_driver_id)) {
+                            @if (m.match_type === "EXACT_NAME") {
+                              <span class="rpm-badge badge-exact">{{
+                                "RPM_BADGE_EXACT_TEAM" | translate
+                              }}</span>
+                            } @else {
+                              <span class="rpm-badge badge-new">{{
+                                "RPM_BADGE_NEW_TEAM" | translate
+                              }}</span>
+                            }
+                          } @else {
+                            @if (m.match_type === "EXACT_NAME") {
+                              <span class="rpm-badge badge-exact">{{
+                                "RPM_BADGE_EXACT_NAME" | translate
+                              }}</span>
+                            } @else if (m.match_type === "EXACT_NICKNAME") {
+                              <span class="rpm-badge badge-nick">{{
+                                "RPM_BADGE_EXACT_NICKNAME" | translate
+                              }}</span>
+                            } @else {
+                              <span class="rpm-badge badge-new">{{
+                                "RPM_BADGE_NEW_DRIVER" | translate
+                              }}</span>
+                            }
+                          }
+                        </td>
+                        <td class="cell-action">
+                          <app-custom-select
+                            class="rpm-action-select"
+                            [value]="res.action"
+                            (change)="
+                              onActionChange(m.source_driver_id, $event)
+                            "
+                          >
+                            <app-custom-option value="LINK">
+                              {{ "RPM_ACTION_LINK" | translate }}
+                            </app-custom-option>
+                            <app-custom-option value="CREATE_NEW">
+                              {{
+                                (isTeam(m.source_driver_id)
+                                  ? "RPM_ACTION_CREATE_NEW_TEAM"
+                                  : "RPM_ACTION_CREATE_NEW"
+                                ) | translate
+                              }}
+                            </app-custom-option>
+                          </app-custom-select>
+                        </td>
+                        <td class="cell-resolution">
+                          @if (res.action === "LINK") {
+                            @if (isTeam(m.source_driver_id)) {
+                              <app-custom-select
+                                class="rpm-target-driver-select"
+                                [value]="res.target_driver_id"
+                                (change)="
+                                  onTargetDriverChange(
+                                    m.source_driver_id,
+                                    $event
+                                  )
+                                "
+                              >
+                                <app-custom-option value="" [disabled]="true">
+                                  --
+                                  {{ "RPM_SELECT_LOCAL_TEAM" | translate }} --
+                                </app-custom-option>
+                                @for (
+                                  lt of localTeams;
+                                  track lt.entity_id || lt.id
+                                ) {
+                                  <app-custom-option
+                                    [value]="'t_' + (lt.entity_id || lt.id)"
+                                  >
+                                    {{ lt.name }}
+                                  </app-custom-option>
+                                }
+                              </app-custom-select>
+                            } @else {
+                              <app-custom-select
+                                class="rpm-target-driver-select"
+                                [value]="res.target_driver_id"
+                                (change)="
+                                  onTargetDriverChange(
+                                    m.source_driver_id,
+                                    $event
+                                  )
+                                "
+                              >
+                                <app-custom-option value="" [disabled]="true">
+                                  --
+                                  {{ "RPM_SELECT_LOCAL_DRIVER" | translate }} --
+                                </app-custom-option>
+                                @for (
+                                  ld of localDrivers;
+                                  track ld.entity_id || ld.id
+                                ) {
+                                  <app-custom-option
+                                    [value]="ld.entity_id || ld.id"
+                                  >
+                                    {{ ld.name }}
+                                    @if (ld.nickname) {
+                                      ({{ ld.nickname }})
+                                    }
+                                  </app-custom-option>
+                                }
+                              </app-custom-select>
+                            }
+                          } @else {
+                            <input
+                              type="text"
+                              class="rpm-new-driver-input"
+                              [ngModel]="res.new_driver_name"
+                              (ngModelChange)="
+                                onNewNameChange(m.source_driver_id, $event)
+                              "
+                              [placeholder]="
+                                (isTeam(m.source_driver_id)
+                                  ? 'RPM_NEW_TEAM_NAME_PLACEHOLDER'
+                                  : 'RPM_NEW_NAME_PLACEHOLDER'
+                                ) | translate
+                              "
+                              autocomplete="off"
+                              data-dashlane-ignore="true"
+                              data-1p-ignore="true"
+                              data-lpignore="true"
+                              data-bwignore="true"
+                              data-form-type="other"
+                            />
+                          }
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="rpm-footer">
+        @if (currentStep === 1) {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onClose()"
+            [disabled]="isCommitting"
+          >
+            {{ "RPM_BTN_CANCEL" | translate }}
+          </button>
+          @if (duplicateAction === "SKIP") {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="onCommit()"
+              [disabled]="isCommitting"
+            >
+              @if (isCommitting) {
+                <span class="material-icons spin-icon">sync</span>
+                <span>{{ "RPM_BTN_IMPORTING" | translate }}</span>
+              } @else {
+                <span class="material-icons">close</span>
+                <span>{{ "RPM_BTN_SKIP_DONE" | translate }}</span>
+              }
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="goToStep(2)"
+              [disabled]="isCommitting || !raceName.trim()"
+            >
+              <span>{{
+                "RPM_BTN_NEXT_DRIVERS"
+                  | translate: { count: p.driver_mappings.length }
+              }}</span>
+              <span class="material-icons">arrow_forward</span>
+            </button>
+          }
+        } @else {
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="goToStep(1)"
+            [disabled]="isCommitting"
+          >
+            <span class="material-icons">arrow_back</span>
+            <span>{{ "RPM_BTN_BACK" | translate }}</span>
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="onCommit()"
+            [disabled]="isCommitting"
+          >
+            @if (isCommitting) {
+              <span class="material-icons spin-icon">sync</span>
+              <span>{{ "RPM_BTN_IMPORTING" | translate }}</span>
+            } @else {
+              <span class="material-icons">file_download</span>
+              <span>{{ "RPM_BTN_IMPORT" | translate }}</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

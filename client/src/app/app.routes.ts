@@ -2,6 +2,7 @@ import { inject } from "@angular/core";
 import { ActivatedRouteSnapshot, ResolveFn, Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
+import { CarEditorComponent } from "@app/components/car-editor/car-editor.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
@@ -19,7 +20,6 @@ import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-set
 import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
 import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
-import { CarEditorComponent } from "@app/components/car-editor/car-editor.component";
 import { ThemeEditorComponent } from "@app/components/theme-editor/theme-editor.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";

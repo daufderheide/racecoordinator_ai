@@ -391,3 +391,12 @@ O painel **Crash and Learn (CNL)** configura regras e penalidades para saídas d
 - **Penalidade de voltas por batida**: Voltas deduzidas da pontuação da bateria por cada batida.
 - **Penalidade de tempo por batida (segundos)**: Tempo em segundos adicionado ao tempo total da bateria por cada batida.
 - **Porcentagem de pontuação na desqualificação**: Porcentagem da pontuação creditada ao piloto desqualificado (padrão `100%`). Pilotos desqualificados ficam atrás dos não desqualificados na classificação.
+
+---
+
+## Exportação e importação de configuração de corrida {: #race-config-export-import }
+
+A barra de ferramentas do Editor de corridas oferece recursos para exportar e importar configurações:
+
+- **Exportar configuração**: Exporta o modelo de configuração atual (regras de pontuação, rotações, simulações de combustível, opções de largada e tabelas de pontos de temporada) para um arquivo `.rccfg.json`.
+- **Importar configuração**: Permite selecionar um arquivo `.rccfg.json`. Se já existir uma corrida com o mesmo nome, um diálogo permite **Substituir** o modelo existente ou importá-lo com um sufixo renomeado automaticamente (`<nome>_1`). Observe que os pacotes de corrida concluídos (`.rcpack`) importados pelo Editor de temporadas ou pela janela Histórico de corridas também importam e reconciliam automaticamente sua configuração de corrida com as mesmas opções de resolução de conflitos (**Renomear automaticamente**, **Substituir** ou **Usar existente**).

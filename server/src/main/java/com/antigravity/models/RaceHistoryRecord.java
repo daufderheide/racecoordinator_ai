@@ -68,6 +68,14 @@ public class RaceHistoryRecord {
   @JsonAlias({"seasonEntityId", "season_id", "seasonId"})
   private String seasonEntityId;
 
+  @JsonProperty("source_race_id")
+  @JsonAlias({"sourceRaceId"})
+  private String sourceRaceId;
+
+  @JsonProperty("package_fingerprint")
+  @JsonAlias({"packageFingerprint"})
+  private String packageFingerprint;
+
   public RaceHistoryRecord() {}
 
   public RaceHistoryRecord(
@@ -322,5 +330,27 @@ public class RaceHistoryRecord {
   @JsonAlias({"seasonEntityId", "season_id", "seasonId"})
   public void setSeasonEntityId(String seasonEntityId) {
     this.seasonEntityId = seasonEntityId;
+  }
+
+  @JsonProperty("source_race_id")
+  public String getSourceRaceId() {
+    return sourceRaceId;
+  }
+
+  @JsonProperty("source_race_id")
+  @JsonAlias({"sourceRaceId"})
+  public void setSourceRaceId(String sourceRaceId) {
+    this.sourceRaceId = sourceRaceId;
+  }
+
+  @JsonProperty("package_fingerprint")
+  public String getPackageFingerprint() {
+    return packageFingerprint;
+  }
+
+  @JsonProperty("package_fingerprint")
+  @JsonAlias({"packageFingerprint"})
+  public void setPackageFingerprint(String packageFingerprint) {
+    this.packageFingerprint = packageFingerprint;
   }
 }

@@ -15,6 +15,9 @@ describe("RaceHistoryDialogComponent", () => {
   let mockRouter: jasmine.SpyObj<Router>;
   let roleSubject: BehaviorSubject<Role>;
   let mockAuthService: { currentRole$: BehaviorSubject<Role> };
+  let originalShowSaveFilePicker: any;
+  let mockWritable: any;
+  let mockHandle: any;
 
   const mockHistories = [
     {
@@ -58,6 +61,19 @@ describe("RaceHistoryDialogComponent", () => {
   ];
 
   beforeEach(async () => {
+    originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+    mockWritable = {
+      write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+      close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+    };
+    mockHandle = {
+      createWritable: jasmine
+        .createSpy("createWritable")
+        .and.returnValue(Promise.resolve(mockWritable)),
+    };
+    (window as any).showSaveFilePicker = jasmine
+      .createSpy("showSaveFilePicker")
+      .and.returnValue(Promise.resolve(mockHandle));
     mockDataService = jasmine.createSpyObj("DataService", [
       "getAllFinishedRaceHistory",
       "getRaceHistoryById",
@@ -67,6 +83,11 @@ describe("RaceHistoryDialogComponent", () => {
       "exportRaceHistoryToCsv",
       "updateHistoryLapSections",
       "resetRaceRecords",
+      "exportRacePackageBlob",
+      "previewRacePackage",
+      "commitRacePackage",
+      "getSeasons",
+      "getDrivers",
     ]);
     mockDataService.getAllFinishedRaceHistory.and.returnValue(
       of(mockHistories),
@@ -76,6 +97,19 @@ describe("RaceHistoryDialogComponent", () => {
     mockDataService.exportRaceHistoryToCsv.and.returnValue(of("csv data"));
     mockDataService.updateHistoryLapSections.and.returnValue(of({} as any));
     mockDataService.resetRaceRecords.and.returnValue(of(undefined as any));
+    mockDataService.exportRacePackageBlob.and.returnValue(
+      of(new Blob(["mock-rcpack"], { type: "application/zip" })),
+    );
+    mockDataService.previewRacePackage.and.returnValue(
+      of({
+        temp_package_token: "tok-1",
+        duplicate_race: false,
+        manifest: { race_name: "Grand Prix A" } as any,
+        driver_mappings: [],
+      }),
+    );
+    mockDataService.getSeasons.and.returnValue(of([]));
+    mockDataService.getDrivers.and.returnValue(of([]));
 
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
 
@@ -103,6 +137,10 @@ describe("RaceHistoryDialogComponent", () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput("visible", true);
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    (window as any).showSaveFilePicker = originalShowSaveFilePicker;
   });
 
   it("should create the component", () => {
@@ -857,6 +895,146 @@ describe("RaceHistoryDialogComponent", () => {
           races: [{ entity_id: "eid_1" }],
         } as any),
       ).toBe("eid_1");
+    });
+  });
+
+  describe("Race Package Export & Import", () => {
+    it("should export race package when exportRacePackage is called", async () => {
+      const group = component.groupedHistories[0];
+      await component.exportRacePackage(group);
+
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+      expect(mockDataService.exportRacePackageBlob).toHaveBeenCalledWith(
+        "hist_2",
+      );
+    });
+
+    it("should render preview badge on the export package button", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+      const exportBtn = fixture.nativeElement.querySelector(
+        ".btn-export-package",
+      );
+      expect(exportBtn).toBeTruthy();
+      const badge = exportBtn.querySelector("app-preview-badge");
+      expect(badge).toBeTruthy();
+    });
+
+    it("should return early if group is null or invalid in exportRacePackage", async () => {
+      await component.exportRacePackage(null as any);
+      expect(mockDataService.exportRacePackageBlob).not.toHaveBeenCalled();
+
+      await component.exportRacePackage({ races: [] } as any);
+      expect(mockDataService.exportRacePackageBlob).not.toHaveBeenCalled();
+    });
+
+    it("should handle error during exportRacePackage gracefully", async () => {
+      mockDataService.exportRacePackageBlob.and.returnValue(
+        throwError(() => new Error("Export failed")),
+      );
+      const group = component.groupedHistories[0];
+      await component.exportRacePackage(group);
+      expect(component.isExportingPackage).toBeFalse();
+    });
+
+    it("should handle onPackageFileSelected with valid file", () => {
+      const mockFile = new File(["dummy"], "race.rcpack", {
+        type: "application/zip",
+      });
+      const inputEl = document.createElement("input");
+      inputEl.type = "file";
+      const event = {
+        target: { files: [mockFile], value: "race.rcpack" },
+      } as any;
+
+      component.onPackageFileSelected(event);
+
+      expect(mockDataService.getSeasons).toHaveBeenCalled();
+      expect(mockDataService.previewRacePackage).toHaveBeenCalledWith(mockFile);
+      expect(component.showPackageModal).toBeTrue();
+      expect(component.packagePreview).toBeDefined();
+      expect(component.isImportingPackage).toBeFalse();
+    });
+
+    it("should return early if no file in onPackageFileSelected", () => {
+      const event = { target: { files: [] } } as any;
+      component.onPackageFileSelected(event);
+      expect(mockDataService.previewRacePackage).not.toHaveBeenCalled();
+    });
+
+    it("should handle error in previewRacePackage gracefully", () => {
+      mockDataService.previewRacePackage.and.returnValue(
+        throwError(() => new Error("Invalid preview")),
+      );
+      const mockFile = new File(["dummy"], "race.rcpack");
+      const event = {
+        target: { files: [mockFile], value: "race.rcpack" },
+      } as any;
+
+      component.onPackageFileSelected(event);
+
+      expect(component.isImportingPackage).toBeFalse();
+      expect(component.showPackageModal).toBeFalse();
+    });
+
+    it("should close package modal and reload on onPackageCommitted", () => {
+      spyOn(component, "loadHistories");
+      component.showPackageModal = true;
+      component.packagePreview = { temp_package_token: "tok" } as any;
+
+      component.onPackageCommitted({
+        success: true,
+        race_name: "Sprint Cup",
+        race_config_name: "Sprint Cup",
+        race_config_action: "CREATED",
+        imported_race_id: "r1",
+        driver_count: 2,
+        drivers_created: 1,
+        drivers_linked: 1,
+      } as any);
+
+      expect(component.showPackageModal).toBeFalse();
+      expect(component.packagePreview).toBeNull();
+      expect(component.loadHistories).toHaveBeenCalled();
+      expect(component.showPackageAckModal).toBeTrue();
+      expect(component.packageAckTitle).toBe("RPM_IMPORT_SUCCESS_TITLE");
+
+      component.closePackageAckModal();
+      expect(component.showPackageAckModal).toBeFalse();
+    });
+
+    it("should show skipped message when onPackageCommitted has action SKIPPED", () => {
+      spyOn(component, "loadHistories");
+
+      component.onPackageCommitted({
+        success: true,
+        action: "SKIPPED",
+        race_name: "Sprint Cup",
+        imported_race_id: "r1",
+        driver_count: 2,
+        drivers_created: 1,
+        drivers_linked: 1,
+      } as any);
+
+      expect(component.showPackageAckModal).toBeTrue();
+      expect(component.packageAckTitle).toBe("RPM_IMPORT_SUCCESS_TITLE");
+      expect(component.packageAckMessage).toBe("RPM_IMPORT_SKIPPED_MSG");
+      expect(component.packageAckParams).toEqual({
+        raceName: "Sprint Cup",
+        driverCount: 2,
+        createdCount: 1,
+        linkedCount: 1,
+      });
+    });
+
+    it("should close package modal on closePackageModal", () => {
+      component.showPackageModal = true;
+      component.packagePreview = { temp_package_token: "tok" } as any;
+
+      component.closePackageModal();
+
+      expect(component.showPackageModal).toBeFalse();
+      expect(component.packagePreview).toBeNull();
     });
   });
 });

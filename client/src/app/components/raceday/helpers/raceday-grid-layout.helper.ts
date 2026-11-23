@@ -5,12 +5,12 @@ import {
   LaneGridReplicationHelper,
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
-import { AbsoluteWidgetNode } from "@app/models/settings";
 import {
   SnapRect,
-  SnapResult,
   snapRect,
+  SnapResult,
 } from "@app/components/raceday/utils/snap-guides.utils";
+import { AbsoluteWidgetNode } from "@app/models/settings";
 
 export class RacedayGridLayoutHelper {
   public static getGridDividers(host: any): number[] {
