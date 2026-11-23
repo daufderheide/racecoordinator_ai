@@ -53,6 +53,7 @@ import {
   RaceCatalogHost,
   RaceEditorCatalogHelper,
 } from "./race-editor-catalog.helper";
+import { RaceEditorExportHelper } from "./race-editor-export.helper";
 import {
   FuelGraphCacheEntry,
   FuelGraphHost,
@@ -729,6 +730,34 @@ export class RaceEditorComponent
 
   loadRaces() {
     RaceEditorPersistenceHelper.loadRaces(this);
+  }
+
+  // Export / Import Configuration
+  showConfigConflictModal = false;
+  configConflictExistingName = "";
+  configConflictSuggestedName = "";
+  pendingImportFile: File | null = null;
+  @ViewChild("configFileInput")
+  configFileInputRef!: ElementRef<HTMLInputElement>;
+
+  onExportRaceConfig(): void {
+    RaceEditorExportHelper.exportRaceConfig(this);
+  }
+
+  onImportRaceConfig(): void {
+    RaceEditorExportHelper.triggerImport(
+      this.configFileInputRef?.nativeElement,
+    );
+  }
+
+  onConfigFileSelected(event: Event): void {
+    RaceEditorExportHelper.handleFileSelected(this, event);
+  }
+
+  onResolveConfigConflict(
+    resolution: "OVERWRITE" | "AUTO_RENAME" | "CANCEL",
+  ): void {
+    RaceEditorExportHelper.resolveConflict(this, resolution);
   }
 
   isNameDuplicate(): boolean {

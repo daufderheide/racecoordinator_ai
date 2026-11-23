@@ -720,8 +720,11 @@ export class RacedaySubscriptionsHelper {
     host.subscriptions.push(
       host.raceConnectionService.carData$.subscribe((carData: any) => {
         if (!host.isDestroyed && carData && carData.lane != null) {
-          if (carData.location != null) {
+          if (carData.location != null && carData.location !== -1) {
             host.carLocations.set(carData.lane, carData.location);
+          }
+          if (carData.canRefuel != null) {
+            host.carCanRefuel?.set(carData.lane, carData.canRefuel);
           }
           host.handleCarFuelAudio(carData);
           host.cdr.markForCheck();

@@ -447,3 +447,12 @@ The **Crash and Learn (CNL)** expander configures rules and penalties governing 
 - **Heat Crash Lap Penalty**: The number of laps deducted from a driver's heat score for each detected crash.
 - **Heat Time Penalty (seconds)**: The amount of penalty time in seconds added to a driver's total heat time for each detected crash.
 - **Disqualification Heat Score Percentage**: Specifies the percentage of accumulated heat score credited to a disqualified driver (defaults to `100%`). A value of `100%` counts all laps completed prior to disqualification, while `0%` invalidates the driver's entire heat score. Disqualified drivers are ranked below all non-disqualified drivers in heat standings.
+
+---
+
+## Race Configuration Export & Import {: #race-config-export-import }
+
+The Race Editor toolbar provides export and import capabilities for sharing and backing up race configurations:
+
+- **Export Configuration**: Clicking **Export Configuration** exports the current race configuration template (scoring rules, rotation format, fuel simulations, start options, and season points schedules) to a `.rccfg.json` file. This file contains no run history or driver records, making it ideal for distributing race formats or transferring templates from a laptop to a track PC.
+- **Import Configuration**: Clicking **Import Configuration** prompts you to select a `.rccfg.json` file. If a race with the same name already exists, a conflict dialog lets you **Overwrite** the existing template or import it with an auto-renamed suffix (`<name>_1`). Note that completed race packages (`.rcpack`) imported from the Season Editor or Race History dialog also automatically import and reconcile their underlying race configuration with the same conflict resolution options (**Auto-Rename**, **Overwrite**, or **Use Existing**).

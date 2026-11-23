@@ -2,6 +2,7 @@ import { TestBed } from "@angular/core/testing";
 import { ActivatedRouteSnapshot } from "@angular/router";
 
 import { racedayTitleResolver, routes } from "./app.routes";
+import { CarEditorComponent } from "./components/car-editor/car-editor.component";
 import { ThemeService } from "./services/theme.service";
 import { TranslationService } from "./services/translation.service";
 
@@ -40,6 +41,16 @@ describe("app.routes and racedayTitleResolver", () => {
 
     expect(racedayRoute?.title).toBe(racedayTitleResolver);
     expect(defaultRacedayRoute?.title).toBe(racedayTitleResolver);
+  });
+
+  it("guards the Slotcar editor like the other editors", () => {
+    const carRoute = routes.find((r) => r.path === "car-editor");
+    const teamRoute = routes.find((r) => r.path === "team-editor");
+
+    expect(carRoute?.component).toBe(CarEditorComponent);
+    expect(carRoute?.canActivate).toEqual(teamRoute?.canActivate);
+    expect(carRoute?.canDeactivate).toEqual(teamRoute?.canDeactivate);
+    expect(carRoute?.runGuardsAndResolvers).toBe("always");
   });
 
   it("should return Raceday when themeId query param is absent", () => {

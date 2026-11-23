@@ -8,8 +8,13 @@ import {
 } from "@app/models/driver-import.model";
 import { DriverLabel } from "@app/models/driver-label";
 import { Event } from "@app/models/event";
+import {
+  RacePackageCommitRequest,
+  RacePackagePreview,
+  RacePackageResult,
+} from "@app/models/race-package.model";
 import { Season, SeasonStandingItem } from "@app/models/season";
-import { ITeamModel } from "@app/proto/antigravity";
+import { ICarModel, ITeamModel } from "@app/proto/antigravity";
 
 export class DataEntityCrudHelper {
   constructor(
@@ -161,6 +166,53 @@ export class DataEntityCrudHelper {
     return this.http.delete<any>(`${this.racesUrl}/${id}`);
   }
 
+  exportRaceConfigBlob(id: string): Observable<Blob> {
+    return this.http.get(
+      `${this.racesUrl}/${encodeURIComponent(id)}/export-config`,
+      { responseType: "blob" },
+    );
+  }
+
+  importRaceConfig(
+    file: File,
+    resolution?: string,
+    customName?: string,
+  ): Observable<any> {
+    const formData = new FormData();
+    formData.append("file", file);
+    let params: any = {};
+    if (resolution) params.resolution = resolution;
+    if (customName) params.custom_name = customName;
+    return this.http.post(`${this.racesUrl}/import-config`, formData, {
+      params,
+    });
+  }
+
+  exportRacePackageBlob(id: string): Observable<Blob> {
+    return this.http.get(
+      `${this.getBaseUrl()}/api/history/races/${encodeURIComponent(id)}/export-package`,
+      { responseType: "blob" },
+    );
+  }
+
+  previewRacePackage(file: File): Observable<RacePackagePreview> {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.http.post<RacePackagePreview>(
+      `${this.getBaseUrl()}/api/history/races/preview-package`,
+      formData,
+    );
+  }
+
+  commitRacePackage(
+    request: RacePackageCommitRequest,
+  ): Observable<RacePackageResult> {
+    return this.http.post<RacePackageResult>(
+      `${this.getBaseUrl()}/api/history/races/commit-package`,
+      request,
+    );
+  }
+
   getTracks(): Observable<any[]> {
     return this.http.get<any[]>(this.tracksUrl);
   }
@@ -272,6 +324,22 @@ export class DataEntityCrudHelper {
 
   deleteTeam(id: string): Observable<any> {
     return this.http.delete<any>(`${this.getBaseUrl()}/api/teams/${id}`);
+  }
+
+  getCars(): Observable<ICarModel[]> {
+    return this.http.get<ICarModel[]>(`${this.getBaseUrl()}/api/cars`);
+  }
+
+  createCar(car: any): Observable<any> {
+    return this.http.post<any>(`${this.getBaseUrl()}/api/cars`, car);
+  }
+
+  updateCar(id: string, car: any): Observable<any> {
+    return this.http.put<any>(`${this.getBaseUrl()}/api/cars/${id}`, car);
+  }
+
+  deleteCar(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.getBaseUrl()}/api/cars/${id}`);
   }
 
   getCustomUIs(): Observable<any[]> {

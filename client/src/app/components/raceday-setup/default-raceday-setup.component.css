@@ -132,6 +132,12 @@
   border-bottom: none;
 }
 
+.setup-menu-dropdown-item.has-preview-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .setup-menu-dropdown-item.has-shortcut {
   display: flex;
   justify-content: space-between;

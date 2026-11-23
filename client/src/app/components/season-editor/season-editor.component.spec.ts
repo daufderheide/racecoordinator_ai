@@ -10,7 +10,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { of } from "rxjs";
+import { of, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Season } from "@app/models/season";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
@@ -25,6 +25,10 @@ import {
 } from "@app/testing/unit-test-mocks";
 
 import { SeasonEditorComponent } from "./season-editor.component";
+import {
+  buildRaceRecordFromHistory,
+  calculateDriverHeatPointsMap,
+} from "./season-editor.utils";
 import { SeasonEditorHarness } from "./testing/season-editor.harness";
 
 @Component({
@@ -102,6 +106,23 @@ describe("SeasonEditorComponent", () => {
       createSeason: (s: any) => of({ ...s, entity_id: "s1" }),
       updateSeason: (id: string, s: any) => of({ ...s, entity_id: id }),
       deleteSeason: (_id: string) => of({}),
+      previewRacePackage: (_file: any) =>
+        of({
+          temp_package_token: "tok-season",
+          duplicate_race: false,
+          manifest: { race_name: "Imported Race" } as any,
+          driver_mappings: [],
+        }),
+      commitRacePackage: (_req: any) =>
+        of({
+          success: true,
+          imported_race_id: "imp-1",
+          race_name: "Imported Race",
+          driver_count: 2,
+          drivers_created: 1,
+          drivers_linked: 1,
+        }),
+      getDrivers: () => of([]),
     };
 
     const mockNavigationService = {
@@ -1004,7 +1025,7 @@ describe("SeasonEditorComponent", () => {
       id: { timestamp: 1710000120 }, // 2 minutes later
     };
 
-    const record = component["buildRaceRecordFromHistory"](historyItem);
+    const record = buildRaceRecordFromHistory(historyItem);
     expect(record.timestamp).toBe(1710000000000);
   });
 
@@ -1020,7 +1041,7 @@ describe("SeasonEditorComponent", () => {
       id: { timestamp: 1710000120 },
     };
 
-    const record = component["buildRaceRecordFromHistory"](historyItem);
+    const record = buildRaceRecordFromHistory(historyItem);
     expect(record.timestamp).toBe(expectedMillis);
   });
 
@@ -1040,7 +1061,7 @@ describe("SeasonEditorComponent", () => {
       ],
     };
 
-    const record = component["buildRaceRecordFromHistory"](historyItem);
+    const record = buildRaceRecordFromHistory(historyItem);
     expect(record.driver_results.length).toBe(2);
     expect(record.driver_results[0].overall_points).toBe(25);
     expect(record.driver_results[0].total_points).toBe(25);
@@ -1066,7 +1087,7 @@ describe("SeasonEditorComponent", () => {
       ],
     };
 
-    const record = component["buildRaceRecordFromHistory"](historyItem);
+    const record = buildRaceRecordFromHistory(historyItem);
     expect(record.driver_results.length).toBe(1);
     expect(record.driver_results[0].driver_id).toBe("d10");
     expect(record.driver_results[0].overall_points).toBe(30);
@@ -1094,10 +1115,7 @@ describe("SeasonEditorComponent", () => {
       },
     ];
 
-    const heatPointsMap = component["calculateDriverHeatPointsMap"](
-      heats,
-      heatPointsList,
-    );
+    const heatPointsMap = calculateDriverHeatPointsMap(heats, heatPointsList);
     // d1: 5 (heat 1) + 3 (heat 2) = 8
     expect(heatPointsMap.get("d1")).toBe(8);
     // d2: 3 (heat 1) + 5 (heat 2) = 8
@@ -1107,13 +1125,9 @@ describe("SeasonEditorComponent", () => {
   });
 
   it("should return empty map for invalid heats or empty heat points list in calculateDriverHeatPointsMap", () => {
-    expect(component["calculateDriverHeatPointsMap"]([], [5, 3]).size).toBe(0);
-    expect(
-      component["calculateDriverHeatPointsMap"](null as any, [5, 3]).size,
-    ).toBe(0);
-    expect(
-      component["calculateDriverHeatPointsMap"]([{ drivers: [] }], []).size,
-    ).toBe(0);
+    expect(calculateDriverHeatPointsMap([], [5, 3]).size).toBe(0);
+    expect(calculateDriverHeatPointsMap(null as any, [5, 3]).size).toBe(0);
+    expect(calculateDriverHeatPointsMap([{ drivers: [] }], []).size).toBe(0);
   });
 
   it("should handle race expansion, removal, and add race modal with history filtering", () => {
@@ -1757,6 +1771,175 @@ describe("SeasonEditorComponent", () => {
         replaceUrl: true,
       });
       expect(component.loadData).not.toHaveBeenCalled();
+    });
+
+    it("should handle onSeasonPackageFileSelected with valid file", () => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "previewRacePackage").and.callThrough();
+      const mockFile = new File(["dummy"], "race.rcpack", {
+        type: "application/zip",
+      });
+      const event = {
+        target: { files: [mockFile], value: "race.rcpack" },
+      } as any;
+
+      component.onSeasonPackageFileSelected(event);
+
+      expect(dataService.previewRacePackage).toHaveBeenCalledWith(mockFile);
+      expect(component.showSeasonPackageModal).toBeTrue();
+      expect(component.seasonPackagePreview).toBeDefined();
+      expect(component.isImportingSeasonPackage).toBeFalse();
+    });
+
+    it("should return early if no file in onSeasonPackageFileSelected", () => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "previewRacePackage").and.callThrough();
+      const event = { target: { files: [] } } as any;
+
+      component.onSeasonPackageFileSelected(event);
+
+      expect(dataService.previewRacePackage).not.toHaveBeenCalled();
+    });
+
+    it("should handle error in previewRacePackage gracefully", () => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "previewRacePackage").and.returnValue(
+        throwError(() => new Error("Invalid preview")),
+      );
+      const mockFile = new File(["dummy"], "race.rcpack");
+      const event = {
+        target: { files: [mockFile], value: "race.rcpack" },
+      } as any;
+
+      component.onSeasonPackageFileSelected(event);
+
+      expect(component.isImportingSeasonPackage).toBeFalse();
+      expect(component.showSeasonPackageModal).toBeFalse();
+    });
+
+    it("should close season package modal on closeSeasonPackageModal", () => {
+      component.showSeasonPackageModal = true;
+      component.seasonPackagePreview = { temp_package_token: "tok" } as any;
+
+      component.closeSeasonPackageModal();
+
+      expect(component.showSeasonPackageModal).toBeFalse();
+      expect(component.seasonPackagePreview).toBeNull();
+    });
+
+    it("should reload data and close modals on onSeasonPackageCommitted", () => {
+      spyOn(component, "loadData");
+      component.showAddRaceModal = true;
+      component.showSeasonPackageModal = true;
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Season 1",
+        drops: 0,
+        races: [],
+      };
+
+      component.onSeasonPackageCommitted({
+        success: true,
+        race_name: "Sprint Cup",
+        race_config_name: "Sprint Cup",
+        race_config_action: "AUTO_RENAME",
+        imported_race_id: "r1",
+        driver_count: 2,
+        drivers_created: 1,
+        drivers_linked: 1,
+      } as any);
+
+      expect(component.showSeasonPackageModal).toBeFalse();
+      expect(component.showAddRaceModal).toBeFalse();
+      expect(component.loadData).toHaveBeenCalledWith("s1");
+      expect(component.showPackageAckModal).toBeTrue();
+      expect(component.packageAckTitle).toBe("RPM_IMPORT_SUCCESS_TITLE");
+
+      component.closePackageAckModal();
+      expect(component.showPackageAckModal).toBeFalse();
+    });
+
+    it("should render preview badge on the import package button in add race modal", () => {
+      component.showAddRaceModal = true;
+      fixture.detectChanges();
+      const importBtn = fixture.nativeElement.querySelector(
+        ".btn-import-package",
+      );
+      expect(importBtn).toBeTruthy();
+      const badge = importBtn.querySelector("app-preview-badge");
+      expect(badge).toBeTruthy();
+    });
+
+    it("should show skipped message when onSeasonPackageCommitted has action SKIPPED", () => {
+      spyOn(component, "loadData");
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Season 1",
+        drops: 0,
+        races: [],
+      };
+
+      component.onSeasonPackageCommitted({
+        success: true,
+        action: "SKIPPED",
+        race_name: "Sprint Cup",
+        imported_race_id: "r1",
+        driver_count: 2,
+        drivers_created: 1,
+        drivers_linked: 1,
+      } as any);
+
+      expect(component.showPackageAckModal).toBeTrue();
+      expect(component.packageAckTitle).toBe("RPM_IMPORT_SUCCESS_TITLE");
+      expect(component.packageAckMessage).toBe("RPM_IMPORT_SKIPPED_MSG");
+      expect(component.packageAckParams).toEqual({
+        raceName: "Sprint Cup",
+        driverCount: 2,
+        createdCount: 1,
+        linkedCount: 1,
+      });
+    });
+
+    it("should preserve edit mode after season package import completes", () => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "getSeasons").and.returnValue(
+        of([
+          {
+            entity_id: "s1",
+            name: "Season 1",
+            drops: 0,
+            races: [
+              {
+                race_id: "r1",
+                race_name: "Sprint Cup",
+                timestamp: 1700000000,
+                driver_results: [],
+              },
+            ],
+          } as Season,
+        ]),
+      );
+
+      component.isEditMode = true;
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Season 1",
+        drops: 0,
+        races: [],
+      };
+
+      component.onSeasonPackageCommitted({
+        success: true,
+        race_name: "Sprint Cup",
+        race_config_name: "Sprint Cup",
+        race_config_action: "AUTO_RENAME",
+        imported_race_id: "r1",
+        driver_count: 2,
+        drivers_created: 1,
+        drivers_linked: 1,
+      } as any);
+
+      expect(component.isEditMode).toBeTrue();
     });
   });
 });

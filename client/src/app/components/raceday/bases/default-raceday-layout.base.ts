@@ -1,4 +1,5 @@
 import { CdkDragDrop } from "@angular/cdk/drag-drop";
+import { signal } from "@angular/core";
 import { SafeStyle } from "@angular/platform-browser";
 import {
   AnchorPoint,
@@ -26,6 +27,10 @@ import {
 } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
 import { RacedayLayoutUtils } from "@app/components/raceday/utils/raceday-layout.utils";
+import {
+  SnapRect,
+  SnapResult,
+} from "@app/components/raceday/utils/snap-guides.utils";
 import {
   AbsoluteWidgetNode,
   LayoutConfig,
@@ -419,6 +424,36 @@ export abstract class DefaultRacedayLayoutBase {
 
   hasWidgetId(id: string): boolean {
     return RacedayGridLayoutHelper.hasWidgetId(this, id);
+  }
+
+  /**
+   * Layout Editor overlay while a widget is dragged or resized (phase 4a):
+   * the guide lines it snapped to and its position / size, in layout px.
+   */
+  readonly snapGuides = signal<{ x: number[]; y: number[] } | null>(null);
+  readonly dragReadout = signal<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  } | null>(null);
+
+  /** Snapping to edges and centres, nearest first, with guide lines. */
+  snapWithGuides(
+    rect: SnapRect,
+    ignoreId: string,
+    handle: string,
+    layoutWidth: number = 1920,
+    layoutHeight: number = 1080,
+  ): SnapResult {
+    return RacedayGridLayoutHelper.snapWithGuides(
+      this,
+      rect,
+      ignoreId,
+      handle,
+      layoutWidth,
+      layoutHeight,
+    );
   }
 
   snapToEdges(

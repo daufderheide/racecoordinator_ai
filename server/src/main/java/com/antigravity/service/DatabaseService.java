@@ -367,7 +367,7 @@ public class DatabaseService {
           updatedRaces.add(
               new SeasonRaceRecord(
                   r.getRaceId(),
-                  r.getRaceName(),
+                  raceName != null ? raceName : r.getRaceName(),
                   r.getTimestamp(),
                   r.isDemo(),
                   updatedResults,
@@ -528,6 +528,37 @@ public class DatabaseService {
           runtimeRace.getRecordData().toByteArray().length);
     } catch (Exception e) {
       logger.error("Failed to save race records", e);
+    }
+  }
+
+  public void saveRaceRecords(
+      DatabaseContext context, String raceId, byte[] recordDataBytes, boolean isDemo) {
+    if (context == null
+        || raceId == null
+        || recordDataBytes == null
+        || recordDataBytes.length == 0) {
+      return;
+    }
+    String tableName = getCollectionName("race_records", isDemo);
+    try {
+      context.ensureRaceRecordsTable(tableName);
+      String sql =
+          "INSERT INTO "
+              + tableName
+              + " (race_id, records_blob) VALUES (?, ?) "
+              + "ON CONFLICT(race_id) DO UPDATE SET records_blob=excluded.records_blob";
+      try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, raceId);
+        pstmt.setBytes(2, recordDataBytes);
+        pstmt.executeUpdate();
+      }
+      logger.info(
+          "SAVED RAW RACE RECORDS: race_id={}, isDemo={}, records_size={}",
+          raceId,
+          isDemo,
+          recordDataBytes.length);
+    } catch (Exception e) {
+      logger.error("Failed to save raw race records blob for raceId={}", raceId, e);
     }
   }
 
