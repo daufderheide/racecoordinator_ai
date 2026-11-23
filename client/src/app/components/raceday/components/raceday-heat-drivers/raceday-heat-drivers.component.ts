@@ -69,11 +69,6 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     () => this.widget()?.customSettings?.["titleGlow"] !== false,
   );
 
-  /** The title is in capitals by default; it can be shown as typed (#1213). */
-  titleUppercase = computed(
-    () => this.widget()?.customSettings?.["titleUppercase"] !== false,
-  );
-
   rowBg = computed(() => {
     if (this.type() !== "next-heat") return null;
     if (!this.rowShading()) return "transparent";

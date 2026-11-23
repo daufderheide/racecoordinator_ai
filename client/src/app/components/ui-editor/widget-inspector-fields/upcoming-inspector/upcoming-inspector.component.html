@@ -93,18 +93,6 @@
     </div>
   </div>
 
-  <div class="inspector-section" style="margin-bottom: 8px">
-    <label class="form-check-label">
-      <input
-        type="checkbox"
-        class="form-checkbox"
-        id="upcoming-title-uppercase"
-        [ngModel]="settings().titleUppercase !== false"
-        (ngModelChange)="settings().titleUppercase = $event; onSettingsChange()"
-      />
-      <span>{{ "UE_INSPECTOR_UPCOMING_TITLE_UPPERCASE" | translate }}</span>
-    </label>
-  </div>
   <div class="inspector-section">
     <label class="form-check-label">
       <input

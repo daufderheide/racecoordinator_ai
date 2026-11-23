@@ -138,17 +138,14 @@ describe("UpcomingInspectorComponent", () => {
       await fixture.whenStable();
     }
 
-    it("shows the title options ticked by default", async () => {
+    it("shows the title glow ticked by default", async () => {
       await fixture.whenStable();
-      expect(box("upcoming-title-uppercase").checked).toBeTrue();
       expect(box("upcoming-title-glow").checked).toBeTrue();
     });
 
-    it("saves the title options when unticked", async () => {
+    it("saves the title glow when unticked", async () => {
       await fixture.whenStable();
-      await toggle("upcoming-title-uppercase");
       await toggle("upcoming-title-glow");
-      expect(component.settings().titleUppercase).toBeFalse();
       expect(component.settings().titleGlow).toBeFalse();
       expect(changeSpy).toHaveBeenCalled();
     });

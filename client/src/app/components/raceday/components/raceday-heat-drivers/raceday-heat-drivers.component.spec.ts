@@ -801,25 +801,23 @@ describe("RacedayHeatDriversComponent", () => {
     it("keeps the title glow and capitals by default", () => {
       const title = render({}).querySelector(".next-heat-title")!;
       expect(title.classList).not.toContain("no-title-glow");
-      expect(title.classList).not.toContain("title-as-typed");
       expect(getComputedStyle(title).textTransform).toBe("uppercase");
       expect(getComputedStyle(title).textShadow).not.toBe("none");
     });
 
-    it("can switch off the title glow and capitals", () => {
-      const title = render({
-        titleGlow: false,
-        titleUppercase: false,
-      }).querySelector(".next-heat-title")!;
-      expect(getComputedStyle(title).textTransform).toBe("none");
+    it("can switch off the title glow, keeping the capitals", () => {
+      const title = render({ titleGlow: false }).querySelector(
+        ".next-heat-title",
+      )!;
+      expect(getComputedStyle(title).textTransform).toBe("uppercase");
       expect(getComputedStyle(title).textShadow).toBe("none");
     });
 
-    it("applies the title options to On Deck too", () => {
-      const title = render({ titleUppercase: false }, "on-deck").querySelector(
+    it("applies the title glow option to On Deck too", () => {
+      const title = render({ titleGlow: false }, "on-deck").querySelector(
         ".on-deck-title",
       )!;
-      expect(getComputedStyle(title).textTransform).toBe("none");
+      expect(getComputedStyle(title).textShadow).toBe("none");
     });
 
     it("keeps the row shading by default on a light background", () => {

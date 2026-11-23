@@ -32,11 +32,6 @@ app-raceday-heat-drivers {
   text-shadow: none;
 }
 
-/* "Uppercase" switched off in the widget settings: show the title as typed. */
-.next-heat-title.title-as-typed, .on-deck-title.title-as-typed {
-  text-transform: none;
-}
-
 .next-heat-list, .on-deck-list {
   display: flex;
   flex-direction: column;
