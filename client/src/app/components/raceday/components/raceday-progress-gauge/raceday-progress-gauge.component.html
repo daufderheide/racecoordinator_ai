@@ -1,5 +1,6 @@
 <div
   class="progress-gauge-container"
+  [style.background-color]="laneBackground"
   [class.gauge-thermometer]="effectiveGaugeStyle === 'thermometer'"
   [class.gauge-bar]="effectiveGaugeStyle === 'bar'"
   [class.orientation-vertical]="effectiveOrientation === 'vertical'"

@@ -577,4 +577,34 @@ describe("RacedayProgressGaugeComponent", () => {
       expect(component.isLightBackground).toBeFalse();
     });
   });
+
+  it("uses the lane's colour as background when asked and bound to a lane (phase 3c)", () => {
+    const driver: any = { laneIndex: 1, objectId: "d2" };
+    const parent: any = {
+      heatDrivers: [{ laneIndex: 0, objectId: "d1" }, driver],
+      getLaneColor: (d: any, p: string) =>
+        p === "background_color" && d.laneIndex === 1 ? "#00ff00" : "",
+    };
+    fixture.componentRef.setInput("parent", parent);
+    fixture.componentRef.setInput("widget", {
+      id: "w",
+      widgetType: "progress-gauge",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      customSettings: { targetIndex: 1, laneColorBackground: true },
+    } as any);
+    expect(component.laneBackground).toBe("#00ff00");
+    fixture.componentRef.setInput("widget", {
+      id: "w",
+      widgetType: "progress-gauge",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 100,
+      customSettings: { targetIndex: 1 },
+    } as any);
+    expect(component.laneBackground).not.toBe("#00ff00");
+  });
 });

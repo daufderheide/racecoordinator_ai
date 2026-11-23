@@ -1,6 +1,19 @@
 @if (heat()) {
   <div
     class="info-section"
+    [style.padding-inline]="
+      widget()?.customSettings?.['lineAlignment'] === 'left' ||
+      widget()?.customSettings?.['lineAlignment'] === 'right'
+        ? '0.6em'
+        : null
+    "
+    [style.justify-content]="
+      widget()?.customSettings?.['lineAlignment'] === 'left'
+        ? 'flex-start'
+        : widget()?.customSettings?.['lineAlignment'] === 'right'
+          ? 'flex-end'
+          : null
+    "
     #infoPanel
     [style.background-color]="effectiveBackgroundColor()"
     [style.--header-label-font-size]="

@@ -440,4 +440,45 @@ describe("InspectorFormComponent", () => {
     expect(runs).toEqual(["back w1"]);
     expect(changes).toBe(0);
   });
+
+  it("offers Auto next to left / centre / right for an aligned part (phase 3c)", () => {
+    fixture.componentRef.setInput("schema", {
+      widgetType: "records",
+      folders: [
+        {
+          id: "text",
+          groups: [
+            {
+              fields: [
+                {
+                  id: "header",
+                  type: "textPart",
+                  labelKey: "HEADER",
+                  keys: { size: "headerFontSize", align: "headerAlignment" },
+                  keyDefaults: { align: "" },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    render();
+    q("#kit-folder-text")?.click();
+    render();
+    q('[data-field="header"] .kit-part-head')?.click();
+    render();
+    const row = Array.from(
+      el().querySelectorAll('[data-field="header"] .kit-seg'),
+    ).find((x) => x.querySelector("[data-align]")) as HTMLElement;
+    const buttons = Array.from(row.querySelectorAll("button"));
+    expect(buttons.length).toBe(4);
+    expect(buttons[0].getAttribute("aria-pressed")).toBe("true");
+    (row.querySelector('[data-align="right"]') as HTMLButtonElement).click();
+    render();
+    expect(settings["headerAlignment"]).toBe("right");
+    buttons[0].click();
+    render();
+    expect(settings["headerAlignment"]).toBe("");
+  });
 });

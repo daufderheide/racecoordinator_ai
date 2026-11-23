@@ -2,7 +2,13 @@ import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspect
 
 import { BATCH2_SCHEMAS } from "./batch2-schemas";
 import { BATCH3_SCHEMAS } from "./batch3-schemas";
-import { frameFolder, layoutFolder, textPart } from "./common";
+import {
+  emptyStateFolder,
+  frameFolder,
+  laneColourField,
+  layoutFolder,
+  textPart,
+} from "./common";
 import { LANE_COLUMN_SCHEMAS } from "./lane-column-schema";
 import { laneViewSchema } from "./lane-view-schema";
 
@@ -51,6 +57,35 @@ const recordsSchema: InspectorSchema = {
             },
           ],
         },
+        {
+          titleKey: "UE_KIT_NUMBERS",
+          fields: [
+            {
+              id: "lapDecimalPlaces",
+              type: "segment",
+              key: "lapDecimalPlaces",
+              labelKey: "UE_KIT_LAP_DECIMALS",
+              default: 3,
+              options: [0, 1, 2, 3].map((v) => ({
+                value: v,
+                label: String(v),
+              })),
+              searchTerms: "lap time decimals precision number format",
+            },
+            {
+              id: "scoreDecimalPlaces",
+              type: "segment",
+              key: "scoreDecimalPlaces",
+              labelKey: "UE_KIT_SCORE_DECIMALS",
+              default: 3,
+              options: [0, 1, 2, 3].map((v) => ({
+                value: v,
+                label: String(v),
+              })),
+              searchTerms: "score points decimals precision number format",
+            },
+          ],
+        },
       ],
     },
     {
@@ -59,6 +94,7 @@ const recordsSchema: InspectorSchema = {
         {
           fields: [
             textPart("header", "UE_KIT_PART_HEADER", "header", {
+              aligned: true,
               styled: true,
               sampleKey: "RD_RECORD_RACE_LAP",
             }),
@@ -72,6 +108,7 @@ const recordsSchema: InspectorSchema = {
     },
     frameFolder(),
     layoutFolder(),
+    emptyStateFolder(),
   ],
 };
 
@@ -161,24 +198,6 @@ const timerSchema: InspectorSchema = {
                 { value: 3, label: "3" },
               ],
             },
-            // digit glow and inner shadow (#1212)
-            {
-              id: "timerGlow",
-              type: "switch",
-              key: "timerGlow",
-              labelKey: "UE_INSPECTOR_TIMER_GLOW",
-              default: true,
-              searchTerms: "glow digits shine neon",
-            },
-            {
-              id: "timerInnerShadow",
-              type: "switch",
-              key: "timerInnerShadow",
-              labelKey: "UE_INSPECTOR_TIMER_INNER_SHADOW",
-              helpKey: "UE_INSPECTOR_TIMER_INNER_SHADOW_HINT",
-              default: true,
-              searchTerms: "inner shadow edge flat",
-            },
           ],
         },
         {
@@ -236,12 +255,14 @@ const timerSchema: InspectorSchema = {
         {
           fields: [
             textPart("time", "UE_KIT_PART_TIME", "time", {
+              aligned: true,
               styled: true,
               sample: "2:03",
               defaultColor: "#32cd32",
               sizeMax: 200,
             }),
             textPart("status", "UE_KIT_PART_STATUS", "status", {
+              aligned: true,
               styled: true,
               sampleKey: "RD_AUTO_ADVANCING",
               defaultColor: "#ffaa00",
@@ -278,6 +299,21 @@ function textInfoSchema(widgetType: string, icon: string): InspectorSchema {
                 styled: true,
                 sample: "Test Track",
               }),
+              // label and value are one line: it aligns as a whole (phase 3c)
+              {
+                id: "lineAlignment",
+                type: "segment",
+                key: "lineAlignment",
+                labelKey: "UE_KIT_ALIGN",
+                default: "",
+                searchTerms: "align alignment left centre center right",
+                options: [
+                  { value: "", labelKey: "UE_KIT_AUTO" },
+                  { value: "left", labelKey: "UE_KIT_ALIGN_LEFT" },
+                  { value: "center", labelKey: "UE_KIT_ALIGN_CENTRE" },
+                  { value: "right", labelKey: "UE_KIT_ALIGN_RIGHT" },
+                ],
+              },
             ],
           },
         ],
@@ -285,6 +321,18 @@ function textInfoSchema(widgetType: string, icon: string): InspectorSchema {
       frameFolder(),
       layoutFolder(),
     ],
+  };
+}
+
+/** Adds the lane-colour background switch to the Colours & frame folder. */
+function withLaneColour(schema: InspectorSchema): InspectorSchema {
+  return {
+    ...schema,
+    folders: schema.folders.map((f) =>
+      f.id === "frame"
+        ? { ...f, groups: [...f.groups, { fields: [laneColourField()] }] }
+        : f,
+    ),
   };
 }
 
@@ -472,7 +520,7 @@ export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
   "track-name": textInfoSchema("track-name", "route"),
   branding: frameOnlySchema("branding", "branding_watermark"),
   qr: frameOnlySchema("qr", "qr_code_2"),
-  flag: frameOnlySchema("flag", "flag"),
+  flag: withLaneColour(frameOnlySchema("flag", "flag")),
   image: imageSchema,
   label: labelSchema,
   ...Object.fromEntries(

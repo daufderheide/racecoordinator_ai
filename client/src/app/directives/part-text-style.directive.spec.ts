@@ -66,4 +66,21 @@ describe("PartTextStyleDirective", () => {
     expect(span().style.textTransform).toBe("none");
     expect(span().style.fontWeight).toBe("normal");
   });
+
+  it("aligns a part: text-align, and justify-content for a flex row (phase 3c)", () => {
+    for (const [v, justify] of [
+      ["left", "flex-start"],
+      ["center", "center"],
+      ["right", "flex-end"],
+    ]) {
+      fixture.componentInstance.settings = { headerAlignment: v };
+      fixture.detectChanges();
+      expect(span().style.textAlign).toBe(v);
+      expect(span().style.justifyContent).toBe(justify);
+    }
+    fixture.componentInstance.settings = { headerAlignment: "middle" };
+    fixture.detectChanges();
+    expect(span().style.textAlign).toBe("");
+    expect(span().style.justifyContent).toBe("");
+  });
 });

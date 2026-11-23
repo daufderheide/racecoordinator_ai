@@ -45,7 +45,12 @@ async function setupRecordsTest(
     headerFontWeight?: string;
     headerLetterSpacing?: number;
     headerTextTransform?: string;
+    lapDecimalPlaces?: number;
+    scoreDecimalPlaces?: number;
+    emptyValueMode?: string;
+    emptyValueText?: string;
   },
+  raceData: any = MOCK_RACE_DATA,
 ) {
   if (customSettings) {
     await TestSetupHelper.setupSettings(page, {
@@ -73,7 +78,7 @@ async function setupRecordsTest(
   );
 
   await page.locator(".dashboard-wrapper").waitFor();
-  await TestSetupHelper.mockRaceData(page, MOCK_RACE_DATA);
+  await TestSetupHelper.mockRaceData(page, raceData);
 
   const records = page.locator("app-raceday-records");
   await records.waitFor({ state: "visible" });
@@ -157,5 +162,28 @@ test.describe("Raceday Records Visuals", () => {
         height: box.height + 48,
       },
     });
+  });
+
+  test("should show lap times and the score with the chosen decimals", async ({
+    page,
+  }) => {
+    const records = await setupRecordsTest(page, {
+      lapDecimalPlaces: 1,
+      scoreDecimalPlaces: 0,
+    });
+    await expect(records).toHaveScreenshot("raceday-records-decimals.png");
+  });
+
+  test("should show own text where a record is missing", async ({ page }) => {
+    // no score record and no heat best yet
+    const data = JSON.parse(JSON.stringify(MOCK_RACE_DATA));
+    delete data.race.recordData.overall.highestScore;
+    delete data.race.recordData.current.heatFastestLap;
+    const records = await setupRecordsTest(
+      page,
+      { emptyValueMode: "text", emptyValueText: "n/a" },
+      data,
+    );
+    await expect(records).toHaveScreenshot("raceday-records-empty-text.png");
   });
 });

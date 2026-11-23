@@ -5,6 +5,7 @@ import { FinishMethod } from "@app/models/heat_scoring";
 import { AbsoluteWidgetNode, HighlightLapStyle } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { isColorLight } from "@app/utils/color.utils";
+import { emptyValue } from "@app/utils/empty-value.utils";
 import {
   formatTimerDisplay,
   TimerFormatOptions,
@@ -58,6 +59,19 @@ export class RacedayProgressGaugeComponent {
 
   get effectiveTargetIndex(): number {
     return this.targetIndex() ?? this.effectiveSettings["targetIndex"] ?? 0;
+  }
+
+  /**
+   * Lane-colour background (phase 3c): the colour of the lane the gauge
+   * follows, or nothing (the frame's own background shows).
+   */
+  get laneBackground(): string | null {
+    if (this.effectiveSettings["laneColorBackground"] !== true) return null;
+    const driver = this.targetDriver;
+    const parent: any = this.parent();
+    return driver && parent?.getLaneColor
+      ? parent.getLaneColor(driver, "background_color") || null
+      : null;
   }
 
   get targetDriver(): DriverHeatData | undefined {
@@ -158,10 +172,13 @@ export class RacedayProgressGaugeComponent {
 
   get labelText(): string {
     if (this.effectiveGaugeType === "fuel") {
-      return this.isEmptyDriver ? "--%" : `${Math.round(this.percentage)}%`;
+      return this.isEmptyDriver
+        ? emptyValue(this.widget()?.customSettings, "--%")
+        : `${Math.round(this.percentage)}%`;
     }
 
-    if (this.isEmptyDriver) return "--";
+    if (this.isEmptyDriver)
+      return emptyValue(this.widget()?.customSettings, "--");
 
     const parent = this.parent();
     const finishValue =

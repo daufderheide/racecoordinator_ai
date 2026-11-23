@@ -4,7 +4,13 @@ import {
   InspectorSchema,
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
-import { frameFolder, layoutFolder, textPart } from "./common";
+import {
+  emptyStateFolder,
+  frameFolder,
+  laneColourField,
+  layoutFolder,
+  textPart,
+} from "./common";
 
 /**
  * Phase 2, batch 2: Next Heat / On Deck, the leaderboards, Heat List and
@@ -43,6 +49,7 @@ function upcomingSchema(widgetType: "next-heat" | "on-deck"): InspectorSchema {
           {
             fields: [
               textPart("title", "UE_KIT_PART_TITLE", "title", {
+                aligned: true,
                 styled: true,
                 sizeMin: 10,
                 sizeMax: 120,
@@ -82,6 +89,7 @@ function leaderboardSchema(
 ): InspectorSchema {
   const parts = [
     textPart("title", "UE_KIT_PART_TITLE", "title", {
+      aligned: true,
       styled: true,
       sizeMin: 10,
       sizeMax: 120,
@@ -90,6 +98,7 @@ function leaderboardSchema(
     ...(withSubtitle
       ? [
           textPart("subtitle", "UE_KIT_PART_SUBTITLE", "subtitle", {
+            aligned: true,
             styled: true,
             sizeMin: 10,
             sizeMax: 120,
@@ -118,12 +127,13 @@ function leaderboardSchema(
         id: "content",
         groups: [
           {
+            titleKey: "UE_KIT_NUMBERS",
             fields: [
               {
                 id: "decimalPlaces",
                 type: "segment",
                 key: "decimalPlaces",
-                labelKey: "UE_INSPECTOR_DECIMAL_PLACES",
+                labelKey: "UE_KIT_DECIMALS",
                 options: n([0, 1, 2, 3]),
                 searchTerms: "decimals precision number format",
               },
@@ -369,27 +379,32 @@ const heatListSchema: InspectorSchema = {
               "summaryShowMedianLap",
               "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_MEDIAN_LAP",
             ),
+          ],
+        },
+        {
+          titleKey: "UE_KIT_NUMBERS",
+          fields: [
             {
               id: "summaryLapDecimalPlaces",
               type: "segment",
               key: "summaryLapDecimalPlaces",
-              labelKey: "UE_INSPECTOR_HEAT_LIST_SUMMARY_LAP_DECIMALS",
+              labelKey: "UE_KIT_LAP_DECIMALS",
               options: [
                 { value: "auto", labelKey: "UE_KIT_AUTO" },
                 ...n(["0", "1", "2", "3"]),
               ],
               helpKey: "UE_INSPECTOR_HEAT_LIST_SUMMARY_LAP_DECIMALS_AUTO",
               visibleWhen: anySummary,
-              searchTerms: "decimals laps",
+              searchTerms: "laps decimals precision number format",
             },
             {
               id: "summaryTimeDecimalPlaces",
               type: "segment",
               key: "summaryTimeDecimalPlaces",
-              labelKey: "UE_INSPECTOR_HEAT_LIST_SUMMARY_TIME_DECIMALS",
+              labelKey: "UE_KIT_TIME_DECIMALS",
               options: n([1, 2, 3, 4]),
               visibleWhen: anySummary,
-              searchTerms: "decimals time",
+              searchTerms: "time decimals precision number format",
             },
           ],
         },
@@ -401,6 +416,7 @@ const heatListSchema: InspectorSchema = {
         {
           fields: [
             textPart("title", "UE_KIT_PART_TITLE", "title", {
+              aligned: true,
               styled: true,
               sizeMin: 10,
               sizeMax: 120,
@@ -472,6 +488,7 @@ const heatListSchema: InspectorSchema = {
       ],
     },
     layoutFolder(),
+    emptyStateFolder({ lane: true }),
   ],
 };
 
@@ -668,10 +685,10 @@ const progressGaugeSchema: InspectorSchema = {
               id: "lapDecimalPlaces",
               type: "segment",
               key: "lapDecimalPlaces",
-              labelKey: "UE_INSPECTOR_GAUGE_LAP_DECIMALS",
+              labelKey: "UE_KIT_LAP_DECIMALS",
               options: n([0, 1, 2, 3]),
               visibleWhen: isHeatProgress,
-              searchTerms: "laps decimals",
+              searchTerms: "laps decimals precision number format",
             },
           ],
         },
@@ -716,12 +733,14 @@ const progressGaugeSchema: InspectorSchema = {
               labelKey: "UE_INSPECTOR_GAUGE_FILL_COLOR",
               searchTerms: "fill gauge level colour color",
             },
+            laneColourField(),
           ],
         },
         ...frameFolder().groups.slice(1),
       ],
     },
     layoutFolder(),
+    emptyStateFolder(),
   ],
 };
 

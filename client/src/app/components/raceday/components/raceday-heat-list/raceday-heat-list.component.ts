@@ -24,6 +24,7 @@ import { RaceState } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
+import { emptyLaneLabel, emptyValue } from "@app/utils/empty-value.utils";
 
 import {
   calculateCardDimensions,
@@ -402,17 +403,17 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     const lapDecSetting = this.summaryLapDecimalPlaces();
 
     let rank = 99;
-    let formattedRank = "--";
+    let formattedRank = this.empty("--");
     let lapCount = 0;
-    let formattedLaps = "--";
+    let formattedLaps = this.empty("--");
     let bestLapTime = 0;
-    let formattedBestLap = "--";
+    let formattedBestLap = this.empty("--");
     let gapLeader = 0;
-    let formattedGap = "--";
+    let formattedGap = this.empty("--");
     let averageLapTime = 0;
-    let formattedAvgLap = "--";
+    let formattedAvgLap = this.empty("--");
     let medianLapTime = 0;
-    let formattedMedianLap = "--";
+    let formattedMedianLap = this.empty("--");
 
     if (isOccupied && hd) {
       if (isCompleted || isActive) {
@@ -489,6 +490,16 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     };
   }
 
+  /** Placeholder where a value is missing: own, blank or own text (phase 3c). */
+  empty(fallback: string): string {
+    return emptyValue(this.widget()?.customSettings, fallback);
+  }
+
+  /** The "Empty Lane" label: own, blank or own text (phase 3c). */
+  emptyLane(fallback: string): string {
+    return emptyLaneLabel(this.widget()?.customSettings, fallback);
+  }
+
   private formatLaneGap(
     hd: any,
     rank: number,
@@ -497,19 +508,19 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     timeDec: number,
   ): string {
     if (typeof hd.gapLeader !== "number") {
-      return "--";
+      return this.empty("--");
     }
     const fixed = Math.abs(hd.gapLeader).toFixed(timeDec);
     const isZero = Number(fixed) === 0;
     if (rank === 1) {
-      return "--";
+      return this.empty("--");
     }
     if (isZero) {
       return lapCount > 0 ||
         bestLapTime > 0 ||
         RacedayFormatUtils.hasHeatData(hd)
         ? "+" + fixed
-        : "--";
+        : this.empty("--");
     }
     return (hd.gapLeader > 0 ? "+" : "-") + fixed;
   }
@@ -555,17 +566,17 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       const isOccupied = !!(driverNickname || teamName);
 
       let rank = 99;
-      let formattedRank = "--";
+      let formattedRank = this.empty("--");
       let laps = 0;
-      let formattedLaps = "--";
+      let formattedLaps = this.empty("--");
       let bestTime = 0;
-      let formattedBestLap = "--";
+      let formattedBestLap = this.empty("--");
       let gapLeader = 0;
-      let formattedGap = "--";
+      let formattedGap = this.empty("--");
       let averageLapTime = 0;
-      let formattedAvgLap = "--";
+      let formattedAvgLap = this.empty("--");
       let medianLapTime = 0;
-      let formattedMedianLap = "--";
+      let formattedMedianLap = this.empty("--");
 
       if (isOccupied && (isCompleted || isActive)) {
         if (typeof lane.rank === "number" && lane.rank > 0 && lane.rank < 90) {
@@ -593,12 +604,12 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
         const fixed = Math.abs(gapLeader).toFixed(timeDec);
         const isZero = Number(fixed) === 0;
         if (rank === 1) {
-          formattedGap = "--";
+          formattedGap = this.empty("--");
         } else if (isZero) {
           formattedGap =
             laps > 0 || bestTime > 0 || RacedayFormatUtils.hasHeatData(lane)
               ? "+" + fixed
-              : "--";
+              : this.empty("--");
         } else if (gapLeader > 0) {
           formattedGap = "+" + fixed;
         } else {

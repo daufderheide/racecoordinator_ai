@@ -1,5 +1,6 @@
 import { hasFixedLayer } from "@app/components/raceday/utils/layer-order.utils";
 import {
+  InspectorField,
   InspectorFolder,
   InspectorGroup,
   TextPartField,
@@ -148,6 +149,86 @@ function borderGroup(): InspectorGroup {
   };
 }
 
+/**
+ * What the widget shows where it has no value (phase 3c): its own
+ * placeholder, nothing, or your own text; optionally the same for the
+ * "Empty Lane" label. See utils/empty-value.utils.ts.
+ */
+export function emptyStateFolder(
+  options: { lane?: boolean } = {},
+): InspectorFolder {
+  const pair = (
+    modeKey: string,
+    textKey: string,
+    labelKey: string,
+    ownLabelKey: string,
+  ): InspectorField[] => [
+    {
+      id: modeKey,
+      type: "segment",
+      key: modeKey,
+      labelKey,
+      default: "",
+      searchTerms: "empty no data dashes placeholder blank missing",
+      options: [
+        { value: "", labelKey: ownLabelKey },
+        { value: "blank", labelKey: "UE_KIT_EMPTY_BLANK" },
+        { value: "text", labelKey: "UE_KIT_EMPTY_OWN_TEXT" },
+      ],
+    },
+    {
+      id: textKey,
+      type: "text",
+      key: textKey,
+      labelKey: "UE_KIT_EMPTY_TEXT",
+      maxLength: 40,
+      default: "",
+      searchTerms: "empty text placeholder",
+      visibleWhen: (s) => s[modeKey] === "text",
+    },
+  ];
+  return {
+    id: "behaviour",
+    groups: [
+      {
+        titleKey: "UE_KIT_EMPTY_STATES",
+        fields: [
+          ...pair(
+            "emptyValueMode",
+            "emptyValueText",
+            "UE_KIT_EMPTY_VALUE",
+            "UE_KIT_EMPTY_DASHES",
+          ),
+          ...(options.lane
+            ? pair(
+                "emptyLaneMode",
+                "emptyLaneText",
+                "UE_KIT_EMPTY_LANE",
+                "UE_KIT_EMPTY_LANE_OWN",
+              )
+            : []),
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Lane-colour background (phase 3c): for widgets that follow one lane (Flag,
+ * Progress Gauge), the lane's colour instead of the widget's own background.
+ */
+export function laneColourField(): InspectorField {
+  return {
+    id: "laneColorBackground",
+    type: "switch",
+    key: "laneColorBackground",
+    labelKey: "UE_KIT_LANE_COLOUR_BG",
+    helpKey: "UE_KIT_LANE_COLOUR_BG_HELP",
+    default: false,
+    searchTerms: "lane colour color background",
+  };
+}
+
 export function layoutFolder(): InspectorFolder {
   return {
     id: "layout",
@@ -240,9 +321,14 @@ export function textPart(
   id: string,
   labelKey: string,
   prefix: string,
-  options: Partial<TextPartField> & { styled?: boolean } = {},
+  options: Partial<TextPartField> & {
+    styled?: boolean;
+    aligned?: boolean;
+  } = {},
 ): TextPartField {
-  const { styled, ...rest } = options;
+  const { styled, aligned, ...rest } = options;
+  // alignment per part (phase 3c): <prefix>Alignment, "Auto" = the widget's own
+  const alignKeys = aligned ? { align: `${prefix}Alignment` } : {};
   const styleKeys = styled
     ? {
         weight: `${prefix}FontWeight`,
@@ -259,18 +345,18 @@ export function textPart(
       size: `${prefix}FontSize`,
       color: `${prefix}TextColor`,
       ...styleKeys,
+      ...alignKeys,
     },
     searchTerms: styled
       ? "font size colour color text typography weight bold spacing uppercase case"
       : "font size colour color text typography",
     ...rest,
     // nothing stored = the part's own look (see PartTextStyleDirective)
-    ...(styled
+    ...(styled || aligned
       ? {
           keyDefaults: {
-            weight: "",
-            spacing: 0,
-            case: "",
+            ...(styled ? { weight: "", spacing: 0, case: "" } : {}),
+            ...(aligned ? { align: "" } : {}),
             ...(rest.keyDefaults || {}),
           },
         }

@@ -91,6 +91,15 @@ export class RacedayFlagComponent {
     return "red";
   }
 
+  /** The background colour of the lane this flag follows, or "". */
+  laneBackgroundColor(): string {
+    const driver = this.targetDriver;
+    const parent: any = this.parent();
+    return driver && parent?.getLaneColor
+      ? parent.getLaneColor(driver, "background_color") || ""
+      : "";
+  }
+
   get targetDriver(): DriverHeatData | undefined {
     const parent = this.parent();
     const bindingMode =
@@ -206,6 +215,11 @@ export class RacedayFlagComponent {
   get effectiveBackgroundColor(): string | null {
     if (this.isColorBarMode && !this.isImageMode) {
       return null;
+    }
+    // lane-colour background (phase 3c): the colour of the lane it follows
+    if (this.effectiveSettings["laneColorBackground"] === true) {
+      const lane = this.laneBackgroundColor();
+      if (lane) return lane;
     }
     return (
       this.effectiveSettings["backgroundColor"] ||
