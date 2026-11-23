@@ -636,7 +636,7 @@ public class PhidgetProtocolTest {
         .setOutputChannelPhysicalState(eq(0), org.mockito.ArgumentMatchers.anyBoolean());
     boolean resultAttached = spyProtocol.setPinState(true, 0, true);
     assertTrue(resultAttached);
-    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
+    verify(spyProtocol).setOutputChannelPhysicalState(0, false);
   }
 
   @Test
@@ -650,38 +650,38 @@ public class PhidgetProtocolTest {
             org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
 
     // Pin 0 is BEHAVIOR_RELAY_VALUE (main relay)
-    // 1. Normally Closed (normallyClosedRelays = true): Power ON (true) -> coil TRUE, OFF (false)
-    // -> coil FALSE
+    // 1. Normally Closed (normallyClosedRelays = true): Power ON (true) -> coil FALSE, OFF (false)
+    // -> coil TRUE
     config.normallyClosedRelays = true;
     assertTrue(spyProtocol.setPinState(true, 0, true));
-    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
-
-    assertTrue(spyProtocol.setPinState(true, 0, false));
     verify(spyProtocol).setOutputChannelPhysicalState(0, false);
 
-    // 2. Normally Open (normallyClosedRelays = false): Power ON (true) -> coil FALSE, OFF (false)
-    // -> coil TRUE
+    assertTrue(spyProtocol.setPinState(true, 0, false));
+    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
+
+    // 2. Normally Open (normallyClosedRelays = false): Power ON (true) -> coil TRUE, OFF (false)
+    // -> coil FALSE
     config.normallyClosedRelays = false;
     assertTrue(spyProtocol.setPinState(true, 0, true));
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(0, false);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(0, true);
 
     assertTrue(spyProtocol.setPinState(true, 0, false));
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(0, true);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(0, false);
 
     // Pin 1 is BEHAVIOR_RELAY_BASE_VALUE (lane 0 relay)
     config.normallyClosedRelays = true;
     assertTrue(spyProtocol.setPinState(true, 1, true));
-    verify(spyProtocol).setOutputChannelPhysicalState(1, true);
+    verify(spyProtocol).setOutputChannelPhysicalState(1, false);
 
     assertTrue(spyProtocol.setPinState(true, 1, false));
-    verify(spyProtocol).setOutputChannelPhysicalState(1, false);
+    verify(spyProtocol).setOutputChannelPhysicalState(1, true);
 
     config.normallyClosedRelays = false;
     assertTrue(spyProtocol.setPinState(true, 1, true));
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(1, false);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(1, true);
 
     assertTrue(spyProtocol.setPinState(true, 1, false));
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(1, true);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(1, false);
   }
 
   @Test
@@ -696,33 +696,33 @@ public class PhidgetProtocolTest {
         .when(spyProtocol)
         .setLaneRelayPhysicalState(eq(0), org.mockito.ArgumentMatchers.anyBoolean());
 
-    // 1. Normally Closed: on -> true, off -> false
+    // 1. Normally Closed: on -> false, off -> true
     config.normallyClosedRelays = true;
     spyProtocol.setMainPower(true);
-    verify(spyProtocol).setMainRelayPhysicalState(true);
-
-    spyProtocol.setMainPower(false);
     verify(spyProtocol).setMainRelayPhysicalState(false);
 
-    spyProtocol.setLanePower(true, 0);
-    verify(spyProtocol).setLaneRelayPhysicalState(0, true);
+    spyProtocol.setMainPower(false);
+    verify(spyProtocol).setMainRelayPhysicalState(true);
 
-    spyProtocol.setLanePower(false, 0);
+    spyProtocol.setLanePower(true, 0);
     verify(spyProtocol).setLaneRelayPhysicalState(0, false);
 
-    // 2. Normally Open: on -> false, off -> true
+    spyProtocol.setLanePower(false, 0);
+    verify(spyProtocol).setLaneRelayPhysicalState(0, true);
+
+    // 2. Normally Open: on -> true, off -> false
     config.normallyClosedRelays = false;
     spyProtocol.setMainPower(true);
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setMainRelayPhysicalState(false);
-
-    spyProtocol.setMainPower(false);
     verify(spyProtocol, org.mockito.Mockito.times(2)).setMainRelayPhysicalState(true);
 
+    spyProtocol.setMainPower(false);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setMainRelayPhysicalState(false);
+
     spyProtocol.setLanePower(true, 0);
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setLaneRelayPhysicalState(0, false);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setLaneRelayPhysicalState(0, true);
 
     spyProtocol.setLanePower(false, 0);
-    verify(spyProtocol, org.mockito.Mockito.times(2)).setLaneRelayPhysicalState(0, true);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setLaneRelayPhysicalState(0, false);
   }
 
   @Test
@@ -756,17 +756,17 @@ public class PhidgetProtocolTest {
         (Map<Integer, Boolean>) lastLanePowerField.get(spyProtocol);
     lanePowerMap.put(0, true);
 
-    // NC = true: power ON -> setState(true)
+    // NC = true: power ON -> setState(false)
     config.normallyClosedRelays = true;
-    spyProtocol.syncPower();
-    verify(spyProtocol).setMainRelayPhysicalState(true);
-    verify(spyProtocol).setLaneRelayPhysicalState(0, true);
-
-    // NC = false: power ON -> setState(false)
-    config.normallyClosedRelays = false;
     spyProtocol.syncPower();
     verify(spyProtocol).setMainRelayPhysicalState(false);
     verify(spyProtocol).setLaneRelayPhysicalState(0, false);
+
+    // NC = false: power ON -> setState(true)
+    config.normallyClosedRelays = false;
+    spyProtocol.syncPower();
+    verify(spyProtocol).setMainRelayPhysicalState(true);
+    verify(spyProtocol).setLaneRelayPhysicalState(0, true);
   }
 
   @Test
@@ -793,20 +793,20 @@ public class PhidgetProtocolTest {
     // Channel 0 is BEHAVIOR_RELAY_VALUE (main relay)
     config.normallyClosedRelays = true;
     spyProtocol.applyOutputChannelState(0);
-    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
+    verify(spyProtocol).setOutputChannelPhysicalState(0, false);
 
     config.normallyClosedRelays = false;
     spyProtocol.applyOutputChannelState(0);
-    verify(spyProtocol).setOutputChannelPhysicalState(0, false);
+    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
 
     // Channel 1 is BEHAVIOR_RELAY_BASE_VALUE (lane 0 relay)
     config.normallyClosedRelays = true;
     spyProtocol.applyOutputChannelState(1);
-    verify(spyProtocol).setOutputChannelPhysicalState(1, true);
+    verify(spyProtocol).setOutputChannelPhysicalState(1, false);
 
     config.normallyClosedRelays = false;
     spyProtocol.applyOutputChannelState(1);
-    verify(spyProtocol).setOutputChannelPhysicalState(1, false);
+    verify(spyProtocol).setOutputChannelPhysicalState(1, true);
   }
 
   @Test
@@ -923,14 +923,14 @@ public class PhidgetProtocolTest {
     verify(relayProto).setLanePower(true, 1);
     verify(relayProto).setLanePower(true, 2);
     verify(relayProto).setLanePower(true, 3);
-    // Normally Open (normallyClosedRelays = false): on -> false
-    verify(relayProto).setLaneRelayPhysicalState(0, false);
-    verify(relayProto).setLaneRelayPhysicalState(1, false);
+    // Normally Open (normallyClosedRelays = false): on -> true
+    verify(relayProto).setLaneRelayPhysicalState(0, true);
+    verify(relayProto).setLaneRelayPhysicalState(1, true);
 
     // Turn Lane 1 power OFF
     delegate.setLanePower(false, 0);
     verify(relayProto).setLanePower(false, 0);
-    verify(relayProto).setLaneRelayPhysicalState(0, true);
+    verify(relayProto).setLaneRelayPhysicalState(0, false);
   }
 
   @Test
