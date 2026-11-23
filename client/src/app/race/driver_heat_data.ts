@@ -45,6 +45,7 @@ export class DriverHeatData {
   private _adjustedLapCount: number | null = null;
   private _totalTime: number | null = null;
   public isRefueling: boolean = false;
+  public canRefuel: boolean = false;
   public currentLocation: number = -1;
   public rank: number = 0;
   public flag: number = 0;
@@ -109,6 +110,7 @@ export class DriverHeatData {
     this._adjustedLapCount = null;
     this._totalTime = null;
     this.isRefueling = false;
+    this.canRefuel = false;
     this.currentLocation = -1;
     this.flag = 0;
     this.lapsLed = 0;

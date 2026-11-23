@@ -11,9 +11,10 @@ message CarData {
   int32 lane = 1;
   double controller_throttle_pct = 2;
   double car_throttle_pct = 3;
-  int32 location = 4;
-  int32 location_id = 5;
+  optional int32 location = 4;
+  optional int32 location_id = 5;
   optional double fuel_level = 6;
   bool is_refueling = 7;
   optional RaceFlag flag = 8;
+  optional bool can_refuel = 9;
 }

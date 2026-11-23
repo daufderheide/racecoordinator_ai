@@ -76,6 +76,7 @@ public class HeatConverterTest {
     dhd.setGapLeader(1.2);
     dhd.setGapPosition(0.3);
     dhd.setRefueling(true);
+    dhd.setCanRefuel(true);
     dhd.setCurrentLocation(com.antigravity.protocols.CarLocation.PitRow);
     dhd.setInitialFuelLevel(100.0);
     dhd.addLap(10.0, false, true);
@@ -98,6 +99,7 @@ public class HeatConverterTest {
     assertEquals(1.2, proto.getGapLeader(), 0.001);
     assertEquals(0.3, proto.getGapPosition(), 0.001);
     assertTrue(proto.getIsRefueling());
+    assertTrue(proto.getCanRefuel());
     assertTrue(proto.getIsFinished());
     assertEquals(
         com.antigravity.protocols.CarLocation.PitRow.getValue(), proto.getCurrentLocation());

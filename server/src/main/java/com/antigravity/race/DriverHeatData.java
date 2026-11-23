@@ -107,6 +107,7 @@ public class DriverHeatData extends ServerToClientObject
   private double autoCalculatedLaps = 0;
   private int falseStarts = 0;
   private boolean isRefueling = false;
+  private boolean canRefuel = false;
   private double remainingFalseStartTimePenalty = 0.0;
   private RaceFlag flag = RaceFlag.UNKNOWN_FLAG;
   private boolean isFinished = false;
@@ -447,6 +448,7 @@ public class DriverHeatData extends ServerToClientObject
     lapsLed = 0;
     carryOverTime = 0.0;
     isRefueling = false;
+    canRefuel = false;
     currentLocation = null;
     flag = RaceFlag.UNKNOWN_FLAG;
   }
@@ -637,6 +639,14 @@ public class DriverHeatData extends ServerToClientObject
 
   public void setRefueling(boolean refueling) {
     isRefueling = refueling;
+  }
+
+  public boolean isCanRefuel() {
+    return canRefuel;
+  }
+
+  public void setCanRefuel(boolean canRefuel) {
+    this.canRefuel = canRefuel;
   }
 
   public void setAutoCalculatedLaps(double autoCalculatedLaps) {

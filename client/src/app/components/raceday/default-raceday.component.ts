@@ -447,6 +447,7 @@ export class DefaultRacedayComponent
   private cachedDefaultLaneWidgetSettings: any = null;
   private cachedDefaultLaneWidgetsRef: any = null;
   private carLocations = new Map<number, number>();
+  private carCanRefuel = new Map<number, boolean>();
   private fuelAudioTracker: FuelAudioTracker;
   private get laneFuelAudioStates(): Map<number, any> {
     return this.fuelAudioTracker.getStates();

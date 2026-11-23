@@ -57,5 +57,6 @@ message DriverHeatData {
   double total_time = 37;
   double gap_leader_laps = 38;
   double gap_position_laps = 39;
+  bool can_refuel = 40;
 }
 

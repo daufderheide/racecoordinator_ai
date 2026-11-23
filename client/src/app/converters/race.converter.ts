@@ -245,11 +245,13 @@ export class RaceConverter {
   private static parseTeamOptions(rawOptions: any): TeamOptions {
     if (!rawOptions) return new TeamOptions();
     return new TeamOptions(
-      rawOptions.heatLapLimit || 0,
-      rawOptions.heatTimeLimit || 0,
-      rawOptions.overallLapLimit || 0,
-      rawOptions.overallTimeLimit || 0,
-      rawOptions.requirePitStopChangeDriver || false,
+      rawOptions.heatLapLimit || rawOptions.heat_lap_limit || 0,
+      rawOptions.heatTimeLimit || rawOptions.heat_time_limit || 0,
+      rawOptions.overallLapLimit || rawOptions.overall_lap_limit || 0,
+      rawOptions.overallTimeLimit || rawOptions.overall_time_limit || 0,
+      rawOptions.requirePitStopChangeDriver ??
+        rawOptions.require_pit_stop_change_driver ??
+        false,
     );
   }
 

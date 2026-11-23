@@ -454,13 +454,15 @@ public class Racing implements IRaceState {
             .setCarThrottlePct(carData.getCarThrottlePCT())
             .setLocation(carData.getLocation().getValue())
             .setLocationId(carData.getLocationId())
-            .setIsRefueling(executionManager.getIsRefueling()[lane]);
+            .setIsRefueling(executionManager.getIsRefueling()[lane])
+            .setCanRefuel(carData.getCanRefuel());
 
     if (race.getCurrentHeat() != null && race.getCurrentHeat().getDrivers() != null) {
       if (lane >= 0 && lane < race.getCurrentHeat().getDrivers().size()) {
         DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(lane);
         if (driverData != null) {
           driverData.setCurrentLocation(carData.getLocation());
+          driverData.setCanRefuel(carData.getCanRefuel());
           if (driverData.getDriver() != null) {
             dataBuilder.setFuelLevel(driverData.getDriver().getFuelLevel());
           }

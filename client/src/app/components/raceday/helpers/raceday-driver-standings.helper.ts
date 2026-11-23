@@ -647,9 +647,14 @@ export class RacedayDriverStandingsHelper {
     ) {
       return false;
     }
-    const location = host.carLocations?.get(hd.laneIndex);
-    if (location === undefined) return false;
-    return location === 1 || location >= 2000;
+    const location =
+      host.carLocations?.get(hd?.laneIndex) ?? hd?.currentLocation;
+    const inPit =
+      location === 1 || (location !== undefined && location >= 2000);
+    const canRefuel =
+      host.carCanRefuel?.get(hd?.laneIndex) ?? hd?.canRefuel ?? inPit;
+    const isPittingAndAbleToRefuel = inPit && canRefuel;
+    return !isPittingAndAbleToRefuel;
   }
 
   static onCellClick(

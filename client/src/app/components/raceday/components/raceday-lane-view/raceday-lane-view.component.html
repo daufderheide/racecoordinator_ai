@@ -386,7 +386,8 @@
                           "
                           [style.background-image]="
                             (parent().authService.currentRole$ | async) ===
-                            parent().Role.VIEWER
+                              parent().Role.VIEWER ||
+                            parent().isDriverSwapDisabled(hd)
                               ? 'none'
                               : parent().getDropdownArrowBg(hd)
                           "
@@ -397,7 +398,8 @@
                           "
                           [style.padding-right]="
                             (parent().authService.currentRole$ | async) ===
-                            parent().Role.VIEWER
+                              parent().Role.VIEWER ||
+                            parent().isDriverSwapDisabled(hd)
                               ? '0px'
                               : '28px'
                           "
@@ -407,7 +409,8 @@
                         </span>
                         @if (
                           (parent().authService.currentRole$ | async) !==
-                          parent().Role.VIEWER
+                            parent().Role.VIEWER &&
+                          !parent().isDriverSwapDisabled(hd)
                         ) {
                           <app-custom-select
                             class="teammate-select"

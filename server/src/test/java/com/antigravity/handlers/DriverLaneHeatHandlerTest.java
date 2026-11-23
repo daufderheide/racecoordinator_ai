@@ -643,4 +643,158 @@ public class DriverLaneHeatHandlerTest {
         "hist_rec_single", updatedSeason.getRaces().get(0).getHistoryRecordId());
     org.junit.Assert.assertEquals("season_single_1", activeRace.getSeasonEntityId());
   }
+
+  @Test
+  public void testChangeActualDriver_TeamRace_RequirePitStop_Enforcement() {
+    Driver d1 = new Driver("Alice", "Ally", "d1", "1");
+    Driver d2 = new Driver("Bob", "Bobby", "d2", "2");
+    new com.antigravity.repository.SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .save(d1);
+    new com.antigravity.repository.SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .save(d2);
+
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Lane l2 = new com.antigravity.models.Lane("white", "black", 101);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .lanes(java.util.Arrays.asList(l1, l2))
+            .build();
+
+    com.antigravity.models.TeamOptions teamOptions =
+        new com.antigravity.models.TeamOptions(null, null, null, null, true);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Team Race Pit Stop")
+            .withTeamOptions(teamOptions)
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Arrays.asList(p1, p2))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    activeRace.changeState(new com.antigravity.race.states.Racing());
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+
+    com.antigravity.race.DriverHeatData dhd0 = activeRace.getCurrentHeat().getDrivers().get(0);
+
+    when(ctx.pathParam("lane")).thenReturn("0");
+    HashMap<String, String> body = new HashMap<>();
+    body.put("driverId", "d2");
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+
+    // 1. On main track, cannot refuel -> 403
+    dhd0.setCurrentLocation(com.antigravity.protocols.CarLocation.Main);
+    dhd0.setCanRefuel(false);
+    handler.changeActualDriver(ctx);
+    verify(ctx).status(403);
+    verify(ctx).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
+
+    // 2. In pit row, but cannot refuel -> 403
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(any(Integer.class))).thenReturn(ctx);
+    when(ctx.result(any(String.class))).thenReturn(ctx);
+    when(ctx.pathParam("lane")).thenReturn("0");
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+    dhd0.setCurrentLocation(com.antigravity.protocols.CarLocation.PitRow);
+    dhd0.setCanRefuel(false);
+    handler.changeActualDriver(ctx);
+    verify(ctx).status(403);
+    verify(ctx).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
+
+    // 3. In pit row AND can refuel -> 200
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(any(Integer.class))).thenReturn(ctx);
+    when(ctx.result(any(String.class))).thenReturn(ctx);
+    when(ctx.pathParam("lane")).thenReturn("0");
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+    dhd0.setCurrentLocation(com.antigravity.protocols.CarLocation.PitRow);
+    dhd0.setCanRefuel(true);
+    handler.changeActualDriver(ctx);
+    verify(ctx).status(200);
+
+    // 4. In pit bay AND can refuel -> 200
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(any(Integer.class))).thenReturn(ctx);
+    when(ctx.result(any(String.class))).thenReturn(ctx);
+    when(ctx.pathParam("lane")).thenReturn("0");
+    body.put("driverId", "d1");
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+    dhd0.setCurrentLocation(com.antigravity.protocols.CarLocation.PitBayBase);
+    dhd0.setCanRefuel(true);
+    handler.changeActualDriver(ctx);
+    verify(ctx).status(200);
+  }
+
+  @Test
+  public void testChangeHeatActualDriver_TeamRace_RequirePitStop_Enforcement() {
+    Driver d1 = new Driver("Alice", "Ally", "d1", "1");
+    Driver d2 = new Driver("Bob", "Bobby", "d2", "2");
+    new com.antigravity.repository.SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .save(d1);
+    new com.antigravity.repository.SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .save(d2);
+
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Lane l2 = new com.antigravity.models.Lane("white", "black", 101);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .lanes(java.util.Arrays.asList(l1, l2))
+            .build();
+
+    com.antigravity.models.TeamOptions teamOptions =
+        new com.antigravity.models.TeamOptions(null, null, null, null, true);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Team Race Pit Stop Heat")
+            .withTeamOptions(teamOptions)
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Arrays.asList(p1, p2))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    activeRace.changeState(new com.antigravity.race.states.Racing());
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+
+    com.antigravity.race.DriverHeatData dhd0 = activeRace.getCurrentHeat().getDrivers().get(0);
+
+    when(ctx.pathParam("heatNumber")).thenReturn("1");
+    when(ctx.pathParam("lane")).thenReturn("0");
+    HashMap<String, String> body = new HashMap<>();
+    body.put("driverId", "d2");
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+
+    // 1. Not in pit -> 403
+    dhd0.setCurrentLocation(com.antigravity.protocols.CarLocation.Main);
+    dhd0.setCanRefuel(false);
+    handler.changeHeatActualDriver(ctx);
+    verify(ctx).status(403);
+    verify(ctx).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
+
+    // 2. In pit and can refuel -> 200
+    org.mockito.Mockito.reset(ctx);
+    when(ctx.status(any(Integer.class))).thenReturn(ctx);
+    when(ctx.result(any(String.class))).thenReturn(ctx);
+    when(ctx.pathParam("heatNumber")).thenReturn("1");
+    when(ctx.pathParam("lane")).thenReturn("0");
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(body);
+    dhd0.setCurrentLocation(com.antigravity.protocols.CarLocation.PitRow);
+    dhd0.setCanRefuel(true);
+    handler.changeHeatActualDriver(ctx);
+    verify(ctx).status(200);
+  }
 }
