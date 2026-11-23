@@ -548,7 +548,7 @@ app-inspector-shell {
 /* Inside a text part the sub-settings are short: a small label column. */
 .kit-part-body .kit-row,
 .kit-part-body .kit-row:has(> .kit-ctrl > app-kit-stepper) {
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
@@ -622,6 +622,19 @@ app-inspector-shell {
   display: block;
   flex: 1;
   min-width: 0;
+}
+
+/* note: a short paragraph, e.g. a custom widget's description */
+.kit-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--k-muted);
+}
+
+/* image: the selector centred in its row */
+.kit-ctrl-image {
+  justify-content: center;
 }
 
 .kit-muted {
@@ -1114,4 +1127,214 @@ app-inspector-shell {
   .kit-chev {
     transition: none;
   }
+}
+
+/* ---------- embedded parts (Lane View column manager) ----------
+   The column manager is the old inspector in "columns only" mode; its markup
+   is unchanged. These rules give it the panel's theme colours. The Available
+   Columns tree reuses the Widget Library styles (toolbox-*), so in yellow it
+   already matches; dark gets the editor colours. */
+.kit-embed {
+  min-width: 0;
+}
+
+.kit-panel .kit-lane-view-columns .inspector-column-item {
+  background: var(--k-part);
+  border: 1px solid var(--k-part-line);
+  border-radius: 6px;
+  color: var(--k-text);
+}
+
+.kit-panel .kit-lane-view-columns .col-label,
+.kit-panel .kit-lane-view-columns .inspector-label,
+.kit-panel .kit-lane-view-columns .inspector-section-title,
+.kit-panel .kit-lane-view-columns .toolbox-subtitle,
+.kit-panel .kit-lane-view-columns .col-width-unit,
+.kit-panel .kit-lane-view-columns .col-decimals-unit {
+  color: var(--k-label);
+}
+
+.kit-panel .kit-lane-view-columns .col-drag-handle,
+.kit-panel .kit-lane-view-columns .col-format-toggle-btn {
+  color: var(--k-muted);
+}
+
+.kit-panel .kit-lane-view-columns .delete-btn {
+  color: var(--k-danger);
+}
+
+.kit-panel .kit-lane-view-columns .inspector-input,
+.kit-panel .kit-lane-view-columns .inspector-number-input {
+  background: var(--k-input);
+  color: var(--k-input-text);
+  border: 1px solid var(--k-input-line);
+  border-radius: 4px;
+}
+
+.kit-panel .kit-lane-view-columns .inspector-input:focus,
+.kit-panel .kit-lane-view-columns .inspector-number-input:focus {
+  outline: none;
+  border-color: var(--k-focus);
+  box-shadow: 0 0 0 2px var(--k-focus-ring);
+}
+
+/* Available Columns tree in the dark panel: the editor's section look */
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-header,
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-header {
+  background: var(--k-folder);
+  border-color: var(--k-folder-line);
+  color: var(--k-folder-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-content,
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-content {
+  background: var(--k-fbody);
+  border-color: var(--k-fbody-line);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-folder-icon,
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-icon,
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .drag-indicator-icon {
+  color: var(--k-folder-icon);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-group-badge,
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-subgroup-badge {
+  background: var(--k-badge-bg);
+  color: var(--k-badge-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-item {
+  background: var(--k-seg);
+  border-color: var(--k-seg-line);
+  color: var(--k-seg-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-widget-item:hover {
+  border-color: var(--k-focus);
+}
+
+/* The Widget Library's sub-folder icon and search box use !important in
+   styles.css, so the dark panel has to as well. */
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .subfolder-icon {
+  color: var(--k-folder-icon) !important;
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-input {
+  background: var(--k-input) !important;
+  color: var(--k-input-text) !important;
+  border-color: var(--k-input-line) !important;
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-input:focus {
+  border-color: var(--k-focus) !important;
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-view-columns .toolbox-search-wrapper .toolbox-search-input::placeholder {
+  color: var(--k-placeholder);
+}
+
+/* ---------- embedded Lane Column inspector, dark panel ----------
+   The inspector is shown whole (grid sync depends on it). In yellow it keeps
+   the look it had in the old panel; in dark it gets the editor colours. */
+.kit-panel[data-panel-theme="dark"] .kit-lane-column {
+  color: var(--k-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+    .inspector-label,
+    .inspector-geometry-title,
+    .inspector-group-title,
+    .inspector-section-title,
+    .breadcrumb-sep
+  ) {
+  color: var(--k-label);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+    .inspector-geometry-title,
+    .inspector-group-title
+  )
+  .material-icons {
+  color: var(--k-folder-icon);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .inspector-section-group {
+  background: var(--k-part);
+  border-color: var(--k-part-line);
+}
+
+/* scope navigation: breadcrumbs and Widget / Grid / Column tabs */
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .grid-scope-nav {
+  background: var(--k-fbody);
+  border-color: var(--k-folder-line);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .breadcrumb-btn {
+  color: var(--k-label);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .breadcrumb-btn:hover {
+  color: var(--k-text);
+  background: var(--k-hit);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .breadcrumb-btn.active {
+  color: var(--k-on-text);
+  background: var(--k-on-bg);
+  border-color: var(--k-on-line);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .scope-mode-tabs {
+  background: var(--k-seg);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .scope-tab {
+  color: var(--k-seg-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .scope-tab.active {
+  color: var(--k-on-text);
+  background: var(--k-on-bg);
+  box-shadow: inset 0 0 0 1px var(--k-on-line);
+}
+
+/* inputs, buttons and the inset map */
+.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+    .inspector-input,
+    .inspector-number-input
+  ) {
+  background: var(--k-input);
+  color: var(--k-input-text);
+  border-color: var(--k-input-line);
+  color-scheme: dark !important;
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .btn-secondary,
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .ghost-icon-btn {
+  background: var(--k-btn-bg);
+  border-color: var(--k-btn-line);
+  color: var(--k-btn-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .btn-primary {
+  background: var(--k-on-bg);
+  border-color: var(--k-on-line);
+  color: var(--k-on-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .inset-map-cell,
+.kit-panel[data-panel-theme="dark"] .kit-lane-column .hero-inset-dropzone {
+  background: var(--k-seg);
+  border-color: var(--k-seg-line);
+  color: var(--k-seg-text);
+}
+
+.kit-panel[data-panel-theme="dark"] .kit-lane-column :is(
+    .inset-map-label,
+    .hero-widget-name,
+    .hero-drop-title,
+    .hero-widget-label
+  ) {
+  color: var(--k-text);
 }

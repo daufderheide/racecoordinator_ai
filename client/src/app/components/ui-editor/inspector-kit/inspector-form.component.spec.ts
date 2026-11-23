@@ -6,7 +6,7 @@ import {
   InspectorFormComponent,
   resetInspectorFormMemory,
 } from "./inspector-form.component";
-import { InspectorSchema } from "./inspector-schema";
+import { InspectorField, InspectorSchema } from "./inspector-schema";
 
 describe("InspectorFormComponent", () => {
   let fixture: ComponentFixture<InspectorFormComponent>;
@@ -192,6 +192,53 @@ describe("InspectorFormComponent", () => {
     expect(
       q('[data-folder="layout"] .kit-folder-summary')!.textContent!.trim(),
     ).toBe("100, 50 · 400 × 200");
+  });
+
+  it('selects an option stored as text by an older inspector ("2" = 2)', () => {
+    const f: InspectorField = {
+      id: "dec",
+      type: "segment",
+      key: "decimalPlaces",
+      labelKey: "UE_INSPECTOR_DECIMAL_PLACES",
+      options: [
+        { value: 2, label: "2" },
+        { value: 3, label: "3" },
+      ],
+    };
+    settings["decimalPlaces"] = "2";
+    expect(component.isOption(f, f.options[0])).toBeTrue();
+    expect(component.isOption(f, f.options[1])).toBeFalse();
+  });
+
+  it("stores a worked-out field through its write function", () => {
+    const f: InspectorField = {
+      id: "lane",
+      type: "stepper",
+      key: "targetIndex",
+      labelKey: "UE_INSPECTOR_TARGET_LANE",
+      min: 1,
+      max: 8,
+      maxFrom: (c) => c.totalLanes,
+      read: (s) => Number(s["targetIndex"] ?? 0) + 1,
+      write: (s, v) => (s["targetIndex"] = Number(v) - 1),
+    };
+    fixture.componentRef.setInput("totalLanes", 6);
+    component.setField(f, 3);
+    expect(settings["targetIndex"]).toBe(2);
+    expect(component.value(f)).toBe(3);
+    expect(component.maxFor(f)).toBe(6);
+    expect(changes).toBe(1);
+  });
+
+  it("rounds a scaled position in the Layout summary", () => {
+    fixture.componentRef.setInput("widget", {
+      ...fixture.componentInstance.widget(),
+      y: 741.7358609997833,
+    });
+    fixture.detectChanges();
+    expect(
+      q('[data-folder="layout"] .kit-folder-summary')!.textContent!.trim(),
+    ).toBe("100, 742 · 400 × 200");
   });
 
   it("opens and closes a folder and remembers it for the widget type", () => {

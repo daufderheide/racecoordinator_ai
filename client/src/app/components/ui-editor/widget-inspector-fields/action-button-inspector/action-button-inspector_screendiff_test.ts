@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 test.describe("Action Button Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -54,16 +55,17 @@ test.describe("Action Button Inspector Visuals", () => {
     const inspectorPanel = page.locator(".widget-inspector-panel");
     await inspectorPanel.waitFor({ state: "visible" });
 
-    // Verify inspector contains action-button-specific fields
-    const inspectorFields = page.locator("app-action-button-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
+    // The redesigned panel: open Text (with the Label part) and Behaviour
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.openPart("label");
+    await kit.openFolder("behaviour");
+    await kit.settle('[data-folder="text"]');
 
-    await expect(inspectorFields).toHaveScreenshot(
-      "action-button-inspector.png",
-      {
-        maxDiffPixelRatio: 0.05,
-      },
-    );
+    await expect(kit.panel).toHaveScreenshot("action-button-inspector.png", {
+      maxDiffPixelRatio: 0.05,
+    });
   });
 
   test("should display action button inspector for action back button", async ({
@@ -108,11 +110,15 @@ test.describe("Action Button Inspector Visuals", () => {
     const inspectorPanel = page.locator(".widget-inspector-panel");
     await inspectorPanel.waitFor({ state: "visible" });
 
-    // Verify inspector contains action-button-specific fields
-    const inspectorFields = page.locator("app-action-button-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
+    // The redesigned panel: open Text (with the Label part) and Behaviour
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.openPart("label");
+    await kit.openFolder("behaviour");
+    await kit.settle('[data-folder="text"]');
 
-    await expect(inspectorFields).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "action-back-button-inspector.png",
       {
         maxDiffPixelRatio: 0.05,

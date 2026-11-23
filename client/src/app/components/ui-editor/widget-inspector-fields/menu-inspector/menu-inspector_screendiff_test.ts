@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 test.describe("Menu Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -52,37 +53,17 @@ test.describe("Menu Inspector Visuals", () => {
       .first();
     await menuWidget.dispatchEvent("pointerdown");
 
-    // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    // Verify inspector contains menu-specific fields
-    const inspectorFields = page.locator("app-menu-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const sliders = inspectorFields.locator("input[type='range']");
-    const colorPickers = inspectorFields.locator("input[type='color']");
-
-    await sliders.nth(0).fill("18"); // Font size
-    await colorPickers.nth(0).evaluate((el: HTMLInputElement) => {
-      el.value = "#ff0000";
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }); // Text color to Red
-
-    // Blur any active element, clear hover, and scroll inspector panel so menu fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-menu-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
-    await page.mouse.move(0, 0);
+    // The redesigned panel: the menu's font, size and colour in Text
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.setPartSize("menu", 18);
+    await kit.setPartColor("menu", "#ff0000");
+    await kit.settle('[data-folder="text"]');
 
     // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
-      "menu-bar-inspector-options.png",
-      {
-        animations: "disabled",
-      },
-    );
+    await expect(kit.panel).toHaveScreenshot("menu-bar-inspector-options.png", {
+      animations: "disabled",
+    });
   });
 });

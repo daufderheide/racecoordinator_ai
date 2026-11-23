@@ -1,4 +1,8 @@
-import { InspectorFolder, TextPartField } from "./inspector-schema";
+import {
+  InspectorFolder,
+  InspectorOption,
+  TextPartField,
+} from "./inspector-schema";
 
 /**
  * One line shown on a closed folder, so you can see what's set without
@@ -43,7 +47,9 @@ export function folderSummary(
   }
 
   if (folder.id === "layout" && widget) {
-    return `${widget.x ?? 0}, ${widget.y ?? 0} · ${widget.width ?? 0} × ${widget.height ?? 0}`;
+    // positions can be fractions after scaling; the summary shows whole pixels
+    const r = (v: any) => Math.round(Number(v) || 0);
+    return `${r(widget.x)}, ${r(widget.y)} · ${r(widget.width)} × ${r(widget.height)}`;
   }
 
   // Content / behaviour: how many switches are on, plus the first choices.
@@ -56,15 +62,27 @@ export function folderSummary(
   }
   for (const f of fields) {
     if (parts.length >= 3) break;
-    if (
-      (f.type === "segment" || f.type === "select") &&
-      settings[f.key] !== undefined
-    ) {
-      const opt = f.options.find((o) => o.value === settings[f.key]);
+    const chosen =
+      f.type === "segment" || f.type === "select"
+        ? f.read
+          ? f.read(settings)
+          : settings[f.key]
+        : undefined;
+    if (chosen !== undefined && chosen !== null) {
+      // 2 and "2" are the same choice (older inspectors stored text)
+      const opt = (f as { options: InspectorOption[] }).options.find(
+        (o) => String(o.value) === String(chosen),
+      );
       if (opt)
         parts.push(
           opt.labelKey ? t(opt.labelKey) : (opt.label ?? String(opt.value)),
         );
+    } else if (f.type === "text" && settings[f.key]) {
+      const text = String(settings[f.key]);
+      parts.push(`"${text.length > 24 ? text.slice(0, 23) + "…" : text}"`);
+    } else if (f.type === "image" && settings[f.key]) {
+      const name = String(settings[f.key]).split(/[\\/]/).pop() || "";
+      parts.push(name.length > 28 ? name.slice(0, 27) + "…" : name);
     }
   }
   return parts.join(" · ");

@@ -119,7 +119,16 @@
       <app-inspector-form
         #form
         [schema]="s"
-        [settings]="widget().customSettings"
+        [settings]="formSettings()"
+        [totalLanes]="totalLanes()"
+        [globalSettings]="globalSettings()"
+        [customUi]="customUi()"
+        [availableColumns]="availableColumns()"
+        [isPracticeMode]="isPracticeMode()"
+        [selectedAnchor]="selectedAnchor()"
+        [selectionToken]="selectionToken()"
+        [activeTab]="activeTab()"
+        [actions]="actions()"
         [widget]="widget()"
         [query]="query()"
         [onlyChanged]="onlyChanged()"

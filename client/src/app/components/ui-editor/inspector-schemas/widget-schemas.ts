@@ -1,5 +1,9 @@
 import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
+import { BATCH2_SCHEMAS } from "./batch2-schemas";
+import { BATCH3_SCHEMAS } from "./batch3-schemas";
+import { LANE_COLUMN_SCHEMAS } from "./lane-column-schema";
+import { laneViewSchema } from "./lane-view-schema";
 import { frameFolder, layoutFolder, textPart } from "./common";
 
 /**
@@ -278,6 +282,180 @@ function textInfoSchema(widgetType: string, icon: string): InspectorSchema {
   };
 }
 
+/** Widgets with only colours, frame and layout (Branding Image, QR Code, Flag). */
+function frameOnlySchema(widgetType: string, icon: string): InspectorSchema {
+  return { widgetType, icon, folders: [frameFolder(), layoutFolder()] };
+}
+
+const imageSchema: InspectorSchema = {
+  widgetType: "image",
+  icon: "image",
+  folders: [
+    {
+      id: "content",
+      groups: [
+        {
+          fields: [
+            {
+              id: "imageUrl",
+              type: "image",
+              key: "imageUrl",
+              labelKey: "UE_KIT_IMAGE",
+              searchTerms: "image picture logo asset file",
+            },
+          ],
+        },
+      ],
+    },
+    frameFolder(),
+    layoutFolder(),
+  ],
+};
+
+const labelSchema: InspectorSchema = {
+  widgetType: "label",
+  icon: "title",
+  folders: [
+    {
+      id: "content",
+      groups: [
+        {
+          fields: [
+            {
+              id: "text",
+              type: "text",
+              key: "text",
+              labelKey: "UE_INSPECTOR_LABEL_TEXT",
+              maxLength: 120,
+              searchTerms: "text caption title words",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "text",
+      groups: [
+        {
+          fields: [
+            {
+              id: "label",
+              type: "textPart",
+              labelKey: "UE_INSPECTOR_LABEL_TEXT",
+              keys: {
+                font: "fontFamily",
+                size: "fontSize",
+                color: "textColor",
+                align: "alignment",
+              },
+              sizeMin: 8,
+              sizeMax: 120,
+              sampleSetting: "text",
+              searchTerms: "font size colour color align typography",
+            },
+            {
+              id: "fontBold",
+              type: "switch",
+              key: "fontBold",
+              labelKey: "UE_INSPECTOR_FONT_BOLD",
+              searchTerms: "bold weight heavy",
+            },
+            {
+              id: "fontItalic",
+              type: "switch",
+              key: "fontItalic",
+              labelKey: "UE_INSPECTOR_FONT_ITALIC",
+              searchTerms: "italic slanted",
+            },
+          ],
+        },
+      ],
+    },
+    frameFolder(),
+    layoutFolder(),
+  ],
+};
+
+/** Every action button (Start/Resume, Pause, Export, Back...) has the same settings. */
+function actionButtonSchema(widgetType: string): InspectorSchema {
+  return {
+    widgetType,
+    icon: "smart_button",
+    folders: [
+      {
+        id: "text",
+        groups: [
+          {
+            fields: [
+              {
+                id: "label",
+                type: "textPart",
+                labelKey: "UE_KIT_PART_LABEL",
+                keys: {
+                  font: "fontFamily",
+                  size: "fontSize",
+                  color: "textColor",
+                },
+                sizeMin: 10,
+                sizeMax: 100,
+                keyDefaults: { size: 16 },
+                sampleKey: ACTION_BUTTON_LABEL_KEYS[widgetType],
+                searchTerms: "font size colour color button text typography",
+              },
+            ],
+          },
+        ],
+      },
+      frameFolder(),
+      layoutFolder(),
+      {
+        id: "behaviour",
+        groups: [
+          {
+            fields: [
+              {
+                id: "shortcut",
+                type: "text",
+                key: "shortcut",
+                labelKey: "UE_INSPECTOR_SHORTCUT",
+                helpKey: "UE_KIT_SHORTCUT_HELP",
+                placeholder: "F4, Control+S",
+                maxLength: 40,
+                searchTerms: "shortcut key keyboard hotkey",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/** Every action button and the name it shows (the same keys the canvas button uses). */
+export const ACTION_BUTTON_LABEL_KEYS: Record<string, string> = {
+  "action-start-resume": "RD_MENU_START_RESUME",
+  "action-pause": "RD_MENU_PAUSE",
+  "action-next-heat": "RD_MENU_NEXT_HEAT",
+  "action-restart-heat": "RD_MENU_RESTART",
+  "action-defer-heat": "RD_MENU_DEFER",
+  "action-skip-heat": "RD_MENU_SKIP_HEAT",
+  "action-skip-race": "RD_MENU_SKIP_RACE",
+  "action-add-lap": "RD_MENU_ADD_LAP",
+  "action-modify-heats": "RD_MENU_MODIFY",
+  "action-export-pdf": "RD_MENU_EXPORT_PDF",
+  "action-export-csv": "RD_MENU_EXPORT_CSV",
+  "action-export-xls": "RD_MENU_EXPORT_XLS",
+  "action-open-heat-results": "RD_WIN_HEAT_RESULTS",
+  "action-open-race-results": "RD_WIN_RACE_RESULTS",
+  "action-open-season-results": "RD_WIN_SEASON_RESULTS",
+  "action-open-prediction-results": "RD_WIN_PREDICTION_RESULTS",
+  "action-master-power-on": "RD_MENU_MAIN_POWER_ON",
+  "action-master-power-off": "RD_MENU_MAIN_POWER_OFF",
+  "action-back": "RD_MENU_BACK",
+  "action-forward": "RD_MENU_FORWARD",
+  "action-close": "RD_MENU_CLOSE",
+};
+
 export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
   records: recordsSchema,
   timer: timerSchema,
@@ -286,6 +464,21 @@ export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
   "event-name": textInfoSchema("event-name", "event"),
   "season-name": textInfoSchema("season-name", "emoji_events"),
   "track-name": textInfoSchema("track-name", "route"),
+  branding: frameOnlySchema("branding", "branding_watermark"),
+  qr: frameOnlySchema("qr", "qr_code_2"),
+  flag: frameOnlySchema("flag", "flag"),
+  image: imageSchema,
+  label: labelSchema,
+  ...Object.fromEntries(
+    Object.keys(ACTION_BUTTON_LABEL_KEYS).map((t) => [
+      t,
+      actionButtonSchema(t),
+    ]),
+  ),
+  ...BATCH2_SCHEMAS,
+  ...BATCH3_SCHEMAS,
+  "lane-view": laneViewSchema,
+  ...LANE_COLUMN_SCHEMAS,
 };
 
 /** The redesigned schema for a widget, or null to keep its existing inspector. */

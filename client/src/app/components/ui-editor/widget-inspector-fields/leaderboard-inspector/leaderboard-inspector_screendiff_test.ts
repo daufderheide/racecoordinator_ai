@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-import { LeaderboardInspectorHarnessE2e } from "./testing/leaderboard-inspector.harness.e2e";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 test.describe("Leaderboard Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -79,30 +79,18 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await leaderboardWidget.dispatchEvent("pointerdown");
 
     // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    // Verify inspector contains leaderboard-specific title
-    const inspectorFields = page.locator("app-leaderboard-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const harness = new LeaderboardInspectorHarnessE2e(inspectorFields);
-    // Interact with options to show they work and are displayed properly
-    await harness.setDecimalPlaces(1);
-    await harness.setTitleFontSize(28);
-    await harness.setOverallLeaderFontSize(24);
-    await harness.setRestFontSize(20);
-
-    // Blur any active element, clear hover, and scroll inspector panel so leaderboard fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-leaderboard-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
-    await page.mouse.move(0, 0);
+    // The redesigned panel: decimals in Content, the text parts in Text
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.pickOption("decimalPlaces", "1");
+    await kit.openFolder("text");
+    await kit.setPartSize("title", 28);
+    await kit.setPartSize("leader", 24);
+    await kit.setPartSize("rest", 20);
+    await kit.settle('[data-folder="content"]');
 
     // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "leaderboard-inspector-options.png",
       {
         animations: "disabled",
@@ -177,70 +165,21 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await groupLeaderboardWidget.dispatchEvent("pointerdown");
 
     // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    // Verify inspector contains leaderboard-specific title
-    const inspectorFields = page.locator("app-leaderboard-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    // Verify subtitle fields are present in the inspector (since it's a group leaderboard)
-    const subtitleTitle = inspectorFields.locator(
-      "div.inspector-geometry-title",
-      { hasText: "Subtitle Settings" },
-    );
-    await expect(subtitleTitle).toBeVisible();
-
-    const selects = inspectorFields.locator("app-custom-select");
-    const sliders = inspectorFields.locator("input[type='range']");
-    const colorPickers = inspectorFields.locator("input[type='color']");
-
-    await selects.nth(0).locator(".custom-select-trigger").click();
-    await selects
-      .nth(0)
-      .locator('.custom-select-option[data-value="2"]')
-      .click();
-
-    await sliders.nth(0).evaluate((el: HTMLInputElement) => {
-      el.value = "28";
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    await sliders.nth(1).evaluate((el: HTMLInputElement) => {
-      el.value = "20";
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    await colorPickers.nth(1).evaluate((el: HTMLInputElement) => {
-      el.value = "#ff0000";
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    await sliders.nth(2).evaluate((el: HTMLInputElement) => {
-      el.value = "24";
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    await sliders.nth(3).evaluate((el: HTMLInputElement) => {
-      el.value = "18";
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    });
-
-    // Blur any active element, clear hover, and scroll inspector panel so leaderboard fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-leaderboard-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
-    await page.mouse.move(0, 0);
+    // The redesigned panel: a group leaderboard also has a Subtitle part
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.pickOption("decimalPlaces", "2");
+    await kit.openFolder("text");
+    await expect(page.locator('[data-field="subtitle"]')).toBeVisible();
+    await kit.setPartSize("title", 28);
+    await kit.setPartSize("subtitle", 20);
+    await kit.setPartColor("subtitle", "#ff0000");
+    await kit.setPartSize("leader", 24);
+    await kit.setPartSize("rest", 18);
+    await kit.settle('[data-folder="text"]');
 
     // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "group-leaderboard-inspector-options.png",
       {
         animations: "disabled",

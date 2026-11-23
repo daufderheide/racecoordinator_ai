@@ -131,6 +131,48 @@ describe("InspectorShellComponent", () => {
     expect(q("#kit-search")).toBeNull();
   });
 
+  it("runs the schema's onOpen once per selected widget and saves what it changed", () => {
+    let runs = 0;
+    host.schema = {
+      ...WIDGET_SCHEMAS["records"],
+      onOpen: (s: Record<string, any>) => {
+        runs++;
+        s["migrated"] = true;
+        return true;
+      },
+    };
+    host.widget = { ...host.widget, id: "w9" };
+    fixture.detectChanges();
+    expect(runs).toBe(1);
+    expect(host.changes).toBe(1);
+    expect(host.changedWidget.customSettings.migrated).toBeTrue();
+    // the same widget again (e.g. a fresh copy after a save): no second run
+    host.widget = { ...host.widget };
+    fixture.detectChanges();
+    expect(runs).toBe(1);
+  });
+
+  it("stores a change for a widget created without customSettings", () => {
+    // Regression: Branding Image and QR Code have no customSettings, and the
+    // form silently dropped every change.
+    host.widget = {
+      id: "w2",
+      widgetType: "qr",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 200,
+    };
+    host.schema = WIDGET_SCHEMAS["qr"];
+    fixture.detectChanges();
+    q("#kit-folder-frame")!.click();
+    fixture.detectChanges();
+    (q("#kit-showBorder") as HTMLButtonElement).click();
+    expect(host.changes).toBe(1);
+    // QR has the panel card defaults: the border starts on, one click turns it off
+    expect(host.changedWidget.customSettings.showBorder).toBe(false);
+  });
+
   it("passes changes, delete and previous/next up to the editor", () => {
     (q("#kit-showHeatBest") as HTMLButtonElement).click();
     q(".inspector-delete-btn")!.click();

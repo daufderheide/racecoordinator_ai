@@ -6,9 +6,13 @@ import { TranslationService } from "@app/services/translation.service";
 
 import {
   defaultFor,
+  fieldKeys,
   fieldMatches,
+  fieldSource,
   FOLDER_META,
   FOLDER_ORDER,
+  InspectorActions,
+  InspectorContext,
   InspectorField,
   InspectorFolder,
   InspectorFolderId,
@@ -18,11 +22,13 @@ import {
   isFieldChanged,
   isFieldVisible,
   registryDefaults,
-  resetField,
+  resetFieldWhereStored,
   TextPartField,
+  writeFieldKey,
 } from "./inspector-schema";
 import { folderSummary } from "./inspector-summary";
 import { KitColorComponent } from "./kit-color.component";
+import { KitImageComponent } from "./kit-image.component";
 import { KitStepperComponent } from "./kit-stepper.component";
 
 export interface GeometryChange {
@@ -33,6 +39,8 @@ export interface GeometryChange {
 export interface ResetEvent {
   /** Translation key of what was reset (field label or folder name). */
   labelKey: string;
+  /** Literal name, when the field has no translation key. */
+  label?: string;
 }
 
 /** Folders opened per widget type, remembered while the editor is open. */
@@ -68,6 +76,7 @@ interface VisibleFolder {
     TranslatePipe,
     KitStepperComponent,
     KitColorComponent,
+    KitImageComponent,
   ],
 })
 export class InspectorFormComponent {
@@ -76,6 +85,18 @@ export class InspectorFormComponent {
   widget = input<any>(null);
   query = input("");
   onlyChanged = input(false);
+  /** Number of lanes on the track (for limits such as a target lane). */
+  totalLanes = input(4);
+  /** Editor data some embedded parts work on (Lane View columns). */
+  globalSettings = input<any>(null);
+  customUi = input<any>(null);
+  availableColumns = input<{ key: string; label: string }[]>([]);
+  isPracticeMode = input(false);
+  /** Lane Column: the inset clicked on the canvas, the open tab, editor handlers. */
+  selectedAnchor = input<string | null>(null);
+  selectionToken = input(0);
+  activeTab = input<string | null>(null);
+  actions = input<InspectorActions | null>(null);
   widthLocked = input(false);
   heightLocked = input(false);
   /** Bumped by the shell after any change so computed values refresh. */
@@ -114,7 +135,7 @@ export class InspectorFormComponent {
           ...g,
           fields: g.fields.filter(
             (f) =>
-              isFieldVisible(f, settings) &&
+              isFieldVisible(f, settings, this.context()) &&
               fieldMatches(f, query, this.t) &&
               (!onlyChanged || this.isChanged(f)),
           ),
@@ -150,12 +171,19 @@ export class InspectorFormComponent {
   }
 
   summary(folder: InspectorFolder): string {
-    return folderSummary(folder, this.settings() || {}, this.widget(), this.t);
+    // fields stored on the widget itself are summarised from there
+    const view = { ...(this.settings() || {}) };
+    for (const field of folder.groups.flatMap((g) => g.fields)) {
+      if (field.on === "widget" || field.on === "both") {
+        for (const key of fieldKeys(field)) view[key] = this.widget()?.[key];
+      }
+    }
+    return folderSummary(folder, view, this.widget(), this.t);
   }
 
   isChanged(field: InspectorField): boolean {
     if (field.type === "geometry") return false;
-    return isFieldChanged(field, this.settings() || {}, this.defaults());
+    return isFieldChanged(field, this.source(field), this.defaults());
   }
 
   isHit(field: InspectorField): boolean {
@@ -163,8 +191,17 @@ export class InspectorFormComponent {
   }
 
   /** Label split around the search term so it can be highlighted. */
-  labelParts(key: string): { text: string; hit: boolean }[] {
-    const label = this.t(key);
+  /** A field's label: its literal text when it has one, else the translation. */
+  labelOf(field: InspectorField): string {
+    return field.label ?? this.t(field.labelKey);
+  }
+
+  /** A field's help text, if any (literal or translated). */
+  helpOf(field: InspectorField): string {
+    return field.help ?? (field.helpKey ? this.t(field.helpKey) : "");
+  }
+
+  labelParts(label: string): { text: string; hit: boolean }[] {
     const q = this.query().trim().toLowerCase();
     const i = q ? label.toLowerCase().indexOf(q) : -1;
     if (i < 0) return [{ text: label, hit: false }];
@@ -175,9 +212,27 @@ export class InspectorFormComponent {
     ].filter((p) => p.text);
   }
 
+  context(): InspectorContext {
+    return {
+      widget: this.widget(),
+      totalLanes: this.totalLanes() || 4,
+      globalSettings: this.globalSettings(),
+      customUi: this.customUi(),
+      availableColumns: this.availableColumns(),
+      isPracticeMode: this.isPracticeMode(),
+      selectedAnchor: this.selectedAnchor(),
+      selectionToken: this.selectionToken(),
+      activeTab: this.activeTab(),
+      actions: this.actions() || undefined,
+    };
+  }
+
   value(field: InspectorField): any {
+    if (field.read) {
+      return field.read(this.settings() || {});
+    }
     if (!("key" in field)) return undefined;
-    const v = this.settings()?.[field.key];
+    const v = this.source(field)?.[field.key];
     return v === undefined || v === null
       ? defaultFor(field, field.key, this.defaults())
       : v;
@@ -189,14 +244,75 @@ export class InspectorFormComponent {
   ): any {
     const key = field.keys[part];
     if (!key) return undefined;
-    const v = this.settings()?.[key];
+    const v = this.source(field)?.[key];
     return v === undefined || v === null
       ? defaultFor(field, key, this.defaults())
       : v;
   }
 
+  /**
+   * Whether an option is the current value. Older inspectors stored some numbers
+   * as text ("2"), so 2 and "2" count as the same choice.
+   */
+  isOption(field: InspectorField, o: InspectorOption): boolean {
+    const v = this.value(field);
+    if (v === undefined || v === null) return false;
+    return String(v) === String(o.value);
+  }
+
   optionLabel(o: InspectorOption): string {
     return o.labelKey ? this.t(o.labelKey) : (o.label ?? String(o.value));
+  }
+
+  partColorVisible(field: TextPartField): boolean {
+    return (
+      !field.colorVisibleWhen || field.colorVisibleWhen(this.settings() || {})
+    );
+  }
+
+  /** Called by an embedded part after it changed the widget or the editor data. */
+  private readonly embedNotify = () => {
+    this.localRevision++;
+    this.settingsChange.emit();
+  };
+
+  /** Inputs for an embedded part (see EmbedField). */
+  embedInputs(): Record<string, unknown> {
+    return {
+      settings: this.settings(),
+      widget: this.widget(),
+      context: this.context(),
+      notify: this.embedNotify,
+    };
+  }
+
+  /** Stores a field's value: through its `write` when it has one, else its key. */
+  setField(field: InspectorField, value: any): void {
+    const s = this.settings();
+    if (!s) return;
+    if (field.write) {
+      field.write(s, value, this.context());
+      this.localRevision++;
+      this.settingsChange.emit();
+      return;
+    }
+    if ("key" in field) this.setKey(field, field.key, value);
+  }
+
+  /** The object a field reads from (customSettings or the widget itself). */
+  source(field: InspectorField): Record<string, any> {
+    return fieldSource(field, this.settings(), this.widget());
+  }
+
+  private setKey(field: InspectorField, key: string, value: any): void {
+    writeFieldKey(field, this.settings(), this.widget(), key, value);
+    this.localRevision++;
+    this.settingsChange.emit();
+  }
+
+  maxFor(field: InspectorField): number {
+    if (field.type !== "stepper") return 100;
+    return field.maxFrom ? field.maxFrom(this.context()) : field.max;
   }
 
   set(key: string, value: any): void {
@@ -213,7 +329,7 @@ export class InspectorFormComponent {
     value: any,
   ): void {
     const key = field.keys[part];
-    if (key) this.set(key, value);
+    if (key) this.setKey(field, key, value);
   }
 
   toggle(key: string, current: boolean): void {
@@ -221,15 +337,25 @@ export class InspectorFormComponent {
   }
 
   resetOne(field: InspectorField): void {
-    resetField(field, this.settings(), this.defaults());
+    resetFieldWhereStored(
+      field,
+      this.settings(),
+      this.widget(),
+      this.defaults(),
+    );
     this.settingsChange.emit();
-    this.reset.emit({ labelKey: field.labelKey });
+    this.reset.emit({ labelKey: field.labelKey, label: field.label });
   }
 
   resetFolder(folder: InspectorFolder): void {
     for (const field of folder.groups.flatMap((g) => g.fields)) {
       if (this.isChanged(field))
-        resetField(field, this.settings(), this.defaults());
+        resetFieldWhereStored(
+          field,
+          this.settings(),
+          this.widget(),
+          this.defaults(),
+        );
     }
     this.settingsChange.emit();
     this.reset.emit({ labelKey: FOLDER_META[folder.id].labelKey });
@@ -255,8 +381,11 @@ export class InspectorFormComponent {
   }
 
   partSample(field: TextPartField): string {
+    if (field.sampleSetting && this.settings()?.[field.sampleSetting]) {
+      return String(this.settings()[field.sampleSetting]);
+    }
     if (field.sampleKey) return this.t(field.sampleKey);
-    return field.sample ?? this.t(field.labelKey);
+    return field.sample ?? this.labelOf(field);
   }
 
   partMeta(field: TextPartField): string {

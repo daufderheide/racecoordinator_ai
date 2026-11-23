@@ -951,14 +951,23 @@ describe("LayoutEditorComponent", () => {
       component.onWidgetDropdownSelect("w1");
       fixture.detectChanges();
 
+      // A leaderboard uses the redesigned panel: X/Y/W/H are in its Layout
+      // folder (the panel remembers open folders per widget type)
+      const layoutFolder =
+        fixture.nativeElement.querySelector("#kit-folder-layout");
+      if (layoutFolder.getAttribute("aria-expanded") !== "true") {
+        layoutFolder.click();
+        fixture.detectChanges();
+      }
+
       const wInput: HTMLInputElement =
-        fixture.nativeElement.querySelector("#inspector-pos-w");
+        fixture.nativeElement.querySelector("#kit-size-0");
       const hInput: HTMLInputElement =
-        fixture.nativeElement.querySelector("#inspector-pos-h");
+        fixture.nativeElement.querySelector("#kit-size-1");
       const xInput: HTMLInputElement =
-        fixture.nativeElement.querySelector("#inspector-pos-x");
+        fixture.nativeElement.querySelector("#kit-position-0");
       const yInput: HTMLInputElement =
-        fixture.nativeElement.querySelector("#inspector-pos-y");
+        fixture.nativeElement.querySelector("#kit-position-1");
 
       expect(wInput).toBeTruthy();
       expect(hInput).toBeTruthy();
@@ -1889,15 +1898,24 @@ describe("LayoutEditorComponent", () => {
       component.onWidgetDropdownSelect("w1");
       fixture.detectChanges();
 
+      // A leaderboard uses the redesigned panel: X/Y/W/H are in its Layout
+      // folder (the panel remembers open folders per widget type)
+      const layoutFolder =
+        fixture.nativeElement.querySelector("#kit-folder-layout");
+      if (layoutFolder.getAttribute("aria-expanded") !== "true") {
+        layoutFolder.click();
+        fixture.detectChanges();
+      }
+
       const inspector = fixture.nativeElement.querySelector(
         "#help-widget-inspector",
       );
       expect(inspector).toBeTruthy();
 
-      const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
-      const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
-      const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
-      const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
+      const xInput = fixture.nativeElement.querySelector("#kit-position-0");
+      const yInput = fixture.nativeElement.querySelector("#kit-position-1");
+      const wInput = fixture.nativeElement.querySelector("#kit-size-0");
+      const hInput = fixture.nativeElement.querySelector("#kit-size-1");
 
       expect(xInput).toBeTruthy();
       expect(yInput).toBeTruthy();

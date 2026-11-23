@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import {
   Component,
+  effect,
   ElementRef,
   HostListener,
   inject,
@@ -8,6 +9,7 @@ import {
   OnDestroy,
   output,
   signal,
+  untracked,
   viewChild,
   ViewEncapsulation,
 } from "@angular/core";
@@ -21,6 +23,8 @@ import {
 } from "./inspector-form.component";
 import {
   allFields,
+  fieldSource,
+  InspectorActions,
   InspectorSchema,
   isFieldChanged,
   registryDefaults,
@@ -59,6 +63,18 @@ export class InspectorShellComponent implements OnDestroy {
   schema = input<InspectorSchema | null>(null);
   displayName = input("");
   typeLabelKey = input("");
+  /** Number of lanes on the track, for limits such as a target lane. */
+  totalLanes = input(4);
+  /** Editor data some embedded parts work on (Lane View columns). */
+  globalSettings = input<any>(null);
+  customUi = input<any>(null);
+  availableColumns = input<{ key: string; label: string }[]>([]);
+  isPracticeMode = input(false);
+  /** Lane Column: the inset clicked on the canvas, the open tab, editor handlers. */
+  selectedAnchor = input<string | null>(null);
+  selectionToken = input(0);
+  activeTab = input<string | null>(null);
+  actions = input<InspectorActions | null>(null);
   widthLocked = input(false);
   heightLocked = input(false);
   canNavigate = input(true);
@@ -81,13 +97,52 @@ export class InspectorShellComponent implements OnDestroy {
   toast = signal<{ message: string; undo: boolean } | null>(null);
   private toastTimer: any = null;
 
+  /**
+   * The settings object the form edits. Some widgets (Branding Image, QR Code)
+   * are created without customSettings; the form needs an object to write into,
+   * so it is added here and saved with the first change.
+   */
+  /** Widget id + type the schema's onOpen last ran for. */
+  private openedFor = "";
+
+  constructor() {
+    // A schema's onOpen (fill defaults, migrate old values) runs once per
+    // selected widget, like the old inspectors did when they opened.
+    effect(() => {
+      const w = this.widget();
+      const schema = this.schema();
+      untracked(() => this.runOnOpen(w, schema));
+    });
+  }
+
+  private runOnOpen(w: any, schema: InspectorSchema | null): void {
+    const key = w && schema ? `${w.id}|${schema.widgetType}` : "";
+    if (!key || key === this.openedFor) return;
+    this.openedFor = key;
+    if (!schema?.onOpen) return;
+    const changed = schema.onOpen(this.formSettings(), {
+      widget: w,
+      totalLanes: this.totalLanes() || 4,
+    });
+    if (changed) this.widgetChange.emit(w);
+  }
+
+  formSettings(): Record<string, any> {
+    const w = this.widget();
+    if (!w) return {};
+    if (!w.customSettings) w.customSettings = {};
+    return w.customSettings;
+  }
+
   changedCount(): number {
     const schema = this.schema();
     const settings = this.widget()?.customSettings;
     if (!schema || !settings) return 0;
     const defaults = registryDefaults(schema.widgetType);
     return allFields(schema).filter(
-      (f) => f.type !== "geometry" && isFieldChanged(f, settings, defaults),
+      (f) =>
+        f.type !== "geometry" &&
+        isFieldChanged(f, fieldSource(f, settings, this.widget()), defaults),
     ).length;
   }
 
@@ -112,7 +167,7 @@ export class InspectorShellComponent implements OnDestroy {
   }
 
   onReset(event: ResetEvent): void {
-    const name = this.translation.translate(event.labelKey);
+    const name = event.label ?? this.translation.translate(event.labelKey);
     this.showToast(
       this.translation.translate("UE_KIT_RESET_DONE", { name }),
       true,

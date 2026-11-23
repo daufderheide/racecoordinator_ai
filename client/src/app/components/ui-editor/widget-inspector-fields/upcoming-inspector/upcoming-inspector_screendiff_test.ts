@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
+import { InspectorKitHarnessE2e } from "@app/components/ui-editor/inspector-kit/testing/inspector-kit.harness.e2e";
 
 test.describe("Upcoming Inspector Visuals", () => {
   test.beforeEach(async ({ page }) => {
@@ -91,38 +92,18 @@ test.describe("Upcoming Inspector Visuals", () => {
     await nextHeatWidget.dispatchEvent("pointerdown");
 
     // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    // Verify inspector contains upcoming-specific fields
-    const inspectorFields = page.locator("app-upcoming-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    const sliders = inspectorFields.locator("input[type='range']");
-    const colorPickers = inspectorFields.locator("input[type='color']");
-
-    await sliders.nth(0).fill("28"); // Title font size
-    await colorPickers.nth(0).evaluate((el: HTMLInputElement) => {
-      el.value = "#ff0000";
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }); // Title text color to Red
-
-    await sliders.nth(1).fill("22"); // Lane font size
-    await colorPickers.nth(1).evaluate((el: HTMLInputElement) => {
-      el.value = "#00ff00";
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }); // Lane text color to Green
-
-    // Blur any active element, clear hover, and scroll inspector panel so upcoming fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-upcoming-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
-    await page.mouse.move(0, 0);
+    // The redesigned panel: Title and Lanes parts in Text
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.openFolder("text");
+    await kit.setPartSize("title", 28);
+    await kit.setPartColor("title", "#ff0000");
+    await kit.setPartSize("lanes", 22);
+    await kit.setPartColor("lanes", "#00ff00");
+    await kit.settle('[data-folder="text"]');
 
     // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
+    await expect(kit.panel).toHaveScreenshot(
       "next-heat-inspector-options.png",
       {
         animations: "disabled",
@@ -148,27 +129,14 @@ test.describe("Upcoming Inspector Visuals", () => {
     await onDeckWidget.dispatchEvent("pointerdown");
 
     // Wait for the inspector panel to be visible
-    const inspectorPanel = page.locator(".widget-inspector-panel");
-    await inspectorPanel.waitFor({ state: "visible" });
-
-    // Verify inspector contains upcoming-specific fields
-    const inspectorFields = page.locator("app-upcoming-inspector");
-    await inspectorFields.waitFor({ state: "visible" });
-
-    // Blur any active element, clear hover, and scroll inspector panel so upcoming fields are at the top
-    await page.evaluate(() => {
-      (document.activeElement as HTMLElement)?.blur();
-      const fields = document.querySelector("app-upcoming-inspector");
-      fields?.scrollIntoView({ block: "start", inline: "nearest" });
-    });
-    await page.mouse.move(0, 0);
+    // The redesigned panel, as it opens
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.settle();
 
     // Take screenshot of the inspector panel
-    await expect(inspectorPanel).toHaveScreenshot(
-      "on-deck-inspector-options.png",
-      {
-        animations: "disabled",
-      },
-    );
+    await expect(kit.panel).toHaveScreenshot("on-deck-inspector-options.png", {
+      animations: "disabled",
+    });
   });
 });
