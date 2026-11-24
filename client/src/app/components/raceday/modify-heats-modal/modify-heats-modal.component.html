@@ -918,6 +918,7 @@
   [cars]="cars.allCars"
   [teamDrivers]="cars.teamDrivers(cars.target)"
   [choice]="cars.choiceFor(cars.target)"
+  [serverUrl]="dataService.serverUrl"
   (save)="onCarPicked($event)"
   (close)="cars.target = null"
 ></app-car-pick-dialog>

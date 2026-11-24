@@ -60,7 +60,7 @@ Chaque voiture a les mêmes champs et garde ses propres valeurs. Un champ laiss�
 
 ## Voitures slot en course {: #car-in-race }
 
-- **Race Day Setup** : dans la liste des pilotes qui courent, cliquez sur l'icône de voiture d'une ligne pour choisir une voiture slot. Une équipe choisit **Une voiture pour l'équipe** ou **Une voiture par pilote**. RC AI retient votre choix pour la course suivante.
+- **Race Day Setup** : dans la liste des pilotes qui courent, cliquez sur l'icône de voiture d'une ligne pour choisir une voiture slot. Une équipe choisit **Une voiture pour l'équipe** ou **Une voiture par pilote**. Une voiture court pour un seul pilote : une voiture qu'un autre pilote a déjà est grisée, et une ligne affiche un avertissement si un choix retenu entre en conflit. RC AI retient votre choix pour la course suivante.
 - **Échanger entre les séries** : le jour de course, ouvrez **Directeur de Course → Voitures slot…**. La série suivante y figure voie par voie ; choisissez une autre voiture et elle est échangée tout de suite. Pendant une série, les listes sont verrouillées.
 - **Modifier les séries** : l'icône de voiture d'un pilote change sa voiture pour toutes les séries pas encore courues.
 - **Résultats** : chaque série garde une copie de la voiture telle qu'elle a couru ; modifier ou supprimer une voiture plus tard ne change pas les anciens résultats.

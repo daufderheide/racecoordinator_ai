@@ -128,4 +128,62 @@ describe("RacedaySetupCarsHelper (#1210)", () => {
     expect(host.allCars).toBeUndefined();
     expect(RacedaySetupCarsHelper.launchChoices(host)).toEqual([]);
   });
+
+  describe("one car per entry (#1251)", () => {
+    const cleo = new Driver("d3", "Cleo", "C");
+
+    beforeEach(() => {
+      host.selectedParticipants = [ann, team, cleo];
+      host.getLocalizedName = (p: any) => `${p.name}!`;
+      host.carChoices = {
+        d_d1: { carId: "c1", carPerDriver: false, driverCars: {} },
+        t_t1: {
+          carId: "",
+          carPerDriver: true,
+          driverCars: { d1: "c2", d2: "c3" },
+        },
+      };
+    });
+
+    it("lists the cars the other entries in the race have", () => {
+      expect(RacedaySetupCarsHelper.takenBy(host, cleo)).toEqual({
+        c1: "Ann!",
+        c2: "Ferrari!",
+        c3: "Ferrari!",
+      });
+      expect(RacedaySetupCarsHelper.takenBy(host, ann)).toEqual({
+        c2: "Ferrari!",
+        c3: "Ferrari!",
+      });
+    });
+
+    it("works out the taken cars when the dialog opens", () => {
+      RacedaySetupCarsHelper.open(host, cleo);
+      expect(host.carPickTarget).toBe(cleo);
+      expect(Object.keys(host.carPickTaken)).toEqual(["c1", "c2", "c3"]);
+    });
+
+    it("ignores entries that are not in the race", () => {
+      host.selectedParticipants = [ann, cleo];
+      expect(RacedaySetupCarsHelper.takenBy(host, cleo)).toEqual({
+        c1: "Ann!",
+      });
+    });
+
+    it("falls back to the entry's name", () => {
+      delete host.getLocalizedName;
+      expect(RacedaySetupCarsHelper.takenBy(host, cleo)["c1"]).toBe("Ann");
+    });
+
+    it("finds a remembered pick that clashes with another entry", () => {
+      expect(RacedaySetupCarsHelper.conflict(host, cleo)).toBe("");
+      host.carChoices.d_d3 = {
+        carId: "c3",
+        carPerDriver: false,
+        driverCars: {},
+      };
+      expect(RacedaySetupCarsHelper.conflict(host, cleo)).toBe("Ferrari!");
+      expect(RacedaySetupCarsHelper.conflict(host, ann)).toBe("");
+    });
+  });
 });

@@ -3,6 +3,7 @@ import { CarPickDriver } from "@app/components/shared/car-pick-dialog/car-pick-d
 import { Car } from "@app/models/car";
 import {
   CarChoice,
+  choiceCarIds,
   cleanCarChoice,
   emptyCarChoice,
   hasAnyCar,
@@ -69,8 +70,39 @@ export class RacedaySetupCarsHelper {
     return name(choice.carId) || "";
   }
 
+  /**
+   * The cars the other entries in the race already have (car id → entry
+   * name). One car can't race for two entries (#1251), so the pick dialog
+   * greys these out.
+   */
+  static takenBy(host: any, p: Participant): Record<string, string> {
+    const me = getParticipantUniqueId(p);
+    const taken: Record<string, string> = {};
+    for (const other of host.selectedParticipants || []) {
+      const id = getParticipantUniqueId(other);
+      if (id === me) continue;
+      for (const carId of choiceCarIds(host.carChoices?.[id])) {
+        taken[carId] ??= host.getLocalizedName?.(other) ?? other.name ?? "";
+      }
+    }
+    return taken;
+  }
+
+  /**
+   * The other entry that has one of this entry's cars, or "" (a remembered
+   * pick can clash once both entries are in the race).
+   */
+  static conflict(host: any, p: Participant): string {
+    const taken = RacedaySetupCarsHelper.takenBy(host, p);
+    const clash = choiceCarIds(RacedaySetupCarsHelper.choiceFor(host, p)).find(
+      (carId) => taken[carId] !== undefined,
+    );
+    return clash ? taken[clash] : "";
+  }
+
   static open(host: any, p: Participant, event?: Event): void {
     event?.stopPropagation();
+    host.carPickTaken = RacedaySetupCarsHelper.takenBy(host, p);
     host.carPickTarget = p;
   }
 

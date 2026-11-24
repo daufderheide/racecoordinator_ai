@@ -845,8 +845,21 @@
                       }
                     </div>
                     @if (allCars.length > 0 && carSummary(participant)) {
-                      <div class="driver-car" [title]="carSummary(participant)">
-                        <span class="material-icons">directions_car</span>
+                      <div
+                        class="driver-car"
+                        [class.car-clash]="!!carConflict(participant)"
+                        [title]="
+                          carConflict(participant)
+                            ? ('CPD_USED_BY'
+                              | translate: { name: carConflict(participant) })
+                            : carSummary(participant)
+                        "
+                      >
+                        <span class="material-icons">{{
+                          carConflict(participant)
+                            ? "warning"
+                            : "directions_car"
+                        }}</span>
                         <span class="driver-car-name">{{
                           carSummary(participant)
                         }}</span>
@@ -1585,6 +1598,8 @@
   [cars]="allCars"
   [teamDrivers]="carPickTarget ? carTeamDrivers(carPickTarget) : []"
   [choice]="carPickTarget ? carChoiceFor(carPickTarget) : emptyChoice"
+  [takenBy]="carPickTaken"
+  [serverUrl]="dataService.serverUrl"
   (save)="onCarPicked($event)"
   (close)="carPickTarget = null"
 ></app-car-pick-dialog>

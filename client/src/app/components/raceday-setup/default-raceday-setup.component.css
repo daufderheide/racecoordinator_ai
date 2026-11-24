@@ -527,6 +527,11 @@
   text-overflow: ellipsis;
 }
 
+/* Another entry in the race has this car too (#1251). */
+.driver-car.car-clash {
+  color: #fbbf24;
+}
+
 .car-pick-btn {
   flex-shrink: 0;
   display: inline-flex;

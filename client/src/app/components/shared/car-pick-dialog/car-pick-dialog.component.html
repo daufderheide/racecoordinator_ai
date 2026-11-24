@@ -54,43 +54,106 @@
           </div>
         }
 
-        @if (!draft.carPerDriver) {
-          <div class="form-field">
-            <label class="field-label">{{ "CPD_LABEL_CAR" | translate }}</label>
-            <app-custom-select
-              id="car-pick-select"
-              [value]="draft.carId"
-              (change)="setCar($event)"
-            >
-              <app-custom-option value="">{{
-                "CPD_NO_CAR" | translate
-              }}</app-custom-option>
-              @for (car of sortedCars(); track car.entity_id) {
-                <app-custom-option [value]="car.entity_id">{{
-                  label(car)
-                }}</app-custom-option>
-              }
-            </app-custom-select>
-          </div>
-        } @else {
-          @for (d of teamDrivers(); track d.id) {
-            <div class="form-field" [id]="'car-pick-driver-' + d.id">
-              <label class="field-label">{{ d.name }}</label>
-              <app-custom-select
-                [value]="driverCar(d.id)"
-                (change)="setDriverCar(d.id, $event)"
+        @if (draft.carPerDriver) {
+          <div class="cpd-drivers" role="tablist">
+            @for (d of teamDrivers(); track d.id) {
+              <button
+                type="button"
+                role="tab"
+                class="cpd-driver"
+                [id]="'car-pick-driver-' + d.id"
+                [class.active]="d.id === activeDriverId"
+                [attr.aria-selected]="d.id === activeDriverId"
+                (click)="activeDriverId = d.id"
               >
-                <app-custom-option value="">{{
-                  "CPD_NO_CAR" | translate
-                }}</app-custom-option>
-                @for (car of sortedCars(); track car.entity_id) {
-                  <app-custom-option [value]="car.entity_id">{{
-                    label(car)
-                  }}</app-custom-option>
-                }
-              </app-custom-select>
+                <span class="cpd-driver-name">{{ d.name }}</span>
+                <span class="cpd-driver-car">{{
+                  carName(driverCar(d.id)) || ("CPD_NO_CAR" | translate)
+                }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        @if (sortedCars().length > 0) {
+          @if (showSearch()) {
+            <div class="cpd-search">
+              <span class="material-icons">search</span>
+              <input
+                type="text"
+                id="car-pick-search"
+                [(ngModel)]="search"
+                [placeholder]="'CPD_SEARCH' | translate"
+                [attr.aria-label]="'CPD_SEARCH' | translate"
+              />
             </div>
           }
+          <div class="cpd-list" id="car-pick-list" role="radiogroup">
+            @if (!search.trim()) {
+              <button
+                type="button"
+                role="radio"
+                class="cpd-car cpd-car-none"
+                id="car-pick-none"
+                [class.selected]="!selectedId()"
+                [attr.aria-checked]="!selectedId()"
+                (click)="pick('')"
+              >
+                <span class="cpd-thumb">
+                  <span class="material-icons">block</span>
+                </span>
+                <span class="cpd-car-text">
+                  <span class="cpd-car-name">{{
+                    "CPD_NO_CAR" | translate
+                  }}</span>
+                </span>
+              </button>
+            }
+            @for (car of visibleCars(); track car.entity_id) {
+              <button
+                type="button"
+                role="radio"
+                class="cpd-car"
+                [id]="'car-pick-car-' + car.entity_id"
+                [class.selected]="car.entity_id === selectedId()"
+                [class.taken]="!!usedBy(car.entity_id)"
+                [disabled]="!!usedBy(car.entity_id)"
+                [attr.aria-checked]="car.entity_id === selectedId()"
+                (click)="pick(car.entity_id)"
+              >
+                <span class="cpd-thumb">
+                  @if (imageUrl(car)) {
+                    <img
+                      [src]="imageUrl(car)"
+                      alt=""
+                      draggable="false"
+                      (error)="onImageError(car)"
+                    />
+                  } @else {
+                    <span class="material-icons">directions_car</span>
+                  }
+                </span>
+                <span class="cpd-car-text">
+                  <span class="cpd-car-name">{{ car.name }}</span>
+                  @if (usedBy(car.entity_id)) {
+                    <span class="cpd-car-meta cpd-used">{{
+                      "CPD_USED_BY" | translate: { name: usedBy(car.entity_id) }
+                    }}</span>
+                  } @else if (meta(car)) {
+                    <span class="cpd-car-meta">{{ meta(car) }}</span>
+                  }
+                </span>
+                @if (car.entity_id === selectedId()) {
+                  <span class="material-icons cpd-check">check_circle</span>
+                }
+              </button>
+            }
+            @if (visibleCars().length === 0) {
+              <p class="cpd-hint" id="car-pick-no-match">
+                {{ "CPD_NO_MATCH" | translate }}
+              </p>
+            }
+          </div>
         }
 
         @if (sortedCars().length === 0) {

@@ -154,4 +154,115 @@ describe("CarPickDialogComponent (#1210)", () => {
     open({});
     expect(el("#car-pick-empty")?.textContent).toContain("CPD_EMPTY");
   });
+
+  describe("car list (#1251)", () => {
+    const click = (sel: string) => {
+      (el(sel) as HTMLButtonElement).click();
+      fixture.detectChanges();
+    };
+
+    it("shows No car first, then each car with its class and scale", () => {
+      open({});
+      const rows = Array.from(
+        fixture.nativeElement.querySelectorAll("#car-pick-list .cpd-car"),
+      ) as HTMLElement[];
+      expect(rows.map((r) => r.id)).toEqual([
+        "car-pick-none",
+        "car-pick-car-c1",
+        "car-pick-car-c2",
+      ]);
+      expect(rows[1].textContent).toContain("GT3 · 1/32");
+      expect(el("#car-pick-none")?.classList).toContain("selected");
+    });
+
+    it("picks a car with a click and back to no car", () => {
+      open({});
+      click("#car-pick-car-c2");
+      expect(el("#car-pick-car-c2")?.classList).toContain("selected");
+      expect(el("#car-pick-car-c2 .cpd-check")).not.toBeNull();
+      click("#car-pick-none");
+      component.onSave();
+      expect(saved[0].carId).toBe("");
+    });
+
+    it("greys out a car another entry has", () => {
+      open({ takenBy: { c2: "Bob" } });
+      const row = el("#car-pick-car-c2") as HTMLButtonElement;
+      expect(row.disabled).toBeTrue();
+      expect(row.classList).toContain("taken");
+      expect(row.textContent).toContain("CPD_USED_BY");
+      component.pick("c2");
+      expect(component.draft.carId).toBe("");
+      expect(component.usedBy("c2")).toBe("Bob");
+    });
+
+    it("never greys out the entry's own car", () => {
+      open({
+        takenBy: { c2: "Bob" },
+        choice: { carId: "c2", carPerDriver: false, driverCars: {} },
+      });
+      expect(
+        (el("#car-pick-car-c2") as HTMLButtonElement).disabled,
+      ).toBeFalse();
+    });
+
+    it("gives each team driver a tab and greys out a team mate's car", () => {
+      open({
+        teamDrivers: [
+          { id: "d1", name: "Ann" },
+          { id: "d2", name: "Bob" },
+        ],
+        choice: { carId: "", carPerDriver: true, driverCars: { d1: "c1" } },
+      });
+      expect(component.activeDriverId).toBe("d1");
+      expect(el("#car-pick-driver-d1")?.textContent).toContain("audi R8");
+      expect(el("#car-pick-driver-d2")?.textContent).toContain("CPD_NO_CAR");
+      click("#car-pick-driver-d2");
+      expect(component.activeDriverId).toBe("d2");
+      expect((el("#car-pick-car-c1") as HTMLButtonElement).disabled).toBeTrue();
+      expect(component.usedBy("c1")).toBe("Ann");
+      click("#car-pick-car-c2");
+      component.onSave();
+      expect(saved[0].driverCars).toEqual({ d1: "c1", d2: "c2" });
+    });
+
+    it("shows a search box from seven cars and filters on name, brand and class", () => {
+      open({});
+      expect(el("#car-pick-search")).toBeNull();
+      const many = Array.from(
+        { length: 7 },
+        (_, i) =>
+          new Car(`m${i}`, `Car ${i}`, {
+            brand: i === 3 ? "Scalextric" : "Carrera",
+            carClass: i === 5 ? "LMP1" : "GT",
+          }),
+      );
+      fixture.componentRef.setInput("cars", many);
+      fixture.detectChanges();
+      expect(el("#car-pick-search")).not.toBeNull();
+      component.search = "scalex";
+      expect(component.visibleCars().map((c) => c.entity_id)).toEqual(["m3"]);
+      component.search = "lmp";
+      expect(component.visibleCars().map((c) => c.entity_id)).toEqual(["m5"]);
+      component.search = "zzz";
+      fixture.detectChanges();
+      expect(el("#car-pick-no-match")).not.toBeNull();
+      expect(el("#car-pick-none")).toBeNull();
+    });
+
+    it("shows the car picture from the server, or an icon", () => {
+      const withPic = new Car("p1", "Pic car", { avatarUrl: "/assets/p1.png" });
+      fixture.componentRef.setInput("cars", [withPic, cars[0]]);
+      open({ serverUrl: "http://host:7070" });
+      expect(
+        (el("#car-pick-car-p1 img") as HTMLImageElement).getAttribute("src"),
+      ).toBe("http://host:7070/assets/p1.png");
+      expect(el("#car-pick-car-c2 img")).toBeNull();
+      component.onImageError(withPic);
+      fixture.detectChanges();
+      expect(el("#car-pick-car-p1 img")).toBeNull();
+      const web = new Car("w", "Web", { avatarUrl: "https://x/y.png" });
+      expect(component.imageUrl(web)).toBe("https://x/y.png");
+    });
+  });
 });

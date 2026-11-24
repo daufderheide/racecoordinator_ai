@@ -1,6 +1,7 @@
 import { Car } from "./car";
 import {
   applyChoiceToParticipant,
+  choiceCarIds,
   choiceFromParticipant,
   cleanCarChoice,
   emptyCarChoice,
@@ -122,5 +123,20 @@ describe("car-choice (#1210)", () => {
     expect(participantCarSummary(p)).toBe("");
     expect(participantCarSummary(undefined)).toBe("");
     expect(participantCarFor(undefined)).toBeUndefined();
+  });
+
+  it("lists the cars a choice uses, each once (#1251)", () => {
+    expect(
+      choiceCarIds({ carId: "c1", carPerDriver: false, driverCars: {} }),
+    ).toEqual(["c1"]);
+    expect(
+      choiceCarIds({
+        carId: "c9",
+        carPerDriver: true,
+        driverCars: { d1: "c1", d2: "c2", d3: "c1", d4: "" },
+      }),
+    ).toEqual(["c1", "c2"]);
+    expect(choiceCarIds(emptyCarChoice())).toEqual([]);
+    expect(choiceCarIds(undefined)).toEqual([]);
   });
 });

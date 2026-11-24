@@ -27,8 +27,8 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 12px;
   width: 100%;
-  max-width: 440px;
-  max-height: 85vh;
+  max-width: 520px;
+  max-height: min(640px, 85vh);
   display: flex;
   flex-direction: column;
   box-shadow:
@@ -84,7 +84,8 @@
 
 .modal-body {
   padding: 16px 20px;
-  overflow-y: auto;
+  overflow: hidden;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -199,4 +200,181 @@
 
 .modal-footer {
   gap: 8px;
+}
+
+/* Driver tabs for "a car per driver" (#1251). */
+.cpd-drivers {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.cpd-driver {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 110px;
+  padding: 6px 10px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.cpd-driver.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+}
+
+.cpd-driver-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.cpd-driver-car {
+  font-size: 12px;
+  color: #94a3b8;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cpd-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.cpd-search .material-icons {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.cpd-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.cpd-search:focus-within {
+  border-color: #38bdf8;
+}
+
+/* The car list (#1251): one row per car, scrolls inside the dialog. */
+.cpd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  padding-right: 2px;
+}
+
+.cpd-car {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: #e2e8f0;
+  flex-shrink: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.cpd-car:hover:not(:disabled) {
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.cpd-car.selected {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+}
+
+.cpd-car.taken {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.cpd-thumb {
+  width: 56px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.cpd-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cpd-thumb .material-icons {
+  font-size: 22px;
+  color: #64748b;
+}
+
+.cpd-car-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cpd-car-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cpd-car-meta {
+  font-size: 12px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cpd-used {
+  color: #fbbf24;
+}
+
+.cpd-check {
+  font-size: 20px;
+  color: #38bdf8;
+  flex-shrink: 0;
 }

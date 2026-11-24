@@ -164,6 +164,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
   /** Slotcars (#1210): the database, the pick per entry, the entry being picked for. */
   public allCars: Car[] = [];
   public carChoices: Record<string, CarChoice> = {};
+  /** Cars other entries have, for the open pick dialog (#1251). */
+  public carPickTaken: Record<string, string> = {};
   public carPickTarget: Participant | null = null;
   public readonly emptyChoice: CarChoice = emptyCarChoice();
   public driverLabels: DriverLabel[] = [];
@@ -297,7 +299,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   menuItems = RacedaySetupNavigationHelper.buildMenuItems(this);
 
   constructor(
-    private dataService: DataService,
+    protected dataService: DataService,
     private cdr: ChangeDetectorRef,
     private raceService: RaceService,
     private router: Router,
@@ -340,6 +342,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   carTeamDrivers(participant: Participant): CarPickDriver[] {
     return RacedaySetupCarsHelper.teamDrivers(this, participant);
+  }
+
+  carConflict(participant: Participant): string {
+    return RacedaySetupCarsHelper.conflict(this, participant);
   }
 
   openCarPick(participant: Participant, event?: Event): void {

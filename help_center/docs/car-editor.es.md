@@ -60,7 +60,7 @@ Todos los coches tienen los mismos campos y guardan sus propios valores. Un camp
 
 ## Coches de slot en una carrera {: #car-in-race }
 
-- **Race Day Setup**: en la lista de pilotos que corren, haz clic en el icono del coche de una fila para elegir un coche de slot. Un equipo elige **Un coche para el equipo** o **Un coche por piloto**. RC AI recuerda tu elección para la próxima carrera.
+- **Race Day Setup**: en la lista de pilotos que corren, haz clic en el icono del coche de una fila para elegir un coche de slot. Un equipo elige **Un coche para el equipo** o **Un coche por piloto**. Un coche corre para un solo piloto: un coche que ya tiene otro piloto aparece en gris, y una fila muestra un aviso si una elección recordada choca. RC AI recuerda tu elección para la próxima carrera.
 - **Cambiar entre mangas**: el día de carrera, abre **Director de Carrera → Coches de slot…**. Muestra la próxima manga carril por carril; elige otro coche y cambia al instante. Mientras una manga está en curso, las listas están bloqueadas.
 - **Modificar mangas**: el icono del coche de un piloto cambia su coche para todas las mangas que aún no se han corrido.
 - **Resultados**: cada manga guarda una copia del coche tal como corrió, así que editar o borrar un coche después no cambia los resultados anteriores.
