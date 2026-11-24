@@ -372,6 +372,7 @@ export class RacedaySetupLaunchHelper {
 
     const raceAgain = !!host.pendingRaceAgain;
     const carChoices = RacedaySetupCarsHelper.launchChoices(host);
+    const laneCarIds = RacedaySetupCarsHelper.launchLaneCarIds(host);
     host.pendingRaceAgain = false;
 
     const initializeObservable =
@@ -386,6 +387,7 @@ export class RacedaySetupLaunchHelper {
             themeId,
             raceAgain,
             carChoices,
+            laneCarIds,
           )
         : host.dataService.initializeRace(
             raceId,
@@ -397,6 +399,7 @@ export class RacedaySetupLaunchHelper {
             themeId,
             raceAgain,
             carChoices,
+            laneCarIds,
           );
 
     initializeObservable.subscribe({

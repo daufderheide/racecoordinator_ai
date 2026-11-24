@@ -234,15 +234,6 @@ public class DriverLaneHeatHandler {
         ctx.status(400).result("Invalid lane index: " + lane);
         return;
       }
-      DriverHeatData dhd = drivers.get(lane);
-      RaceParticipant participant = dhd.getDriver();
-      if (participant == null
-          || participant.getDriver() == null
-          || Driver.EMPTY_DRIVER_ID.equals(participant.getDriver().getEntityId())) {
-        ctx.status(400).result("RD_ERR_CAR_SWAP_EMPTY_LANE");
-        return;
-      }
-
       Car car = null;
       if (!carId.isEmpty()) {
         car = DatabaseService.getInstance().getCar(databaseContext, carId);
@@ -250,6 +241,24 @@ public class DriverLaneHeatHandler {
           ctx.status(404).result("RD_ERR_CAR_NOT_FOUND");
           return;
         }
+      }
+
+      // IROC: the car belongs to the lane, so an empty lane can get one too.
+      if (race.isCarsStayInLanes()) {
+        race.setLaneCar(lane, car);
+        race.refreshCarSnapshots();
+        race.broadcast(race.createSnapshot());
+        ctx.status(200);
+        return;
+      }
+
+      DriverHeatData dhd = drivers.get(lane);
+      RaceParticipant participant = dhd.getDriver();
+      if (participant == null
+          || participant.getDriver() == null
+          || Driver.EMPTY_DRIVER_ID.equals(participant.getDriver().getEntityId())) {
+        ctx.status(400).result("RD_ERR_CAR_SWAP_EMPTY_LANE");
+        return;
       }
 
       if (participant.isCarPerDriver()) {

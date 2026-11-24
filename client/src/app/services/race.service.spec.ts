@@ -1,4 +1,5 @@
 import { TestBed } from "@angular/core/testing";
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -142,5 +143,15 @@ describe("RaceService", () => {
     expect(service.getParticipants()).toEqual([]);
     expect(service.getRace()).toBeUndefined();
     expect(service.getRacingDrivers()).toEqual([]);
+  });
+
+  it("keeps the car on each lane (IROC, #1210)", () => {
+    expect(service.getLaneCars()).toEqual([]);
+    const seen: unknown[] = [];
+    service.laneCars$.subscribe((c) => seen.push(c));
+    const lanes = [undefined, new Car("c1", "Audi R8")];
+    service.setLaneCars(lanes);
+    expect(service.getLaneCars()).toBe(lanes);
+    expect(seen).toEqual([[], lanes]);
   });
 });

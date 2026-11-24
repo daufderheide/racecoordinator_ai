@@ -77,4 +77,19 @@ describe("RacedaySlotcarsHelper (#1210)", () => {
     RacedaySlotcarsHelper.swap(host, { lane: 0, carId: "c1" });
     expect(host.ackModalMessage).toBe("RSD_ERR_MESSAGE");
   });
+
+  it("knows when the cars stay in their lanes (IROC)", () => {
+    expect(RacedaySlotcarsHelper.carsStayInLanes(host)).toBeFalse();
+    host.raceService = { getRace: () => ({ cars_stay_in_lanes: true }) };
+    expect(RacedaySlotcarsHelper.carsStayInLanes(host)).toBeTrue();
+    host.race = { cars_stay_in_lanes: false };
+    expect(RacedaySlotcarsHelper.carsStayInLanes(host)).toBeFalse();
+  });
+
+  it("hands out the car on each lane", () => {
+    expect(RacedaySlotcarsHelper.laneCars(host)).toEqual([]);
+    const lanes = [undefined, { entity_id: "c1" }];
+    host.raceService = { getLaneCars: () => lanes };
+    expect(RacedaySlotcarsHelper.laneCars(host)).toBe(lanes as any);
+  });
 });

@@ -1125,6 +1125,8 @@
   [track]="track"
   [cars]="raceCars"
   [locked]="isSlotcarSwapLocked"
+  [lanesMode]="carsStayInLanes"
+  [laneCars]="laneCars"
   (swap)="onSlotcarSwap($event)"
   (close)="showSlotcarsDialog = false"
 ></app-raceday-slotcars-dialog>

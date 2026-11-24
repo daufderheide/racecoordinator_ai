@@ -498,6 +498,31 @@
                   </label>
                 </div>
               </div>
+              <div class="config-row">
+                <!-- IROC: the slotcars stay in their lanes (#1210) -->
+                <div class="config-section checkbox-section">
+                  <label
+                    id="cars-stay-in-lanes-input"
+                    class="checkbox-container"
+                    [class.disabled]="!isEditMode"
+                    [title]="'RE_CARS_STAY_IN_LANES_HINT' | translate"
+                  >
+                    <input
+                      id="cars-stay-in-lanes-checkbox"
+                      type="checkbox"
+                      [(ngModel)]="editingRace.cars_stay_in_lanes"
+                      (ngModelChange)="captureState()"
+                      class="cars-stay-in-lanes-input"
+                      data-testid="cars-stay-in-lanes-input"
+                      [disabled]="!isEditMode"
+                    />
+                    <span class="checkmark"></span>
+                    <span class="checkbox-label">
+                      {{ "RE_CARS_STAY_IN_LANES" | translate }}
+                    </span>
+                  </label>
+                </div>
+              </div>
             </app-editor-section>
 
             <!-- Scoring Section -->

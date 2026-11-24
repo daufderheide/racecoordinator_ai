@@ -46,4 +46,17 @@ describe("CarConverter (#1210)", () => {
     expect(back).toEqual(car);
     expect(CarConverter.toProto(undefined)).toBeUndefined();
   });
+
+  it("reads the car on each lane, by lane index (IROC)", () => {
+    const lanes = CarConverter.laneCarsFromProto([
+      { lane: 2, car: { model: { entityId: "c2" }, name: "Ford GT40" } },
+      { lane: 0, car: { model: { entityId: "c1" }, name: "Audi R8" } },
+    ]);
+    expect(lanes.length).toBe(3);
+    expect(lanes[0]?.name).toBe("Audi R8");
+    expect(lanes[1]).toBeUndefined();
+    expect(lanes[2]?.entity_id).toBe("c2");
+    expect(CarConverter.laneCarsFromProto(undefined)).toEqual([]);
+    expect(CarConverter.laneCarsFromProto([{ car: {} }])).toEqual([undefined]);
+  });
 });

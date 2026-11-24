@@ -1,0 +1,98 @@
+/* Race Day Setup: the car on each lane (IROC, #1210). */
+
+:host {
+  display: block;
+  margin-top: 10px;
+}
+
+.lane-cars-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.lane-cars-bar:hover,
+.lane-cars-bar:focus-visible {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.12);
+  outline: none;
+}
+
+.lane-cars-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lane-cars-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #38bdf8;
+}
+
+.lane-cars-title .material-icons,
+.lane-cars-edit {
+  font-size: 16px;
+}
+
+.lane-cars-edit {
+  color: #94a3b8;
+}
+
+.lane-cars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lane-car {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lane-car-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
+  background: #94a3b8;
+}
+
+.lane-car-name {
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lane-car-name.empty {
+  color: #64748b;
+  font-style: italic;
+}

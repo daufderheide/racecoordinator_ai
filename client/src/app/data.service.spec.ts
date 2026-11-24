@@ -16,6 +16,7 @@ import {
   EndRaceResponse,
   GetPhidgetDevicesResponse,
   InitializeInterfaceResponse,
+  InitializeRaceRequest,
   InitializeRaceResponse,
   InterfaceEvent,
   ListAssetsResponse,
@@ -1823,6 +1824,45 @@ describe("DataService", () => {
       expect(req.request.body instanceof Blob).toBeTrue();
 
       req.flush(respBuffer.slice().buffer);
+    });
+
+    it("sends the lane cars of an IROC race (#1210)", async () => {
+      const respBuffer = InitializeRaceResponse.encode(
+        InitializeRaceResponse.create({ success: true }),
+      ).finish();
+      service
+        .initializeRace(
+          "race-1",
+          ["d1"],
+          false,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          true,
+          [],
+          ["c1", "", "c2"],
+        )
+        .subscribe();
+      const req = httpMock.expectOne((r) =>
+        r.url.endsWith("/api/initialize-race"),
+      );
+      const body = new Uint8Array(await req.request.body.arrayBuffer());
+      const sent = InitializeRaceRequest.decode(body);
+      expect(sent.laneCarIds).toEqual(["c1", "", "c2"]);
+      expect(sent.raceAgain).toBeTrue();
+      expect(sent.carChoices).toEqual([]);
+      req.flush(respBuffer.slice().buffer);
+    });
+
+    it("sends no lane cars when there are none", async () => {
+      service.initializeRace("race-1", ["d1"], false).subscribe();
+      const req = httpMock.expectOne((r) =>
+        r.url.endsWith("/api/initialize-race"),
+      );
+      const body = new Uint8Array(await req.request.body.arrayBuffer());
+      expect(InitializeRaceRequest.decode(body).laneCarIds).toEqual([]);
+      req.flush(new ArrayBuffer(0));
     });
 
     it("should update live lap record status", (done) => {

@@ -931,4 +931,59 @@ public class DriverLaneHeatHandlerTest {
     assertEquals("c1", tp.carFor(onLane).getEntityId());
     assertNull("the shared car stays unset", tp.getCar());
   }
+
+  // ---- Cars stay in their lanes, IROC (#1210) ----
+  private Race startIrocRace(RaceParticipant... participants) {
+    Track track =
+        new Track.Builder()
+            .name("Track 1")
+            .lanes(Arrays.asList(new Lane("red", "black", 100), new Lane("blue", "white", 100)))
+            .build();
+    com.antigravity.models.Race model = // fqn-collision
+        new com.antigravity.models.Race.Builder() // fqn-collision
+            .withName("IROC")
+            .withEntityId("r-iroc")
+            .withCarsStayInLanes(true)
+            .build();
+    Race race =
+        new Race.Builder()
+            .model(model)
+            .drivers(Arrays.asList(participants))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    ClientSubscriptionManager.getInstance().setRace(race);
+    return race;
+  }
+
+  @Test
+  public void inAnIrocRaceTheSwapPutsTheCarOnTheLane() {
+    RaceParticipant p = new RaceParticipant(ann);
+    p.setCar(new Car.Builder().withName("Own").withEntityId("own").build());
+    Race race = startIrocRace(p, new RaceParticipant(bob));
+    swap(1, "c2");
+    verify(ctx).status(200);
+    assertEquals("c2", race.getLaneCar(1).getEntityId());
+    assertEquals("c2", race.getCurrentHeat().getDrivers().get(1).getCar().getEntityId());
+    assertEquals("the racer's own car is untouched", "own", p.getCar().getEntityId());
+  }
+
+  @Test
+  public void inAnIrocRaceAnEmptyLaneCanGetACar() {
+    Race race = startIrocRace(new RaceParticipant(ann));
+    int emptyLane =
+        race.getCurrentHeat().getDrivers().get(0).getDriver().getDriver() == ann ? 1 : 0;
+    swap(emptyLane, "c1");
+    verify(ctx).status(200);
+    assertEquals("c1", race.getLaneCar(emptyLane).getEntityId());
+  }
+
+  @Test
+  public void inAnIrocRaceAnEmptyCarIdTakesTheCarOffTheLane() {
+    Race race = startIrocRace(new RaceParticipant(ann), new RaceParticipant(bob));
+    swap(0, "c1");
+    swap(0, "");
+    assertNull(race.getLaneCar(0));
+    assertNull(race.getCurrentHeat().getDrivers().get(0).getCar());
+  }
 }

@@ -103,4 +103,53 @@ describe("RacedaySlotcarsDialogComponent (#1210)", () => {
       fixture.nativeElement.querySelector("#slotcars-empty"),
     ).not.toBeNull();
   });
+
+  describe("cars stay in their lanes (IROC)", () => {
+    const ford = new Car("c2", "Ford GT40");
+
+    function irocHeat(): Heat {
+      const hd0 = new DriverHeatData("h0", participant("p1", ann) as any, 0);
+      hd0.car = audi; // the copy of a heat that has run
+      const empty = new DriverHeatData(
+        "h1",
+        participant("e1", new Driver("EMPTY_LANE", "")) as any,
+        1,
+      );
+      return new Heat("heat-2", 3, [hd0, empty]);
+    }
+
+    beforeEach(() => {
+      fixture.componentRef.setInput("heat", irocHeat());
+      fixture.componentRef.setInput("lanesMode", true);
+      fixture.componentRef.setInput("laneCars", [ford, undefined]);
+      fixture.detectChanges();
+    });
+
+    it("lists every lane, empty ones too, with the lane's car right now", () => {
+      const rows = component.rows();
+      expect(rows.map((r) => r.lane)).toEqual([0, 1]);
+      expect(rows.map((r) => r.name)).toEqual(["Ann", ""]);
+      expect(rows.map((r) => r.carId)).toEqual(["c2", ""]);
+    });
+
+    it("explains the lanes and names an empty lane", () => {
+      const host: HTMLElement = fixture.nativeElement;
+      expect(host.querySelector("#slotcars-intro-lanes")).not.toBeNull();
+      const name = host.querySelector("#slotcars-lane-1 .rsd-name")!;
+      expect(name.classList).toContain("rsd-empty");
+      expect(name.textContent).toContain("RSD_EMPTY_LANE");
+    });
+
+    it("swaps the car of an empty lane", () => {
+      component.onSwap(component.rows()[1], "c1");
+      expect(swaps).toEqual([{ lane: 1, carId: "c1" }]);
+    });
+
+    it("leaves empty lanes out when the racers keep their own cars", () => {
+      fixture.componentRef.setInput("lanesMode", false);
+      fixture.detectChanges();
+      expect(component.rows().map((r) => r.lane)).toEqual([0]);
+      expect(component.rows()[0].carId).toBe("c1");
+    });
+  });
 });

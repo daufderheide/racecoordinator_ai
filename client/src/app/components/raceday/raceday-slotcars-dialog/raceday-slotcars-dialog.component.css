@@ -1,7 +1,7 @@
 /* Race day "Slotcars…" (#1210), on top of the pick dialog's look. */
 
 .rsd-dialog {
-  max-width: 560px;
+  max-width: 640px;
 }
 
 .rsd-row {
@@ -20,7 +20,8 @@
   border-radius: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: #ffffff;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
   background: #94a3b8;
 }
 
@@ -35,8 +36,13 @@
 }
 
 .rsd-select {
-  flex: 0 0 240px;
+  flex: 0 0 340px;
   min-width: 0;
+}
+
+.rsd-name.rsd-empty {
+  color: #64748b;
+  font-style: italic;
 }
 
 .rsd-note {

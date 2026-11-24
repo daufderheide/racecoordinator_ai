@@ -44,6 +44,8 @@ export class Race implements Model {
   readonly crash_and_learn_options: CrashAndLearnOptions;
   readonly practice: boolean;
   readonly adjust_drift_laps: boolean;
+  /** IROC: the slotcars stay in their lanes and the drivers rotate (#1210). */
+  readonly cars_stay_in_lanes: boolean;
   readonly theme_id?: string;
   readonly start_time_millis?: number;
   readonly step_up: number;
@@ -103,6 +105,7 @@ export class Race implements Model {
     step_up: number = 0,
     points_scoring?: PointsScoring,
     compatibility?: RaceCompatibility,
+    cars_stay_in_lanes: boolean = false,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -149,6 +152,7 @@ export class Race implements Model {
     this.step_up = step_up;
     this.points_scoring = points_scoring;
     this.compatibility = compatibility;
+    this.cars_stay_in_lanes = cars_stay_in_lanes;
   }
 
   get objectId(): string {

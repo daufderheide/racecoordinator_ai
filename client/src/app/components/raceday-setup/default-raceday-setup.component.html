@@ -844,7 +844,11 @@
                         {{ getLocalizedTeamMembers(participant) }}
                       }
                     </div>
-                    @if (allCars.length > 0 && carSummary(participant)) {
+                    @if (
+                      allCars.length > 0 &&
+                      !laneCarsUi.active() &&
+                      carSummary(participant)
+                    ) {
                       <div class="driver-car" [title]="carSummary(participant)">
                         <span class="material-icons">directions_car</span>
                         <span class="driver-car-name">{{
@@ -885,7 +889,7 @@
                       }
                     </div>
                   }
-                  @if (allCars.length > 0) {
+                  @if (allCars.length > 0 && !laneCarsUi.active()) {
                     <button
                       type="button"
                       class="car-pick-btn"
@@ -903,6 +907,15 @@
               }
             }
           </div>
+          @if (laneCarsUi.active()) {
+            <!-- IROC: the cars stay in their lanes (#1210) -->
+            <app-lane-cars-bar
+              [lanes]="laneCarsUi.lanes()"
+              [cars]="allCars"
+              [laneCarIds]="laneCarsUi.ids()"
+              (save)="laneCarsUi.save($event)"
+            ></app-lane-cars-bar>
+          }
         </div>
       </div>
 

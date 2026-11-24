@@ -65,4 +65,18 @@ describe("ModifyHeatsCars (#1210)", () => {
     expect(cars.teamDrivers(p)).toEqual([{ id: "d2", name: "Bob" }]);
     expect(cars.teamDrivers(null)).toEqual([]);
   });
+
+  it("shows the car parts only when racers keep their own car", () => {
+    expect(cars.show).toBeTrue();
+    let iroc = true;
+    const lanes = new ModifyHeatsCars(
+      () => [ann],
+      () => ({ cars_stay_in_lanes: iroc }),
+    );
+    expect(lanes.show).toBeFalse(); // no cars yet
+    lanes.allCars = cars.allCars;
+    expect(lanes.show).toBeFalse();
+    iroc = false;
+    expect(lanes.show).toBeTrue();
+  });
 });

@@ -1,0 +1,38 @@
+<button
+  type="button"
+  class="lane-cars-bar"
+  id="lane-cars-bar"
+  [title]="'RDS_LANE_CARS_TOOLTIP' | translate"
+  (click)="dialogOpen.set(true)"
+>
+  <span class="lane-cars-head">
+    <span class="lane-cars-title">
+      <span class="material-icons">directions_car</span>
+      {{ "RDS_LANE_CARS" | translate }}
+    </span>
+    <span class="material-icons lane-cars-edit">edit</span>
+  </span>
+  <span class="lane-cars-list">
+    @for (row of rows(); track row.lane) {
+      <span class="lane-car" [id]="'lane-car-' + row.lane">
+        <span
+          class="lane-car-chip"
+          [style.background-color]="row.color || null"
+          >{{ row.lane + 1 }}</span
+        >
+        <span class="lane-car-name" [class.empty]="!row.name">{{
+          row.name || ("RDS_LANE_CARS_NONE" | translate)
+        }}</span>
+      </span>
+    }
+  </span>
+</button>
+
+<app-lane-cars-dialog
+  [visible]="dialogOpen()"
+  [lanes]="lanes()"
+  [cars]="cars()"
+  [laneCarIds]="laneCarIds()"
+  (save)="onSave($event)"
+  (close)="dialogOpen.set(false)"
+></app-lane-cars-dialog>

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Arrays;
 import org.junit.Test;
 
@@ -95,5 +96,24 @@ public class RaceTest {
     assertEquals(6.0, cloned.getCrashAndLearnOptions().getAutomatedCrashTime(), 0.001);
     assertEquals(4, cloned.getCrashAndLearnOptions().getMaxCrashes());
     assertEquals(2.0, cloned.getCrashAndLearnOptions().getHeatCrashLapPenalty(), 0.001);
+  }
+
+  // Cars stay in their lanes, IROC (#1210)
+  @Test
+  public void testCarsStayInLanesIsOffByDefaultAndSurvivesCopyAndJson() throws Exception {
+    assertFalse(new Race.Builder().withName("Plain").build().isCarsStayInLanes());
+
+    Race iroc = new Race.Builder().withName("IROC").withCarsStayInLanes(true).build();
+    assertTrue(new Race.Builder().from(iroc).build().isCarsStayInLanes());
+
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(iroc);
+    assertTrue(json.contains("\"cars_stay_in_lanes\":true"));
+    assertTrue(mapper.readValue(json, Race.class).isCarsStayInLanes());
+    assertTrue(
+        "the camelCase name is read too",
+        mapper
+            .readValue("{\"@id\":1,\"name\":\"R\",\"carsStayInLanes\":true}", Race.class)
+            .isCarsStayInLanes());
   }
 }

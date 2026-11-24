@@ -1,0 +1,87 @@
+@if (visible()) {
+  <div class="cpd-backdrop" id="lane-cars-backdrop" (click)="onClose()">
+    <div
+      class="cpd-dialog lcd-dialog"
+      id="lane-cars-dialog"
+      role="dialog"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="onClose()"
+    >
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">directions_car</span>
+          <div class="cpd-titles">
+            <h2 class="modal-title">
+              {{ "LCD_TITLE" | translate }}
+              <app-preview-badge></app-preview-badge>
+            </h2>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          id="lane-cars-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="cpd-hint">{{ "LCD_INTRO" | translate }}</p>
+
+        @for (l of lanes(); track l.lane; let i = $index) {
+          <div class="lcd-row" [id]="'lane-cars-lane-' + l.lane">
+            <span class="lcd-lane" [style.background-color]="l.color || null">{{
+              l.lane + 1
+            }}</span>
+            <span class="lcd-name">{{
+              "LCD_LANE" | translate: { lane: l.lane + 1 }
+            }}</span>
+            <app-custom-select
+              class="lcd-select"
+              [value]="carFor(i)"
+              (change)="setCar(i, $event)"
+            >
+              <app-custom-option value="">{{
+                "CPD_NO_CAR" | translate
+              }}</app-custom-option>
+              @for (car of sortedCars(); track car.entity_id) {
+                <app-custom-option [value]="car.entity_id">{{
+                  label(car)
+                }}</app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        }
+
+        @if (sortedCars().length === 0) {
+          <p class="cpd-hint" id="lane-cars-empty">
+            {{ "CPD_EMPTY" | translate }}
+          </p>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          id="lane-cars-cancel"
+          (click)="onClose()"
+        >
+          {{ "COMMON_CANCEL" | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          id="lane-cars-save"
+          (click)="onSave()"
+        >
+          {{ "SAVE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

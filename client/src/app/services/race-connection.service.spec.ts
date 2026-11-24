@@ -98,6 +98,7 @@ describe("RaceConnectionService", () => {
       "setParticipants",
       "getParticipants",
       "setGroupParticipants",
+      "setLaneCars",
       "clear",
     ]);
     mockRaceService.getParticipants.and.returnValue([]);
@@ -831,6 +832,8 @@ describe("RaceConnectionService", () => {
       expect(mockRaceService.setParticipants).toHaveBeenCalled();
       expect(mockRaceService.setHeats).toHaveBeenCalled();
       expect(mockRaceService.setCurrentHeat).toHaveBeenCalled();
+      // Cars stay in their lanes (#1210): a full update sets the lane cars.
+      expect(mockRaceService.setLaneCars).toHaveBeenCalledWith([]);
 
       const participantsOrder =
         mockRaceService.setParticipants.calls.first().invocationOrder;

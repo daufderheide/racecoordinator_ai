@@ -101,6 +101,7 @@ export class DataRaceControlHelper {
     themeId?: string,
     raceAgain?: boolean,
     carChoices?: IParticipantCarChoice[],
+    laneCarIds?: string[],
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
@@ -112,6 +113,7 @@ export class DataRaceControlHelper {
       themeId,
       raceAgain: raceAgain || undefined,
       carChoices: carChoices && carChoices.length ? carChoices : undefined,
+      laneCarIds: laneCarIds && laneCarIds.length ? laneCarIds : undefined,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 

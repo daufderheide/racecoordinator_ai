@@ -283,6 +283,8 @@ export class Settings {
   selectedDriverIds: string[] = [];
   /** Slotcars picked per roster entry (#1210), keyed by the d_/t_ id. */
   selectedCarChoices: Record<string, CarChoice> = {};
+  /** Cars stay in their lanes (#1210): the car id per lane, keyed by track id. */
+  selectedLaneCars: Record<string, string[]> = {};
   demoConfig?: IDemoConfig;
   /** Whether the last race started from Race Day Setup was a demo race (used by "Race Again"). */
   lastStartIsDemo: boolean = false;
