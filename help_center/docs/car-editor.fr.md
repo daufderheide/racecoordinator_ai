@@ -25,6 +25,7 @@ L'éditeur de voitures slot fonctionne comme l'éditeur d'équipes :
 - **Modifier / Terminé** : bascule entre lecture seule et édition.
 - **Supprimer** : supprime la voiture choisie après confirmation.
 - **Exporter** : enregistre vos voitures slot dans un fichier ZIP. Voir [Exporter les voitures slot](#car-export).
+- **Importer** : ajoute des voitures slot depuis un fichier. Voir [Importer des voitures slot](#car-import).
 - **Annuler / Rétablir** : revient en arrière ou en avant dans vos modifications récentes.
 - **Aide (?)** : lance la visite guidée.
 
@@ -102,3 +103,12 @@ Cliquez sur **Exporter** dans la barre d'outils pour enregistrer toutes vos voit
 - **Vos champs** : chacun de vos propres champs a une colonne, au nom du champ.
 - **Photos** : les photos des voitures vont dans un dossier `images` du ZIP, chaque photo une seule fois. La colonne Picture indique le fichier.
 - **Sans identifiants** : les voitures et les champs sont reconnus par leur nom, le fichier fonctionne donc dans n'importe quelle base.
+
+## Importer des voitures slot {: #car-import }
+
+Cliquez sur **Importer** dans la barre d'outils pour ajouter des voitures slot depuis un fichier CSV, Excel ou JSON, ou depuis un ZIP créé avec **Exporter**. Téléchargez un modèle depuis la fenêtre pour partir des bonnes colonnes.
+
+- **Photos** : utilisez un ZIP de l'export, ou ajoutez les fichiers photo à côté du CSV. La colonne Picture indique le fichier.
+- **D'abord un aperçu** : vous voyez chaque voiture avant tout enregistrement. Une voiture dont vous avez déjà le nom est un conflit : **Ignorer**, **Écraser** votre voiture, ou **Renommer automatiquement** pour l'importer comme copie, par exemple « Audi R8 (1) ».
+- **Écraser** ne change que ce que contient le fichier. Les colonnes absentes du fichier gardent leur valeur.
+- **Vos champs** : une colonne qui n'est pas un détail de voiture devient l'un de vos champs, trouvé par son nom. Un champ que vous n'avez pas encore est ajouté (depuis un export JSON avec son type, sinon en texte), et un nouveau choix est ajouté au champ. L'aperçu indique ce qui sera ajouté.

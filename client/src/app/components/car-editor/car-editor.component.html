@@ -15,6 +15,11 @@
     [disabledCopy]="!isConfigValid() || isSaving"
     [disabledDelete]="!selectedCar || isSaving"
     [copyDisabledTooltipKey]="'CE_TOOLTIP_COPY_DISABLED'"
+    [showImport]="true"
+    [disabledImport]="isEditMode || isSaving"
+    [importTitleKey]="'CIM_TITLE'"
+    [importHelpTitleKey]="'CE_HELP_IMPORT_TITLE'"
+    [importHelpContentKey]="'CE_HELP_IMPORT_CONTENT'"
     [showExport]="true"
     [disabledExport]="isEditMode || isSaving || allCars.length === 0"
     [exportTitleKey]="'CEM_TITLE'"
@@ -31,6 +36,7 @@
     (add)="onAddNewCar()"
     (copy)="onCopyCar()"
     (delete)="onDeleteCar()"
+    (import)="showImportModal = true"
     (export)="showExportModal = true"
   >
     <div title-actions class="car-title-actions">
@@ -381,3 +387,12 @@
   (close)="showExportModal = false"
 >
 </app-driver-export-modal>
+
+<app-import-modal
+  kind="cars"
+  [visible]="showImportModal"
+  [titleKey]="'CIM_TITLE'"
+  (close)="showImportModal = false"
+  (imported)="onCarsImported($event)"
+>
+</app-import-modal>

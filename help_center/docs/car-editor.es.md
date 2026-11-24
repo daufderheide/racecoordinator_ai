@@ -25,6 +25,7 @@ El editor de coches de slot funciona como el editor de equipos:
 - **Editar / Listo**: cambia entre solo lectura y edición.
 - **Eliminar**: elimina el coche elegido tras confirmarlo.
 - **Exportar**: guarda tus coches de slot en un archivo ZIP. Consulta [Exportar coches de slot](#car-export).
+- **Importar**: añade coches de slot desde un archivo. Consulta [Importar coches de slot](#car-import).
 - **Deshacer / Rehacer**: retrocede o avanza por tus cambios recientes.
 - **Ayuda (?)**: inicia la visita guiada.
 
@@ -102,3 +103,12 @@ Haz clic en **Exportar** en la barra de herramientas para guardar todos tus coch
 - **Tus campos**: cada uno de tus propios campos tiene una columna con el nombre del campo.
 - **Fotos**: las fotos de los coches van a una carpeta `images` dentro del ZIP, cada foto una sola vez. La columna Picture indica el archivo.
 - **Sin identificadores**: los coches y los campos se reconocen por su nombre, así que el archivo funciona en cualquier base de datos.
+
+## Importar coches de slot {: #car-import }
+
+Haz clic en **Importar** en la barra de herramientas para añadir coches de slot desde un archivo CSV, Excel o JSON, o desde un ZIP hecho con **Exportar**. Descarga una plantilla en la ventana para empezar con las columnas correctas.
+
+- **Fotos**: usa un ZIP de Exportar, o añade los archivos de las fotos junto al CSV. La columna Picture indica el archivo.
+- **Primero una vista previa**: ves cada coche antes de guardar nada. Un coche con un nombre que ya tienes es un conflicto: **Omitir**, **Sobrescribir** tu coche, o **Renombrar automáticamente** para importarlo como copia, por ejemplo "Audi R8 (1)".
+- **Sobrescribir** solo cambia lo que trae el archivo. Las columnas que el archivo no tiene conservan su valor.
+- **Tus campos**: una columna que no es un dato del coche pasa a ser uno de tus propios campos, buscado por su nombre. Un campo que aún no tienes se añade (desde una exportación JSON con su tipo, si no como texto), y una opción nueva se añade al campo. La vista previa indica qué se añadirá.

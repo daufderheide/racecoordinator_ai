@@ -63,6 +63,11 @@ class MockEditorTitleComponent {
   disabledCopy = input<boolean>(false);
   disabledDelete = input<boolean>(false);
   copyDisabledTooltipKey = input<string>("");
+  showImport = input<boolean>(false);
+  disabledImport = input<boolean>(false);
+  importTitleKey = input<string>("");
+  importHelpTitleKey = input<string>("");
+  importHelpContentKey = input<string>("");
   showExport = input<boolean>(false);
   disabledExport = input<boolean>(false);
   exportTitleKey = input<string>("");
@@ -80,6 +85,7 @@ class MockEditorTitleComponent {
   copy = output<void>();
   delete = output<void>();
   export = output<void>();
+  import = output<void>();
 }
 
 describe("CarEditorComponent", () => {
@@ -670,6 +676,49 @@ describe("CarEditorComponent", () => {
       component.isEditMode = true;
       fixture.detectChanges();
       expect(title().disabledExport()).toBeTrue();
+    });
+  });
+
+  describe("import (#1210, step 6b)", () => {
+    beforeEach(async () => setUp("c1"));
+
+    const title = () =>
+      fixture.debugElement.query(By.directive(MockEditorTitleComponent))
+        .componentInstance as MockEditorTitleComponent;
+
+    it("shows an Import button with the car texts", () => {
+      expect(title().showImport()).toBeTrue();
+      expect(title().importTitleKey()).toBe("CIM_TITLE");
+      expect(title().importHelpTitleKey()).toBe("CE_HELP_IMPORT_TITLE");
+      component.isEditMode = true;
+      fixture.detectChanges();
+      expect(title().disabledImport()).toBeTrue();
+    });
+
+    it("opens the import dialog for cars", () => {
+      title().import.emit();
+      fixture.detectChanges();
+      expect(component.showImportModal).toBeTrue();
+      expect(
+        fixture.nativeElement.querySelector("#import-modal-dialog"),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector("input[type=file]").accept,
+      ).not.toContain(".wav");
+    });
+
+    it("reloads the cars and fields after an import and shows the new car", () => {
+      dataService.getCars.calls.reset();
+      dataService.getCarFields.calls.reset();
+      component.onCarsImported({ createdDriverIds: ["c2"] });
+      expect(dataService.getCars).toHaveBeenCalled();
+      expect(dataService.getCarFields).toHaveBeenCalled();
+      expect(component.selectedCarId).toBe("c2");
+    });
+
+    it("keeps the car on screen when the import made no car", () => {
+      component.onCarsImported({ createdDriverIds: [], updatedDriverIds: [] });
+      expect(component.selectedCarId).toBe("c1");
     });
   });
 

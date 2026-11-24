@@ -18,6 +18,7 @@ import {
 import { DriverExportModalComponent } from "@app/components/shared/driver-export-modal/driver-export-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
+import { ImportModalComponent } from "@app/components/shared/import-modal/import-modal.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
@@ -76,6 +77,7 @@ const NAV_KEY = "car";
     CustomOptionComponent,
     CarFieldManagerComponent,
     DriverExportModalComponent,
+    ImportModalComponent,
   ],
 })
 export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
@@ -169,6 +171,8 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   isFieldManagerOpen = false;
   /** The export dialog (#1210, step 6a). */
   showExportModal = false;
+  /** The import dialog (#1210, step 6b). */
+  showImportModal = false;
 
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;
@@ -903,6 +907,39 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.isAutoSaving = false;
     this.transitionToReadOnlyOnSave = false;
     this.cdr.detectChanges();
+  }
+
+  /**
+   * After an import (#1210, step 6b): reload the cars, the own fields (the import may add some)
+   * and the pictures, then show the first car it created or updated.
+   */
+  onCarsImported(result: {
+    createdDriverIds?: string[];
+    updatedDriverIds?: string[];
+  }) {
+    const targetId =
+      result.createdDriverIds?.[0] || result.updatedDriverIds?.[0];
+    forkJoin({
+      cars: this.dataService.getCars(),
+      assets: this.dataService.listAssets(),
+      fields: this.dataService.getCarFields(),
+    }).subscribe({
+      next: (r) => {
+        this.carFields = sortCarFields(
+          ((r.fields as any[]) || []).map((f) => CarField.fromJSON(f)),
+        );
+        this.imageAssets = (r.assets || []).filter(
+          (a: any) => a?.type === "image",
+        );
+        this.setAllCars((r.cars as any[]) || []);
+        if (targetId) {
+          this.selectedCarId = undefined;
+          this.onSelectCarById(targetId);
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => this.logger.error("Failed to reload after import", err),
+    });
   }
 
   private refreshCarList() {

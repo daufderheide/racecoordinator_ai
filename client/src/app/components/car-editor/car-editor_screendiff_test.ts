@@ -100,6 +100,91 @@ test.describe("Slotcar Editor Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("opens the import dialog for the cars", async ({ page }) => {
+    await open(page, "c1");
+    await page.locator("#import-btn").click();
+    const dialog = page.locator("#import-modal-dialog");
+    await dialog.waitFor({ state: "visible" });
+    await settle(page);
+
+    await expect(dialog).toHaveScreenshot("car-import-upload.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("previews a car import with a conflict and new fields", async ({
+    page,
+  }) => {
+    await page.route("**/api/cars/import/preview", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          totalRows: 3,
+          validCount: 2,
+          conflictCount: 1,
+          errorCount: 0,
+          importedAssetNames: [],
+          existingCars: [{ entityId: "c3", name: "Audi R8 LMS" }],
+          newFields: [{ name: "Club number", type: "text", options: [] }],
+          newOptions: [
+            { name: "Tyre compound", type: "choice", options: ["Super soft"] },
+          ],
+          rows: [
+            {
+              rowIndex: 1,
+              rawName: "Ferrari 330 P4",
+              resolvedName: "Ferrari 330 P4",
+              values: { brand: "Slot.it", carClass: "Classic", scale: "1/32" },
+              customValues: { "Club number": "12" },
+              status: "VALID",
+              conflictType: "NONE",
+            },
+            {
+              rowIndex: 2,
+              rawName: "Audi R8 LMS",
+              resolvedName: "Audi R8 LMS",
+              values: { brand: "Scalextric", carClass: "GT3", scale: "1/32" },
+              customValues: {},
+              status: "CONFLICT",
+              conflictType: "DUPLICATE_NAME",
+              selectedResolution: "SKIP",
+              existingCarId: "c3",
+            },
+            {
+              rowIndex: 3,
+              rawName: "Mini Cooper S",
+              resolvedName: "Mini Cooper S",
+              values: { brand: "Scalextric", carClass: "Touring" },
+              customValues: { "Tyre compound": "Super soft" },
+              status: "VALID",
+              conflictType: "NONE",
+              message: "Picture not found: images/mini.png",
+            },
+          ],
+        }),
+      }),
+    );
+    await open(page, "c1");
+    await page.locator("#import-btn").click();
+    const dialog = page.locator("#import-modal-dialog");
+    await dialog.waitFor({ state: "visible" });
+    await dialog.locator("input[type=file]").setInputFiles({
+      name: "cars.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("Name\nFerrari 330 P4\n"),
+    });
+    await page.locator("#btn-validate-preview").click();
+    await page.locator("#import-preview-step").waitFor();
+    await settle(page);
+
+    await expect(dialog).toHaveScreenshot("car-import-preview.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });
 
 test.describe("Slotcars in the Manage menu", () => {

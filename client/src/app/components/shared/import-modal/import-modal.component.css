@@ -978,3 +978,48 @@
   background: #252a33;
   border-top: 1px solid #334155;
 }
+
+/* Slotcar import (#1210, step 6b) */
+.car-field-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #bae6fd;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+}
+
+.car-field-notice .material-icons {
+  font-size: 20px;
+  color: #38bdf8;
+}
+
+.car-details {
+  display: block;
+  font-size: 13px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.car-row-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #fbbf24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.car-row-warning .material-icons {
+  font-size: 14px;
+}

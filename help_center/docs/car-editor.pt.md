@@ -25,6 +25,7 @@ O editor de carros slot funciona como o editor de equipes:
 - **Editar / Concluir**: alterna entre somente leitura e edição.
 - **Excluir**: exclui o carro escolhido após confirmação.
 - **Exportar**: salva seus carros slot em um arquivo ZIP. Veja [Exportar carros slot](#car-export).
+- **Importar**: adiciona carros slot de um arquivo. Veja [Importar carros slot](#car-import).
 - **Desfazer / Refazer**: volta ou avança pelas alterações recentes.
 - **Ajuda (?)**: inicia o tour guiado.
 
@@ -102,3 +103,12 @@ Clique em **Exportar** na barra de ferramentas para salvar todos os seus carros 
 - **Seus campos**: cada um dos seus próprios campos ganha uma coluna com o nome do campo.
 - **Fotos**: as fotos dos carros vão para uma pasta `images` no ZIP, cada foto uma só vez. A coluna Picture indica o arquivo.
 - **Sem IDs**: carros e campos são reconhecidos pelo nome, então o arquivo funciona em qualquer banco de dados.
+
+## Importar carros slot {: #car-import }
+
+Clique em **Importar** na barra de ferramentas para adicionar carros slot de um arquivo CSV, Excel ou JSON, ou de um ZIP feito com **Exportar**. Baixe um modelo na janela para começar com as colunas certas.
+
+- **Fotos**: use um ZIP do Exportar, ou adicione os arquivos das fotos junto ao CSV. A coluna Picture indica o arquivo.
+- **Primeiro uma prévia**: você vê cada carro antes de salvar qualquer coisa. Um carro com um nome que você já tem é um conflito: **Ignorar**, **Substituir** o seu carro, ou **Renomear automaticamente** para importá-lo como cópia, por exemplo "Audi R8 (1)".
+- **Substituir** muda só o que o arquivo traz. As colunas que o arquivo não tem mantêm o valor.
+- **Seus campos**: uma coluna que não é um dado do carro vira um dos seus próprios campos, encontrado pelo nome. Um campo que você ainda não tem é adicionado (de uma exportação JSON com o seu tipo, senão como texto), e uma nova opção é adicionada ao campo. A prévia mostra o que será adicionado.

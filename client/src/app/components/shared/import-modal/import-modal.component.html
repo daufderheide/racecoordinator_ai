@@ -45,7 +45,7 @@
               type="file"
               class="hidden-file-input"
               multiple
-              accept=".csv,.xlsx,.xls,.json,.zip,.wav,.mp3,.ogg,.png,.jpg,.jpeg,.webp"
+              [accept]="config().accept"
               (change)="onFileInputChange($event)"
             />
 
@@ -55,7 +55,7 @@
                 {{ "DIM_DROPZONE_TEXT" | translate }}
               </p>
               <p class="dropzone-secondary-text">
-                {{ "DIM_DROPZONE_HINT" | translate }}
+                {{ config().dropzoneHintKey | translate }}
               </p>
             } @else {
               <span class="material-icons dropzone-icon file-ready"
@@ -82,30 +82,32 @@
             }
           </div>
 
-          <!-- Upload Configuration Settings -->
-          <div class="upload-config-section">
-            <div class="config-row">
-              <label class="config-label">{{
-                "DIM_BLANK_AUDIO_LABEL" | translate
-              }}</label>
-              <app-custom-select
-                id="import-audio-default-select"
-                class="config-select"
-                [value]="audioDefaultMode"
-                (change)="onAudioDefaultModeChange($event)"
-              >
-                <app-custom-option value="file">{{
-                  "DIM_BLANK_AUDIO_FILE" | translate
-                }}</app-custom-option>
-                <app-custom-option value="none">{{
-                  "DIM_BLANK_AUDIO_NONE" | translate
-                }}</app-custom-option>
-                <app-custom-option value="system">{{
-                  "DIM_BLANK_AUDIO_SYSTEM" | translate
-                }}</app-custom-option>
-              </app-custom-select>
+          <!-- Upload Configuration Settings (drivers: blank audio slots) -->
+          @if (!isCars()) {
+            <div class="upload-config-section">
+              <div class="config-row">
+                <label class="config-label">{{
+                  "DIM_BLANK_AUDIO_LABEL" | translate
+                }}</label>
+                <app-custom-select
+                  id="import-audio-default-select"
+                  class="config-select"
+                  [value]="audioDefaultMode"
+                  (change)="onAudioDefaultModeChange($event)"
+                >
+                  <app-custom-option value="file">{{
+                    "DIM_BLANK_AUDIO_FILE" | translate
+                  }}</app-custom-option>
+                  <app-custom-option value="none">{{
+                    "DIM_BLANK_AUDIO_NONE" | translate
+                  }}</app-custom-option>
+                  <app-custom-option value="system">{{
+                    "DIM_BLANK_AUDIO_SYSTEM" | translate
+                  }}</app-custom-option>
+                </app-custom-select>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Template Downloads -->
           <div class="templates-section">
@@ -230,6 +232,37 @@
             }
           </div>
 
+          <!-- Cars: own fields and choice options the import adds -->
+          @if (
+            isCars() &&
+            carChanges &&
+            (carChanges.newFields.length > 0 ||
+              carChanges.newOptions.length > 0)
+          ) {
+            <div class="car-field-notice" id="import-car-field-notice">
+              <span class="material-icons">playlist_add</span>
+              <div>
+                @if (carChanges.newFields.length > 0) {
+                  <div id="import-car-new-fields">
+                    {{
+                      "CIM_NEW_FIELDS"
+                        | translate
+                          : { fields: carFieldList(carChanges.newFields) }
+                    }}
+                  </div>
+                }
+                @if (carChanges.newOptions.length > 0) {
+                  <div id="import-car-new-options">
+                    {{
+                      "CIM_NEW_OPTIONS"
+                        | translate: { options: carOptionList() }
+                    }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Filter & Bulk Actions Bar -->
           <div class="preview-actions-bar">
             <div class="search-input-wrap">
@@ -283,11 +316,20 @@
                   <th class="col-num">#</th>
                   <th class="col-status">{{ "DIM_COL_STATUS" | translate }}</th>
                   <th class="col-name">{{ "RDS_LABEL_NAME" | translate }}</th>
-                  <th class="col-nick">
-                    {{ "RDS_LABEL_NICKNAME" | translate }}
+                  @if (!isCars()) {
+                    <th class="col-nick">
+                      {{ "RDS_LABEL_NICKNAME" | translate }}
+                    </th>
+                  }
+                  <th class="col-avatar">
+                    {{ config().pictureColumnKey | translate }}
                   </th>
-                  <th class="col-avatar">{{ "DIM_COL_AVATAR" | translate }}</th>
-                  <th class="col-audio">{{ "DIM_COL_AUDIO" | translate }}</th>
+                  <th class="col-audio">
+                    {{
+                      (isCars() ? "CIM_COL_DETAILS" : "DIM_COL_AUDIO")
+                        | translate
+                    }}
+                  </th>
                   <th class="col-action">
                     {{ "DIM_COL_RESOLUTION" | translate }}
                   </th>
@@ -341,22 +383,24 @@
                         (ngModelChange)="onRowNameChange(row, $event)"
                       />
                     </td>
-                    <td class="col-nick">
-                      <input
-                        type="text"
-                        class="cell-input"
-                        [class.invalid]="
-                          isRowNicknameInvalid(row) && !isRowSkipped(row)
-                        "
-                        [class.warning]="isRowNicknameWarning(row)"
-                        [class.skipped]="isRowNicknameWarning(row)"
-                        [title]="
-                          isRowNicknameInvalid(row) ? row.message || '' : ''
-                        "
-                        [ngModel]="row.resolvedNickname"
-                        (ngModelChange)="onRowNicknameChange(row, $event)"
-                      />
-                    </td>
+                    @if (!isCars()) {
+                      <td class="col-nick">
+                        <input
+                          type="text"
+                          class="cell-input"
+                          [class.invalid]="
+                            isRowNicknameInvalid(row) && !isRowSkipped(row)
+                          "
+                          [class.warning]="isRowNicknameWarning(row)"
+                          [class.skipped]="isRowNicknameWarning(row)"
+                          [title]="
+                            isRowNicknameInvalid(row) ? row.message || '' : ''
+                          "
+                          [ngModel]="row.resolvedNickname"
+                          (ngModelChange)="onRowNicknameChange(row, $event)"
+                        />
+                      </td>
+                    }
                     <td class="col-avatar">
                       @if (row.avatarUrl) {
                         <div class="avatar-cell">
@@ -384,7 +428,9 @@
                             }
                           </div>
                           <span class="avatar-text" [title]="row.avatarUrl">{{
-                            row.avatarUrl
+                            isCars()
+                              ? carPictureName(row.avatarUrl)
+                              : row.avatarUrl
                           }}</span>
                         </div>
                       } @else {
@@ -392,7 +438,15 @@
                       }
                     </td>
                     <td class="col-audio">
-                      @if (row.defaultAudioMode === "none") {
+                      @if (isCars()) {
+                        <span class="car-details">{{ carDetails(row) }}</span>
+                        @if (row.status === "VALID" && row.message) {
+                          <span class="car-row-warning" [title]="row.message">
+                            <span class="material-icons">warning</span>
+                            <span>{{ row.message }}</span>
+                          </span>
+                        }
+                      } @else if (row.defaultAudioMode === "none") {
                         <span class="audio-badge badge-muted">
                           <span class="material-icons">volume_off</span>
                           <span>{{ "DIM_AUDIO_MUTED" | translate }}</span>
@@ -463,7 +517,7 @@
             }
             <span class="material-icons">file_download_done</span>
             <span>{{
-              "DIM_BTN_IMPORT_COUNT" | translate: { count: resolvableCount }
+              config().importCountKey | translate: { count: resolvableCount }
             }}</span>
           </button>
         </div>
@@ -479,14 +533,14 @@
 
           <div class="summary-cards-grid">
             <div class="summary-card">
-              <span class="material-icons card-icon icon-import"
-                >person_add</span
-              >
+              <span class="material-icons card-icon icon-import">{{
+                config().createdIcon
+              }}</span>
               <span class="card-number">{{
                 importResult?.importedCount || 0
               }}</span>
               <span class="card-label">{{
-                "DIM_SUMMARY_IMPORTED" | translate
+                config().summaryImportedKey | translate
               }}</span>
             </div>
             <div class="summary-card">
@@ -495,7 +549,7 @@
                 importResult?.updatedCount || 0
               }}</span>
               <span class="card-label">{{
-                "DIM_SUMMARY_UPDATED" | translate
+                config().summaryUpdatedKey | translate
               }}</span>
             </div>
             <div class="summary-card">
@@ -504,9 +558,24 @@
                 importResult?.skippedCount || 0
               }}</span>
               <span class="card-label">{{
-                "DIM_SUMMARY_SKIPPED" | translate
+                config().summarySkippedKey | translate
               }}</span>
             </div>
+            @if (isCars() && createdFieldNames.length > 0) {
+              <div
+                class="summary-card"
+                id="summary-fields-card"
+                [title]="createdFieldNames.join(', ')"
+              >
+                <span class="material-icons card-icon icon-asset"
+                  >playlist_add</span
+                >
+                <span class="card-number">{{ createdFieldNames.length }}</span>
+                <span class="card-label">{{
+                  "CIM_SUMMARY_FIELDS" | translate
+                }}</span>
+              </div>
+            }
             @if (preview && preview.importedAssetNames.length > 0) {
               <div
                 class="summary-card clickable-card"

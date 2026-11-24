@@ -70,6 +70,7 @@ public class DatabaseTaskHandler {
     new DriverImportTaskHandler(databaseContext, driverRepository, app);
     new DriverLabelTaskHandler(databaseContext, driverRepository, teamRepository, app);
     new CarTaskHandler(databaseContext, app);
+    new CarImportTaskHandler(databaseContext, app);
     new CarFieldTaskHandler(databaseContext, app);
     new RacePackageTaskHandler(databaseContext, app);
 

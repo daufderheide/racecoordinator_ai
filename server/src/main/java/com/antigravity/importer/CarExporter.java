@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,6 +98,41 @@ public class CarExporter {
         break;
     }
     return ExportMediaCollector.buildZip(dataFileName, data, media.getFiles());
+  }
+
+  /**
+   * A file to fill in for the import (#1210, step 6b): the header row with the user's own fields
+   * and one example car.
+   *
+   * @return the file and its extension ("csv", "xlsx" or "json")
+   */
+  public static Map.Entry<String, byte[]> templateFile(List<CarField> fields, String format)
+      throws IOException {
+    Car example =
+        new Car.Builder()
+            .withName("Porsche 911 RSR #92")
+            .withBrand("Carrera")
+            .withCarClass("GT3")
+            .withScale("1/32")
+            .withMotor("Slot.it V12/4 21.5k")
+            .withMagnet("None")
+            .withChassis("Sidewinder")
+            .withGears("9/27")
+            .withTyres("Ortmann urethane")
+            .withModified(true)
+            .withNotes("Lowered body")
+            .build();
+    List<Car> cars = Collections.singletonList(example);
+    List<CarField> sortedFields = sortFields(fields);
+    Map<String, String> noPictures = Collections.emptyMap();
+    switch (normalizeFormat(format)) {
+      case "xlsx":
+        return new AbstractMap.SimpleEntry<>("xlsx", excelBytes(cars, sortedFields, noPictures));
+      case "json":
+        return new AbstractMap.SimpleEntry<>("json", jsonBytes(cars, sortedFields, noPictures));
+      default:
+        return new AbstractMap.SimpleEntry<>("csv", csvBytes(cars, sortedFields, noPictures));
+    }
   }
 
   /** The header row: the fixed columns, then one per own field. */
