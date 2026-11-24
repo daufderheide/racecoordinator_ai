@@ -5,7 +5,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
-import { of, throwError } from "rxjs";
+import { of, Subject, throwError } from "rxjs";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
@@ -172,8 +172,9 @@ describe("UpdateSelectorComponent", () => {
     expect(mockUpdateService.setUpdateChannel).not.toHaveBeenCalled();
   });
 
-  it("should log error when setUpdateChannel fails on server", () => {
+  it("should log error, revert channel, and not emit channelSelected when setUpdateChannel fails on server", () => {
     mockAuthService.currentRole = Role.ADMIN;
+    spyOn(component.channelSelected, "emit");
     mockUpdateService.setUpdateChannel.and.returnValue(
       throwError(() => new Error("Server error")),
     );
@@ -182,6 +183,44 @@ describe("UpdateSelectorComponent", () => {
     component.selectChannel("ALPHA", event);
 
     expect(mockLogger.error).toHaveBeenCalled();
+    expect(component.channelSelected.emit).not.toHaveBeenCalled();
+    expect(component.currentChannel).toBe("BETA");
+  });
+
+  it("should only emit channelSelected after setUpdateChannel succeeds", () => {
+    mockAuthService.currentRole = Role.ADMIN;
+    const channelSubject = new Subject<any>();
+    mockUpdateService.setUpdateChannel.and.returnValue(
+      channelSubject.asObservable(),
+    );
+    spyOn(component.channelSelected, "emit");
+
+    const event = new MouseEvent("click");
+    component.selectChannel("ALPHA", event);
+
+    expect(component.channelSelected.emit).not.toHaveBeenCalled();
+
+    channelSubject.next("OK");
+    channelSubject.complete();
+
+    expect(component.channelSelected.emit).toHaveBeenCalledWith("ALPHA");
+  });
+
+  it("should unsubscribe active channel switch on destroy", () => {
+    mockAuthService.currentRole = Role.ADMIN;
+    const channelSubject = new Subject<any>();
+    mockUpdateService.setUpdateChannel.and.returnValue(
+      channelSubject.asObservable(),
+    );
+    spyOn(component.channelSelected, "emit");
+
+    const event = new MouseEvent("click");
+    component.selectChannel("ALPHA", event);
+
+    component.ngOnDestroy();
+
+    channelSubject.next("OK");
+    expect(component.channelSelected.emit).not.toHaveBeenCalled();
   });
 
   it("should display disabled styling and admin-required tooltip for non-admin (VIEWER)", () => {
