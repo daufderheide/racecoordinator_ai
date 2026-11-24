@@ -543,6 +543,8 @@ export class DataService {
   createCar = (car: any) => this.crudHelper.createCar(car);
   updateCar = (id: string, car: any) => this.crudHelper.updateCar(id, car);
   deleteCar = (id: string) => this.crudHelper.deleteCar(id);
+  exportCars = (format: string, carIds?: string[]) =>
+    this.crudHelper.exportCars(format, carIds);
   getCarFields = () => this.crudHelper.getCarFields();
   createCarField = (field: any) => this.crudHelper.createCarField(field);
   updateCarField = (id: string, f: any) =>

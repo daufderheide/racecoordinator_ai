@@ -2,10 +2,19 @@ package com.antigravity.handlers;
 
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.importer.CarExporter;
 import com.antigravity.models.Car;
+import com.antigravity.models.CarField;
 import com.antigravity.repository.SqliteRepository;
+import com.antigravity.service.AssetService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +25,15 @@ public class CarTaskHandler {
   static final String NAME_REQUIRED = "Car name cannot be empty";
   static final String NAME_EXISTS = "Car name already exists";
 
+  private final DatabaseContext databaseContext;
   private final SqliteRepository<Car> carRepository;
 
   public CarTaskHandler(DatabaseContext databaseContext, Javalin app) {
+    this.databaseContext = databaseContext;
     this.carRepository = new SqliteRepository<>(databaseContext, "cars", Car.class);
 
     app.get("/api/cars", this::getCars, Role.VIEWER);
+    app.get("/api/cars/export", this::exportCars, Role.VIEWER);
     app.post("/api/cars", this::createCar, Role.DIRECTOR);
     app.put("/api/cars/{id}", this::updateCar, Role.DIRECTOR);
     app.delete("/api/cars/{id}", this::deleteCar, Role.DIRECTOR);
@@ -78,6 +90,52 @@ public class CarTaskHandler {
     car = Car.Builder.from(car).withEntityId(id).withId(null).build();
     carRepository.replace(id, car);
     return car;
+  }
+
+  /**
+   * The cars as a ZIP (#1210, step 6a): {@code format} csv (default), xlsx or json; {@code carIds}
+   * a comma-separated list to export only those cars, all cars without it.
+   */
+  public void exportCars(Context ctx) {
+    try {
+      List<Car> cars = selectCars(ctx.queryParam("carIds"));
+      List<CarField> fields =
+          new SqliteRepository<>(databaseContext, "car_fields", CarField.class).findAll();
+      byte[] zip =
+          new CarExporter(databaseContext, assetService())
+              .exportCarsZip(cars, fields, ctx.queryParam("format"));
+      ctx.contentType("application/zip");
+      ctx.header("Content-Disposition", "attachment; filename=\"cars_export.zip\"");
+      ctx.result(new ByteArrayInputStream(zip));
+    } catch (Exception e) {
+      logger.error("Error exporting cars", e);
+      ctx.status(500).result("Error exporting cars: " + e.getMessage());
+    }
+  }
+
+  private List<Car> selectCars(String carIdsParam) {
+    List<Car> all = carRepository.findAll();
+    if (carIdsParam == null || carIdsParam.trim().isEmpty()) {
+      return all;
+    }
+    Set<String> ids = new HashSet<>();
+    for (String id : carIdsParam.split(",")) {
+      if (!id.trim().isEmpty()) ids.add(id.trim());
+    }
+    List<Car> picked = new ArrayList<>();
+    for (Car car : all) {
+      if (car != null && ids.contains(car.getEntityId())) picked.add(car);
+    }
+    return picked;
+  }
+
+  private AssetService assetService() {
+    String dbName = databaseContext.getCurrentDatabaseName();
+    if (dbName == null || dbName.trim().isEmpty()) {
+      dbName = "RaceCoordinator_AI_DB";
+    }
+    File assetsDir = new File(new File(databaseContext.getDataRoot(), dbName), "assets");
+    return new AssetService(databaseContext, assetsDir.getAbsolutePath());
   }
 
   public void deleteCar(Context ctx) {

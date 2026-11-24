@@ -63,6 +63,11 @@ class MockEditorTitleComponent {
   disabledCopy = input<boolean>(false);
   disabledDelete = input<boolean>(false);
   copyDisabledTooltipKey = input<string>("");
+  showExport = input<boolean>(false);
+  disabledExport = input<boolean>(false);
+  exportTitleKey = input<string>("");
+  exportHelpTitleKey = input<string>("");
+  exportHelpContentKey = input<string>("");
   showHelp = input<boolean>(true);
   helpSteps = input<any[]>([]);
   helpRecordName = input<string | undefined>();
@@ -74,6 +79,7 @@ class MockEditorTitleComponent {
   add = output<void>();
   copy = output<void>();
   delete = output<void>();
+  export = output<void>();
 }
 
 describe("CarEditorComponent", () => {
@@ -631,6 +637,39 @@ describe("CarEditorComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/car-stats"], {
         queryParams: {},
       });
+    });
+  });
+
+  describe("export (#1210, step 6a)", () => {
+    beforeEach(async () => setUp("c1"));
+
+    const title = () =>
+      fixture.debugElement.query(By.directive(MockEditorTitleComponent))
+        .componentInstance as MockEditorTitleComponent;
+
+    it("shows an Export button with the car texts", () => {
+      expect(title().showExport()).toBeTrue();
+      expect(title().disabledExport()).toBeFalse();
+      expect(title().exportTitleKey()).toBe("CEM_TITLE");
+      expect(title().exportHelpTitleKey()).toBe("CE_HELP_EXPORT_TITLE");
+    });
+
+    it("opens the export dialog for the cars", () => {
+      title().export.emit();
+      fixture.detectChanges();
+      expect(component.showExportModal).toBeTrue();
+      expect(
+        fixture.nativeElement.querySelector("#car-export-modal-dialog"),
+      ).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector(".count-text").textContent,
+      ).toContain("CEM_CAR_COUNT");
+    });
+
+    it("can't export in Edit Mode", () => {
+      component.isEditMode = true;
+      fixture.detectChanges();
+      expect(title().disabledExport()).toBeTrue();
     });
   });
 

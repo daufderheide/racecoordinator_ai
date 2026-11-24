@@ -15,6 +15,11 @@
     [disabledCopy]="!isConfigValid() || isSaving"
     [disabledDelete]="!selectedCar || isSaving"
     [copyDisabledTooltipKey]="'CE_TOOLTIP_COPY_DISABLED'"
+    [showExport]="true"
+    [disabledExport]="isEditMode || isSaving || allCars.length === 0"
+    [exportTitleKey]="'CEM_TITLE'"
+    [exportHelpTitleKey]="'CE_HELP_EXPORT_TITLE'"
+    [exportHelpContentKey]="'CE_HELP_EXPORT_CONTENT'"
     [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'carEditorHelpShown'"
@@ -26,6 +31,7 @@
     (add)="onAddNewCar()"
     (copy)="onCopyCar()"
     (delete)="onDeleteCar()"
+    (export)="showExportModal = true"
   >
     <div title-actions class="car-title-actions">
       <button
@@ -367,3 +373,11 @@
   (close)="closeFieldManager()"
 >
 </app-car-field-manager>
+
+<app-driver-export-modal
+  kind="cars"
+  [visible]="showExportModal"
+  [driverCount]="allCars.length"
+  (close)="showExportModal = false"
+>
+</app-driver-export-modal>

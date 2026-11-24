@@ -1,5 +1,11 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, input, output } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  computed,
+  input,
+  output,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { firstValueFrom } from "rxjs";
 import { DataService } from "@app/data.service";
@@ -7,6 +13,37 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { saveFileAs } from "@app/utils/file-download.utils";
 
 export type DriverExportFormat = "csv" | "xlsx" | "json";
+
+/** What the dialog exports: drivers (the default) or slotcars (#1210, step 6a). */
+export type ExportKind = "drivers" | "cars";
+
+/** The texts, element ids and file name per kind; drivers keep their old ids. */
+const KIND_CONFIG = {
+  drivers: {
+    idPrefix: "driver-export",
+    titleKey: "DEM_TITLE",
+    countKey: "DEM_DRIVER_COUNT",
+    countIcon: "people",
+    infoKey: "DEM_EXPORT_INFO",
+    noteKey: "DEM_SHARED_AUDIO_INFO",
+    exportingKey: "DEM_EXPORTING",
+    buttonKey: "DEM_BTN_EXPORT",
+    errorKey: "DEM_ERROR_EXPORT_FAILED",
+    fileName: "drivers_export.zip",
+  },
+  cars: {
+    idPrefix: "car-export",
+    titleKey: "CEM_TITLE",
+    countKey: "CEM_CAR_COUNT",
+    countIcon: "directions_car",
+    infoKey: "CEM_EXPORT_INFO",
+    noteKey: "CEM_OWN_FIELDS_INFO",
+    exportingKey: "CEM_EXPORTING",
+    buttonKey: "CEM_BTN_EXPORT",
+    errorKey: "CEM_ERROR_EXPORT_FAILED",
+    fileName: "cars_export.zip",
+  },
+};
 
 @Component({
   standalone: true,
@@ -17,7 +54,11 @@ export type DriverExportFormat = "csv" | "xlsx" | "json";
 })
 export class DriverExportModalComponent {
   visible = input(false);
+  /** How many drivers (or cars) will be exported. */
   driverCount = input(0);
+  kind = input<ExportKind>("drivers");
+
+  config = computed(() => KIND_CONFIG[this.kind()] || KIND_CONFIG.drivers);
 
   close = output<void>();
   exported = output<{ format: DriverExportFormat }>();
@@ -52,11 +93,13 @@ export class DriverExportModalComponent {
 
     try {
       const blob = await firstValueFrom(
-        this.dataService.exportDrivers(this.selectedFormat),
+        this.kind() === "cars"
+          ? this.dataService.exportCars(this.selectedFormat)
+          : this.dataService.exportDrivers(this.selectedFormat),
       );
 
       const saved = await saveFileAs({
-        suggestedName: `drivers_export.zip`,
+        suggestedName: this.config().fileName,
         data: blob,
         mimeType: "application/zip",
         description: "ZIP Archive",
@@ -70,7 +113,7 @@ export class DriverExportModalComponent {
       }
     } catch (err: any) {
       if (err?.name !== "AbortError") {
-        this.errorMessage = "DEM_ERROR_EXPORT_FAILED";
+        this.errorMessage = this.config().errorKey;
       }
     } finally {
       this.isExporting = false;

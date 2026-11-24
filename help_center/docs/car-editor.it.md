@@ -24,6 +24,7 @@ L'editor auto slot funziona come l'editor delle squadre:
 - **Duplica**: copia l'auto scelta con un nome nuovo e unico. Comodo per una seconda auto dello stesso tipo.
 - **Modifica / Fatto**: passa dalla sola lettura alla modifica e viceversa.
 - **Elimina**: elimina l'auto scelta dopo la conferma.
+- **Esporta**: salva le tue auto slot in un file ZIP. Vedi [Esporta auto slot](#car-export).
 - **Annulla / Ripeti**: va indietro o avanti tra le modifiche recenti.
 - **Aiuto (?)**: avvia la visita guidata.
 
@@ -91,3 +92,13 @@ I risultati mostrano l'auto con cui ha corso ogni pilota, com'era in quella manc
 - **Filtri**: limita i risultati a un'auto, una classe, una pista o un pilota.
 - **Gare demo**: selezionalo per vedere i risultati delle gare demo.
 - I numeri usano l'auto di ogni manche com'era in gara, quindi modificare un'auto in seguito non li cambia. Non contano i giri sotto il tempo minimo della gara né i giri esclusi dai record.
+
+## Esporta auto slot {: #car-export }
+
+Fai clic su **Esporta** nella barra degli strumenti per salvare tutte le tue auto slot in un file ZIP, come backup o per condividerle con un altro club.
+
+- **Formato**: scegli **CSV** o **Excel** per un foglio di calcolo, oppure **JSON** per un file strutturato.
+- **Contenuto**: una riga per auto con tutti i dettagli: nome, foto, marca, classe, scala, assetto, Modificata (Yes/No) e note.
+- **I tuoi campi**: ciascuno dei tuoi campi ha una colonna con il nome del campo.
+- **Foto**: le foto delle auto vanno in una cartella `images` nello ZIP, ogni foto una sola volta. La colonna Picture indica il file.
+- **Niente ID**: auto e campi vengono riconosciuti per nome, quindi il file funziona in qualsiasi database.

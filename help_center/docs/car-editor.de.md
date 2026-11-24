@@ -24,6 +24,7 @@ Der Slotcar-Editor funktioniert wie der Team-Editor:
 - **Duplizieren**: Kopiert das gewählte Auto unter einem neuen, eindeutigen Namen. Praktisch für ein zweites Auto desselben Typs.
 - **Bearbeiten / Fertig**: Wechselt zwischen Nur-Lese- und Bearbeitungsmodus.
 - **Löschen**: Löscht das gewählte Auto nach Bestätigung.
+- **Exportieren**: Speichert Ihre Slotcars in einer ZIP-Datei. Siehe [Slotcars exportieren](#car-export).
 - **Rückgängig / Wiederholen**: Geht durch Ihre letzten Änderungen zurück oder vor.
 - **Hilfe (?)**: Startet die geführte Tour.
 
@@ -91,3 +92,13 @@ Die **Auto-Statistik** zeigt, wie Ihre Slotcars in Ihren gespeicherten Rennen ab
 - **Filter**: Grenzen Sie die Ergebnisse auf ein Auto, eine Klasse, eine Strecke oder einen Fahrer ein.
 - **Demo-Rennen**: Haken Sie es an, um die Ergebnisse von Demo-Rennen zu sehen.
 - Die Zahlen verwenden das Auto jedes Laufs, wie es gefahren ist; spätere Änderungen am Auto ändern sie nicht. Runden unter der Mindestrundenzeit des Rennens und Runden, die nicht für Rekorde zählen, werden nicht mitgezählt.
+
+## Slotcars exportieren {: #car-export }
+
+Klicken Sie in der Werkzeugleiste auf **Exportieren**, um alle Ihre Slotcars in einer ZIP-Datei zu speichern, als Sicherung oder um sie mit einem anderen Club zu teilen.
+
+- **Format**: Wählen Sie **CSV** oder **Excel** für eine Tabelle oder **JSON** für eine strukturierte Datei.
+- **Inhalt**: eine Zeile pro Auto mit allen Angaben: Name, Bild, Marke, Klasse, Maßstab, Setup, Modifiziert (Yes/No) und Notizen.
+- **Ihre Felder**: Jedes eigene Feld bekommt eine Spalte mit dem Namen des Feldes.
+- **Bilder**: Die Fahrzeugbilder kommen in einen Ordner `images` im ZIP, jedes Bild nur einmal. Die Spalte Picture nennt die Datei.
+- **Keine IDs**: Autos und Felder werden über den Namen zugeordnet, daher funktioniert die Datei in jeder Datenbank.

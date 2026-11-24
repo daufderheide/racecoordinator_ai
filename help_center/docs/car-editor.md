@@ -24,6 +24,7 @@ The Slotcar Editor works like the Team Editor:
 - **Duplicate**: Copies the selected car under a new, unique name. Handy for a second car of the same type.
 - **Edit / Done Editing**: Switches between Read-Only Mode and Edit Mode.
 - **Delete**: Deletes the selected car after you confirm.
+- **Export**: Saves your slotcars to a ZIP file. See [Export Slotcars](#car-export).
 - **Undo / Redo**: Steps back or forward through your recent edits.
 - **Help (?)**: Starts the guided tour.
 
@@ -91,3 +92,13 @@ The results show the car each driver ran, as it was in that heat. Editing a car 
 - **Filters**: narrow the results to one car, class, track or driver.
 - **Demo races**: tick it to see the results of demo races instead.
 - The numbers use each heat's car as it ran, so editing a car later doesn't change them. Laps under the race's minimum lap time and laps left out of the records don't count.
+
+## Export Slotcars {: #car-export }
+
+Click **Export** in the toolbar to save all your slotcars to a ZIP file, for a backup or to share them with another club.
+
+- **Format**: pick **CSV** or **Excel** for a spreadsheet, or **JSON** for a structured file.
+- **What's in it**: one row per car with every detail: name, picture, brand, class, scale, setup, Modified (Yes/No) and notes.
+- **Your fields**: each of your own fields gets a column, named after the field.
+- **Pictures**: the car pictures go into an `images` folder in the ZIP, each picture only once. The Picture column names the file.
+- **Ids stay out**: cars and fields are matched by name, so the file works in any database.

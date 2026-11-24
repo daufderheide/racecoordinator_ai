@@ -1,11 +1,14 @@
 @if (visible()) {
-  <div class="export-modal-backdrop" id="driver-export-modal-backdrop">
-    <div class="export-modal-dialog" id="driver-export-modal-dialog">
+  <div
+    class="export-modal-backdrop"
+    [id]="config().idPrefix + '-modal-backdrop'"
+  >
+    <div class="export-modal-dialog" [id]="config().idPrefix + '-modal-dialog'">
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="modal-title-wrap">
           <span class="material-icons modal-header-icon">upload</span>
-          <h2 class="modal-title">{{ "DEM_TITLE" | translate }}</h2>
+          <h2 class="modal-title">{{ config().titleKey | translate }}</h2>
         </div>
         <button
           type="button"
@@ -20,30 +23,33 @@
 
       <!-- Error Alert Banner -->
       @if (errorMessage) {
-        <div class="alert-banner error" id="driver-export-error-banner">
+        <div
+          class="alert-banner error"
+          [id]="config().idPrefix + '-error-banner'"
+        >
           <span class="material-icons alert-icon">error</span>
           <span class="alert-text">{{ errorMessage | translate }}</span>
         </div>
       }
 
       <!-- Modal Body -->
-      <div class="modal-body" id="driver-export-body">
+      <div class="modal-body" [id]="config().idPrefix + '-body'">
         <!-- Overview Banner -->
         <div class="export-overview-card">
           <div class="driver-count-badge">
-            <span class="material-icons count-icon">people</span>
+            <span class="material-icons count-icon">{{
+              config().countIcon
+            }}</span>
             <span class="count-text">{{
-              "DEM_DRIVER_COUNT" | translate: { count: driverCount() }
+              config().countKey | translate: { count: driverCount() }
             }}</span>
           </div>
           <p class="export-description">
-            {{ "DEM_EXPORT_INFO" | translate }}
+            {{ config().infoKey | translate }}
           </p>
           <div class="export-note-banner">
             <span class="material-icons note-icon">info</span>
-            <span class="note-text">{{
-              "DEM_SHARED_AUDIO_INFO" | translate
-            }}</span>
+            <span class="note-text">{{ config().noteKey | translate }}</span>
           </div>
         </div>
 
@@ -56,7 +62,7 @@
             <!-- CSV Card -->
             <div
               class="format-card"
-              id="driver-export-format-csv"
+              [id]="config().idPrefix + '-format-csv'"
               [class.selected]="selectedFormat === 'csv'"
               (click)="selectFormat('csv')"
             >
@@ -80,7 +86,7 @@
             <!-- Excel Card -->
             <div
               class="format-card"
-              id="driver-export-format-xlsx"
+              [id]="config().idPrefix + '-format-xlsx'"
               [class.selected]="selectedFormat === 'xlsx'"
               (click)="selectFormat('xlsx')"
             >
@@ -106,7 +112,7 @@
             <!-- JSON Card -->
             <div
               class="format-card"
-              id="driver-export-format-json"
+              [id]="config().idPrefix + '-format-json'"
               [class.selected]="selectedFormat === 'json'"
               (click)="selectFormat('json')"
             >
@@ -137,7 +143,7 @@
         <button
           type="button"
           class="btn-secondary"
-          id="btn-driver-export-cancel"
+          [id]="'btn-' + config().idPrefix + '-cancel'"
           [disabled]="isExporting"
           (click)="onClose()"
         >
@@ -146,16 +152,16 @@
         <button
           type="button"
           class="btn-primary"
-          id="btn-driver-export-confirm"
+          [id]="'btn-' + config().idPrefix + '-confirm'"
           [disabled]="isExporting || driverCount() === 0"
           (click)="onExport()"
         >
           @if (isExporting) {
             <span class="spinner-small"></span>
-            <span>{{ "DEM_EXPORTING" | translate }}</span>
+            <span>{{ config().exportingKey | translate }}</span>
           } @else {
             <span class="material-icons">file_download</span>
-            <span>{{ "DEM_BTN_EXPORT" | translate }}</span>
+            <span>{{ config().buttonKey | translate }}</span>
           }
         </button>
       </div>
