@@ -152,6 +152,8 @@ message RaceModel {
   int32 step_up = 37;
   PointsScoring points_scoring = 38;
   CrashAndLearnOptions crash_and_learn_options = 39;
+  // IROC: the slotcars stay in their lanes and the drivers rotate (#1210).
+  bool cars_stay_in_lanes = 40;
 }
 
 message CrashAndLearnOptions {

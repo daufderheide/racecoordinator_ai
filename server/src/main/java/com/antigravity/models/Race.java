@@ -142,6 +142,11 @@ public class Race extends Model {
   @JsonAlias("adjustDriftLaps")
   private final boolean adjustDriftLaps;
 
+  /** IROC: the slotcars stay in their lanes and the drivers rotate (#1210). */
+  @JsonProperty("cars_stay_in_lanes")
+  @JsonAlias("carsStayInLanes")
+  private final boolean carsStayInLanes;
+
   @JsonProperty("theme_id")
   @JsonAlias("themeId")
   private final String themeId;
@@ -214,6 +219,7 @@ public class Race extends Model {
           Boolean startBehindSensor,
       @JsonProperty("practice") @JsonAlias("practice") Boolean practice,
       @JsonProperty("adjust_drift_laps") @JsonAlias("adjustDriftLaps") Boolean adjustDriftLaps,
+      @JsonProperty("cars_stay_in_lanes") @JsonAlias("carsStayInLanes") Boolean carsStayInLanes,
       @JsonProperty("theme_id") @JsonAlias("themeId") String themeId,
       @JsonProperty("step_up") @JsonAlias("stepUp") Integer stepUp,
       @JsonProperty("_compat_meta") @JsonAlias({"compatMeta", "_compatMeta", "compat_meta"})
@@ -275,6 +281,7 @@ public class Race extends Model {
     this.startBehindSensor = startBehindSensor != null ? startBehindSensor : true;
     this.practice = practice != null ? practice : false;
     this.adjustDriftLaps = adjustDriftLaps != null ? adjustDriftLaps : false;
+    this.carsStayInLanes = carsStayInLanes != null ? carsStayInLanes : false;
     this.themeId = themeId != null ? themeId : Theme.DEFAULT_THEME_ID;
     this.stepUp = stepUp != null ? stepUp : 0;
     this.compatMeta = syncCompatMeta(compatMeta, this.stepUp, this.overallScoring);
@@ -319,6 +326,7 @@ public class Race extends Model {
     private boolean startBehindSensor = true;
     private boolean practice = false;
     private boolean adjustDriftLaps = false;
+    private boolean carsStayInLanes = false;
     private String themeId = Theme.DEFAULT_THEME_ID;
     private int stepUp = 0;
     private Map<String, Object> compatMeta;
@@ -363,6 +371,7 @@ public class Race extends Model {
       this.startBehindSensor = other.isStartBehindSensor();
       this.practice = other.isPractice();
       this.adjustDriftLaps = other.isAdjustDriftLaps();
+      this.carsStayInLanes = other.isCarsStayInLanes();
       this.themeId = other.getThemeId();
       this.stepUp = other.getStepUp();
       this.compatMeta = other.getCompatMeta();
@@ -556,6 +565,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withCarsStayInLanes(boolean carsStayInLanes) {
+      this.carsStayInLanes = carsStayInLanes;
+      return this;
+    }
+
     public Builder withThemeId(String themeId) {
       this.themeId = themeId;
       return this;
@@ -621,6 +635,7 @@ public class Race extends Model {
           startBehindSensor,
           practice,
           adjustDriftLaps,
+          carsStayInLanes,
           themeId,
           stepUp,
           compatMeta,
@@ -834,6 +849,11 @@ public class Race extends Model {
   @JsonProperty("adjust_drift_laps")
   public boolean isAdjustDriftLaps() {
     return adjustDriftLaps;
+  }
+
+  @JsonProperty("cars_stay_in_lanes")
+  public boolean isCarsStayInLanes() {
+    return carsStayInLanes;
   }
 
   @JsonProperty("theme_id")

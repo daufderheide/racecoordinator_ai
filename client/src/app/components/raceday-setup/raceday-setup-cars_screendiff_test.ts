@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { MOCK_RACES } from "@app/testing/data/races_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 /** Slotcars in Race Day Setup (#1210): the car on a racing row and the pick dialog. */
@@ -51,5 +52,68 @@ test.describe("Race Day Setup slotcars", () => {
 
     await page.locator("#car-pick-save").click();
     await expect(page.locator("#racing-item-1")).toContainText("Audi R8 LMS");
+  });
+});
+
+/** Cars stay in their lanes (IROC, #1210): the lane cars under the Racing list. */
+test.describe("Race Day Setup lane cars (IROC)", () => {
+  test.use({ locale: "en" });
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page, { cars: true });
+    // The same races, as IROC races (the newest route wins).
+    await page.route("**/api/races", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(
+          MOCK_RACES.map((r) => ({ ...r, cars_stay_in_lanes: true })),
+        ),
+      }),
+    );
+    await TestSetupHelper.setupLocalStorage(page, {
+      selectedDriverIds: ["d1", "d2"],
+      selectedLaneCars: { t1: ["c2", ""] },
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await TestSetupHelper.waitForLocalization(page, "en", page.goto("/"));
+    await page.locator(".setup-container").waitFor({ state: "visible" });
+    await page.locator("#lane-cars-bar").waitFor();
+    await TestSetupHelper.disableAnimations(page);
+  });
+
+  test("shows the lane cars instead of a car per racer", async ({ page }) => {
+    await page.mouse.move(0, 0);
+    await expect(page.locator("#lane-car-0")).toContainText("Ford GT40 Mk II");
+    await expect(page.locator("#lane-car-1")).toContainText("No car");
+    await expect(page.locator("#racing-car-btn-0")).toHaveCount(0);
+    await expect(page.locator("app-lane-cars-bar")).toHaveScreenshot(
+      "setup-lane-cars-bar.png",
+      { animations: "disabled" },
+    );
+  });
+
+  test("picks the lane cars in the dialog", async ({ page }) => {
+    await page.locator("#lane-cars-bar").click();
+    await page.locator("#lane-cars-dialog").waitFor();
+    await page.locator("#lane-cars-lane-1 app-custom-select").click();
+    await page
+      .locator(".custom-select-option")
+      .filter({ hasText: "Porsche 911 RSR #92" })
+      .click();
+    await TestSetupHelper.blurActiveElement(page);
+    await page.mouse.move(0, 0);
+
+    await expect(page.locator("#lane-cars-dialog")).toHaveScreenshot(
+      "setup-lane-cars-dialog.png",
+      { animations: "disabled" },
+    );
+
+    await page.locator("#lane-cars-save").click();
+    await expect(page.locator("#lane-car-1")).toContainText(
+      "Porsche 911 RSR #92",
+    );
   });
 });

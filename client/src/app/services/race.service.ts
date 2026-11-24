@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -66,6 +67,18 @@ export class RaceService {
 
   getHeats(): Heat[] {
     return this.heatsSubject.getValue();
+  }
+
+  /** Cars stay in their lanes (#1210): the car on each lane right now, by lane index. */
+  private laneCarsSubject = new BehaviorSubject<(Car | undefined)[]>([]);
+  laneCars$ = this.laneCarsSubject.asObservable();
+
+  setLaneCars(cars: (Car | undefined)[]) {
+    this.laneCarsSubject.next(cars);
+  }
+
+  getLaneCars(): (Car | undefined)[] {
+    return this.laneCarsSubject.getValue();
   }
 
   private currentHeatSubject = new BehaviorSubject<Heat | undefined>(undefined);

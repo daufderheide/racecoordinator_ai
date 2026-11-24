@@ -2,6 +2,7 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.ClientCommandTaskHandler.TaskResult;
+import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceCompatibility;
@@ -302,6 +303,23 @@ public class RaceControlHandler {
     return participants;
   }
 
+  /**
+   * Cars stay in their lanes (#1210): the car picked for each lane, read from the Slotcar database.
+   * One entry per track lane; an empty or unknown id leaves that lane without a car.
+   */
+  private List<Car> resolveLaneCars(List<String> laneCarIds, Track track) {
+    int lanes = track.getLanes() != null ? track.getLanes().size() : 0;
+    List<Car> cars = new ArrayList<>();
+    for (int lane = 0; lane < lanes; lane++) {
+      String id = lane < laneCarIds.size() ? laneCarIds.get(lane) : "";
+      cars.add(
+          id == null || id.isEmpty()
+              ? null
+              : DatabaseService.getInstance().getCar(databaseContext, id));
+    }
+    return cars;
+  }
+
   /** The slotcar(s) picked for one roster entry (#1210), read from the Slotcar database. */
   private void applyCarChoice(RaceParticipant rp, ParticipantCarChoice choice) {
     if (choice == null) return;
@@ -380,6 +398,11 @@ public class RaceControlHandler {
               .demoConfig(request.getDemoConfig())
               .seasonEntityId(request.getSeasonId())
               .build();
+      if (raceModel.isCarsStayInLanes()) {
+        runtimeRace.setLaneCars(resolveLaneCars(request.getLaneCarIdsList(), raceTrack));
+        // The first heat is prepared while the race is built, so take its snapshot again.
+        runtimeRace.refreshCarSnapshots();
+      }
 
       ClientSubscriptionManager.getInstance().setRace(runtimeRace);
       runtimeRace.init();

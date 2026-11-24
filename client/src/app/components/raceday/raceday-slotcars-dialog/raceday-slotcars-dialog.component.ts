@@ -11,6 +11,7 @@ import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { getContrastColor } from "@app/utils/color.utils";
 
 export interface SlotcarSwap {
   lane: number;
@@ -45,12 +46,18 @@ interface LaneRow {
   ],
 })
 export class RacedaySlotcarsDialogComponent {
+  /** Dark or light lane number, readable on any lane color. */
+  protected readonly chipText = getContrastColor;
+
   visible = input(false);
   heat = input<Heat | undefined>(undefined);
   track = input<Track | undefined>(undefined);
   cars = input<Car[]>([]);
   /** A heat is counting down, racing or paused: no swaps now. */
   locked = input(false);
+  /** IROC (#1210): the cars stay in their lanes; rows are lanes, with the lane's car. */
+  lanesMode = input(false);
+  laneCars = input<(Car | undefined)[]>([]);
 
   swap = output<SlotcarSwap>();
   close = output<void>();
@@ -61,16 +68,21 @@ export class RacedaySlotcarsDialogComponent {
     ),
   );
 
-  rows = computed<LaneRow[]>(() =>
-    (this.heat()?.heatDrivers || [])
-      .filter((hd) => !this.isEmptyLane(hd))
+  rows = computed<LaneRow[]>(() => {
+    const lanes = this.lanesMode();
+    return (this.heat()?.heatDrivers || [])
+      .filter((hd) => lanes || !this.isEmptyLane(hd))
       .map((hd) => ({
         lane: hd.laneIndex,
         color: this.track()?.lanes?.[hd.laneIndex]?.background_color || "",
-        name: this.racerName(hd),
-        carId: hd.car?.entity_id || "",
-      })),
-  );
+        name: this.isEmptyLane(hd) ? "" : this.racerName(hd),
+        // In lanes mode the lane's car right now: after a heat has run, its
+        // own copy keeps the old car while a swap is for the next heats.
+        carId: lanes
+          ? this.laneCars()[hd.laneIndex]?.entity_id || ""
+          : hd.car?.entity_id || "",
+      }));
+  });
 
   label(car: Car): string {
     return carLabel(car);

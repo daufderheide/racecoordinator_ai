@@ -66,6 +66,7 @@ import { UpdateChannel } from "@app/services/update.service";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
+import { LaneCarsBarComponent } from "./lane-cars-bar/lane-cars-bar.component";
 import { RacedaySetupCarsHelper } from "./raceday-setup-cars.helper";
 import {
   formatEnumDisplay,
@@ -89,6 +90,7 @@ import {
 } from "./raceday-setup-formatting.helper";
 import { getRacedaySetupHelpSteps } from "./raceday-setup-help.helper";
 import { RacedaySetupInitHelper } from "./raceday-setup-init.helper";
+import { RacedaySetupLaneCars } from "./raceday-setup-lane-cars";
 import { RacedaySetupLaunchHelper } from "./raceday-setup-launch.helper";
 import { RacedaySetupMenuHelper } from "./raceday-setup-menu.helper";
 import { RacedaySetupNavigationHelper } from "./raceday-setup-navigation.helper";
@@ -141,6 +143,7 @@ import { RacedaySetupUiHelper } from "./raceday-setup-ui.helper";
     DriverLabelsOverflowDirective,
     PreviewBadgeComponent,
     CarPickDialogComponent,
+    LaneCarsBarComponent,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
@@ -166,6 +169,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
   public carChoices: Record<string, CarChoice> = {};
   public carPickTarget: Participant | null = null;
   public readonly emptyChoice: CarChoice = emptyCarChoice();
+  /** Cars stay in their lanes (IROC); the picks are `laneCars`, set by loadCars. */
+  protected laneCarsUi = new RacedaySetupLaneCars(this);
   public driverLabels: DriverLabel[] = [];
   public selectedAvailableLabelIds: string[] = [];
   public selectedRacingLabelIds: string[] = [];

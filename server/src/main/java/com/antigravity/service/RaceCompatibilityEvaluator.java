@@ -116,6 +116,8 @@ public class RaceCompatibilityEvaluator {
                   "practice",
                   "adjust_drift_laps",
                   "adjustDriftLaps",
+                  "cars_stay_in_lanes",
+                  "carsStayInLanes",
                   "theme_id",
                   "themeId",
                   "step_up",

@@ -93,7 +93,7 @@
                     <span class="driver-step-badge">{{ sBadge }}</span>
                   }
                 </div>
-                @if (cars.allCars.length > 0 && cars.summary(participant)) {
+                @if (cars.show && cars.summary(participant)) {
                   <div class="driver-car" [title]="cars.summary(participant)">
                     <span class="material-icons">directions_car</span>
                     <span class="driver-car-name">{{
@@ -102,7 +102,7 @@
                   </div>
                 }
               </div>
-              @if (cars.allCars.length > 0) {
+              @if (cars.show) {
                 <button
                   type="button"
                   class="car-pick-btn"

@@ -209,7 +209,8 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected databaseTeams: Team[] = [];
   protected databaseParticipants: (Driver | Team)[] = [];
   protected allDrivers: Driver[] = [];
-  protected cars = new ModifyHeatsCars(() => this.allDrivers); // Slotcars (#1210)
+  // Slotcars (#1210); none per racer when the cars stay in their lanes.
+  protected cars = new ModifyHeatsCars(() => this.allDrivers, this.race);
   private savingCount = 0;
   protected get isSaving(): boolean {
     return this.savingCount > 0;

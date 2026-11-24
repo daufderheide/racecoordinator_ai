@@ -66,3 +66,12 @@ Ogni auto ha gli stessi campi e mantiene i propri valori. Un campo lasciato vuot
 - **Risultati**: ogni manche conserva una copia dell'auto così come ha corso, quindi modificare o eliminare un'auto in seguito non cambia i risultati passati.
 
 L'icona dell'auto e la voce Auto slot… compaiono solo quando ci sono auto slot nel database.
+
+## Le auto restano nella loro corsia (IROC) {: #cars-in-lanes }
+
+In una gara IROC le auto restano nella loro corsia per tutta la gara e i piloti ruotano tra le corsie, così ogni pilota corre con ogni auto.
+
+- **Editor di gara**: spunta **Le auto restano nella loro corsia (IROC)** nella sezione **Manche**.
+- **Configurazione del Giorno di Gara**: sotto l'elenco **Piloti in Gara** compare un riquadro **Auto per corsia**. Cliccalo per scegliere l'auto di ogni corsia. RC AI ricorda le auto per pista. Le icone auto dei piloti sono nascoste, perché l'auto va con la corsia.
+- **Cambiare tra le manche**: **Direttore Gara → Auto slot…** mostra ogni corsia con la sua auto. Una nuova auto vale dalla prossima manche non ancora corsa.
+- **Risultati**: ogni manche salva l'auto di ogni corsia, così vedi quale pilota ha corso con quale auto.

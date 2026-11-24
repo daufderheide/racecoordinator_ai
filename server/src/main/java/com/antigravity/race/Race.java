@@ -4,6 +4,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.converters.RaceConverter;
 import com.antigravity.converters.RaceParticipantConverter;
+import com.antigravity.models.Car;
 import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
@@ -60,6 +61,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +99,10 @@ public class Race implements ProtocolListener {
   private IRaceState state;
   private float accumulatedRaceTime = 0.0f;
   private boolean hasRacedInCurrentHeat = false;
+
+  /** Cars stay in their lanes (#1210): the car on each lane, by lane index; null = none. */
+  private final List<Car> laneCars = new ArrayList<>();
+
   private boolean autoStartFired = false;
   private boolean autoAdvanceFired = false;
   private double autoStartRemaining = 0;
@@ -1436,10 +1442,43 @@ public class Race implements ProtocolListener {
     if (currentHeat == null || currentHeat.getDrivers() == null || hasRacedInCurrentHeat) {
       return;
     }
-    for (DriverHeatData heatData : currentHeat.getDrivers()) {
+    List<DriverHeatData> heatDrivers = currentHeat.getDrivers();
+    for (int lane = 0; lane < heatDrivers.size(); lane++) {
+      DriverHeatData heatData = heatDrivers.get(lane);
+      if (isCarsStayInLanes()) {
+        // IROC: the car belongs to the lane; whoever races this lane in this heat drives it.
+        heatData.setCar(getLaneCar(lane));
+        continue;
+      }
       RaceParticipant participant = heatData.getDriver();
       heatData.setCar(participant != null ? participant.carFor(heatData.getActualDriver()) : null);
     }
+  }
+
+  /** True when the race keeps the slotcars in their lanes (IROC, #1210). */
+  public boolean isCarsStayInLanes() {
+    return model != null && model.isCarsStayInLanes();
+  }
+
+  /** The car on each lane, by lane index (null = no car). Empty unless cars stay in lanes. */
+  public List<Car> getLaneCars() {
+    return Collections.unmodifiableList(laneCars);
+  }
+
+  public Car getLaneCar(int lane) {
+    return lane >= 0 && lane < laneCars.size() ? laneCars.get(lane) : null;
+  }
+
+  /** Puts a car on a lane (null removes it). Takes effect from the next heat that hasn't run. */
+  public void setLaneCar(int lane, Car car) {
+    if (lane < 0) return;
+    while (laneCars.size() <= lane) laneCars.add(null);
+    laneCars.set(lane, car);
+  }
+
+  public void setLaneCars(List<Car> cars) {
+    laneCars.clear();
+    if (cars != null) laneCars.addAll(cars);
   }
 
   public void resetCurrentHeat() {

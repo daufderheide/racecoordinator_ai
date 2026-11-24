@@ -66,3 +66,12 @@ Elke auto krijgt dezelfde velden en houdt zijn eigen waarden. Een veld dat je le
 - **Uitslagen**: elke heat bewaart een kopie van de auto zoals hij reed, dus een auto later aanpassen of verwijderen verandert oude uitslagen niet.
 
 Het auto-icoon en de menuoptie Slotcars… verschijnen pas als er slotcars in de database staan.
+
+## Auto's blijven in hun baan (IROC) {: #cars-in-lanes }
+
+In een IROC-race blijven de auto's de hele race in hun baan en rouleren de coureurs door de banen, zodat elke coureur met elke auto rijdt.
+
+- **Race-editor**: vink **Auto's blijven in hun baan (IROC)** aan in het onderdeel **Heats**.
+- **Race Day Setup**: onder de lijst **Racende Coureurs** staat een vak **Auto's per baan**. Klik erop om de auto voor elke baan te kiezen. RC AI onthoudt de auto's per circuit. De auto-iconen bij de coureurs zijn verborgen, want de auto hoort bij de baan.
+- **Wisselen tussen heats**: **Race Directeur → Slotcars…** toont elke baan met zijn auto. Een nieuwe auto telt vanaf de volgende heat die nog niet gereden is.
+- **Uitslagen**: elke heat bewaart de auto van elke baan, dus je ziet welke coureur met welke auto reed.

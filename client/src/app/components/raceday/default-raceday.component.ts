@@ -146,6 +146,15 @@ export class DefaultRacedayComponent
     return RacedaySlotcarsHelper.isLocked(this);
   }
 
+  /** IROC (#1210): the cars stay in their lanes. */
+  get carsStayInLanes(): boolean {
+    return RacedaySlotcarsHelper.carsStayInLanes(this);
+  }
+
+  get laneCars(): (Car | undefined)[] {
+    return RacedaySlotcarsHelper.laneCars(this);
+  }
+
   onSlotcarSwap(swap: SlotcarSwap): void {
     RacedaySlotcarsHelper.swap(this, swap);
   }

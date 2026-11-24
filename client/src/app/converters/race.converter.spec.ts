@@ -42,6 +42,23 @@ describe("RaceConverter", () => {
     expect(result.fuel_options.enabled).toBeFalse();
   });
 
+  it("reads whether the cars stay in their lanes (IROC, #1210)", () => {
+    const base: IRaceModel = {
+      model: { entityId: "r9" },
+      name: "IROC",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+    expect(RaceConverter.fromProto(base).cars_stay_in_lanes).toBeFalse();
+    expect(
+      RaceConverter.fromProto({ ...base, carsStayInLanes: true })
+        .cars_stay_in_lanes,
+    ).toBeTrue();
+    expect(
+      RaceConverter.fromProto({ ...base, cars_stay_in_lanes: true } as any)
+        .cars_stay_in_lanes,
+    ).toBeTrue();
+  });
+
   it("should map drift time from proto", () => {
     const mockProto: IRaceModel = {
       model: { entityId: "r3" },
