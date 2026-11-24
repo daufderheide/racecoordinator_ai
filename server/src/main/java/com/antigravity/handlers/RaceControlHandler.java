@@ -9,6 +9,7 @@ import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.DeferHeatResponse;
+import com.antigravity.proto.DriverCarChoice;
 import com.antigravity.proto.EndRaceRequest;
 import com.antigravity.proto.EndRaceResponse;
 import com.antigravity.proto.InitializeRaceRequest;
@@ -16,6 +17,7 @@ import com.antigravity.proto.InitializeRaceResponse;
 import com.antigravity.proto.ModifyHeatsRequest;
 import com.antigravity.proto.ModifyHeatsResponse;
 import com.antigravity.proto.NextHeatResponse;
+import com.antigravity.proto.ParticipantCarChoice;
 import com.antigravity.proto.PauseRaceResponse;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RegenerateHeatsRequest;
@@ -139,7 +141,7 @@ public class RaceControlHandler {
 
     List<Team> allTeams = dbService.getAllTeams(databaseContext);
     List<RaceParticipant> participants =
-        buildParticipants(participantIds, drivers, teams, allTeams);
+        buildParticipants(participantIds, drivers, teams, allTeams, request.getCarChoicesList());
 
     Track raceTrack =
         DatabaseService.getInstance().getTrack(databaseContext, raceModel.getTrackEntityId());
@@ -278,48 +280,85 @@ public class RaceControlHandler {
   }
 
   private List<RaceParticipant> buildParticipants(
-      List<String> participantIds, List<Driver> drivers, List<Team> teams, List<Team> allTeams) {
+      List<String> participantIds,
+      List<Driver> drivers,
+      List<Team> teams,
+      List<Team> allTeams,
+      List<ParticipantCarChoice> carChoices) {
+    Map<String, ParticipantCarChoice> choiceById = new HashMap<>();
+    if (carChoices != null) {
+      for (ParticipantCarChoice c : carChoices) {
+        choiceById.put(c.getParticipantId(), c);
+      }
+    }
     List<RaceParticipant> participants = new ArrayList<>();
     for (String pid : participantIds) {
-      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
-      boolean isExplicitDriver = pid.startsWith("d_");
-      boolean isExplicitTeam = pid.startsWith("t_");
-
-      if (!isExplicitTeam) {
-        Driver driver =
-            drivers.stream().filter(d -> d.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (driver != null) {
-          Team driverTeam = null;
-          if (!isExplicitDriver) {
-            driverTeam =
-                allTeams.stream()
-                    .filter(t -> t.getDriverIds().contains(rawId))
-                    .findFirst()
-                    .orElse(null);
-          }
-
-          if (driverTeam != null) {
-            participants.add(new RaceParticipant(driver, driverTeam));
-          } else {
-            participants.add(new RaceParticipant(driver));
-          }
-          continue;
-        }
-      }
-
-      if (!isExplicitDriver) {
-        Team team =
-            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (team != null) {
-          RaceParticipant rp = new RaceParticipant(team);
-          List<Driver> teamDrivers =
-              DatabaseService.getInstance().getDrivers(databaseContext, team.getDriverIds());
-          rp.setTeamDrivers(teamDrivers);
-          participants.add(rp);
-        }
+      int before = participants.size();
+      addParticipant(pid, drivers, teams, allTeams, participants);
+      if (participants.size() > before) {
+        applyCarChoice(participants.get(participants.size() - 1), choiceById.get(pid));
       }
     }
     return participants;
+  }
+
+  /** The slotcar(s) picked for one roster entry (#1210), read from the Slotcar database. */
+  private void applyCarChoice(RaceParticipant rp, ParticipantCarChoice choice) {
+    if (choice == null) return;
+    DatabaseService db = DatabaseService.getInstance();
+    rp.setCarPerDriver(choice.getCarPerDriver());
+    if (choice.getCarPerDriver()) {
+      for (DriverCarChoice dc : choice.getDriverCarsList()) {
+        rp.setDriverCar(dc.getDriverId(), db.getCar(databaseContext, dc.getCarId()));
+      }
+    } else {
+      rp.setCar(db.getCar(databaseContext, choice.getCarId()));
+    }
+  }
+
+  private void addParticipant(
+      String pid,
+      List<Driver> drivers,
+      List<Team> teams,
+      List<Team> allTeams,
+      List<RaceParticipant> participants) {
+    String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
+    boolean isExplicitDriver = pid.startsWith("d_");
+    boolean isExplicitTeam = pid.startsWith("t_");
+
+    if (!isExplicitTeam) {
+      Driver driver =
+          drivers.stream().filter(d -> d.getEntityId().equals(rawId)).findFirst().orElse(null);
+      if (driver != null) {
+        Team driverTeam = null;
+        if (!isExplicitDriver) {
+          driverTeam =
+              allTeams.stream()
+                  .filter(t -> t.getDriverIds().contains(rawId))
+                  .findFirst()
+                  .orElse(null);
+        }
+
+        if (driverTeam != null) {
+          participants.add(new RaceParticipant(driver, driverTeam));
+        } else {
+          participants.add(new RaceParticipant(driver));
+        }
+        return;
+      }
+    }
+
+    if (!isExplicitDriver) {
+      Team team =
+          teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
+      if (team != null) {
+        RaceParticipant rp = new RaceParticipant(team);
+        List<Driver> teamDrivers =
+            DatabaseService.getInstance().getDrivers(databaseContext, team.getDriverIds());
+        rp.setTeamDrivers(teamDrivers);
+        participants.add(rp);
+      }
+    }
   }
 
   private TaskResult startRuntimeRace(

@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Team;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -43,6 +44,11 @@ public class RaceParticipant extends ServerToClientObject
   private int stepUpIndex = 0;
   private int crashes = 0;
   private boolean isDisqualified = false;
+  // Slotcar for this race (#1210): a solo driver's car or a team's shared car.
+  private Car car;
+  // A team with a car per driver uses driverCars instead of car.
+  private boolean carPerDriver = false;
+  private List<ParticipantDriverCar> driverCars = new ArrayList<>();
 
   public RaceParticipant(Driver driver) {
     super();
@@ -234,6 +240,52 @@ public class RaceParticipant extends ServerToClientObject
 
   public void setSeed(int seed) {
     this.seed = seed;
+  }
+
+  public Car getCar() {
+    return car;
+  }
+
+  public void setCar(Car car) {
+    this.car = car;
+  }
+
+  public boolean isCarPerDriver() {
+    return carPerDriver;
+  }
+
+  public void setCarPerDriver(boolean carPerDriver) {
+    this.carPerDriver = carPerDriver;
+  }
+
+  public List<ParticipantDriverCar> getDriverCars() {
+    return driverCars;
+  }
+
+  public void setDriverCars(List<ParticipantDriverCar> driverCars) {
+    this.driverCars = driverCars != null ? driverCars : new ArrayList<>();
+  }
+
+  /**
+   * The car on the track for this entry: the team driver's own car when the team races with a car
+   * per driver, otherwise the entry's car. Null when no car was picked.
+   */
+  public Car carFor(Driver actualDriver) {
+    if (carPerDriver) {
+      String id = actualDriver != null ? actualDriver.getEntityId() : null;
+      if (id == null) return null;
+      for (ParticipantDriverCar dc : driverCars) {
+        if (id.equals(dc.getDriverId())) return dc.getCar();
+      }
+      return null;
+    }
+    return car;
+  }
+
+  /** Sets the car of one team driver (car per driver), replacing an earlier one. */
+  public void setDriverCar(String driverId, Car car) {
+    driverCars.removeIf(dc -> driverId.equals(dc.getDriverId()));
+    if (car != null) driverCars.add(new ParticipantDriverCar(driverId, car));
   }
 
   public double getFuelLevel() {

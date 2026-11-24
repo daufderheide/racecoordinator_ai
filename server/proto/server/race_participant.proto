@@ -3,6 +3,7 @@ package com.antigravity;
 
 import "client/driver_model.proto";
 import "client/team_model.proto";
+import "client/car_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -48,4 +49,15 @@ message RaceParticipant {
   int32 step_up_index = 37;
   int32 crashes = 38;
   bool is_disqualified = 39;
+  // Slotcar for this race (step 3 of #1210): a solo driver's car, or the
+  // car a team shares. With car_per_driver, each team driver has their own
+  // car in driver_cars instead.
+  CarModel car = 40;
+  bool car_per_driver = 41;
+  repeated ParticipantDriverCar driver_cars = 42;
+}
+
+message ParticipantDriverCar {
+  string driver_id = 1;
+  CarModel car = 2;
 }

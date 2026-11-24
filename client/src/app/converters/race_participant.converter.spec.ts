@@ -207,4 +207,44 @@ describe("RaceParticipantConverter", () => {
     expect(p2).toBe(p1);
     expect(p1.stepUpIndex).toBe(1);
   });
+
+  describe("slotcars (#1210)", () => {
+    const full: IRaceParticipant = {
+      objectId: "p1",
+      driver: { name: "Ann", model: { entityId: "d1" } },
+      car: { model: { entityId: "c1" }, name: "Audi R8" },
+      carPerDriver: true,
+      driverCars: [
+        {
+          driverId: "d1",
+          car: { model: { entityId: "c2" }, name: "Ford GT40" },
+        },
+        { driverId: "", car: { model: { entityId: "c3" }, name: "No driver" } },
+      ],
+    };
+
+    it("reads the racer's cars", () => {
+      const p = RaceParticipantConverter.fromProto(full);
+      expect(p.car?.name).toBe("Audi R8");
+      expect(p.carPerDriver).toBeTrue();
+      expect(p.driverCars?.map((dc) => dc.car.name)).toEqual(["Ford GT40"]);
+    });
+
+    it("keeps the cars when a heat only refers to the racer", () => {
+      RaceParticipantConverter.fromProto(full);
+      const again = RaceParticipantConverter.fromProto({ objectId: "p1" });
+      expect(again.car?.name).toBe("Audi R8");
+    });
+
+    it("takes a swapped car from the next full update", () => {
+      RaceParticipantConverter.fromProto(full);
+      const updated = RaceParticipantConverter.fromProto({
+        objectId: "p1",
+        driver: { name: "Ann", model: { entityId: "d1" } },
+      });
+      expect(updated.car).toBeUndefined();
+      expect(updated.carPerDriver).toBeFalse();
+      expect(updated.driverCars).toEqual([]);
+    });
+  });
 });

@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarLocation;
@@ -105,6 +106,8 @@ public class DriverHeatData extends ServerToClientObject
   private double reactionTime = -1.0;
   private double pendingLapTime = 0.0f;
   private double initialFuelLevel = 100.0;
+  // The car on the track in this heat (#1210): a copy taken before the heat ran.
+  private Car car;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
   private double gapLeaderF1 = 0.0;
@@ -539,6 +542,14 @@ public class DriverHeatData extends ServerToClientObject
 
   public void setInitialFuelLevel(double initialFuelLevel) {
     this.initialFuelLevel = initialFuelLevel;
+  }
+
+  public Car getCar() {
+    return car;
+  }
+
+  public void setCar(Car car) {
+    this.car = car;
   }
 
   public void addPendingLapTime(double lapTime) {

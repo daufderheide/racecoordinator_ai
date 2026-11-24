@@ -4,6 +4,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { RaceParticipant } from "@app/race/race_participant";
 
+import { CarConverter } from "./car.converter";
 import { ConverterCache } from "./converter_cache";
 import { DriverConverter } from "./driver.converter";
 import { RaceParticipantConverter } from "./race_participant.converter";
@@ -55,6 +56,7 @@ export class HeatConverter {
     );
 
     this.populateScalarProperties(hd, dProto);
+    hd.car = CarConverter.fromProto(dProto.car);
     this.populateAnalysisMetrics(hd, dProto);
     this.populateLapsAndSegments(hd, dProto);
 

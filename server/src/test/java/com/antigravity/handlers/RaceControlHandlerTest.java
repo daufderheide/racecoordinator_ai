@@ -709,4 +709,50 @@ public class RaceControlHandlerTest {
     assertNotNull(result.result);
     org.junit.Assert.assertTrue(result.result.toString().contains("unsupported features"));
   }
+
+  // Slotcars picked in the roster (#1210)
+  @Test
+  public void testHandleInitializeRace_AppliesTheCarPicks() throws Exception {
+    InitializeRaceRequest base = insertRaceAgainFixture();
+    new SqliteRepository<>(
+            databaseContext, "cars", com.antigravity.models.Car.class) // fqn-collision
+        .insert(
+            new com.antigravity.models.Car.Builder() // fqn-collision
+                .withName("Audi R8")
+                .withEntityId("c1")
+                .build());
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder(base)
+            .setRaceAgain(false)
+            .addCarChoices(
+                com.antigravity.proto.ParticipantCarChoice.newBuilder() // fqn-collision
+                    .setParticipantId("d_driver-again")
+                    .setCarId("c1"))
+            .build();
+
+    assertEquals(200, handler.handleInitializeRace(request).status);
+
+    com.antigravity.race.Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+    RaceParticipant p = activeRace.getDrivers().get(0);
+    assertEquals("Audi R8", p.getCar().getName());
+    assertEquals(
+        "the first heat has the car",
+        "c1",
+        activeRace.getCurrentHeat().getDrivers().get(0).getCar().getEntityId());
+  }
+
+  @Test
+  public void testHandleInitializeRace_IgnoresADeletedCar() throws Exception {
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder(insertRaceAgainFixture())
+            .setRaceAgain(false)
+            .addCarChoices(
+                com.antigravity.proto.ParticipantCarChoice.newBuilder() // fqn-collision
+                    .setParticipantId("d_driver-again")
+                    .setCarId("gone"))
+            .build();
+
+    assertEquals(200, handler.handleInitializeRace(request).status);
+    assertNull(ClientSubscriptionManager.getInstance().getRace().getDrivers().get(0).getCar());
+  }
 }

@@ -1,0 +1,123 @@
+@if (visible()) {
+  <div class="cpd-backdrop" id="car-pick-backdrop" (click)="onClose()">
+    <div
+      class="cpd-dialog"
+      id="car-pick-dialog"
+      role="dialog"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="onClose()"
+    >
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">directions_car</span>
+          <div class="cpd-titles">
+            <h2 class="modal-title">
+              {{ "CPD_TITLE" | translate }}
+              <app-preview-badge></app-preview-badge>
+            </h2>
+            <div class="cpd-entry" id="car-pick-entry">{{ entryName() }}</div>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          id="car-pick-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (isTeam()) {
+          <div class="cpd-segment" role="radiogroup">
+            <button
+              type="button"
+              id="car-pick-team-shared"
+              class="cpd-segment-btn"
+              [class.active]="!draft.carPerDriver"
+              (click)="setPerDriver(false)"
+            >
+              {{ "CPD_TEAM_SHARED" | translate }}
+            </button>
+            <button
+              type="button"
+              id="car-pick-team-per-driver"
+              class="cpd-segment-btn"
+              [class.active]="draft.carPerDriver"
+              (click)="setPerDriver(true)"
+            >
+              {{ "CPD_TEAM_PER_DRIVER" | translate }}
+            </button>
+          </div>
+        }
+
+        @if (!draft.carPerDriver) {
+          <div class="form-field">
+            <label class="field-label">{{ "CPD_LABEL_CAR" | translate }}</label>
+            <app-custom-select
+              id="car-pick-select"
+              [value]="draft.carId"
+              (change)="setCar($event)"
+            >
+              <app-custom-option value="">{{
+                "CPD_NO_CAR" | translate
+              }}</app-custom-option>
+              @for (car of sortedCars(); track car.entity_id) {
+                <app-custom-option [value]="car.entity_id">{{
+                  label(car)
+                }}</app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        } @else {
+          @for (d of teamDrivers(); track d.id) {
+            <div class="form-field" [id]="'car-pick-driver-' + d.id">
+              <label class="field-label">{{ d.name }}</label>
+              <app-custom-select
+                [value]="driverCar(d.id)"
+                (change)="setDriverCar(d.id, $event)"
+              >
+                <app-custom-option value="">{{
+                  "CPD_NO_CAR" | translate
+                }}</app-custom-option>
+                @for (car of sortedCars(); track car.entity_id) {
+                  <app-custom-option [value]="car.entity_id">{{
+                    label(car)
+                  }}</app-custom-option>
+                }
+              </app-custom-select>
+            </div>
+          }
+        }
+
+        @if (sortedCars().length === 0) {
+          <p class="cpd-hint" id="car-pick-empty">
+            {{ "CPD_EMPTY" | translate }}
+          </p>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          id="car-pick-cancel"
+          (click)="onClose()"
+        >
+          {{ "COMMON_CANCEL" | translate }}
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          id="car-pick-save"
+          (click)="onSave()"
+        >
+          {{ "SAVE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -2,6 +2,7 @@ package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.context.RaceScope;
+import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.DriverTrackStats;
@@ -143,6 +144,12 @@ public class DatabaseService {
       }
     }
     return orderedDrivers;
+  }
+
+  /** A slotcar by id (#1210), or null for an empty id or a deleted car. */
+  public Car getCar(DatabaseContext context, String entityId) {
+    if (entityId == null || entityId.isEmpty()) return null;
+    return new SqliteRepository<>(context, "cars", Car.class).findByEntityId(entityId);
   }
 
   public List<Team> getTeams(DatabaseContext context, List<String> entityIds) {

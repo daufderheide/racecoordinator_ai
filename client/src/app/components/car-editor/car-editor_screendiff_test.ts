@@ -6,7 +6,7 @@ import { CarEditorHarnessE2e } from "./testing/car-editor.harness.e2e";
 
 test.describe("Slotcar Editor Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.setupStandardMocks(page, { cars: true });
     await page.setViewportSize({ width: 1600, height: 900 });
     await TestSetupHelper.disableAnimations(page);
   });

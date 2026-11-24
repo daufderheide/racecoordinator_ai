@@ -29,6 +29,11 @@ import {
 import { Observable, Subject, Subscription } from "rxjs";
 import { debounceTime } from "rxjs/operators";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
+import { RacedaySlotcarsHelper } from "@app/components/raceday/helpers/raceday-slotcars.helper";
+import {
+  RacedaySlotcarsDialogComponent,
+  SlotcarSwap,
+} from "@app/components/raceday/raceday-slotcars-dialog/raceday-slotcars-dialog.component";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
@@ -36,6 +41,7 @@ import { PdfExportDialogComponent } from "@app/components/shared/pdf-export-dial
 import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-dialog/race-history-dialog.component";
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
+import { Car } from "@app/models/car";
 import { CustomUI } from "@app/models/custom-ui";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -115,6 +121,7 @@ export type { LapDisplayInfo } from "./helpers/raceday-column-layout.helper";
     DisallowLapRecordsDialogComponent,
     RaceHistoryDialogComponent,
     BrowserNavigationComponent,
+    RacedaySlotcarsDialogComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -127,6 +134,21 @@ export class DefaultRacedayComponent
   saveRaceName = "";
   showDisallowLapRecordsDialog = false;
   showRaceHistoryDialog = false;
+  /** Race day "Slotcars…" (#1210). */
+  showSlotcarsDialog = false;
+  raceCars: Car[] = [];
+
+  get hasSlotcars(): boolean {
+    return RacedaySlotcarsHelper.hasSlotcars(this);
+  }
+
+  get isSlotcarSwapLocked(): boolean {
+    return RacedaySlotcarsHelper.isLocked(this);
+  }
+
+  onSlotcarSwap(swap: SlotcarSwap): void {
+    RacedaySlotcarsHelper.swap(this, swap);
+  }
 
   get disallowLapRecordsHeats(): Heat[] {
     return RacedayRecordsStatsHelper.getDisallowLapRecordsHeats(this);
@@ -649,6 +671,7 @@ export class DefaultRacedayComponent
   }
 
   ngOnInit() {
+    RacedaySlotcarsHelper.loadCars(this);
     if (
       !this.route?.snapshot?.queryParams?.["themeId"] &&
       this.themeService?.getTransientThemeId?.()

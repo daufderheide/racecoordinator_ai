@@ -1,6 +1,7 @@
 package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
@@ -12,8 +13,10 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
+import com.antigravity.race.states.Starting;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.util.SeasonPointsCalculator;
 import io.javalin.http.Context;
@@ -182,6 +185,7 @@ public class DriverLaneHeatHandler {
           }
 
           dhd.setActualDriver(driver);
+          race.refreshCarSnapshots();
           race.updateAndBroadcastOverallStandings();
           race.broadcast(race.createSnapshot());
           ctx.status(200);
@@ -192,6 +196,77 @@ public class DriverLaneHeatHandler {
         ctx.status(400).result("Invalid lane index: " + lane);
       }
     } catch (Exception e) {
+      ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Quick car swap on race day (#1210): gives the racer on this lane another slotcar, between
+   * heats. An empty carId means no car. A team with a car per driver changes the car of the driver
+   * on the lane. The change holds for this heat and the heats after it; heats already run keep
+   * their car.
+   */
+  @SuppressWarnings("unchecked")
+  public void changeCar(Context ctx) {
+    try {
+      int lane = Integer.parseInt(ctx.pathParam("lane"));
+      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
+      String carId = body.get("carId") != null ? body.get("carId") : "";
+      logger.info("ClientCommand received: change-car lane {} carId {}", lane, carId);
+      ReplayLogger.logReplayCommand("changeCar", ReplayLogger.mapOf("lane", lane, "carId", carId));
+
+      Race race = ClientSubscriptionManager.getInstance().getRace();
+      if (race == null || race.getCurrentHeat() == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+      // Between heats only: not while a heat counts down, runs or is paused. After a heat the new
+      // car is for the next heats; the finished heat keeps its snapshot.
+      if (race.getState() instanceof Racing
+          || race.getState() instanceof Starting
+          || race.getState() instanceof Paused
+          || race.getState() instanceof RaceOver) {
+        ctx.status(409).result("RD_ERR_CAR_SWAP_HEAT_STARTED");
+        return;
+      }
+      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+      if (lane < 0 || lane >= drivers.size()) {
+        ctx.status(400).result("Invalid lane index: " + lane);
+        return;
+      }
+      DriverHeatData dhd = drivers.get(lane);
+      RaceParticipant participant = dhd.getDriver();
+      if (participant == null
+          || participant.getDriver() == null
+          || Driver.EMPTY_DRIVER_ID.equals(participant.getDriver().getEntityId())) {
+        ctx.status(400).result("RD_ERR_CAR_SWAP_EMPTY_LANE");
+        return;
+      }
+
+      Car car = null;
+      if (!carId.isEmpty()) {
+        car = DatabaseService.getInstance().getCar(databaseContext, carId);
+        if (car == null) {
+          ctx.status(404).result("RD_ERR_CAR_NOT_FOUND");
+          return;
+        }
+      }
+
+      if (participant.isCarPerDriver()) {
+        Driver actual = dhd.getActualDriver();
+        if (actual == null || actual.getEntityId() == null) {
+          ctx.status(400).result("RD_ERR_CAR_SWAP_EMPTY_LANE");
+          return;
+        }
+        participant.setDriverCar(actual.getEntityId(), car);
+      } else {
+        participant.setCar(car);
+      }
+      race.refreshCarSnapshots();
+      race.broadcast(race.createSnapshot());
+      ctx.status(200);
+    } catch (Exception e) {
+      logger.error("Error changing car", e);
       ctx.status(500).result("Error: " + e.getMessage());
     }
   }

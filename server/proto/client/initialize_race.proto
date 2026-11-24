@@ -9,6 +9,20 @@ option java_outer_classname = "InitializeRaceProto";
 
 import "client/demo_config.proto";
 
+// Slotcar picked for one entry of the roster (#1210). participant_id is the
+// same d_/t_ id as in driver_ids. Empty car_id means no car.
+message ParticipantCarChoice {
+  string participant_id = 1;
+  string car_id = 2;
+  bool car_per_driver = 3;
+  repeated DriverCarChoice driver_cars = 4;
+}
+
+message DriverCarChoice {
+  string driver_id = 1;
+  string car_id = 2;
+}
+
 message InitializeRaceRequest {
   string race_id = 1;
   repeated string driver_ids = 2;
@@ -20,6 +34,7 @@ message InitializeRaceRequest {
   // File → Race Again: only allowed while the current race is over.
   // https://github.com/daufderheide/racecoordinator_ai/issues/679
   bool race_again = 8;
+  repeated ParticipantCarChoice car_choices = 9;
 }
 
 message InitializeRaceResponse {

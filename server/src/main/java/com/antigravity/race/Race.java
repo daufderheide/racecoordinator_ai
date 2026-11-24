@@ -1423,8 +1423,23 @@ public class Race implements ProtocolListener {
         }
       }
     }
+    refreshCarSnapshots();
     crashManager.initializeHeatDrivers(currentHeat);
     syncLanePowerWithState(true);
+  }
+
+  /**
+   * Copies each entry's car onto the current heat (#1210), so the results keep the car as it ran.
+   * Only while the heat hasn't been raced yet: once laps count, the snapshot stays as it was.
+   */
+  public void refreshCarSnapshots() {
+    if (currentHeat == null || currentHeat.getDrivers() == null || hasRacedInCurrentHeat) {
+      return;
+    }
+    for (DriverHeatData heatData : currentHeat.getDrivers()) {
+      RaceParticipant participant = heatData.getDriver();
+      heatData.setCar(participant != null ? participant.carFor(heatData.getActualDriver()) : null);
+    }
   }
 
   public void resetCurrentHeat() {

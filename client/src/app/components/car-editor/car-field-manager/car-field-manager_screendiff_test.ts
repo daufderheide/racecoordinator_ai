@@ -5,7 +5,7 @@ import { CarFieldManagerHarnessE2e } from "./testing/car-field-manager.harness.e
 
 test.describe("Slotcar field manager visuals", () => {
   test.beforeEach(async ({ page }) => {
-    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.setupStandardMocks(page, { cars: true });
     await page.setViewportSize({ width: 1600, height: 900 });
     await TestSetupHelper.disableAnimations(page);
     await TestSetupHelper.waitForLocalization(

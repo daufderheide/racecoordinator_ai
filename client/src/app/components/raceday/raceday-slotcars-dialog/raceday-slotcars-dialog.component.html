@@ -1,0 +1,90 @@
+@if (visible()) {
+  <div class="cpd-backdrop" id="slotcars-backdrop" (click)="onClose()">
+    <div
+      class="cpd-dialog rsd-dialog"
+      id="slotcars-dialog"
+      role="dialog"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="onClose()"
+    >
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="material-icons modal-header-icon">directions_car</span>
+          <div class="cpd-titles">
+            <h2 class="modal-title">
+              {{ "RSD_TITLE" | translate }}
+              <app-preview-badge></app-preview-badge>
+            </h2>
+            @if (heat(); as h) {
+              <div class="cpd-entry">
+                {{ "RSD_HEAT" | translate: { heat: h.heatNumber } }}
+              </div>
+            }
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-ghost-close"
+          id="slotcars-close"
+          (click)="onClose()"
+          [title]="'COMMON_CLOSE' | translate"
+          aria-label="Close"
+        >
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (locked()) {
+          <p class="rsd-note" id="slotcars-locked">
+            <span class="material-icons">lock</span>
+            {{ "RSD_LOCKED" | translate }}
+          </p>
+        } @else {
+          <p class="cpd-hint">{{ "RSD_INTRO" | translate }}</p>
+        }
+
+        @for (row of rows(); track row.lane) {
+          <div class="rsd-row" [id]="'slotcars-lane-' + row.lane">
+            <span
+              class="rsd-lane"
+              [style.background-color]="row.color || null"
+              >{{ row.lane + 1 }}</span
+            >
+            <span class="rsd-name" [title]="row.name">{{ row.name }}</span>
+            <app-custom-select
+              class="rsd-select"
+              [value]="row.carId"
+              [disabled]="locked()"
+              (change)="onSwap(row, $event)"
+            >
+              <app-custom-option value="">{{
+                "CPD_NO_CAR" | translate
+              }}</app-custom-option>
+              @for (car of sortedCars(); track car.entity_id) {
+                <app-custom-option [value]="car.entity_id">{{
+                  label(car)
+                }}</app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+        } @empty {
+          <p class="cpd-hint" id="slotcars-empty">
+            {{ "RSD_NO_RACERS" | translate }}
+          </p>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn-primary"
+          id="slotcars-done"
+          (click)="onClose()"
+        >
+          {{ "COMMON_DONE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

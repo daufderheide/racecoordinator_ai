@@ -3,6 +3,8 @@ import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { RaceState } from "@app/proto/antigravity";
 
+import { RacedaySlotcarsHelper } from "./raceday-slotcars.helper";
+
 export class RacedayActionsMenuHelper {
   static toggleMenu(host: any): void {
     host.logger?.debug(
@@ -176,6 +178,7 @@ export class RacedayActionsMenuHelper {
     if (action === "DEFER_HEAT" && host.isDeferHeatDisabled) return;
     if (action === "SKIP_RACE" && host.isSkipRaceDisabled) return;
     if (action === "MODIFY" && host.isModifyDisabled) return;
+    if (action === "SLOTCARS" && host.isModifyDisabled) return;
     if (action === "ADD_LAP" && host.isAddLapDisabled) return;
 
     host.isMenuOpen = false;
@@ -316,6 +319,8 @@ export class RacedayActionsMenuHelper {
     } else if (action === "DISALLOW_LAP_RECORDS") {
       host.showDisallowLapRecordsDialog = true;
       host.cdr?.markForCheck();
+    } else if (action === "SLOTCARS") {
+      RacedaySlotcarsHelper.open(host);
     }
   }
 

@@ -3,7 +3,7 @@
 L'**éditeur de voitures slot** tient la liste de vos voitures slot : ce qu'elles sont, la catégorie dans laquelle elles roulent, leur échelle et leurs réglages. Ouvrez-le depuis Race Day Setup avec **Gérer → Voitures slot**.
 
 !!! note
-    C'est la première étape de la prise en charge des voitures. Les voitures ne sont pas encore liées aux pilotes ni aux courses ; rien ne change le jour de course.
+    Choisissez une voiture pour chaque pilote dans Race Day Setup et échangez les voitures entre les séries. Chaque série enregistre la voiture telle qu'elle était sur la piste : les résultats gardent la bonne voiture, même après une modification.
 
     Le badge **Aperçu** à côté du titre signifie que cette fonction est encore en cours d'élaboration. Elle peut encore beaucoup changer, voire être retirée, pendant que nous recueillons vos retours. Donnez-nous votre avis sur GitHub ou SlotForum.
 
@@ -57,3 +57,12 @@ Sous les réglages, vous pouvez ajouter vos propres champs, pour tout ce que sui
 - **Supprimer** : retire le champ, et sa valeur de chaque voiture, après confirmation.
 
 Chaque voiture a les mêmes champs et garde ses propres valeurs. Un champ laissé vide reste vide.
+
+## Voitures slot en course {: #car-in-race }
+
+- **Race Day Setup** : dans la liste des pilotes qui courent, cliquez sur l'icône de voiture d'une ligne pour choisir une voiture slot. Une équipe choisit **Une voiture pour l'équipe** ou **Une voiture par pilote**. RC AI retient votre choix pour la course suivante.
+- **Échanger entre les séries** : le jour de course, ouvrez **Directeur de Course → Voitures slot…**. La série suivante y figure voie par voie ; choisissez une autre voiture et elle est échangée tout de suite. Pendant une série, les listes sont verrouillées.
+- **Modifier les séries** : l'icône de voiture d'un pilote change sa voiture pour toutes les séries pas encore courues.
+- **Résultats** : chaque série garde une copie de la voiture telle qu'elle a couru ; modifier ou supprimer une voiture plus tard ne change pas les anciens résultats.
+
+L'icône de voiture et l'élément Voitures slot… n'apparaissent que lorsqu'il y a des voitures slot dans la base de données.

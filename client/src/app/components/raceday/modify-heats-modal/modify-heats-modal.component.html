@@ -93,7 +93,30 @@
                     <span class="driver-step-badge">{{ sBadge }}</span>
                   }
                 </div>
+                @if (cars.allCars.length > 0 && cars.summary(participant)) {
+                  <div class="driver-car" [title]="cars.summary(participant)">
+                    <span class="material-icons">directions_car</span>
+                    <span class="driver-car-name">{{
+                      cars.summary(participant)
+                    }}</span>
+                  </div>
+                }
               </div>
+              @if (cars.allCars.length > 0) {
+                <button
+                  type="button"
+                  class="car-pick-btn"
+                  [id]="'pool-car-btn-' + i"
+                  [class.has-car]="!!cars.summary(participant)"
+                  [title]="'RDS_CAR_PICK_TOOLTIP' | translate"
+                  [attr.aria-label]="'RDS_CAR_PICK_TOOLTIP' | translate"
+                  (click)="cars.open(participant, $event)"
+                  (dblclick)="$event.stopPropagation()"
+                  (mousedown)="$event.stopPropagation()"
+                >
+                  <span class="material-icons">directions_car</span>
+                </button>
+              }
               @if (getDriverHighlightColor(participant); as hlColor) {
                 <div
                   class="driver-highlight-chip"
@@ -888,3 +911,13 @@
     </div>
   }
 </div>
+
+<app-car-pick-dialog
+  [visible]="!!cars.target"
+  [entryName]="cars.target ? getParticipantName(cars.target) : ''"
+  [cars]="cars.allCars"
+  [teamDrivers]="cars.teamDrivers(cars.target)"
+  [choice]="cars.choiceFor(cars.target)"
+  (save)="onCarPicked($event)"
+  (close)="cars.target = null"
+></app-car-pick-dialog>

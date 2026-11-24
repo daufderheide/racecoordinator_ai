@@ -3,6 +3,8 @@ import { Race } from "@app/models/race";
 import { Settings } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 
+import { RacedaySetupCarsHelper } from "./raceday-setup-cars.helper";
+
 export interface ParsedInitializeRaceError {
   errorTitle: string;
   errorMessage: string;
@@ -369,6 +371,7 @@ export class RacedaySetupLaunchHelper {
       undefined;
 
     const raceAgain = !!host.pendingRaceAgain;
+    const carChoices = RacedaySetupCarsHelper.launchChoices(host);
     host.pendingRaceAgain = false;
 
     const initializeObservable =
@@ -382,6 +385,7 @@ export class RacedaySetupLaunchHelper {
             seasonId,
             themeId,
             raceAgain,
+            carChoices,
           )
         : host.dataService.initializeRace(
             raceId,
@@ -392,6 +396,7 @@ export class RacedaySetupLaunchHelper {
             undefined,
             themeId,
             raceAgain,
+            carChoices,
           );
 
     initializeObservable.subscribe({

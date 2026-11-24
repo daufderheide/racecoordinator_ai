@@ -5,6 +5,7 @@ import {
   TimerSubsecondMode,
 } from "@app/utils/timer-format.utils";
 
+import { CarChoice } from "./car-choice";
 import {
   DEFAULT_FUEL_LAYOUT,
   DEFAULT_LAYOUT,
@@ -280,6 +281,8 @@ export class Settings {
   isEventMode: boolean = false;
   selectedSeasonId: string = "";
   selectedDriverIds: string[] = [];
+  /** Slotcars picked per roster entry (#1210), keyed by the d_/t_ id. */
+  selectedCarChoices: Record<string, CarChoice> = {};
   demoConfig?: IDemoConfig;
   /** Whether the last race started from Race Day Setup was a demo race (used by "Race Again"). */
   lastStartIsDemo: boolean = false;

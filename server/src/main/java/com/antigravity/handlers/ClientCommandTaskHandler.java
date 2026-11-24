@@ -75,6 +75,10 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
         driverLaneHeatHandler::changeActualDriver,
         Role.DIRECTOR);
     app.post(
+        "/api/races/current-heat/drivers/{lane}/car",
+        driverLaneHeatHandler::changeCar,
+        Role.DIRECTOR);
+    app.post(
         "/api/races/current-heat/drivers/{lane}/reset",
         driverLaneHeatHandler::resetLaneHeatData,
         Role.DIRECTOR);

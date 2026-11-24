@@ -21,6 +21,7 @@ import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { finalize, forkJoin, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { CarPickDialogComponent } from "@app/components/shared/car-pick-dialog/car-pick-dialog.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
@@ -33,6 +34,7 @@ import {
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { CarChoice } from "@app/models/car-choice";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
@@ -55,6 +57,7 @@ import {
   DropResult,
   ModifyHeatsService,
 } from "./modify-heats.service";
+import { ModifyHeatsCars } from "./modify-heats-cars";
 import {
   areModifyHeatsStatesEqual,
   assignStepNumbers,
@@ -137,6 +140,7 @@ import {
     ConfirmationModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
+    CarPickDialogComponent,
     HeatsFilterBarComponent,
   ],
 })
@@ -194,6 +198,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected databaseTeams: Team[] = [];
   protected databaseParticipants: (Driver | Team)[] = [];
   protected allDrivers: Driver[] = [];
+  protected cars = new ModifyHeatsCars(() => this.allDrivers); // Slotcars (#1210)
   private savingCount = 0;
   protected get isSaving(): boolean {
     return this.savingCount > 0;
@@ -375,6 +380,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       assignStepNumbers(this.localHeats, this.race()?.step_up);
     }
 
+    this.cars.load(this.dataService);
     forkJoin({
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
@@ -936,6 +942,10 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   protected onExitCancel() {
     this.showExitConfirmation = false;
+  }
+
+  protected onCarPicked(choice: CarChoice): void {
+    if (this.cars.pick(choice)) this.autoSave();
   }
 
   protected autoSave(

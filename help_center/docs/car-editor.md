@@ -3,7 +3,7 @@
 The **Slotcar Editor** keeps a list of your slotcars: what they are, the class they race in, their scale, and their setup. Open it from Race Day Setup with **Manage → Slotcars**.
 
 !!! note
-    This is the first step of car support. Cars are not linked to drivers or races yet, so nothing changes on race day.
+    Pick a car for each racer in Race Day Setup, and swap cars between heats. Each heat saves the car as it was on the track, so results keep the right car even after you edit it.
 
     The **Preview** badge next to the title means this feature is still taking shape. It may change a lot, or even be removed, while we collect feedback. Tell us what you think on GitHub or SlotForum.
 
@@ -57,3 +57,12 @@ Below the setup you can add fields of your own, for whatever your club keeps tra
 - **Delete**: removes the field, and its value from every car, after you confirm.
 
 Every car gets the same fields and keeps its own values. A field you leave empty stays empty.
+
+## Slotcars in a Race {: #car-in-race }
+
+- **Race Day Setup**: in the Racing list, click the car icon on a row to pick a slotcar. A team picks **One car for the team** or **A car per driver**. RC AI remembers your picks for the next race.
+- **Swap between heats**: on race day, open **Race Director → Slotcars…**. It lists the coming heat lane by lane; pick another car and it changes straight away. While a heat is running, the lists are locked.
+- **Modify Heats**: the car icon on a racer changes their car for every heat that hasn't run yet.
+- **Results**: each heat keeps a copy of the car as it raced, so editing or deleting a car later doesn't change past results.
+
+The car icon and the Slotcars… item only appear once there are slotcars in the database.

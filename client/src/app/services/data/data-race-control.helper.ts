@@ -11,6 +11,7 @@ import {
   IHeat,
   InitializeRaceRequest,
   InitializeRaceResponse,
+  IParticipantCarChoice,
   IRaceParticipant,
   IStartRaceResponse,
   ModifyHeatsRequest,
@@ -99,6 +100,7 @@ export class DataRaceControlHelper {
     seasonId?: string,
     themeId?: string,
     raceAgain?: boolean,
+    carChoices?: IParticipantCarChoice[],
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
@@ -109,6 +111,7 @@ export class DataRaceControlHelper {
       seasonId,
       themeId,
       raceAgain: raceAgain || undefined,
+      carChoices: carChoices && carChoices.length ? carChoices : undefined,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 
@@ -656,6 +659,15 @@ export class DataRaceControlHelper {
           driverId,
         },
       )
+      .pipe(map(() => true));
+  }
+
+  /** Quick car swap on race day (#1210): "" takes the car away. */
+  changeCar(lane: number, carId: string): Observable<boolean> {
+    return this.http
+      .post(`${this.getBaseUrl()}/api/races/current-heat/drivers/${lane}/car`, {
+        carId,
+      })
       .pipe(map(() => true));
   }
 
