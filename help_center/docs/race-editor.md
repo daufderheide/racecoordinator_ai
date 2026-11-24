@@ -220,7 +220,7 @@ When **Step-Up** is configured to a positive integer ($S > 0$), Race Coordinator
 - **Advancement & Score Reset**: When a step concludes (marked by the step boundary heat), the top $S$ drivers advance to the next step. Advancing drivers have their scored overall statistics reset—only heats completed in their highest step reached count toward overall standings.
 - **Tiered Overall Standings**: Drivers in lower steps cannot rank higher in the overall race standings than drivers in higher steps, regardless of their raw lap counts or times. The winner of the final step is crowned the winner of the race.
 - **Group Races**: In group races with step-up enabled, each group progresses through its own step-up ladder independently.
-- **Modify Heats Support**: On the Modify Heats screen, step-up drivers are identified with dedicated badges, and step boundary heats can be inspected and toggled.
+- **Modify Heats Support**: On the Modify Heats screen, step-up drivers and group assignments can be isolated using dedicated **Group and Step filter tabs**, step boundary heats can be inspected and toggled, and heats can be reassigned between groups using custom select dropdowns.
 
 ### Lap and Time Adjustments (Impact on Rankings and Metrics)
 

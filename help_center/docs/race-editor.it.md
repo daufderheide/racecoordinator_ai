@@ -222,7 +222,7 @@ Quando **Avanzamento a gradini (Step-Up)** è configurato con un valore intero p
 - **Promozione e azzeramento punteggio**: Al termine di un gradino (segnato dalla manche limite di gradino), i migliori $S$ piloti salgono al gradino successivo. Le statistiche generali dei piloti promossi vengono azzerate: solo le manche del gradino più alto raggiunto contano per la classifica generale finale.
 - **Classifica generale a livelli**: I piloti dei gradini inferiori non possono mai superare i piloti dei gradini superiori nella classifica generale finale, a prescindere da giri o tempi individuali. Il vincitore del gradino finale vince la gara.
 - **Gare a gruppi**: Nelle gare a gruppi con avanzamento attivo, ogni gruppo scala la propria scala in modo indipendente.
-- **Supporto in Modifica manche**: Nella schermata Modifica manche, i piloti promossi sono contraddistinti da appositi badge e le manche limite possono essere esaminate e modificate.
+- **Supporto in Modifica manche**: Nella schermata Modifica manche, i piloti promossi e le assegnazioni di gruppo possono essere isolati tramite **schede di filtro per gruppo e livello**, le manche limite possono essere esaminate e modificate, e le manche possono essere riassegnate tra gruppi tramite menu a discesa personalizzati.
 
 ---
 

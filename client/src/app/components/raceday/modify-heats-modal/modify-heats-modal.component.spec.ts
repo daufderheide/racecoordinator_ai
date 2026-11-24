@@ -27,7 +27,10 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { ModifyHeatsModalComponent } from "./modify-heats-modal.component";
-import { executeHeatReorder } from "./modify-heats-modal.utils";
+import {
+  createParticipantFromDriver,
+  executeHeatReorder,
+} from "./modify-heats-modal.utils";
 
 describe("ModifyHeatsModalComponent", () => {
   let component: ModifyHeatsModalComponent;
@@ -2915,6 +2918,127 @@ describe("ModifyHeatsModalComponent", () => {
         const lane0 = driversInHeat.find((d) => d.laneIndex === 0);
         expect(lane0?.participant.objectId).toBe("STEP_UP_0");
         expect(component["errorMessage"]()).toBeUndefined();
+      });
+    });
+
+    describe("group and step filters and controls", () => {
+      beforeEach(() => {
+        const race = component.race();
+        if (race) {
+          Object.defineProperty(race, "group_options", {
+            value: new GroupOptions(true, 2),
+            writable: true,
+            configurable: true,
+          });
+          Object.defineProperty(race, "step_up", {
+            value: 2,
+            writable: true,
+            configurable: true,
+          });
+        }
+        component["localHeats"] = [
+          new Heat("h1", 1, [], []),
+          new Heat("h2", 2, [], []),
+          new Heat("h3", 3, [], []),
+          new Heat("h4", 4, [], []),
+        ];
+        component["localHeats"][0].group = 0;
+        component["localHeats"][0].step = 1;
+        component["localHeats"][0].isStepUpBoundary = true;
+        component["localHeats"][1].group = 1;
+        component["localHeats"][1].step = 1;
+        component["localHeats"][1].isStepUpBoundary = true;
+        component["localHeats"][2].group = 0;
+        component["localHeats"][2].step = 2;
+        component["localHeats"][3].group = 1;
+        component["localHeats"][3].step = 2;
+        component["undoManager"].initialize({
+          heats: component["localHeats"],
+          participants: component["localParticipants"],
+        });
+      });
+
+      it("should filter heats by group", () => {
+        expect(component.filteredHeats().length).toBe(4);
+        component.setGroupFilter(0);
+        expect(component.selectedGroup()).toBe(0);
+        expect(component.isFilterActive()).toBeTrue();
+        expect(component.filteredHeats().length).toBe(2);
+        expect(
+          component.filteredHeats().every((h) => h.group === 0),
+        ).toBeTrue();
+
+        component.clearFilters();
+        expect(component.selectedGroup()).toBeNull();
+        expect(component.isFilterActive()).toBeFalse();
+        expect(component.filteredHeats().length).toBe(4);
+      });
+
+      it("should filter heats by step", () => {
+        component.setStepFilter(2);
+        expect(component.selectedStep()).toBe(2);
+        expect(component.isFilterActive()).toBeTrue();
+        expect(component.filteredHeats().length).toBe(2);
+        expect(component.filteredHeats().every((h) => h.step === 2)).toBeTrue();
+      });
+
+      it("should filter heats by both group and step concurrently", () => {
+        component.setGroupFilter(1);
+        component.setStepFilter(2);
+        expect(component.filteredHeats().length).toBe(1);
+        expect(component.filteredHeats()[0].heatNumber).toBe(4);
+      });
+
+      it("should update heat group via onGroupSelectChange", () => {
+        const heat = component["localHeats"][0];
+        expect(heat.group).toBe(0);
+
+        component["onGroupSelectChange"](heat, 1);
+        expect(heat.group).toBe(1);
+        expect(component["hasUnsavedChanges"]).toBeTrue();
+      });
+
+      it("should render group select in heat header when groups enabled", () => {
+        fixture.detectChanges();
+        const headerGroupContainer = fixture.nativeElement.querySelector(
+          ".heat-header .header-group-container",
+        );
+        expect(headerGroupContainer).toBeTruthy();
+        const select = headerGroupContainer.querySelector("app-custom-select");
+        expect(select).toBeTruthy();
+      });
+
+      it("should inherit selectedGroup and selectedStep when onAddHeat is called", () => {
+        component.setGroupFilter(1);
+        component.setStepFilter(2);
+        component["onAddHeat"]();
+
+        const addedHeat =
+          component["localHeats"][component["localHeats"].length - 1];
+        expect(addedHeat.group).toBe(1);
+        expect(addedHeat.step).toBe(2);
+      });
+
+      it("should track dragged participant on onDriverDragStarted and onDriverDragEnded", () => {
+        const participant = createParticipantFromDriver(
+          new Driver("Test", "Test", "d-1"),
+        );
+        component.onDriverDragStarted(participant);
+        expect(component.draggedParticipant).toBe(participant);
+
+        const rawDriver = new Driver("d-raw", "Raw", "Raw");
+        component.onDriverDragStarted(rawDriver);
+        expect(component.draggedParticipant?.driver?.entity_id).toBe("d-raw");
+
+        const rawTeam = new Team("t-raw", "Team A", undefined, ["d-raw"]);
+        component.onDriverDragStarted(rawTeam);
+        expect(component.draggedParticipant?.team?.objectId).toBe("t-raw");
+
+        component.onDriverDragStarted(null);
+        expect(component.draggedParticipant).toBeNull();
+
+        component.onDriverDragEnded();
+        expect(component.draggedParticipant).toBeNull();
       });
     });
   });

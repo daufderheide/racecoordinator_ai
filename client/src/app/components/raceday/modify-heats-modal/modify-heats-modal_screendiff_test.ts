@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { DefaultRacedayHarnessE2e } from "@app/components/raceday/testing/default-raceday.harness.e2e";
 import { RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
@@ -347,9 +347,7 @@ test.describe("Modify Heats Modal Visuals", () => {
     await expect(page).toHaveScreenshot("modify-heats-step-up.png");
   });
 
-  test("should show group step-up race with group selectors, step badges, and boundary controls", async ({
-    page,
-  }) => {
+  async function setupGroupStepUpModal(page: Page) {
     const racedayHarness = new DefaultRacedayHarnessE2e(
       page.locator(".dashboard-wrapper"),
     );
@@ -359,13 +357,13 @@ test.describe("Modify Heats Modal Visuals", () => {
         race: {
           model: {
             entityId: "r1",
-            stepUp: 2,
-            groupOptions: {
-              enabled: true,
-              maxGroups: 2,
-            },
           },
           name: "Group Step-Up Race",
+          stepUp: 2,
+          groupOptions: {
+            enabled: true,
+            maxGroups: 2,
+          },
           track: {
             model: { entityId: "t1" },
             name: "Test Track",
@@ -445,7 +443,7 @@ test.describe("Modify Heats Modal Visuals", () => {
             heatNumber: 1,
             group: 0,
             step: 1,
-            isStepUpBoundary: false,
+            isStepUpBoundary: true,
             heatDrivers: [
               {
                 objectId: "hd1",
@@ -568,7 +566,73 @@ test.describe("Modify Heats Modal Visuals", () => {
       .locator("#step-up-pool")
       .waitFor({ state: "visible", timeout: 15000 });
 
+    return { modalHarness };
+  }
+
+  test("should show group step-up race with group selectors, step badges, and boundary controls", async ({
+    page,
+  }) => {
+    await setupGroupStepUpModal(page);
     await expect(page).toHaveScreenshot("modify-heats-group-step-up.png");
+  });
+
+  test("should show group filter active with only heats from selected group displayed", async ({
+    page,
+  }) => {
+    const { modalHarness } = await setupGroupStepUpModal(page);
+
+    await modalHarness.selectGroupFilter(0);
+
+    // Wait for the tab to be active and filtered out heat (Heat 2) to detach
+    await page
+      .locator(".group-filter-section .filter-tab.active:has-text('Group 1')")
+      .waitFor({ state: "visible" });
+    await page
+      .locator('.heat-card:has-text("Heat 2")')
+      .waitFor({ state: "detached" });
+
+    await expect(page).toHaveScreenshot("modify-heats-group-filter-active.png");
+  });
+
+  test("should show step-up filter active with only heats from selected step displayed", async ({
+    page,
+  }) => {
+    const { modalHarness } = await setupGroupStepUpModal(page);
+
+    await modalHarness.selectStepFilter(2);
+
+    // Wait for the tab to be active and filtered out heats (Heat 1 and Heat 2) to detach
+    await page
+      .locator(".step-filter-section .filter-tab.active:has-text('Step 2')")
+      .waitFor({ state: "visible" });
+    await page
+      .locator('.heat-card:has-text("Heat 1")')
+      .waitFor({ state: "detached" });
+    await page
+      .locator('.heat-card:has-text("Heat 2")')
+      .waitFor({ state: "detached" });
+
+    await expect(page).toHaveScreenshot("modify-heats-step-filter-active.png");
+  });
+
+  test("should show empty filter state when no heats match the active filters", async ({
+    page,
+  }) => {
+    const { modalHarness } = await setupGroupStepUpModal(page);
+
+    await modalHarness.selectGroupFilter(1);
+    await page
+      .locator(".group-filter-section .filter-tab.active:has-text('Group 2')")
+      .waitFor({ state: "visible" });
+
+    await modalHarness.selectStepFilter(2);
+    await page
+      .locator(".step-filter-section .filter-tab.active:has-text('Step 2')")
+      .waitFor({ state: "visible" });
+
+    await page.locator(".empty-filter-state").waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("modify-heats-empty-filter-state.png");
   });
 
   test("should show when three heats have been started and cannot be edited, along with an editable heat", async ({
