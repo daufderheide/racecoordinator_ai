@@ -68,7 +68,6 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { LaneCarsBarComponent } from "./lane-cars-bar/lane-cars-bar.component";
 import { RacedaySetupCarsHelper } from "./raceday-setup-cars.helper";
-import { RacedaySetupLaneCars } from "./raceday-setup-lane-cars";
 import {
   formatEnumDisplay,
   getContrastColor,
@@ -91,6 +90,7 @@ import {
 } from "./raceday-setup-formatting.helper";
 import { getRacedaySetupHelpSteps } from "./raceday-setup-help.helper";
 import { RacedaySetupInitHelper } from "./raceday-setup-init.helper";
+import { RacedaySetupLaneCars } from "./raceday-setup-lane-cars";
 import { RacedaySetupLaunchHelper } from "./raceday-setup-launch.helper";
 import { RacedaySetupMenuHelper } from "./raceday-setup-menu.helper";
 import { RacedaySetupNavigationHelper } from "./raceday-setup-navigation.helper";
