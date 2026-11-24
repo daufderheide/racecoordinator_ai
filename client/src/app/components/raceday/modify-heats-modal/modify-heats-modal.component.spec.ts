@@ -3040,6 +3040,44 @@ describe("ModifyHeatsModalComponent", () => {
         component.onDriverDragEnded();
         expect(component.draggedParticipant).toBeNull();
       });
+
+      it("should return heat divider info when step or group changes between heats", () => {
+        expect(component.getHeatDivider(0)).toBeNull();
+
+        const div1 = component.getHeatDivider(1);
+        expect(div1).not.toBeNull();
+        expect(div1?.groupChanged).toBeTrue();
+        expect(div1?.stepChanged).toBeFalse();
+
+        const div2 = component.getHeatDivider(2);
+        expect(div2).not.toBeNull();
+        expect(div2?.stepChanged).toBeTrue();
+        expect(div2?.groupChanged).toBeTrue();
+
+        // Toggling group dividers off hides group divider on heat 1 (group only)
+        component.toggleGroupDividers(false);
+        expect(component.showGroupDividers()).toBeFalse();
+        expect(component.getHeatDivider(1)).toBeNull();
+
+        // Heat 2 has both step and group change; with group dividers off and step dividers on, stepChanged should still be true but groupChanged false
+        const div2StepOnly = component.getHeatDivider(2);
+        expect(div2StepOnly).not.toBeNull();
+        expect(div2StepOnly?.stepChanged).toBeTrue();
+        expect(div2StepOnly?.groupChanged).toBeFalse();
+
+        // Toggling step dividers off as well makes heat 2 return null
+        component.toggleStepDividers(false);
+        expect(component.showStepDividers()).toBeFalse();
+        expect(component.getHeatDivider(2)).toBeNull();
+
+        // Toggling both back on restores dividers
+        component.toggleGroupDividers(true);
+        component.toggleStepDividers(true);
+        expect(component.showGroupDividers()).toBeTrue();
+        expect(component.showStepDividers()).toBeTrue();
+        expect(component.getHeatDivider(1)).not.toBeNull();
+        expect(component.getHeatDivider(2)).not.toBeNull();
+      });
     });
   });
 });

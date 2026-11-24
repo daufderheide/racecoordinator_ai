@@ -2672,5 +2672,40 @@ describe("CustomRotationEditorComponent", () => {
       expect(sBadge).toBeTruthy();
       expect(sBadge.nativeElement.textContent.trim()).toBe("S1");
     });
+
+    it("should return heat divider info when step or group changes between heats", () => {
+      const rot = component.internalRotations[0];
+      expect(component.getHeatDivider(rot, 0)).toBeNull();
+
+      const div1 = component.getHeatDivider(rot, 1);
+      expect(div1).not.toBeNull();
+      expect(div1?.groupChanged).toBeTrue();
+      expect(div1?.stepChanged).toBeFalse();
+
+      const div2 = component.getHeatDivider(rot, 2);
+      expect(div2).not.toBeNull();
+      expect(div2?.stepChanged).toBeTrue();
+      expect(div2?.groupChanged).toBeFalse();
+
+      // Toggling group dividers off hides group divider on heat 1 (which only has group change)
+      component.toggleGroupDividers(false);
+      expect(component.showGroupDividers()).toBeFalse();
+      expect(component.getHeatDivider(rot, 1)).toBeNull();
+      // Heat 2 has step change only, so it should still be present
+      expect(component.getHeatDivider(rot, 2)).not.toBeNull();
+
+      // Toggling step dividers off hides step divider on heat 2
+      component.toggleStepDividers(false);
+      expect(component.showStepDividers()).toBeFalse();
+      expect(component.getHeatDivider(rot, 2)).toBeNull();
+
+      // Toggling both back on restores both dividers
+      component.toggleGroupDividers(true);
+      component.toggleStepDividers(true);
+      expect(component.showGroupDividers()).toBeTrue();
+      expect(component.showStepDividers()).toBeTrue();
+      expect(component.getHeatDivider(rot, 1)).not.toBeNull();
+      expect(component.getHeatDivider(rot, 2)).not.toBeNull();
+    });
   });
 });
