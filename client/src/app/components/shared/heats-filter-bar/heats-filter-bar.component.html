@@ -73,17 +73,75 @@
                 }
         }}
       </span>
-      @if (isFilterActive()) {
-        <button
-          type="button"
-          class="btn-clear-filters"
-          (click)="onClearFilters()"
-          [title]="'RD_CLEAR_FILTERS' | translate"
-        >
-          <span class="material-icons">clear</span>
-          <span>{{ "RD_CLEAR_FILTERS" | translate }}</span>
-        </button>
-      }
+      <div class="filter-summary-actions">
+        @if (hasGroupFilter()) {
+          <button
+            type="button"
+            class="btn-toggle-dividers btn-toggle-group-dividers"
+            [class.active]="showGroupDividers()"
+            (click)="onToggleGroupDividers()"
+            [title]="
+              (showGroupDividers()
+                ? 'RD_HIDE_GROUP_DIVIDERS'
+                : 'RD_SHOW_GROUP_DIVIDERS'
+              ) | translate
+            "
+            [attr.aria-label]="
+              (showGroupDividers()
+                ? 'RD_HIDE_GROUP_DIVIDERS'
+                : 'RD_SHOW_GROUP_DIVIDERS'
+              ) | translate
+            "
+          >
+            <span class="material-icons">group</span>
+            <span>{{
+              (showGroupDividers()
+                ? "RD_HIDE_GROUP_DIVIDERS"
+                : "RD_SHOW_GROUP_DIVIDERS"
+              ) | translate
+            }}</span>
+          </button>
+        }
+        @if (hasStepFilter()) {
+          <button
+            type="button"
+            class="btn-toggle-dividers btn-toggle-step-dividers"
+            [class.active]="showStepDividers()"
+            (click)="onToggleStepDividers()"
+            [title]="
+              (showStepDividers()
+                ? 'RD_HIDE_STEP_DIVIDERS'
+                : 'RD_SHOW_STEP_DIVIDERS'
+              ) | translate
+            "
+            [attr.aria-label]="
+              (showStepDividers()
+                ? 'RD_HIDE_STEP_DIVIDERS'
+                : 'RD_SHOW_STEP_DIVIDERS'
+              ) | translate
+            "
+          >
+            <span class="material-icons">trending_up</span>
+            <span>{{
+              (showStepDividers()
+                ? "RD_HIDE_STEP_DIVIDERS"
+                : "RD_SHOW_STEP_DIVIDERS"
+              ) | translate
+            }}</span>
+          </button>
+        }
+        @if (isFilterActive()) {
+          <button
+            type="button"
+            class="btn-clear-filters"
+            (click)="onClearFilters()"
+            [title]="'RD_CLEAR_FILTERS' | translate"
+          >
+            <span class="material-icons">clear</span>
+            <span>{{ "RD_CLEAR_FILTERS" | translate }}</span>
+          </button>
+        }
+      </div>
     </div>
   </div>
 }

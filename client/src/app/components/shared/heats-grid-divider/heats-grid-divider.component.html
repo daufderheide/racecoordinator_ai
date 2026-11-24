@@ -1,0 +1,16 @@
+<div class="divider-line divider-line-start"></div>
+<div class="divider-badge">
+  @if (divider().stepChanged) {
+    <span class="divider-chip step-chip">
+      <span class="material-icons chip-icon">trending_up</span>
+      <span class="chip-text">{{ divider().stepLabel }}</span>
+    </span>
+  }
+  @if (divider().groupChanged) {
+    <span class="divider-chip group-chip">
+      <span class="material-icons chip-icon">group</span>
+      <span class="chip-text">{{ divider().groupLabel }}</span>
+    </span>
+  }
+</div>
+<div class="divider-line divider-line-end"></div>

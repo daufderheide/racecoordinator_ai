@@ -19,7 +19,7 @@ import { HostListener } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { finalize, forkJoin, Subscription } from "rxjs";
+import { forkJoin, Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { CarPickDialogComponent } from "@app/components/shared/car-pick-dialog/car-pick-dialog.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -28,7 +28,16 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
+import {
+  getHeatDividerInfo,
+  HeatDividerInfo,
+  loadShowGroupDividersPreference,
+  loadShowStepDividersPreference,
+  saveShowGroupDividersPreference,
+  saveShowStepDividersPreference,
+} from "@app/components/shared/heats-filter-bar/heats-filter.utils";
 import { HeatsFilterBarComponent } from "@app/components/shared/heats-filter-bar/heats-filter-bar.component";
+import { HeatsGridDividerComponent } from "@app/components/shared/heats-grid-divider/heats-grid-divider.component";
 import {
   UndoEventType,
   UndoManager,
@@ -42,7 +51,7 @@ import { Team } from "@app/models/team";
 import { Track } from "@app/models/track";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { IRaceParticipant, RaceState } from "@app/proto/antigravity";
+import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { LoggerService } from "@app/services/logger.service";
@@ -95,12 +104,10 @@ import {
   applyTeammateChange,
   AvailableGroup,
   AvailableStep,
-  buildSavePayload,
   calculateStepUpPool,
   canEnterDriverDropListPredicate,
   canEnterHeatsGridPredicate,
   cloneInitialHeats,
-  convertParticipantsToProto,
   DriverHighlightManager,
   filterHeatsByGroupAndStep,
   getAvailableGroups,
@@ -118,11 +125,14 @@ import {
   isStepUpEnabledHelper,
   loadAndRegisterDrivers,
   loadAndRegisterTeams,
-  mapRegeneratedHeatsFromProto,
   removeDriverFromHeatState,
   removeHeatFromState,
   resolveDraggedParticipant,
 } from "./modify-heats-ui.helper";
+import {
+  executeModifyHeatsSave,
+  executeRegenerateHeats,
+} from "./modify-heats-validation.helper";
 
 @Component({
   standalone: true,
@@ -142,6 +152,7 @@ import {
     CustomOptionComponent,
     CarPickDialogComponent,
     HeatsFilterBarComponent,
+    HeatsGridDividerComponent,
   ],
 })
 export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
@@ -242,7 +253,19 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected isAvailableDriversCollapsed = false;
   selectedGroup = signal<number | null>(null);
   selectedStep = signal<number | null>(null);
+  showGroupDividers = signal<boolean>(loadShowGroupDividersPreference());
+  showStepDividers = signal<boolean>(loadShowStepDividersPreference());
   draggedParticipant: RaceParticipant | null = null;
+
+  toggleGroupDividers(show: boolean): void {
+    this.showGroupDividers.set(show);
+    saveShowGroupDividersPreference(show);
+  }
+
+  toggleStepDividers(show: boolean): void {
+    this.showStepDividers.set(show);
+    saveShowStepDividersPreference(show);
+  }
 
   hasGroupFilter(): boolean {
     return !!this.race()?.group_options?.enabled;
@@ -271,6 +294,22 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.localHeats,
       this.selectedGroup(),
       this.selectedStep(),
+    );
+  }
+
+  getHeatDivider(index: number): HeatDividerInfo | null {
+    if (!this.showGroupDividers() && !this.showStepDividers()) {
+      return null;
+    }
+    return getHeatDividerInfo(
+      this.filteredHeats(),
+      index,
+      this.isStepUpEnabled,
+      this.hasGroupFilter(),
+      this.translationService,
+      (grpIdx) => this.getCustomGroupName(grpIdx),
+      this.showStepDividers(),
+      this.showGroupDividers(),
     );
   }
   private cdr = inject(ChangeDetectorRef);
@@ -749,8 +788,6 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected onHeatMouseLeave(_index: number): void {}
-
   protected onGridMouseMove(event: MouseEvent): void {
     if (!this.isDraggingHeat) return;
     this.heatDragController.updatePointHover(
@@ -848,52 +885,28 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.savingCount++;
     this.cdr.detectChanges();
     this.errorMessage.set(undefined);
-    try {
-      // Convert local participants to Proto IRaceParticipant[]
-      const protoParticipants: IRaceParticipant[] = convertParticipantsToProto(
-        this.localParticipants,
-      );
-
-      this.dataService
-        .regenerateHeats(protoParticipants)
-        .pipe(
-          finalize(() => {
-            this.savingCount--;
-            this.cdr.detectChanges();
-          }),
-        )
-        .subscribe({
-          next: (res) => {
-            if (res.success && res.heats) {
-              // Update local heats with the newly generated ones
-              this.localHeats = mapRegeneratedHeatsFromProto(res.heats);
-              this.updateDriverPool();
-              this.updateDatabaseParticipants();
-              this.updateDropListConnections();
-              this.undoManager.captureState();
-              this.autoSave();
-            } else {
-              this.errorMessage.set(
-                res.errorMessage ||
-                  "Failed to regenerate heats. Please try again.",
-              );
-              this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
-              this.ackModalMessage = this.errorMessage() || "";
-              this.showAckModal = true;
-            }
-          },
-          error: (err) => {
-            this.errorMessage.set("Server error: " + err.message);
-            this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
-            this.ackModalMessage = this.errorMessage() || "";
-            this.showAckModal = true;
-          },
-        });
-    } catch (e) {
-      console.error("Error building regenerate heats payload:", e);
-      this.savingCount--;
-      this.cdr.detectChanges();
-    }
+    executeRegenerateHeats(
+      this.localParticipants,
+      this.dataService,
+      (heats) => {
+        this.localHeats = heats;
+        this.updateDriverPool();
+        this.updateDatabaseParticipants();
+        this.updateDropListConnections();
+        this.undoManager.captureState();
+        this.autoSave();
+      },
+      (msg) => {
+        this.errorMessage.set(msg);
+        this.ackModalTitle = "RD_REGENERATE_HEATS_FAILED";
+        this.ackModalMessage = msg;
+        this.showAckModal = true;
+      },
+      () => {
+        this.savingCount--;
+        this.cdr.detectChanges();
+      },
+    );
   }
 
   get canSave(): boolean {
@@ -961,16 +974,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
         !isGroupChange &&
         isHardValidationError(validationError, this.translationService)
       ) {
-        // Revert invalid started heat / started participant change
         this.undoManager.undo();
         this.undoManager.clearRedo();
       } else {
         this.hasUnsavedChanges = true;
       }
-      // No increment happened yet for this call, but if we were called from another save
-      // we don't want to mess with it. Wait, actually we DIDN'T increment yet.
-      // autoSave is called, first thing it does is check validation.
-      // If invalid, it returns BEFORE incrementing savingCount.
       return;
     }
     this.errorMessage.set(undefined);
@@ -980,43 +988,25 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
     this.hasUnsavedChanges = true;
 
-    try {
-      const { protoHeats, protoParticipants } = buildSavePayload(
-        this.localHeats,
-        this.track(),
-        (h) => this.isHeatStarted(h),
-        this.localParticipants,
-      );
-
-      this.dataService
-        .modifyHeats(protoHeats, protoParticipants)
-        .pipe(
-          finalize(() => {
-            this.savingCount--;
-            this.cdr.detectChanges();
-          }),
-        )
-        .subscribe({
-          next: (res: any) => {
-            if (res.success) {
-              this.hasUnsavedChanges = false;
-              this.undoManager.resetTracking({
-                heats: this.localHeats,
-                participants: this.localParticipants,
-              });
-            } else {
-              this.handleSaveFailure(triggeredBy);
-            }
-          },
-          error: (e: any) => {
-            this.handleSaveFailure(triggeredBy);
-          },
+    executeModifyHeatsSave(
+      this.localHeats,
+      this.track(),
+      (h) => this.isHeatStarted(h),
+      this.localParticipants,
+      this.dataService,
+      () => {
+        this.hasUnsavedChanges = false;
+        this.undoManager.resetTracking({
+          heats: this.localHeats,
+          participants: this.localParticipants,
         });
-    } catch (e) {
-      console.error("Error building save payload:", e);
-      this.savingCount--;
-      this.cdr.detectChanges();
-    }
+      },
+      () => this.handleSaveFailure(triggeredBy),
+      () => {
+        this.savingCount--;
+        this.cdr.detectChanges();
+      },
+    );
   }
 
   private handleSaveFailure(triggeredBy: UndoEventType) {

@@ -467,6 +467,10 @@
                   [selectedStep]="rotation.selectedStep ?? null"
                   [totalHeats]="(rotation.heats || []).length"
                   [visibleHeats]="getFilteredHeats(rotation).length"
+                  [showGroupDividers]="showGroupDividers()"
+                  [showStepDividers]="showStepDividers()"
+                  (toggleGroupDividers)="toggleGroupDividers($event)"
+                  (toggleStepDividers)="toggleStepDividers($event)"
                   (groupChange)="setRotationGroupFilter(rotation, $event)"
                   (stepChange)="setRotationStepFilter(rotation, $event)"
                   (clearFilters)="clearRotationFilters(rotation)"
@@ -480,7 +484,14 @@
                   [cdkDropListData]="rotation.heats || []"
                   (cdkDropListDropped)="dropHeat(rotation, $event)"
                 >
-                  @for (heat of getFilteredHeats(rotation); track heat) {
+                  @for (
+                    heat of getFilteredHeats(rotation);
+                    track heat;
+                    let fIdx = $index
+                  ) {
+                    @if (getHeatDivider(rotation, fIdx); as divider) {
+                      <app-heats-grid-divider [divider]="divider" />
+                    }
                     @let hIdx = getHeatIndex(rotation, heat);
                     <div
                       class="heat-card"
