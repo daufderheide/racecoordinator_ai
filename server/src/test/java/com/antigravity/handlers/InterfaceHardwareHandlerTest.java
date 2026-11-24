@@ -7,6 +7,7 @@ import io.javalin.http.Context;
 import java.util.Collections;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +22,19 @@ public class InterfaceHardwareHandlerTest {
     HttpServletRequest req = mock(HttpServletRequest.class);
     HttpServletResponse res = mock(HttpServletResponse.class);
     ctx = new Context(req, res, Collections.emptyMap());
+  }
+
+  @After
+  public void tearDown() {
+    com.antigravity.protocols.ProtocolDelegate protocol =
+        com.antigravity.race.ClientSubscriptionManager.getInstance().getProtocol();
+    if (protocol != null) {
+      try {
+        protocol.close();
+      } catch (Exception ignored) {
+      }
+      com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(null);
+    }
   }
 
   @Test

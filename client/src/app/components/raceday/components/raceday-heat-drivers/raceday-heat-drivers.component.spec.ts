@@ -215,18 +215,35 @@ describe("RacedayHeatDriversComponent", () => {
     };
 
     it("keeps the auto-fit row depth and gap when the text is made bigger", () => {
+      // At the auto-fit size the 1.5x lane badge sets the row depth.
       const auto = setupSizedPanel({});
       const autoSize = px(auto, "--heat-drivers-font-size");
       const autoRow =
-        1.1 * autoSize + 2 * px(auto, "--heat-drivers-item-padding-y");
+        1.5 * autoSize + 2 * px(auto, "--heat-drivers-item-padding-y");
       const autoGap = px(auto, "--heat-drivers-gap");
 
-      const custom = setupSizedPanel({ laneFontSize: autoSize + 4 });
-      expect(px(custom, "--heat-drivers-font-size")).toBe(autoSize + 4);
-      expect(px(custom, "--heat-drivers-gap")).toBeCloseTo(autoGap, 5);
-      const customRow =
-        1.1 * (autoSize + 4) + 2 * px(custom, "--heat-drivers-item-padding-y");
-      expect(customRow).toBeCloseTo(autoRow, 5);
+      // With a custom size the badge fits the text (1.1x), as the name does.
+      for (const extra of [4, 10]) {
+        const size = autoSize + extra;
+        const custom = setupSizedPanel({ laneFontSize: size });
+        expect(px(custom, "--heat-drivers-font-size")).toBe(size);
+        expect(px(custom, "--heat-drivers-gap")).toBeCloseTo(autoGap, 5);
+        expect(px(custom, "--heat-drivers-badge-height")).toBeCloseTo(
+          size * 1.1,
+          5,
+        );
+        const customRow =
+          1.1 * size + 2 * px(custom, "--heat-drivers-item-padding-y");
+        expect(customRow).toBeCloseTo(autoRow, 5);
+      }
+    });
+
+    it("leaves the lane badge at its auto size without a custom size (#1242)", () => {
+      setupSizedPanel({ laneFontSize: 30 });
+      const panel = setupSizedPanel({});
+      expect(panel.style.getPropertyValue("--heat-drivers-badge-height")).toBe(
+        "",
+      );
     });
 
     it("never lets the row padding drop below 2px", () => {
