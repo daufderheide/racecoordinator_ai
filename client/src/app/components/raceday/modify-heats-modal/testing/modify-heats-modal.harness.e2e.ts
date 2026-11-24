@@ -84,6 +84,34 @@ export class ModifyHeatsModalHarnessE2e implements ModifyHeatsModalHarnessBase {
       .isVisible();
   }
 
+  async selectGroupFilter(index: number | null): Promise<void> {
+    await this.waitForLoaderToBeHidden();
+    const section = this.locator.locator(".group-filter-section");
+    if (index === null) {
+      await section.locator(".filter-tab").first().click();
+    } else {
+      await section
+        .locator(".filter-tab")
+        .nth(index + 1)
+        .click();
+    }
+  }
+
+  async selectStepFilter(step: number | null): Promise<void> {
+    await this.waitForLoaderToBeHidden();
+    const section = this.locator.locator(".step-filter-section");
+    if (step === null) {
+      await section.locator(".filter-tab").first().click();
+    } else {
+      await section.locator(".filter-tab").nth(step).click();
+    }
+  }
+
+  async clickClearFilters(): Promise<void> {
+    await this.waitForLoaderToBeHidden();
+    await this.locator.locator(".btn-clear-filters").click();
+  }
+
   async dragDriverToHeat(
     driverName: string,
     heatIndex: number,

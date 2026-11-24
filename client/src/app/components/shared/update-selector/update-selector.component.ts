@@ -9,6 +9,7 @@ import {
   output,
   ViewEncapsulation,
 } from "@angular/core";
+import { Subscription } from "rxjs";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
@@ -42,6 +43,8 @@ export class UpdateSelectorComponent implements OnInit, OnDestroy {
 
   activeTooltipChannel: UpdateChannel | null = null;
   private tooltipTimeoutId: any = null;
+  private channelSwitchSub?: Subscription;
+  private configSub?: Subscription;
 
   readonly channels: ChannelOption[] = [
     {
@@ -80,7 +83,7 @@ export class UpdateSelectorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.updateService.getUpdateConfig().subscribe({
+    this.configSub = this.updateService.getUpdateConfig().subscribe({
       next: (config) => {
         if (config && config.channel) {
           this.currentChannel = config.channel;
@@ -95,6 +98,14 @@ export class UpdateSelectorComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.clearTooltip();
+    if (this.channelSwitchSub) {
+      this.channelSwitchSub.unsubscribe();
+      this.channelSwitchSub = undefined;
+    }
+    if (this.configSub) {
+      this.configSub.unsubscribe();
+      this.configSub = undefined;
+    }
   }
 
   toggleDropdown(event: Event) {
@@ -127,18 +138,28 @@ export class UpdateSelectorComponent implements OnInit, OnDestroy {
     if (!this.isChannelSelectionEnabled || !this.isAdmin) {
       return;
     }
+    const previousChannel = this.currentChannel;
     this.currentChannel = channel;
     this.closeDropdown();
-    this.channelSelected.emit(channel);
-    this.updateService.setUpdateChannel(channel).subscribe({
-      next: () => {
-        this.logger.info(`Update channel changed to ${channel}`);
-      },
-      error: (err) => {
-        this.logger.error("Failed to update channel", err);
-      },
-    });
     this.cdr.markForCheck();
+
+    if (this.channelSwitchSub) {
+      this.channelSwitchSub.unsubscribe();
+    }
+    this.channelSwitchSub = this.updateService
+      .setUpdateChannel(channel)
+      .subscribe({
+        next: () => {
+          this.logger.info(`Update channel changed to ${channel}`);
+          this.channelSelected.emit(channel);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.logger.error("Failed to update channel", err);
+          this.currentChannel = previousChannel;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   onChannelHover(channel: UpdateChannel) {

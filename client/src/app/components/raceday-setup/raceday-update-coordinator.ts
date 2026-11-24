@@ -24,6 +24,7 @@ export class RacedayUpdateCoordinator {
   public pendingUpdateAction: "install" | "download" | null = null;
   public progressSubscription: Subscription | null = null;
   public restartPollSubscription: Subscription | null = null;
+  public checkSubscription: Subscription | null = null;
   public targetUpdateVersion: string | null = null;
   public preUpdateServerVersion: string | null = null;
   public updateTimedOut = false;
@@ -137,21 +138,29 @@ export class RacedayUpdateCoordinator {
     if (force) {
       this.updateBannerDismissed = false;
       this.showUpToDateModal = false;
+      this.updateResult = null;
+      this.callbacks.onStateChange();
     }
-    this.updateService.checkForUpdates(force).subscribe({
-      next: (result) => {
-        this.updateResult = result;
-        if (force && !result.updateAvailable) {
-          this.showUpToDateModal = true;
-        }
-        this.callbacks.onStateChange();
-      },
-      error: (err) => {
-        if (err.status !== 0) {
-          this.logger.warn("Failed to check for updates", err);
-        }
-      },
-    });
+    if (this.checkSubscription) {
+      this.checkSubscription.unsubscribe();
+      this.checkSubscription = null;
+    }
+    this.checkSubscription = this.updateService
+      .checkForUpdates(force)
+      .subscribe({
+        next: (result) => {
+          this.updateResult = result;
+          if (force && !result.updateAvailable) {
+            this.showUpToDateModal = true;
+          }
+          this.callbacks.onStateChange();
+        },
+        error: (err) => {
+          if (err.status !== 0) {
+            this.logger.warn("Failed to check for updates", err);
+          }
+        },
+      });
   }
 
   public acknowledgeUpToDate() {
@@ -539,6 +548,10 @@ export class RacedayUpdateCoordinator {
   }
 
   public destroy() {
+    if (this.checkSubscription) {
+      this.checkSubscription.unsubscribe();
+      this.checkSubscription = null;
+    }
     if (this.progressSubscription) {
       this.progressSubscription.unsubscribe();
       this.progressSubscription = null;

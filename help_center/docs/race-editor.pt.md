@@ -222,7 +222,7 @@ Quando o **Avanço por degraus (Step-Up)** é configurado com um valor inteiro p
 - **Avanço e reinício de pontuação**: Ao término de um degrau (marcado pela bateria limite do degrau), os $S$ melhores pilotos avançam para o próximo degrau. As estatísticas gerais dos promovidos são zeradas: apenas as baterias do degrau mais alto alcançado contam para a classificação geral final.
 - **Classificação geral em níveis**: Pilotos de degraus inferiores nunca podem ficar à frente de pilotos de degraus superiores na classificação geral final, independentemente de voltas ou tempos individuais. O vencedor do degrau final é o vencedor da corrida.
 - **Corridas por grupos**: Em corridas por grupos com avanço habilitado, cada grupo sobe sua própria escada de forma independente.
-- **Suporte em Modificar baterias**: Na tela Modificar baterias, os pilotos promovidos são identificados com emblemas próprios e os limites de degrau podem ser inspecionados e alternados.
+- **Suporte em Modificar baterias**: Na tela Modificar baterias, os pilotos promovidos e as atribuições de grupo podem ser isolados usando **guias de filtro de Grupo e Etapa**, os limites de degrau podem ser inspecionados e alternados, e as baterias podem ser reatribuídas entre grupos por meio de listas suspensas de seleção personalizada.
 
 ### Configurações de Temporizador
 - **Atraso de Início / Reinício**: Segundos de contagem regressiva prévia.

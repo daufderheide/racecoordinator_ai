@@ -300,7 +300,7 @@ test.describe("Asset Manager Visuals", () => {
       .waitFor({ state: "visible" });
 
     const trackSelect = page.locator(
-      "app-custom-rotation-editor app-custom-select",
+      "app-custom-rotation-editor #custom-rotation-track-select",
     );
     await trackSelect.locator(".custom-select-trigger").click();
     await trackSelect
@@ -348,7 +348,7 @@ test.describe("Asset Manager Visuals", () => {
 
     // Select the 4-lane "Speedway" track (the default "Classic Circuit" only has 2 lanes)
     const trackSelect = page.locator(
-      "app-custom-rotation-editor app-custom-select",
+      "app-custom-rotation-editor #custom-rotation-track-select",
     );
     await trackSelect.locator(".custom-select-trigger").click();
     await trackSelect
@@ -362,16 +362,24 @@ test.describe("Asset Manager Visuals", () => {
       .click();
 
     // Set first heat group to 2 (UI value)
-    const firstGroupInput = page
-      .locator("app-custom-rotation-editor .group-input")
-      .first();
-    await firstGroupInput.fill("2");
+    const firstGroupSelect = page
+      .locator("app-custom-rotation-editor .heat-card")
+      .first()
+      .locator(".header-group-select");
+    await firstGroupSelect.locator(".custom-select-trigger").click();
+    await firstGroupSelect
+      .locator('.custom-select-option[data-value="1"]')
+      .click();
 
     // Set second heat group to 3 (UI value)
-    const lastGroupInput = page
-      .locator("app-custom-rotation-editor .group-input")
-      .last();
-    await lastGroupInput.fill("3");
+    const lastGroupSelect = page
+      .locator("app-custom-rotation-editor .heat-card")
+      .last()
+      .locator(".header-group-select");
+    await lastGroupSelect.locator(".custom-select-trigger").click();
+    await lastGroupSelect
+      .locator('.custom-select-option[data-value="2"]')
+      .click();
 
     // Drag drivers 1-4 from the pool to Heat 1 (lane drop targets: #rot-0-heat-0-lane-X)
     await page
@@ -450,7 +458,7 @@ test.describe("Asset Manager Visuals", () => {
 
     // Select Speedway track (4 lanes)
     const trackSelect = page.locator(
-      "app-custom-rotation-editor app-custom-select",
+      "app-custom-rotation-editor #custom-rotation-track-select",
     );
     await trackSelect.locator(".custom-select-trigger").click();
     await trackSelect
@@ -547,7 +555,7 @@ test.describe("Asset Manager Visuals", () => {
 
     // Select Speedway track (4 lanes)
     const trackSelect = page.locator(
-      "app-custom-rotation-editor app-custom-select",
+      "app-custom-rotation-editor #custom-rotation-track-select",
     );
     await trackSelect.locator(".custom-select-trigger").click();
     await trackSelect
@@ -573,8 +581,14 @@ test.describe("Asset Manager Visuals", () => {
     await boundaryBtns.nth(0).click();
 
     // In Heat 2: set group to 2 and toggle step boundary
-    const groupInputs = page.locator("app-custom-rotation-editor .group-input");
-    await groupInputs.nth(1).fill("2");
+    const secondGroupSelect = page
+      .locator("app-custom-rotation-editor .heat-card")
+      .nth(1)
+      .locator(".header-group-select");
+    await secondGroupSelect.locator(".custom-select-trigger").click();
+    await secondGroupSelect
+      .locator('.custom-select-option[data-value="1"]')
+      .click();
     await boundaryBtns.nth(1).click();
 
     // In Heat 3: Group 1, step 2 (auto-derived) - drag Step-Up 1, Step-Up 2 into lanes
@@ -637,7 +651,7 @@ test.describe("Asset Manager Visuals", () => {
 
     // Select the 4-lane "Speedway" track
     const trackSelect = page.locator(
-      "app-custom-rotation-editor app-custom-select",
+      "app-custom-rotation-editor #custom-rotation-track-select",
     );
     await trackSelect.locator(".custom-select-trigger").click();
     await trackSelect

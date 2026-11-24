@@ -46,6 +46,8 @@
               class="driver-item"
               cdkDrag
               [cdkDragData]="participant"
+              (cdkDragStarted)="onDriverDragStarted(participant)"
+              (cdkDragEnded)="onDriverDragEnded()"
               [class.driver-highlighted]="isDriverHighlighted(participant)"
               [class.driver-dimmed]="
                 hasHighlightedDrivers() && !isDriverHighlighted(participant)
@@ -84,6 +86,12 @@
                 </div>
                 <div class="driver-meta">
                   {{ getParticipantMeta(participant) }}
+                  @if (getParticipantGroupBadge(participant); as gBadge) {
+                    <span class="driver-group-badge">{{ gBadge }}</span>
+                  }
+                  @if (getParticipantStepBadge(participant); as sBadge) {
+                    <span class="driver-step-badge">{{ sBadge }}</span>
+                  }
                 </div>
                 @if (cars.allCars.length > 0 && cars.summary(participant)) {
                   <div class="driver-car" [title]="cars.summary(participant)">
@@ -154,6 +162,8 @@
                 class="driver-item step-up-item"
                 cdkDrag
                 [cdkDragData]="stepParticipant"
+                (cdkDragStarted)="onDriverDragStarted(stepParticipant)"
+                (cdkDragEnded)="onDriverDragEnded()"
               >
                 <span
                   class="material-icons step-up-icon"
@@ -389,6 +399,8 @@
               class="driver-item"
               cdkDrag
               [cdkDragData]="item"
+              (cdkDragStarted)="onDriverDragStarted(item)"
+              (cdkDragEnded)="onDriverDragEnded()"
               (dblclick)="onAddFromAvailable(item)"
             >
               <img [src]="item.avatarUrl | avatarUrl" class="driver-avatar" />
@@ -411,6 +423,21 @@
 
     <!-- Right Panel: Heats Grid -->
     <div class="preview-panel">
+      <!-- Filter Toolbar: Group and Step Filters -->
+      <app-heats-filter-bar
+        [hasGroupFilter]="hasGroupFilter()"
+        [hasStepFilter]="hasStepFilter()"
+        [availableGroups]="availableGroups()"
+        [availableSteps]="availableSteps()"
+        [selectedGroup]="selectedGroup()"
+        [selectedStep]="selectedStep()"
+        [totalHeats]="localHeats.length"
+        [visibleHeats]="filteredHeats().length"
+        (groupChange)="setGroupFilter($event)"
+        (stepChange)="setStepFilter($event)"
+        (clearFilters)="clearFilters()"
+      />
+
       <div
         class="heats-grid"
         [class.has-driver-highlight]="hasHighlightedDrivers()"
@@ -424,7 +451,8 @@
         (mousemove)="onGridMouseMove($event)"
         [style.zoom]="zoomLevel / 100"
       >
-        @for (heat of localHeats; track heat.objectId; let hIdx = $index) {
+        @for (heat of filteredHeats(); track heat.objectId) {
+          @let hIdx = getHeatIndex(heat);
           <div
             class="heat-card"
             [attr.data-heat-idx]="hIdx"
@@ -434,6 +462,9 @@
             [class.heat-dimmed]="
               hasHighlightedDrivers() && !isHeatHighlighted(heat)
             "
+            [class.heat-incompatible]="isHeatIncompatible(heat)"
+            [class.heat-compatible]="isHeatCompatible(heat)"
+            [class.has-warning]="!!getHeatWarning(heat)"
             [class.drop-target]="isHeatSwapHighlight(hIdx, heat)"
             [class.has-insert-indicator]="
               activeInsertSlot === hIdx ||
@@ -507,6 +538,11 @@
                       }}</span
                     >
                   }
+                  @if (getHeatWarning(heat); as warnMsg) {
+                    <span class="heat-warning-indicator" [title]="warnMsg">
+                      <span class="material-icons">warning</span>
+                    </span>
+                  }
                 </h4>
                 @if (getHeatHighlightColors(heat); as pips) {
                   @if (pips.length > 0) {
@@ -522,6 +558,26 @@
                   }
                 }
               </div>
+              @if (
+                race() && race().group_options && race().group_options.enabled
+              ) {
+                <div class="header-group-container">
+                  <app-custom-select
+                    class="group-select header-group-select"
+                    [disabled]="isHeatStarted(heat)"
+                    [ngModel]="heat.group"
+                    (change)="onGroupSelectChange(heat, $event)"
+                    (click)="$event.stopPropagation()"
+                    (mousedown)="$event.stopPropagation()"
+                  >
+                    @for (grp of availableGroups(); track grp.index) {
+                      <app-custom-option [value]="grp.index">
+                        {{ grp.name }}
+                      </app-custom-option>
+                    }
+                  </app-custom-select>
+                </div>
+              }
               <div class="header-actions">
                 @if (isHeatStarted(heat)) {
                   <span
@@ -567,26 +623,6 @@
                   {{ "RD_STEP_UP_BOUNDARY" | translate }}
                 </button>
               }
-              @if (
-                race() && race().group_options && race().group_options.enabled
-              ) {
-                <span class="heat-group-tag">
-                  <span class="group-label">
-                    @if (getCustomGroupName(heat.group)) {
-                      {{ getCustomGroupName(heat.group) }}:
-                    } @else {
-                      {{ "RE_GROUPS_LABEL" | translate }}:
-                    }
-                  </span>
-                  <input
-                    type="number"
-                    class="group-input"
-                    [ngModel]="heat.group + 1"
-                    (ngModelChange)="onGroupChange(heat, $event)"
-                    min="1"
-                  />
-                </span>
-              }
             </div>
             <div class="heat-lanes">
               @for (lane of track().lanes; track $index; let lIdx = $index) {
@@ -606,6 +642,8 @@
                         class="driver-item populated"
                         cdkDrag
                         [cdkDragData]="dhd.participant"
+                        (cdkDragStarted)="onDriverDragStarted(dhd.participant)"
+                        (cdkDragEnded)="onDriverDragEnded()"
                         [cdkDragDisabled]="isHeatStarted(heat)"
                         [class.driver-highlighted]="
                           isDriverHighlighted(dhd.participant)
@@ -783,6 +821,19 @@
             <div class="heat-placeholder" *cdkDragPlaceholder></div>
           </div>
         }
+        @if (filteredHeats().length === 0 && localHeats.length > 0) {
+          <div class="empty-filter-state">
+            <span class="material-icons">filter_list_off</span>
+            <p>{{ "RD_NO_HEATS_MATCH_FILTER" | translate }}</p>
+            <button
+              type="button"
+              class="btn-clear-filter-empty"
+              (click)="clearFilters()"
+            >
+              {{ "RD_CLEAR_FILTERS" | translate }}
+            </button>
+          </div>
+        }
       </div>
     </div>
   </div>
@@ -845,7 +896,10 @@
                 } @else {
                   <span class="material-icons warn-icon">warning</span>
                 }
-                <span>{{ item.key | translate: item.params }}</span>
+                <span
+                  >{{ item.prefix ? item.prefix + ": " : ""
+                  }}{{ item.key | translate: item.params }}</span
+                >
               </li>
             }
           </ul>

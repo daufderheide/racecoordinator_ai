@@ -222,7 +222,7 @@ Wenn **Aufstieg (Step-Up)** auf einen positiven Wert ($S > 0$) eingestellt ist, 
 - **Aufstieg & Punktezurücksetzung**: Nach Abschluss einer Stufe (gekennzeichnet durch den Stufengrenz-Lauf) steigen die besten $S$ Fahrer in die nächste Stufe auf. Bei aufsteigenden Fahrern wird die Gesamtwertung zurückgesetzt – nur Läufe in der höchsten erreichten Stufe zählen für die Gesamtwertung.
 - **Gestaffelte Gesamtwertung**: Fahrer aus niedrigeren Stufen können in der Gesamtwertung niemals vor Fahrern höherer Stufen platziert werden, unabhängig von ihren Runden oder Zeiten. Der Sieger der Finalstufe gewinnt das Rennen.
 - **Gruppenrennen**: Bei Gruppenrennen mit aktiviertem Aufstieg durchläuft jede Gruppe ihre eigene Leiter unabhängig.
-- **Unterstützung bei Läufe bearbeiten**: Auf der Seite „Läufe bearbeiten“ werden Aufstiegsfahrer mit Abzeichen markiert und Stufengrenzen können überprüft und umgeschaltet werden.
+- **Unterstützung bei Läufe bearbeiten**: Auf der Seite „Läufe bearbeiten“ können Aufstiegsfahrer und Gruppenzuweisungen über dedizierte **Gruppen- und Stufen-Filter-Tabs** isoliert werden, Stufengrenzen können überprüft und umgeschaltet werden, und Läufe können über benutzerdefinierte Auswahllisten Gruppen neu zugewiesen werden.
 
 ---
 

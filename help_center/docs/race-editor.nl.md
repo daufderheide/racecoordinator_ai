@@ -222,7 +222,7 @@ Wanneer **Promotie (Step-Up)** is ingesteld op een positief geheel getal ($S > 0
 - **Promotie en score-reset**: Zodra een trede is afgerond (gemarkeerd door de tredegrensheat), promoveren de beste $S$ coureurs naar de volgende trede. De algemene statistieken van gepromoveerde coureurs worden gereset: alleen heats in de hoogst bereikte trede tellen mee voor de eindstand.
 - **Gelaagde eindstand**: Coureurs op lagere treden kunnen in de eindstand nooit hoger eindigen dan coureurs op hogere treden, ongeacht hun rondes of tijden. De winnaar van de finaletrede wint de race.
 - **Groepsraces**: Bij groepsraces met promotie doorloopt elke groep zelfstandig zijn eigen ladder.
-- **Ondersteuning in Heats bewerken**: In het scherm Heats bewerken worden promotiecoureurs aangeduid met een speciale badge en kunnen tredegrenzen worden bekeken en aangepast.
+- **Ondersteuning in Heats bewerken**: In het scherm Heats bewerken kunnen promotiecoureurs en groepstoewijzingen worden geïsoleerd met behulp van **Groeps- en Stap-filtertabbladen**, tredegrenzen kunnen worden bekeken en aangepast, en heats kunnen opnieuw worden toegewezen tussen groepen via aangepaste selectiekeuzemenu's.
 
 ---
 

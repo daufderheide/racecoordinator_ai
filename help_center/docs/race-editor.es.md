@@ -222,7 +222,7 @@ Cuando **Ascenso (Step-Up)** se configura con un entero positivo ($S > 0$), Race
 - **Ascenso y reinicio de puntuación**: Al concluir un escalón (marcado por la tanda límite de escalón), los mejores $S$ pilotos ascienden al siguiente escalón. Su puntuación acumulada se reinicia: solo las tandas del escalón más alto alcanzado cuentan para la clasificación general.
 - **Clasificación general escalonada**: Los pilotos de escalones inferiores nunca pueden quedar por encima de los pilotos de escalones superiores en la clasificación general final, sin importar sus vueltas o tiempos individuales. El ganador del escalón final es el ganador de la carrera.
 - **Carreras por grupos**: En carreras por grupos con ascenso activado, cada grupo progresa por su propia escalera de forma independiente.
-- **Soporte en Modificar tandas**: En la pantalla de Modificar tandas, los pilotos de ascenso se identifican con distintivos propios y los límites de escalón pueden revisarse y conmutarse.
+- **Soporte en Modificar tandas**: En la pantalla de Modificar tandas, los pilotos de ascenso y las asignaciones de grupo se pueden aislar usando **pestañas de filtro de Grupo y Paso**, los límites de escalón pueden revisarse y conmutarse, y las mangas se pueden reasignar entre grupos mediante listas desplegables de selección personalizada.
 
 ### Ajustes de Temporizador
 - **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.

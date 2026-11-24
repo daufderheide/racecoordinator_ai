@@ -1,9 +1,8 @@
 import { Car } from "@app/models/car";
+import { CarField } from "@app/models/car-field";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
 import enJson from "../../../assets/i18n/en.json";
-import { CarField } from "@app/models/car-field";
-
 import {
   areCarsEqual,
   choiceOptions,
