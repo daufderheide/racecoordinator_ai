@@ -1,0 +1,89 @@
+import { TranslationService } from "@app/services/translation.service";
+
+export interface HeatLike {
+  group?: number | null;
+  step?: number | null;
+}
+
+export interface AvailableGroup {
+  index: number;
+  name: string;
+  count: number;
+}
+
+export interface AvailableStep {
+  step: number;
+  name: string;
+  count: number;
+}
+
+export function getAvailableSteps<T extends HeatLike>(
+  heats: T[],
+  translationService: TranslationService,
+): AvailableStep[] {
+  if (!heats || heats.length === 0) return [];
+  const stepSet = new Set<number>();
+  for (const h of heats) {
+    stepSet.add(h.step || 1);
+  }
+  const sortedSteps = Array.from(stepSet).sort((a, b) => a - b);
+  return sortedSteps.map((s) => ({
+    step: s,
+    name: translationService.translate("RD_FILTER_STEP_N", { n: s }),
+    count: heats.filter((h) => (h.step || 1) === s).length,
+  }));
+}
+
+export function filterHeatsByGroupAndStep<T extends HeatLike>(
+  heats: T[],
+  selectedGroup: number | null,
+  selectedStep: number | null,
+): T[] {
+  if (!heats || heats.length === 0) return [];
+  if (selectedGroup === null && selectedStep === null) return heats;
+  return heats.filter((h) => {
+    if (selectedGroup !== null && (h.group ?? 0) !== selectedGroup) {
+      return false;
+    }
+    if (selectedStep !== null && (h.step || 1) !== selectedStep) {
+      return false;
+    }
+    return true;
+  });
+}
+
+export function getAvailableGroupsForRotation<T extends HeatLike>(
+  heats: T[],
+  translationService: TranslationService,
+): AvailableGroup[] {
+  if (!heats || heats.length === 0) return [];
+  const maxGroup = Math.max(0, ...heats.map((h) => h.group ?? 0));
+  const groups: AvailableGroup[] = [];
+  for (let i = 0; i <= maxGroup; i++) {
+    const name = translationService.translate("RD_FILTER_GROUP_N", {
+      n: i + 1,
+    });
+    const count = heats.filter((h) => (h.group ?? 0) === i).length;
+    groups.push({ index: i, name, count });
+  }
+  return groups;
+}
+
+export function getRotationGroupOptions<T extends HeatLike>(
+  heats: T[],
+  translationService: TranslationService,
+): { index: number; name: string }[] {
+  const maxGroup =
+    heats && heats.length > 0
+      ? Math.max(0, ...heats.map((h) => h.group ?? 0))
+      : 0;
+  const numOptions = Math.max(4, maxGroup + 2);
+  const options: { index: number; name: string }[] = [];
+  for (let i = 0; i < numOptions; i++) {
+    options.push({
+      index: i,
+      name: translationService.translate("RD_FILTER_GROUP_N", { n: i + 1 }),
+    });
+  }
+  return options;
+}

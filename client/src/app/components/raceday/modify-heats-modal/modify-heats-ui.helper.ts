@@ -378,17 +378,14 @@ export function canEnterDriverDropListPredicate(
   );
 }
 
-export interface AvailableGroup {
-  index: number;
-  name: string;
-  count: number;
-}
-
-export interface AvailableStep {
-  step: number;
-  name: string;
-  count: number;
-}
+export {
+  AvailableGroup,
+  AvailableStep,
+  filterHeatsByGroupAndStep,
+  getAvailableSteps,
+  HeatLike,
+} from "@app/components/shared/heats-filter-bar/heats-filter.utils";
+import { AvailableGroup } from "@app/components/shared/heats-filter-bar/heats-filter.utils";
 
 export function getAvailableGroups(
   race: Race | undefined,
@@ -412,41 +409,6 @@ export function getAvailableGroups(
     groups.push({ index: i, name, count });
   }
   return groups;
-}
-
-export function getAvailableSteps(
-  heats: Heat[],
-  translationService: TranslationService,
-): AvailableStep[] {
-  if (!heats || heats.length === 0) return [];
-  const stepSet = new Set<number>();
-  for (const h of heats) {
-    stepSet.add(h.step || 1);
-  }
-  const sortedSteps = Array.from(stepSet).sort((a, b) => a - b);
-  return sortedSteps.map((s) => ({
-    step: s,
-    name: translationService.translate("RD_FILTER_STEP_N", { n: s }),
-    count: heats.filter((h) => (h.step || 1) === s).length,
-  }));
-}
-
-export function filterHeatsByGroupAndStep(
-  heats: Heat[],
-  selectedGroup: number | null,
-  selectedStep: number | null,
-): Heat[] {
-  if (!heats || heats.length === 0) return [];
-  if (selectedGroup === null && selectedStep === null) return heats;
-  return heats.filter((h) => {
-    if (selectedGroup !== null && h.group !== selectedGroup) {
-      return false;
-    }
-    if (selectedStep !== null && (h.step || 1) !== selectedStep) {
-      return false;
-    }
-    return true;
-  });
 }
 
 export function isHeatIncompatibleWithDraggedParticipant(

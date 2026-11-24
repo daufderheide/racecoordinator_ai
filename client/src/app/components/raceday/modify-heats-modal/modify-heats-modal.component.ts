@@ -27,6 +27,7 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
+import { HeatsFilterBarComponent } from "@app/components/shared/heats-filter-bar/heats-filter-bar.component";
 import {
   UndoEventType,
   UndoManager,
@@ -136,6 +137,7 @@ import {
     ConfirmationModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
+    HeatsFilterBarComponent,
   ],
 })
 export class ModifyHeatsModalComponent implements OnInit, OnDestroy {

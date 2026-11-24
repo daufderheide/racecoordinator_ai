@@ -375,6 +375,41 @@
   text-overflow: ellipsis;
 }
 
+.driver-meta {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.driver-group-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.driver-step-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
 .driver-highlight-badge {
   display: inline-block;
   width: 9px;
@@ -763,7 +798,7 @@
   color: #f8fafc;
   transition: color 0.2s;
   min-width: 0;
-  flex: 1;
+  flex: 0 0 auto;
 }
 
 .header-title:hover {
@@ -878,37 +913,35 @@
   font-weight: 500;
 }
 
-.heat-group-tag {
-  display: inline-flex;
+.header-group-container {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.74rem;
-  color: #94a3b8;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
 }
 
-.heat-group-tag .group-label {
-  color: #94a3b8;
-  font-weight: 500;
+.group-select {
+  min-width: 95px;
+  max-width: 140px;
 }
 
-.group-input {
-  width: 36px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+.header-group-select {
+  width: 100%;
+  min-width: 60px;
+  max-width: 100%;
+}
+
+.group-select ::ng-deep .custom-select-trigger {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  min-height: 24px;
+  height: 24px;
   border-radius: 4px;
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(56, 189, 248, 0.3);
   color: #38bdf8;
-  padding: 1px 4px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-align: center;
-  outline: none;
-  font-family: inherit;
-  cursor: text;
-}
-
-.group-input:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  font-weight: 600;
 }
 
 .header-actions {

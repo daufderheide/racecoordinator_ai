@@ -197,6 +197,15 @@
                     ></span>
                   }
                 </div>
+                <div class="driver-meta">
+                  <span>Driver {{ driver.id }}</span>
+                  @if (getDriverGroupBadge(driver.id); as gBadge) {
+                    <span class="driver-group-badge">{{ gBadge }}</span>
+                  }
+                  @if (getDriverStepBadge(driver.id); as sBadge) {
+                    <span class="driver-step-badge">{{ sBadge }}</span>
+                  }
+                </div>
               </div>
               @if (getDriverHighlightColor(driver.id); as hlColor) {
                 <div
@@ -449,6 +458,19 @@
             <!-- Body of expander -->
             @if (rotation.isExpanded) {
               <div class="expander-body">
+                <app-heats-filter-bar
+                  [hasGroupFilter]="hasRotationGroupFilter(rotation)"
+                  [hasStepFilter]="hasRotationStepFilter(rotation)"
+                  [availableGroups]="getRotationAvailableGroups(rotation)"
+                  [availableSteps]="getRotationAvailableSteps(rotation)"
+                  [selectedGroup]="rotation.selectedGroup ?? null"
+                  [selectedStep]="rotation.selectedStep ?? null"
+                  [totalHeats]="(rotation.heats || []).length"
+                  [visibleHeats]="getFilteredHeats(rotation).length"
+                  (groupChange)="setRotationGroupFilter(rotation, $event)"
+                  (stepChange)="setRotationStepFilter(rotation, $event)"
+                  (clearFilters)="clearRotationFilters(rotation)"
+                />
                 <div
                   class="heats-grid"
                   [class.has-driver-highlight]="hasHighlightedDrivers()"
@@ -458,7 +480,8 @@
                   [cdkDropListData]="rotation.heats || []"
                   (cdkDropListDropped)="dropHeat(rotation, $event)"
                 >
-                  @for (heat of rotation.heats; track heat; let hIdx = $index) {
+                  @for (heat of getFilteredHeats(rotation); track heat) {
+                    @let hIdx = getHeatIndex(rotation, heat);
                     <div
                       class="heat-card"
                       cdkDrag
@@ -514,6 +537,33 @@
                             >
                           }
                         </div>
+                        <div class="header-group-container">
+                          <app-custom-select
+                            class="group-select header-group-select"
+                            [ngModel]="heat.group || 0"
+                            (change)="
+                              onHeatGroupSelectChange(rotation, heat, $event)
+                            "
+                            (click)="$event.stopPropagation()"
+                            (mousedown)="$event.stopPropagation()"
+                          >
+                            @for (
+                              grp of getRotationGroupOptions(rotation);
+                              track grp.index
+                            ) {
+                              <app-custom-option [value]="grp.index">
+                                {{ grp.name }}
+                              </app-custom-option>
+                            }
+                          </app-custom-select>
+                          @if (heatHasGroupConflict(rotation, hIdx)) {
+                            <span
+                              class="warning-icon"
+                              title="Driver is assigned to multiple groups!"
+                              ><span class="material-icons">warning</span></span
+                            >
+                          }
+                        </div>
                         <div class="header-actions">
                           <button
                             class="btn-remove"
@@ -545,27 +595,6 @@
                             >{{ getOriginalHeatDisplay(heat) }}</span
                           >
                         </span>
-                        <div class="heat-group-tag">
-                          <span class="group-label"
-                            >{{ "RE_GROUPS_LABEL" | translate }}:</span
-                          >
-                          <input
-                            type="number"
-                            class="group-input"
-                            [ngModel]="(heat.group || 0) + 1"
-                            (ngModelChange)="
-                              onHeatGroupChange(rotation, heat, $event)
-                            "
-                            min="1"
-                          />
-                          @if (heatHasGroupConflict(rotation, hIdx)) {
-                            <span
-                              class="warning-icon"
-                              title="Driver is assigned to multiple groups!"
-                              ><span class="material-icons">warning</span></span
-                            >
-                          }
-                        </div>
                         <button
                           type="button"
                           class="boundary-badge"

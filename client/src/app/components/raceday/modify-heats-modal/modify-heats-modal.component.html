@@ -401,95 +401,19 @@
     <!-- Right Panel: Heats Grid -->
     <div class="preview-panel">
       <!-- Filter Toolbar: Group and Step Filters -->
-      @if (hasGroupFilter() || hasStepFilter()) {
-        <div class="heats-filter-bar">
-          @if (hasGroupFilter()) {
-            <div class="filter-section group-filter-section">
-              <span class="filter-label">
-                <span class="material-icons">folder_shared</span>
-                <span>{{ "RE_GROUPS_LABEL" | translate }}:</span>
-              </span>
-              <div class="filter-tabs">
-                <button
-                  type="button"
-                  class="filter-tab"
-                  [class.active]="selectedGroup() === null"
-                  (click)="setGroupFilter(null)"
-                >
-                  <span>{{ "RD_FILTER_ALL_GROUPS" | translate }}</span>
-                  <span class="tab-badge">{{ localHeats.length }}</span>
-                </button>
-                @for (grp of availableGroups(); track grp.index) {
-                  <button
-                    type="button"
-                    class="filter-tab"
-                    [class.active]="selectedGroup() === grp.index"
-                    (click)="setGroupFilter(grp.index)"
-                  >
-                    <span>{{ grp.name }}</span>
-                    <span class="tab-badge">{{ grp.count }}</span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-
-          @if (hasStepFilter()) {
-            <div class="filter-section step-filter-section">
-              <span class="filter-label">
-                <span class="material-icons">trending_up</span>
-                <span>{{ "RE_STEP_UP" | translate }}:</span>
-              </span>
-              <div class="filter-tabs">
-                <button
-                  type="button"
-                  class="filter-tab"
-                  [class.active]="selectedStep() === null"
-                  (click)="setStepFilter(null)"
-                >
-                  <span>{{ "RD_FILTER_ALL_STEPS" | translate }}</span>
-                  <span class="tab-badge">{{ localHeats.length }}</span>
-                </button>
-                @for (st of availableSteps(); track st.step) {
-                  <button
-                    type="button"
-                    class="filter-tab"
-                    [class.active]="selectedStep() === st.step"
-                    (click)="setStepFilter(st.step)"
-                  >
-                    <span>{{ st.name }}</span>
-                    <span class="tab-badge">{{ st.count }}</span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-
-          <div class="filter-summary">
-            <span class="filter-count">
-              {{
-                "RD_SHOWING_HEATS_COUNT"
-                  | translate
-                    : {
-                        visible: filteredHeats().length,
-                        total: localHeats.length,
-                      }
-              }}
-            </span>
-            @if (isFilterActive()) {
-              <button
-                type="button"
-                class="btn-clear-filters"
-                (click)="clearFilters()"
-                [title]="'RD_CLEAR_FILTERS' | translate"
-              >
-                <span class="material-icons">clear</span>
-                <span>{{ "RD_CLEAR_FILTERS" | translate }}</span>
-              </button>
-            }
-          </div>
-        </div>
-      }
+      <app-heats-filter-bar
+        [hasGroupFilter]="hasGroupFilter()"
+        [hasStepFilter]="hasStepFilter()"
+        [availableGroups]="availableGroups()"
+        [availableSteps]="availableSteps()"
+        [selectedGroup]="selectedGroup()"
+        [selectedStep]="selectedStep()"
+        [totalHeats]="localHeats.length"
+        [visibleHeats]="filteredHeats().length"
+        (groupChange)="setGroupFilter($event)"
+        (stepChange)="setStepFilter($event)"
+        (clearFilters)="clearFilters()"
+      />
 
       <div
         class="heats-grid"

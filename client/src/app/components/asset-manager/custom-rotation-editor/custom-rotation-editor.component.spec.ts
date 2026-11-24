@@ -2549,4 +2549,128 @@ describe("CustomRotationEditorComponent", () => {
       expect(emptySlot).toBeTruthy();
     });
   });
+
+  describe("Custom Rotation Heat Filtering and Group Header Select", () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+      component.internalAssetName = "Filter Test";
+      component.internalRotations = [
+        {
+          numDrivers: 4,
+          isExpanded: true,
+          heats: [
+            { driverIndices: [1, 2, 3, 4], group: 0, step: 1 },
+            { driverIndices: [1, 2, 3, 4], group: 1, step: 1 },
+            {
+              driverIndices: [-1, 2, 3, 4],
+              group: 1,
+              step: 2,
+              isStepUpBoundary: true,
+            },
+          ],
+        },
+      ];
+      component.updateDropListConnections();
+      fixture.detectChanges();
+    });
+
+    it("should accurately report hasRotationGroupFilter and hasRotationStepFilter", () => {
+      const rot = component.internalRotations[0];
+      expect(component.hasRotationGroupFilter(rot)).toBeTrue();
+      expect(component.hasRotationStepFilter(rot)).toBeTrue();
+
+      const noFilterRot = {
+        numDrivers: 4,
+        heats: [{ driverIndices: [1, 2, 3, 4], group: 0, step: 1 }],
+      };
+      expect(component.hasRotationGroupFilter(noFilterRot)).toBeFalse();
+      expect(component.hasRotationStepFilter(noFilterRot)).toBeFalse();
+    });
+
+    it("should filter heats by selectedGroup and selectedStep", () => {
+      const rot = component.internalRotations[0];
+      expect(component.getFilteredHeats(rot).length).toBe(3);
+
+      component.setRotationGroupFilter(rot, 1);
+      expect(component.getFilteredHeats(rot).length).toBe(2);
+
+      component.setRotationStepFilter(rot, 2);
+      expect(component.getFilteredHeats(rot).length).toBe(1);
+      expect(component.getFilteredHeats(rot)[0].step).toBe(2);
+
+      component.clearRotationFilters(rot);
+      expect(component.getFilteredHeats(rot).length).toBe(3);
+    });
+
+    it("should return the true heat index even when filtered", () => {
+      const rot = component.internalRotations[0];
+      const heat3 = rot.heats![2];
+
+      component.setRotationStepFilter(rot, 2);
+      const filtered = component.getFilteredHeats(rot);
+      expect(filtered.length).toBe(1);
+      expect(component.getHeatIndex(rot, filtered[0])).toBe(2);
+      expect(component.getHeatIndex(rot, heat3)).toBe(2);
+    });
+
+    it("should update heat group via onHeatGroupSelectChange", () => {
+      const rot = component.internalRotations[0];
+      const heat = rot.heats![0];
+      expect(heat.group).toBe(0);
+
+      component.onHeatGroupSelectChange(rot, heat, 2); // Select Group 3 (index 2)
+      expect(heat.group).toBe(2);
+    });
+
+    it("should handle dropHeat correctly when filtered", () => {
+      const rot = component.internalRotations[0];
+      // Filter to group 1 (which has indices 1 and 2 in rot.heats)
+      component.setRotationGroupFilter(rot, 1);
+      const filtered = component.getFilteredHeats(rot);
+      expect(filtered.length).toBe(2);
+
+      const event = {
+        previousIndex: 0, // was index 1 in full list
+        currentIndex: 1, // was index 2 in full list
+      } as any;
+
+      component.dropHeat(rot, event);
+
+      // Verify reordering in full heats list
+      expect(rot.heats![1].isStepUpBoundary).toBeTrue();
+      expect(!!rot.heats![2].isStepUpBoundary).toBeFalse();
+    });
+
+    it("should render heats filter bar when filters are available", () => {
+      const filterBar = fixture.debugElement.query(
+        By.css("app-heats-filter-bar"),
+      );
+      expect(filterBar).toBeTruthy();
+    });
+
+    it("should display group and step badges on virtual drivers in the racing list", () => {
+      expect(component.getDriverGroupBadge(1)).toBe("G1");
+      expect(component.getDriverStepBadge(1)).toBe("S1");
+      expect(component.getDriverGroupBadge(99)).toBeNull();
+
+      fixture.detectChanges();
+
+      const driverItems = fixture.debugElement.queryAll(
+        By.css("#driver-pool .driver-item"),
+      );
+      expect(driverItems.length).toBeGreaterThan(0);
+
+      // Driver 1 is in heat 1 (G1, S1)
+      const firstDriverMeta = driverItems[0].query(By.css(".driver-meta"));
+      expect(firstDriverMeta).toBeTruthy();
+
+      const gBadge = firstDriverMeta.query(By.css(".driver-group-badge"));
+      expect(gBadge).toBeTruthy();
+      expect(gBadge.nativeElement.textContent.trim()).toBe("G1");
+
+      const sBadge = firstDriverMeta.query(By.css(".driver-step-badge"));
+      expect(sBadge).toBeTruthy();
+      expect(sBadge.nativeElement.textContent.trim()).toBe("S1");
+    });
+  });
 });
