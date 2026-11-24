@@ -4,9 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.Heat;
 import com.antigravity.race.RaceStatistics;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 
 public class RaceHistoryRecordTest {
@@ -72,24 +76,24 @@ public class RaceHistoryRecordTest {
     RaceHistoryRecord record = new RaceHistoryRecord();
     assertEquals(0, record.getIneligibleLapCount());
 
-    com.antigravity.race.Heat heat1 = new com.antigravity.race.Heat();
-    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData();
+    Heat heat1 = new Heat();
+    DriverHeatData dhd1 = new DriverHeatData();
     dhd1.setLane(0);
     dhd1.addLap(4.5, false, true);
     dhd1.addLap(4.2, false, false); // Ineligible
 
-    com.antigravity.race.DriverHeatData dhd2 = new com.antigravity.race.DriverHeatData();
+    DriverHeatData dhd2 = new DriverHeatData();
     dhd2.setLane(1);
     dhd2.addLap(4.8, false, true);
     dhd2.addLap(4.3, false, false); // Ineligible
     dhd2.addLap(4.1, false, false); // Ineligible
 
-    java.util.List<com.antigravity.race.DriverHeatData> drivers = new ArrayList<>();
+    List<DriverHeatData> drivers = new ArrayList<>();
     drivers.add(dhd1);
     drivers.add(dhd2);
     heat1.setDrivers(drivers);
 
-    java.util.List<com.antigravity.race.Heat> heats = new ArrayList<>();
+    List<Heat> heats = new ArrayList<>();
     heats.add(heat1);
     record.setHeats(heats);
 
@@ -106,5 +110,46 @@ public class RaceHistoryRecordTest {
 
     RaceHistoryRecord deserialized = mapper.readValue(json, RaceHistoryRecord.class);
     assertEquals(5, deserialized.getIneligibleLapCount());
+  }
+
+  @Test
+  public void testHeatCarSnapshotSurvivesSaveAndLoad() throws Exception {
+    // The results pages show each heat's car from the saved race (#1210), so
+    // the snapshot must come back from the race_history JSON intact.
+    Car car =
+        new Car.Builder()
+            .withName("Audi R8 LMS")
+            .withCarClass("GT3")
+            .withMotor("Flat-6 21.5k")
+            .withTyres("Ortmann")
+            .withEntityId("car-1")
+            .build();
+    DriverHeatData dhd = new DriverHeatData();
+    dhd.setLane(0);
+    dhd.setCar(car);
+    Heat heat = new Heat();
+    List<DriverHeatData> drivers = new ArrayList<>();
+    drivers.add(dhd);
+    heat.setDrivers(drivers);
+    RaceHistoryRecord record = new RaceHistoryRecord();
+    List<Heat> heats = new ArrayList<>();
+    heats.add(heat);
+    record.setHeats(heats);
+
+    // The same settings as SqliteRepository, which stores race_history.
+    ObjectMapper mapper =
+        new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
+    RaceHistoryRecord loaded =
+        mapper.readValue(mapper.writeValueAsString(record), RaceHistoryRecord.class);
+
+    Car back = loaded.getHeats().get(0).getDrivers().get(0).getCar();
+    assertNotNull(back);
+    assertEquals("Audi R8 LMS", back.getName());
+    assertEquals("GT3", back.getCarClass());
+    assertEquals("Flat-6 21.5k", back.getMotor());
+    assertEquals("Ortmann", back.getTyres());
+    assertEquals("car-1", back.getEntityId());
   }
 }

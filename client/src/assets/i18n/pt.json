@@ -1997,6 +1997,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Ajustar seções de volta/tempo",
   "RR_BTN_EXPORT_CSV": "Exportar CSV",
   "RR_BTN_HEAT_RESULTS": "Resultados de bateria",
+  "RR_CARS_COUNT": "{{count}} carros",
   "RR_HORIZONTAL_SCROLLBAR": "Barra de rolagem horizontal dos resultados da corrida",
   "SAVE": "Salvar",
   "SE_ADD_RACE_TITLE": "Adicionar corrida finalizada à temporada",

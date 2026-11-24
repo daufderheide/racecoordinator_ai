@@ -75,3 +75,10 @@ In una gara IROC le auto restano nella loro corsia per tutta la gara e i piloti 
 - **Configurazione del Giorno di Gara**: sotto l'elenco **Piloti in Gara** compare un riquadro **Auto per corsia**. Cliccalo per scegliere l'auto di ogni corsia. RC AI ricorda le auto per pista. Le icone auto dei piloti sono nascoste, perché l'auto va con la corsia.
 - **Cambiare tra le manche**: **Direttore Gara → Auto slot…** mostra ogni corsia con la sua auto. Una nuova auto vale dalla prossima manche non ancora corsa.
 - **Risultati**: ogni manche salva l'auto di ogni corsia, così vedi quale pilota ha corso con quale auto.
+
+## Le auto nei risultati {: #cars-in-results }
+
+I risultati mostrano l'auto con cui ha corso ogni pilota, com'era in quella manche. Se modifichi un'auto in seguito, i risultati passati non cambiano.
+
+- **Risultati manche** e la pagina dei risultati di un pilota: ogni scheda di manche mostra l'auto accanto alla corsia. Passaci sopra con il mouse per vedere classe, scala e assetto.
+- **Risultati gara**: ogni pilota mostra la sua auto sotto il nome. Se ha corso con più di un'auto (una gara IROC o uno scambio), indica quante; passaci sopra per vedere l'elenco.

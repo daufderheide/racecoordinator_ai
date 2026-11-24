@@ -1997,6 +1997,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Rondesecties/tijd aanpassen",
   "RR_BTN_EXPORT_CSV": "CSV exporteren",
   "RR_BTN_HEAT_RESULTS": "Heatresultaten",
+  "RR_CARS_COUNT": "{{count}} auto's",
   "RR_HORIZONTAL_SCROLLBAR": "Horizontale schuifbalk voor raceresultaten",
   "SAVE": "Opslaan",
   "SE_ADD_RACE_TITLE": "Voltooide race toevoegen aan seizoen",

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { HeatResultsHelper } from "@app/components/heat-results/testing/heat-results_helper";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { RaceResultsHarnessE2e } from "./testing/race-results.harness.e2e";
@@ -354,6 +355,43 @@ test.describe("Race Results Visuals - Australian Locale", () => {
 
     await page.mouse.move(0, 0);
     await expect(header).toHaveScreenshot("race-results-header-en-au.png", {
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
+    });
+  });
+});
+
+test.describe("Race Results slotcars (#1210)", () => {
+  test("shows each racer's car, or how many cars they ran", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const mockData = HeatResultsHelper.withCars(
+      RaceResultsHelper.createMockRaceData(),
+    );
+    // A second heat where Ally ran the Ford: she ran two cars this race.
+    const heat2 = JSON.parse(JSON.stringify(mockData.race.currentHeat));
+    heat2.objectId = "h2";
+    heat2.heatNumber = 2;
+    heat2.heatDrivers[0].car = { ...heat2.heatDrivers[1].car };
+    mockData.race.heats = [mockData.race.currentHeat, heat2];
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    const table = page.locator(".results-table");
+    await expect(table.locator(".driver-car-line")).toHaveCount(3);
+    await expect(table).toContainText("2 cars");
+    await expect(table).toContainText("Porsche 911 RSR");
+    await page.mouse.move(0, 0);
+
+    await expect(table).toHaveScreenshot("race-results-slotcars.png", {
       maxDiffPixelRatio: 0.05,
       maxDiffPixels: 8000,
     });

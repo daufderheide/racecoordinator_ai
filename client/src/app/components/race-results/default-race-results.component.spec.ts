@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import { HeatRanking } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
@@ -309,6 +310,45 @@ describe("DefaultRaceResultsComponent", () => {
 
       const rows = component["standingsRows"];
       expect(rows[0].laneScores).toEqual([3, 4, null, null]);
+    });
+
+    it("lists the slotcars each racer ran, one per car (#1210)", () => {
+      const d1 = createDriver("d1", "Alice", "Ally");
+      const p1 = createParticipant("d1", d1, 1, 15, 60, 3.5, 4, 4, 100, 1);
+      component["race"] = {
+        track: { lanes: [{}, {}, {}, {}] },
+        heat_scoring: { heatRanking: HeatRanking.HR_LAP_COUNT },
+      } as any;
+      const audi = new Car("c1", "Audi R8");
+      const ford = new Car("c2", "Ford GT40");
+      const heats = [1, 2, 3].map((n) =>
+        createHeatWithLaps(`h${n}`, n, [{ driver: d1, laps: [4.0] }]),
+      );
+      heats[0].heatDrivers[0].car = audi;
+      heats[1].heatDrivers[0].car = ford;
+      heats[2].heatDrivers[0].car = audi;
+
+      mockRaceService.getHeats.and.returnValue(heats);
+      participantsSubject.next([p1]);
+      heatsSubject.next(heats);
+
+      const cars = component["standingsRows"][0].cars;
+      expect(cars.map((c) => c.name)).toEqual(["Audi R8", "Ford GT40"]);
+    });
+
+    it("leaves the car list empty when no heat has a car (#1210)", () => {
+      const d1 = createDriver("d1", "Alice", "Ally");
+      const p1 = createParticipant("d1", d1, 1, 15, 60, 3.5, 4, 4, 100, 1);
+      component["race"] = {
+        track: { lanes: [{}, {}] },
+        heat_scoring: { heatRanking: HeatRanking.HR_LAP_COUNT },
+      } as any;
+      const heat = createHeatWithLaps("h1", 1, [{ driver: d1, laps: [4.0] }]);
+      mockRaceService.getHeats.and.returnValue([heat]);
+      participantsSubject.next([p1]);
+      heatsSubject.next([heat]);
+
+      expect(component["standingsRows"][0].cars).toEqual([]);
     });
 
     it("should calculate laneScores based on heatRanking HR_FASTEST_LAP", () => {

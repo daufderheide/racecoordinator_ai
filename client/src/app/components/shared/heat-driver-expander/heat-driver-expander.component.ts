@@ -6,6 +6,7 @@ import { RaceParticipant } from "@app/models/race_participant";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { carTooltip } from "@app/utils/car-results.utils";
 
 export interface HeatStandingsRow {
   rank: number;
@@ -45,6 +46,9 @@ export class HeatDriverExpanderComponent {
   @Input() customStatsTitle?: string;
   @Input() isGroupRace = false;
   @Input() groupNames: string[] = [];
+
+  /** Tooltip for the heat's car: name, class, scale and setup (#1210). */
+  protected readonly carTooltip = carTooltip;
 
   protected formatGap(gap: number | null | undefined): string {
     if (gap === null || gap === undefined || isNaN(gap)) return "--.---";

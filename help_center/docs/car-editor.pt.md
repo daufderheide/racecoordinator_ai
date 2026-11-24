@@ -75,3 +75,10 @@ Numa corrida IROC os carros ficam na sua pista a corrida toda e os pilotos rodam
 - **Configuração do Dia de Corrida**: abaixo da lista **Pilotos na Corrida** aparece uma caixa **Carros por pista**. Clique nela para escolher o carro de cada pista. O RC AI lembra os carros por traçado. Os ícones de carro dos pilotos ficam ocultos, porque o carro acompanha a pista.
 - **Trocar entre baterias**: **Diretor de Prova → Carros slot…** mostra cada pista com o seu carro. Um carro novo conta a partir da próxima bateria que ainda não correu.
 - **Resultados**: cada bateria guarda o carro de cada pista, assim vê qual piloto correu com qual carro.
+
+## Carros nos resultados {: #cars-in-results }
+
+Os resultados mostram o carro com que cada piloto correu, tal como estava nessa bateria. Editar um carro depois não muda os resultados anteriores.
+
+- **Resultados de bateria** e a página de resultados de um piloto: cada cartão de bateria mostra o carro ao lado da pista. Passe o rato por cima para ver a classe, a escala e a afinação.
+- **Resultados de corrida**: cada piloto mostra o seu carro sob o nome. Se correu com mais de um carro (uma corrida IROC ou uma troca), indica quantos; passe o rato por cima para ver a lista.
