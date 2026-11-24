@@ -68,6 +68,13 @@ public class DefaultProtocolTest {
       lastHeartbeatTimeMs = now();
     }
 
+    public boolean customRequiresHeartbeat = true;
+
+    @Override
+    protected boolean requiresHeartbeat() {
+      return customRequiresHeartbeat;
+    }
+
     @Override
     protected double getHardwareDebounceUs() {
       return 0;
@@ -228,6 +235,17 @@ public class DefaultProtocolTest {
     assertTrue("Healthy again after heartbeat", protocol.isHealthy());
     protocol.connected = false;
     assertFalse("Unhealthy if disconnected despite recent heartbeat", protocol.isHealthy());
+  }
+
+  @Test
+  public void testIsHealthyWhenHeartbeatNotRequired() {
+    protocol.customRequiresHeartbeat = false;
+    protocol.connected = true;
+    assertTrue("Healthy when connected and heartbeat not required", protocol.isHealthy());
+    protocol.advanceTime(10000);
+    assertTrue("Still healthy after timeout when heartbeat not required", protocol.isHealthy());
+    protocol.connected = false;
+    assertFalse("Unhealthy when disconnected even if heartbeat not required", protocol.isHealthy());
   }
 
   @Test

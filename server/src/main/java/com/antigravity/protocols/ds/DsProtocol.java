@@ -333,12 +333,18 @@ public class DsProtocol extends AbstractSerialProtocol {
         break;
       case 0xA6:
         logger.info("DSxxx End Pause (0xA6)");
+        if (listener != null) {
+          listener.onStartTimer(getInterfaceIndex());
+        }
         break;
       case 0xA7:
         logger.info("DSxxx Abort Race (0xA7)");
         if (listener != null) {
           listener.onAbort(getInterfaceIndex());
         }
+        break;
+      case 0xC0:
+        logger.info("DSxxx Keep-alive / heartbeat (0xC0)");
         break;
       default:
         logger.warn("DSxxx Unknown function code: 0x{}", String.format("%02X", functionType));

@@ -27,6 +27,12 @@ public class RaceHardwareEventHandler {
     if (state instanceof HeatOver) {
       logger.info("Advancing to next heat due to hardware START_TIMER");
       race.moveToNextHeat();
+    } else if (state instanceof NotStarted) {
+      logger.info("Starting race due to hardware START_TIMER");
+      race.startRace();
+    } else if (state instanceof Paused) {
+      logger.info("Resuming race due to hardware START_TIMER");
+      race.startRace();
     } else {
       logger.info(
           "Ignoring hardware START_TIMER in state {}",
@@ -43,7 +49,7 @@ public class RaceHardwareEventHandler {
         "Hardware onPauseTimer received from interface {}. Current state: {}",
         interfaceIndex,
         state != null ? state.getClass().getSimpleName() : "null");
-    if (state instanceof Racing) {
+    if (state instanceof Racing || state instanceof Starting) {
       logger.info("Pausing race due to hardware PAUSE_TIMER");
       race.pauseRace();
     } else {
