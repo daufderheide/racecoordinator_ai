@@ -2003,6 +2003,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Regola sezioni di giro/tempo",
   "RR_BTN_EXPORT_CSV": "Esporta CSV",
   "RR_BTN_HEAT_RESULTS": "Risultati manche",
+  "RR_CARS_COUNT": "{{count}} auto",
   "RR_HORIZONTAL_SCROLLBAR": "Barra di scorrimento orizzontale dei risultati della gara",
   "SAVE": "Salva",
   "SE_ADD_RACE_TITLE": "Aggiungi gara terminata alla stagione",

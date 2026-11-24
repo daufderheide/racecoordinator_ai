@@ -396,6 +396,44 @@ export class HeatResultsHelper {
     return mockData;
   }
 
+  /**
+   * Puts a slotcar snapshot on every heat entry (#1210): Ally runs the Audi,
+   * Bob the Ford GT40 and the third driver the Porsche, in every heat.
+   */
+  static withCars(mockData: any): any {
+    const cars: Record<string, any> = {
+      hd1: {
+        model: { entityId: "c1" },
+        name: "Audi R8 LMS",
+        carClass: "GT3",
+        scale: "1/32",
+        tyres: "Ortmann",
+      },
+      hd2: {
+        model: { entityId: "c2" },
+        name: "Ford GT40 Mk II",
+        carClass: "Classic",
+        scale: "1/32",
+      },
+      hd3: {
+        model: { entityId: "c3" },
+        name: "Porsche 911 RSR",
+        carClass: "GT3",
+        scale: "1/32",
+      },
+    };
+    const visit = (node: any) => {
+      if (Array.isArray(node)) return node.forEach(visit);
+      if (!node || typeof node !== "object") return;
+      if (("laneIndex" in node || "driver" in node) && cars[node.objectId]) {
+        node.car = { ...cars[node.objectId] };
+      }
+      Object.values(node).forEach(visit);
+    };
+    visit(mockData);
+    return mockData;
+  }
+
   static async injectMockRaceData(page: any, mockData: any) {
     const buffer = RaceData.encode(mockData).finish();
     const dataArray = Array.from(buffer);

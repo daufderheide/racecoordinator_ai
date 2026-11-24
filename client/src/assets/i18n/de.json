@@ -1730,6 +1730,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Rundenabschnitte/Zeit anpassen",
   "RR_BTN_EXPORT_CSV": "CSV exportieren",
   "RR_BTN_HEAT_RESULTS": "Laufergebnisse",
+  "RR_CARS_COUNT": "{{count}} Autos",
   "RR_HORIZONTAL_SCROLLBAR": "Horizontale Bildlaufleiste für Rennergebnisse",
   "RM_BTN_RESET_RECORDS": "Renndatensätze & Verlauf zurücksetzen",
   "RM_COL_TRACK": "STRECKE",

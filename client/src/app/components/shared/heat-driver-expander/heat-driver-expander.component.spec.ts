@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
@@ -194,6 +195,30 @@ describe("HeatDriverExpanderComponent Analysis Section", () => {
 
     it("should return -X.XXX for negative number", () => {
       expect((component as any).formatGap(-0.5)).toBe("-0.500");
+    });
+  });
+
+  describe("slotcar badge (#1210)", () => {
+    const badge = () =>
+      fixture.nativeElement.querySelector(".car-badge") as HTMLElement | null;
+
+    it("shows the car the driver ran in this heat, with its setup as tooltip", () => {
+      const data = createMockHeatData([5.0]);
+      data.heatDriver.car = new Car("c1", "Audi R8 LMS", {
+        carClass: "GT3",
+        tyres: "Ortmann",
+      });
+      component.heatData = data;
+      fixture.detectChanges();
+
+      expect(badge()?.textContent).toContain("Audi R8 LMS");
+      expect(badge()?.title).toBe("Audi R8 LMS (GT3)\nOrtmann");
+    });
+
+    it("shows no badge when the heat has no car", () => {
+      component.heatData = createMockHeatData([5.0]);
+      fixture.detectChanges();
+      expect(badge()).toBeNull();
     });
   });
 });

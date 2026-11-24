@@ -388,6 +388,27 @@
   text-transform: uppercase;
 }
 
+/* The slotcar(s) this racer ran (#1210). */
+.driver-car-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #7dd3fc;
+}
+
+.driver-car-line .material-icons {
+  font-size: 15px;
+}
+
+.driver-car-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Highlighting columns */
 .text-highlight {
   color: #00e5ff;

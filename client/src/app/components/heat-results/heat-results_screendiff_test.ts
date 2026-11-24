@@ -329,3 +329,38 @@ test.describe("Heat Results Visuals", () => {
     );
   });
 });
+
+test.describe("Heat Results slotcars (#1210)", () => {
+  test("shows the car each driver ran in the heat card header", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
+    const mockData = HeatResultsHelper.withCars(
+      HeatResultsHelper.createMockHeatData(),
+    );
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/heat-results"),
+    );
+
+    const section = page.locator(".heats-section-container");
+    await expect(section.locator(".car-badge")).toHaveCount(3);
+    await expect(section.locator(".car-badge").first()).toContainText(
+      "Audi R8 LMS",
+    );
+    await page.mouse.move(0, 0);
+
+    await expect(section.locator(".heat-card-header").first()).toHaveScreenshot(
+      "heat-results-slotcars.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 8000,
+      },
+    );
+  });
+});

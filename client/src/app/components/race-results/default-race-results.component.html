@@ -189,6 +189,28 @@
                       {{ row.driver.name }}
                     </div>
                   }
+                  <!-- Slotcar(s) this racer ran (#1210) -->
+                  @if (row.cars.length === 1) {
+                    <div
+                      class="driver-car-line"
+                      [title]="carTooltip(row.cars[0])"
+                    >
+                      <span class="material-icons">directions_car</span>
+                      <span class="driver-car-name">{{
+                        row.cars[0].name
+                      }}</span>
+                    </div>
+                  } @else if (row.cars.length > 1) {
+                    <div
+                      class="driver-car-line"
+                      [title]="carsTooltip(row.cars)"
+                    >
+                      <span class="material-icons">directions_car</span>
+                      <span class="driver-car-name">{{
+                        "RR_CARS_COUNT" | translate: { count: row.cars.length }
+                      }}</span>
+                    </div>
+                  }
                 </div>
               </div>
               <!-- Overall Score -->

@@ -90,6 +90,32 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* The slotcar as it ran in this heat (#1210). */
+.car-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 4px;
+}
+
+.car-badge-icon {
+  font-size: 15px;
+  color: #38bdf8;
+}
+
+.car-badge-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .heat-toggle-icon {
   color: #00e5ff;
   display: flex;
