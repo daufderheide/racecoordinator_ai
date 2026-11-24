@@ -1,0 +1,38 @@
+/* Lane cars (#1210), on top of the pick dialog's look. */
+
+.lcd-dialog {
+  max-width: 600px;
+}
+
+.lcd-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lcd-lane {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #94a3b8;
+}
+
+.lcd-name {
+  flex: 0 0 auto;
+  min-width: 60px;
+  font-size: 14px;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+.lcd-select {
+  flex: 1;
+  min-width: 0;
+}

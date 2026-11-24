@@ -66,3 +66,12 @@ Todos os carros têm os mesmos campos e guardam seus próprios valores. Um campo
 - **Resultados**: cada bateria guarda uma cópia do carro como ele correu, então editar ou excluir um carro depois não muda os resultados anteriores.
 
 O ícone de carro e o item Carros slot… só aparecem quando há carros slot no banco de dados.
+
+## Os carros ficam na sua pista (IROC) {: #cars-in-lanes }
+
+Numa corrida IROC os carros ficam na sua pista a corrida toda e os pilotos rodam pelas pistas, assim cada piloto corre com cada carro.
+
+- **Editor de corridas**: marque **Os carros ficam na sua pista (IROC)** na secção **Baterias**.
+- **Configuração do Dia de Corrida**: abaixo da lista **Pilotos na Corrida** aparece uma caixa **Carros por pista**. Clique nela para escolher o carro de cada pista. O RC AI lembra os carros por traçado. Os ícones de carro dos pilotos ficam ocultos, porque o carro acompanha a pista.
+- **Trocar entre baterias**: **Diretor de Prova → Carros slot…** mostra cada pista com o seu carro. Um carro novo conta a partir da próxima bateria que ainda não correu.
+- **Resultados**: cada bateria guarda o carro de cada pista, assim vê qual piloto correu com qual carro.

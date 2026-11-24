@@ -1,6 +1,7 @@
 package com.antigravity.converters;
 
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.Car;
 import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.FuelOptions;
@@ -9,6 +10,7 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
+import com.antigravity.proto.LaneCar;
 import com.antigravity.proto.SeasonStanding;
 import com.antigravity.util.SeasonPointsCalculator;
 import com.antigravity.util.SeasonPointsCalculator.DriverRaceScoreDetail;
@@ -90,6 +92,7 @@ public class RaceConverter {
       builder.setSoloLaneIndex(race.getSoloLaneIndex());
       builder.setPractice(race.isPractice());
       builder.setAdjustDriftLaps(race.isAdjustDriftLaps());
+      builder.setCarsStayInLanes(race.isCarsStayInLanes());
       if (race.getThemeId() != null) {
         builder.setThemeId(race.getThemeId());
       }
@@ -399,6 +402,15 @@ public class RaceConverter {
 
     if (race.getStatistics() != null && race.getStatistics().getStartMillis() > 0) {
       builder.setStartTimeMillis(race.getStatistics().getStartMillis());
+    }
+
+    // Cars stay in their lanes (#1210): the car on each lane, for race day's Slotcars dialog.
+    List<Car> laneCars = race.getLaneCars();
+    for (int lane = 0; lane < laneCars.size(); lane++) {
+      if (laneCars.get(lane) != null) {
+        builder.addLaneCars(
+            LaneCar.newBuilder().setLane(lane).setCar(CarConverter.toProto(laneCars.get(lane))));
+      }
     }
 
     return builder.build();

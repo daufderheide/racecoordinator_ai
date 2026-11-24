@@ -66,3 +66,12 @@ Every car gets the same fields and keeps its own values. A field you leave empty
 - **Results**: each heat keeps a copy of the car as it raced, so editing or deleting a car later doesn't change past results.
 
 The car icon and the Slotcars… item only appear once there are slotcars in the database.
+
+## Cars Stay in Their Lanes (IROC) {: #cars-in-lanes }
+
+In an IROC race the slotcars stay in their lanes all race and the drivers rotate through the lanes, so every driver races every car.
+
+- **Race editor**: tick **Cars stay in their lanes (IROC)** in the Heats section.
+- **Race Day Setup**: a **Lane cars** box appears under the **Drivers Racing** list. Click it to pick the car for each lane. RC AI remembers the lane cars per track. The car icons on the racers are hidden, since the car goes with the lane.
+- **Swap between heats**: **Race Director → Slotcars…** lists every lane with its car. A new car counts from the next heat that hasn't run.
+- **Results**: each heat saves the car of each lane, so you can see which driver raced which car.

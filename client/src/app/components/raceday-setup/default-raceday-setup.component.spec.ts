@@ -649,6 +649,7 @@ describe("DefaultRacedaySetupComponent", () => {
       "default_classic_rc_ai",
       false,
       [],
+      [],
     );
   }));
 
@@ -687,6 +688,7 @@ describe("DefaultRacedaySetupComponent", () => {
       undefined,
       "custom-theme-123",
       false,
+      [],
       [],
     );
   }));

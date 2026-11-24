@@ -844,19 +844,24 @@
                         {{ getLocalizedTeamMembers(participant) }}
                       }
                     </div>
-                    @if (allCars.length > 0 && carSummary(participant)) {
+                    @if (
+                      allCars.length > 0 &&
+                      !laneCarsUi.active() &&
+                      carSummary(participant)
+                    ) {
                       <div
                         class="driver-car"
-                        [class.car-clash]="!!carConflict(participant)"
+                        [class.car-clash]="!!carPick.conflict(participant)"
                         [title]="
-                          carConflict(participant)
+                          carPick.conflict(participant)
                             ? ('CPD_USED_BY'
-                              | translate: { name: carConflict(participant) })
+                              | translate
+                                : { name: carPick.conflict(participant) })
                             : carSummary(participant)
                         "
                       >
                         <span class="material-icons">{{
-                          carConflict(participant)
+                          carPick.conflict(participant)
                             ? "warning"
                             : "directions_car"
                         }}</span>
@@ -898,7 +903,7 @@
                       }
                     </div>
                   }
-                  @if (allCars.length > 0) {
+                  @if (allCars.length > 0 && !laneCarsUi.active()) {
                     <button
                       type="button"
                       class="car-pick-btn"
@@ -916,6 +921,15 @@
               }
             }
           </div>
+          @if (laneCarsUi.active()) {
+            <!-- IROC: the cars stay in their lanes (#1210) -->
+            <app-lane-cars-bar
+              [lanes]="laneCarsUi.lanes()"
+              [cars]="allCars"
+              [laneCarIds]="laneCarsUi.ids()"
+              (save)="laneCarsUi.save($event)"
+            ></app-lane-cars-bar>
+          }
         </div>
       </div>
 
@@ -1596,9 +1610,9 @@
   [visible]="!!carPickTarget"
   [entryName]="carPickTarget ? getLocalizedName(carPickTarget) : ''"
   [cars]="allCars"
-  [teamDrivers]="carPickTarget ? carTeamDrivers(carPickTarget) : []"
-  [choice]="carPickTarget ? carChoiceFor(carPickTarget) : emptyChoice"
-  [takenBy]="carPickTaken"
+  [teamDrivers]="carPick.teamDrivers()"
+  [choice]="carPick.choice()"
+  [takenBy]="carPick.taken()"
   [serverUrl]="dataService.serverUrl"
   (save)="onCarPicked($event)"
   (close)="carPickTarget = null"

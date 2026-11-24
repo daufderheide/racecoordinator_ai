@@ -66,3 +66,12 @@ Jedes Auto bekommt dieselben Felder und behält seine eigenen Werte. Ein leer ge
 - **Ergebnisse**: Jeder Lauf behält eine Kopie des Autos, wie es gefahren ist. Spätere Änderungen oder das Löschen eines Autos ändern alte Ergebnisse nicht.
 
 Das Auto-Symbol und der Menüpunkt Slotcars… erscheinen erst, wenn es Slotcars in der Datenbank gibt.
+
+## Autos bleiben auf ihrer Spur (IROC) {: #cars-in-lanes }
+
+In einem IROC-Rennen bleiben die Autos das ganze Rennen auf ihrer Spur und die Fahrer wechseln durch die Spuren, so fährt jeder Fahrer jedes Auto.
+
+- **Rennen-Editor**: Haken Sie im Abschnitt **Heats** **Autos bleiben auf ihrer Spur (IROC)** an.
+- **Renntag-Setup**: Unter der Liste **Fahrer im Rennen** erscheint ein Feld **Autos je Spur**. Klicken Sie darauf, um das Auto für jede Spur zu wählen. RC AI merkt sich die Autos je Strecke. Die Auto-Symbole bei den Fahrern sind ausgeblendet, denn das Auto gehört zur Spur.
+- **Zwischen den Läufen tauschen**: **Rennleiter → Slotcars…** zeigt jede Spur mit ihrem Auto. Ein neues Auto gilt ab dem nächsten Lauf, der noch nicht gefahren ist.
+- **Ergebnisse**: Jeder Lauf speichert das Auto jeder Spur, so sehen Sie, welcher Fahrer welches Auto gefahren ist.

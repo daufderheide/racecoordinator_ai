@@ -1,5 +1,6 @@
 import { inject, Injectable, NgZone, OnDestroy } from "@angular/core";
 import { BehaviorSubject, Subject, Subscription } from "rxjs";
+import { CarConverter } from "@app/converters/car.converter";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { LaneConverter } from "@app/converters/lane.converter";
@@ -767,6 +768,12 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private applyHeatsAndRecordsFromUpdate(update: IRace): void {
+    // Cars stay in their lanes (#1210): a full race update carries the car on each lane.
+    if (update.race) {
+      this.raceService.setLaneCars(
+        CarConverter.laneCarsFromProto(update.laneCars),
+      );
+    }
     if (
       !this.raceService.getRace()?.track &&
       (update.currentHeat || (update.heats && update.heats.length > 0))

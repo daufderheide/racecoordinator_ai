@@ -2348,6 +2348,7 @@ export class TestSetupHelper {
       recentRaceIds?: string[];
       selectedDriverIds?: string[];
       selectedCarChoices?: Record<string, unknown>;
+      selectedLaneCars?: Record<string, string[]>;
       racedaySetupWalkthroughSeen?: boolean;
       shareAnalytics?: boolean;
       language?: string;

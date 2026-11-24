@@ -165,6 +165,8 @@ export class RaceConverter {
         undefined,
       p.stepUp ?? p.step_up ?? (proto as any).stepUp ?? 0,
       this.parsePointsScoring(p.pointsScoring || p.points_scoring),
+      undefined,
+      p.carsStayInLanes ?? p.cars_stay_in_lanes ?? false,
     );
   }
 

@@ -7,6 +7,7 @@ import "server/race_participant.proto";
 import "server/race_state.proto";
 import "server/record_data.proto";
 import "server/season_standing.proto";
+import "client/car_model.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -31,4 +32,11 @@ message Race {
   string season_name = 16;
   repeated SeasonStanding season_standings = 17;
   int64 start_time_millis = 18;
+  // Cars stay in their lanes (#1210): the car on each lane right now.
+  repeated LaneCar lane_cars = 19;
+}
+
+message LaneCar {
+  int32 lane = 1;
+  CarModel car = 2;
 }

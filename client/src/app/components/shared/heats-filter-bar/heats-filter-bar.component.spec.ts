@@ -144,4 +144,56 @@ describe("HeatsFilterBarComponent", () => {
 
     expect(clearSpy).toHaveBeenCalled();
   });
+
+  it("should render group divider toggle button and emit toggleGroupDividers on click", () => {
+    fixture.componentRef.setInput("hasGroupFilter", true);
+    fixture.componentRef.setInput("showGroupDividers", true);
+    fixture.detectChanges();
+
+    const toggleBtn = fixture.nativeElement.querySelector(
+      ".btn-toggle-group-dividers",
+    );
+    expect(toggleBtn).toBeTruthy();
+    expect(toggleBtn.classList).toContain("active");
+    expect(toggleBtn.querySelector(".material-icons").textContent.trim()).toBe(
+      "group",
+    );
+
+    const toggleSpy = jasmine.createSpy("toggleGroupDividers");
+    component.toggleGroupDividers.subscribe(toggleSpy);
+
+    toggleBtn.click();
+    expect(toggleSpy).toHaveBeenCalledWith(false);
+
+    fixture.componentRef.setInput("showGroupDividers", false);
+    fixture.detectChanges();
+
+    expect(toggleBtn.classList).not.toContain("active");
+  });
+
+  it("should render step divider toggle button and emit toggleStepDividers on click", () => {
+    fixture.componentRef.setInput("hasStepFilter", true);
+    fixture.componentRef.setInput("showStepDividers", true);
+    fixture.detectChanges();
+
+    const toggleBtn = fixture.nativeElement.querySelector(
+      ".btn-toggle-step-dividers",
+    );
+    expect(toggleBtn).toBeTruthy();
+    expect(toggleBtn.classList).toContain("active");
+    expect(toggleBtn.querySelector(".material-icons").textContent.trim()).toBe(
+      "trending_up",
+    );
+
+    const toggleSpy = jasmine.createSpy("toggleStepDividers");
+    component.toggleStepDividers.subscribe(toggleSpy);
+
+    toggleBtn.click();
+    expect(toggleSpy).toHaveBeenCalledWith(false);
+
+    fixture.componentRef.setInput("showStepDividers", false);
+    fixture.detectChanges();
+
+    expect(toggleBtn.classList).not.toContain("active");
+  });
 });

@@ -1,0 +1,112 @@
+:host {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  flex-basis: 100%;
+  gap: 12px;
+  margin: 16px 0 6px 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.divider-line {
+  height: 1px;
+}
+
+.divider-line-start {
+  flex: 0 0 24px;
+}
+
+.divider-line-end {
+  flex: 1;
+}
+
+.divider-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.divider-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.divider-chip .chip-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.divider-chip .chip-text {
+  line-height: 1;
+}
+
+.step-chip {
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.35);
+  color: #c084fc;
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.15);
+}
+
+.group-chip {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+/* Color theme lines based on host classes */
+:host(.step-only) .divider-line-start {
+  background: linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.6));
+}
+
+:host(.step-only) .divider-line-end {
+  background: linear-gradient(
+    90deg,
+    rgba(192, 132, 252, 0.6),
+    rgba(192, 132, 252, 0.1),
+    transparent
+  );
+}
+
+:host(.group-only) .divider-line-start {
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6));
+}
+
+:host(.group-only) .divider-line-end {
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.6),
+    rgba(56, 189, 248, 0.1),
+    transparent
+  );
+}
+
+:host(.step-and-group) .divider-line-start {
+  background: linear-gradient(90deg, transparent, rgba(192, 132, 252, 0.6));
+}
+
+:host(.step-and-group) .divider-line-end {
+  background: linear-gradient(
+    90deg,
+    rgba(56, 189, 248, 0.6),
+    rgba(56, 189, 248, 0.1),
+    transparent
+  );
+}

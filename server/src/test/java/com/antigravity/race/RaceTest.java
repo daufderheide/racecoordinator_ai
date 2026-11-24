@@ -5218,4 +5218,103 @@ public class RaceTest {
       assertEquals(false, HeatConverter.toProto(heatOf(race, p2), new HashSet<>()).hasCar());
     }
   }
+
+  // =========================================================================
+  // Cars stay in their lanes, IROC (#1210)
+  // =========================================================================
+  public static class LaneCars {
+    private static Car car(String id) {
+      return new Car.Builder().withName("Car " + id).withEntityId(id).build();
+    }
+
+    private final RaceParticipant p1 = new RaceParticipant(new Driver("Ann", "A", "d1", "1"));
+    private final RaceParticipant p2 = new RaceParticipant(new Driver("Bob", "B", "d2", "2"));
+
+    private com.antigravity.race.Race race(boolean carsStayInLanes) {
+      Track track =
+          new Track.Builder()
+              .name("Track 1")
+              .lanes(Arrays.asList(new Lane("red", "black", 100), new Lane("blue", "white", 100)))
+              .build();
+      com.antigravity.models.Race model = // fqn-collision
+          new com.antigravity.models.Race.Builder() // fqn-collision
+              .withName("IROC")
+              .withEntityId("r1")
+              .withCarsStayInLanes(carsStayInLanes)
+              .build();
+      return new com.antigravity.race.Race.Builder()
+          .model(model)
+          .drivers(Arrays.asList(p1, p2))
+          .track(track)
+          .isDemoMode(true)
+          .build();
+    }
+
+    @Test
+    public void eachLaneKeepsItsCarWhoeverRacesIt() {
+      p1.setCar(car("own-1"));
+      p2.setCar(car("own-2"));
+      com.antigravity.race.Race race = race(true);
+      race.setLaneCars(Arrays.asList(car("red"), car("blue")));
+      race.refreshCarSnapshots();
+      List<DriverHeatData> lanes = race.getCurrentHeat().getDrivers();
+      assertEquals("red", lanes.get(0).getCar().getEntityId());
+      assertEquals("blue", lanes.get(1).getCar().getEntityId());
+    }
+
+    @Test
+    public void aLaneWithoutACarGivesNoCar() {
+      com.antigravity.race.Race race = race(true);
+      race.setLaneCar(1, car("blue"));
+      race.refreshCarSnapshots();
+      assertNull(race.getCurrentHeat().getDrivers().get(0).getCar());
+      assertEquals("blue", race.getCurrentHeat().getDrivers().get(1).getCar().getEntityId());
+      assertNull(race.getLaneCar(5));
+      assertNull(race.getLaneCar(-1));
+    }
+
+    @Test
+    public void aSwappedLaneCarCountsUntilTheHeatHasRun() {
+      com.antigravity.race.Race race = race(true);
+      race.setLaneCar(0, car("red"));
+      race.refreshCarSnapshots();
+      race.setHasRacedInCurrentHeat(true);
+      race.setLaneCar(0, car("spare"));
+      race.refreshCarSnapshots();
+      assertEquals("red", race.getCurrentHeat().getDrivers().get(0).getCar().getEntityId());
+      assertEquals("spare", race.getLaneCar(0).getEntityId());
+    }
+
+    @Test
+    public void withoutTheOptionTheRacersKeepTheirOwnCars() {
+      p1.setCar(car("own-1"));
+      com.antigravity.race.Race race = race(false);
+      race.setLaneCars(Arrays.asList(car("red"), car("blue")));
+      race.refreshCarSnapshots();
+      assertFalse(race.isCarsStayInLanes());
+      DriverHeatData ann =
+          race.getCurrentHeat().getDrivers().stream()
+              .filter(d -> d.getDriver() == p1)
+              .findFirst()
+              .orElseThrow(AssertionError::new);
+      assertEquals("own-1", ann.getCar().getEntityId());
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void theLaneCarListIsReadOnly() {
+      race(true).getLaneCars().add(car("x"));
+    }
+
+    @Test
+    public void sendsTheLaneCarsAndTheOptionToTheClients() {
+      com.antigravity.race.Race race = race(true);
+      race.setLaneCars(Arrays.asList(null, car("blue")));
+      com.antigravity.proto.Race proto = // fqn-collision
+          com.antigravity.converters.RaceConverter.toProto(race); // fqn-collision
+      assertTrue(proto.getRace().getCarsStayInLanes());
+      assertEquals("lanes without a car are left out", 1, proto.getLaneCarsCount());
+      assertEquals(1, proto.getLaneCars(0).getLane());
+      assertEquals("blue", proto.getLaneCars(0).getCar().getModel().getEntityId());
+    }
+  }
 }

@@ -40,6 +40,10 @@
             <span class="material-icons">lock</span>
             {{ "RSD_LOCKED" | translate }}
           </p>
+        } @else if (lanesMode()) {
+          <p class="cpd-hint" id="slotcars-intro-lanes">
+            {{ "RSD_INTRO_LANES" | translate }}
+          </p>
         } @else {
           <p class="cpd-hint">{{ "RSD_INTRO" | translate }}</p>
         }
@@ -49,9 +53,15 @@
             <span
               class="rsd-lane"
               [style.background-color]="row.color || null"
+              [style.color]="chipText(row.color)"
               >{{ row.lane + 1 }}</span
             >
-            <span class="rsd-name" [title]="row.name">{{ row.name }}</span>
+            <span
+              class="rsd-name"
+              [class.rsd-empty]="!row.name"
+              [title]="row.name"
+              >{{ row.name || ("RSD_EMPTY_LANE" | translate) }}</span
+            >
             <app-custom-select
               class="rsd-select"
               [value]="row.carId"

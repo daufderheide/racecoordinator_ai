@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
@@ -754,5 +755,84 @@ public class RaceControlHandlerTest {
 
     assertEquals(200, handler.handleInitializeRace(request).status);
     assertNull(ClientSubscriptionManager.getInstance().getRace().getDrivers().get(0).getCar());
+  }
+
+  // Cars stay in their lanes (#1210)
+  private InitializeRaceRequest insertIrocFixture() {
+    Race race =
+        new Race.Builder()
+            .withName("IROC Race")
+            .withTrackEntityId("track-iroc")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withCarsStayInLanes(true)
+            .withEntityId("race-iroc")
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("IROC Track")
+            .lanes(Arrays.asList(new Lane("red", "black", 100), new Lane("white", "black", 100)))
+            .entityId("track-iroc")
+            .build();
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .insert(new Driver("Iroc One", "I1", "driver-iroc-1", null));
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class)
+        .insert(new Driver("Iroc Two", "I2", "driver-iroc-2", null));
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+    new SqliteRepository<>(
+            databaseContext, "cars", com.antigravity.models.Car.class) // fqn-collision
+        .insert(
+            new com.antigravity.models.Car.Builder() // fqn-collision
+                .withName("Red car")
+                .withEntityId("c-red")
+                .build());
+    return InitializeRaceRequest.newBuilder()
+        .setRaceId("race-iroc")
+        .addDriverIds("d_driver-iroc-1")
+        .addDriverIds("d_driver-iroc-2")
+        .setIsDemoMode(true)
+        .build();
+  }
+
+  @Test
+  public void testHandleInitializeRace_PutsTheCarsOnTheirLanes() throws Exception {
+    InitializeRaceRequest request =
+        insertIrocFixture().toBuilder().addLaneCarIds("c-red").addLaneCarIds("").build();
+
+    assertEquals(200, handler.handleInitializeRace(request).status);
+
+    com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+    assertEquals(2, race.getLaneCars().size());
+    assertEquals("Red car", race.getLaneCar(0).getName());
+    assertNull("no car on lane 2", race.getLaneCar(1));
+    assertEquals(
+        "whoever races lane 1 drives the red car",
+        "c-red",
+        race.getCurrentHeat().getDrivers().get(0).getCar().getEntityId());
+    assertNull(race.getCurrentHeat().getDrivers().get(1).getCar());
+  }
+
+  @Test
+  public void testHandleInitializeRace_LaneCarsIgnoreAnUnknownOrMissingCar() throws Exception {
+    InitializeRaceRequest request = insertIrocFixture().toBuilder().addLaneCarIds("gone").build();
+
+    assertEquals(200, handler.handleInitializeRace(request).status);
+
+    com.antigravity.race.Race race = ClientSubscriptionManager.getInstance().getRace();
+    assertEquals("one entry per lane", 2, race.getLaneCars().size());
+    assertNull(race.getLaneCar(0));
+    assertNull(race.getLaneCar(1));
+  }
+
+  @Test
+  public void testHandleInitializeRace_LaneCarsOnlyForAnIrocRace() throws Exception {
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder(insertRaceAgainFixture())
+            .setRaceAgain(false)
+            .addLaneCarIds("c1")
+            .build();
+
+    assertEquals(200, handler.handleInitializeRace(request).status);
+    assertTrue(ClientSubscriptionManager.getInstance().getRace().getLaneCars().isEmpty());
   }
 }

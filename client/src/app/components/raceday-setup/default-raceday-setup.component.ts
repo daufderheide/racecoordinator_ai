@@ -20,10 +20,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
-import {
-  CarPickDialogComponent,
-  CarPickDriver,
-} from "@app/components/shared/car-pick-dialog/car-pick-dialog.component";
+import { CarPickDialogComponent } from "@app/components/shared/car-pick-dialog/car-pick-dialog.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
   CustomOptionComponent,
@@ -40,7 +37,7 @@ import { UpdateSelectorComponent } from "@app/components/shared/update-selector/
 import { DataService } from "@app/data.service";
 import { DriverLabelsOverflowDirective } from "@app/directives/driver-labels-overflow.directive";
 import { Car } from "@app/models/car";
-import { CarChoice, emptyCarChoice } from "@app/models/car-choice";
+import { CarChoice } from "@app/models/car-choice";
 import { Driver } from "@app/models/driver";
 import { DriverLabel } from "@app/models/driver-label";
 import { Event as EventModel } from "@app/models/event";
@@ -66,6 +63,8 @@ import { UpdateChannel } from "@app/services/update.service";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
+import { LaneCarsBarComponent } from "./lane-cars-bar/lane-cars-bar.component";
+import { RacedaySetupCarPick } from "./raceday-setup-car-pick";
 import { RacedaySetupCarsHelper } from "./raceday-setup-cars.helper";
 import {
   formatEnumDisplay,
@@ -89,6 +88,7 @@ import {
 } from "./raceday-setup-formatting.helper";
 import { getRacedaySetupHelpSteps } from "./raceday-setup-help.helper";
 import { RacedaySetupInitHelper } from "./raceday-setup-init.helper";
+import { RacedaySetupLaneCars } from "./raceday-setup-lane-cars";
 import { RacedaySetupLaunchHelper } from "./raceday-setup-launch.helper";
 import { RacedaySetupMenuHelper } from "./raceday-setup-menu.helper";
 import { RacedaySetupNavigationHelper } from "./raceday-setup-navigation.helper";
@@ -141,6 +141,7 @@ import { RacedaySetupUiHelper } from "./raceday-setup-ui.helper";
     DriverLabelsOverflowDirective,
     PreviewBadgeComponent,
     CarPickDialogComponent,
+    LaneCarsBarComponent,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
@@ -164,10 +165,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   /** Slotcars (#1210): the database, the pick per entry, the entry being picked for. */
   public allCars: Car[] = [];
   public carChoices: Record<string, CarChoice> = {};
-  /** Cars other entries have, for the open pick dialog (#1251). */
-  public carPickTaken: Record<string, string> = {};
   public carPickTarget: Participant | null = null;
-  public readonly emptyChoice: CarChoice = emptyCarChoice();
+  /** Cars stay in their lanes (IROC); the picks are `laneCars`, set by loadCars. */
+  protected laneCarsUi = new RacedaySetupLaneCars(this);
+  protected carPick = new RacedaySetupCarPick(this);
   public driverLabels: DriverLabel[] = [];
   public selectedAvailableLabelIds: string[] = [];
   public selectedRacingLabelIds: string[] = [];
@@ -334,18 +335,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   carSummary(participant: Participant): string {
     return RacedaySetupCarsHelper.summary(this, participant);
-  }
-
-  carChoiceFor(participant: Participant): CarChoice {
-    return RacedaySetupCarsHelper.choiceFor(this, participant);
-  }
-
-  carTeamDrivers(participant: Participant): CarPickDriver[] {
-    return RacedaySetupCarsHelper.teamDrivers(this, participant);
-  }
-
-  carConflict(participant: Participant): string {
-    return RacedaySetupCarsHelper.conflict(this, participant);
   }
 
   openCarPick(participant: Participant, event?: Event): void {

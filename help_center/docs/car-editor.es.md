@@ -66,3 +66,12 @@ Todos los coches tienen los mismos campos y guardan sus propios valores. Un camp
 - **Resultados**: cada manga guarda una copia del coche tal como corrió, así que editar o borrar un coche después no cambia los resultados anteriores.
 
 El icono del coche y la opción Coches de slot… solo aparecen cuando hay coches de slot en la base de datos.
+
+## Los coches se quedan en su carril (IROC) {: #cars-in-lanes }
+
+En una carrera IROC los coches se quedan en su carril toda la carrera y los pilotos rotan por los carriles, así cada piloto corre con cada coche.
+
+- **Editor de carreras**: marca **Los coches se quedan en su carril (IROC)** en la sección **Mangas**.
+- **Configuración del Día de Carrera**: bajo la lista **Pilotos en Carrera** aparece un cuadro **Coches por carril**. Haz clic para elegir el coche de cada carril. RC AI recuerda los coches por pista. Los iconos de coche de los pilotos se ocultan, porque el coche va con el carril.
+- **Cambiar entre mangas**: **Director de Carrera → Coches de slot…** muestra cada carril con su coche. Un coche nuevo cuenta desde la siguiente manga que no se ha corrido.
+- **Resultados**: cada manga guarda el coche de cada carril, así ves qué piloto corrió con qué coche.

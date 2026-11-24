@@ -12,6 +12,7 @@ import {
   OnDestroy,
   OnInit,
   output,
+  signal,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -25,8 +26,15 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import {
   AvailableGroup,
   AvailableStep,
+  getHeatDividerInfo,
+  HeatDividerInfo,
+  loadShowGroupDividersPreference,
+  loadShowStepDividersPreference,
+  saveShowGroupDividersPreference,
+  saveShowStepDividersPreference,
 } from "@app/components/shared/heats-filter-bar/heats-filter.utils";
 import { HeatsFilterBarComponent } from "@app/components/shared/heats-filter-bar/heats-filter-bar.component";
+import { HeatsGridDividerComponent } from "@app/components/shared/heats-grid-divider/heats-grid-divider.component";
 import {
   UndoEventType,
   UndoManager,
@@ -121,6 +129,7 @@ import { processImportFiles } from "./rotation-import.utils";
     CustomOptionComponent,
     AutoSelectDefaultDirective,
     HeatsFilterBarComponent,
+    HeatsGridDividerComponent,
   ],
 })
 export class CustomRotationEditorComponent
@@ -492,18 +501,9 @@ export class CustomRotationEditorComponent
   get discardMessage(): string {
     return this.lifecycle.discardMessage;
   }
-
-  confirmDiscard(): Promise<boolean> {
-    return this.lifecycle.confirmDiscard();
-  }
-
-  onConfirmDiscard() {
-    this.lifecycle.onConfirmDiscard();
-  }
-
-  onCancelDiscard() {
-    this.lifecycle.onCancelDiscard();
-  }
+  confirmDiscard = (): Promise<boolean> => this.lifecycle.confirmDiscard();
+  onConfirmDiscard = (): void => this.lifecycle.onConfirmDiscard();
+  onCancelDiscard = (): void => this.lifecycle.onCancelDiscard();
 
   private initEditorState() {
     initializeRotationOriginalHeatNumbers(this.internalRotations);
@@ -669,6 +669,38 @@ export class CustomRotationEditorComponent
   readonly hasRotationStepFilter = hasRotationStepFilter;
   readonly getFilteredHeats = filterRotationHeats;
 
+  showGroupDividers = signal<boolean>(loadShowGroupDividersPreference());
+  showStepDividers = signal<boolean>(loadShowStepDividersPreference());
+
+  toggleGroupDividers(show: boolean): void {
+    this.showGroupDividers.set(show);
+    saveShowGroupDividersPreference(show);
+  }
+
+  toggleStepDividers(show: boolean): void {
+    this.showStepDividers.set(show);
+    saveShowStepDividersPreference(show);
+  }
+
+  getHeatDivider(
+    rotation: LocalRotation,
+    index: number,
+  ): HeatDividerInfo | null {
+    if (!this.showGroupDividers() && !this.showStepDividers()) {
+      return null;
+    }
+    return getHeatDividerInfo(
+      this.getFilteredHeats(rotation),
+      index,
+      this.rotationHasStepUps(rotation),
+      this.hasRotationGroupFilter(rotation),
+      this.translationService,
+      undefined,
+      this.showStepDividers(),
+      this.showGroupDividers(),
+    );
+  }
+
   getRotationAvailableGroups(rotation: LocalRotation): AvailableGroup[] {
     return getRotationAvailableGroups(rotation, this.translationService);
   }
@@ -683,22 +715,24 @@ export class CustomRotationEditorComponent
     return getRotationGroupOptions(rotation, this.translationService);
   }
 
-  getHeatIndex(rotation: ICustomRotation, heat: ICustomHeat): number {
-    return (rotation.heats || []).indexOf(heat);
-  }
-
-  setRotationGroupFilter(rotation: LocalRotation, group: number | null): void {
+  getHeatIndex = (rotation: ICustomRotation, heat: ICustomHeat): number =>
+    (rotation.heats || []).indexOf(heat);
+  setRotationGroupFilter = (
+    rotation: LocalRotation,
+    group: number | null,
+  ): void => {
     rotation.selectedGroup = group;
-  }
-
-  setRotationStepFilter(rotation: LocalRotation, step: number | null): void {
+  };
+  setRotationStepFilter = (
+    rotation: LocalRotation,
+    step: number | null,
+  ): void => {
     rotation.selectedStep = step;
-  }
-
-  clearRotationFilters(rotation: LocalRotation): void {
+  };
+  clearRotationFilters = (rotation: LocalRotation): void => {
     rotation.selectedGroup = null;
     rotation.selectedStep = null;
-  }
+  };
 
   getDriverGroupBadge = (driverId: number): string | null =>
     getRotationDriverGroupBadge(this.internalRotations, driverId);
@@ -820,41 +854,22 @@ export class CustomRotationEditorComponent
     syncRotationDriverCounts(this.internalRotations);
   }
 
-  isDriverHighlighted(driverId: number): boolean {
-    return this.highlightManager.isDriverHighlighted(driverId);
-  }
-
-  getDriverHighlightColor(driverId: number): string | null {
-    return this.highlightManager.getDriverHighlightColor(driverId);
-  }
-
-  toggleDriverHighlight(driverId: number, event?: MouseEvent): void {
+  isDriverHighlighted = (driverId: number): boolean =>
+    this.highlightManager.isDriverHighlighted(driverId);
+  getDriverHighlightColor = (driverId: number): string | null =>
+    this.highlightManager.getDriverHighlightColor(driverId);
+  toggleDriverHighlight = (driverId: number, event?: MouseEvent): void =>
     this.highlightManager.toggleDriverHighlight(driverId, event);
-  }
-
-  clearDriverHighlights(): void {
+  clearDriverHighlights = (): void =>
     this.highlightManager.clearDriverHighlights();
-  }
-
-  hasHighlightedDrivers(): boolean {
-    return this.highlightManager.hasHighlightedDrivers();
-  }
-
-  isHeatHighlighted(heat: ICustomHeat): boolean {
-    return this.highlightManager.isHeatHighlighted(heat);
-  }
-
-  getHeatHighlightColors(heat: ICustomHeat): string[] {
-    return this.highlightManager.getHeatHighlightColors(heat);
-  }
-
-  getContrastTextColor(color: string): string {
-    return getContrastTextColor(color);
-  }
-
-  getOriginalHeatDisplay(heat: ICustomHeat): string {
-    return getOriginalHeatDisplay(heat);
-  }
+  hasHighlightedDrivers = (): boolean =>
+    this.highlightManager.hasHighlightedDrivers();
+  isHeatHighlighted = (heat: ICustomHeat): boolean =>
+    this.highlightManager.isHeatHighlighted(heat);
+  getHeatHighlightColors = (heat: ICustomHeat): string[] =>
+    this.highlightManager.getHeatHighlightColors(heat);
+  getContrastTextColor = getContrastTextColor;
+  getOriginalHeatDisplay = getOriginalHeatDisplay;
 
   removeFromHeat(
     rotation: ICustomRotation,
@@ -866,6 +881,55 @@ export class CustomRotationEditorComponent
       this.validateRotationLaneEquality(rotation as LocalRotation);
       this.captureState();
     }
+  }
+
+  private performSave(
+    isAuto: boolean,
+    onSuccess?: (asset: IAssetMessage) => void,
+    onError?: () => void,
+  ) {
+    this.isAutoSaving = isAuto;
+    this.savingCount++;
+    this.cdr.detectChanges();
+
+    this.dataService
+      .saveCustomRotation(
+        this.internalAssetName,
+        this.internalNumLanes,
+        this.internalRotations,
+        this.internalAssetId || this.assetId(),
+      )
+      .subscribe({
+        next: (asset) => {
+          this.savingCount--;
+          this.lastSavedAsset = asset;
+          if (asset.model?.entityId) {
+            this.internalAssetId = asset.model.entityId;
+          }
+          this.undoManager.resetTracking({
+            assetName: this.internalAssetName,
+            selectedTrackId: this.selectedTrackId,
+            numLanes: this.internalNumLanes,
+            rotations: this.internalRotations,
+          });
+          this.cdr.detectChanges();
+          if (onSuccess) {
+            onSuccess(asset);
+          } else {
+            this.handlePendingActions();
+          }
+        },
+        error: (err) => {
+          this.logger.error(
+            `Failed to ${isAuto ? "auto-save" : "save"} custom rotation`,
+            err,
+          );
+          this.savingCount--;
+          this.cdr.detectChanges();
+          onError?.();
+          this.handlePendingActions();
+        },
+      });
   }
 
   save() {
@@ -882,45 +946,14 @@ export class CustomRotationEditorComponent
       return;
     }
 
-    this.isAutoSaving = false;
-    this.savingCount++;
-    this.cdr.detectChanges();
-    this.dataService
-      .saveCustomRotation(
-        this.internalAssetName,
-        this.internalNumLanes,
-        this.internalRotations,
-        this.internalAssetId || this.assetId(),
-      )
-      .subscribe({
-        next: (asset) => {
-          this.savingCount--;
-          this.lastSavedAsset = asset;
-          const assetId = asset.model?.entityId;
-          if (assetId) {
-            this.internalAssetId = assetId;
-          }
-          this.undoManager.resetTracking({
-            assetName: this.internalAssetName,
-            selectedTrackId: this.selectedTrackId,
-            numLanes: this.internalNumLanes,
-            rotations: this.internalRotations,
-          });
-          this.saved.emit(asset);
-
-          if (this.pendingSave || this.pendingNavigateBack) {
-            this.handlePendingActions();
-          } else {
-            this.navigateBack();
-          }
-        },
-        error: (err) => {
-          this.logger.error("Failed to save custom rotation", err);
-          this.savingCount--;
-          this.cdr.detectChanges();
-          this.handlePendingActions();
-        },
-      });
+    this.performSave(false, (asset) => {
+      this.saved.emit(asset);
+      if (this.pendingSave || this.pendingNavigateBack) {
+        this.handlePendingActions();
+      } else {
+        this.navigateBack();
+      }
+    });
   }
 
   autoSave(triggeredBy: UndoEventType = "push") {
@@ -935,46 +968,12 @@ export class CustomRotationEditorComponent
       return;
     }
 
-    this.isAutoSaving = true;
-    this.savingCount++;
-    this.cdr.detectChanges();
-
-    this.dataService
-      .saveCustomRotation(
-        this.internalAssetName,
-        this.internalNumLanes,
-        this.internalRotations,
-        this.internalAssetId || this.assetId(),
-      )
-      .subscribe({
-        next: (asset) => {
-          this.savingCount--;
-          this.lastSavedAsset = asset;
-          const assetId = asset.model?.entityId;
-          if (assetId) {
-            this.internalAssetId = assetId;
-          }
-          this.undoManager.resetTracking({
-            assetName: this.internalAssetName,
-            selectedTrackId: this.selectedTrackId,
-            numLanes: this.internalNumLanes,
-            rotations: this.internalRotations,
-          });
-          this.cdr.detectChanges();
-          this.handlePendingActions();
-        },
-        error: (err) => {
-          this.logger.error("Failed to auto-save custom rotation", err);
-          this.savingCount--;
-          this.cdr.detectChanges();
-
-          if (triggeredBy === "push") {
-            this.undoManager.undo();
-            this.undoManager.clearRedo();
-          }
-          this.handlePendingActions();
-        },
-      });
+    this.performSave(true, undefined, () => {
+      if (triggeredBy === "push") {
+        this.undoManager.undo();
+        this.undoManager.clearRedo();
+      }
+    });
   }
 
   navigateBack() {
@@ -1021,32 +1020,29 @@ export class CustomRotationEditorComponent
     );
   }
 
-  isRotationEqual(rotation: ICustomRotation): boolean {
-    return this.equalityManager.isRotationEqual(
+  isRotationEqual = (rotation: ICustomRotation): boolean =>
+    this.equalityManager.isRotationEqual(
       rotation,
       this.internalNumLanes,
       this.translationService,
       (rot) => this.checkRotationLaneEqualityDirect(rot),
     );
-  }
 
-  validateRotationLaneEquality(rotation: LocalRotation): void {
+  validateRotationLaneEquality = (rotation: LocalRotation): void =>
     this.equalityManager.validateRotationLaneEquality(
       rotation,
       this.internalNumLanes,
       this.translationService,
       (rot) => this.checkRotationLaneEqualityDirect(rot),
     );
-  }
 
-  validateAllRotationsLaneEquality(): void {
+  validateAllRotationsLaneEquality = (): void =>
     this.equalityManager.validateAllRotationsLaneEquality(
       this.internalRotations,
       this.internalNumLanes,
       this.translationService,
       (rot) => this.checkRotationLaneEqualityDirect(rot),
     );
-  }
 
   showEqualityReport(rotation: ICustomRotation, idx: number): void {
     this.reportRotationIdx = idx;
@@ -1088,25 +1084,23 @@ export class CustomRotationEditorComponent
     this.captureState();
   }
 
-  closeImportSummary() {
+  closeImportSummary(): void {
     this.importSummary = null;
   }
 
-  async exportSingleRotation(rotation: LocalRotation) {
-    await exportSingleRotationHelper(
+  exportSingleRotation = (rotation: LocalRotation): Promise<void> =>
+    exportSingleRotationHelper(
       this.internalAssetName,
       this.internalNumLanes,
       rotation,
       this.logger,
     );
-  }
 
-  async exportRotations() {
-    await exportRotationsAssetHelper(
+  exportRotations = (): Promise<void> =>
+    exportRotationsAssetHelper(
       this.internalAssetName,
       this.internalNumLanes,
       this.internalRotations,
       this.logger,
     );
-  }
 }

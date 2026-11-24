@@ -93,7 +93,7 @@
                     <span class="driver-step-badge">{{ sBadge }}</span>
                   }
                 </div>
-                @if (cars.allCars.length > 0 && cars.summary(participant)) {
+                @if (cars.show && cars.summary(participant)) {
                   <div class="driver-car" [title]="cars.summary(participant)">
                     <span class="material-icons">directions_car</span>
                     <span class="driver-car-name">{{
@@ -102,7 +102,7 @@
                   </div>
                 }
               </div>
-              @if (cars.allCars.length > 0) {
+              @if (cars.show) {
                 <button
                   type="button"
                   class="car-pick-btn"
@@ -433,6 +433,10 @@
         [selectedStep]="selectedStep()"
         [totalHeats]="localHeats.length"
         [visibleHeats]="filteredHeats().length"
+        [showGroupDividers]="showGroupDividers()"
+        [showStepDividers]="showStepDividers()"
+        (toggleGroupDividers)="toggleGroupDividers($event)"
+        (toggleStepDividers)="toggleStepDividers($event)"
         (groupChange)="setGroupFilter($event)"
         (stepChange)="setStepFilter($event)"
         (clearFilters)="clearFilters()"
@@ -451,7 +455,10 @@
         (mousemove)="onGridMouseMove($event)"
         [style.zoom]="zoomLevel / 100"
       >
-        @for (heat of filteredHeats(); track heat.objectId) {
+        @for (heat of filteredHeats(); track heat.objectId; let fIdx = $index) {
+          @if (getHeatDivider(fIdx); as divider) {
+            <app-heats-grid-divider [divider]="divider" />
+          }
           @let hIdx = getHeatIndex(heat);
           <div
             class="heat-card"
@@ -481,7 +488,6 @@
             (cdkDragEnded)="onHeatDragEnded()"
             (mouseenter)="onHeatMouseEnter(hIdx, $event)"
             (mousemove)="onHeatMouseMove(hIdx, $event)"
-            (mouseleave)="onHeatMouseLeave(hIdx)"
           >
             <!-- Highlight Overlay -->
             @if (isHeatSwapHighlight(hIdx, heat)) {

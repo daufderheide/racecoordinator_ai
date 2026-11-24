@@ -20,7 +20,17 @@ export class ModifyHeatsCars {
   allCars: Car[] = [];
   target: RaceParticipant | null = null;
 
-  constructor(private allDrivers: () => Driver[]) {}
+  constructor(
+    private allDrivers: () => Driver[],
+    /** The race: with IROC the cars stay in their lanes, so racers have no car here. */
+    private race: () => { cars_stay_in_lanes?: boolean } | undefined = () =>
+      undefined,
+  ) {}
+
+  /** The car parts show when there are cars and the racers keep their own car. */
+  get show(): boolean {
+    return this.allCars.length > 0 && !this.race()?.cars_stay_in_lanes;
+  }
 
   load(dataService: any): void {
     const cars$ = dataService?.getCars?.();

@@ -157,12 +157,6 @@ describe("RacedaySetupCarsHelper (#1210)", () => {
       });
     });
 
-    it("works out the taken cars when the dialog opens", () => {
-      RacedaySetupCarsHelper.open(host, cleo);
-      expect(host.carPickTarget).toBe(cleo);
-      expect(Object.keys(host.carPickTaken)).toEqual(["c1", "c2", "c3"]);
-    });
-
     it("ignores entries that are not in the race", () => {
       host.selectedParticipants = [ann, cleo];
       expect(RacedaySetupCarsHelper.takenBy(host, cleo)).toEqual({
@@ -184,6 +178,101 @@ describe("RacedaySetupCarsHelper (#1210)", () => {
       };
       expect(RacedaySetupCarsHelper.conflict(host, cleo)).toBe("Ferrari!");
       expect(RacedaySetupCarsHelper.conflict(host, ann)).toBe("");
+    });
+  });
+
+  describe("cars stay in their lanes (IROC)", () => {
+    const track = {
+      entity_id: "tr1",
+      lanes: [
+        { background_color: "#ef4444" },
+        { background_color: "" },
+        { background_color: "#3b82f6" },
+      ],
+    };
+
+    beforeEach(() => {
+      settings.selectedLaneCars = { tr1: ["c2", "gone", "c1"] };
+      RacedaySetupCarsHelper.loadCars(host);
+      host.selectedRace = { cars_stay_in_lanes: true, track };
+    });
+
+    it("is on only for an IROC race with cars in the database", () => {
+      expect(RacedaySetupCarsHelper.carsInLanes(host)).toBeTrue();
+      host.selectedRace = { cars_stay_in_lanes: false, track };
+      expect(RacedaySetupCarsHelper.carsInLanes(host)).toBeFalse();
+      host.selectedRace = { cars_stay_in_lanes: true, track };
+      host.allCars = [];
+      expect(RacedaySetupCarsHelper.carsInLanes(host)).toBeFalse();
+      host.selectedRace = undefined;
+      expect(RacedaySetupCarsHelper.carsInLanes(host)).toBeFalse();
+    });
+
+    it("finds the track in the track list, as a race only names its id", () => {
+      host.tracks = [{ ...track, entity_id: "tr2", lanes: [{}] }];
+      host.selectedRace = { cars_stay_in_lanes: true, track_entity_id: "tr2" };
+      expect(RacedaySetupCarsHelper.lanes(host)).toEqual([
+        { lane: 0, color: "" },
+      ]);
+      RacedaySetupCarsHelper.saveLaneCars(host, ["c1"]);
+      expect(host.laneCars.tr2).toEqual(["c1"]);
+    });
+
+    it("lists the track's lanes with their colours", () => {
+      expect(RacedaySetupCarsHelper.lanes(host)).toEqual([
+        { lane: 0, color: "#ef4444" },
+        { lane: 1, color: "" },
+        { lane: 2, color: "#3b82f6" },
+      ]);
+      host.selectedRace = { cars_stay_in_lanes: true };
+      expect(RacedaySetupCarsHelper.lanes(host)).toEqual([]);
+    });
+
+    it("remembers the lane cars per track, known cars only", () => {
+      expect(RacedaySetupCarsHelper.laneCarIds(host)).toEqual(["c2", "", "c1"]);
+      host.selectedRace = {
+        cars_stay_in_lanes: true,
+        track: { ...track, entity_id: "other" },
+      };
+      expect(RacedaySetupCarsHelper.laneCarIds(host)).toEqual(["", "", ""]);
+    });
+
+    it("saves the lane cars for the race's track", () => {
+      RacedaySetupCarsHelper.saveLaneCars(host, ["c1", "", ""]);
+      expect(host.laneCars.tr1).toEqual(["c1", "", ""]);
+      expect(settings.selectedLaneCars.tr1).toEqual(["c1", "", ""]);
+      expect(host.settingsService.saveSettings).toHaveBeenCalledWith(settings);
+    });
+
+    it("forgets a track's lane cars when all are cleared", () => {
+      RacedaySetupCarsHelper.saveLaneCars(host, ["", "", ""]);
+      expect(host.laneCars.tr1).toBeUndefined();
+    });
+
+    it("saves nothing without a track", () => {
+      host.selectedRace = { cars_stay_in_lanes: true };
+      RacedaySetupCarsHelper.saveLaneCars(host, ["c1"]);
+      expect(host.settingsService.saveSettings).not.toHaveBeenCalled();
+    });
+
+    it("sends the lane cars at race start instead of the racers' picks", () => {
+      host.carChoices = {
+        d_d1: { carId: "c1", carPerDriver: false, driverCars: {} },
+      };
+      expect(RacedaySetupCarsHelper.launchLaneCarIds(host)).toEqual([
+        "c2",
+        "",
+        "c1",
+      ]);
+      expect(RacedaySetupCarsHelper.launchChoices(host)).toEqual([]);
+    });
+
+    it("sends no lane cars when none are picked or the race isn't IROC", () => {
+      host.laneCars = {};
+      expect(RacedaySetupCarsHelper.launchLaneCarIds(host)).toEqual([]);
+      host.laneCars = { tr1: ["c1"] };
+      host.selectedRace = { cars_stay_in_lanes: false, track };
+      expect(RacedaySetupCarsHelper.launchLaneCarIds(host)).toEqual([]);
     });
   });
 });

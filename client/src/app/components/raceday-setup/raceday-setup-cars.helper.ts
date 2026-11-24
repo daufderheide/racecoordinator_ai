@@ -1,5 +1,6 @@
 import { catchError, of } from "rxjs";
 import { CarPickDriver } from "@app/components/shared/car-pick-dialog/car-pick-dialog.component";
+import { LaneCarLane } from "@app/components/shared/lane-cars-dialog/lane-cars-dialog.component";
 import { Car } from "@app/models/car";
 import {
   CarChoice,
@@ -36,6 +37,9 @@ export class RacedaySetupCarsHelper {
         if (hasAnyCar(choice) || choice.carPerDriver) choices[id] = choice;
       }
       host.carChoices = choices;
+      host.laneCars = {
+        ...(host.settingsService?.getSettings?.()?.selectedLaneCars || {}),
+      };
       host.cdr?.detectChanges?.();
     });
   }
@@ -102,7 +106,6 @@ export class RacedaySetupCarsHelper {
 
   static open(host: any, p: Participant, event?: Event): void {
     event?.stopPropagation();
-    host.carPickTaken = RacedaySetupCarsHelper.takenBy(host, p);
     host.carPickTarget = p;
   }
 
@@ -122,8 +125,68 @@ export class RacedaySetupCarsHelper {
     }
   }
 
+  // ---- Cars stay in their lanes, IROC (step 4 of #1210) ----
+
+  /** The selected race keeps its cars in the lanes and there are cars to pick. */
+  static carsInLanes(host: any): boolean {
+    return (
+      (host.allCars?.length || 0) > 0 && !!host.selectedRace?.cars_stay_in_lanes
+    );
+  }
+
+  /** The selected race's track: from the track list (races only name its id). */
+  static raceTrack(host: any): any {
+    const race = host.selectedRace;
+    const id = race?.track_entity_id || race?.track?.entity_id;
+    return (
+      (host.tracks || []).find((t: any) => id && t.entity_id === id) ||
+      race?.track
+    );
+  }
+
+  /** The lanes of the selected race's track, with their colours. */
+  static lanes(host: any): LaneCarLane[] {
+    return (RacedaySetupCarsHelper.raceTrack(host)?.lanes || []).map(
+      (l: any, lane: number) => ({ lane, color: l?.background_color || "" }),
+    );
+  }
+
+  /** The car id per lane for the selected race's track ("" = none), known cars only. */
+  static laneCarIds(host: any): string[] {
+    const trackId = RacedaySetupCarsHelper.raceTrack(host)?.entity_id || "";
+    const stored: string[] = host.laneCars?.[trackId] || [];
+    const known = new Set((host.allCars || []).map((c: Car) => c.entity_id));
+    return RacedaySetupCarsHelper.lanes(host).map((l) =>
+      known.has(stored[l.lane]) ? stored[l.lane] : "",
+    );
+  }
+
+  /** Remembers the lane cars per track, so the next race on it starts with them. */
+  static saveLaneCars(host: any, ids: string[]): void {
+    const trackId = RacedaySetupCarsHelper.raceTrack(host)?.entity_id;
+    if (!trackId) return;
+    const next = { ...(host.laneCars || {}) };
+    if (ids.some(Boolean)) next[trackId] = [...ids];
+    else delete next[trackId];
+    host.laneCars = next;
+    const settings = host.settingsService?.getSettings?.();
+    if (settings) {
+      settings.selectedLaneCars = next;
+      host.settingsService.saveSettings(settings);
+    }
+  }
+
+  /** The lane cars for InitializeRaceRequest; empty unless the cars stay in their lanes. */
+  static launchLaneCarIds(host: any): string[] {
+    if (!RacedaySetupCarsHelper.carsInLanes(host)) return [];
+    const ids = RacedaySetupCarsHelper.laneCarIds(host);
+    return ids.some(Boolean) ? ids : [];
+  }
+
   /** The picks of the entries in the race, for InitializeRaceRequest. */
   static launchChoices(host: any): IParticipantCarChoice[] {
+    // With the cars in their lanes the racers' own picks don't apply.
+    if (RacedaySetupCarsHelper.carsInLanes(host)) return [];
     return (host.selectedParticipants || [])
       .map((p: Participant) => {
         const id = getParticipantUniqueId(p);

@@ -66,3 +66,12 @@ Chaque voiture a les mêmes champs et garde ses propres valeurs. Un champ laiss�
 - **Résultats** : chaque série garde une copie de la voiture telle qu'elle a couru ; modifier ou supprimer une voiture plus tard ne change pas les anciens résultats.
 
 L'icône de voiture et l'élément Voitures slot… n'apparaissent que lorsqu'il y a des voitures slot dans la base de données.
+
+## Les voitures restent dans leur voie (IROC) {: #cars-in-lanes }
+
+Dans une course IROC, les voitures restent dans leur voie toute la course et les pilotes tournent sur les voies : chaque pilote court avec chaque voiture.
+
+- **Éditeur de course** : cochez **Les voitures restent dans leur voie (IROC)** dans la section **Manches**.
+- **Configuration du Jour de Course** : un encadré **Voitures par voie** apparaît sous la liste **Pilotes en Course**. Cliquez dessus pour choisir la voiture de chaque voie. RC AI retient les voitures par circuit. Les icônes de voiture des pilotes sont masquées, car la voiture va avec la voie.
+- **Échanger entre les séries** : **Directeur de Course → Voitures slot…** affiche chaque voie avec sa voiture. Une nouvelle voiture compte à partir de la prochaine série pas encore courue.
+- **Résultats** : chaque série enregistre la voiture de chaque voie, vous voyez donc quel pilote a couru avec quelle voiture.

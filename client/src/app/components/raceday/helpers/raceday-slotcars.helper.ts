@@ -19,6 +19,14 @@ export class RacedaySlotcarsHelper {
     });
   }
 
+  static carsStayInLanes(host: any): boolean {
+    return !!(host.race || host.raceService?.getRace?.())?.cars_stay_in_lanes;
+  }
+
+  static laneCars(host: any): (Car | undefined)[] {
+    return host.raceService?.getLaneCars?.() || [];
+  }
+
   static hasSlotcars(host: any): boolean {
     return (host.raceCars?.length || 0) > 0;
   }

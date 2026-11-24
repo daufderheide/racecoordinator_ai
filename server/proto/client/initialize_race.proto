@@ -35,6 +35,8 @@ message InitializeRaceRequest {
   // https://github.com/daufderheide/racecoordinator_ai/issues/679
   bool race_again = 8;
   repeated ParticipantCarChoice car_choices = 9;
+  // Cars stay in their lanes (#1210): the car id per lane, by lane index; "" = no car.
+  repeated string lane_car_ids = 10;
 }
 
 message InitializeRaceResponse {
