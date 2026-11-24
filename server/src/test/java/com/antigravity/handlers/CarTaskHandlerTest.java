@@ -19,8 +19,13 @@ import com.antigravity.models.Car;
 import com.antigravity.repository.SqliteRepository;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,6 +71,7 @@ public class CarTaskHandlerTest {
   @Test
   public void testRoutesAndRoles() {
     verify(app).get(eq("/api/cars"), any(), eq(Role.VIEWER));
+    verify(app).get(eq("/api/cars/export"), any(), eq(Role.VIEWER));
     verify(app).post(eq("/api/cars"), any(), eq(Role.DIRECTOR));
     verify(app).put(eq("/api/cars/{id}"), any(), eq(Role.DIRECTOR));
     verify(app).delete(eq("/api/cars/{id}"), any(), eq(Role.DIRECTOR));
@@ -269,6 +275,71 @@ public class CarTaskHandlerTest {
     when(ctx.pathParam("id")).thenThrow(new RuntimeException("boom"));
 
     handler.deleteCar(ctx);
+
+    verify(ctx).status(500);
+  }
+
+  /** The data file of an exported ZIP the handler wrote to ctx.result. */
+  private String exportedFile(String name) throws Exception {
+    ArgumentCaptor<InputStream> result = ArgumentCaptor.forClass(InputStream.class);
+    verify(ctx).result(result.capture());
+    try (ZipInputStream zis = new ZipInputStream(result.getValue())) {
+      ZipEntry entry;
+      while ((entry = zis.getNextEntry()) != null) {
+        if (entry.getName().equals(name)) {
+          return new String(readAll(zis), StandardCharsets.UTF_8);
+        }
+      }
+    }
+    return null;
+  }
+
+  private static byte[] readAll(InputStream in) throws Exception {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    byte[] buf = new byte[4096];
+    int n;
+    while ((n = in.read(buf)) != -1) {
+      out.write(buf, 0, n);
+    }
+    return out.toByteArray();
+  }
+
+  @Test
+  public void testExportCars_AllAsCsvZip() throws Exception {
+    carRepository.insert(car("Porsche", "1"));
+    carRepository.insert(car("Ferrari", "2"));
+    when(ctx.queryParam("format")).thenReturn("csv");
+
+    handler.exportCars(ctx);
+
+    verify(ctx).contentType("application/zip");
+    verify(ctx).header(eq("Content-Disposition"), eq("attachment; filename=\"cars_export.zip\""));
+    String csv = exportedFile("cars.csv");
+    assertTrue(csv.contains("\nFerrari,,,GT3,"));
+    assertTrue(csv.contains("\nPorsche,,,GT3,"));
+  }
+
+  @Test
+  public void testExportCars_OnlyTheGivenIds() throws Exception {
+    carRepository.insert(car("Porsche", "1"));
+    carRepository.insert(car("Ferrari", "2"));
+    carRepository.insert(car("Audi", "3"));
+    when(ctx.queryParam("format")).thenReturn("json");
+    when(ctx.queryParam("carIds")).thenReturn("3, 1,");
+
+    handler.exportCars(ctx);
+
+    String json = exportedFile("cars.json");
+    assertTrue(json.contains("\"Audi\""));
+    assertTrue(json.contains("\"Porsche\""));
+    assertTrue(!json.contains("\"Ferrari\""));
+  }
+
+  @Test
+  public void testExportCars_ErrorIs500() {
+    when(ctx.queryParam("carIds")).thenThrow(new RuntimeException("boom"));
+
+    handler.exportCars(ctx);
 
     verify(ctx).status(500);
   }

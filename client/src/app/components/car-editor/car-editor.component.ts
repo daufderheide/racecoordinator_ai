@@ -15,6 +15,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { DriverExportModalComponent } from "@app/components/shared/driver-export-modal/driver-export-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -74,6 +75,7 @@ const NAV_KEY = "car";
     CustomSelectComponent,
     CustomOptionComponent,
     CarFieldManagerComponent,
+    DriverExportModalComponent,
   ],
 })
 export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
@@ -165,6 +167,8 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   /** The user's own fields, in editor order. */
   carFields: CarField[] = [];
   isFieldManagerOpen = false;
+  /** The export dialog (#1210, step 6a). */
+  showExportModal = false;
 
   isConnectionLost = false;
   private connectionSubscription: Subscription | null = null;

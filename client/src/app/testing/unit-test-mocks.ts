@@ -62,6 +62,7 @@ export const mockDataService = {
   exportDrivers: jasmine
     .createSpy("exportDrivers")
     .and.returnValue(of(new Blob([]))),
+  exportCars: jasmine.createSpy("exportCars").and.returnValue(of(new Blob([]))),
   getCurrentDatabase: jasmine
     .createSpy("getCurrentDatabase")
     .and.returnValue(of({ name: "test_db" })),
@@ -286,6 +287,7 @@ export function resetMocks() {
   mockDataService.getEvents.and.returnValue(of([]));
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.exportDrivers.and.returnValue(of(new Blob([])));
+  mockDataService.exportCars.and.returnValue(of(new Blob([])));
   mockDataService.resetLaneHeatData.and.returnValue(of(true));
   mockDataService.getDatabases.and.returnValue(of([]));
   mockDataService.connectToRaceDataSocket.and.stub();

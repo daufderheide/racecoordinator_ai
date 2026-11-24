@@ -342,6 +342,15 @@ export class DataEntityCrudHelper {
     return this.http.delete<any>(`${this.getBaseUrl()}/api/cars/${id}`);
   }
 
+  /** The cars as a ZIP (#1210, step 6a): all of them, or only carIds. */
+  exportCars(format: string, carIds?: string[]): Observable<Blob> {
+    let url = `${this.getBaseUrl()}/api/cars/export?format=${encodeURIComponent(format)}`;
+    if (carIds && carIds.length > 0) {
+      url += `&carIds=${encodeURIComponent(carIds.join(","))}`;
+    }
+    return this.http.get(url, { responseType: "blob" });
+  }
+
   getCarFields(): Observable<any[]> {
     return this.http.get<any[]>(`${this.getBaseUrl()}/api/car-fields`);
   }

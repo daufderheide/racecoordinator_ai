@@ -87,6 +87,19 @@ test.describe("Slotcar Editor Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("opens the export dialog for the cars", async ({ page }) => {
+    await open(page, "c1");
+    await page.locator("#export-btn").click();
+    const dialog = page.locator("#car-export-modal-dialog");
+    await dialog.waitFor({ state: "visible" });
+    await settle(page);
+
+    await expect(dialog).toHaveScreenshot("car-export-dialog.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });
 
 test.describe("Slotcars in the Manage menu", () => {

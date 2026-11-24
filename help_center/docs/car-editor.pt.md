@@ -24,6 +24,7 @@ O editor de carros slot funciona como o editor de equipes:
 - **Duplicar**: copia o carro escolhido com um nome novo e único. Útil para um segundo carro do mesmo tipo.
 - **Editar / Concluir**: alterna entre somente leitura e edição.
 - **Excluir**: exclui o carro escolhido após confirmação.
+- **Exportar**: salva seus carros slot em um arquivo ZIP. Veja [Exportar carros slot](#car-export).
 - **Desfazer / Refazer**: volta ou avança pelas alterações recentes.
 - **Ajuda (?)**: inicia o tour guiado.
 
@@ -91,3 +92,13 @@ Os resultados mostram o carro com que cada piloto correu, tal como estava nessa 
 - **Filtros**: limite os resultados a um carro, classe, pista ou piloto.
 - **Corridas demo**: marque para ver os resultados das corridas demo.
 - Os números usam o carro de cada bateria tal como correu, por isso editar um carro depois não os altera. Não contam as voltas abaixo do tempo mínimo de volta da corrida nem as voltas excluídas dos recordes.
+
+## Exportar carros slot {: #car-export }
+
+Clique em **Exportar** na barra de ferramentas para salvar todos os seus carros slot em um arquivo ZIP, como backup ou para compartilhá-los com outro clube.
+
+- **Formato**: escolha **CSV** ou **Excel** para uma planilha, ou **JSON** para um arquivo estruturado.
+- **Conteúdo**: uma linha por carro com todos os detalhes: nome, foto, marca, classe, escala, acerto, Modificado (Yes/No) e notas.
+- **Seus campos**: cada um dos seus próprios campos ganha uma coluna com o nome do campo.
+- **Fotos**: as fotos dos carros vão para uma pasta `images` no ZIP, cada foto uma só vez. A coluna Picture indica o arquivo.
+- **Sem IDs**: carros e campos são reconhecidos pelo nome, então o arquivo funciona em qualquer banco de dados.

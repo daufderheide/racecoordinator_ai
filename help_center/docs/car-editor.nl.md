@@ -24,6 +24,7 @@ De Slotcar-editor werkt zoals de Team Editor:
 - **Dupliceren**: Kopieert de gekozen auto onder een nieuwe, unieke naam. Handig voor een tweede auto van hetzelfde type.
 - **Bewerken / Klaar**: Wisselt tussen alleen-lezen en bewerkmodus.
 - **Verwijderen**: Verwijdert de gekozen auto na bevestiging.
+- **Exporteren**: Slaat je slotcars op in een ZIP-bestand. Zie [Slotcars exporteren](#car-export).
 - **Ongedaan maken / Opnieuw**: Stapt terug of vooruit door je recente wijzigingen.
 - **Help (?)**: Start de rondleiding.
 
@@ -91,3 +92,13 @@ De resultaten tonen de auto waarmee elke rijder reed, zoals die in die heat was.
 - **Filters**: beperk de resultaten tot één auto, klasse, baan of rijder.
 - **Demoraces**: vink het aan om de resultaten van demoraces te zien.
 - De cijfers gebruiken de auto van elke heat zoals die reed, dus een auto later aanpassen verandert ze niet. Ronden onder de minimale rondetijd van de race en ronden die niet meetellen voor records tellen niet mee.
+
+## Slotcars exporteren {: #car-export }
+
+Klik in de werkbalk op **Exporteren** om al je slotcars op te slaan in een ZIP-bestand, als back-up of om ze te delen met een andere club.
+
+- **Formaat**: kies **CSV** of **Excel** voor een spreadsheet, of **JSON** voor een gestructureerd bestand.
+- **Wat erin zit**: één rij per auto met alle gegevens: naam, foto, merk, klasse, schaal, set-up, Aangepast (Yes/No) en notities.
+- **Je eigen velden**: elk eigen veld krijgt een kolom, met de naam van het veld.
+- **Foto's**: de foto's van de auto's gaan in een map `images` in de ZIP, elke foto maar één keer. De kolom Picture noemt het bestand.
+- **Geen id's**: auto's en velden worden op naam herkend, dus het bestand werkt in elke database.

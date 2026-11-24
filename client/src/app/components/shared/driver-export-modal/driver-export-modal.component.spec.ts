@@ -29,7 +29,13 @@ describe("DriverExportModalComponent", () => {
       .createSpy("showSaveFilePicker")
       .and.returnValue(Promise.resolve(mockHandle));
 
-    mockDataService = jasmine.createSpyObj("DataService", ["exportDrivers"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "exportDrivers",
+      "exportCars",
+    ]);
+    mockDataService.exportCars.and.returnValue(
+      of(new Blob(["mock-zip-content"], { type: "application/zip" })),
+    );
     mockDataService.exportDrivers.and.returnValue(
       of(new Blob(["mock-zip-content"], { type: "application/zip" })),
     );
@@ -173,5 +179,57 @@ describe("DriverExportModalComponent", () => {
     fixture.componentRef.setInput("driverCount", 0);
     await component.onExport();
     expect(mockDataService.exportDrivers).not.toHaveBeenCalled();
+  });
+
+  describe("for slotcars (#1210, step 6a)", () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput("kind", "cars");
+      fixture.componentRef.setInput("visible", true);
+      fixture.componentRef.setInput("driverCount", 3);
+      fixture.detectChanges();
+    });
+
+    const el = (sel: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(sel);
+
+    it("shows the car texts and ids", () => {
+      expect(el("#car-export-modal-dialog")).not.toBeNull();
+      expect(el("#driver-export-modal-dialog")).toBeNull();
+      expect(el(".modal-title")?.textContent).toContain("CEM_TITLE");
+      expect(el(".count-text")?.textContent).toContain("CEM_CAR_COUNT:3");
+      expect(el(".note-text")?.textContent).toContain("CEM_OWN_FIELDS_INFO");
+      expect(el("#btn-car-export-confirm")?.textContent).toContain(
+        "CEM_BTN_EXPORT",
+      );
+      expect(el("#car-export-format-xlsx")).not.toBeNull();
+    });
+
+    it("exports the cars in the picked format as cars_export.zip", async () => {
+      component.selectFormat("json");
+      await component.onExport();
+      expect(mockDataService.exportCars).toHaveBeenCalledWith("json");
+      expect(mockDataService.exportDrivers).not.toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalledWith(
+        jasmine.objectContaining({ suggestedName: "cars_export.zip" }),
+      );
+    });
+
+    it("shows the car error when the export fails", async () => {
+      mockDataService.exportCars.and.returnValue(
+        throwError(() => new Error("Network error")),
+      );
+      await component.onExport();
+      expect(component.errorMessage).toBe("CEM_ERROR_EXPORT_FAILED");
+    });
+  });
+
+  it("keeps the driver ids and texts by default", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("driverCount", 2);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector("#driver-export-modal-dialog"),
+    ).not.toBeNull();
+    expect(component.config().fileName).toBe("drivers_export.zip");
   });
 });
