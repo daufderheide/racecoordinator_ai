@@ -615,6 +615,25 @@ describe("CarEditorComponent", () => {
     });
   });
 
+  describe("car stats (#1210)", () => {
+    beforeEach(async () => setUp("c1"));
+
+    it("opens Car Stats with the car on screen", () => {
+      component.openCarStats();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/car-stats"], {
+        queryParams: { carId: "c1" },
+      });
+    });
+
+    it("opens Car Stats for all cars when none is selected", () => {
+      component.selectedCarId = undefined;
+      component.openCarStats();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/car-stats"], {
+        queryParams: {},
+      });
+    });
+  });
+
   describe("help", () => {
     beforeEach(async () => setUp("c1"));
 

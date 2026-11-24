@@ -82,3 +82,12 @@ Os resultados mostram o carro com que cada piloto correu, tal como estava nessa 
 
 - **Resultados de bateria** e a página de resultados de um piloto: cada cartão de bateria mostra o carro ao lado da pista. Passe o rato por cima para ver a classe, a escala e a afinação.
 - **Resultados de corrida**: cada piloto mostra o seu carro sob o nome. Se correu com mais de um carro (uma corrida IROC ou uma troca), indica quantos; passe o rato por cima para ver a lista.
+
+## Estatísticas dos carros {: #car-stats }
+
+**Estatísticas dos carros** mostra como os seus carros slot se saíram nas corridas guardadas. Abra-o com o botão do gráfico no topo do Editor de carros slot; começa com o carro que está no ecrã.
+
+- **Agrupar por**: uma linha por carro, classe, campo de afinação (marca, escala, motor, íman, chassis, relação, pneus), um dos seus próprios campos, pista ou piloto. Escolha um carro e agrupe por pista ou piloto para ver onde e com quem foi mais rápido.
+- **Filtros**: limite os resultados a um carro, classe, pista ou piloto.
+- **Corridas demo**: marque para ver os resultados das corridas demo.
+- Os números usam o carro de cada bateria tal como correu, por isso editar um carro depois não os altera. Não contam as voltas abaixo do tempo mínimo de volta da corrida nem as voltas excluídas dos recordes.

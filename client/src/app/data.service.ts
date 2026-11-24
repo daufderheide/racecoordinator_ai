@@ -1,6 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { Observable } from "rxjs";
+import { CarStatsQuery } from "@app/models/car-stats";
 import {
   DriverImportCommitRequest,
   DriverImportPreview,
@@ -1009,6 +1010,8 @@ export class DataService {
   getGlobalStatistics(raceId?: string, isDemo?: boolean): Observable<any> {
     return this.historyStatsHelper.getGlobalStatistics(raceId, isDemo);
   }
+  getCarStatistics = (query: CarStatsQuery) =>
+    this.historyStatsHelper.getCarStatistics(query);
   resetRaceRecords(raceId: string): Observable<void> {
     return this.historyStatsHelper.resetRaceRecords(raceId);
   }

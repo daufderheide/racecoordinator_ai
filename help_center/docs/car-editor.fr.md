@@ -82,3 +82,12 @@ Les résultats montrent la voiture de chaque pilote, telle qu'elle était dans c
 
 - **Résultats de manche** et la page de résultats d'un pilote : chaque carte de manche affiche la voiture à côté de la voie. Survolez-la pour voir la classe, l'échelle et le réglage.
 - **Résultats de course** : chaque pilote affiche sa voiture sous son nom. S'il a couru avec plusieurs voitures (course IROC ou échange), le nombre est indiqué ; survolez-le pour voir la liste.
+
+## Statistiques des voitures {: #car-stats }
+
+**Statistiques des voitures** montre les résultats de vos voitures slot dans vos courses enregistrées. Ouvrez-le avec le bouton graphique en haut de l'Éditeur de voitures slot ; il commence avec la voiture affichée.
+
+- **Regrouper par** : une ligne par voiture, classe, champ de réglage (marque, échelle, moteur, aimant, châssis, rapport, pneus), un de vos propres champs, piste ou pilote. Choisissez une voiture et regroupez par piste ou par pilote pour voir où et avec qui elle a été la plus rapide.
+- **Filtres** : limitez les résultats à une voiture, une classe, une piste ou un pilote.
+- **Courses démo** : cochez-le pour voir les résultats des courses démo.
+- Les chiffres utilisent la voiture de chaque manche telle qu'elle a couru ; modifier une voiture plus tard ne les change pas. Les tours sous le temps de tour minimum de la course et les tours exclus des records ne comptent pas.

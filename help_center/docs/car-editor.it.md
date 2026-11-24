@@ -82,3 +82,12 @@ I risultati mostrano l'auto con cui ha corso ogni pilota, com'era in quella manc
 
 - **Risultati manche** e la pagina dei risultati di un pilota: ogni scheda di manche mostra l'auto accanto alla corsia. Passaci sopra con il mouse per vedere classe, scala e assetto.
 - **Risultati gara**: ogni pilota mostra la sua auto sotto il nome. Se ha corso con più di un'auto (una gara IROC o uno scambio), indica quante; passaci sopra per vedere l'elenco.
+
+## Statistiche auto {: #car-stats }
+
+**Statistiche auto** mostra come sono andate le tue auto slot nelle gare salvate. Aprilo con il pulsante del grafico in alto nell'Editor auto slot; parte dall'auto mostrata.
+
+- **Raggruppa per**: una riga per auto, classe, campo di assetto (marca, scala, motore, magnete, telaio, rapporti, gomme), uno dei tuoi campi, pista o pilota. Scegli un'auto e raggruppa per pista o pilota per vedere dove e con chi è andata più forte.
+- **Filtri**: limita i risultati a un'auto, una classe, una pista o un pilota.
+- **Gare demo**: selezionalo per vedere i risultati delle gare demo.
+- I numeri usano l'auto di ogni manche com'era in gara, quindi modificare un'auto in seguito non li cambia. Non contano i giri sotto il tempo minimo della gara né i giri esclusi dai record.

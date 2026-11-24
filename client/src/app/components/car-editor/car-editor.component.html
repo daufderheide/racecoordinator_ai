@@ -27,6 +27,19 @@
     (copy)="onCopyCar()"
     (delete)="onDeleteCar()"
   >
+    <div title-actions class="car-title-actions">
+      <button
+        id="car-stats-btn"
+        type="button"
+        class="car-title-btn"
+        [disabled]="isEditMode"
+        (click)="openCarStats()"
+        [title]="'CS_OPEN_TOOLTIP' | translate"
+        [attr.aria-label]="'CS_OPEN_TOOLTIP' | translate"
+      >
+        <span class="material-icons">query_stats</span>
+      </button>
+    </div>
   </app-editor-title>
 
   @if (editingCar) {

@@ -1,5 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
+import { CarStatRow, CarStatsQuery } from "@app/models/car-stats";
 
 export class DataHistoryStatsHelper {
   constructor(
@@ -182,6 +183,19 @@ export class DataHistoryStatsHelper {
       url += `?${queryString}`;
     }
     return this.http.get<any>(url);
+  }
+
+  /** Car stats from the saved races (#1210), grouped and filtered on the server. */
+  getCarStatistics(query: CarStatsQuery): Observable<CarStatRow[]> {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined || value === null || value === "") continue;
+      params.append(key === "isDemo" ? "demo" : key, String(value));
+    }
+    const qs = params.toString();
+    return this.http.get<CarStatRow[]>(
+      `${this.getBaseUrl()}/api/history/cars/stats${qs ? `?${qs}` : ""}`,
+    );
   }
 
   getGlobalStatistics(raceId?: string, isDemo?: boolean): Observable<any> {

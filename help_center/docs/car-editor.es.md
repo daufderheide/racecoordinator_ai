@@ -82,3 +82,12 @@ Los resultados muestran el coche con el que corrió cada piloto, tal como era en
 
 - **Resultados de manga** y la página de resultados de un piloto: cada tarjeta de manga muestra el coche junto al carril. Pasa el ratón por encima para ver la clase, la escala y la puesta a punto.
 - **Resultados de carrera**: cada piloto muestra su coche bajo su nombre. Si corrió con más de un coche (una carrera IROC o un cambio), indica cuántos; pasa el ratón por encima para ver la lista.
+
+## Estadísticas de coches {: #car-stats }
+
+**Estadísticas de coches** muestra cómo les fue a tus coches de slot en tus carreras guardadas. Ábrelo con el botón del gráfico arriba en el Editor de coches de slot; empieza con el coche que tienes en pantalla.
+
+- **Agrupar por**: una fila por coche, clase, campo de puesta a punto (marca, escala, motor, imán, chasis, desarrollo, neumáticos), uno de tus propios campos, pista o piloto. Elige un coche y agrupa por pista o piloto para ver dónde y con quién fue más rápido.
+- **Filtros**: limita los resultados a un coche, clase, pista o piloto.
+- **Carreras demo**: márcalo para ver los resultados de las carreras demo.
+- Los números usan el coche de cada manga tal como corrió, así que editar un coche después no los cambia. No cuentan las vueltas por debajo del tiempo mínimo de vuelta de la carrera ni las vueltas excluidas de los récords.

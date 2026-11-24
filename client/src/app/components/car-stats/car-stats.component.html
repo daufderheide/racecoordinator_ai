@@ -1,0 +1,165 @@
+<div class="page-container">
+  <app-editor-title
+    titleKey="CS_TITLE"
+    [showPreviewBadge]="true"
+    [showHelp]="false"
+    [showUndo]="false"
+    [showRedo]="false"
+  ></app-editor-title>
+
+  <div class="cs-body">
+    <p class="cs-intro">{{ "CS_INTRO" | translate }}</p>
+
+    <div class="cs-filters config-section" id="car-stats-filters">
+      <div class="cs-filter">
+        <label>{{ "CS_GROUP_BY" | translate }}</label>
+        <app-custom-select
+          id="cs-group-by"
+          [value]="query().groupBy"
+          (change)="setGroup($event)"
+        >
+          @for (g of groups(); track g.value) {
+            <app-custom-option [value]="g.value">{{
+              g.custom ? g.label : (g.label | translate)
+            }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+
+      <div class="cs-filter">
+        <label>{{ "CS_GROUP_CAR" | translate }}</label>
+        <app-custom-select
+          id="cs-filter-car"
+          [value]="query().carId || ''"
+          (change)="setFilter('carId', $event)"
+        >
+          <app-custom-option value="">{{
+            "CS_ALL" | translate
+          }}</app-custom-option>
+          @for (c of cars(); track c.id) {
+            <app-custom-option [value]="c.id">{{ c.name }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+
+      <div class="cs-filter">
+        <label>{{ "CE_LABEL_CLASS" | translate }}</label>
+        <app-custom-select
+          id="cs-filter-class"
+          [value]="query().carClass || ''"
+          (change)="setFilter('carClass', $event)"
+        >
+          <app-custom-option value="">{{
+            "CS_ALL" | translate
+          }}</app-custom-option>
+          @for (c of classes(); track c) {
+            <app-custom-option [value]="c">{{ c }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+
+      <div class="cs-filter">
+        <label>{{ "CS_GROUP_TRACK" | translate }}</label>
+        <app-custom-select
+          id="cs-filter-track"
+          [value]="query().trackId || ''"
+          (change)="setFilter('trackId', $event)"
+        >
+          <app-custom-option value="">{{
+            "CS_ALL" | translate
+          }}</app-custom-option>
+          @for (t of tracks(); track t.id) {
+            <app-custom-option [value]="t.id">{{ t.name }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+
+      <div class="cs-filter">
+        <label>{{ "CS_GROUP_DRIVER" | translate }}</label>
+        <app-custom-select
+          id="cs-filter-driver"
+          [value]="query().driverId || ''"
+          (change)="setFilter('driverId', $event)"
+        >
+          <app-custom-option value="">{{
+            "CS_ALL" | translate
+          }}</app-custom-option>
+          @for (d of drivers(); track d.id) {
+            <app-custom-option [value]="d.id">{{ d.name }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+
+      <label
+        class="checkbox-container cs-demo"
+        id="cs-demo"
+        [title]="'CS_DEMO_RACES_HINT' | translate"
+      >
+        <input
+          type="checkbox"
+          [checked]="!!query().isDemo"
+          (change)="setDemo($any($event.target).checked)"
+        />
+        <span class="checkmark"></span>
+        <span class="checkbox-label">{{ "CS_DEMO_RACES" | translate }}</span>
+      </label>
+    </div>
+
+    <div class="cs-results config-section" id="car-stats-results">
+      @if (loading()) {
+        <p class="cs-message" id="cs-loading">{{ "CS_LOADING" | translate }}</p>
+      } @else if (failed()) {
+        <p class="cs-message cs-error" id="cs-error">
+          {{ "CS_ERROR" | translate }}
+        </p>
+      } @else if (rows().length === 0) {
+        <p class="cs-message" id="cs-empty">{{ "CS_EMPTY" | translate }}</p>
+      } @else {
+        <table class="cs-table" id="car-stats-table">
+          <thead>
+            <tr>
+              <th class="cs-col-group">
+                {{
+                  groupHeader().custom
+                    ? groupHeader().label
+                    : (groupHeader().label | translate)
+                }}
+              </th>
+              <th>{{ "CS_COL_RACES" | translate }}</th>
+              <th>{{ "CS_COL_HEATS" | translate }}</th>
+              <th>{{ "DR_HEADER_LAPS" | translate }}</th>
+              <th>{{ "DR_HEADER_BEST" | translate }}</th>
+              <th class="cs-col-text">{{ "CS_COL_BEST_BY" | translate }}</th>
+              <th>{{ "DR_HEADER_MEDIAN" | translate }}</th>
+              <th>{{ "DR_HEADER_AVG" | translate }}</th>
+              <th class="cs-col-text">{{ "CS_COL_LAST_RACED" | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.key) {
+              <tr class="cs-row">
+                <td class="cs-col-group" [title]="row.label">
+                  {{ row.label }}
+                </td>
+                <td>{{ row.races }}</td>
+                <td>{{ row.heats }}</td>
+                <td>{{ row.laps }}</td>
+                <td class="cs-best">{{ formatTime(row.best_lap_time) }}</td>
+                <td class="cs-col-text">{{ row.best_lap_driver || "—" }}</td>
+                <td>{{ formatTime(row.median_lap_time) }}</td>
+                <td>{{ formatTime(row.average_lap_time) }}</td>
+                <td class="cs-col-text">
+                  {{
+                    row.last_raced
+                      ? (row.last_raced | localDate: "shortDate")
+                      : "—"
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+</div>
