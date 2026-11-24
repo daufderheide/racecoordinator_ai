@@ -25,6 +25,9 @@ import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
 import { isColorLight } from "@app/utils/color.utils";
 
+/** Lane badge height in auto scale, in lane font sizes (see the widget CSS). */
+const AUTO_BADGE_HEIGHT = 1.5;
+
 @Component({
   standalone: true,
   selector: "app-raceday-heat-drivers",
@@ -274,6 +277,7 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     panelEl.style.removeProperty("--heat-drivers-item-padding-x");
     panelEl.style.removeProperty("--heat-drivers-item-padding-y");
     panelEl.style.removeProperty("--heat-drivers-title-margin");
+    panelEl.style.removeProperty("--heat-drivers-badge-height");
   }
 
   private measureMaxRowWidthAt100(
@@ -337,7 +341,9 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
    * Spacing normally scales with the lane font size. When `spacing` is given
    * (a custom font size), the gaps follow the auto-fit size `spacingBase`
    * instead, and the row padding shrinks or grows so each row stays as deep
-   * as it would be at the auto-fit size (minimum 2px).
+   * as it would be at the auto-fit size (minimum 2px). The lane badge then
+   * fits the text (1.1x) instead of the auto-scale 1.5x, so the badge
+   * doesn't make the rows deeper (#1242).
    */
   private applyCSSProperties(
     panelEl: HTMLElement,
@@ -348,12 +354,12 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     const base = spacing?.spacingBase ?? targetLaneFontSize;
     // Row content height in font sizes: one line (1.1) or name + team line.
     const contentFactor = spacing?.hasTeams ? 1.87 : 1.1;
+    // At the auto-fit size the 1.5x lane badge is the tallest part of a
+    // one-line row, so it sets the depth the rows keep.
+    const rowDepthAtBase =
+      (Math.max(contentFactor, AUTO_BADGE_HEIGHT) + 1) * base;
     const itemPaddingY = spacing
-      ? Math.max(
-          2,
-          (contentFactor * base + base - contentFactor * targetLaneFontSize) /
-            2,
-        )
+      ? Math.max(2, (rowDepthAtBase - contentFactor * targetLaneFontSize) / 2)
       : targetLaneFontSize * 0.5;
 
     const set = (name: string, px: number) =>
@@ -366,6 +372,11 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     set("--heat-drivers-item-padding-x", targetLaneFontSize * 0.75);
     set("--heat-drivers-item-padding-y", itemPaddingY);
     set("--heat-drivers-title-margin", base * 0.75);
+    if (spacing) {
+      set("--heat-drivers-badge-height", targetLaneFontSize * 1.1);
+    } else {
+      panelEl.style.removeProperty("--heat-drivers-badge-height");
+    }
   }
 
   nextHeatNumber = computed<number>(() => {

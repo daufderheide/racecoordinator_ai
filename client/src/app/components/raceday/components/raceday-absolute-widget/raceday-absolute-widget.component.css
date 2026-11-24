@@ -693,15 +693,19 @@
         )
       )
   ) !important;
-  height: calc(
-    1.5 *
-      var(
-        --custom-lane-size,
+  /* With a custom lane font size the badge fits the text (#1242). */
+  height: var(
+    --heat-drivers-badge-height,
+    calc(
+      1.5 *
         var(
-          --heat-drivers-font-size,
-          calc(9cqh * var(--widget-scale-factor, 1))
+          --custom-lane-size,
+          var(
+            --heat-drivers-font-size,
+            calc(9cqh * var(--widget-scale-factor, 1))
+          )
         )
-      )
+    )
   ) !important;
   padding: 0
     calc(
