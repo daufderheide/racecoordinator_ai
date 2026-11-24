@@ -949,7 +949,10 @@
                 } @else {
                   <span class="material-icons warn-icon">warning</span>
                 }
-                <span>{{ item.key | translate: item.params }}</span>
+                <span
+                  >{{ item.prefix ? item.prefix + ": " : ""
+                  }}{{ item.key | translate: item.params }}</span
+                >
               </li>
             }
           </ul>

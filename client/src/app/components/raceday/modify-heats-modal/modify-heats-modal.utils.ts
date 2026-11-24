@@ -11,7 +11,6 @@ import { IHeat, IRaceParticipant, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
-import { checkLaneEquality } from "@app/utils/lane-equality";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 export interface ModifyHeatsState {
@@ -686,41 +685,7 @@ export function collectHeatCardBounds(
   return bounds;
 }
 
-export function performLaneCheck(
-  localParticipants: RaceParticipant[],
-  localHeats: Heat[],
-  track: Track,
-  translationService: TranslationService,
-): { allEqual: boolean; reports: any[] } {
-  const activeParticipants = localParticipants.filter(
-    (p) => p.driver && !p.driver.isEmpty(),
-  );
-  const driverIds = activeParticipants.map((p) => p.objectId);
-  const driverNames = new Map<string, string>();
-  activeParticipants.forEach((p) => {
-    driverNames.set(p.objectId, getParticipantName(p));
-  });
-
-  const heats = localHeats.map((h) =>
-    track.lanes.map((_, laneIdx) => {
-      const dhd = h.heatDrivers.find((d) => d.laneIndex === laneIdx);
-      return dhd &&
-        dhd.participant &&
-        !isPlaceholderParticipant(dhd.participant)
-        ? dhd.participant.objectId
-        : null;
-    }),
-  );
-
-  const result = checkLaneEquality(
-    track.lanes.length,
-    driverIds,
-    heats,
-    driverNames,
-    translationService,
-  );
-  return { allEqual: result.allEqual, reports: result.reports };
-}
+export { performLaneCheck } from "./modify-heats-lane-check.helper";
 
 export function revertSaveFailure(
   triggeredBy: UndoEventType,

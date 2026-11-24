@@ -1097,6 +1097,8 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       this.localHeats,
       this.track(),
       this.translationService,
+      this.isStepUpEnabled,
+      this.race(),
     );
     this.isHeatsEqual = result.allEqual;
     if (showModal) {
