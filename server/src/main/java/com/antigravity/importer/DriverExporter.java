@@ -582,6 +582,19 @@ public class DriverExporter {
     return name;
   }
 
+  /**
+   * The audio column headers, one per {@link #AUDIO_SLOT_KEYS} entry and in the same order as the
+   * values each row writes ("lap" becomes "Lap", "driftLap" becomes "DriftLap"). Building them from
+   * the same list keeps every value under its own header; the importer reads these names back.
+   */
+  static List<String> audioHeaders() {
+    List<String> headers = new ArrayList<>();
+    for (String key : AUDIO_SLOT_KEYS) {
+      headers.add(Character.toUpperCase(key.charAt(0)) + key.substring(1));
+    }
+    return headers;
+  }
+
   private byte[] generateCsvBytes(
       List<Driver> drivers,
       Map<String, String> urlToZipEntryMap,
@@ -592,9 +605,10 @@ public class DriverExporter {
     for (int i = 0; i < possibleLabels.size(); i++) {
       sb.append(",Label ").append(i + 1);
     }
-    sb.append(",Lap,BestLap,Penalty,RaceBestLap,RaceLaneBestLap,")
-        .append(
-            "HeatBestLap,NewRaceLeader,NewHeatLeader,OverallBestLap,OverallLaneBestLap,PitIn,Fuel\n");
+    for (String header : audioHeaders()) {
+      sb.append(",").append(header);
+    }
+    sb.append("\n");
 
     for (Driver d : drivers) {
       String name = escapeCsv(d.getName());
@@ -636,18 +650,7 @@ public class DriverExporter {
       for (int i = 0; i < possibleLabels.size(); i++) {
         headerList.add("Label " + (i + 1));
       }
-      headerList.add("Lap");
-      headerList.add("BestLap");
-      headerList.add("Penalty");
-      headerList.add("RaceBestLap");
-      headerList.add("RaceLaneBestLap");
-      headerList.add("HeatBestLap");
-      headerList.add("NewRaceLeader");
-      headerList.add("NewHeatLeader");
-      headerList.add("OverallBestLap");
-      headerList.add("OverallLaneBestLap");
-      headerList.add("PitIn");
-      headerList.add("Fuel");
+      headerList.addAll(audioHeaders());
 
       for (int i = 0; i < headerList.size(); i++) {
         Cell c = headerRow.createCell(i);
