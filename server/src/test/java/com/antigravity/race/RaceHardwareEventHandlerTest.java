@@ -30,6 +30,7 @@ public class RaceHardwareEventHandlerTest {
     when(race.isStopped()).thenReturn(true);
     RaceHardwareEventHandler.handleStartTimer(race, 0);
     verify(race, never()).moveToNextHeat();
+    verify(race, never()).startRace();
   }
 
   @Test
@@ -38,6 +39,34 @@ public class RaceHardwareEventHandlerTest {
     when(race.getState()).thenReturn(new HeatOver());
     RaceHardwareEventHandler.handleStartTimer(race, 0);
     verify(race).moveToNextHeat();
+    verify(race, never()).startRace();
+  }
+
+  @Test
+  public void testHandleStartTimerInNotStartedStartsRace() {
+    when(race.isStopped()).thenReturn(false);
+    when(race.getState()).thenReturn(new NotStarted());
+    RaceHardwareEventHandler.handleStartTimer(race, 0);
+    verify(race).startRace();
+    verify(race, never()).moveToNextHeat();
+  }
+
+  @Test
+  public void testHandleStartTimerInPausedResumesRace() {
+    when(race.isStopped()).thenReturn(false);
+    when(race.getState()).thenReturn(new Paused());
+    RaceHardwareEventHandler.handleStartTimer(race, 0);
+    verify(race).startRace();
+    verify(race, never()).moveToNextHeat();
+  }
+
+  @Test
+  public void testHandleStartTimerInStartingDoesNothing() {
+    when(race.isStopped()).thenReturn(false);
+    when(race.getState()).thenReturn(new Starting());
+    RaceHardwareEventHandler.handleStartTimer(race, 0);
+    verify(race, never()).startRace();
+    verify(race, never()).moveToNextHeat();
   }
 
   @Test
@@ -46,6 +75,7 @@ public class RaceHardwareEventHandlerTest {
     when(race.getState()).thenReturn(new Racing());
     RaceHardwareEventHandler.handleStartTimer(race, 0);
     verify(race, never()).moveToNextHeat();
+    verify(race, never()).startRace();
   }
 
   @Test
@@ -59,6 +89,14 @@ public class RaceHardwareEventHandlerTest {
   public void testHandlePauseTimerInRacingPausesRace() {
     when(race.isStopped()).thenReturn(false);
     when(race.getState()).thenReturn(new Racing());
+    RaceHardwareEventHandler.handlePauseTimer(race, 0);
+    verify(race).pauseRace();
+  }
+
+  @Test
+  public void testHandlePauseTimerInStartingPausesRace() {
+    when(race.isStopped()).thenReturn(false);
+    when(race.getState()).thenReturn(new Starting());
     RaceHardwareEventHandler.handlePauseTimer(race, 0);
     verify(race).pauseRace();
   }

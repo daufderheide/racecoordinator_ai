@@ -273,6 +273,18 @@ public class DsProtocolTest {
     serialConnection.injectData(abortPacket);
     assertEquals(1, listener.abortCount);
 
+    byte[] endPausePacket = buildDs21BytePacket(3, 0x00, 0xA6, 0.0);
+    serialConnection.injectData(endPausePacket);
+    assertEquals(2, listener.startTimerCount);
+
+    byte[] keepAlivePacket = buildDs21BytePacket(3, 0x00, 0xC0, 0.0);
+    serialConnection.injectData(keepAlivePacket);
+    // 0xC0 keep-alive packet should be handled cleanly without modifying counts
+    assertEquals(2, listener.startTimerCount);
+    assertEquals(1, listener.pauseTimerCount);
+    assertEquals(1, listener.endHeatCount);
+    assertEquals(1, listener.abortCount);
+
     protocol.close();
   }
 
