@@ -75,4 +75,10 @@ describe("LaneCarsBarComponent (IROC, #1210)", () => {
     expect(saved).toEqual([["c1", ""]]);
     expect(component.dialogOpen()).toBeFalse();
   });
+
+  it("uses a dark lane number on a light lane color", () => {
+    const chipText = (component as any).chipText as (c?: string) => string;
+    expect(chipText("#ffffff")).toBe("#0f172a");
+    expect(chipText("#ef4444")).toBe("#ffffff");
+  });
 });

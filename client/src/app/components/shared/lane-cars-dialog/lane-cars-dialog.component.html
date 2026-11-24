@@ -34,9 +34,12 @@
 
         @for (l of lanes(); track l.lane; let i = $index) {
           <div class="lcd-row" [id]="'lane-cars-lane-' + l.lane">
-            <span class="lcd-lane" [style.background-color]="l.color || null">{{
-              l.lane + 1
-            }}</span>
+            <span
+              class="lcd-lane"
+              [style.background-color]="l.color || null"
+              [style.color]="chipText(l.color)"
+              >{{ l.lane + 1 }}</span
+            >
             <span class="lcd-name">{{
               "LCD_LANE" | translate: { lane: l.lane + 1 }
             }}</span>

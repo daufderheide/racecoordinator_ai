@@ -11,6 +11,7 @@
 }
 
 .rsd-lane {
+  font-family: var(--app-font-family);
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -21,7 +22,6 @@
   font-size: 13px;
   font-weight: 700;
   color: #ffffff;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
   background: #94a3b8;
 }
 

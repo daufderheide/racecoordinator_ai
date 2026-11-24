@@ -16,6 +16,7 @@ import {
 import { PreviewBadgeComponent } from "@app/components/shared/preview-badge/preview-badge.component";
 import { Car } from "@app/models/car";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { getContrastColor } from "@app/utils/color.utils";
 
 /** One track lane in the dialog: its index and background colour. */
 export interface LaneCarLane {
@@ -44,6 +45,9 @@ export interface LaneCarLane {
   ],
 })
 export class LaneCarsDialogComponent {
+  /** Dark or light lane number, readable on any lane color. */
+  protected readonly chipText = getContrastColor;
+
   visible = input(false);
   lanes = input<LaneCarLane[]>([]);
   cars = input<Car[]>([]);

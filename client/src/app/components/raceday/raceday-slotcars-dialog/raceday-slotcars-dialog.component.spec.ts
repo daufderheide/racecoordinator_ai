@@ -152,4 +152,10 @@ describe("RacedaySlotcarsDialogComponent (#1210)", () => {
       expect(component.rows()[0].carId).toBe("c1");
     });
   });
+
+  it("uses a dark lane number on a light lane color", () => {
+    const chipText = (component as any).chipText as (c?: string) => string;
+    expect(chipText("#ffffff")).toBe("#0f172a");
+    expect(chipText("#ef4444")).toBe("#ffffff");
+  });
 });

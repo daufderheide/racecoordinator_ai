@@ -11,6 +11,7 @@ import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { getContrastColor } from "@app/utils/color.utils";
 
 export interface SlotcarSwap {
   lane: number;
@@ -45,6 +46,9 @@ interface LaneRow {
   ],
 })
 export class RacedaySlotcarsDialogComponent {
+  /** Dark or light lane number, readable on any lane color. */
+  protected readonly chipText = getContrastColor;
+
   visible = input(false);
   heat = input<Heat | undefined>(undefined);
   track = input<Track | undefined>(undefined);

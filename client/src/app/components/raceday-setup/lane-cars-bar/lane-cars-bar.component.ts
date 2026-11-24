@@ -5,6 +5,7 @@ import {
 } from "@app/components/shared/lane-cars-dialog/lane-cars-dialog.component";
 import { Car } from "@app/models/car";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { getContrastColor } from "@app/utils/color.utils";
 
 /** One lane in the bar: index, colour and the car's name ("" = no car). */
 export interface LaneCarRow {
@@ -26,6 +27,9 @@ export interface LaneCarRow {
   imports: [TranslatePipe, LaneCarsDialogComponent],
 })
 export class LaneCarsBarComponent {
+  /** Dark or light lane number, readable on any lane color. */
+  protected readonly chipText = getContrastColor;
+
   lanes = input<LaneCarLane[]>([]);
   cars = input<Car[]>([]);
   laneCarIds = input<string[]>([]);
