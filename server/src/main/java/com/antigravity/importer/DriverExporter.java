@@ -4,29 +4,20 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverLabel;
-import com.antigravity.proto.AssetMessage;
 import com.antigravity.repository.SqliteRepository;
-import com.antigravity.service.AssetDefaultsInitializer;
 import com.antigravity.service.AssetService;
 import com.antigravity.util.LogicalSortComparator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
@@ -34,12 +25,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DriverExporter {
 
-  private static final Logger logger = LoggerFactory.getLogger(DriverExporter.class);
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private static final String[] AUDIO_SLOT_KEYS = {
@@ -62,30 +50,6 @@ public class DriverExporter {
   private final SqliteRepository<Driver> driverRepository;
   private final AssetService assetService;
   private final SqliteRepository<DriverLabel> driverLabelRepository;
-
-  public static class ExportedMediaFile {
-    private final String zipEntryName;
-    private final byte[] data;
-    private final String hash;
-
-    public ExportedMediaFile(String zipEntryName, byte[] data, String hash) {
-      this.zipEntryName = zipEntryName;
-      this.data = data;
-      this.hash = hash;
-    }
-
-    public String getZipEntryName() {
-      return zipEntryName;
-    }
-
-    public byte[] getData() {
-      return data;
-    }
-
-    public String getHash() {
-      return hash;
-    }
-  }
 
   public DriverExporter(
       DatabaseContext databaseContext,
@@ -121,14 +85,12 @@ public class DriverExporter {
     List<DriverLabel> possibleLabels = resolvePossibleLabels(targetDrivers);
     String normalizedFormat = normalizeFormat(format);
 
-    Map<String, ExportedMediaFile> hashToFileMap = new LinkedHashMap<>();
-    Map<String, String> urlToZipEntryMap = new HashMap<>();
-    Set<String> usedEntryNames = new HashSet<>();
-
     // Collect and deduplicate companion media assets (sound and avatar)
+    ExportMediaCollector media = new ExportMediaCollector(databaseContext, assetService);
     for (Driver driver : targetDrivers) {
-      collectDriverMedia(driver, hashToFileMap, urlToZipEntryMap, usedEntryNames);
+      collectDriverMedia(driver, media);
     }
+    Map<String, String> urlToZipEntryMap = media.getUrlToZipEntryMap();
 
     // Generate primary data file bytes based on requested format
     byte[] dataFileBytes;
@@ -151,7 +113,7 @@ public class DriverExporter {
     }
 
     // Bundle data file and companion assets into a ZIP archive
-    return buildZipPackage(dataFileName, dataFileBytes, hashToFileMap.values());
+    return ExportMediaCollector.buildZip(dataFileName, dataFileBytes, media.getFiles());
   }
 
   private List<Driver> prepareDrivers(List<Driver> drivers) {
@@ -264,17 +226,9 @@ public class DriverExporter {
     return "csv";
   }
 
-  private void collectDriverMedia(
-      Driver driver,
-      Map<String, ExportedMediaFile> hashToFileMap,
-      Map<String, String> urlToZipEntryMap,
-      Set<String> usedEntryNames) {
-
+  private void collectDriverMedia(Driver driver, ExportMediaCollector media) {
     // Avatar
-    if (driver.getAvatarUrl() != null && !driver.getAvatarUrl().trim().isEmpty()) {
-      resolveAndRegisterMedia(
-          driver.getAvatarUrl().trim(), "image", hashToFileMap, urlToZipEntryMap, usedEntryNames);
-    }
+    media.add(driver.getAvatarUrl(), ExportMediaCollector.IMAGE);
 
     // Audio Slots
     for (String slotKey : AUDIO_SLOT_KEYS) {
@@ -282,304 +236,9 @@ public class DriverExporter {
       if (config == null) continue;
       String type = config.getType();
       if ("preset".equalsIgnoreCase(type) || type == null || type.trim().isEmpty()) {
-        String url = config.getUrl();
-        if (url != null && !url.trim().isEmpty()) {
-          resolveAndRegisterMedia(
-              url.trim(), "sound", hashToFileMap, urlToZipEntryMap, usedEntryNames);
-        }
+        media.add(config.getUrl(), ExportMediaCollector.SOUND);
       }
     }
-  }
-
-  private void resolveAndRegisterMedia(
-      String urlOrId,
-      String mediaType,
-      Map<String, ExportedMediaFile> hashToFileMap,
-      Map<String, String> urlToZipEntryMap,
-      Set<String> usedEntryNames) {
-
-    if (urlToZipEntryMap.containsKey(urlOrId)) {
-      return;
-    }
-
-    ResolvedAsset asset = resolveAssetData(urlOrId);
-    if (asset == null || asset.data == null || asset.data.length == 0) {
-      return;
-    }
-
-    String hash = AssetService.calculateSha256(asset.data);
-    if (hashToFileMap.containsKey(hash)) {
-      // Audio or image is shared with another driver or slot: reuse existing entry
-      ExportedMediaFile existing = hashToFileMap.get(hash);
-      registerUrlMappings(urlOrId, existing.getZipEntryName(), urlToZipEntryMap);
-      return;
-    }
-
-    String folder = "image".equals(mediaType) ? "images/" : "audio/";
-    String uniqueName =
-        chooseUniqueEntryName(asset.suggestedName, mediaType, folder, usedEntryNames);
-    String zipEntryName = folder + uniqueName;
-    usedEntryNames.add(zipEntryName.toLowerCase(Locale.ROOT));
-
-    ExportedMediaFile exported = new ExportedMediaFile(zipEntryName, asset.data, hash);
-    hashToFileMap.put(hash, exported);
-    registerUrlMappings(urlOrId, zipEntryName, urlToZipEntryMap);
-  }
-
-  private void registerUrlMappings(
-      String urlOrId, String zipEntryName, Map<String, String> urlToZipEntryMap) {
-    if (urlOrId == null || urlOrId.trim().isEmpty() || zipEntryName == null) {
-      return;
-    }
-    urlToZipEntryMap.put(urlOrId, zipEntryName);
-
-    String clean = urlOrId.trim();
-    if (clean.toLowerCase(Locale.ROOT).startsWith("preset:")) {
-      String without = clean.substring(7).trim();
-      urlToZipEntryMap.put(without, zipEntryName);
-    } else {
-      urlToZipEntryMap.put("preset:" + clean, zipEntryName);
-    }
-
-    if (clean.startsWith("/assets/")) {
-      String stripped = clean.substring("/assets/".length());
-      urlToZipEntryMap.put(stripped, zipEntryName);
-    } else {
-      urlToZipEntryMap.put("/assets/" + clean, zipEntryName);
-    }
-
-    // Default helmet url variant like /assets/default_black-yellow_Helmet_Black-Yellow
-    if (clean.startsWith("/assets/default_") && clean.contains("_Helmet_")) {
-      String helmetSuffix = clean.substring(clean.indexOf("_Helmet_") + 8).toLowerCase(Locale.ROOT);
-      urlToZipEntryMap.put(
-          "assets/defaults/helmets/helmet_" + helmetSuffix.replace(" ", "_") + ".png",
-          zipEntryName);
-    }
-
-    // Map aliases for default assets
-    String defaultResPath = AssetDefaultsInitializer.getDefaultResourcePath(clean);
-    if (defaultResPath == null && clean.startsWith("/assets/")) {
-      defaultResPath =
-          AssetDefaultsInitializer.getDefaultResourcePath(clean.substring("/assets/".length()));
-    }
-    if (defaultResPath != null) {
-      registerDefaultAssetAliases(defaultResPath, zipEntryName, urlToZipEntryMap);
-    }
-  }
-
-  private void registerDefaultAssetAliases(
-      String defaultResPath, String zipEntryName, Map<String, String> urlToZipEntryMap) {
-    for (AssetDefaultsInitializer.DefaultAsset def :
-        AssetDefaultsInitializer.getDefaultImageAssets()) {
-      String res = AssetDefaultsInitializer.getDefaultResourcePath(def.id);
-      if (defaultResPath.equalsIgnoreCase(res)) {
-        urlToZipEntryMap.put(def.id, zipEntryName);
-        urlToZipEntryMap.put("/assets/" + def.id, zipEntryName);
-        String fn = AssetDefaultsInitializer.getDefaultFilename(def.id);
-        if (fn != null) {
-          urlToZipEntryMap.put(fn, zipEntryName);
-          urlToZipEntryMap.put("/assets/" + fn, zipEntryName);
-        }
-      }
-    }
-    for (AssetDefaultsInitializer.DefaultAsset def :
-        AssetDefaultsInitializer.getDefaultAudioAssets()) {
-      String res = AssetDefaultsInitializer.getDefaultResourcePath(def.id);
-      if (defaultResPath.equalsIgnoreCase(res)) {
-        urlToZipEntryMap.put(def.id, zipEntryName);
-        urlToZipEntryMap.put("preset:" + def.id, zipEntryName);
-        urlToZipEntryMap.put("/assets/" + def.id, zipEntryName);
-        String fn = AssetDefaultsInitializer.getDefaultFilename(def.id);
-        if (fn != null) {
-          urlToZipEntryMap.put(fn, zipEntryName);
-          urlToZipEntryMap.put("/assets/" + fn, zipEntryName);
-        }
-      }
-    }
-  }
-
-  private static class ResolvedAsset {
-    final byte[] data;
-    final String suggestedName;
-
-    ResolvedAsset(byte[] data, String suggestedName) {
-      this.data = data;
-      this.suggestedName = suggestedName;
-    }
-  }
-
-  private ResolvedAsset resolveAssetData(String urlOrId) {
-    if (urlOrId == null || urlOrId.trim().isEmpty()) {
-      return null;
-    }
-
-    String cleanUrl = urlOrId.trim();
-    if (cleanUrl.toLowerCase(Locale.ROOT).startsWith("preset:")) {
-      cleanUrl = cleanUrl.substring(7).trim();
-    }
-
-    String currentDbName =
-        databaseContext != null && databaseContext.getCurrentDatabaseName() != null
-            ? databaseContext.getCurrentDatabaseName()
-            : "RaceCoordinator_AI_DB";
-    File assetsDir =
-        databaseContext != null
-            ? new File(new File(databaseContext.getDataRoot(), currentDbName), "assets")
-            : new File("assets");
-
-    String filename =
-        cleanUrl.startsWith("/assets/") ? cleanUrl.substring("/assets/".length()) : cleanUrl;
-
-    String defaultResPath = AssetDefaultsInitializer.getDefaultResourcePath(cleanUrl);
-    if (defaultResPath == null) {
-      defaultResPath = AssetDefaultsInitializer.getDefaultResourcePath(filename);
-    }
-    String defaultSuggestedName = defaultResPath != null ? extractSimpleName(defaultResPath) : null;
-
-    // 1. Check physical file directly in assets directory
-    File directFile = new File(assetsDir, filename);
-    if (directFile.exists() && directFile.isFile() && directFile.length() > 0) {
-      try {
-        byte[] bytes = Files.readAllBytes(directFile.toPath());
-        String suggested =
-            defaultSuggestedName != null ? defaultSuggestedName : extractSimpleName(filename);
-        return new ResolvedAsset(bytes, suggested);
-      } catch (Exception e) {
-        logger.warn("Could not read asset file: {}", directFile.getAbsolutePath(), e);
-      }
-    }
-
-    // 2. Try finding via AssetService metadata
-    if (assetService != null) {
-      AssetMessage assetMsg = assetService.getAssetById(filename);
-      if (assetMsg == null && filename.contains("_") && !filename.startsWith("default_")) {
-        String idPrefix = filename.substring(0, filename.indexOf('_'));
-        assetMsg = assetService.getAssetById(idPrefix);
-      }
-      if (assetMsg != null) {
-        String realFilename =
-            assetMsg.getUrl() != null && assetMsg.getUrl().startsWith("/assets/")
-                ? assetMsg.getUrl().substring("/assets/".length())
-                : filename;
-        File assetFile = new File(assetsDir, realFilename);
-        if (assetFile.exists() && assetFile.isFile() && assetFile.length() > 0) {
-          try {
-            byte[] bytes = Files.readAllBytes(assetFile.toPath());
-            String name =
-                defaultSuggestedName != null
-                    ? defaultSuggestedName
-                    : (assetMsg.getName() != null && !assetMsg.getName().isEmpty()
-                        ? assetMsg.getName()
-                        : extractSimpleName(realFilename));
-            return new ResolvedAsset(bytes, name);
-          } catch (Exception e) {
-            logger.warn(
-                "Could not read asset file from service metadata: {}",
-                assetFile.getAbsolutePath(),
-                e);
-          }
-        }
-      }
-    }
-
-    // 3. Check case-insensitive match in assets directory
-    if (assetsDir.exists() && assetsDir.isDirectory()) {
-      File[] matching =
-          assetsDir.listFiles(
-              (d, name) -> name.equalsIgnoreCase(filename) || name.endsWith("_" + filename));
-      if (matching != null && matching.length > 0) {
-        try {
-          byte[] bytes = Files.readAllBytes(matching[0].toPath());
-          String suggested =
-              defaultSuggestedName != null
-                  ? defaultSuggestedName
-                  : extractSimpleName(matching[0].getName());
-          return new ResolvedAsset(bytes, suggested);
-        } catch (Exception e) {
-          logger.warn(
-              "Could not read case-matched asset file: {}", matching[0].getAbsolutePath(), e);
-        }
-      }
-    }
-
-    // 4. Default resource fallback from classpath if not present on disk
-    if (defaultResPath != null) {
-      byte[] bytes = readResourceBytes(defaultResPath);
-      if (bytes != null && bytes.length > 0) {
-        return new ResolvedAsset(bytes, defaultSuggestedName);
-      }
-    }
-
-    return null;
-  }
-
-  private byte[] readResourceBytes(String resourcePath) {
-    if (resourcePath == null) {
-      return null;
-    }
-    try (java.io.InputStream is =
-        AssetDefaultsInitializer.class.getResourceAsStream(resourcePath)) {
-      if (is == null) {
-        return null;
-      }
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      byte[] buf = new byte[8192];
-      int nRead;
-      while ((nRead = is.read(buf, 0, buf.length)) != -1) {
-        buffer.write(buf, 0, nRead);
-      }
-      return buffer.toByteArray();
-    } catch (Exception e) {
-      logger.warn("Could not read default resource bytes: {}", resourcePath, e);
-      return null;
-    }
-  }
-
-  private String extractSimpleName(String filename) {
-    if (filename == null) return "sound.wav";
-    String simple = filename;
-    int slashIdx = Math.max(simple.lastIndexOf('/'), simple.lastIndexOf('\\'));
-    if (slashIdx >= 0) {
-      simple = simple.substring(slashIdx + 1);
-    }
-    // If UUID prefix (e.g. 12345678-1234-..._beep.wav or uuid_beep.wav), strip it
-    int underscoreIdx = simple.indexOf('_');
-    if (underscoreIdx > 0 && underscoreIdx < simple.length() - 1) {
-      simple = simple.substring(underscoreIdx + 1);
-    }
-    return simple;
-  }
-
-  private String chooseUniqueEntryName(
-      String suggestedName, String mediaType, String folder, Set<String> usedEntryNames) {
-    String baseName =
-        suggestedName != null && !suggestedName.trim().isEmpty() ? suggestedName.trim() : "";
-    baseName = baseName.replaceAll("[^a-zA-Z0-9.-]", "_");
-
-    if (baseName.isEmpty() || baseName.startsWith(".")) {
-      baseName = "image".equals(mediaType) ? "avatar.png" : "audio.wav";
-    }
-
-    String name = baseName;
-    String nameWithoutExt = name;
-    String ext = "";
-    int dotIdx = name.lastIndexOf('.');
-    if (dotIdx > 0) {
-      nameWithoutExt = name.substring(0, dotIdx);
-      ext = name.substring(dotIdx);
-    }
-
-    if (ext.isEmpty()) {
-      ext = "image".equals(mediaType) ? ".png" : ".wav";
-      name = nameWithoutExt + ext;
-    }
-
-    int counter = 1;
-    while (usedEntryNames.contains((folder + name).toLowerCase(Locale.ROOT))) {
-      name = nameWithoutExt + "_" + counter + ext;
-      counter++;
-    }
-    return name;
   }
 
   /**
@@ -842,28 +501,5 @@ public class DriverExporter {
       return "\"" + value.replace("\"", "\"\"") + "\"";
     }
     return value;
-  }
-
-  private byte[] buildZipPackage(
-      String dataFileName, byte[] dataFileBytes, Iterable<ExportedMediaFile> mediaFiles)
-      throws IOException {
-
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-      // Primary data file first
-      ZipEntry dataEntry = new ZipEntry(dataFileName);
-      zos.putNextEntry(dataEntry);
-      zos.write(dataFileBytes);
-      zos.closeEntry();
-
-      // Companion media files (deduplicated)
-      for (ExportedMediaFile media : mediaFiles) {
-        ZipEntry mediaEntry = new ZipEntry(media.getZipEntryName());
-        zos.putNextEntry(mediaEntry);
-        zos.write(media.getData());
-        zos.closeEntry();
-      }
-    }
-    return baos.toByteArray();
   }
 }
