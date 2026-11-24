@@ -20,13 +20,31 @@ export class HeatsFilterBarComponent {
   readonly selectedStep = input<number | null>(null);
   readonly totalHeats = input<number>(0);
   readonly visibleHeats = input<number>(0);
+  readonly showDividers = input<boolean>(true);
+  readonly showGroupDividers = input<boolean>(true);
+  readonly showStepDividers = input<boolean>(true);
 
   readonly groupChange = output<number | null>();
   readonly stepChange = output<number | null>();
   readonly clearFilters = output<void>();
+  readonly toggleDividers = output<boolean>();
+  readonly toggleGroupDividers = output<boolean>();
+  readonly toggleStepDividers = output<boolean>();
 
   isFilterActive(): boolean {
     return this.selectedGroup() !== null || this.selectedStep() !== null;
+  }
+
+  onToggleDividers(): void {
+    this.toggleDividers.emit(!this.showDividers());
+  }
+
+  onToggleGroupDividers(): void {
+    this.toggleGroupDividers.emit(!this.showGroupDividers());
+  }
+
+  onToggleStepDividers(): void {
+    this.toggleStepDividers.emit(!this.showStepDividers());
   }
 
   onSelectGroup(grp: number | null): void {

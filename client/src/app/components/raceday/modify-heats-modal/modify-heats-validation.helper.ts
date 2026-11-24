@@ -1,5 +1,9 @@
+import { finalize, Subscription } from "rxjs";
+import { DataService } from "@app/data.service";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { Track } from "@app/models/track";
+import { IRaceParticipant } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -8,6 +12,11 @@ import {
   isPlaceholderParticipant,
   isStepUpParticipant,
 } from "./modify-heats-modal.utils";
+import {
+  buildSavePayload,
+  convertParticipantsToProto,
+  mapRegeneratedHeatsFromProto,
+} from "./modify-heats-ui.helper";
 
 export function validateGroupSequence(_heats: Heat[]): {
   isValid: boolean;
@@ -265,4 +274,79 @@ export function getModifyHeatsValidationError(
   }
 
   return null;
+}
+
+export function executeRegenerateHeats(
+  localParticipants: RaceParticipant[],
+  dataService: DataService,
+  onSuccess: (heats: Heat[]) => void,
+  onError: (msg: string) => void,
+  onComplete: () => void,
+): Subscription | null {
+  try {
+    const protoParticipants: IRaceParticipant[] =
+      convertParticipantsToProto(localParticipants);
+    return dataService
+      .regenerateHeats(protoParticipants)
+      .pipe(finalize(onComplete))
+      .subscribe({
+        next: (res) => {
+          if (res.success && res.heats) {
+            onSuccess(mapRegeneratedHeatsFromProto(res.heats));
+          } else {
+            onError(
+              res.errorMessage ||
+                "Failed to regenerate heats. Please try again.",
+            );
+          }
+        },
+        error: (err) => {
+          onError("Server error: " + err.message);
+        },
+      });
+  } catch (e) {
+    console.error("Error building regenerate heats payload:", e);
+    onComplete();
+    return null;
+  }
+}
+
+export function executeModifyHeatsSave(
+  localHeats: Heat[],
+  track: Track,
+  isHeatStarted: (h: Heat) => boolean,
+  localParticipants: RaceParticipant[],
+  dataService: DataService,
+  onSuccess: () => void,
+  onError: () => void,
+  onComplete: () => void,
+): Subscription | null {
+  try {
+    const { protoHeats, protoParticipants } = buildSavePayload(
+      localHeats,
+      track,
+      isHeatStarted,
+      localParticipants,
+    );
+
+    return dataService
+      .modifyHeats(protoHeats, protoParticipants)
+      .pipe(finalize(onComplete))
+      .subscribe({
+        next: (res: any) => {
+          if (res.success) {
+            onSuccess();
+          } else {
+            onError();
+          }
+        },
+        error: () => {
+          onError();
+        },
+      });
+  } catch (e) {
+    console.error("Error building save payload:", e);
+    onComplete();
+    return null;
+  }
 }
