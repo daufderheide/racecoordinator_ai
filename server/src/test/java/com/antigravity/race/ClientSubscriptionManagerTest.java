@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -78,9 +79,20 @@ public class ClientSubscriptionManagerTest {
     }
 
     // Since it's a singleton, we have to clear internal state for isolation
+    manager.flushBroadcasts();
     clearPrivateSet("sessions");
     clearPrivateSet("raceDataSubscribers");
     clearPrivateSet("interfaceSubscribers");
+  }
+
+  @After
+  public void tearDown() {
+    if (manager != null) {
+      manager.flushBroadcasts();
+      clearPrivateSet("sessions");
+      clearPrivateSet("raceDataSubscribers");
+      clearPrivateSet("interfaceSubscribers");
+    }
   }
 
   private void clearPrivateSet(String fieldName) {
@@ -731,6 +743,7 @@ public class ClientSubscriptionManagerTest {
     com.antigravity.proto.InterfaceEvent event =
         com.antigravity.proto.InterfaceEvent.parseFrom(bytes);
     assertEquals(com.antigravity.proto.InterfaceStatus.NO_DATA, event.getStatus().getStatus());
+    manager.removeInterfaceSession(mockContext);
   }
 
   @Test
@@ -764,6 +777,7 @@ public class ClientSubscriptionManagerTest {
     com.antigravity.proto.InterfaceEvent event =
         com.antigravity.proto.InterfaceEvent.parseFrom(bytes);
     assertEquals(com.antigravity.proto.InterfaceStatus.CONNECTED, event.getStatus().getStatus());
+    manager.removeInterfaceSession(mockContext);
   }
 
   private WsContext createMockWsContext(org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote) {
