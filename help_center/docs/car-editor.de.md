@@ -82,3 +82,12 @@ Die Ergebnisse zeigen das Auto, das jeder Fahrer gefahren ist, so wie es in dies
 
 - **Laufergebnisse** und die Ergebnisseite eines Fahrers: Jede Laufkarte zeigt das Auto neben der Spur. Zeigen Sie darauf, um Klasse, Maßstab und Setup zu sehen.
 - **Rennergebnisse**: Jeder Fahrer zeigt sein Auto unter seinem Namen. Ist er mehr als ein Auto gefahren (ein IROC-Rennen oder ein Tausch), steht dort, wie viele; zeigen Sie darauf, um die Liste zu sehen.
+
+## Auto-Statistik {: #car-stats }
+
+Die **Auto-Statistik** zeigt, wie Ihre Slotcars in Ihren gespeicherten Rennen abgeschnitten haben. Öffnen Sie sie mit der Diagramm-Schaltfläche oben im Slotcar-Editor; sie startet mit dem Auto, das gerade angezeigt wird.
+
+- **Gruppieren nach**: eine Zeile je Auto, Klasse, Setup-Feld (Marke, Maßstab, Motor, Magnet, Chassis, Übersetzung, Reifen), eigenem Feld, Strecke oder Fahrer. Wählen Sie ein Auto und gruppieren Sie nach Strecke oder Fahrer, um zu sehen, wo und mit wem es am schnellsten war.
+- **Filter**: Grenzen Sie die Ergebnisse auf ein Auto, eine Klasse, eine Strecke oder einen Fahrer ein.
+- **Demo-Rennen**: Haken Sie es an, um die Ergebnisse von Demo-Rennen zu sehen.
+- Die Zahlen verwenden das Auto jedes Laufs, wie es gefahren ist; spätere Änderungen am Auto ändern sie nicht. Runden unter der Mindestrundenzeit des Rennens und Runden, die nicht für Rekorde zählen, werden nicht mitgezählt.

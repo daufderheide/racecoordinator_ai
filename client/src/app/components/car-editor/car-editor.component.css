@@ -346,3 +346,36 @@
   min-height: 38px;
   margin-top: 22px;
 }
+
+/* Car Stats button in the title bar (#1210). */
+.car-title-btn {
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  font-family: inherit;
+}
+
+.car-title-btn .material-icons {
+  font-size: 1.35rem;
+}
+
+.car-title-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.car-title-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}

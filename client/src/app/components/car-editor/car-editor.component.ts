@@ -661,6 +661,14 @@ export class CarEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.captureState();
   }
 
+  /** Car Stats (#1210), starting with the car on screen. */
+  openCarStats() {
+    const carId = this.selectedCarId;
+    this.router.navigate(["/car-stats"], {
+      queryParams: carId ? { carId } : {},
+    });
+  }
+
   openFieldManager() {
     // Leave the field being edited first, so typing can't change it behind the dialog.
     (document.activeElement as HTMLElement | null)?.blur();

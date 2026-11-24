@@ -82,3 +82,12 @@ De resultaten tonen de auto waarmee elke rijder reed, zoals die in die heat was.
 
 - **Heatresultaten** en de resultatenpagina van een rijder: elke heatkaart toont de auto naast de baan. Wijs hem aan om klasse, schaal en afstelling te zien.
 - **Raceresultaten**: elke rijder toont zijn auto onder zijn naam. Reed hij met meer dan één auto (een IROC-race of een wissel), dan staat er hoeveel; wijs het aan om de lijst te zien.
+
+## Autostatistieken {: #car-stats }
+
+**Autostatistieken** laat zien hoe je slotcars het deden in je opgeslagen races. Open het met de grafiekknop bovenaan in de Slotcar-editor; het begint met de auto die je bekijkt.
+
+- **Groeperen op**: één rij per auto, klasse, afstelveld (merk, schaal, motor, magneet, chassis, overbrenging, banden), een van je eigen velden, baan of rijder. Kies een auto en groepeer op baan of rijder om te zien waar en met wie hij het snelst ging.
+- **Filters**: beperk de resultaten tot één auto, klasse, baan of rijder.
+- **Demoraces**: vink het aan om de resultaten van demoraces te zien.
+- De cijfers gebruiken de auto van elke heat zoals die reed, dus een auto later aanpassen verandert ze niet. Ronden onder de minimale rondetijd van de race en ronden die niet meetellen voor records tellen niet mee.

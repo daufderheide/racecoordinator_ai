@@ -82,3 +82,12 @@ The results show the car each driver ran, as it was in that heat. Editing a car 
 
 - **Heat Results** and a driver's results page: each heat card shows the car next to the lane. Point at it to see the class, scale and setup.
 - **Race Results**: each racer shows their car under their name. If they ran more than one car (an IROC race or a swap), it says how many; point at it to see the list.
+
+## Car Stats {: #car-stats }
+
+**Car Stats** shows how your slotcars did in your saved races. Open it with the chart button at the top of the Slotcar Editor; it starts with the car on screen.
+
+- **Group by**: one row per car, class, setup field (brand, scale, motor, magnet, chassis, gears, tyres), one of your own fields, track or driver. Pick a car and group by track or driver to see where and with whom it went fastest.
+- **Filters**: narrow the results to one car, class, track or driver.
+- **Demo races**: tick it to see the results of demo races instead.
+- The numbers use each heat's car as it ran, so editing a car later doesn't change them. Laps under the race's minimum lap time and laps left out of the records don't count.

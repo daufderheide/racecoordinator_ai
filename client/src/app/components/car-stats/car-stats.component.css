@@ -1,0 +1,206 @@
+/* Car Stats (#1210): results from the saved races, per car, class or setup. */
+
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  color: #e2e8f0;
+  font-family: var(--app-font-family);
+  overflow: hidden;
+  position: relative;
+}
+
+.page-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(
+      circle at 15% 50%,
+      rgba(56, 189, 248, 0.15),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 85% 30%,
+      rgba(139, 92, 246, 0.15),
+      transparent 40%
+    ),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    30px 30px,
+    30px 30px;
+  overflow: hidden;
+}
+
+.cs-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 30px 24px;
+  overflow: auto;
+}
+
+.cs-intro {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+.config-section {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.cs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.cs-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 180px;
+}
+
+.cs-filter label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Demo races checkbox, as in the editors. */
+.checkbox-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: relative;
+  height: 20px;
+  width: 20px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-radius: 4px;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid #0f172a;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.cs-results {
+  overflow-x: auto;
+}
+
+.cs-message {
+  margin: 20px 0;
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.cs-error {
+  color: #f87171;
+}
+
+.cs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.cs-table th {
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.cs-table td {
+  padding: 10px 12px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.cs-table .cs-col-group,
+.cs-table .cs-col-text {
+  text-align: left;
+}
+
+.cs-table td.cs-col-group {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.cs-table td.cs-best {
+  color: #e879f9;
+  font-weight: 700;
+}
+
+.cs-row:hover td {
+  background: rgba(56, 189, 248, 0.06);
+}

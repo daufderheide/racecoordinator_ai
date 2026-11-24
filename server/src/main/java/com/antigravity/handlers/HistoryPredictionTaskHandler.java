@@ -18,6 +18,7 @@ import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.Racing;
+import com.antigravity.service.CarStatistics;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.RacePredictionService;
 import com.antigravity.util.CsvExporter;
@@ -68,6 +69,7 @@ public class HistoryPredictionTaskHandler {
         Role.DIRECTOR);
     app.get("/api/history/stats", this::getGlobalStatistics, Role.VIEWER);
     app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics, Role.VIEWER);
+    app.get("/api/history/cars/stats", this::getCarStatistics, Role.VIEWER);
     app.get("/api/predictions/races/{id}", this::getRacePredictionRecord, Role.VIEWER);
     app.get("/api/predictions/evaluations/{id}", this::getPredictionEvaluationRecord, Role.VIEWER);
   }
@@ -480,6 +482,29 @@ public class HistoryPredictionTaskHandler {
     } catch (Exception e) {
       logger.error("Error fetching driver statistics", e);
       ctx.status(500).result("Error fetching driver statistics: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Car stats from the saved races (#1210): {@code groupBy} = car, class, brand, scale, motor,
+   * magnet, chassis, gears, tyres, custom:&lt;fieldId&gt;, track or driver; optional filters {@code
+   * carId}, {@code carClass}, {@code trackId}, {@code driverId}; {@code demo=true} for demo races.
+   */
+  public void getCarStatistics(Context ctx) {
+    try {
+      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
+      List<RaceHistoryRecord> history =
+          DatabaseService.getInstance().getRaceHistory(databaseContext, scope);
+      CarStatistics.Filters filters =
+          new CarStatistics.Filters(
+              ctx.queryParam("carId"),
+              ctx.queryParam("carClass"),
+              ctx.queryParam("trackId"),
+              ctx.queryParam("driverId"));
+      ctx.json(CarStatistics.compute(history, ctx.queryParam("groupBy"), filters));
+    } catch (Exception e) {
+      logger.error("Error fetching car statistics", e);
+      ctx.status(500).result("Error fetching car statistics: " + e.getMessage());
     }
   }
 

@@ -3,6 +3,7 @@ import { ActivatedRouteSnapshot, ResolveFn, Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
 import { CarEditorComponent } from "@app/components/car-editor/car-editor.component";
+import { CarStatsComponent } from "@app/components/car-stats/car-stats.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
@@ -155,6 +156,12 @@ export const routes: Routes = [
     runGuardsAndResolvers: "always",
     title: "Slotcar Editor",
     data: { animation: "CarEditorPage" },
+  },
+  {
+    path: "car-stats",
+    component: CarStatsComponent,
+    title: "Car Stats",
+    data: { animation: "CarStatsPage" },
   },
   {
     path: "track-manager",

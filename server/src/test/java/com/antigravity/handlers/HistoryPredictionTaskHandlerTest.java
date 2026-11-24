@@ -52,6 +52,7 @@ public class HistoryPredictionTaskHandlerTest {
             eq(Role.DIRECTOR));
     verify(mockJavalin).get(eq("/api/history/stats"), any(), eq(Role.VIEWER));
     verify(mockJavalin).get(eq("/api/history/drivers/{driverId}/stats"), any(), eq(Role.VIEWER));
+    verify(mockJavalin).get(eq("/api/history/cars/stats"), any(), eq(Role.VIEWER));
     verify(mockJavalin).get(eq("/api/predictions/races/{id}"), any(), eq(Role.VIEWER));
     verify(mockJavalin).get(eq("/api/predictions/evaluations/{id}"), any(), eq(Role.VIEWER));
   }
@@ -131,6 +132,17 @@ public class HistoryPredictionTaskHandlerTest {
 
     handler.exportRaceHistoryCsv(mockCtx);
     verify(mockCtx).status(404);
+  }
+
+  @Test
+  public void testGetCarStatistics_EmptyHistoryGivesAnEmptyList() {
+    // Car stats (#1210) come from the saved races; a fresh database has none.
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.queryParam("groupBy")).thenReturn("class");
+    when(mockCtx.status(any(Integer.class))).thenReturn(mockCtx);
+
+    handler.getCarStatistics(mockCtx);
+    verify(mockCtx).json(eq(new ArrayList<>()));
   }
 
   @Test
