@@ -351,7 +351,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   private modifyHeatsService = inject(ModifyHeatsService);
 
-  constructor(private dataService: DataService) {
+  constructor(protected dataService: DataService) {
     this.undoManager = new UndoManager<ModifyHeatsState>(
       {
         clonner: (state) => ({

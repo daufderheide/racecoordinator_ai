@@ -2,7 +2,10 @@ import { expect, test } from "@playwright/test";
 import { MOCK_RACES } from "@app/testing/data/races_data";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
-/** Slotcars in Race Day Setup (#1210): the car on a racing row and the pick dialog. */
+/**
+ * Slotcars in Race Day Setup (#1210): the car on a racing row and the pick
+ * dialog, with a car another entry has greyed out (#1251).
+ */
 test.describe("Race Day Setup slotcars", () => {
   test.use({ locale: "en" });
 
@@ -37,11 +40,9 @@ test.describe("Race Day Setup slotcars", () => {
   test("picks a car in the dialog", async ({ page }) => {
     await page.locator("#racing-car-btn-1").click();
     await page.locator("#car-pick-dialog").waitFor();
-    await page.locator("#car-pick-select").click();
-    await page
-      .locator(".custom-select-option")
-      .filter({ hasText: "Audi R8 LMS" })
-      .click();
+    // The Porsche is driver 1's (#1251): greyed out, "Used by …".
+    await expect(page.locator("#car-pick-car-c1")).toBeDisabled();
+    await page.locator("#car-pick-car-c3").click();
     await TestSetupHelper.blurActiveElement(page);
     await page.mouse.move(0, 0);
 
@@ -52,6 +53,26 @@ test.describe("Race Day Setup slotcars", () => {
 
     await page.locator("#car-pick-save").click();
     await expect(page.locator("#racing-item-1")).toContainText("Audi R8 LMS");
+  });
+
+  test("warns when two entries have the same car", async ({ page }) => {
+    await TestSetupHelper.setupLocalStorage(page, {
+      selectedDriverIds: ["d1", "d2"],
+      selectedCarChoices: {
+        d_d1: { carId: "c1", carPerDriver: false, driverCars: {} },
+        d_d2: { carId: "c1", carPerDriver: false, driverCars: {} },
+      },
+      racedaySetupWalkthroughSeen: true,
+      language: "en",
+    });
+    await TestSetupHelper.waitForLocalization(page, "en", page.reload());
+    await page.locator("#racing-item-1 .driver-car.car-clash").waitFor();
+    await TestSetupHelper.disableAnimations(page);
+    await page.mouse.move(0, 0);
+    await expect(page.locator("#racing-item-0").locator("..")).toHaveScreenshot(
+      "setup-racing-rows-car-clash.png",
+      { animations: "disabled" },
+    );
   });
 });
 

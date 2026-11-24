@@ -60,7 +60,7 @@ Elke auto krijgt dezelfde velden en houdt zijn eigen waarden. Een veld dat je le
 
 ## Slotcars in een race {: #car-in-race }
 
-- **Race Day Setup**: klik in de lijst met coureurs die meedoen op het auto-icoon van een rij om een slotcar te kiezen. Een team kiest **Eén auto voor het team** of **Een auto per coureur**. RC AI onthoudt je keuze voor de volgende race.
+- **Race Day Setup**: klik in de lijst met coureurs die meedoen op het auto-icoon van een rij om een slotcar te kiezen. Een team kiest **Eén auto voor het team** of **Een auto per coureur**. Eén auto rijdt voor één coureur: een auto die een ander al heeft, is grijs, en een rij toont een waarschuwing als een onthouden keuze botst. RC AI onthoudt je keuze voor de volgende race.
 - **Wisselen tussen de heats**: open op de racedag **Race Directeur → Slotcars…**. Daar staat de volgende heat baan voor baan; kies een andere auto en hij wordt meteen gewisseld. Tijdens een heat zijn de lijsten op slot.
 - **Heats wijzigen**: het auto-icoon bij een coureur verandert zijn auto voor alle heats die nog niet gereden zijn.
 - **Uitslagen**: elke heat bewaart een kopie van de auto zoals hij reed, dus een auto later aanpassen of verwijderen verandert oude uitslagen niet.

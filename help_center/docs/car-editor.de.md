@@ -60,7 +60,7 @@ Jedes Auto bekommt dieselben Felder und behält seine eigenen Werte. Ein leer ge
 
 ## Slotcars im Rennen {: #car-in-race }
 
-- **Race Day Setup**: Klicken Sie in der Liste der startenden Fahrer auf das Auto-Symbol einer Zeile, um ein Slotcar zu wählen. Ein Team wählt **Ein Auto für das Team** oder **Ein Auto pro Fahrer**. RC AI merkt sich Ihre Auswahl für das nächste Rennen.
+- **Race Day Setup**: Klicken Sie in der Liste der startenden Fahrer auf das Auto-Symbol einer Zeile, um ein Slotcar zu wählen. Ein Team wählt **Ein Auto für das Team** oder **Ein Auto pro Fahrer**. Ein Auto fährt für einen Fahrer: Ein Auto, das ein anderer schon hat, ist ausgegraut, und eine Zeile zeigt eine Warnung, wenn eine gemerkte Auswahl kollidiert. RC AI merkt sich Ihre Auswahl für das nächste Rennen.
 - **Tauschen zwischen den Läufen**: Öffnen Sie am Renntag **Rennleiter → Slotcars…**. Dort steht der nächste Lauf Spur für Spur; wählen Sie ein anderes Auto, und es wird sofort getauscht. Während ein Lauf läuft, sind die Listen gesperrt.
 - **Läufe ändern**: Das Auto-Symbol bei einem Fahrer ändert sein Auto für alle Läufe, die noch nicht gefahren sind.
 - **Ergebnisse**: Jeder Lauf behält eine Kopie des Autos, wie es gefahren ist. Spätere Änderungen oder das Löschen eines Autos ändern alte Ergebnisse nicht.

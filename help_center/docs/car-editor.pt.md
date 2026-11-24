@@ -60,7 +60,7 @@ Todos os carros têm os mesmos campos e guardam seus próprios valores. Um campo
 
 ## Carros slot numa corrida {: #car-in-race }
 
-- **Race Day Setup**: na lista de pilotos que vão correr, clique no ícone de carro de uma linha para escolher um carro slot. Uma equipe escolhe **Um carro para a equipe** ou **Um carro por piloto**. O RC AI lembra a sua escolha para a próxima corrida.
+- **Race Day Setup**: na lista de pilotos que vão correr, clique no ícone de carro de uma linha para escolher um carro slot. Uma equipe escolhe **Um carro para a equipe** ou **Um carro por piloto**. Um carro corre para um só piloto: um carro que outro piloto já tem fica em cinza, e uma linha mostra um aviso se uma escolha lembrada entrar em conflito. O RC AI lembra a sua escolha para a próxima corrida.
 - **Trocar entre baterias**: no dia da corrida, abra **Diretor de Prova → Carros slot…**. Ele mostra a próxima bateria pista por pista; escolha outro carro e ele é trocado na hora. Durante uma bateria, as listas ficam bloqueadas.
 - **Modificar baterias**: o ícone de carro de um piloto muda o carro dele para todas as baterias que ainda não foram corridas.
 - **Resultados**: cada bateria guarda uma cópia do carro como ele correu, então editar ou excluir um carro depois não muda os resultados anteriores.

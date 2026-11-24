@@ -42,6 +42,15 @@ export function hasAnyCar(choice: CarChoice | undefined): boolean {
     : !!choice.carId;
 }
 
+/** The car ids a choice uses: the shared car, or each driver's car. */
+export function choiceCarIds(choice: CarChoice | undefined): string[] {
+  if (!choice) return [];
+  const ids = choice.carPerDriver
+    ? Object.values(choice.driverCars)
+    : [choice.carId];
+  return [...new Set(ids.filter(Boolean))];
+}
+
 /** What the server gets at race start for one entry. */
 export function toCarChoiceProto(
   participantId: string,

@@ -849,8 +849,22 @@
                       !laneCarsUi.active() &&
                       carSummary(participant)
                     ) {
-                      <div class="driver-car" [title]="carSummary(participant)">
-                        <span class="material-icons">directions_car</span>
+                      <div
+                        class="driver-car"
+                        [class.car-clash]="!!carPick.conflict(participant)"
+                        [title]="
+                          carPick.conflict(participant)
+                            ? ('CPD_USED_BY'
+                              | translate
+                                : { name: carPick.conflict(participant) })
+                            : carSummary(participant)
+                        "
+                      >
+                        <span class="material-icons">{{
+                          carPick.conflict(participant)
+                            ? "warning"
+                            : "directions_car"
+                        }}</span>
                         <span class="driver-car-name">{{
                           carSummary(participant)
                         }}</span>
@@ -1596,8 +1610,10 @@
   [visible]="!!carPickTarget"
   [entryName]="carPickTarget ? getLocalizedName(carPickTarget) : ''"
   [cars]="allCars"
-  [teamDrivers]="carPickTarget ? carTeamDrivers(carPickTarget) : []"
-  [choice]="carPickTarget ? carChoiceFor(carPickTarget) : emptyChoice"
+  [teamDrivers]="carPick.teamDrivers()"
+  [choice]="carPick.choice()"
+  [takenBy]="carPick.taken()"
+  [serverUrl]="dataService.serverUrl"
   (save)="onCarPicked($event)"
   (close)="carPickTarget = null"
 ></app-car-pick-dialog>

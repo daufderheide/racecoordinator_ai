@@ -60,7 +60,7 @@ Every car gets the same fields and keeps its own values. A field you leave empty
 
 ## Slotcars in a Race {: #car-in-race }
 
-- **Race Day Setup**: in the Racing list, click the car icon on a row to pick a slotcar. A team picks **One car for the team** or **A car per driver**. RC AI remembers your picks for the next race.
+- **Race Day Setup**: in the Racing list, click the car icon on a row to pick a slotcar. A team picks **One car for the team** or **A car per driver**. One car races for one racer: a car another racer already has is greyed out, and a row shows a warning when a remembered pick clashes. RC AI remembers your picks for the next race.
 - **Swap between heats**: on race day, open **Race Director → Slotcars…**. It lists the coming heat lane by lane; pick another car and it changes straight away. While a heat is running, the lists are locked.
 - **Modify Heats**: the car icon on a racer changes their car for every heat that hasn't run yet.
 - **Results**: each heat keeps a copy of the car as it raced, so editing or deleting a car later doesn't change past results.

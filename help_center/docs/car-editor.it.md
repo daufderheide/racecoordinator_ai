@@ -60,7 +60,7 @@ Ogni auto ha gli stessi campi e mantiene i propri valori. Un campo lasciato vuot
 
 ## Auto slot in gara {: #car-in-race }
 
-- **Race Day Setup**: nell'elenco dei piloti in gara, fai clic sull'icona dell'auto di una riga per scegliere un'auto slot. Una squadra sceglie **Un'auto per la squadra** o **Un'auto per pilota**. RC AI ricorda la tua scelta per la gara successiva.
+- **Race Day Setup**: nell'elenco dei piloti in gara, fai clic sull'icona dell'auto di una riga per scegliere un'auto slot. Una squadra sceglie **Un'auto per la squadra** o **Un'auto per pilota**. Un'auto corre per un solo pilota: un'auto che ha già un altro pilota è in grigio, e una riga mostra un avviso se una scelta ricordata è in conflitto. RC AI ricorda la tua scelta per la gara successiva.
 - **Cambiare tra le manche**: il giorno della gara, apri **Direttore Gara → Auto slot…**. Mostra la prossima manche corsia per corsia; scegli un'altra auto e cambia subito. Durante una manche gli elenchi sono bloccati.
 - **Modifica manche**: l'icona dell'auto di un pilota cambia la sua auto per tutte le manche non ancora corse.
 - **Risultati**: ogni manche conserva una copia dell'auto così come ha corso, quindi modificare o eliminare un'auto in seguito non cambia i risultati passati.
