@@ -460,7 +460,7 @@
 .update-banner {
   background: #00f0ff;
   color: #000;
-  padding: 10px 20px;
+  padding: 6px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -472,8 +472,9 @@
   transform: translateX(-50%);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  gap: 20px;
+  gap: 16px;
   max-width: 90vw;
+  white-space: nowrap;
   transition: all 0.3s ease;
 }
 
@@ -483,12 +484,16 @@
 
 .update-info {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .update-title {
   font-weight: bold;
+  font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .update-subtext {
@@ -497,6 +502,7 @@
   color: #111;
   opacity: 0.9;
   letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .update-banner span {
@@ -505,19 +511,27 @@
 
 .update-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .update-btn-primary {
   background: #000;
   color: #00f0ff;
   border: 1px solid #000;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-family: var(--app-font-family);
+  font-size: 0.85rem;
   font-weight: bold;
   text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .update-btn-primary:hover {
@@ -528,10 +542,16 @@
   background: transparent;
   color: #000;
   border: 1px solid #000;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 4px;
   cursor: pointer;
   font-family: var(--app-font-family);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .update-btn-secondary:hover {

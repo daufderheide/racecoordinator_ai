@@ -1213,6 +1213,45 @@ describe("RacedaySetupComponent", () => {
       expect(mockUpdateService.snoozeUpdate).toHaveBeenCalledWith("v1.2.3", 7);
     });
 
+    it("should render update banner as a single line with nowrap", fakeAsync(() => {
+      const mockResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+      mockUpdateService.checkForUpdates.and.returnValue(of(mockResult));
+      fixture.detectChanges();
+      tick();
+
+      component.checkForUpdates(true);
+      fixture.detectChanges();
+
+      const banner = fixture.nativeElement.querySelector(".update-banner");
+      expect(banner).toBeTruthy();
+      expect(window.getComputedStyle(banner).whiteSpace).toBe("nowrap");
+
+      const title = fixture.nativeElement.querySelector(".update-title");
+      expect(title).toBeTruthy();
+      expect(window.getComputedStyle(title).whiteSpace).toBe("nowrap");
+
+      const primaryBtn = fixture.nativeElement.querySelector(
+        ".update-btn-primary",
+      );
+      expect(primaryBtn).toBeTruthy();
+      expect(window.getComputedStyle(primaryBtn).whiteSpace).toBe("nowrap");
+
+      const secondaryBtns = fixture.nativeElement.querySelectorAll(
+        ".update-btn-secondary",
+      );
+      expect(secondaryBtns.length).toBeGreaterThan(0);
+      expect(window.getComputedStyle(secondaryBtns[0]).whiteSpace).toBe(
+        "nowrap",
+      );
+    }));
+
     it("should cancel update when cancelUpdate is called", () => {
       mockUpdateService.cancelUpdate.and.returnValue(of(true));
       component.isUpdating = true;
