@@ -256,10 +256,10 @@
         @if (isLayoutCustomizing && selectionBox(); as b) {
           <div
             class="selection-box"
-            [style.left.%]="(b.x / (layout?.baseWidth || 1920)) * 100"
-            [style.top.%]="(b.y / (layout?.baseHeight || 1080)) * 100"
-            [style.width.%]="(b.w / (layout?.baseWidth || 1920)) * 100"
-            [style.height.%]="(b.h / (layout?.baseHeight || 1080)) * 100"
+            [style.left.%]="(b.x / (layout.baseWidth || 1920)) * 100"
+            [style.top.%]="(b.y / (layout.baseHeight || 1080)) * 100"
+            [style.width.%]="(b.w / (layout.baseWidth || 1920)) * 100"
+            [style.height.%]="(b.h / (layout.baseHeight || 1080)) * 100"
           ></div>
         }
         @if (isLayoutCustomizing && canvasNote(); as note) {

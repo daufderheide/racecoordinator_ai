@@ -1,25 +1,41 @@
-import { CdkDrag, CdkDropList } from "@angular/cdk/drag-drop";
+import { CdkDrag, CdkDragDrop, CdkDropList } from "@angular/cdk/drag-drop";
 import { ChangeDetectorRef } from "@angular/core";
 import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
+import { DriverConverter } from "@app/converters/driver.converter";
+import { HeatConverter } from "@app/converters/heat.converter";
+import { TeamConverter } from "@app/converters/team.converter";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { Team } from "@app/models/team";
+import { Track } from "@app/models/track";
+import { IHeat, IRaceParticipant } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
   allocateHighlightColor,
+  assignStepNumbers,
   calculateHeatCardHoverAction,
   calculateHeatDropAction,
+  cloneHeat,
   collectHeatCardBounds,
+  convertHeatsToProto,
+  convertParticipantsToProto,
   createParticipantFromDriver,
+  createParticipantFromTeam,
   executeHeatReorder,
   getHeatHighlightColors as extractHeatHighlightColors,
   getParticipantKey,
   getParticipantMeta,
+  getParticipantName,
+  HeatCardBounds,
   HeatDropAction,
+  isDriver,
+  isPlaceholderParticipant,
   isStepUpParticipant,
+  isTeam,
 } from "./modify-heats-modal.utils";
 
 export class DriverHighlightManager {
@@ -361,3 +377,451 @@ export function canEnterDriverDropListPredicate(
     "heatDrivers" in drag.data
   );
 }
+
+export {
+  AvailableGroup,
+  AvailableStep,
+  filterHeatsByGroupAndStep,
+  getAvailableSteps,
+  HeatLike,
+} from "@app/components/shared/heats-filter-bar/heats-filter.utils";
+import { AvailableGroup } from "@app/components/shared/heats-filter-bar/heats-filter.utils";
+
+export function getAvailableGroups(
+  race: Race | undefined,
+  heats: Heat[],
+  translationService: TranslationService,
+): AvailableGroup[] {
+  if (!race?.group_options?.enabled) {
+    return [];
+  }
+  const maxGroups = Math.max(
+    race.group_options.max_groups || 1,
+    ...heats.map((h) => (h.group ?? 0) + 1),
+  );
+  const groups: AvailableGroup[] = [];
+  for (let i = 0; i < maxGroups; i++) {
+    const customName = getCustomGroupName(race, i);
+    const name =
+      customName ||
+      translationService.translate("RD_FILTER_GROUP_N", { n: i + 1 });
+    const count = heats.filter((h) => h.group === i).length;
+    groups.push({ index: i, name, count });
+  }
+  return groups;
+}
+
+export function isHeatIncompatibleWithDraggedParticipant(
+  heat: Heat,
+  participant: RaceParticipant | null | undefined,
+  localHeats: Heat[],
+  isStepUpEnabled: boolean,
+  groupEnabled: boolean,
+): boolean {
+  if (!participant) return false;
+
+  // Step-Up placeholder is NOT allowed in Step 1
+  if (isStepUpEnabled && isStepUpParticipant(participant)) {
+    if ((heat.step || 1) === 1) {
+      return true;
+    }
+  }
+
+  // Regular drivers cannot be placed into a different group if already assigned to a group
+  if (
+    groupEnabled &&
+    !isPlaceholderParticipant(participant) &&
+    !isStepUpParticipant(participant)
+  ) {
+    const existingOtherGroupHeat = localHeats.find(
+      (h) =>
+        h.group !== heat.group &&
+        h.heatDrivers?.some(
+          (d) =>
+            !isPlaceholderParticipant(d.participant) &&
+            !isStepUpParticipant(d.participant) &&
+            d.participant.objectId === participant.objectId,
+        ),
+    );
+    if (existingOtherGroupHeat) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function getHeatValidationWarning(
+  heat: Heat,
+  localHeats: Heat[],
+  race: Race | undefined,
+  isStepUpEnabled: boolean,
+  translationService: TranslationService,
+): string | null {
+  if (!heat) return null;
+
+  // Check step-up in step 1
+  if (isStepUpEnabled && (heat.step || 1) === 1) {
+    if (heat.heatDrivers?.some((d) => isStepUpParticipant(d.participant))) {
+      return translationService.translate("RD_ERR_STEP_UP_IN_STEP_ONE");
+    }
+  }
+
+  // Check step-up count mismatch in step > 1
+  if (
+    isStepUpEnabled &&
+    race?.step_up &&
+    race.step_up > 0 &&
+    (heat.step || 1) > 1 &&
+    race.heat_rotation_type !== "Custom"
+  ) {
+    const stepUpCount = (heat.heatDrivers || []).filter((d) =>
+      isStepUpParticipant(d.participant),
+    ).length;
+    if (stepUpCount !== race.step_up) {
+      return translationService.translate("RD_ERR_STEP_UP_COUNT_MISMATCH", {
+        step: heat.step || 1,
+        expected: race.step_up,
+        found: stepUpCount,
+      });
+    }
+  }
+
+  // Check group conflict for drivers in this heat
+  if (race?.group_options?.enabled) {
+    for (const dhd of heat.heatDrivers || []) {
+      const p = dhd.participant;
+      if (isPlaceholderParticipant(p) || isStepUpParticipant(p)) continue;
+      const otherGroupHeat = localHeats.find(
+        (h) =>
+          h.group !== heat.group &&
+          h.heatDrivers?.some(
+            (d) =>
+              !isPlaceholderParticipant(d.participant) &&
+              !isStepUpParticipant(d.participant) &&
+              d.participant.objectId === p.objectId,
+          ),
+      );
+      if (otherGroupHeat) {
+        return translationService.translate(
+          "RD_ERR_PARTICIPANT_MULTIPLE_GROUPS",
+          {
+            participant: getParticipantName(p),
+            group1: otherGroupHeat.group + 1,
+            group2: heat.group + 1,
+          },
+        );
+      }
+    }
+  }
+
+  return null;
+}
+
+export function getParticipantGroupBadge(
+  participant: RaceParticipant | null | undefined,
+  localHeats: Heat[],
+  race: Race | undefined,
+): string | null {
+  if (!participant || !race?.group_options?.enabled) return null;
+  if (isPlaceholderParticipant(participant) || isStepUpParticipant(participant))
+    return null;
+
+  const heat = localHeats.find((h) =>
+    h.heatDrivers?.some(
+      (d) =>
+        !isPlaceholderParticipant(d.participant) &&
+        !isStepUpParticipant(d.participant) &&
+        d.participant.objectId === participant.objectId,
+    ),
+  );
+  if (!heat) return null;
+  const custom = getCustomGroupName(race, heat.group);
+  return custom || `G${heat.group + 1}`;
+}
+
+export function getParticipantStepBadge(
+  participant: RaceParticipant | null | undefined,
+  localHeats: Heat[],
+  isStepUpEnabled: boolean,
+): string | null {
+  if (!participant || !isStepUpEnabled) return null;
+  if (isPlaceholderParticipant(participant) || isStepUpParticipant(participant))
+    return null;
+
+  const heat = localHeats.find((h) =>
+    h.heatDrivers?.some(
+      (d) =>
+        !isPlaceholderParticipant(d.participant) &&
+        !isStepUpParticipant(d.participant) &&
+        d.participant.objectId === participant.objectId,
+    ),
+  );
+  if (!heat) return null;
+  return `S${heat.step || 1}`;
+}
+
+export function resolveDraggedParticipant(
+  participant: RaceParticipant | Driver | Team | null | undefined,
+): RaceParticipant | null {
+  if (!participant) return null;
+  if (
+    participant instanceof RaceParticipant ||
+    "driver" in participant ||
+    "team" in participant ||
+    "rank" in participant
+  ) {
+    return participant as RaceParticipant;
+  }
+  if (isDriver(participant)) {
+    return createParticipantFromDriver(participant);
+  }
+  if (isTeam(participant)) {
+    return createParticipantFromTeam(participant);
+  }
+  return null;
+}
+
+export class HeatDragDropController {
+  isDraggingHeat = false;
+  heatDropAction: HeatDropAction = null;
+  hoveredHeatIdx = -1;
+
+  get activeInsertSlot(): number {
+    return this.heatDropAction?.type === "insert"
+      ? this.heatDropAction.slotIndex
+      : -1;
+  }
+
+  onDragStarted(): void {
+    this.isDraggingHeat = true;
+    this.heatDropAction = null;
+    this.hoveredHeatIdx = -1;
+  }
+
+  onDragEnded(): void {
+    this.isDraggingHeat = false;
+    this.heatDropAction = null;
+    this.hoveredHeatIdx = -1;
+  }
+
+  isHeatSwapHighlight(
+    index: number,
+    heat: Heat,
+    isHeatStarted: (h: Heat) => boolean,
+  ): boolean {
+    if (isHeatStarted(heat)) return false;
+    return (
+      this.heatDropAction?.type === "swap" &&
+      this.heatDropAction.targetIndex === index
+    );
+  }
+
+  updateCardHover(
+    index: number,
+    event: MouseEvent,
+    lastStartedIdx: number,
+    heat: Heat,
+    isHeatStarted: (h: Heat) => boolean,
+  ): void {
+    const res = resolveHeatCardHover(
+      index,
+      event,
+      lastStartedIdx,
+      heat,
+      isHeatStarted,
+    );
+    this.heatDropAction = res.action;
+    this.hoveredHeatIdx = res.hoveredHeatIdx;
+  }
+
+  updatePointHover(
+    pointerX: number,
+    pointerY: number,
+    heats: Heat[],
+    lastStartedIdx: number,
+    isHeatStarted: (h: Heat) => boolean,
+  ): void {
+    const res = resolveHeatDropFromPoint(
+      pointerX,
+      pointerY,
+      heats,
+      lastStartedIdx,
+      isHeatStarted,
+    );
+    this.heatDropAction = res.action;
+    this.hoveredHeatIdx = res.hoveredHeatIdx;
+  }
+
+  onHover(
+    index: number,
+    heats: Heat[],
+    lastStartedIdx: number,
+    isHeatStarted: (h: Heat) => boolean,
+  ): void {
+    const res = handleHeatHoverAction(
+      index,
+      this.isDraggingHeat,
+      heats,
+      lastStartedIdx,
+      isHeatStarted,
+    );
+    this.heatDropAction = res.action;
+    this.hoveredHeatIdx = res.hoveredHeatIdx;
+  }
+
+  handleDrop(
+    event: CdkDragDrop<Heat[]>,
+    heats: Heat[],
+    lastStartedIdx: number,
+    isHeatStarted: (h: Heat) => boolean,
+    cardBoundsGetter?: () => HeatCardBounds[],
+  ): { reordered: boolean; newHeats: Heat[] } {
+    this.isDraggingHeat = false;
+    let action = this.heatDropAction;
+    if (!action && event.dropPoint) {
+      const cards = cardBoundsGetter
+        ? cardBoundsGetter()
+        : collectHeatCardBounds(heats, isHeatStarted);
+      action = calculateHeatDropAction(
+        event.dropPoint.x,
+        event.dropPoint.y,
+        cards,
+        lastStartedIdx,
+      );
+    }
+    this.heatDropAction = null;
+    this.hoveredHeatIdx = -1;
+    if (!action) return { reordered: false, newHeats: heats };
+
+    const draggedHeat = event.item?.data as Heat;
+    if (!draggedHeat) return { reordered: false, newHeats: heats };
+
+    const fromIdx = heats.findIndex((h) => h.objectId === draggedHeat.objectId);
+    if (fromIdx === -1) return { reordered: false, newHeats: heats };
+
+    return executeHeatReorder(heats, fromIdx, action, lastStartedIdx);
+  }
+}
+
+export function addHeatToState(
+  localHeats: Heat[],
+  selectedGroup: number | null,
+  selectedStep: number | null,
+  stepUpConfig?: number,
+  isStepUpEnabled?: boolean,
+): Heat {
+  const newHeatNumber = localHeats.length + 1;
+  const newHeat = new Heat(`new-heat-${Date.now()}`, newHeatNumber, [], []);
+  if (selectedGroup !== null) {
+    newHeat.group = selectedGroup;
+  }
+  if (selectedStep !== null) {
+    newHeat.step = selectedStep;
+  }
+  localHeats.push(newHeat);
+  if (isStepUpEnabled) {
+    assignStepNumbers(localHeats, stepUpConfig);
+  }
+  return newHeat;
+}
+
+export function removeHeatFromState(
+  localHeats: Heat[],
+  index: number,
+  isHeatStarted: (h: Heat) => boolean,
+  stepUpConfig?: number,
+  isStepUpEnabled?: boolean,
+): boolean {
+  if (
+    index < 0 ||
+    index >= localHeats.length ||
+    isHeatStarted(localHeats[index])
+  ) {
+    return false;
+  }
+  localHeats.splice(index, 1);
+  localHeats.forEach((h, i) => (h.heatNumber = i + 1));
+  if (isStepUpEnabled) {
+    assignStepNumbers(localHeats, stepUpConfig);
+  }
+  return true;
+}
+
+export function removeDriverFromHeatState(
+  localHeats: Heat[],
+  heatIdx: number,
+  laneIdx: number,
+  isHeatStarted: (h: Heat) => boolean,
+): boolean {
+  const heat = localHeats[heatIdx];
+  if (!heat || isHeatStarted(heat)) return false;
+  const dhd = heat.heatDrivers.find((d) => d.laneIndex === laneIdx);
+  if (!dhd || !dhd.participant || isPlaceholderParticipant(dhd.participant)) {
+    return false;
+  }
+  heat.heatDrivers = heat.heatDrivers.filter((d) => d.laneIndex !== laneIdx);
+  return true;
+}
+
+export function cloneInitialHeats(heats: Heat[]): Heat[] {
+  return heats.map((h) => {
+    const cloned = cloneHeat(h);
+    if (cloned.originalHeatNumber === undefined) {
+      cloned.originalHeatNumber = h.originalHeatNumber ?? h.heatNumber;
+    }
+    return cloned;
+  });
+}
+
+export function getDriverHeatDataInLaneHelper(
+  localHeats: Heat[],
+  heatIdx: number,
+  laneIdx: number,
+): DriverHeatData | null {
+  const dhd = localHeats[heatIdx]?.heatDrivers?.find(
+    (d: DriverHeatData) => d.laneIndex === laneIdx,
+  );
+  if (!dhd || isPlaceholderParticipant(dhd.participant)) {
+    return null;
+  }
+  return dhd;
+}
+
+export function mapRegeneratedHeatsFromProto(protoHeats: IHeat[]): Heat[] {
+  return protoHeats.map((hProto: IHeat) => {
+    const heat = HeatConverter.fromProto(hProto);
+    heat.originalHeatNumber = heat.heatNumber;
+    return cloneHeat(heat);
+  });
+}
+
+export function loadAndRegisterDrivers(driversRaw: any[]): Driver[] {
+  return (driversRaw as any[]).map((d) => {
+    const driver = DriverConverter.fromJSON(d);
+    DriverConverter.register(driver);
+    return driver;
+  });
+}
+
+export function loadAndRegisterTeams(teamsRaw: any[]): Team[] {
+  return (teamsRaw as any[]).map((t) => {
+    const team = TeamConverter.fromJSON(t);
+    TeamConverter.register(team);
+    return team;
+  });
+}
+
+export function buildSavePayload(
+  localHeats: Heat[],
+  track: Track | undefined,
+  isHeatStarted: (h: Heat) => boolean,
+  localParticipants: RaceParticipant[],
+): { protoHeats: IHeat[]; protoParticipants: IRaceParticipant[] } {
+  return {
+    protoHeats: convertHeatsToProto(localHeats, track!, isHeatStarted),
+    protoParticipants: convertParticipantsToProto(localParticipants),
+  };
+}
+
+export { convertParticipantsToProto } from "./modify-heats-modal.utils";

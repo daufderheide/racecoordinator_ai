@@ -1,6 +1,10 @@
 import { ICustomHeat } from "@app/proto/antigravity";
 
 import {
+  calculateMaxDriverAndStepUp,
+  initializeRotationOriginalHeatNumbers,
+} from "./rotation-editor.utils";
+import {
   assignCustomRotationStepNumbers,
   LocalRotation,
 } from "./rotation-export.utils";
@@ -304,4 +308,44 @@ export async function parseAndValidateImportFile(
       params: { file: file.name },
     };
   }
+}
+
+export async function processImportFiles(
+  files: File[],
+  internalRotations: LocalRotation[],
+  internalNumLanes: number,
+): Promise<{
+  results: any[];
+  maxDriverId: number;
+  maxStepUpId: number;
+}> {
+  const results: any[] = [];
+  for (const file of files) {
+    const existingDriverCounts = internalRotations
+      .map((r) => r.numDrivers)
+      .filter((d): d is number => d !== undefined && d !== null);
+
+    const res = await parseAndValidateImportFile(
+      file,
+      internalNumLanes,
+      existingDriverCounts,
+    );
+
+    if (res.success && res.newRotations) {
+      initializeRotationOriginalHeatNumbers(res.newRotations);
+      internalRotations.push(...res.newRotations);
+    }
+    results.push({
+      success: res.success,
+      key: res.key,
+      params: res.params,
+    });
+  }
+
+  const limits = calculateMaxDriverAndStepUp(internalRotations);
+  return {
+    results,
+    maxDriverId: limits.maxDriverId,
+    maxStepUpId: limits.maxStepUpId,
+  };
 }

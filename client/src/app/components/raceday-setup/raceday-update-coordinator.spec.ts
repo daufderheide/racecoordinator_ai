@@ -1,5 +1,6 @@
 import { fakeAsync, tick } from "@angular/core/testing";
-import { of, throwError } from "rxjs";
+import { of, Subject, throwError } from "rxjs";
+import { UpdateCheckResult } from "@app/services/update.service";
 
 import { RacedayUpdateCoordinator } from "./raceday-update-coordinator";
 
@@ -301,6 +302,96 @@ describe("RacedayUpdateCoordinator", () => {
 
       coordinator.acknowledgeUpToDate();
       expect(coordinator.showUpToDateModal).toBeFalse();
+    });
+
+    it("should clear previous updateResult while forced check is pending", () => {
+      coordinator.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.0.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      };
+      const pendingSubject = new Subject<UpdateCheckResult>();
+      mockUpdateService.checkForUpdates.and.returnValue(
+        pendingSubject.asObservable(),
+      );
+
+      coordinator.checkForUpdates(true);
+
+      expect(coordinator.updateResult).toBeNull();
+
+      pendingSubject.next({
+        updateAvailable: true,
+        latestVersion: "v1.1.0-beta.17",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      });
+      pendingSubject.complete();
+
+      expect(coordinator.updateResult?.latestVersion).toBe("v1.1.0-beta.17");
+    });
+
+    it("should cancel prior in-flight check when checkForUpdates is called again", () => {
+      const firstSubject = new Subject<UpdateCheckResult>();
+      const secondSubject = new Subject<UpdateCheckResult>();
+      mockUpdateService.checkForUpdates.and.returnValues(
+        firstSubject.asObservable(),
+        secondSubject.asObservable(),
+      );
+
+      coordinator.checkForUpdates(true);
+      coordinator.checkForUpdates(true);
+
+      firstSubject.next({
+        updateAvailable: true,
+        latestVersion: "v1.0.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      });
+      firstSubject.complete();
+
+      expect(coordinator.updateResult).toBeNull();
+
+      secondSubject.next({
+        updateAvailable: true,
+        latestVersion: "v1.1.0-beta.17",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      });
+      secondSubject.complete();
+
+      expect(coordinator.updateResult?.latestVersion).toBe("v1.1.0-beta.17");
+    });
+
+    it("should unsubscribe checkSubscription on destroy", () => {
+      const pendingSubject = new Subject<UpdateCheckResult>();
+      mockUpdateService.checkForUpdates.and.returnValue(
+        pendingSubject.asObservable(),
+      );
+
+      coordinator.checkForUpdates(true);
+      expect(coordinator.checkSubscription).not.toBeNull();
+
+      coordinator.destroy();
+      expect(coordinator.checkSubscription).toBeNull();
+
+      pendingSubject.next({
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        downloadUrl: "http://example.com/dl",
+        releaseNotes: "",
+        releaseUrl: "http://example.com/rel",
+        isWindows: true,
+      });
+      expect(coordinator.updateResult).toBeNull();
     });
 
     it("should dismiss update banner and snooze", () => {

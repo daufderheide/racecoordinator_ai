@@ -39,7 +39,6 @@ import {
   mapToSelectItems,
 } from "@app/utils/editor-utils";
 
-import { CarFieldManagerComponent } from "./car-field-manager/car-field-manager.component";
 import {
   areCarsEqual,
   choiceOptions,
@@ -51,6 +50,7 @@ import {
   setCustomValue,
   withoutField,
 } from "./car-editor.helper";
+import { CarFieldManagerComponent } from "./car-field-manager/car-field-manager.component";
 
 /** Key for NavigationService's "last edited" memory. */
 const NAV_KEY = "car";

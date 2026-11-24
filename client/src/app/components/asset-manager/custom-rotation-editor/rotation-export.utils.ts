@@ -15,6 +15,8 @@ export interface LocalRotation extends ICustomRotation {
   isExpanded?: boolean;
   isEqual?: boolean;
   equalityReport?: any[];
+  selectedGroup?: number | null;
+  selectedStep?: number | null;
 }
 
 export function getRotationSignature(

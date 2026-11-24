@@ -3,6 +3,7 @@ import { TranslationService } from "@app/services/translation.service";
 export interface LaneEqualityReportItem {
   key: string;
   params?: any;
+  prefix?: string;
 }
 
 export interface LaneEqualityResult {

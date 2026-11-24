@@ -222,7 +222,7 @@ Lorsque l'option **Progression (Step-Up)** est configurée avec un entier positi
 - **Promotion et réinitialisation des scores** : Lorsqu'un échelon se termine (marqué par la manche frontière d'échelon), les $S$ meilleurs pilotes sont promus à l'échelon suivant. Leurs statistiques cumulées sont réinitialisées : seules les manches de l'échelon le plus élevé atteint comptent pour le classement général.
 - **Classement général hiérarchisé** : Les pilotes des échelons inférieurs ne peuvent pas devancer les pilotes des échelons supérieurs au classement général, quels que soient leurs tours ou temps bruts. Le vainqueur de l'échelon final remporte la course.
 - **Courses par groupes** : Dans les courses par groupes avec progression, chaque groupe suit sa propre échelle de manière indépendante.
-- **Support dans Modifier les manches** : Dans l'écran Modifier les manches, les pilotes promus sont identifiés par un badge dédié et les frontières d'échelon peuvent être examinées et modifiées.
+- **Support dans Modifier les manches** : Dans l'écran Modifier les manches, les pilotes promus et les attributions de groupe peuvent être isolés à l'aide d'**onglets de filtre de groupe et d'étape**, les frontières d'échelon peuvent être examinées et modifiées, et les manches peuvent être réassignées entre groupes à l'aide de listes déroulantes de sélection personnalisée.
 
 ---
 
