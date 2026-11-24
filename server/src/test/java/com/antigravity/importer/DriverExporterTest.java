@@ -748,4 +748,56 @@ public class DriverExporterTest {
       }
     }
   }
+
+  @Test
+  public void testAudioHeadersMatchEverySlotTheRowsWrite() {
+    List<String> headers = DriverExporter.audioHeaders();
+    assertEquals(13, headers.size());
+    assertEquals("Lap", headers.get(0));
+    assertEquals("Fuel", headers.get(11));
+    assertEquals("DriftLap", headers.get(12));
+  }
+
+  @Test
+  public void testCsvHasAHeaderForEveryValueIncludingDriftLap() throws Exception {
+    Driver d =
+        new Driver.Builder()
+            .withEntityId("d1")
+            .withName("Ann")
+            .withNickname("Speedy")
+            .withDriftLapAudio(new AudioConfig("tts", "", "Drift!"))
+            .build();
+    driverRepository.insert(d);
+
+    byte[] csv =
+        extractZipEntries(exporter.exportDriversZip(Arrays.asList(d), "csv")).get("drivers.csv");
+    String[] lines = new String(csv, StandardCharsets.UTF_8).split("\n");
+    // Line 0 is the "# default-audio" directive, line 1 the header, line 2 the driver.
+    assertEquals(lines[1].split(",", -1).length, lines[2].split(",", -1).length);
+    assertTrue(lines[1].endsWith(",Fuel,DriftLap"));
+
+    // The drift lap sound comes back on import.
+    try (InputStream is = new ByteArrayInputStream(csv)) {
+      ParsedDataFile parsed = DriverImportParserHelper.parseCsv(is);
+      assertEquals("tts:Drift!", parsed.getRows().get(0).get("driftLap"));
+    }
+  }
+
+  @Test
+  public void testExcelHasADriftLapColumnThatImportsBack() throws Exception {
+    Driver d =
+        new Driver.Builder()
+            .withEntityId("d1")
+            .withName("Ann")
+            .withDriftLapAudio(new AudioConfig("tts", "", "Drift!"))
+            .build();
+    driverRepository.insert(d);
+
+    byte[] xlsx =
+        extractZipEntries(exporter.exportDriversZip(Arrays.asList(d), "xlsx")).get("drivers.xlsx");
+    try (InputStream is = new ByteArrayInputStream(xlsx)) {
+      ParsedDataFile parsed = DriverImportParserHelper.parseExcel(is);
+      assertEquals("tts:Drift!", parsed.getRows().get(0).get("driftLap"));
+    }
+  }
 }

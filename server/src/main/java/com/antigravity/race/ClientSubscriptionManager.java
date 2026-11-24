@@ -566,7 +566,9 @@ public class ClientSubscriptionManager {
     if (!hasDirectorSubscribers() && currentRace != null) {
       logger.info(
           "Last director client disconnected/unsubscribed. Stopping and clearing current race.");
-      deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      if (currentRace.getRaceModel() != null && currentRace.getRaceModel().getEntityId() != null) {
+        deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      }
       cleanupFuture = null;
       setRace(null);
       checkAutoShutdown();
@@ -577,7 +579,9 @@ public class ClientSubscriptionManager {
     if (currentRace != null) {
       logger.info("Force stopping current race via explicit command.");
       cancelPendingCleanup();
-      deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      if (currentRace.getRaceModel() != null && currentRace.getRaceModel().getEntityId() != null) {
+        deleteAutoSave(currentRace.getRaceModel().getEntityId(), currentRace.isDemoMode());
+      }
       setRace(null);
     } else {
       logger.info(
@@ -949,10 +953,15 @@ public class ClientSubscriptionManager {
       return CompletableFuture.completedFuture(null);
     }
 
+    List<WsContext> targets = new ArrayList<>(interfaceSubscribers);
+    if (targets.isEmpty()) {
+      return CompletableFuture.completedFuture(null);
+    }
+
     byte[] bytes = event.toByteArray();
     return CompletableFuture.runAsync(
         () -> {
-          for (WsContext session : interfaceSubscribers) {
+          for (WsContext session : targets) {
             try {
               session.send(ByteBuffer.wrap(bytes));
             } catch (Exception e) {
