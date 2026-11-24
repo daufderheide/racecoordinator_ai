@@ -75,3 +75,10 @@ In een IROC-race blijven de auto's de hele race in hun baan en rouleren de coure
 - **Race Day Setup**: onder de lijst **Racende Coureurs** staat een vak **Auto's per baan**. Klik erop om de auto voor elke baan te kiezen. RC AI onthoudt de auto's per circuit. De auto-iconen bij de coureurs zijn verborgen, want de auto hoort bij de baan.
 - **Wisselen tussen heats**: **Race Directeur → Slotcars…** toont elke baan met zijn auto. Een nieuwe auto telt vanaf de volgende heat die nog niet gereden is.
 - **Uitslagen**: elke heat bewaart de auto van elke baan, dus je ziet welke coureur met welke auto reed.
+
+## Slotcars in de resultaten {: #cars-in-results }
+
+De resultaten tonen de auto waarmee elke rijder reed, zoals die in die heat was. Als je een auto later aanpast, blijven oude resultaten gelijk.
+
+- **Heatresultaten** en de resultatenpagina van een rijder: elke heatkaart toont de auto naast de baan. Wijs hem aan om klasse, schaal en afstelling te zien.
+- **Raceresultaten**: elke rijder toont zijn auto onder zijn naam. Reed hij met meer dan één auto (een IROC-race of een wissel), dan staat er hoeveel; wijs het aan om de lijst te zien.

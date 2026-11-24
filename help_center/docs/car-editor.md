@@ -75,3 +75,10 @@ In an IROC race the slotcars stay in their lanes all race and the drivers rotate
 - **Race Day Setup**: a **Lane cars** box appears under the **Drivers Racing** list. Click it to pick the car for each lane. RC AI remembers the lane cars per track. The car icons on the racers are hidden, since the car goes with the lane.
 - **Swap between heats**: **Race Director → Slotcars…** lists every lane with its car. A new car counts from the next heat that hasn't run.
 - **Results**: each heat saves the car of each lane, so you can see which driver raced which car.
+
+## Slotcars in the Results {: #cars-in-results }
+
+The results show the car each driver ran, as it was in that heat. Editing a car later doesn't change past results.
+
+- **Heat Results** and a driver's results page: each heat card shows the car next to the lane. Point at it to see the class, scale and setup.
+- **Race Results**: each racer shows their car under their name. If they ran more than one car (an IROC race or a swap), it says how many; point at it to see the list.

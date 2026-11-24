@@ -18,6 +18,7 @@ import {
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 import {
   AllowFinish,
@@ -35,6 +36,7 @@ import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IRecordData, IRecordEntry } from "@app/proto/antigravity";
+import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
@@ -44,6 +46,11 @@ import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import {
+  carsTooltip,
+  carTooltip,
+  uniqueCars,
+} from "@app/utils/car-results.utils";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
@@ -292,6 +299,18 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       .toLowerCase();
   }
 
+  /** This driver's entry in the heat, or undefined when they didn't race it. */
+  private findHeatDriver(
+    heat: Heat,
+    driver: Driver,
+  ): DriverHeatData | undefined {
+    const key = this.getDriverKey(driver);
+    return heat.heatDrivers.find((d) => {
+      const dDriver = d ? this.getDriverFromHeatDriver(d) : null;
+      return !!dDriver && this.getDriverKey(dDriver) === key;
+    });
+  }
+
   protected getDriverFromHeatDriver(d: any): any {
     if (!d) return null;
     if (d.participant?.driver) return d.participant.driver;
@@ -304,6 +323,10 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   // SVG Dimensions
+  /** Tooltips for the racer's car line (#1210). */
+  protected readonly carTooltip = carTooltip;
+  protected readonly carsTooltip = carsTooltip;
+
   protected width = 1400;
   protected height = 750;
 
@@ -644,18 +667,12 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       );
 
       const laneScores: (number | null)[] = Array(laneCount).fill(null);
+      const heatCars: (Car | undefined)[] = [];
 
       allHeats.forEach((heat) => {
-        const hd = heat.heatDrivers.find((d) => {
-          if (!d) return false;
-          const dDriver = this.getDriverFromHeatDriver(d);
-          return (
-            dDriver &&
-            this.getDriverKey(dDriver) === this.getDriverKey(curr.driver)
-          );
-        });
-
+        const hd = this.findHeatDriver(heat, curr.driver);
         if (hd) {
+          heatCars.push(hd.car);
           const laneIndex = hd.laneIndex;
           if (laneIndex >= 0 && laneIndex < laneCount) {
             let score = 0;
@@ -695,6 +712,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
         gapAhead,
         avatarUrl: curr.driver.avatarUrl || "",
         laneScores,
+        cars: uniqueCars(heatCars),
       };
     });
 

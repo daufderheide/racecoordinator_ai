@@ -75,3 +75,10 @@ Dans une course IROC, les voitures restent dans leur voie toute la course et les
 - **Configuration du Jour de Course** : un encadré **Voitures par voie** apparaît sous la liste **Pilotes en Course**. Cliquez dessus pour choisir la voiture de chaque voie. RC AI retient les voitures par circuit. Les icônes de voiture des pilotes sont masquées, car la voiture va avec la voie.
 - **Échanger entre les séries** : **Directeur de Course → Voitures slot…** affiche chaque voie avec sa voiture. Une nouvelle voiture compte à partir de la prochaine série pas encore courue.
 - **Résultats** : chaque série enregistre la voiture de chaque voie, vous voyez donc quel pilote a couru avec quelle voiture.
+
+## Les voitures dans les résultats {: #cars-in-results }
+
+Les résultats montrent la voiture de chaque pilote, telle qu'elle était dans cette manche. Modifier une voiture plus tard ne change pas les résultats passés.
+
+- **Résultats de manche** et la page de résultats d'un pilote : chaque carte de manche affiche la voiture à côté de la voie. Survolez-la pour voir la classe, l'échelle et le réglage.
+- **Résultats de course** : chaque pilote affiche sa voiture sous son nom. S'il a couru avec plusieurs voitures (course IROC ou échange), le nombre est indiqué ; survolez-le pour voir la liste.

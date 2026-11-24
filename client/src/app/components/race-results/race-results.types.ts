@@ -1,3 +1,4 @@
+import { Car } from "@app/models/car";
 import { Driver } from "@app/models/driver";
 
 export interface StandingsRow {
@@ -14,6 +15,8 @@ export interface StandingsRow {
   gapAhead: number | null;
   avatarUrl: string;
   laneScores: (number | null)[];
+  /** The slotcars this racer ran, from each heat's snapshot (#1210). */
+  cars: Car[];
 }
 
 export interface GraphPoint {

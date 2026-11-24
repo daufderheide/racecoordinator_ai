@@ -75,3 +75,10 @@ In einem IROC-Rennen bleiben die Autos das ganze Rennen auf ihrer Spur und die F
 - **Renntag-Setup**: Unter der Liste **Fahrer im Rennen** erscheint ein Feld **Autos je Spur**. Klicken Sie darauf, um das Auto für jede Spur zu wählen. RC AI merkt sich die Autos je Strecke. Die Auto-Symbole bei den Fahrern sind ausgeblendet, denn das Auto gehört zur Spur.
 - **Zwischen den Läufen tauschen**: **Rennleiter → Slotcars…** zeigt jede Spur mit ihrem Auto. Ein neues Auto gilt ab dem nächsten Lauf, der noch nicht gefahren ist.
 - **Ergebnisse**: Jeder Lauf speichert das Auto jeder Spur, so sehen Sie, welcher Fahrer welches Auto gefahren ist.
+
+## Slotcars in den Ergebnissen {: #cars-in-results }
+
+Die Ergebnisse zeigen das Auto, das jeder Fahrer gefahren ist, so wie es in diesem Lauf war. Wenn Sie ein Auto später ändern, bleiben alte Ergebnisse gleich.
+
+- **Laufergebnisse** und die Ergebnisseite eines Fahrers: Jede Laufkarte zeigt das Auto neben der Spur. Zeigen Sie darauf, um Klasse, Maßstab und Setup zu sehen.
+- **Rennergebnisse**: Jeder Fahrer zeigt sein Auto unter seinem Namen. Ist er mehr als ein Auto gefahren (ein IROC-Rennen oder ein Tausch), steht dort, wie viele; zeigen Sie darauf, um die Liste zu sehen.

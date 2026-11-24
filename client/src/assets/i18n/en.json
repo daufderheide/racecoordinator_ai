@@ -1732,6 +1732,7 @@
   "RR_BTN_ADD_LAP_SECTIONS": "Adjust Lap Sections/Time",
   "RR_BTN_EXPORT_CSV": "Export CSV",
   "RR_BTN_HEAT_RESULTS": "Heat Results",
+  "RR_CARS_COUNT": "{{count}} cars",
   "RR_HORIZONTAL_SCROLLBAR": "Race results horizontal scrollbar",
   "RM_BTN_RESET_RECORDS": "Reset Race Records & History",
   "RM_COL_TRACK": "TRACK",

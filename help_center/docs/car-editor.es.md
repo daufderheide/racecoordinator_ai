@@ -75,3 +75,10 @@ En una carrera IROC los coches se quedan en su carril toda la carrera y los pilo
 - **Configuración del Día de Carrera**: bajo la lista **Pilotos en Carrera** aparece un cuadro **Coches por carril**. Haz clic para elegir el coche de cada carril. RC AI recuerda los coches por pista. Los iconos de coche de los pilotos se ocultan, porque el coche va con el carril.
 - **Cambiar entre mangas**: **Director de Carrera → Coches de slot…** muestra cada carril con su coche. Un coche nuevo cuenta desde la siguiente manga que no se ha corrido.
 - **Resultados**: cada manga guarda el coche de cada carril, así ves qué piloto corrió con qué coche.
+
+## Coches de slot en los resultados {: #cars-in-results }
+
+Los resultados muestran el coche con el que corrió cada piloto, tal como era en esa manga. Si editas un coche después, los resultados anteriores no cambian.
+
+- **Resultados de manga** y la página de resultados de un piloto: cada tarjeta de manga muestra el coche junto al carril. Pasa el ratón por encima para ver la clase, la escala y la puesta a punto.
+- **Resultados de carrera**: cada piloto muestra su coche bajo su nombre. Si corrió con más de un coche (una carrera IROC o un cambio), indica cuántos; pasa el ratón por encima para ver la lista.
