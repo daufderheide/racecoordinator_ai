@@ -105,6 +105,11 @@ public class RaceConverter {
       builder.setHeatTimesThrough(race.getHeatTimesThrough());
       builder.setReverseHeats(race.isReverseHeats());
       builder.setStepUp(race.getStepUp());
+      if (race.getDriverLaneSelection() != null) {
+        builder.setDriverLaneSelection(
+            com.antigravity.proto.DriverLaneSelection.valueOf( // fqn-collision
+                "DLS_" + race.getDriverLaneSelection().name()));
+      }
 
       if (race.getGroupOptions() != null) {
         builder.setGroupOptions(buildGroupOptions(race.getGroupOptions()));

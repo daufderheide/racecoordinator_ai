@@ -110,6 +110,7 @@ public class Race implements ProtocolListener {
   private Boolean mainPower = null;
   private Boolean[] lanePower;
   private volatile boolean stopped = false;
+  private volatile boolean modifyHeatsOpen = false;
   private String historyRecordId;
 
   private HeatExecutionManager executionManager;
@@ -126,6 +127,14 @@ public class Race implements ProtocolListener {
 
   public void setHistoryRecordId(String historyRecordId) {
     this.historyRecordId = historyRecordId;
+  }
+
+  public boolean isModifyHeatsOpen() {
+    return modifyHeatsOpen;
+  }
+
+  public void setModifyHeatsOpen(boolean modifyHeatsOpen) {
+    this.modifyHeatsOpen = modifyHeatsOpen;
   }
 
   private Race(Builder builder) {

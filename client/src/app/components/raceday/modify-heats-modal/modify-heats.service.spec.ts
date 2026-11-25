@@ -388,6 +388,51 @@ describe("ModifyHeatsService", () => {
       );
     });
 
+    it("should reject dropping a step-up driver into a step 2 heat when step 1 has completed", () => {
+      const suDriver = new Driver("Step-Up 1", "Step-Up 1", "STEP_UP_0");
+      const suPart = new RaceParticipant(
+        "STEP_UP_0",
+        suDriver,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        100,
+      );
+      suPart.isStepUp = true;
+
+      const heat0 = new Heat("h0", 1, [], [], false);
+      heat0.step = 1;
+      const heat1 = new Heat("h1", 2, [], [], false);
+      heat1.step = 2;
+
+      const event: any = {
+        previousContainer: { id: "step-up-pool" },
+        container: { id: "heat-1-lane-0" },
+        item: { data: suPart },
+      };
+
+      const context: DropContext = {
+        localHeats: [heat0, heat1],
+        localParticipants: [],
+        allDrivers: [],
+        allTeams: [],
+        isHeatStarted: (h) => h.step === 1,
+        isParticipantInStartedHeat: () => false,
+      };
+
+      const result = service.handleDrop(event, context);
+      expect(result.actionTaken).toBeFalse();
+      expect(result.error).toEqual({
+        title: "RDS_ERR_VALIDATION_TITLE",
+        message: "RD_ERR_STEP_UP_IN_ACTIVE_STEP",
+      });
+    });
+
     it("should reject moving driver to heat they are already in", () => {
       const p1 = createTestParticipant(createTestDriver("d1", "Dave"));
       const p2 = createTestParticipant(createTestDriver("d2", "Alice"));

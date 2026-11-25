@@ -482,4 +482,44 @@ describe("RaceConverter", () => {
     expect(result.crash_and_learn_options.reset_dq_each_heat).toBeTrue();
     expect(result.crash_and_learn_options.dq_heat_score_percentage).toBe(100.0);
   });
+
+  describe("DriverLaneSelection conversion", () => {
+    it("should default driver_lane_selection to NONE when missing", () => {
+      const mockProto: IRaceModel = {
+        model: { entityId: "r-dls-1" },
+        name: "Default DLS",
+        track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      };
+      const result = RaceConverter.fromProto(mockProto);
+      expect(result.driver_lane_selection).toBe("NONE");
+    });
+
+    it("should convert numeric and string enum values for driverLaneSelection", () => {
+      const cases: Array<{ input: any; expected: string }> = [
+        { input: 0, expected: "NONE" },
+        { input: "DLS_NONE", expected: "NONE" },
+        { input: 1, expected: "RACE_START" },
+        { input: "DLS_RACE_START", expected: "RACE_START" },
+        { input: "RACE_START", expected: "RACE_START" },
+        { input: 2, expected: "HEAT_START" },
+        { input: "DLS_HEAT_START", expected: "HEAT_START" },
+        { input: "HEAT_START", expected: "HEAT_START" },
+        { input: 3, expected: "STEP_START" },
+        { input: "DLS_STEP_START", expected: "STEP_START" },
+        { input: "STEP_START", expected: "STEP_START" },
+        { input: 99, expected: "NONE" },
+      ];
+
+      for (const c of cases) {
+        const mockProto: any = {
+          model: { entityId: `r-dls-${c.expected}-${c.input}` },
+          name: "DLS Race",
+          track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+          driverLaneSelection: c.input,
+        };
+        const result = RaceConverter.fromProto(mockProto);
+        expect(result.driver_lane_selection).toBe(c.expected as any);
+      }
+    });
+  });
 });

@@ -1138,7 +1138,14 @@ describe("DataService", () => {
           expect(regenRes.success).toBeTrue();
           service.finalizeModifyHeats().subscribe((fin) => {
             expect(fin).toBe("OK");
-            done();
+            service.openModifyHeats().subscribe((openRes) => {
+              expect(openRes).toBe("OK");
+              done();
+            });
+            const reqOpen = httpMock.expectOne((r) =>
+              r.url.endsWith("/api/open-modify-heats"),
+            );
+            reqOpen.flush("OK");
           });
           const reqFin = httpMock.expectOne((r) =>
             r.url.endsWith("/api/finalize-modify-heats"),

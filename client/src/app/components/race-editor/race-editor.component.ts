@@ -406,6 +406,16 @@ export class RaceEditorComponent
     );
   }
 
+  onStepUpChange(value: number): void {
+    if (
+      (Number(value) || 0) <= 0 &&
+      this.editingRace?.driver_lane_selection === "STEP_START"
+    ) {
+      this.editingRace.driver_lane_selection = "NONE";
+    }
+    this.captureState();
+  }
+
   constructor(
     public route: ActivatedRoute,
     public router: Router,

@@ -426,6 +426,45 @@ public class RaceControlHandlerTest {
     handler.modifyHeats(ctx);
     handler.regenerateHeats(ctx);
     handler.finalizeModifyHeats(ctx);
+
+    io.javalin.http.Context ctxOpen = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(ctxOpen.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(ctxOpen);
+    handler.openModifyHeats(ctxOpen);
+    org.mockito.Mockito.verify(ctxOpen).status(200);
+  }
+
+  @Test
+  public void testOpenAndFinalizeModifyHeats_TogglesFlagOnActiveRace() throws Exception {
+    Driver d1 = new Driver("D1", "D1", "d1", null);
+    RaceParticipant rp1 = new RaceParticipant(d1);
+    Track track =
+        new Track.Builder()
+            .entityId("t1")
+            .lanes(Arrays.asList(new Lane("red", "black", 100)))
+            .build();
+    Race raceModel = new Race.Builder().withName("R1").withTrackEntityId("t1").build();
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .track(track)
+            .drivers(Arrays.asList(rp1))
+            .skipHardwareInterface(true)
+            .build();
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    assertFalse(activeRace.isModifyHeatsOpen());
+
+    io.javalin.http.Context ctxOpen = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(ctxOpen.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(ctxOpen);
+    handler.openModifyHeats(ctxOpen);
+    org.mockito.Mockito.verify(ctxOpen).status(200);
+    assertTrue(activeRace.isModifyHeatsOpen());
+
+    io.javalin.http.Context ctxFinalize = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(ctxFinalize.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(ctxFinalize);
+    handler.finalizeModifyHeats(ctxFinalize);
+    org.mockito.Mockito.verify(ctxFinalize).status(200);
+    assertFalse(activeRace.isModifyHeatsOpen());
   }
 
   @Test

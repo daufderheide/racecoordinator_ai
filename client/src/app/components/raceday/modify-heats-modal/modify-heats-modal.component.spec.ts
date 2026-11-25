@@ -47,6 +47,7 @@ describe("ModifyHeatsModalComponent", () => {
       "regenerateHeats",
       "modifyHeats",
       "updateRaceSubscription",
+      "openModifyHeats",
       "finalizeModifyHeats",
     ]);
     mockDataService.updateRaceSubscription.and.stub();
@@ -56,6 +57,7 @@ describe("ModifyHeatsModalComponent", () => {
       of({ success: true, heats: [] }),
     );
     mockDataService.modifyHeats.and.returnValue(of({ success: true }));
+    mockDataService.openModifyHeats.and.returnValue(of("OK"));
     mockDataService.finalizeModifyHeats.and.returnValue(of("OK"));
 
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
@@ -1529,6 +1531,11 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["localParticipants"][0].objectId).toBe("p1");
       expect(component["localParticipants"][1].driver.name).toBe("D3");
       expect(component["localParticipants"][2].objectId).toBe("p2");
+    });
+
+    it("should call openModifyHeats on initialization", () => {
+      fixture.detectChanges();
+      expect(mockDataService.openModifyHeats).toHaveBeenCalled();
     });
   });
 
@@ -3098,6 +3105,61 @@ describe("ModifyHeatsModalComponent", () => {
         expect(component.showStepDividers()).toBeTrue();
         expect(component.getHeatDivider(1)).not.toBeNull();
         expect(component.getHeatDivider(2)).not.toBeNull();
+      });
+    });
+
+    describe("step-up active step validation in component", () => {
+      it("should not show warning for step 2 heat when step 1 heats have started and step 2 has real drivers", () => {
+        const heat1 = new Heat("h1", 1, [], [], false);
+        heat1.step = 1;
+        heat1.started = true;
+        const heat2 = new Heat(
+          "h2",
+          2,
+          [
+            new DriverHeatData(
+              "dhd1",
+              createParticipantFromDriver(new Driver("d1", "D1", "d1")),
+              0,
+            ),
+          ],
+          [],
+          false,
+        );
+        heat2.step = 2;
+
+        component["localHeats"] = [heat1, heat2];
+        const race = new Race("r1", "Step-Up Race", {} as any);
+        Object.defineProperty(race, "step_up", { value: 2 });
+        fixture.componentRef.setInput("raceInput", race);
+        fixture.detectChanges();
+
+        expect(component.getHeatWarning(heat2)).toBeNull();
+      });
+
+      it("should reject step-up participant in canEnterDriverDropList for step 2 heat when step 1 has completed", () => {
+        const heat1 = new Heat("h1", 1, [], [], false);
+        heat1.step = 1;
+        heat1.started = true;
+        const heat2 = new Heat("h2", 2, [], [], false);
+        heat2.step = 2;
+
+        component["localHeats"] = [heat1, heat2];
+        const race = new Race("r1", "Step-Up Race", {} as any);
+        Object.defineProperty(race, "step_up", { value: 2 });
+        fixture.componentRef.setInput("raceInput", race);
+        fixture.detectChanges();
+
+        const stepUpPart = createParticipantFromDriver(
+          new Driver("su1", "Step-Up 1", "su1"),
+        );
+        stepUpPart.isStepUp = true;
+
+        const drag: any = { data: stepUpPart };
+        const drop: any = { data: { heatIndex: 1, laneIndex: 0 } };
+
+        const allowed = (component as any).canEnterDriverDropList(drag, drop);
+        expect(allowed).toBeFalse();
       });
     });
   });

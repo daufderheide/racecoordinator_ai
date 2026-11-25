@@ -22,6 +22,7 @@ import {
   isPlaceholderParticipant,
   isStepUpParticipant,
 } from "./modify-heats-modal.utils";
+import { hasStepSteppedUp } from "./modify-heats-ui.helper";
 
 export interface DropContext {
   localHeats: Heat[];
@@ -254,6 +255,53 @@ export class ModifyHeatsService {
     return { participant: data as RaceParticipant };
   }
 
+  private validateHeatDropParticipant(
+    participant: RaceParticipant,
+    existingOccupant: RaceParticipant | null,
+    toHIdx: number,
+    fromHIdx: number,
+    heats: Heat[],
+    context: DropContext,
+  ): { title: string; message: string } | null {
+    if (context.race?.group_options?.enabled) {
+      const groupError = this.validateGroups(
+        participant,
+        existingOccupant,
+        toHIdx,
+        fromHIdx,
+        heats,
+      );
+      if (groupError) return groupError;
+    }
+
+    if (isStepUpParticipant(participant)) {
+      const targetStep = heats[toHIdx].step || 1;
+      const targetGroup = heats[toHIdx].group ?? 0;
+      if (targetStep === 1) {
+        return {
+          title: "RDS_ERR_VALIDATION_TITLE",
+          message: this.translationService.translate(
+            "RD_ERR_STEP_UP_IN_STEP_ONE",
+          ),
+        };
+      }
+      if (
+        hasStepSteppedUp(targetStep, targetGroup, heats, context.isHeatStarted)
+      ) {
+        return {
+          title: "RDS_ERR_VALIDATION_TITLE",
+          message: this.translationService.translate(
+            "RD_ERR_STEP_UP_IN_ACTIVE_STEP",
+            {
+              step: targetStep,
+            },
+          ),
+        };
+      }
+    }
+    return null;
+  }
+
   private handleHeatDrop(
     toId: string,
     fromId: string,
@@ -279,37 +327,20 @@ export class ModifyHeatsService {
       ? parseInt(fromId.split("-")[1], 10)
       : -1;
 
-    // Group Validation
-    if (context.race?.group_options?.enabled) {
-      const groupError = this.validateGroups(
-        participant,
-        existingOccupant,
-        toHIdx,
-        fromHIdx,
-        heats,
-      );
-      if (groupError) {
-        return {
-          updatedHeats: heats,
-          updatedParticipants: participants,
-          actionTaken: false,
-          error: groupError,
-        };
-      }
-    }
-
-    // Step-up in Step 1 Validation
-    if (isStepUpParticipant(participant) && (heats[toHIdx].step || 1) === 1) {
+    const validationError = this.validateHeatDropParticipant(
+      participant,
+      existingOccupant,
+      toHIdx,
+      fromHIdx,
+      heats,
+      context,
+    );
+    if (validationError) {
       return {
         updatedHeats: heats,
         updatedParticipants: participants,
         actionTaken: false,
-        error: {
-          title: "RDS_ERR_VALIDATION_TITLE",
-          message: this.translationService.translate(
-            "RD_ERR_STEP_UP_IN_STEP_ONE",
-          ),
-        },
+        error: validationError,
       };
     }
 

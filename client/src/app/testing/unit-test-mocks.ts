@@ -199,6 +199,7 @@ export const mockTranslationService = {
 };
 
 export const mockRouter = {
+  url: undefined as string | undefined,
   navigate: jasmine.createSpy("navigate"),
   navigateByUrl: jasmine.createSpy("navigateByUrl"),
   events: new Subject().asObservable(),
@@ -343,6 +344,7 @@ export function resetMocks() {
   );
 
   // Restore default behaviors for mockRouter
+  mockRouter.url = undefined;
   mockRouter.navigate.and.stub();
   mockRouter.navigateByUrl.and.stub();
   (mockRouter as any).events = new Subject().asObservable();

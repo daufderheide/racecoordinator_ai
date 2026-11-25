@@ -84,6 +84,7 @@ export class RacedaySubscriptionsHelper {
     host.subscriptions.push(
       host.raceConnectionService.raceState$.subscribe((state: any) => {
         host.handleRaceStateChange(state);
+        RacedaySubscriptionsHelper.checkDriverLaneSelection(host);
       }),
     );
 
@@ -119,6 +120,7 @@ export class RacedaySubscriptionsHelper {
             host.updateRacedayLayout();
             host.updateAudioRelevance();
           }
+          RacedaySubscriptionsHelper.checkDriverLaneSelection(host);
           if (!host.isDestroyed) {
             host.cdr.markForCheck();
           }
@@ -889,5 +891,137 @@ export class RacedaySubscriptionsHelper {
         }
       }),
     );
+  }
+
+  public static checkDriverLaneSelection(host: any): void {
+    if (
+      host.isDriverView ||
+      (typeof host.isUIEditorMode === "function" && host.isUIEditorMode())
+    ) {
+      return;
+    }
+    const race = host.race || host.raceService?.getRace();
+    if (
+      !race ||
+      !race.driver_lane_selection ||
+      race.driver_lane_selection === "NONE"
+    ) {
+      return;
+    }
+    const state = host.raceState;
+    if (
+      state !== RaceState.NOT_STARTED &&
+      state !== undefined &&
+      state !== null
+    ) {
+      return;
+    }
+    if (host.raceHasEnded) {
+      return;
+    }
+    const currentHeat = host.heat || host.raceService?.getCurrentHeat();
+    if (!currentHeat) {
+      return;
+    }
+    if (
+      typeof currentHeat.isStarted === "function"
+        ? currentHeat.isStarted()
+        : currentHeat.started
+    ) {
+      return;
+    }
+    if (host.router?.url && host.router.url.includes("/modify-heats")) {
+      return;
+    }
+
+    const heatNum = currentHeat.heatNumber ?? currentHeat.heat_number ?? 1;
+    const selection = race.driver_lane_selection;
+    const raceService = host.raceService;
+
+    if (!raceService) {
+      return;
+    }
+
+    let shouldOpen = false;
+
+    if (selection === "RACE_START") {
+      if (heatNum === 1 && !raceService.hasOpenedLaneSelection("RACE_START")) {
+        shouldOpen = true;
+        raceService.recordLaneSelectionOpened("RACE_START");
+      }
+    } else if (selection === "HEAT_START") {
+      if (!raceService.hasOpenedLaneSelection("HEAT_START", heatNum)) {
+        shouldOpen = true;
+        raceService.recordLaneSelectionOpened("HEAT_START", heatNum);
+      }
+    } else if (selection === "STEP_START") {
+      const stepUp = race.step_up || 0;
+      if (stepUp > 0) {
+        const heats =
+          host.heats && host.heats.length > 0
+            ? host.heats
+            : raceService.getHeats() || [];
+        const { isFirst, stepNum } =
+          RacedaySubscriptionsHelper.evaluateStepStartEligibility(
+            currentHeat,
+            heats,
+            heatNum,
+          );
+        if (
+          isFirst &&
+          !raceService.hasOpenedLaneSelection("STEP_START", stepNum)
+        ) {
+          shouldOpen = true;
+          raceService.recordLaneSelectionOpened("STEP_START", stepNum);
+        }
+      }
+    }
+
+    if (shouldOpen) {
+      const currentUrl = host.router?.url || "/raceday";
+      const returnUrl = currentUrl.split("?")[0];
+      host.router.navigate(["/modify-heats"], {
+        queryParams: { returnUrl },
+      });
+    }
+  }
+
+  public static evaluateStepStartEligibility(
+    currentHeat: any,
+    heats: any[],
+    heatNum: number,
+  ): { isFirst: boolean; stepNum: number } {
+    const heatIndex = heats.findIndex(
+      (h: any) =>
+        (h.objectId &&
+          currentHeat.objectId &&
+          h.objectId === currentHeat.objectId) ||
+        h.heatNumber === heatNum,
+    );
+    const prevHeat = heatIndex > 0 ? heats[heatIndex - 1] : undefined;
+    const isFirst =
+      heatIndex === -1 ||
+      heatIndex === 0 ||
+      (heatIndex > 0 &&
+        (Boolean(prevHeat?.isStepUpBoundary) ||
+          (currentHeat.step != null &&
+            prevHeat?.step != null &&
+            currentHeat.step > prevHeat.step)));
+
+    let stepNum = currentHeat.step || 0;
+    if (stepNum <= 0) {
+      if (heatIndex <= 0) {
+        stepNum = 1;
+      } else {
+        const boundaries = heats
+          .slice(0, heatIndex)
+          .filter(
+            (h: any) =>
+              (h.group || 0) === (currentHeat.group || 0) && h.isStepUpBoundary,
+          ).length;
+        stepNum = boundaries + 1;
+      }
+    }
+    return { isFirst, stepNum };
   }
 }

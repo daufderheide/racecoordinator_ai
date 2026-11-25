@@ -177,6 +177,9 @@ export function createRacedayMocks(overrides: any = {}) {
     "getHeats",
     "getCurrentHeat",
     "getParticipants",
+    "hasOpenedLaneSelection",
+    "recordLaneSelectionOpened",
+    "resetLaneSelectionTracking",
   ]);
   const mockHeatsWithAudio = deepCopy(MOCK_HEATS).map((h: any) => ({
     ...h,
@@ -204,6 +207,37 @@ export function createRacedayMocks(overrides: any = {}) {
   mockRaceService.getHeats.and.returnValue(mockHeatsWithAudio);
   mockRaceService.getCurrentHeat.and.returnValue(mockHeatsWithAudio[0]);
   mockRaceService.getParticipants.and.returnValue([]);
+
+  let openedRaceStart = false;
+  let openedHeatNum: number | null = null;
+  const openedStepNums = new Set<number>();
+
+  mockRaceService.hasOpenedLaneSelection.and.callFake(
+    (type: string, value?: number) => {
+      if (type === "RACE_START") return openedRaceStart;
+      if (type === "HEAT_START") return openedHeatNum === value;
+      if (type === "STEP_START") {
+        return value != null
+          ? openedStepNums.has(value)
+          : openedStepNums.size > 0;
+      }
+      return false;
+    },
+  );
+  mockRaceService.recordLaneSelectionOpened.and.callFake(
+    (type: string, value?: number) => {
+      if (type === "RACE_START") openedRaceStart = true;
+      if (type === "HEAT_START") openedHeatNum = value ?? null;
+      if (type === "STEP_START") {
+        if (value != null) openedStepNums.add(value);
+      }
+    },
+  );
+  mockRaceService.resetLaneSelectionTracking.and.callFake(() => {
+    openedRaceStart = false;
+    openedHeatNum = null;
+    openedStepNums.clear();
+  });
 
   return {
     mockDataService,

@@ -195,6 +195,12 @@ The Heat Options expander configures automated pacing, heat cycle counts, and ro
 - **Auto Start Warmup Time (s)**: Staging warmup duration before the auto start countdown begins.
 - **Heat Times Through**: Specifies how many times each driver cycles through the entire heat rotation schedule.
 - **Reverse Heats**: Inverts the scheduled heat sequence so drivers run heats in reverse order.
+- **Driver Lane Selection**: Controls whether and when the Modify Heats screen automatically opens for drivers to select or adjust their lane assignments:
+    - **Do not allow lane selection**: Disabled (default). The Modify Heats screen does not open automatically.
+    - **Allow at start of race**: Automatically opens the Modify Heats screen before Heat 1 begins.
+    - **Allow at start of each heat**: Automatically opens the Modify Heats screen before every heat begins.
+    - **Allow at the start of each step (only for step up races)**: Automatically opens the Modify Heats screen at the start of each progressive step in a step-up race (disabled if Step-Up is 0).
+    - **Auto-Start Timer Interaction**: When driver lane selection is enabled, any configured auto-start countdown timer continues ticking down normally while Modify Heats is open. If the timer expires while the Modify Heats screen is open, the auto-start does not fire; once the director closes the Modify Heats screen, the heat awaits manual start by the user.
 ---
 
 ## Scoring Rules {: #scoring-rules }

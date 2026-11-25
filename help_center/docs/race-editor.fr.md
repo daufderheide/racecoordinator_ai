@@ -197,6 +197,12 @@ L'accordéon Options de manche configure le rythme automatisé, les cycles et la
 - **Délai d'échauffement avant départ (s)** : Durée d'échauffement avant le début du compte à rebours automatique.
 - **Passages de manche** : Nombre de fois où chaque pilote effectue la rotation complète des manches.
 - **Manches inversées** : Inverse l'ordre prévu des manches pour concourir dans l'ordre inverse.
+- **Sélection de voie du pilote** : Contrôle si et quand l'écran Modifier les séries (Modify Heats) s'ouvre automatiquement pour permettre aux pilotes de choisir leurs voies :
+    - **Ne pas autoriser la sélection de voie** : Désactivé (par défaut). L'écran de modification ne s'ouvre pas automatiquement.
+    - **Autoriser au début de la course** : Ouvre automatiquement l'écran de modification avant le début de la Série 1.
+    - **Autoriser au début de chaque série** : Ouvre automatiquement l'écran de modification avant chaque série.
+    - **Autoriser au début de chaque étape (courses par étapes uniquement)** : Ouvre automatiquement l'écran de modification au début de chaque palier dans les courses par étapes (désactivé si Step-Up est à 0).
+    - **Interaction avec le compte à rebours de démarrage automatique** : Lorsqu'activé, le décompte de démarrage automatique continue normalement pendant que l'écran est ouvert. S'il expire pendant que l'écran est ouvert, le départ automatique n'est pas déclenché ; après la fermeture de l'écran, le lancement se fait manuellement.
 ---
 
 ## Règles de pointage {: #scoring-rules }

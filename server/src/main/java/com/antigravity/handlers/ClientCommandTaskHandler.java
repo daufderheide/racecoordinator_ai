@@ -43,6 +43,7 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     app.post("/api/abort-timers", raceControlHandler::abortTimers, Role.DIRECTOR);
     app.post("/api/modify-heats", raceControlHandler::modifyHeats, Role.DIRECTOR);
     app.post("/api/regenerate-heats", raceControlHandler::regenerateHeats, Role.DIRECTOR);
+    app.post("/api/open-modify-heats", raceControlHandler::openModifyHeats, Role.DIRECTOR);
     app.post("/api/finalize-modify-heats", raceControlHandler::finalizeModifyHeats, Role.DIRECTOR);
   }
 
@@ -186,6 +187,14 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
 
   void abortTimers(Context ctx) {
     raceControlHandler.abortTimers(ctx);
+  }
+
+  void openModifyHeats(Context ctx) {
+    raceControlHandler.openModifyHeats(ctx);
+  }
+
+  void finalizeModifyHeats(Context ctx) {
+    raceControlHandler.finalizeModifyHeats(ctx);
   }
 
   void saveRace(Context ctx) {

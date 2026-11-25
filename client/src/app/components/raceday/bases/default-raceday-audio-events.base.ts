@@ -315,6 +315,10 @@ export abstract class DefaultRacedayAudioEventsBase extends DefaultRacedayLayout
     RacedayRaceLifecycleHelper.handleRaceStateChange(this, state);
   }
 
+  public checkDriverLaneSelection(): void {
+    RacedaySubscriptionsHelper.checkDriverLaneSelection(this);
+  }
+
   protected getCountdownMaxLamps(): number {
     return RacedayRaceLifecycleHelper.getCountdownMaxLamps(this);
   }

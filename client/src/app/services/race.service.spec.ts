@@ -154,4 +154,65 @@ describe("RaceService", () => {
     expect(service.getLaneCars()).toBe(lanes);
     expect(seen).toEqual([[], lanes]);
   });
+
+  describe("Lane Selection Tracking", () => {
+    it("should track race start lane selection", () => {
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeFalse();
+      service.recordLaneSelectionOpened("RACE_START");
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeTrue();
+      service.resetLaneSelectionTracking();
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeFalse();
+    });
+
+    it("should track heat start lane selection by heat number", () => {
+      expect(service.hasOpenedLaneSelection("HEAT_START", 1)).toBeFalse();
+      service.recordLaneSelectionOpened("HEAT_START", 1);
+      expect(service.hasOpenedLaneSelection("HEAT_START", 1)).toBeTrue();
+      expect(service.hasOpenedLaneSelection("HEAT_START", 2)).toBeFalse();
+    });
+
+    it("should track step start lane selection by step number", () => {
+      expect(service.hasOpenedLaneSelection("STEP_START", 1)).toBeFalse();
+      service.recordLaneSelectionOpened("STEP_START", 1);
+      expect(service.hasOpenedLaneSelection("STEP_START", 1)).toBeTrue();
+      expect(service.hasOpenedLaneSelection("STEP_START", 2)).toBeFalse();
+
+      service.recordLaneSelectionOpened("STEP_START", 2);
+      expect(service.hasOpenedLaneSelection("STEP_START", 1)).toBeTrue();
+      expect(service.hasOpenedLaneSelection("STEP_START", 2)).toBeTrue();
+    });
+
+    it("should reset lane selection tracking when clear is called", () => {
+      service.recordLaneSelectionOpened("RACE_START");
+      service.recordLaneSelectionOpened("HEAT_START", 3);
+      service.clear();
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeFalse();
+      expect(service.hasOpenedLaneSelection("HEAT_START", 3)).toBeFalse();
+    });
+
+    it("should reset lane selection tracking when a different race is set", () => {
+      const track = new Track({
+        entity_id: "t1",
+        name: "Track",
+        num_track_sections: 100,
+        lanes: [],
+        has_digital_fuel: false,
+        arduino_configs: [],
+      });
+      const race1 = new Race("r1", "Race 1", track);
+      const race2 = new Race("r2", "Race 2", track);
+
+      service.setRace(race1);
+      service.recordLaneSelectionOpened("RACE_START");
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeTrue();
+
+      // Setting same race should not reset
+      service.setRace(race1);
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeTrue();
+
+      // Setting different race should reset
+      service.setRace(race2);
+      expect(service.hasOpenedLaneSelection("RACE_START")).toBeFalse();
+    });
+  });
 });

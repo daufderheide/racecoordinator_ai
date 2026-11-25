@@ -443,6 +443,14 @@ export class DataRaceControlHelper {
       );
   }
 
+  openModifyHeats(): Observable<any> {
+    return this.http.post(
+      `${this.getBaseUrl()}/api/open-modify-heats`,
+      {},
+      { responseType: "text" },
+    );
+  }
+
   finalizeModifyHeats(): Observable<any> {
     return this.http.post(
       `${this.getBaseUrl()}/api/finalize-modify-heats`,

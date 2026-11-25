@@ -369,12 +369,66 @@ export function canEnterHeatsGridPredicate(
 
 export function canEnterDriverDropListPredicate(
   drag: CdkDrag<any>,
-  _drop?: CdkDropList<any>,
+  drop?: CdkDropList<any>,
+  localHeats?: Heat[],
+  isStepUpEnabled?: boolean,
+  isHeatStarted?: (h: Heat) => boolean,
 ): boolean {
-  return !(
+  if (
     drag.data &&
     typeof drag.data === "object" &&
     "heatDrivers" in drag.data
+  ) {
+    return false;
+  }
+
+  if (
+    isStepUpEnabled &&
+    localHeats &&
+    drop?.data &&
+    typeof drop.data === "object" &&
+    "heatIndex" in drop.data &&
+    isStepUpParticipant(drag.data)
+  ) {
+    const heat = localHeats[drop.data.heatIndex];
+    if (
+      heat &&
+      ((heat.step || 1) === 1 ||
+        hasStepSteppedUp(
+          heat.step || 1,
+          heat.group ?? 0,
+          localHeats,
+          isHeatStarted,
+        ))
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function hasStepSteppedUp(
+  step: number,
+  group: number,
+  localHeats: Heat[],
+  isHeatStarted?: (h: Heat) => boolean,
+): boolean {
+  if (step <= 1) {
+    return true;
+  }
+  const groupHeats = localHeats.filter((h) => (h.group ?? 0) === (group ?? 0));
+  const steps = Array.from(new Set(groupHeats.map((h) => h.step || 1))).sort(
+    (a, b) => a - b,
+  );
+
+  const currentStepIdx = steps.indexOf(step);
+  const prevStep = currentStepIdx > 0 ? steps[currentStepIdx - 1] : step - 1;
+  const prevStepHeats = groupHeats.filter((h) => (h.step || 1) === prevStep);
+
+  return (
+    prevStepHeats.length > 0 &&
+    prevStepHeats.every((h) => (isHeatStarted ? isHeatStarted(h) : !!h.started))
   );
 }
 
@@ -417,12 +471,21 @@ export function isHeatIncompatibleWithDraggedParticipant(
   localHeats: Heat[],
   isStepUpEnabled: boolean,
   groupEnabled: boolean,
+  isHeatStarted?: (h: Heat) => boolean,
 ): boolean {
   if (!participant) return false;
 
-  // Step-Up placeholder is NOT allowed in Step 1
+  // Step-Up placeholder is NOT allowed in Step 1 or any active/stepped-up step
   if (isStepUpEnabled && isStepUpParticipant(participant)) {
-    if ((heat.step || 1) === 1) {
+    if (
+      (heat.step || 1) === 1 ||
+      hasStepSteppedUp(
+        heat.step || 1,
+        heat.group ?? 0,
+        localHeats,
+        isHeatStarted,
+      )
+    ) {
       return true;
     }
   }
@@ -457,30 +520,44 @@ export function getHeatValidationWarning(
   race: Race | undefined,
   isStepUpEnabled: boolean,
   translationService: TranslationService,
+  isHeatStarted?: (h: Heat) => boolean,
 ): string | null {
   if (!heat) return null;
 
-  // Check step-up in step 1
-  if (isStepUpEnabled && (heat.step || 1) === 1) {
+  const heatStep = heat.step || 1;
+  const steppedUp = hasStepSteppedUp(
+    heatStep,
+    heat.group ?? 0,
+    localHeats,
+    isHeatStarted,
+  );
+
+  // Check step-up in step 1 or any stepped-up step
+  if (isStepUpEnabled && steppedUp) {
     if (heat.heatDrivers?.some((d) => isStepUpParticipant(d.participant))) {
-      return translationService.translate("RD_ERR_STEP_UP_IN_STEP_ONE");
+      return heatStep === 1
+        ? translationService.translate("RD_ERR_STEP_UP_IN_STEP_ONE")
+        : translationService.translate("RD_ERR_STEP_UP_IN_ACTIVE_STEP", {
+            step: heatStep,
+          });
     }
   }
 
-  // Check step-up count mismatch in step > 1
+  // Check step-up count mismatch in step > 1 only if the step has NOT stepped up yet
   if (
     isStepUpEnabled &&
     race?.step_up &&
     race.step_up > 0 &&
-    (heat.step || 1) > 1 &&
-    race.heat_rotation_type !== "Custom"
+    heatStep > 1 &&
+    race.heat_rotation_type !== "Custom" &&
+    !steppedUp
   ) {
     const stepUpCount = (heat.heatDrivers || []).filter((d) =>
       isStepUpParticipant(d.participant),
     ).length;
     if (stepUpCount !== race.step_up) {
       return translationService.translate("RD_ERR_STEP_UP_COUNT_MISMATCH", {
-        step: heat.step || 1,
+        step: heatStep,
         expected: race.step_up,
         found: stepUpCount,
       });

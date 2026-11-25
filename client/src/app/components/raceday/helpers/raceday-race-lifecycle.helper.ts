@@ -11,6 +11,7 @@ export class RacedayRaceLifecycleHelper {
     host.previousTime = 0;
     host.timeFormat = "1.0-0";
     host.resetRaceAudioTracking();
+    host.raceService?.resetLaneSelectionTracking();
   }
 
   public static syncNewRaceTimers(host: any, race: any): void {
@@ -226,6 +227,9 @@ export class RacedayRaceLifecycleHelper {
         if (state === RaceState.NOT_STARTED) {
           host.hasRacedInCurrentHeat = false;
           host.audioService.reset();
+          if (typeof host.checkDriverLaneSelection === "function") {
+            host.checkDriverLaneSelection();
+          }
         }
         host.resetRaceAudioTracking();
       }

@@ -46,11 +46,61 @@ export class RaceService {
   );
   selectedRace$ = this.selectedRaceSubject.asObservable();
 
+  private hasOpenedLaneSelectionForRaceStart = false;
+  private lastLaneSelectionHeatNumber = -1;
+  private lastLaneSelectionStepNumber = -1;
+  private openedLaneSelectionSteps = new Set<number>();
+
+  hasOpenedLaneSelection(
+    type: "RACE_START" | "HEAT_START" | "STEP_START",
+    value?: number,
+  ): boolean {
+    if (type === "RACE_START") {
+      return this.hasOpenedLaneSelectionForRaceStart;
+    }
+    if (type === "HEAT_START") {
+      return this.lastLaneSelectionHeatNumber === value;
+    }
+    if (type === "STEP_START") {
+      return value != null
+        ? this.openedLaneSelectionSteps.has(value)
+        : this.lastLaneSelectionStepNumber !== -1;
+    }
+    return false;
+  }
+
+  recordLaneSelectionOpened(
+    type: "RACE_START" | "HEAT_START" | "STEP_START",
+    value?: number,
+  ): void {
+    if (type === "RACE_START") {
+      this.hasOpenedLaneSelectionForRaceStart = true;
+    } else if (type === "HEAT_START") {
+      this.lastLaneSelectionHeatNumber = value ?? -1;
+    } else if (type === "STEP_START") {
+      this.lastLaneSelectionStepNumber = value ?? -1;
+      if (value != null) {
+        this.openedLaneSelectionSteps.add(value);
+      }
+    }
+  }
+
+  resetLaneSelectionTracking(): void {
+    this.hasOpenedLaneSelectionForRaceStart = false;
+    this.lastLaneSelectionHeatNumber = -1;
+    this.lastLaneSelectionStepNumber = -1;
+    this.openedLaneSelectionSteps.clear();
+  }
+
   getRacingDrivers(): Driver[] {
     return this.racingDriversSubject.getValue();
   }
 
   setRace(race: Race) {
+    const current = this.selectedRaceSubject.getValue();
+    if (!current || (race && current.entity_id !== race.entity_id)) {
+      this.resetLaneSelectionTracking();
+    }
     this.selectedRaceSubject.next(race);
   }
 
@@ -108,6 +158,7 @@ export class RaceService {
   }
 
   clear() {
+    this.resetLaneSelectionTracking();
     this.racingDriversSubject.next([]);
     this.participantsSubject.next([]);
     this.groupParticipantsSubject.next([]);

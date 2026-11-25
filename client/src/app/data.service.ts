@@ -499,6 +499,9 @@ export class DataService {
   ): Observable<RegenerateHeatsResponse> {
     return this.raceControlHelper.regenerateHeats(participants);
   }
+  openModifyHeats(): Observable<any> {
+    return this.raceControlHelper.openModifyHeats();
+  }
   finalizeModifyHeats(): Observable<any> {
     return this.raceControlHelper.finalizeModifyHeats();
   }

@@ -301,76 +301,84 @@ public class NotStarted implements IRaceState {
               t.setDaemon(true);
               return t;
             });
-    final Runnable ticker =
-        new Runnable() {
-          long lastTime = 0;
-          RaceFlag lastFlag = getFlagType(race);
-          boolean warmupEnded = false;
-
-          @Override
-          public void run() {
-            try {
-              long now = System.nanoTime();
-              if (lastTime == 0) {
-                lastTime = now;
-                return;
-              }
-
-              double delta = (now - lastTime) / 1_000_000_000.0;
-              lastTime = now;
-
-              double remaining = race.getAutoStartRemaining() - delta;
-
-              // Handle warmup time power logic and refueling
-              double autoStartTime = race.getRaceModel().getAutoStartTime();
-              double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-              double elapsed = autoStartTime - Math.max(0, remaining);
-
-              if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
-                // During warmup, process refueling and fuel usage
-                executionManager.processTicker((float) delta);
-              }
-
-              if (remaining <= 0) {
-                remaining = 0;
-                race.setAutoStartRemaining(0);
-                broadcastTime(race);
-                stopTimer();
-                race.setAutoStartFired(true);
-                if (autoStartWarmupTime > 0 && !warmupEnded) {
-                  warmupEnded = true;
-                  logger.info("NotStarted: Warmup ended at race start. Resetting heat.");
-                  race.resetCurrentHeat();
-                }
-                race.startRace();
-              } else {
-                race.setAutoStartRemaining(remaining);
-
-                if (autoStartWarmupTime > 0 && elapsed > autoStartWarmupTime && !warmupEnded) {
-                  warmupEnded = true;
-                  logger.info("NotStarted: Warmup ended. Resetting heat.");
-                  race.resetCurrentHeat();
-                  race.updatePowerForFlag(RaceFlag.RED);
-                  race.broadcastFlag(getFlagType(race));
-                }
-
-                RaceFlag currentFlag = getFlagType(race);
-                if (currentFlag != lastFlag) {
-                  logger.info("Auto-start flag changed to: {}", currentFlag);
-                  race.broadcastFlag(currentFlag);
-                  race.updatePowerForFlag(currentFlag);
-                  lastFlag = currentFlag;
-                }
-
-                race.syncRaceState(RaceState.NOT_STARTED, currentFlag, remaining);
-                broadcastTime(race);
-              }
-            } catch (Exception e) {
-              logger.error("Error in auto-start ticker", e);
-            }
-          }
-        };
+    final Runnable ticker = createTicker(race);
     timerHandle = scheduler.scheduleAtFixedRate(ticker, 0, 100, TimeUnit.MILLISECONDS);
+  }
+
+  Runnable createTicker(final Race race) {
+    return new Runnable() {
+      long lastTime = 0;
+      RaceFlag lastFlag = getFlagType(race);
+      boolean warmupEnded = false;
+
+      @Override
+      public void run() {
+        try {
+          long now = System.nanoTime();
+          if (lastTime == 0) {
+            lastTime = now;
+            return;
+          }
+
+          double delta = (now - lastTime) / 1_000_000_000.0;
+          lastTime = now;
+
+          double remaining = race.getAutoStartRemaining() - delta;
+
+          // Handle warmup time power logic and refueling
+          double autoStartTime = race.getRaceModel().getAutoStartTime();
+          double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+          double elapsed = autoStartTime - Math.max(0, remaining);
+
+          if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+            // During warmup, process refueling and fuel usage
+            executionManager.processTicker((float) delta);
+          }
+
+          if (remaining <= 0) {
+            remaining = 0;
+            race.setAutoStartRemaining(0);
+            broadcastTime(race);
+            stopTimer();
+            race.setAutoStartFired(true);
+            if (autoStartWarmupTime > 0 && !warmupEnded) {
+              warmupEnded = true;
+              logger.info("NotStarted: Warmup ended at race start. Resetting heat.");
+              race.resetCurrentHeat();
+            }
+            if (!race.isModifyHeatsOpen()) {
+              race.startRace();
+            } else {
+              logger.info(
+                  "NotStarted: Auto-start timer expired while modify heats is open; waiting for manual start.");
+            }
+          } else {
+            race.setAutoStartRemaining(remaining);
+
+            if (autoStartWarmupTime > 0 && elapsed > autoStartWarmupTime && !warmupEnded) {
+              warmupEnded = true;
+              logger.info("NotStarted: Warmup ended. Resetting heat.");
+              race.resetCurrentHeat();
+              race.updatePowerForFlag(RaceFlag.RED);
+              race.broadcastFlag(getFlagType(race));
+            }
+
+            RaceFlag currentFlag = getFlagType(race);
+            if (currentFlag != lastFlag) {
+              logger.info("Auto-start flag changed to: {}", currentFlag);
+              race.broadcastFlag(currentFlag);
+              race.updatePowerForFlag(currentFlag);
+              lastFlag = currentFlag;
+            }
+
+            race.syncRaceState(RaceState.NOT_STARTED, currentFlag, remaining);
+            broadcastTime(race);
+          }
+        } catch (Exception e) {
+          logger.error("Error in auto-start ticker", e);
+        }
+      }
+    };
   }
 
   private void stopTimer() {

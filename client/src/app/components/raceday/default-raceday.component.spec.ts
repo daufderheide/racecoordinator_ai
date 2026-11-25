@@ -16386,4 +16386,272 @@ describe("DefaultRacedayComponent", () => {
       );
     });
   });
+
+  describe("checkDriverLaneSelection", () => {
+    let isDriverViewSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      mockRouter.navigate.calls.reset();
+      mockRouter.url = "/raceday";
+      mockRaceService.resetLaneSelectionTracking();
+      isDriverViewSpy = spyOnProperty(
+        component,
+        "isDriverView",
+        "get",
+      ).and.returnValue(false);
+      component.raceHasEnded = false;
+      (component as any).raceState = RaceState.NOT_STARTED;
+    });
+
+    it("should do nothing when driver_lane_selection is NONE or unset", () => {
+      component.race = { driver_lane_selection: "NONE" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+      component.race = {} as any;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should do nothing when isDriverView is true", () => {
+      isDriverViewSpy.and.returnValue(true);
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should do nothing when UI editor mode is active", () => {
+      spyOn(component, "isUIEditorMode").and.returnValue(true);
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should do nothing when raceState is RACING", () => {
+      (component as any).raceState = RaceState.RACING;
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should do nothing when race has ended", () => {
+      component.raceHasEnded = true;
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should do nothing when heat is already started", () => {
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => true,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should do nothing when router is already on /modify-heats", () => {
+      mockRouter.url = "/modify-heats";
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should navigate to /modify-heats for RACE_START on heat 1 and not repeat", () => {
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+
+      mockRouter.navigate.calls.reset();
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should not navigate for RACE_START on heat > 1", () => {
+      component.race = { driver_lane_selection: "RACE_START" } as any;
+      (component as any).heat = {
+        heatNumber: 2,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should navigate to /modify-heats for HEAT_START on each new heat", () => {
+      component.race = { driver_lane_selection: "HEAT_START" } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+
+      // Same heat does not re-navigate
+      mockRouter.navigate.calls.reset();
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+      // Next heat navigates
+      (component as any).heat = {
+        heatNumber: 2,
+        isStarted: () => false,
+      } as any;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+    });
+
+    it("should navigate to /modify-heats for STEP_START on each new step when step_up > 0", () => {
+      component.race = {
+        driver_lane_selection: "STEP_START",
+        step_up: 2,
+      } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        step: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+
+      // Same step does not re-navigate
+      mockRouter.navigate.calls.reset();
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+      // Next step navigates
+      (component as any).heat = {
+        heatNumber: 3,
+        step: 2,
+        isStarted: () => false,
+      } as any;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+    });
+
+    it("should only navigate on the first heat of each step and NOT on the last heat of a step", () => {
+      component.race = {
+        driver_lane_selection: "STEP_START",
+        step_up: 2,
+      } as any;
+
+      const heat1 = {
+        heatNumber: 1,
+        step: 1,
+        isStepUpBoundary: false,
+        isStarted: () => false,
+      } as any;
+      const heat2 = {
+        heatNumber: 2,
+        step: 1,
+        isStepUpBoundary: true,
+        isStarted: () => false,
+      } as any;
+      const heat3 = {
+        heatNumber: 3,
+        step: 2,
+        isStepUpBoundary: false,
+        isStarted: () => false,
+      } as any;
+      const heat4 = {
+        heatNumber: 4,
+        step: 2,
+        isStepUpBoundary: true,
+        isStarted: () => false,
+      } as any;
+
+      component.heats = [heat1, heat2, heat3, heat4];
+
+      // Heat 1 (first heat of step 1) -> NAVIGATES
+      (component as any).heat = heat1;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+
+      // Heat 2 (last heat of step 1, boundary) -> DOES NOT NAVIGATE
+      mockRouter.navigate.calls.reset();
+      (component as any).heat = heat2;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+
+      // Heat 3 (first heat of step 2) -> NAVIGATES
+      mockRouter.navigate.calls.reset();
+      (component as any).heat = heat3;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/modify-heats"], {
+        queryParams: { returnUrl: "/raceday" },
+      });
+
+      // Heat 4 (last heat of step 2, boundary) -> DOES NOT NAVIGATE
+      mockRouter.navigate.calls.reset();
+      (component as any).heat = heat4;
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should not navigate for STEP_START when step_up <= 0", () => {
+      component.race = {
+        driver_lane_selection: "STEP_START",
+        step_up: 0,
+      } as any;
+      (component as any).heat = {
+        heatNumber: 1,
+        step: 1,
+        isStarted: () => false,
+      } as any;
+
+      component.checkDriverLaneSelection();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+  });
 });

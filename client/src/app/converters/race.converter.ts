@@ -13,7 +13,7 @@ import {
   OverallScoring,
 } from "@app/models/overall_scoring";
 import { PointsScoring } from "@app/models/points_scoring";
-import { Race } from "@app/models/race";
+import { DriverLaneSelection, Race } from "@app/models/race";
 import { TeamOptions } from "@app/models/team_options";
 import { Track } from "@app/models/track";
 import { IRaceModel } from "@app/proto/antigravity";
@@ -167,7 +167,23 @@ export class RaceConverter {
       this.parsePointsScoring(p.pointsScoring || p.points_scoring),
       undefined,
       p.carsStayInLanes ?? p.cars_stay_in_lanes ?? false,
+      this.parseDriverLaneSelection(
+        p.driverLaneSelection ?? p.driver_lane_selection,
+      ),
     );
+  }
+
+  private static parseDriverLaneSelection(val: any): DriverLaneSelection {
+    if (val === 1 || val === "DLS_RACE_START" || val === "RACE_START") {
+      return "RACE_START";
+    }
+    if (val === 2 || val === "DLS_HEAT_START" || val === "HEAT_START") {
+      return "HEAT_START";
+    }
+    if (val === 3 || val === "DLS_STEP_START" || val === "STEP_START") {
+      return "STEP_START";
+    }
+    return "NONE";
   }
 
   private static parseHeatScoring(rawScoring: any): HeatScoring {

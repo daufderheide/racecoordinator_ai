@@ -197,6 +197,12 @@ El expansor de Opciones de tanda configura los tiempos automatizados, los ciclos
 - **Tiempo de calentamiento para inicio (s)**: Duración del calentamiento previo al inicio automático.
 - **Pasadas por tanda**: Especifica cuántas veces cada piloto completa la rotación total de tandas.
 - **Tandas invertidas**: Invierte el orden programado de las tandas para correr en sentido inverso.
+- **Selección de carril del piloto**: Controla si y cuándo se abre automáticamente la pantalla de Modificar Mangas (Modify Heats) para que los pilotos seleccionen o ajusten sus carriles:
+    - **No permitir selección de carril**: Desactivado (por defecto). La pantalla de Modificar Mangas no se abre automáticamente.
+    - **Permitir al inicio de la carrera**: Abre automáticamente la pantalla de Modificar Mangas antes de que comience la Manga 1.
+    - **Permitir al inicio de cada manga**: Abre automáticamente la pantalla de Modificar Mangas antes de cada manga.
+    - **Permitir al inicio de cada fase (solo para carreras por fases)**: Abre automáticamente la pantalla de Modificar Mangas al inicio de cada fase en carreras por fases (desactivado si Step-Up es 0).
+    - **Interacción con el temporizador de inicio automático**: Con la selección de carril activa, cualquier temporizador de inicio automático sigue contando con normalidad mientras la pantalla está abierta. Si el temporizador expira con la pantalla abierta, el inicio automático no se dispara; una vez cerrada, el usuario inicia la manga manualmente.
 ---
 
 ## Reglas de puntuación {: #scoring-rules }

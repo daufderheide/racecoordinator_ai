@@ -213,12 +213,21 @@ export function validateStepUpHeats(
           isHeatStarted ? isHeatStarted(h) : !!h.started,
         );
 
+      const stepNum = sortedSteps[sIdx];
+      const stepHeats = stepMap.get(stepNum) || [];
+
       if (isPrevStepCompleted) {
+        const hasStepUpInActive = stepHeats.some((h) =>
+          h.heatDrivers?.some((dhd) => isStepUpParticipant(dhd.participant)),
+        );
+        if (hasStepUpInActive) {
+          return translationService.translate("RD_ERR_STEP_UP_IN_ACTIVE_STEP", {
+            step: stepNum,
+          });
+        }
         continue;
       }
 
-      const stepNum = sortedSteps[sIdx];
-      const stepHeats = stepMap.get(stepNum) || [];
       for (const h of stepHeats) {
         const stepUpCount = h.heatDrivers.filter((dhd) =>
           isStepUpParticipant(dhd.participant),

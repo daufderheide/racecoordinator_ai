@@ -116,4 +116,37 @@ public class RaceTest {
             .readValue("{\"@id\":1,\"name\":\"R\",\"carsStayInLanes\":true}", Race.class)
             .isCarsStayInLanes());
   }
+
+  @Test
+  public void testDriverLaneSelectionDefaultsAndSurvivesCopyAndJson() throws Exception {
+    Race defaultRace = new Race.Builder().withName("Default").build();
+    assertEquals(DriverLaneSelection.NONE, defaultRace.getDriverLaneSelection());
+
+    Race customRace =
+        new Race.Builder()
+            .withName("Custom")
+            .withDriverLaneSelection(DriverLaneSelection.HEAT_START)
+            .build();
+    assertEquals(DriverLaneSelection.HEAT_START, customRace.getDriverLaneSelection());
+
+    Race copied = new Race.Builder().from(customRace).build();
+    assertEquals(DriverLaneSelection.HEAT_START, copied.getDriverLaneSelection());
+
+    ObjectMapper mapper = new ObjectMapper();
+    String json = mapper.writeValueAsString(customRace);
+    assertTrue(json.contains("\"driver_lane_selection\":\"HEAT_START\""));
+    assertEquals(
+        DriverLaneSelection.HEAT_START,
+        mapper.readValue(json, Race.class).getDriverLaneSelection());
+
+    Race fromCamelCase =
+        mapper.readValue(
+            "{\"@id\":1,\"name\":\"R\",\"driverLaneSelection\":\"STEP_START\"}", Race.class);
+    assertEquals(DriverLaneSelection.STEP_START, fromCamelCase.getDriverLaneSelection());
+
+    Race fromRaceStart =
+        mapper.readValue(
+            "{\"@id\":1,\"name\":\"R\",\"lane_selection\":\"RACE_START\"}", Race.class);
+    assertEquals(DriverLaneSelection.RACE_START, fromRaceStart.getDriverLaneSelection());
+  }
 }

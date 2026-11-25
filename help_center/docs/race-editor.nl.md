@@ -197,6 +197,12 @@ Het uitklapgedeelte Heat-opties regelt geautomatiseerde timing, herhalingscycli 
 - **Opwarmtijd voor start (s)**: Opwarmduur voorafgaand aan de automatische startaftelling.
 - **Aantal heat-doorgangen**: Bepaalt hoe vaak elke coureur de complete heat-rotatie doorloopt.
 - **Omgekeerde heats**: Draait de volgorde van de heats om zodat coureurs in omgekeerde volgorde rijden.
+- **Baanselectie coureur**: Bepaalt of en wanneer het scherm Heats wijzigen (Modify Heats) automatisch opent voor coureurs om hun banen te kiezen:
+    - **Baanselectie niet toestaan**: Uitgeschakeld (standaard). Het wijzigingsscherm opent niet automatisch.
+    - **Toestaan bij start van race**: Opent automatisch het wijzigingsscherm vóór de start van Heat 1.
+    - **Toestaan bij start van elke heat**: Opent automatisch het wijzigingsscherm vóór de start van elke heat.
+    - **Toestaan bij start van elke stap (alleen bij ladder/step-up races)**: Opent automatisch het wijzigingsscherm bij de start van elke trede bij ladderraces (uitgeschakeld als Step-Up 0 is).
+    - **Interactie met automatische starttimer**: Wanneer baanselectie actief is, loopt een eventuele automatische starttimer normaal door terwijl het wijzigingsscherm openstaat. Als de timer afloopt terwijl het scherm openstaat, start de heat niet automatisch; zodra het scherm gesloten wordt, start de gebruiker de heat handmatig.
 ---
 
 ## Scoringsregels {: #scoring-rules }

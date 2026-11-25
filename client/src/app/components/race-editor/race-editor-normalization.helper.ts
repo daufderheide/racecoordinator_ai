@@ -183,6 +183,8 @@ export class RaceEditorNormalizationHelper {
     const normalized = {
       ...deepCopy(race),
       step_up: Number(race.step_up ?? race.stepUp ?? 0),
+      driver_lane_selection:
+        race.driver_lane_selection ?? race.driverLaneSelection ?? "NONE",
       group_options: race.group_options || {
         enabled: false,
         max_groups: 2,
@@ -244,27 +246,18 @@ export class RaceEditorNormalizationHelper {
       normalized.theme_id = defaultTheme.entity_id;
     }
 
+    if (
+      normalized.step_up <= 0 &&
+      normalized.driver_lane_selection === "STEP_START"
+    ) {
+      normalized.driver_lane_selection = "NONE";
+    }
+
     return normalized;
   }
 
-  static createDefaultRaceTemplate(trackId: string, themeId: string): any {
+  private static createDefaultFuelOptions(): any {
     return {
-      entity_id: "new",
-      name: "",
-      track_entity_id: trackId,
-      theme_id: themeId,
-      step_up: 0,
-      heat_rotation_type: "RoundRobin",
-      heat_scoring: this.normalizeHeatScoring(null),
-      overall_scoring: {
-        dropped_heats: 0,
-        ranking_method: "LAP_COUNT",
-        tiebreaker: "FASTEST_LAP_TIME",
-      },
-      auto_advance_time: 0,
-      auto_start_time: 0,
-      auto_advance_warmup_time: 0,
-      auto_start_warmup_time: 0,
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
@@ -292,6 +285,52 @@ export class RaceEditorNormalizationHelper {
         capacity: 100,
         custom_curve: [],
       },
+    };
+  }
+
+  private static createDefaultScoringOptions(): any {
+    return {
+      season_scoring: {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [3, 2, 1, 0],
+      },
+      points_scoring: {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [3, 2, 1, 0],
+        heat_carry_over_pct: 0,
+        heat_bonus_fastest_lap: 0,
+        heat_bonus_led_lap: 0,
+        heat_bonus_most_laps_led: 0,
+        heat_one_bonus_per_driver: false,
+        overall_bonus_fastest_lap: 0,
+        overall_bonus_fastest_lap_per_lane: 0,
+        overall_bonus_led_lap: 0,
+        overall_bonus_most_laps_led: 0,
+        overall_one_bonus_per_driver: false,
+      },
+    };
+  }
+
+  static createDefaultRaceTemplate(trackId: string, themeId: string): any {
+    return {
+      entity_id: "new",
+      name: "",
+      track_entity_id: trackId,
+      theme_id: themeId,
+      step_up: 0,
+      driver_lane_selection: "NONE",
+      heat_rotation_type: "RoundRobin",
+      heat_scoring: this.normalizeHeatScoring(null),
+      overall_scoring: {
+        dropped_heats: 0,
+        ranking_method: "LAP_COUNT",
+        tiebreaker: "FASTEST_LAP_TIME",
+      },
+      auto_advance_time: 0,
+      auto_start_time: 0,
+      auto_advance_warmup_time: 0,
+      auto_start_warmup_time: 0,
+      ...this.createDefaultFuelOptions(),
       crash_and_learn_options: this.normalizeCrashAndLearnOptions(null),
       min_lap_time: 1.5,
       drift_time: 0.5,
@@ -327,24 +366,7 @@ export class RaceEditorNormalizationHelper {
         rotate_group_heats: false,
         min_advancing: 0,
       },
-      season_scoring: {
-        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
-        heat_position_points: [3, 2, 1, 0],
-      },
-      points_scoring: {
-        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
-        heat_position_points: [3, 2, 1, 0],
-        heat_carry_over_pct: 0,
-        heat_bonus_fastest_lap: 0,
-        heat_bonus_led_lap: 0,
-        heat_bonus_most_laps_led: 0,
-        heat_one_bonus_per_driver: false,
-        overall_bonus_fastest_lap: 0,
-        overall_bonus_fastest_lap_per_lane: 0,
-        overall_bonus_led_lap: 0,
-        overall_bonus_most_laps_led: 0,
-        overall_one_bonus_per_driver: false,
-      },
+      ...this.createDefaultScoringOptions(),
     };
   }
 

@@ -197,6 +197,12 @@ Der Bereich Lauf-Optionen konfiguriert automatisierte Zeitsteuerungen, Durchläu
 - **Aufwärmzeit für Start (s)**: Vorlaufzeit vor Beginn des automatischen Start-Countdowns.
 - **Laufdurchläufe**: Bestimmt, wie oft jeder Fahrer die gesamte Laufrotation durchläuft.
 - **Umgekehrte Läufe**: Dreht die geplante Laufreihenfolge um, sodass Läufe rückwärts ausgetragen werden.
+- **Fahrer-Spurauswahl**: Steuert, ob und wann sich das Fenster zum Bearbeiten der Läufe (Modify Heats) automatisch öffnet, damit Fahrer ihre Spuren auswählen können:
+    - **Spurauswahl nicht zulassen**: Deaktiviert (Standard). Das Bearbeitungsfenster öffnet sich nicht automatisch.
+    - **Zu Beginn des Rennens zulassen**: Öffnet das Bearbeitungsfenster automatisch vor Beginn von Lauf 1.
+    - **Zu Beginn jedes Laufs zulassen**: Öffnet das Bearbeitungsfenster automatisch vor jedem Lauf.
+    - **Zu Beginn jeder Stufe zulassen (nur bei Stufenrennen)**: Öffnet das Bearbeitungsfenster automatisch zu Beginn jeder progressiven Stufe bei Stufenrennen (deaktiviert, wenn Step-Up 0 ist).
+    - **Interaktion mit dem Autostart-Timer**: Wenn die Fahrer-Spurauswahl aktiv ist, läuft ein konfigurierter Autostart-Countdown normal weiter, während Modify Heats geöffnet ist. Läuft der Timer ab, während Modify Heats geöffnet ist, wird der Autostart nicht ausgelöst; nach dem Schließen des Fensters startet der Benutzer den Lauf manuell.
 ---
 
 ## Wertungsregeln {: #scoring-rules }

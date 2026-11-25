@@ -308,4 +308,36 @@ public class NotStartedTest {
     verify(executionManager, never())
         .onLap(anyInt(), anyDouble(), anyInt(), anyBoolean(), anyBoolean(), anyBoolean());
   }
+
+  @Test
+  public void testTickerExpires_WhenModifyHeatsClosed_CallsStartRace() {
+    when(race.getAutoStartRemaining()).thenReturn(-1.0);
+    when(race.isModifyHeatsOpen()).thenReturn(false);
+
+    Runnable ticker = notStarted.createTicker(race);
+    // First run sets lastTime
+    ticker.run();
+    // Second run computes delta > 0, remaining <= 0
+    ticker.run();
+
+    verify(race).setAutoStartRemaining(0.0);
+    verify(race).setAutoStartFired(true);
+    verify(race).startRace();
+  }
+
+  @Test
+  public void testTickerExpires_WhenModifyHeatsOpen_DoesNotCallStartRace() {
+    when(race.getAutoStartRemaining()).thenReturn(-1.0);
+    when(race.isModifyHeatsOpen()).thenReturn(true);
+
+    Runnable ticker = notStarted.createTicker(race);
+    // First run sets lastTime
+    ticker.run();
+    // Second run computes delta > 0, remaining <= 0
+    ticker.run();
+
+    verify(race).setAutoStartRemaining(0.0);
+    verify(race).setAutoStartFired(true);
+    verify(race, never()).startRace();
+  }
 }

@@ -933,6 +933,48 @@ describe("modify-heats-modal.utils", () => {
       );
       expect(error).toBe("RD_ERR_STEP_UP_IN_STEP_ONE");
     });
+
+    it("should reject step-up drivers in active step when prior step is completed", () => {
+      const race = { step_up: 2 } as any;
+      const p1 = createParticipantFromDriver(
+        new Driver("d1", "Driver 1", "D1"),
+      );
+      const p2 = createParticipantFromDriver(
+        new Driver("d2", "Driver 2", "D2"),
+      );
+      const pStep = createParticipantFromDriver(
+        new Driver("STEP_UP_0", "Step Up 1", "SU1"),
+      );
+      pStep.isStepUp = true;
+
+      const h1 = new Heat(
+        "h1",
+        1,
+        [new DriverHeatData("dhd1", p1, 0), new DriverHeatData("dhd2", p2, 1)],
+        [],
+        false,
+      );
+      h1.step = 1;
+
+      const h2 = new Heat(
+        "h2",
+        2,
+        [new DriverHeatData("dhd3", pStep, 0)],
+        [],
+        false,
+      );
+      h2.step = 2;
+
+      const error = getModifyHeatsValidationError(
+        [h1, h2],
+        [h1, h2],
+        [p1, p2, pStep],
+        race,
+        (h) => h.step === 1,
+        mockTranslationService,
+      );
+      expect(error).toBe("RD_ERR_STEP_UP_IN_ACTIVE_STEP");
+    });
   });
 
   describe("isHardValidationError", () => {

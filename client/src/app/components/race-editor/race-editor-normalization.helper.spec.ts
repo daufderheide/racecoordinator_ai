@@ -159,6 +159,29 @@ describe("RaceEditorNormalizationHelper", () => {
       expect(result.season_scoring).toBeDefined();
       expect(result.theme_id).toBe("default_classic_rc_ai");
     });
+
+    it("should normalize driver_lane_selection and reset STEP_START if step_up is 0", () => {
+      const defaultRace = RaceEditorNormalizationHelper.normalizeRace({}, []);
+      expect(defaultRace.driver_lane_selection).toBe("NONE");
+
+      const validHeatStart = RaceEditorNormalizationHelper.normalizeRace(
+        { driver_lane_selection: "HEAT_START" },
+        [],
+      );
+      expect(validHeatStart.driver_lane_selection).toBe("HEAT_START");
+
+      const validStepStart = RaceEditorNormalizationHelper.normalizeRace(
+        { step_up: 2, driver_lane_selection: "STEP_START" },
+        [],
+      );
+      expect(validStepStart.driver_lane_selection).toBe("STEP_START");
+
+      const invalidStepStart = RaceEditorNormalizationHelper.normalizeRace(
+        { step_up: 0, driver_lane_selection: "STEP_START" },
+        [],
+      );
+      expect(invalidStepStart.driver_lane_selection).toBe("NONE");
+    });
   });
 
   describe("createDefaultRaceTemplate", () => {
@@ -170,6 +193,7 @@ describe("RaceEditorNormalizationHelper", () => {
       expect(template.entity_id).toBe("new");
       expect(template.track_entity_id).toBe("track-1");
       expect(template.theme_id).toBe("theme-1");
+      expect(template.driver_lane_selection).toBe("NONE");
       expect(template.min_lap_time).toBe(1.5);
       expect(template.heat_times_through).toBe(1);
       expect(template.season_scoring.position_points.length).toBe(10);

@@ -3279,6 +3279,44 @@ describe("RaceEditorComponent", () => {
       component.editingRace.track_entity_id = "missing";
       expect(component.maxStepUp).toBe(0);
     });
+
+    it("should handle onStepUpChange and reset STEP_START driver_lane_selection when step_up becomes 0", () => {
+      spyOn(component, "captureState");
+      component.editingRace.driver_lane_selection = "STEP_START";
+
+      component.onStepUpChange(2);
+      expect(component.editingRace.driver_lane_selection).toBe("STEP_START");
+      expect(component.captureState).toHaveBeenCalled();
+
+      component.onStepUpChange(0);
+      expect(component.editingRace.driver_lane_selection).toBe("NONE");
+
+      component.editingRace.driver_lane_selection = "HEAT_START";
+      component.onStepUpChange(0);
+      expect(component.editingRace.driver_lane_selection).toBe("HEAT_START");
+    });
+
+    it("should render driver lane selection dropdown inside heats-section and not scoring-section", () => {
+      component.sectionsExpanded.heats = true;
+      component.sectionsExpanded.scoring = true;
+      fixture.detectChanges();
+
+      const heatsSection =
+        fixture.nativeElement.querySelector("#heats-section");
+      expect(heatsSection).toBeTruthy();
+      const dlsInHeats = heatsSection.querySelector(
+        "#driver-lane-selection-select",
+      );
+      expect(dlsInHeats).toBeTruthy();
+
+      const scoringSection =
+        fixture.nativeElement.querySelector("#scoring-section");
+      expect(scoringSection).toBeTruthy();
+      const dlsInScoring = scoringSection.querySelector(
+        "#driver-lane-selection-select",
+      );
+      expect(dlsInScoring).toBeFalsy();
+    });
   });
 
   describe("Editor Tabs and Section Navigation", () => {

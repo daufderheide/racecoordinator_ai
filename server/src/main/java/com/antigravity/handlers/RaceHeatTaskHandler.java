@@ -5,6 +5,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
+import com.antigravity.models.DriverLaneSelection;
 import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -462,6 +463,18 @@ public class RaceHeatTaskHandler {
 
     GroupOptions groupOptions = parseGroupOptionsFromBody(body);
 
+    Object dlsRaw = body.get("driver_lane_selection");
+    if (dlsRaw == null) {
+      dlsRaw = body.get("driverLaneSelection");
+    }
+    DriverLaneSelection dls = DriverLaneSelection.NONE;
+    if (dlsRaw instanceof String) {
+      try {
+        dls = DriverLaneSelection.valueOf(((String) dlsRaw).toUpperCase());
+      } catch (Exception ignored) {
+      }
+    }
+
     return new Race.Builder()
         .withName("Preview")
         .withTrackEntityId(trackId)
@@ -484,6 +497,7 @@ public class RaceHeatTaskHandler {
         .withReverseHeats(reverseHeatsBool)
         .withGroupOptions(groupOptions)
         .withStepUp(stepUp)
+        .withDriverLaneSelection(dls)
         .build();
   }
 

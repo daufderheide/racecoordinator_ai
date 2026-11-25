@@ -523,6 +523,36 @@
                   </label>
                 </div>
               </div>
+              <div class="config-row">
+                <div class="config-section">
+                  <label>{{ "RE_DRIVER_LANE_SELECTION" | translate }}</label>
+                  <app-custom-select
+                    id="driver-lane-selection-select"
+                    class="driver-lane-selection-select"
+                    data-testid="driver-lane-selection-select"
+                    [disabled]="!isEditMode"
+                    [(ngModel)]="editingRace.driver_lane_selection"
+                    (ngModelChange)="captureState()"
+                    [title]="'RE_DRIVER_LANE_SELECTION_HINT' | translate"
+                  >
+                    <app-custom-option value="NONE">
+                      {{ "RE_LANE_SELECTION_NONE" | translate }}
+                    </app-custom-option>
+                    <app-custom-option value="RACE_START">
+                      {{ "RE_LANE_SELECTION_RACE_START" | translate }}
+                    </app-custom-option>
+                    <app-custom-option value="HEAT_START">
+                      {{ "RE_LANE_SELECTION_HEAT_START" | translate }}
+                    </app-custom-option>
+                    <app-custom-option
+                      value="STEP_START"
+                      [disabled]="(editingRace.step_up || 0) <= 0"
+                    >
+                      {{ "RE_LANE_SELECTION_STEP_START" | translate }}
+                    </app-custom-option>
+                  </app-custom-select>
+                </div>
+              </div>
             </app-editor-section>
 
             <!-- Scoring Section -->
@@ -747,7 +777,7 @@
                       data-testid="step-up-input"
                       type="number"
                       [(ngModel)]="editingRace.step_up"
-                      (ngModelChange)="captureState()"
+                      (ngModelChange)="onStepUpChange($event)"
                       min="0"
                       [max]="maxStepUp"
                       [title]="'RE_TOOLTIP_STEP_UP' | translate"

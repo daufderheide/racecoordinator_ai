@@ -32,6 +32,7 @@ export import HeatRankingTiebreaker = _proto_com.antigravity.HeatScoring.HeatRan
 export import CustomRotation = _proto_com.antigravity.CustomRotation;
 export import CustomHeat = _proto_com.antigravity.CustomHeat;
 export import HeatRotationType = _proto_com.antigravity.HeatRotationType;
+export import DriverLaneSelection = _proto_com.antigravity.DriverLaneSelection;
 export import HeatScoring = _proto_com.antigravity.HeatScoring;
 export import IAnalogFuelOptions = _proto_com.antigravity.IAnalogFuelOptions;
 export import IArduinoConfig = _proto_com.antigravity.IArduinoConfig;

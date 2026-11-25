@@ -197,6 +197,12 @@ O acordeão de Opções de bateria configura os tempos automatizados, ciclos de 
 - **Tempo de aquecimento para largada (s)**: Duração do aquecimento antes de iniciar a contagem da largada automática.
 - **Passagens por bateria**: Especifica quantas vezes cada piloto completa o ciclo inteiro de baterias.
 - **Baterias invertidas**: Inverte a sequência programada das baterias para correr em ordem contrária.
+- **Seleção de pista do piloto**: Controla se e quando a tela Modificar Baterias (Modify Heats) é aberta automaticamente para os pilotos escolherem suas pistas:
+    - **Não permitir seleção de pista**: Desativado (padrão). A tela de modificação não abre automaticamente.
+    - **Permitir no início da corrida**: Abre automaticamente a tela de modificação antes de iniciar a Bateria 1.
+    - **Permitir no início de cada bateria**: Abre automaticamente a tela de modificação antes de cada bateria.
+    - **Permitir no início de cada etapa (apenas para corridas escalonadas)**: Abre automaticamente a tela de modificação no início de cada degrau em corridas escalonadas (desativado se Step-Up for 0).
+    - **Interação com temporizador de início automático**: Quando a seleção de pista está ativa, o temporizador de início automático continua a contagem regressiva normalmente com a tela aberta. Se o temporizador expirar enquanto a tela estiver aberta, o início automático não dispara; após fechar a tela, o usuário inicia a bateria manualmente.
 ---
 
 ## Regras de pontuação {: #scoring-rules }

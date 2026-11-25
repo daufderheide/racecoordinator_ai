@@ -823,6 +823,21 @@ public class RaceControlHandler {
     }
   }
 
+  public void openModifyHeats(Context ctx) {
+    logger.info("ClientCommand received: open-modify-heats");
+    try {
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace(); // fqn-collision
+      if (race != null) {
+        race.setModifyHeatsOpen(true);
+      }
+      ctx.status(200).result("OK");
+    } catch (Exception e) {
+      logger.error("Error opening modify heats", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
   public void finalizeModifyHeats(Context ctx) {
     try {
       com.antigravity.race.Race race = // fqn-collision
@@ -831,6 +846,7 @@ public class RaceControlHandler {
         ctx.status(404).result("No active race found");
         return;
       }
+      race.setModifyHeatsOpen(false);
 
       boolean allStarted = !race.getHeats().isEmpty();
       Heat firstUnstarted = null;

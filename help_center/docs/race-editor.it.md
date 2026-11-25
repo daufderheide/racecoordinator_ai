@@ -197,6 +197,12 @@ La sezione Opzioni manche definisce la gestione automatica dei tempi, i cicli e 
 - **Tempo di riscaldamento per avvio (s)**: Durata del riscaldamento prima dell'avvio automatico.
 - **Passaggi manche**: Quante volte ogni pilota completa l'intera rotazione delle manche.
 - **Manche invertite**: Inverte la sequenza delle manche per gareggiare in ordine inverso.
+- **Selezione corsia pilota**: Controlla se e quando aprire automaticamente la schermata Modifica Manche (Modify Heats) affinché i piloti possano scegliere o cambiare corsia:
+    - **Non consentire la selezione della corsia**: Disattivato (predefinito). La schermata di modifica non si apre automaticamente.
+    - **Consenti all'inizio della gara**: Apre automaticamente la schermata di modifica prima dell'inizio della Manche 1.
+    - **Consenti all'inizio di ogni manche**: Apre automaticamente la schermata di modifica prima di ogni manche.
+    - **Consenti all'inizio di ogni fase (solo per gare a tappe)**: Apre automaticamente la schermata di modifica all'inizio di ogni gradino nelle gare a tappe (disattivato se Step-Up è 0).
+    - **Interazione con il timer di avvio automatico**: Con la selezione corsia attiva, l'eventuale timer di avvio automatico continua il conto alla rovescia mentre la schermata è aperta. Se il timer scade mentre la schermata è aperta, l'avvio automatico non si attiva; dopo la chiusura della schermata, l'utente avvia la manche manualmente.
 ---
 
 ## Regole di punteggio {: #scoring-rules }

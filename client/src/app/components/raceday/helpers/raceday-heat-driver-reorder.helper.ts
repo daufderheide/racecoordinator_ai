@@ -174,6 +174,9 @@ export class RacedayHeatDriverReorderHelper {
       host.initializeHeat();
 
       host.syncStartingCountdownLamps(race);
+      if (typeof host.checkDriverLaneSelection === "function") {
+        host.checkDriverLaneSelection();
+      }
     } else {
       host.logger.debug("RacedayComponent: Waiting for race data...");
     }

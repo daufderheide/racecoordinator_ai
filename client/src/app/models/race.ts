@@ -11,6 +11,12 @@ import { SeasonScoring } from "./season";
 import { TeamOptions } from "./team_options";
 import { Track } from "./track";
 
+export type DriverLaneSelection =
+  | "NONE"
+  | "RACE_START"
+  | "HEAT_START"
+  | "STEP_START";
+
 export class Race implements Model {
   readonly entity_id: string;
   readonly name: string;
@@ -46,6 +52,7 @@ export class Race implements Model {
   readonly adjust_drift_laps: boolean;
   /** IROC: the slotcars stay in their lanes and the drivers rotate (#1210). */
   readonly cars_stay_in_lanes: boolean;
+  readonly driver_lane_selection: DriverLaneSelection;
   readonly theme_id?: string;
   readonly start_time_millis?: number;
   readonly step_up: number;
@@ -106,6 +113,7 @@ export class Race implements Model {
     points_scoring?: PointsScoring,
     compatibility?: RaceCompatibility,
     cars_stay_in_lanes: boolean = false,
+    driver_lane_selection: DriverLaneSelection = "NONE",
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -153,6 +161,7 @@ export class Race implements Model {
     this.points_scoring = points_scoring;
     this.compatibility = compatibility;
     this.cars_stay_in_lanes = cars_stay_in_lanes;
+    this.driver_lane_selection = driver_lane_selection;
   }
 
   get objectId(): string {

@@ -23,6 +23,7 @@ import {
   getHeatValidationWarning,
   getParticipantGroupBadge,
   getParticipantStepBadge,
+  hasStepSteppedUp,
   HeatDragDropController,
   isHeatIncompatibleWithDraggedParticipant,
   isStepUpEnabledHelper,
@@ -51,6 +52,9 @@ describe("modify-heats-ui.helper", () => {
         }
         if (key === "RD_ERR_STEP_UP_IN_STEP_ONE") {
           return "Step-up in step 1 error";
+        }
+        if (key === "RD_ERR_STEP_UP_IN_ACTIVE_STEP") {
+          return `Step ${params?.["step"]} has already stepped up`;
         }
         if (key === "RD_ERR_STEP_UP_COUNT_MISMATCH") {
           return `Count mismatch: expected ${params?.["expected"]}, found ${params?.["found"]}`;
@@ -250,6 +254,22 @@ describe("modify-heats-ui.helper", () => {
       ).toBeFalse();
     });
 
+    it("should flag Step 2 heat as incompatible for a step-up participant when Step 1 is completed", () => {
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2);
+      const stepUp = createParticipant("su1", "Step-Up 1", true, 1);
+      expect(
+        isHeatIncompatibleWithDraggedParticipant(
+          heat2,
+          stepUp,
+          [heat1, heat2],
+          true,
+          false,
+          (h) => h.step === 1,
+        ),
+      ).toBeTrue();
+    });
+
     it("should flag heat of different group as incompatible for driver assigned to another group", () => {
       const driver = createParticipant("p1", "Alice");
       const heatGroup0 = createHeat(1, 0, 1, [
@@ -293,6 +313,36 @@ describe("modify-heats-ui.helper", () => {
     });
   });
 
+  describe("hasStepSteppedUp", () => {
+    it("should return true for step 1", () => {
+      const heat = createHeat(1, 0, 1);
+      expect(hasStepSteppedUp(1, 0, [heat])).toBeTrue();
+    });
+
+    it("should return false for step 2 when step 1 heats are not completed", () => {
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2);
+      expect(hasStepSteppedUp(2, 0, [heat1, heat2], () => false)).toBeFalse();
+    });
+
+    it("should return true for step 2 when all step 1 heats are completed", () => {
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2);
+      expect(
+        hasStepSteppedUp(2, 0, [heat1, heat2], (h) => h.step === 1),
+      ).toBeTrue();
+    });
+
+    it("should return false for step 3 when step 1 is completed but step 2 is not completed", () => {
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2);
+      const heat3 = createHeat(3, 0, 3);
+      expect(
+        hasStepSteppedUp(3, 0, [heat1, heat2, heat3], (h) => h.step === 1),
+      ).toBeFalse();
+    });
+  });
+
   describe("getHeatValidationWarning", () => {
     it("should return warning when step-up driver is placed in step 1", () => {
       const stepUp = createParticipant("su1", "Step-Up 1", true, 1);
@@ -324,6 +374,48 @@ describe("modify-heats-ui.helper", () => {
         mockTranslationService,
       );
       expect(warn).toContain("Count mismatch: expected 2, found 1");
+    });
+
+    it("should return null for step 2 heat with real drivers when step 1 is completed", () => {
+      const race = new Race("r1", "Step-Up Race", {} as any);
+      setStepUp(race, 2);
+      const heat1 = createHeat(1, 0, 1, [
+        { lane: 0, participant: createParticipant("p1", "Driver 1") },
+      ]);
+      const heat2 = createHeat(2, 0, 2, [
+        { lane: 0, participant: createParticipant("p2", "Driver 2") },
+        { lane: 1, participant: createParticipant("p3", "Driver 3") },
+      ]);
+      const warn = getHeatValidationWarning(
+        heat2,
+        [heat1, heat2],
+        race,
+        true,
+        mockTranslationService,
+        (h) => h.step === 1,
+      );
+      expect(warn).toBeNull();
+    });
+
+    it("should return warning for step 2 heat with step-up drivers when step 1 is completed", () => {
+      const race = new Race("r1", "Step-Up Race", {} as any);
+      setStepUp(race, 2);
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2, [
+        {
+          lane: 0,
+          participant: createParticipant("su1", "Step-Up 1", true, 1),
+        },
+      ]);
+      const warn = getHeatValidationWarning(
+        heat2,
+        [heat1, heat2],
+        race,
+        true,
+        mockTranslationService,
+        (h) => h.step === 1,
+      );
+      expect(warn).toBe("Step 2 has already stepped up");
     });
 
     it("should return warning when driver is in heats across different groups", () => {
@@ -400,6 +492,40 @@ describe("modify-heats-ui.helper", () => {
       expect(
         canEnterDriverDropListPredicate({ data: { heatDrivers: [] } } as any),
       ).toBeFalse();
+    });
+
+    it("canEnterDriverDropListPredicate should reject step-up participant from entering lane drop list if step has stepped up", () => {
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2);
+      const stepUp = createParticipant("su1", "Step-Up 1", true, 1);
+      const drag: any = { data: stepUp };
+      const drop: any = { data: { heatIndex: 1, laneIndex: 0 } };
+
+      const allowed = canEnterDriverDropListPredicate(
+        drag,
+        drop,
+        [heat1, heat2],
+        true,
+        (h) => h.step === 1,
+      );
+      expect(allowed).toBeFalse();
+    });
+
+    it("canEnterDriverDropListPredicate should allow regular driver to enter lane drop list if step has stepped up", () => {
+      const heat1 = createHeat(1, 0, 1);
+      const heat2 = createHeat(2, 0, 2);
+      const driver = createParticipant("p1", "Alice");
+      const drag: any = { data: driver };
+      const drop: any = { data: { heatIndex: 1, laneIndex: 0 } };
+
+      const allowed = canEnterDriverDropListPredicate(
+        drag,
+        drop,
+        [heat1, heat2],
+        true,
+        (h) => h.step === 1,
+      );
+      expect(allowed).toBeTrue();
     });
   });
 

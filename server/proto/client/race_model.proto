@@ -112,6 +112,13 @@ enum HeatRotationType {
   SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE = 8;
 }
 
+enum DriverLaneSelection {
+  DLS_NONE = 0;
+  DLS_RACE_START = 1;
+  DLS_HEAT_START = 2;
+  DLS_STEP_START = 3;
+}
+
 message RaceModel {
   Model model = 1;
   string name = 2;
@@ -154,6 +161,7 @@ message RaceModel {
   CrashAndLearnOptions crash_and_learn_options = 39;
   // IROC: the slotcars stay in their lanes and the drivers rotate (#1210).
   bool cars_stay_in_lanes = 40;
+  DriverLaneSelection driver_lane_selection = 41;
 }
 
 message CrashAndLearnOptions {

@@ -838,6 +838,26 @@ public class RaceConverterTest {
     assertEquals(50.0, proto.getCrashAndLearnOptions().getDqHeatScorePercentage(), 0.001);
   }
 
+  @Test
+  public void testToProto_DriverLaneSelection() {
+    Track track = new Track.Builder().entityId("track-dls").name("Track").build();
+
+    for (com.antigravity.models.DriverLaneSelection dls :
+        com.antigravity.models.DriverLaneSelection.values()) {
+      Race race =
+          new Race.Builder()
+              .withName("DLS Race " + dls)
+              .withTrackEntityId("track-dls")
+              .withDriverLaneSelection(dls)
+              .build();
+
+      RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+      assertEquals(
+          com.antigravity.proto.DriverLaneSelection.valueOf("DLS_" + dls.name()),
+          proto.getDriverLaneSelection());
+    }
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }
