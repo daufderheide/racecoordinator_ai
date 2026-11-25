@@ -85,12 +85,20 @@
                   }
                 </div>
                 <div class="driver-meta">
-                  {{ getParticipantMeta(participant) }}
+                  <span
+                    class="driver-meta-text"
+                    [title]="getParticipantMeta(participant)"
+                    >{{ getParticipantMeta(participant) }}</span
+                  >
                   @if (getParticipantGroupBadge(participant); as gBadge) {
-                    <span class="driver-group-badge">{{ gBadge }}</span>
+                    <span class="driver-group-badge" [title]="gBadge">{{
+                      gBadge
+                    }}</span>
                   }
                   @if (getParticipantStepBadge(participant); as sBadge) {
-                    <span class="driver-step-badge">{{ sBadge }}</span>
+                    <span class="driver-step-badge" [title]="sBadge">{{
+                      sBadge
+                    }}</span>
                   }
                 </div>
                 @if (cars.show && cars.summary(participant)) {

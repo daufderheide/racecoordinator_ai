@@ -2667,10 +2667,12 @@ describe("CustomRotationEditorComponent", () => {
       const gBadge = firstDriverMeta.query(By.css(".driver-group-badge"));
       expect(gBadge).toBeTruthy();
       expect(gBadge.nativeElement.textContent.trim()).toBe("G1");
+      expect(gBadge.nativeElement.getAttribute("title")).toBe("G1");
 
       const sBadge = firstDriverMeta.query(By.css(".driver-step-badge"));
       expect(sBadge).toBeTruthy();
       expect(sBadge.nativeElement.textContent.trim()).toBe("S1");
+      expect(sBadge.nativeElement.getAttribute("title")).toBe("S1");
     });
 
     it("should return heat divider info when step or group changes between heats", () => {

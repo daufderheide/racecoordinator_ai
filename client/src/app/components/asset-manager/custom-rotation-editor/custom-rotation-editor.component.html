@@ -198,12 +198,16 @@
                   }
                 </div>
                 <div class="driver-meta">
-                  <span>Driver {{ driver.id }}</span>
+                  <span class="driver-meta-text">Driver {{ driver.id }}</span>
                   @if (getDriverGroupBadge(driver.id); as gBadge) {
-                    <span class="driver-group-badge">{{ gBadge }}</span>
+                    <span class="driver-group-badge" [title]="gBadge">{{
+                      gBadge
+                    }}</span>
                   }
                   @if (getDriverStepBadge(driver.id); as sBadge) {
-                    <span class="driver-step-badge">{{ sBadge }}</span>
+                    <span class="driver-step-badge" [title]="sBadge">{{
+                      sBadge
+                    }}</span>
                   }
                 </div>
               </div>

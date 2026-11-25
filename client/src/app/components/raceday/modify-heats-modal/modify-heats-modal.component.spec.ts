@@ -862,6 +862,27 @@ describe("ModifyHeatsModalComponent", () => {
       expect(component["getCustomGroupName"](2)).toBe("");
     });
 
+    it("should render group badge with title attribute in driver meta when participant is in a group", () => {
+      if (component.race()) {
+        (component.race() as any).group_options = {
+          enabled: true,
+          names: ["Novice Group", "Expert Group"],
+        };
+      }
+      component["driverPool"] = [p1];
+      fixture.detectChanges();
+      const metaEl = fixture.nativeElement.querySelector(
+        ".driver-pool .driver-meta",
+      );
+      expect(metaEl).toBeTruthy();
+      const metaText = metaEl.querySelector(".driver-meta-text");
+      expect(metaText).toBeTruthy();
+      const groupBadge = metaEl.querySelector(".driver-group-badge");
+      expect(groupBadge).toBeTruthy();
+      expect(groupBadge.getAttribute("title")).toBe("Novice Group");
+      expect(groupBadge.textContent.trim()).toBe("Novice Group");
+    });
+
     it("should allow valid sequential group change", () => {
       component["onGroupChange"](heat2, 2);
       expect(heat2.group).toBe(1);
