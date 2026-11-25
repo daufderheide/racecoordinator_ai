@@ -25,6 +25,7 @@ L'editor auto slot funziona come l'editor delle squadre:
 - **Modifica / Fatto**: passa dalla sola lettura alla modifica e viceversa.
 - **Elimina**: elimina l'auto scelta dopo la conferma.
 - **Esporta**: salva le tue auto slot in un file ZIP. Vedi [Esporta auto slot](#car-export).
+- **Importa**: aggiunge auto slot da un file. Vedi [Importa auto slot](#car-import).
 - **Annulla / Ripeti**: va indietro o avanti tra le modifiche recenti.
 - **Aiuto (?)**: avvia la visita guidata.
 
@@ -102,3 +103,12 @@ Fai clic su **Esporta** nella barra degli strumenti per salvare tutte le tue aut
 - **I tuoi campi**: ciascuno dei tuoi campi ha una colonna con il nome del campo.
 - **Foto**: le foto delle auto vanno in una cartella `images` nello ZIP, ogni foto una sola volta. La colonna Picture indica il file.
 - **Niente ID**: auto e campi vengono riconosciuti per nome, quindi il file funziona in qualsiasi database.
+
+## Importa auto slot {: #car-import }
+
+Fai clic su **Importa** nella barra degli strumenti per aggiungere auto slot da un file CSV, Excel o JSON, o da uno ZIP creato con **Esporta**. Scarica un modello dalla finestra per partire con le colonne giuste.
+
+- **Foto**: usa uno ZIP di Esporta, oppure aggiungi i file delle foto accanto al CSV. La colonna Picture indica il file.
+- **Prima un'anteprima**: vedi ogni auto prima che venga salvato qualcosa. Un'auto con un nome che hai già è un conflitto: **Salta**, **Sovrascrivi** la tua auto, oppure **Rinomina automaticamente** per importarla come copia, ad esempio "Audi R8 (1)".
+- **Sovrascrivi** cambia solo ciò che c'è nel file. Le colonne che il file non ha mantengono il loro valore.
+- **I tuoi campi**: una colonna che non è un dato dell'auto diventa uno dei tuoi campi, cercato per nome. Un campo che non hai ancora viene aggiunto (da un export JSON con il suo tipo, altrimenti come testo), e una nuova scelta viene aggiunta al campo. L'anteprima indica cosa verrà aggiunto.

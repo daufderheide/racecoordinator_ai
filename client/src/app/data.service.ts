@@ -1,6 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { Observable } from "rxjs";
+import { CarImportCommitRequest } from "@app/models/car-import.model";
 import { CarStatsQuery } from "@app/models/car-stats";
 import {
   DriverImportCommitRequest,
@@ -545,6 +546,12 @@ export class DataService {
   deleteCar = (id: string) => this.crudHelper.deleteCar(id);
   exportCars = (format: string, carIds?: string[]) =>
     this.crudHelper.exportCars(format, carIds);
+  validateCarImport = (formData: FormData) =>
+    this.crudHelper.validateCarImport(formData);
+  commitCarImport = (request: CarImportCommitRequest) =>
+    this.crudHelper.commitCarImport(request);
+  downloadCarImportTemplate = (format: string) =>
+    this.crudHelper.downloadCarImportTemplate(format);
   getCarFields = () => this.crudHelper.getCarFields();
   createCarField = (field: any) => this.crudHelper.createCarField(field);
   updateCarField = (id: string, f: any) =>

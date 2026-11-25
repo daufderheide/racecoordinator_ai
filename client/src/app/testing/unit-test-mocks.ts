@@ -63,6 +63,11 @@ export const mockDataService = {
     .createSpy("exportDrivers")
     .and.returnValue(of(new Blob([]))),
   exportCars: jasmine.createSpy("exportCars").and.returnValue(of(new Blob([]))),
+  validateCarImport: jasmine.createSpy("validateCarImport"),
+  commitCarImport: jasmine.createSpy("commitCarImport"),
+  downloadCarImportTemplate: jasmine
+    .createSpy("downloadCarImportTemplate")
+    .and.returnValue(of(new Blob([]))),
   getCurrentDatabase: jasmine
     .createSpy("getCurrentDatabase")
     .and.returnValue(of({ name: "test_db" })),

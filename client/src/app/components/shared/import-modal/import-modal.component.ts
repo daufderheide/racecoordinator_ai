@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   ElementRef,
   input,
   output,
@@ -24,6 +25,17 @@ import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
 
+import {
+  carDetails,
+  CarFieldChanges,
+  carPictureName,
+  carPreviewToDialog,
+  carResultToDialog,
+  dialogToCarCommit,
+  IMPORT_KIND_CONFIG,
+  ImportKind,
+} from "./import-kind";
+
 @Component({
   standalone: true,
   selector: "app-import-modal",
@@ -42,6 +54,15 @@ export class ImportModalComponent {
   visible = input(false);
   titleKey = input("DIM_TITLE");
   entityType = input("drivers");
+  /** Drivers (the default) or slotcars (#1210, step 6b). */
+  kind = input<ImportKind>("drivers");
+
+  config = computed(
+    () => IMPORT_KIND_CONFIG[this.kind()] || IMPORT_KIND_CONFIG.drivers,
+  );
+  isCars = computed(() => this.kind() === "cars");
+  readonly carDetails = carDetails;
+  readonly carPictureName = carPictureName;
 
   close = output<void>();
   imported = output<DriverImportResult>();
@@ -63,6 +84,10 @@ export class ImportModalComponent {
   importResult: DriverImportResult | null = null;
   showAssetsModal = false;
   avatarErrors = new Set<number>();
+  /** Cars: the own fields and choice options the import adds. */
+  carChanges: CarFieldChanges | null = null;
+  /** Cars: the own fields the import created. */
+  createdFieldNames: string[] = [];
 
   constructor(
     private dataService: DataService,
@@ -151,12 +176,15 @@ export class ImportModalComponent {
   }
 
   downloadTemplate(format: string) {
-    this.dataService.downloadDriverImportTemplate(format).subscribe({
+    const template$ = this.isCars()
+      ? this.dataService.downloadCarImportTemplate(format)
+      : this.dataService.downloadDriverImportTemplate(format);
+    template$.subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `drivers_template.${format}`;
+        a.download = `${this.config().templateName}.${format}`;
         a.click();
         window.URL.revokeObjectURL(url);
         this.cdr.detectChanges();
@@ -187,11 +215,38 @@ export class ImportModalComponent {
       formData.append("assets", comp, comp.name);
     }
 
+    if (this.isCars()) {
+      this.startCarValidation(formData);
+      return;
+    }
     this.dataService.validateDriverImport(formData).subscribe({
       next: (previewRes) => {
         this.preview = previewRes;
         this.avatarErrors.clear();
         this.applyAudioDefaultToPreview();
+        this.step = "preview";
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err?.error || "DIM_ERROR_VALIDATION_FAILED";
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private startCarValidation(formData: FormData) {
+    this.dataService.validateCarImport(formData).subscribe({
+      next: (res) => {
+        this.preview = carPreviewToDialog(res, (k, p) =>
+          this.translationService.translate(k, p as any),
+        );
+        this.carChanges = {
+          newFields: res.newFields || [],
+          newOptions: res.newOptions || [],
+        };
+        this.avatarErrors.clear();
         this.step = "preview";
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -417,7 +472,9 @@ export class ImportModalComponent {
     if (!candName) {
       row.status = "ERROR";
       row.conflictType = "NONE";
-      row.message = "DIM_ERROR_NAME_REQUIRED";
+      row.message = this.isCars()
+        ? this.translationService.translate(this.config().nameRequiredKey)
+        : this.config().nameRequiredKey;
       row.existingDriverId = undefined;
       return true;
     }
@@ -449,10 +506,9 @@ export class ImportModalComponent {
     if (otherInFile) {
       row.status = "CONFLICT";
       row.conflictType = "DUPLICATE_IN_FILE";
-      row.message = this.translationService.translate(
-        "DIM_CONFLICT_DUPLICATE_IN_FILE",
-        { name: candName },
-      );
+      row.message = this.translationService.translate(this.config().inFileKey, {
+        name: candName,
+      });
       row.existingDriverId = undefined;
       if (!row.selectedResolution || row.selectedResolution === "AUTO_RENAME") {
         row.selectedResolution = "SKIP";
@@ -484,7 +540,7 @@ export class ImportModalComponent {
           : "DUPLICATE_NICKNAME";
         row.message = this.translationService.translate(
           isNameMatch
-            ? "DIM_CONFLICT_DUPLICATE_NAME"
+            ? this.config().nameExistsKey
             : "DIM_CONFLICT_NICKNAME_MATCHES_NAME",
           isNameMatch ? { name: candName } : { nickname: candNick },
         );
@@ -666,6 +722,10 @@ export class ImportModalComponent {
     this.errorMessage = null;
     this.cdr.detectChanges();
 
+    if (this.isCars()) {
+      this.commitCarImport();
+      return;
+    }
     const request: DriverImportCommitRequest = {
       rows: this.preview.rows,
     };
@@ -687,6 +747,38 @@ export class ImportModalComponent {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  private commitCarImport() {
+    const request = dialogToCarCommit(this.preview!.rows, this.carChanges);
+    this.dataService.commitCarImport(request).subscribe({
+      next: (res) => {
+        this.importResult = carResultToDialog(res);
+        this.createdFieldNames = res.createdFieldNames || [];
+        this.step = "summary";
+        this.isLoading = false;
+        this.dataService.listAssets?.().subscribe();
+        this.imported.emit(this.importResult);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err?.error || this.config().commitErrorKey;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /** Cars: "Weight (g), Compound" for the notice about new own fields. */
+  carFieldList(changes: { name: string }[]): string {
+    return changes.map((c) => c.name).join(", ");
+  }
+
+  /** Cars: "Compound: Super soft" for the notice about new choice options. */
+  carOptionList(): string {
+    return (this.carChanges?.newOptions || [])
+      .map((c) => `${c.name}: ${c.options.join(", ")}`)
+      .join("; ");
   }
 
   openAssetsModal() {
@@ -729,6 +821,8 @@ export class ImportModalComponent {
     this.activeTab = "all";
     this.showAssetsModal = false;
     this.avatarErrors.clear();
+    this.carChanges = null;
+    this.createdFieldNames = [];
     if (this.fileInputRef?.nativeElement) {
       this.fileInputRef.nativeElement.value = "";
     }

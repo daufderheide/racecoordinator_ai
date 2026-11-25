@@ -2,6 +2,11 @@ import { HttpClient } from "@angular/common/http";
 import { forkJoin, Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import {
+  CarImportCommitRequest,
+  CarImportPreview,
+  CarImportResult,
+} from "@app/models/car-import.model";
+import {
   DriverImportCommitRequest,
   DriverImportPreview,
   DriverImportResult,
@@ -340,6 +345,30 @@ export class DataEntityCrudHelper {
 
   deleteCar(id: string): Observable<any> {
     return this.http.delete<any>(`${this.getBaseUrl()}/api/cars/${id}`);
+  }
+
+  /** Reads a car import file (#1210, step 6b) and says what it would do. */
+  validateCarImport(formData: FormData): Observable<CarImportPreview> {
+    return this.http.post<CarImportPreview>(
+      `${this.getBaseUrl()}/api/cars/import/preview`,
+      formData,
+    );
+  }
+
+  commitCarImport(
+    request: CarImportCommitRequest,
+  ): Observable<CarImportResult> {
+    return this.http.post<CarImportResult>(
+      `${this.getBaseUrl()}/api/cars/import/commit`,
+      request,
+    );
+  }
+
+  downloadCarImportTemplate(format: string): Observable<Blob> {
+    return this.http.get(
+      `${this.getBaseUrl()}/api/cars/import/template?format=${encodeURIComponent(format)}`,
+      { responseType: "blob" },
+    );
   }
 
   /** The cars as a ZIP (#1210, step 6a): all of them, or only carIds. */

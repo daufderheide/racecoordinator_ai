@@ -25,6 +25,7 @@ Der Slotcar-Editor funktioniert wie der Team-Editor:
 - **Bearbeiten / Fertig**: Wechselt zwischen Nur-Lese- und Bearbeitungsmodus.
 - **Löschen**: Löscht das gewählte Auto nach Bestätigung.
 - **Exportieren**: Speichert Ihre Slotcars in einer ZIP-Datei. Siehe [Slotcars exportieren](#car-export).
+- **Importieren**: Fügt Slotcars aus einer Datei hinzu. Siehe [Slotcars importieren](#car-import).
 - **Rückgängig / Wiederholen**: Geht durch Ihre letzten Änderungen zurück oder vor.
 - **Hilfe (?)**: Startet die geführte Tour.
 
@@ -102,3 +103,12 @@ Klicken Sie in der Werkzeugleiste auf **Exportieren**, um alle Ihre Slotcars in 
 - **Ihre Felder**: Jedes eigene Feld bekommt eine Spalte mit dem Namen des Feldes.
 - **Bilder**: Die Fahrzeugbilder kommen in einen Ordner `images` im ZIP, jedes Bild nur einmal. Die Spalte Picture nennt die Datei.
 - **Keine IDs**: Autos und Felder werden über den Namen zugeordnet, daher funktioniert die Datei in jeder Datenbank.
+
+## Slotcars importieren {: #car-import }
+
+Klicken Sie in der Werkzeugleiste auf **Importieren**, um Slotcars aus einer CSV-, Excel- oder JSON-Datei oder aus einem ZIP von **Exportieren** hinzuzufügen. Laden Sie im Dialog eine Vorlage herunter, um mit den richtigen Spalten zu beginnen.
+
+- **Bilder**: Verwenden Sie ein ZIP aus dem Export oder fügen Sie die Bilddateien neben der CSV hinzu. Die Spalte Picture nennt die Datei.
+- **Erst eine Vorschau**: Sie sehen jedes Auto, bevor etwas gespeichert wird. Ein Auto mit einem Namen, den Sie schon haben, ist ein Konflikt: **Überspringen**, Ihr Auto **Überschreiben** oder **Automatisch umbenennen**, um es als Kopie zu importieren, etwa "Audi R8 (1)".
+- **Überschreiben** ändert nur, was in der Datei steht. Spalten, die die Datei nicht hat, behalten ihren Wert.
+- **Ihre Felder**: Eine Spalte, die keine Fahrzeugangabe ist, wird eines Ihrer eigenen Felder, gesucht über den Namen. Ein Feld, das Sie noch nicht haben, wird hinzugefügt (aus einem JSON-Export mit seinem Typ, sonst als Text), und ein neuer Auswahlwert wird dem Feld hinzugefügt. Die Vorschau zeigt, was hinzukommt.

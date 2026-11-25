@@ -25,6 +25,7 @@ De Slotcar-editor werkt zoals de Team Editor:
 - **Bewerken / Klaar**: Wisselt tussen alleen-lezen en bewerkmodus.
 - **Verwijderen**: Verwijdert de gekozen auto na bevestiging.
 - **Exporteren**: Slaat je slotcars op in een ZIP-bestand. Zie [Slotcars exporteren](#car-export).
+- **Importeren**: Voegt slotcars toe uit een bestand. Zie [Slotcars importeren](#car-import).
 - **Ongedaan maken / Opnieuw**: Stapt terug of vooruit door je recente wijzigingen.
 - **Help (?)**: Start de rondleiding.
 
@@ -102,3 +103,12 @@ Klik in de werkbalk op **Exporteren** om al je slotcars op te slaan in een ZIP-b
 - **Je eigen velden**: elk eigen veld krijgt een kolom, met de naam van het veld.
 - **Foto's**: de foto's van de auto's gaan in een map `images` in de ZIP, elke foto maar één keer. De kolom Picture noemt het bestand.
 - **Geen id's**: auto's en velden worden op naam herkend, dus het bestand werkt in elke database.
+
+## Slotcars importeren {: #car-import }
+
+Klik in de werkbalk op **Importeren** om slotcars toe te voegen uit een CSV-, Excel- of JSON-bestand, of uit een ZIP van **Exporteren**. Download een sjabloon in het venster om met de juiste kolommen te beginnen.
+
+- **Foto's**: gebruik een ZIP van Exporteren, of voeg de fotobestanden naast de CSV toe. De kolom Picture noemt het bestand.
+- **Eerst een voorbeeld**: je ziet elke auto voordat er iets wordt opgeslagen. Een auto met een naam die je al hebt is een conflict: **Overslaan**, je auto **Overschrijven**, of **Automatisch hernoemen** om hem als kopie te importeren, zoals "Audi R8 (1)".
+- **Overschrijven** verandert alleen wat in het bestand staat. Kolommen die het bestand niet heeft, houden hun waarde.
+- **Je eigen velden**: een kolom die geen autogegeven is, wordt een van je eigen velden, gezocht op naam. Een veld dat je nog niet hebt wordt toegevoegd (uit een JSON-export met zijn type, anders als tekst), en een keuze die je nog niet hebt wordt aan het veld toegevoegd. Het voorbeeld laat zien wat er wordt toegevoegd.

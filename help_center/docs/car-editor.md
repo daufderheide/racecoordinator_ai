@@ -25,6 +25,7 @@ The Slotcar Editor works like the Team Editor:
 - **Edit / Done Editing**: Switches between Read-Only Mode and Edit Mode.
 - **Delete**: Deletes the selected car after you confirm.
 - **Export**: Saves your slotcars to a ZIP file. See [Export Slotcars](#car-export).
+- **Import**: Adds slotcars from a file. See [Import Slotcars](#car-import).
 - **Undo / Redo**: Steps back or forward through your recent edits.
 - **Help (?)**: Starts the guided tour.
 
@@ -102,3 +103,12 @@ Click **Export** in the toolbar to save all your slotcars to a ZIP file, for a b
 - **Your fields**: each of your own fields gets a column, named after the field.
 - **Pictures**: the car pictures go into an `images` folder in the ZIP, each picture only once. The Picture column names the file.
 - **Ids stay out**: cars and fields are matched by name, so the file works in any database.
+
+## Import Slotcars {: #car-import }
+
+Click **Import** in the toolbar to add slotcars from a CSV, Excel or JSON file, or from a ZIP made with **Export**. Download a template from the dialog to start from the right columns.
+
+- **Pictures**: use a ZIP from Export, or add the picture files next to the CSV. The Picture column names the file.
+- **Preview first**: you see every car before anything is saved. A car with a name you already have is a conflict: **Skip** it, **Overwrite** your car, or **Auto-Rename** it to import it as a copy, such as "Audi R8 (1)".
+- **Overwrite** changes only what the file has. Columns the file doesn't have keep their values.
+- **Your fields**: a column that isn't a car detail becomes one of your own fields, matched by name. A field you don't have yet is added (from a JSON export with its type, otherwise as text), and a choice you don't have yet is added to the field. The preview says what will be added.
