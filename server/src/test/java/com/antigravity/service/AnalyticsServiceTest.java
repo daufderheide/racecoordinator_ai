@@ -778,15 +778,22 @@ public class AnalyticsServiceTest {
     assertEquals(true, params.get("has_crash_and_learn"));
     assertEquals(true, params.get("crash_and_learn_enabled"));
     assertEquals(true, params.get("cnl_enabled"));
-    assertEquals(4, params.get("cnl_max_crashes"));
-    assertEquals(12.5, (Double) params.get("cnl_auto_crash_time"), 0.001);
-    assertEquals(true, params.get("cnl_pause_on_crash"));
-    assertEquals(true, params.get("cnl_allow_multiple_crashes_per_lap"));
-    assertEquals(true, params.get("cnl_reset_crashes_each_heat"));
-    assertEquals(false, params.get("cnl_reset_dq_each_heat"));
-    assertEquals(0.5, (Double) params.get("cnl_heat_crash_lap_penalty"), 0.001);
-    assertEquals(1.0, (Double) params.get("cnl_heat_time_penalty"), 0.001);
-    assertEquals(50.0, (Double) params.get("cnl_dq_heat_score_percentage"), 0.001);
+    // The details are in cnl_race_started, so the race start stays within GA4's 25 parameters.
+    assertFalse(params.containsKey("cnl_max_crashes"));
+    assertFalse(params.containsKey("cnl_dq_heat_score_percentage"));
+    assertTrue(params.size() <= 25);
+
+    Map<String, Object> cnlParams = service.buildCnlParams(mockRace);
+    assertEquals(4, cnlParams.get("max_crashes"));
+    assertEquals(12.5, (Double) cnlParams.get("auto_crash_time"), 0.001);
+    assertEquals(true, cnlParams.get("pause_on_crash"));
+    assertEquals(true, cnlParams.get("allow_multiple_crashes_per_lap"));
+    assertEquals(true, cnlParams.get("reset_crashes_each_heat"));
+    assertEquals(false, cnlParams.get("reset_dq_each_heat"));
+    assertEquals(0.5, (Double) cnlParams.get("heat_crash_lap_penalty"), 0.001);
+    assertEquals(1.0, (Double) cnlParams.get("heat_time_penalty"), 0.001);
+    assertEquals(50.0, (Double) cnlParams.get("dq_heat_score_percentage"), 0.001);
+    assertTrue(cnlParams.size() <= 25);
   }
 
   @Test

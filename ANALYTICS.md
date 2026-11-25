@@ -65,15 +65,7 @@ All server-side events automatically include the following parameters:
    - `has_crash_and_learn` (true/false tracking)
    - `crash_and_learn_enabled` (true/false tracking, alias for `has_crash_and_learn`)
    - `cnl_enabled` (true/false tracking, alias for `has_crash_and_learn`)
-   - `cnl_max_crashes` (numeric count of maximum allowed crashes before DQ)
-   - `cnl_auto_crash_time` (numeric lap time threshold in seconds for auto crash detection)
-   - `cnl_pause_on_crash` (true/false tracking)
-   - `cnl_allow_multiple_crashes_per_lap` (true/false tracking)
-   - `cnl_reset_crashes_each_heat` (true/false tracking)
-   - `cnl_reset_dq_each_heat` (true/false tracking)
-   - `cnl_heat_crash_lap_penalty` (numeric lap deduction penalty per crash)
-   - `cnl_heat_time_penalty` (numeric seconds penalty per crash)
-   - `cnl_dq_heat_score_percentage` (numeric percentage of score retained on DQ)
+   - *The Crash and Learn details (maximum crashes, penalties and so on) are in `cnl_race_started`. GA4 drops parameters past 25 per event, and this event already sends 22.*
 2. **`cnl_race_started`**: Triggers explicitly whenever a race is started with Crash and Learn (CnL) enabled. Parameters captured:
    - `cnl_enabled` (true/false tracking)
    - `crash_and_learn_enabled` (true/false tracking)
@@ -196,15 +188,15 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `CnL Enabled`, Event parameter: `cnl_enabled`
 - Dimension Name: `Crash and Learn Enabled`, Event parameter: `crash_and_learn_enabled`
 - Dimension Name: `Has Crash and Learn`, Event parameter: `has_crash_and_learn`
-- Dimension Name: `CnL Max Crashes`, Event parameter: `cnl_max_crashes`
-- Dimension Name: `CnL Auto Crash Time`, Event parameter: `cnl_auto_crash_time`
-- Dimension Name: `CnL Pause on Crash`, Event parameter: `cnl_pause_on_crash`
-- Dimension Name: `CnL Allow Multiple Crashes Per Lap`, Event parameter: `cnl_allow_multiple_crashes_per_lap`
-- Dimension Name: `CnL Reset Crashes Each Heat`, Event parameter: `cnl_reset_crashes_each_heat`
-- Dimension Name: `CnL Reset DQ Each Heat`, Event parameter: `cnl_reset_dq_each_heat`
-- Dimension Name: `CnL Heat Crash Lap Penalty`, Event parameter: `cnl_heat_crash_lap_penalty`
-- Dimension Name: `CnL Heat Time Penalty`, Event parameter: `cnl_heat_time_penalty`
-- Dimension Name: `CnL DQ Heat Score Percentage`, Event parameter: `cnl_dq_heat_score_percentage`
+- Dimension Name: `CnL Max Crashes`, Event parameter: `max_crashes` (on `cnl_race_started`)
+- Dimension Name: `CnL Auto Crash Time`, Event parameter: `auto_crash_time` (on `cnl_race_started`)
+- Dimension Name: `CnL Pause on Crash`, Event parameter: `pause_on_crash` (on `cnl_race_started`)
+- Dimension Name: `CnL Allow Multiple Crashes Per Lap`, Event parameter: `allow_multiple_crashes_per_lap` (on `cnl_race_started`)
+- Dimension Name: `CnL Reset Crashes Each Heat`, Event parameter: `reset_crashes_each_heat` (on `cnl_race_started`)
+- Dimension Name: `CnL Reset DQ Each Heat`, Event parameter: `reset_dq_each_heat` (on `cnl_race_started`)
+- Dimension Name: `CnL Heat Crash Lap Penalty`, Event parameter: `heat_crash_lap_penalty` (on `cnl_race_started`)
+- Dimension Name: `CnL Heat Time Penalty`, Event parameter: `heat_time_penalty` (on `cnl_race_started`)
+- Dimension Name: `CnL DQ Heat Score Percentage`, Event parameter: `dq_heat_score_percentage` (on `cnl_race_started`)
 
 ### Step 3: Explore and Trend
 Once Dimensions are registered (they take ~24 hours to populate moving forward):

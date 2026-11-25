@@ -211,18 +211,7 @@ public class AnalyticsService {
     params.put("has_crash_and_learn", hasCrashAndLearn);
     params.put("crash_and_learn_enabled", hasCrashAndLearn);
     params.put("cnl_enabled", hasCrashAndLearn);
-    if (hasCrashAndLearn) {
-      CrashAndLearnOptions cnl = race.getRaceModel().getCrashAndLearnOptions();
-      params.put("cnl_max_crashes", cnl.getMaxCrashes());
-      params.put("cnl_auto_crash_time", cnl.getAutomatedCrashTime());
-      params.put("cnl_pause_on_crash", cnl.isPauseHeatOnCrash());
-      params.put("cnl_allow_multiple_crashes_per_lap", cnl.isAllowMultipleCrashesPerLap());
-      params.put("cnl_reset_crashes_each_heat", cnl.isResetCrashesEachHeat());
-      params.put("cnl_reset_dq_each_heat", cnl.isResetDqEachHeat());
-      params.put("cnl_heat_crash_lap_penalty", cnl.getHeatCrashLapPenalty());
-      params.put("cnl_heat_time_penalty", cnl.getHeatTimePenalty());
-      params.put("cnl_dq_heat_score_percentage", cnl.getDqHeatScorePercentage());
-    }
+    // The Crash and Learn details go in cnl_race_started: GA4 drops parameters past 25 per event.
 
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());
