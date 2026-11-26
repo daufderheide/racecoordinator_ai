@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+.heat-details {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.heat-details caption {
+  padding: 4px 8px;
+  color: #bae6fd;
+  font-weight: 700;
+  text-align: start;
+}
+
+.heat-details th,
+.heat-details td {
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  text-align: start;
+}
+
+.heat-details thead th {
+  white-space: nowrap;
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.heat-details .lane-number {
+  width: 1%;
+  border-inline-start: 3px solid var(--heat-lane-color, transparent);
+}
+
+.heat-details .metric {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.team-name,
+.empty-lane {
+  display: block;
+  opacity: 0.72;
+}

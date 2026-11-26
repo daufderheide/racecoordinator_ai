@@ -57,6 +57,7 @@ export interface ProcessedHeatLane {
 }
 
 export interface ProcessedHeat {
+  objectId?: string;
   heatNumber: number;
   group: number;
   groupName: string;
@@ -278,8 +279,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     const curHeatNum = cur?.heatNumber ?? -1;
     const trackObj = this.track();
     const raceObj = this.race() ?? this.parent()?.race;
-    const isRaceOver =
-      (this.raceState() ?? this.parent()?.raceState) === RaceState.RACE_OVER;
+    const raceState = this.raceState() ?? this.parent()?.raceState;
 
     return rawHeats.map((h, idx) =>
       this.buildProcessedHeat(
@@ -289,7 +289,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
         curHeatNum,
         trackObj,
         raceObj,
-        isRaceOver,
+        raceState,
       ),
     );
   });
@@ -301,8 +301,9 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     curHeatNum: number,
     trackObj: Track | undefined,
     raceObj: any,
-    isRaceOver: boolean,
+    raceState: RaceState | undefined,
   ): ProcessedHeat {
+    const isRaceOver = raceState === RaceState.RACE_OVER;
     const heatNum = h.heatNumber ?? idx + 1;
     const groupNum =
       typeof h.group === "number" ? h.group : parseInt(h.group, 10) || 0;
@@ -321,7 +322,9 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     const isCurrent = this.highlightCurrentHeat() && isCurrentHeat;
     const isCompleted =
       (curHeatNum > 0 && heatNum < curHeatNum) ||
-      (heatNum === curHeatNum && isRaceOver) ||
+      (heatNum === curHeatNum &&
+        (isRaceOver ||
+          (this.tableLayout() && raceState === RaceState.HEAT_OVER))) ||
       !!h.isCompleted;
     const isActive = isCurrentHeat;
 
@@ -342,6 +345,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     const lanes = this.buildHeatLanes(h, cur, trackObj, isCompleted, isActive);
 
     return {
+      objectId: h.objectId,
       heatNumber: heatNum,
       group: groupNum,
       groupName,

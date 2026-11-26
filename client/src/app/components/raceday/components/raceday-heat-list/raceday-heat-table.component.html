@@ -23,6 +23,7 @@
       <tr
         [attr.data-heat-number]="heat.heatNumber"
         [class.is-current]="heat.isCurrent"
+        [class.is-striped]="$even"
         [attr.aria-current]="heat.isActive ? 'step' : null"
       >
         <th
@@ -33,10 +34,34 @@
           [style.font-size.px]="settings()?.['heatNumberFontSize'] || null"
           [style.color]="settings()?.['heatNumberTextColor'] || null"
         >
-          {{ heat.heatNumber }}
+          @if (showDetails()) {
+            <button
+              type="button"
+              class="heat-details-toggle"
+              [attr.aria-label]="
+                'HL_TABLE_DETAILS_FOR_HEAT'
+                  | translate: { number: heat.heatNumber }
+              "
+              [attr.aria-expanded]="isExpanded(heat)"
+              (click)="toggleDetails(heat)"
+              (keydown.enter)="$event.stopPropagation()"
+              (keydown.space)="$event.stopPropagation()"
+              (keyup.space)="$event.stopPropagation()"
+            >
+              <span class="material-icons" aria-hidden="true">{{
+                isExpanded(heat) ? "expand_less" : "expand_more"
+              }}</span>
+              {{ heat.heatNumber }}
+            </button>
+          } @else {
+            {{ heat.heatNumber }}
+          }
         </th>
         @if (showStatus()) {
-          <td class="heat-status" [class.is-active]="heat.isActive">
+          <td
+            class="heat-status"
+            [class.is-active]="heat.isActive && !heat.isCompleted"
+          >
             {{ statusKey(heat) | translate }}
           </td>
         }
@@ -81,6 +106,18 @@
           </td>
         }
       </tr>
+      @if (showDetails() && isExpanded(heat)) {
+        <tr class="heat-details-row">
+          <td [attr.colspan]="columnCount()">
+            <app-raceday-heat-details
+              [heat]="heat"
+              [laneCount]="laneCount()"
+              [settings]="settings()"
+              [useLaneColors]="showLaneColors()"
+            ></app-raceday-heat-details>
+          </td>
+        </tr>
+      }
     }
   </tbody>
 </table>

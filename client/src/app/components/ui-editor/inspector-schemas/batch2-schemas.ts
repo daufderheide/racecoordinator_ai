@@ -315,6 +315,14 @@ const heatListSchema: InspectorSchema = {
             },
             {
               ...sw(
+                "heatTableShowDetails",
+                "UE_INSPECTOR_HEAT_LIST_TABLE_DETAILS",
+                "expand heat lineup live timing results",
+              ),
+              visibleWhen: isHeatTable,
+            },
+            {
+              ...sw(
                 "scaleToWindow",
                 "UE_INSPECTOR_HEAT_LIST_SCALE_TO_WINDOW",
                 "scale fit window",
@@ -345,7 +353,8 @@ const heatListSchema: InspectorSchema = {
               ),
               visibleWhen: (settings) =>
                 isHeatTable(settings) &&
-                settings["heatTableShowLanes"] !== false,
+                (settings["heatTableShowLanes"] !== false ||
+                  settings["heatTableShowDetails"] === true),
             },
           ],
         },
@@ -494,7 +503,8 @@ const heatListSchema: InspectorSchema = {
               sample: "Mario",
               visibleWhen: (settings) =>
                 isHeatCards(settings) ||
-                settings["heatTableShowLanes"] !== false,
+                settings["heatTableShowLanes"] !== false ||
+                settings["heatTableShowDetails"] === true,
             }),
             textPart(
               "summaryHeader",

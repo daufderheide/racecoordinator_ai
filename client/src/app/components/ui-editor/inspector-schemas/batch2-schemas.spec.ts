@@ -37,6 +37,19 @@ describe("batch 2 schemas", () => {
       ).toBeFalse();
     });
 
+    it("offers expandable details only for tables and keeps lane styles available for details", () => {
+      const details = field("heat-list", "heatTableShowDetails");
+      const colors = field("heat-list", "heatTableShowLaneColors");
+      const table = { heatListLayout: "table", heatTableShowLanes: false };
+      expect(registryDefaults("heat-list")["heatTableShowDetails"]).toBeFalse();
+      expect(isFieldVisible(details, {})).toBeFalse();
+      expect(isFieldVisible(details, table)).toBeTrue();
+      expect(isFieldVisible(colors, table)).toBeFalse();
+      expect(
+        isFieldVisible(colors, { ...table, heatTableShowDetails: true }),
+      ).toBeTrue();
+    });
+
     it("reads older layouts from the summary flags like the old inspector", () => {
       expect(active().read!({})).toBe("summary_lane_colors");
       expect(active().read!({ showActiveSummary: false })).toBe("lane_colors");

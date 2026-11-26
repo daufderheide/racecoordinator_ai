@@ -57,7 +57,7 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 
 ### Widget-Bibliothek & Konfigurationssteuerung {: #widget-panels }
 
-Öffnen Sie im Widget **Laufliste** den Bereich **Inhalt** und wählen Sie unter **Layout** die Option **Tabelle**, um jeden Lauf in einer Zeile darzustellen. Legen Sie fest, ob Status, Gruppen und Spurbelegung angezeigt werden. Die Spurbelegung verwendet die aktuellen Fahrer- und Teamnamen. Spurfarben können unabhängig ausgeschaltet werden. Unter **Karten** stehen die Laufkarten und Zusammenfassungen zur Verfügung.
+Öffnen Sie im Widget **Laufliste** den Bereich **Inhalt** und wählen Sie unter **Layout** die Option **Tabelle**, um jeden Lauf in einer Zeile darzustellen. Legen Sie fest, ob Status, Gruppen und Spurbelegung angezeigt werden. Die Spurbelegung verwendet die aktuellen Fahrer- und Teamnamen. Spurfarben können unabhängig ausgeschaltet werden. Unter **Karten** stehen die Laufkarten und Zusammenfassungen zur Verfügung. Aktivieren Sie **Ausklappbare Laufdetails** und wählen Sie eine Laufnummer, um die Spurbelegung, Live-Zeiten oder Ergebnisse zu sehen.
 
 In der Haupt-Symbolleiste links neben dem Countdown-Vorschausymbol angeordnet:
 - **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.

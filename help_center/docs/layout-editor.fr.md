@@ -57,7 +57,7 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 
 ### Bibliothèque de widgets & contrôles de configuration {: #widget-panels }
 
-Dans le widget **Liste des manches**, ouvrez **Contenu** et choisissez **Tableau** sous **Disposition** pour afficher une ligne par manche. Choisissez d’afficher l’état, les groupes et les affectations de voie. Les affectations utilisent les noms actuels des pilotes et des équipes. Vous pouvez désactiver les couleurs de voie indépendamment. Choisissez **Cartes** pour afficher les cartes et les résumés des manches.
+Dans le widget **Liste des manches**, ouvrez **Contenu** et choisissez **Tableau** sous **Disposition** pour afficher une ligne par manche. Choisissez d’afficher l’état, les groupes et les affectations de voie. Les affectations utilisent les noms actuels des pilotes et des équipes. Vous pouvez désactiver les couleurs de voie indépendamment. Choisissez **Cartes** pour afficher les cartes et les résumés des manches. Activez **Détails de manche dépliables** et sélectionnez un numéro pour afficher les affectations, le chronométrage en direct ou les résultats.
 
 Situés sur la barre d'outils principale à gauche de l'icône d'aperçu du compte à rebours :
 - **Bibliothèque de widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante. Un clic la restaure également si elle est réduite ou hors de l'écran visible.

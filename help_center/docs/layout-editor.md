@@ -57,7 +57,7 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 
 ### Widget Library & Configuration Controls {: #widget-panels }
 
-In the **Heat List** widget, open **Content** and change **Layout** to **Table** to show one row per heat. Choose whether to display status, groups and lane assignments. Lane assignments use the current driver and team names, and lane colours can be switched off independently. Choose **Cards** to use the heat card and summary options.
+In the **Heat List** widget, open **Content** and change **Layout** to **Table** to show one row per heat. Choose whether to display status, groups and lane assignments. Lane assignments use the current driver and team names, and lane colours can be switched off independently. Choose **Cards** to use the heat card and summary options. Turn on **Expandable Heat Details** and select a heat number to see the upcoming lineup, live timing or completed results.
 
 Located on the main toolbar to the left of the countdown preview icon:
 - **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox. Clicking also unminimizes the toolbox and ensures it is clamped within the visible screen area if previously moved off-screen.

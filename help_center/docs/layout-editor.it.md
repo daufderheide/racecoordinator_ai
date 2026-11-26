@@ -57,7 +57,7 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 
 ### Libreria dei widget e controlli di configurazione {: #widget-panels }
 
-Nel widget **Elenco manche**, apri **Contenuto** e scegli **Tabella** in **Layout** per mostrare una riga per manche. Puoi visualizzare stato, gruppi e assegnazioni di corsia. Le assegnazioni usano i nomi attuali di piloti e squadre. Puoi disattivare i colori delle corsie separatamente. Scegli **Schede** per visualizzare le schede e i riepiloghi delle manche.
+Nel widget **Elenco manche**, apri **Contenuto** e scegli **Tabella** in **Layout** per mostrare una riga per manche. Puoi visualizzare stato, gruppi e assegnazioni di corsia. Le assegnazioni usano i nomi attuali di piloti e squadre. Puoi disattivare i colori delle corsie separatamente. Scegli **Schede** per visualizzare le schede e i riepiloghi delle manche. Attiva **Dettagli manche espandibili** e seleziona un numero di manche per vedere le assegnazioni, il cronometraggio in diretta o i risultati.
 
 Posizionati sulla barra degli strumenti principale a sinistra dell'icona di anteprima conto alla rovescia:
 - **Libreria dei widget (<span class="material-icons">widgets</span>)**: Attiva/disattiva la visibilità della casella degli strumenti mobile. Un clic ripristina la casella se è ridotta a icona o posizionata fuori dallo schermo visibile.

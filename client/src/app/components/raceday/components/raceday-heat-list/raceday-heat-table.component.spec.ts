@@ -106,6 +106,57 @@ describe("RacedayHeatTableComponent", () => {
     expect(table.querySelector(".heat-lane")).toBeNull();
   });
 
+  it("opts into details and opens just one heat at a time even with the schedule columns hidden", () => {
+    fixture.componentRef.setInput("heats", [
+      { ...heat, objectId: "" },
+      {
+        ...heat,
+        objectId: "",
+        heatNumber: 3,
+        isCurrent: false,
+        isActive: false,
+      },
+    ]);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector(".heat-details-toggle")).toBeNull();
+
+    fixture.componentRef.setInput("settings", {
+      heatTableShowDetails: true,
+      heatTableShowStatus: false,
+      heatTableShowGroup: false,
+      heatTableShowLanes: false,
+    });
+    fixture.detectChanges();
+    const [first, second] = Array.from(
+      root.querySelectorAll<HTMLButtonElement>("button"),
+    );
+    expect(first.getAttribute("aria-expanded")).toBe("false");
+    first.click();
+    fixture.detectChanges();
+    expect(first.getAttribute("aria-expanded")).toBe("true");
+    expect(
+      root.querySelector(".heat-details-row > td")?.getAttribute("colspan"),
+    ).toBe("1");
+    expect(root.querySelector("caption")?.textContent?.trim()).toBe(
+      "HL_TABLE_LIVE_TIMING",
+    );
+
+    second.click();
+    fixture.detectChanges();
+    expect(first.getAttribute("aria-expanded")).toBe("false");
+    expect(second.getAttribute("aria-expanded")).toBe("true");
+    expect(root.querySelectorAll(".heat-details-row").length).toBe(1);
+    expect(root.querySelector("caption")?.textContent?.trim()).toBe(
+      "HL_TABLE_LINEUP",
+    );
+
+    second.click();
+    fixture.detectChanges();
+    expect(second.getAttribute("aria-expanded")).toBe("false");
+    expect(root.querySelector(".heat-details-row")).toBeNull();
+  });
+
   it("keeps the track's lane columns when a scheduled heat has no assignments", () => {
     fixture.componentRef.setInput("heats", [{ ...heat, lanes: [] }]);
     fixture.componentRef.setInput("trackLaneCount", 2);

@@ -29,7 +29,7 @@
   background: #1e293b;
 }
 
-.heat-schedule tbody tr:nth-child(odd) {
+.heat-schedule tbody tr.is-striped {
   background: rgba(15, 23, 42, 0.26);
 }
 
@@ -71,4 +71,38 @@
 .heat-team,
 .heat-lane-empty {
   opacity: 0.72;
+}
+
+.heat-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  min-block-size: 24px;
+  min-inline-size: 24px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.heat-details-toggle .material-icons {
+  font-size: 16px;
+}
+
+.heat-details-toggle:hover,
+.heat-details-toggle[aria-expanded="true"] {
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.heat-details-toggle:focus-visible {
+  outline: 2px solid currentColor;
+}
+
+.heat-schedule .heat-details-row > td {
+  padding: 6px 10px 10px;
+  background: rgba(15, 23, 42, 0.45);
 }

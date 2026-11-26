@@ -57,7 +57,7 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 
 ### Widgetbibliotheek & configuratieknoppen {: #widget-panels }
 
-Open **Inhoud** in de widget **Heatlijst** en kies bij **Indeling** voor **Tabel** om één rij per heat te tonen. Je kunt de status, groepen en baantoewijzingen tonen. De baantoewijzingen gebruiken de actuele namen van rijders en teams. Baankleuren zijn apart uit te schakelen. Kies **Kaarten** om de heatkaarten en samenvattingen te gebruiken.
+Open **Inhoud** in de widget **Heatlijst** en kies bij **Indeling** voor **Tabel** om één rij per heat te tonen. Je kunt de status, groepen en baantoewijzingen tonen. De baantoewijzingen gebruiken de actuele namen van rijders en teams. Baankleuren zijn apart uit te schakelen. Kies **Kaarten** om de heatkaarten en samenvattingen te gebruiken. Schakel **Uitklapbare heatdetails** in en kies een heatnummer om de baanindeling, live timing of uitslag te bekijken.
 
 Gelegen op de hoofdwerkbalk links van het startlichten-voorvertoningspictogram:
 - **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit. Een klik herstelt de gereedschapskist ook als deze geminimaliseerd is of buiten het zichtbare scherm is verplaatst.

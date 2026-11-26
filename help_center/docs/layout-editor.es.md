@@ -57,7 +57,7 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 
 ### Biblioteca de widgets y controles de configuración {: #widget-panels }
 
-En el widget **Lista de mangas**, abra **Contenido** y elija **Tabla** en **Diseño** para mostrar una fila por manga. Puede mostrar el estado, los grupos y las asignaciones de carril. Las asignaciones usan los nombres actuales de pilotos y equipos. Los colores de carril se pueden desactivar de forma independiente. Elija **Tarjetas** para ver las tarjetas y los resúmenes de las mangas.
+En el widget **Lista de mangas**, abra **Contenido** y elija **Tabla** en **Diseño** para mostrar una fila por manga. Puede mostrar el estado, los grupos y las asignaciones de carril. Las asignaciones usan los nombres actuales de pilotos y equipos. Los colores de carril se pueden desactivar de forma independiente. Elija **Tarjetas** para ver las tarjetas y los resúmenes de las mangas. Active **Detalles desplegables de la manga** y seleccione un número de manga para ver las asignaciones, el cronometraje en directo o los resultados.
 
 Ubicados en la barra de herramientas principal a la izquierda del icono de vista previa de cuenta regresiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
