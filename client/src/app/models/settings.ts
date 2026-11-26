@@ -10,6 +10,7 @@ import {
   DEFAULT_FUEL_LAYOUT,
   DEFAULT_LAYOUT,
   DEFAULT_PRACTICE_LAYOUT,
+  DEFAULT_STEP_RESULTS_LAYOUT,
   LEGACY_DEFAULT_LAYOUT,
   LEGACY_DEFAULT_PRACTICE_LAYOUT,
 } from "./default-layouts";
@@ -70,6 +71,9 @@ export type WidgetType =
   | "action-forward"
   | "action-close"
   | "progress-gauge"
+  | "step-results"
+  | "step-badge"
+  | "step-status"
   | `custom:${string}`
   | (string & {});
 
@@ -441,6 +445,9 @@ export class Settings {
     DEFAULT_PRACTICE_LAYOUT;
 
   static readonly DEFAULT_FUEL_LAYOUT: LayoutConfig = DEFAULT_FUEL_LAYOUT;
+
+  static readonly DEFAULT_STEP_RESULTS_LAYOUT: LayoutConfig =
+    DEFAULT_STEP_RESULTS_LAYOUT;
 
   static readonly LEGACY_DEFAULT_LAYOUT: LayoutConfig = LEGACY_DEFAULT_LAYOUT;
 

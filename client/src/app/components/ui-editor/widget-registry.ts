@@ -427,6 +427,41 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       ...getDefaultBorderConfigForWidget("season-race-leaderboard"),
     }),
   },
+  "step-results": {
+    defaultSettings: () => ({
+      showTotalTime: true,
+      showBestLap: true,
+      showPoints: false,
+      headerFontFamily: "",
+      headerFontSize: 20,
+      headerTextColor: "",
+      rowFontFamily: "",
+      rowFontSize: 24,
+      rowTextColor: "",
+      backgroundColor: "",
+      ...getDefaultBorderConfigForWidget("step-results"),
+    }),
+  },
+  "step-badge": {
+    defaultSettings: () => ({
+      showAdvanceText: true,
+      fontSize: 18,
+      fontFamily: "",
+      textColor: "#38bdf8",
+      backgroundColor: "transparent",
+      ...getDefaultBorderConfigForWidget("step-badge"),
+    }),
+  },
+  "step-status": {
+    defaultSettings: () => ({
+      ...defaultLaneColumnSettings(),
+      columnKey: "stepStatus",
+      customLabel: "RD_STATUS",
+      useLaneColors: false,
+      backgroundColor: "transparent",
+      ...getDefaultBorderConfigForWidget("step-status"),
+    }),
+  },
   "track-name": {
     defaultSettings: () => ({
       labelFontFamily: "",

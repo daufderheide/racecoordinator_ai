@@ -29,6 +29,7 @@ import {
 import { Observable, Subject, Subscription } from "rxjs";
 import { debounceTime } from "rxjs/operators";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
+import { RacedayStepResultsDialogComponent } from "@app/components/raceday/components/raceday-step-results-dialog/raceday-step-results-dialog.component";
 import { RacedaySlotcarsHelper } from "@app/components/raceday/helpers/raceday-slotcars.helper";
 import {
   RacedaySlotcarsDialogComponent,
@@ -47,6 +48,7 @@ import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
 import { LayoutConfig, Settings } from "@app/models/settings";
+import { StepResults } from "@app/models/step-results.model";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IInterfaceAlertEvent, RaceState } from "@app/proto/antigravity";
@@ -122,6 +124,7 @@ export type { LapDisplayInfo } from "./helpers/raceday-column-layout.helper";
     RaceHistoryDialogComponent,
     BrowserNavigationComponent,
     RacedaySlotcarsDialogComponent,
+    RacedayStepResultsDialogComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -136,6 +139,8 @@ export class DefaultRacedayComponent
   showRaceHistoryDialog = false;
   /** Race day "Slotcars…" (#1210). */
   showSlotcarsDialog = false;
+  showStepResultsDialog = false;
+  currentStepResults: StepResults | null = null;
   raceCars: Car[] = [];
 
   get hasSlotcars(): boolean {
@@ -157,6 +162,32 @@ export class DefaultRacedayComponent
 
   onSlotcarSwap(swap: SlotcarSwap): void {
     RacedaySlotcarsHelper.swap(this, swap);
+  }
+
+  openStepResultsDialog(): void {
+    this.dataService.getStepResults().subscribe({
+      next: (results) => {
+        if (results && results.standings && results.standings.length > 0) {
+          this.currentStepResults = results;
+          this.showStepResultsDialog = true;
+          this.cdr.markForCheck();
+        }
+      },
+      error: (err) => {
+        console.error("Error fetching step results", err);
+      },
+    });
+  }
+
+  closeStepResultsDialog(): void {
+    this.showStepResultsDialog = false;
+    this.dataService.closeStepResults().subscribe({
+      next: () => {},
+      error: (err) => {
+        console.error("Error closing step results", err);
+      },
+    });
+    this.cdr.markForCheck();
   }
 
   get disallowLapRecordsHeats(): Heat[] {

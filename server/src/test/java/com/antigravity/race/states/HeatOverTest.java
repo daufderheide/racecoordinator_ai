@@ -255,4 +255,41 @@ public class HeatOverTest {
     verify(rhm, org.mockito.Mockito.never())
         .handleStepUpAdvancement(org.mockito.ArgumentMatchers.any());
   }
+
+  @Test
+  public void testEnter_CalculatesStepResultsAndOpensDialog_WhenStepUpBoundary() {
+    com.antigravity.race.Heat currentHeat = mock(com.antigravity.race.Heat.class);
+    when(currentHeat.getStatistics()).thenReturn(new com.antigravity.race.RaceHeatStatistics());
+    when(currentHeat.isStepUpBoundary()).thenReturn(true);
+    when(race.getCurrentHeat()).thenReturn(currentHeat);
+    when(race.getRaceModel())
+        .thenReturn(
+            new com.antigravity.models.Race.Builder()
+                .withStepUp(2)
+                .withHeatScoring(new HeatScoring())
+                .build());
+    com.antigravity.race.RaceHeatManager rhm = mock(com.antigravity.race.RaceHeatManager.class);
+    com.antigravity.models.StepResults stepRes =
+        new com.antigravity.models.StepResults(1, 1, 2, 2, java.util.Collections.emptyList());
+    when(rhm.calculateStepResults(currentHeat)).thenReturn(stepRes);
+    when(race.getHeatManager()).thenReturn(rhm);
+
+    heatOver.enter(race);
+
+    verify(rhm).calculateStepResults(currentHeat);
+    verify(race).setCurrentStepResults(stepRes);
+    verify(race).setStepResultsDialogOpen(true);
+  }
+
+  @Test
+  public void testExit_NextHeat_RestartHeat_ClosesStepResultsDialog() {
+    heatOver.exit(race);
+    verify(race).setStepResultsDialogOpen(false);
+
+    heatOver.nextHeat(race);
+    verify(race, org.mockito.Mockito.atLeast(2)).setStepResultsDialogOpen(false);
+
+    heatOver.restartHeat(race);
+    verify(race, org.mockito.Mockito.atLeast(3)).setStepResultsDialogOpen(false);
+  }
 }

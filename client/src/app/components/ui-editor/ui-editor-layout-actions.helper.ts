@@ -25,12 +25,14 @@ export function applyResetLayout(
   const isPractice = ui.entity_id === "practice_ui_layout_rc_ai";
   const isDriverStation = ui.entity_id === "driver_station_ui_layout_rc_ai";
   const isFuel = ui.entity_id === "default_fuel_ui_layout_rc_ai";
+  const isStepResults = ui.entity_id === "step_results_ui_layout_rc_ai";
   const data = getDefaultLayoutResetData(
     isPractice,
     windowWidth,
     windowHeight,
     isDriverStation,
     isFuel,
+    isStepResults,
   );
 
   ui.layoutJson = JSON.stringify(data.defaultLayout);

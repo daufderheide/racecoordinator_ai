@@ -233,6 +233,12 @@ export class RacedayLayoutEditorHelper {
             : draggedType === "image"
               ? 300
               : 200;
+    } else if (draggedType === "step-results") {
+      width = 1800;
+      height = 800;
+    } else if (draggedType === "step-badge") {
+      width = 600;
+      height = 50;
     } else if (
       draggedType === "action-back" ||
       draggedType === "action-forward" ||
@@ -248,13 +254,16 @@ export class RacedayLayoutEditorHelper {
     const isLaneColumn =
       draggedType?.startsWith("lane-col:") ||
       draggedType === "drift-indicator" ||
-      draggedType === "average-score";
+      draggedType === "average-score" ||
+      draggedType === "step-status";
     let laneColumnKey: string | undefined = undefined;
     if (isLaneColumn) {
       if (draggedType === "drift-indicator") {
         laneColumnKey = "driftIndicator";
       } else if (draggedType === "average-score") {
         laneColumnKey = "averageScore";
+      } else if (draggedType === "step-status") {
+        laneColumnKey = "stepStatus";
       } else {
         laneColumnKey = draggedType?.substring("lane-col:".length);
       }
@@ -289,6 +298,11 @@ export class RacedayLayoutEditorHelper {
         const avgRegistry = WIDGET_REGISTRY["average-score"];
         newWidget.customSettings = avgRegistry?.defaultSettings
           ? avgRegistry.defaultSettings()
+          : {};
+      } else if (laneColumnKey === "stepStatus") {
+        const stepRegistry = WIDGET_REGISTRY["step-status"];
+        newWidget.customSettings = stepRegistry?.defaultSettings
+          ? stepRegistry.defaultSettings()
           : {};
       } else {
         const registryEntry = WIDGET_REGISTRY["lane-column"];

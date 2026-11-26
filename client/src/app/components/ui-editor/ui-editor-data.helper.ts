@@ -445,6 +445,7 @@ export function ensureDefaultCustomUis(
   ensurePracticeCustomUi(customUIs, s);
   ensureFuelCustomUi(customUIs, s);
   ensureDriverStationCustomUi(customUIs);
+  ensureStepResultsCustomUi(customUIs);
 }
 
 function ensureRacedayCustomUi(customUIs: CustomUI[], s: Settings): void {
@@ -588,6 +589,34 @@ function ensureDriverStationCustomUi(customUIs: CustomUI[]): void {
         '"useLaneColors":true',
       );
     }
+  }
+}
+
+function ensureStepResultsCustomUi(customUIs: CustomUI[]): void {
+  const stepResultsUi = customUIs.find(
+    (u: any) => u.entity_id === "step_results_ui_layout_rc_ai",
+  );
+  if (!stepResultsUi) {
+    customUIs.push({
+      name: "RC AI (Step Results)",
+      is_default: true,
+      layoutJson: JSON.stringify(Settings.DEFAULT_STEP_RESULTS_LAYOUT),
+      columnsJson: "[]",
+      columnLayoutsJson: "{}",
+      columnVisibilityJson: "{}",
+      columnWidthsJson: "{}",
+      columnAnchorsJson: "{}",
+      entity_id: "step_results_ui_layout_rc_ai",
+      _id: "step_results_ui_layout_rc_ai",
+    });
+  } else if (
+    stepResultsUi.layoutJson &&
+    (!stepResultsUi.layoutJson.includes('"step-badge"') ||
+      stepResultsUi.layoutJson.includes('"step-results"'))
+  ) {
+    stepResultsUi.layoutJson = JSON.stringify(
+      Settings.DEFAULT_STEP_RESULTS_LAYOUT,
+    );
   }
 }
 

@@ -3,6 +3,7 @@ package com.antigravity.race.states;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.AllowFinish;
+import com.antigravity.models.StepResults;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
@@ -95,6 +96,16 @@ public class HeatOver implements IRaceState {
       logger.error("Error updating realtime prediction snapshot", e);
     }
 
+    if (race.getCurrentHeat() != null
+        && race.getCurrentHeat().isStepUpBoundary()
+        && race.getRaceModel() != null
+        && race.getRaceModel().getStepUp() > 0
+        && race.getHeatManager() != null) {
+      StepResults stepResults = race.getHeatManager().calculateStepResults(race.getCurrentHeat());
+      race.setCurrentStepResults(stepResults);
+      race.setStepResultsDialogOpen(stepResults != null);
+    }
+
     double autoAdvanceTime = race.getRaceModel().getAutoAdvanceTime();
     if (autoAdvanceTime > 0 && !race.isAutoAdvanceFired()) {
       race.setAutoAdvanceRemaining(autoAdvanceTime);
@@ -115,11 +126,13 @@ public class HeatOver implements IRaceState {
     logger.info("HeatOver state exited.");
     stopTimer();
     race.setAutoAdvanceRemaining(0);
+    race.setStepResultsDialogOpen(false);
   }
 
   @Override
   public void nextHeat(Race race) {
     stopTimer();
+    race.setStepResultsDialogOpen(false);
     Common.advanceToNextHeat(race);
   }
 
@@ -152,6 +165,7 @@ public class HeatOver implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("HeatOver.restartHeat() called. Resetting current heat.");
+    race.setStepResultsDialogOpen(false);
     if (race.getHeatManager() != null
         && race.getCurrentHeat() != null
         && race.getCurrentHeat().isStepUpBoundary()) {
@@ -223,7 +237,9 @@ public class HeatOver implements IRaceState {
                 broadcastTime(race);
                 stopTimer();
                 race.setAutoAdvanceFired(true);
-                race.moveToNextHeat();
+                if (!race.isStepResultsDialogOpen()) {
+                  race.moveToNextHeat();
+                }
               } else {
                 race.setAutoAdvanceRemaining(remaining);
 

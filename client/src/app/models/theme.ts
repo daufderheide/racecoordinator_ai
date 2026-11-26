@@ -18,6 +18,7 @@ export interface Theme extends Model {
   uiId?: string;
   driver_station_theme_id?: string;
   driver_view_theme_id?: string;
+  step_results_ui_id?: string;
   companion_theme_ids?: string[];
 }
 

@@ -899,6 +899,20 @@ export function resolveLaneColumnFormattedValue(
       "DRIFT"
     );
   }
+  if (columnKey === "stepStatus") {
+    const isUp = Boolean(
+      hd?.isSteppingUp ||
+      (hd as any)?.steppingUp ||
+      hd?.participant?.isStepUp ||
+      (hd?.participant as any)?.isSteppingUp ||
+      (hd?.participant as any)?.steppingUp,
+    );
+    return isUp
+      ? parent?.translationService?.translate?.("RD_STEPPING_UP") ||
+          "RD_STEPPING_UP"
+      : parent?.translationService?.translate?.("RD_ELIMINATED") ||
+          "RD_ELIMINATED";
+  }
   if (columnKey === "averageScore" || columnKey.startsWith("averageScore")) {
     if (raw === null || raw === undefined) return "--";
     return Number(raw).toFixed(settings.lapDecimalPlaces ?? 2);

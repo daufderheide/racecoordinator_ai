@@ -186,4 +186,26 @@ describe("RacedayLabelComponent", () => {
     expect(eff.shouldWrap).toBeFalse();
     expect(eff.fontSize).toBeLessThan(24);
   });
+
+  it("should support labelText and translate translation keys", () => {
+    const labelWidget: AbsoluteWidgetNode = {
+      id: "label-trans",
+      widgetType: "label",
+      x: 10,
+      y: 20,
+      width: 200,
+      height: 50,
+      zIndex: 10,
+      customSettings: {
+        labelText: "RD_STEP_RESULTS_TITLE",
+      },
+    };
+
+    fixture.componentRef.setInput("widget", labelWidget);
+    fixture.detectChanges();
+
+    expect(component.getRawText()).toBe("RD_STEP_RESULTS_TITLE");
+    const span = fixture.nativeElement.querySelector(".label-widget-text");
+    expect(span?.textContent?.trim()).toBe("RD_STEP_RESULTS_TITLE");
+  });
 });

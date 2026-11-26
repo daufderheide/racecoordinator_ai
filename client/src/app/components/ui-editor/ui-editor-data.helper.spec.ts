@@ -17,12 +17,12 @@ import {
 } from "./ui-editor-data.helper";
 
 describe("ui-editor-data.helper", () => {
-  it("should ensure default custom UIs for raceday, practice, fuel, and driver station", () => {
+  it("should ensure default custom UIs for raceday, practice, fuel, driver station, and step results", () => {
     const uis: CustomUI[] = [];
     const settings = new Settings();
 
     ensureDefaultCustomUis(uis, settings);
-    expect(uis.length).toBe(4);
+    expect(uis.length).toBe(5);
     expect(
       uis.some((u) => u.entity_id === "default_ui_layout_rc_ai"),
     ).toBeTrue();
@@ -34,6 +34,9 @@ describe("ui-editor-data.helper", () => {
     ).toBeTrue();
     expect(
       uis.some((u) => u.entity_id === "driver_station_ui_layout_rc_ai"),
+    ).toBeTrue();
+    expect(
+      uis.some((u) => u.entity_id === "step_results_ui_layout_rc_ai"),
     ).toBeTrue();
   });
 
@@ -252,7 +255,7 @@ describe("ui-editor-data.helper", () => {
     expect(result.customDirectoryName).toBe("custom-folder");
     expect(result.customWidgetDirectoryName).toBe("custom-widgets");
     expect(result.track).toEqual({ id: "track1" });
-    expect(result.initialState.customUIs?.length).toBe(4);
+    expect(result.initialState.customUIs?.length).toBe(5);
 
     const loadedThemes = result.initialState.themes;
     expect(

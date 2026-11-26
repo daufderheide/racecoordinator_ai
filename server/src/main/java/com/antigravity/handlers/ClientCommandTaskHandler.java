@@ -45,6 +45,8 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     app.post("/api/regenerate-heats", raceControlHandler::regenerateHeats, Role.DIRECTOR);
     app.post("/api/open-modify-heats", raceControlHandler::openModifyHeats, Role.DIRECTOR);
     app.post("/api/finalize-modify-heats", raceControlHandler::finalizeModifyHeats, Role.DIRECTOR);
+    app.get("/api/step-results", raceControlHandler::getStepResults, Role.VIEWER);
+    app.post("/api/close-step-results", raceControlHandler::closeStepResults, Role.DIRECTOR);
   }
 
   private void registerHardwareRoutes(Javalin app) {

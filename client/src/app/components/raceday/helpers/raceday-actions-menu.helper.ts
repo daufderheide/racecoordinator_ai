@@ -515,7 +515,11 @@ export class RacedayActionsMenuHelper {
       if (host.isForwardDisabled) return;
       window.history.forward();
     } else if (action === "CLOSE") {
-      RacedayActionsMenuHelper.closeWindow();
+      if (host.showStepResultsDialog) {
+        host.closeStepResultsDialog();
+      } else {
+        RacedayActionsMenuHelper.closeWindow();
+      }
     }
   }
 

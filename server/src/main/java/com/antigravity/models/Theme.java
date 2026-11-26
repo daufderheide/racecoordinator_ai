@@ -97,6 +97,7 @@ public class Theme extends Model {
   private final String uiId;
   private final String driverStationThemeId;
   private final String driverViewThemeId;
+  private final String stepResultsUiId;
   private final List<String> companionThemeIds;
   private final Map<String, RaceFlag> resolvedFlagCache = new ConcurrentHashMap<>();
 
@@ -113,6 +114,7 @@ public class Theme extends Model {
           String driverStationThemeId,
       @JsonProperty("driver_view_theme_id") @JsonAlias({"driverViewThemeId"})
           String driverViewThemeId,
+      @JsonProperty("step_results_ui_id") @JsonAlias({"stepResultsUiId"}) String stepResultsUiId,
       @JsonProperty("companion_theme_ids")
           @JsonAlias({"companionThemeIds", "window_theme_ids", "windowThemeIds"})
           List<String> companionThemeIds,
@@ -134,8 +136,39 @@ public class Theme extends Model {
         (driverViewThemeId != null && !driverViewThemeId.trim().isEmpty())
             ? driverViewThemeId
             : DRIVER_STATION_THEME_ID;
+    this.stepResultsUiId =
+        (stepResultsUiId != null && !stepResultsUiId.trim().isEmpty())
+            ? stepResultsUiId
+            : CustomUI.STEP_RESULTS_UI_ID;
     this.companionThemeIds =
         companionThemeIds != null ? new ArrayList<>(companionThemeIds) : new ArrayList<>();
+  }
+
+  public Theme(
+      String name,
+      boolean isDefault,
+      Map<String, String> slots,
+      Map<String, AudioConfig> audioSlots,
+      Map<String, AudioConfig> driverAudioOverrides,
+      String uiId,
+      String driverStationThemeId,
+      String driverViewThemeId,
+      List<String> companionThemeIds,
+      String entityId,
+      String id) {
+    this(
+        name,
+        isDefault,
+        slots,
+        audioSlots,
+        driverAudioOverrides,
+        uiId,
+        driverStationThemeId,
+        driverViewThemeId,
+        CustomUI.STEP_RESULTS_UI_ID,
+        companionThemeIds,
+        entityId,
+        id);
   }
 
   public Theme(
@@ -296,6 +329,14 @@ public class Theme extends Model {
     return companionThemeIds;
   }
 
+  @JsonProperty("step_results_ui_id")
+  @JsonAlias({"stepResultsUiId"})
+  public String getStepResultsUiId() {
+    return (stepResultsUiId != null && !stepResultsUiId.trim().isEmpty())
+        ? stepResultsUiId
+        : CustomUI.STEP_RESULTS_UI_ID;
+  }
+
   public static class Builder {
     private String id;
     private String entityId;
@@ -307,6 +348,7 @@ public class Theme extends Model {
     private String uiId;
     private String driverStationThemeId = DRIVER_STATION_THEME_ID;
     private String driverViewThemeId = DRIVER_STATION_THEME_ID;
+    private String stepResultsUiId = CustomUI.STEP_RESULTS_UI_ID;
     private List<String> companionThemeIds = new ArrayList<>();
 
     public static Builder from(Theme other) {
@@ -326,6 +368,7 @@ public class Theme extends Model {
         b.uiId = other.getUiId();
         b.driverStationThemeId = other.getDriverStationThemeId();
         b.driverViewThemeId = other.getDriverViewThemeId();
+        b.stepResultsUiId = other.getStepResultsUiId();
         b.companionThemeIds =
             other.getCompanionThemeIds() != null
                 ? new ArrayList<>(other.getCompanionThemeIds())
@@ -384,6 +427,11 @@ public class Theme extends Model {
       return this;
     }
 
+    public Builder withStepResultsUiId(String stepResultsUiId) {
+      this.stepResultsUiId = stepResultsUiId;
+      return this;
+    }
+
     public Builder withCompanionThemeIds(List<String> companionThemeIds) {
       this.companionThemeIds =
           companionThemeIds != null ? new ArrayList<>(companionThemeIds) : new ArrayList<>();
@@ -400,6 +448,7 @@ public class Theme extends Model {
           uiId,
           driverStationThemeId,
           driverViewThemeId,
+          stepResultsUiId,
           companionThemeIds,
           entityId,
           id);

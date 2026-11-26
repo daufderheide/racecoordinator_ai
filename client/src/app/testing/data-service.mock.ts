@@ -37,4 +37,18 @@ export class DataServiceMock {
     .and.returnValue(of({ name: "test_db" }));
 
   getThemes = jasmine.createSpy("getThemes").and.returnValue(of([]));
+
+  getStepResults = jasmine.createSpy("getStepResults").and.returnValue(
+    of({
+      step: 1,
+      group: 1,
+      nextStep: 2,
+      stepUpCount: 2,
+      standings: [],
+    }),
+  );
+
+  closeStepResults = jasmine
+    .createSpy("closeStepResults")
+    .and.returnValue(of({ success: true }));
 }

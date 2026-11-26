@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Reader } from "protobufjs/minimal";
 import { Observable } from "rxjs";
 import { map } from "rxjs/operators";
+import { StepResults } from "@app/models/step-results.model";
 import {
   DeferHeatRequest,
   DeferHeatResponse,
@@ -694,5 +695,57 @@ export class DataRaceControlHelper {
         },
       )
       .pipe(map(() => true));
+  }
+
+  getStepResults(): Observable<StepResults> {
+    return this.http.get<any>(`${this.getBaseUrl()}/api/step-results`).pipe(
+      map((raw) => {
+        if (!raw) return null as any;
+        return {
+          step: raw.step ?? 1,
+          group: raw.group ?? 1,
+          nextStep: raw.nextStep ?? raw.next_step ?? 1,
+          next_step: raw.next_step ?? raw.nextStep ?? 1,
+          stepUpCount: raw.stepUpCount ?? raw.step_up_count ?? 0,
+          step_up_count: raw.step_up_count ?? raw.stepUpCount ?? 0,
+          standings: (raw.standings || []).map((s: any) => ({
+            rank: s.rank ?? 0,
+            driverId: s.driverId ?? s.driver_id ?? "",
+            driver_id: s.driver_id ?? s.driverId ?? "",
+            driverName: s.driverName ?? s.driver_name ?? "",
+            driver_name: s.driver_name ?? s.driverName ?? "",
+            totalLaps: s.totalLaps ?? s.total_laps ?? 0,
+            total_laps: s.total_laps ?? s.totalLaps ?? 0,
+            totalTime: s.totalTime ?? s.total_time ?? 0,
+            total_time: s.total_time ?? s.totalTime ?? 0,
+            totalPoints: s.totalPoints ?? s.total_points ?? 0,
+            total_points: s.total_points ?? s.totalPoints ?? 0,
+            bestLapTime: s.bestLapTime ?? s.best_lap_time ?? 0,
+            best_lap_time: s.best_lap_time ?? s.bestLapTime ?? 0,
+            steppingUp: Boolean(
+              s.steppingUp ??
+              s.is_stepping_up ??
+              s.stepping_up ??
+              s.isSteppingUp,
+            ),
+            is_stepping_up: Boolean(
+              s.is_stepping_up ??
+              s.steppingUp ??
+              s.stepping_up ??
+              s.isSteppingUp,
+            ),
+            stepUpIndex: s.stepUpIndex ?? s.step_up_index ?? 0,
+            step_up_index: s.step_up_index ?? s.stepUpIndex ?? 0,
+          })),
+        };
+      }),
+    );
+  }
+
+  closeStepResults(): Observable<any> {
+    return this.http.post<any>(
+      `${this.getBaseUrl()}/api/close-step-results`,
+      {},
+    );
   }
 }

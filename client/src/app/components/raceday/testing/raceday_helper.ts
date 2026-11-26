@@ -90,7 +90,19 @@ export function createRacedayMocks(overrides: any = {}) {
     "saveRace",
     "exportRaceToCsv",
     "exportRaceToXls",
+    "getStepResults",
+    "closeStepResults",
   ]);
+  mockDataService.getStepResults.and.returnValue(
+    of({
+      step: 1,
+      group: 1,
+      nextStep: 2,
+      stepUpCount: 2,
+      standings: [],
+    }),
+  );
+  mockDataService.closeStepResults.and.returnValue(of(true));
   mockDataService.exportRaceToCsv.and.returnValue(of("csv,mock,data"));
   mockDataService.exportRaceToXls.and.returnValue(
     of(

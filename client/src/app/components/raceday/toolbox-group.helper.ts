@@ -263,6 +263,16 @@ export class ToolboxGroupHelper {
           icon: "",
           labelKey: "UE_WIDGET_TYPE_SEASON_RACE_LEADERBOARD",
         },
+        {
+          type: "step-results",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_STEP_RESULTS",
+        },
+        {
+          type: "step-status",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_STEP_STATUS",
+        },
       ],
     },
     {
@@ -270,6 +280,11 @@ export class ToolboxGroupHelper {
       nameKey: "UE_TOOLBOX_SUBGROUP_TITLES_INFO",
       icon: "folder",
       widgets: [
+        {
+          type: "step-badge",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_STEP_BADGE",
+        },
         {
           type: "event-name",
           icon: "",

@@ -6,6 +6,7 @@ import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceCompatibility;
+import com.antigravity.models.StepResults;
 import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
@@ -875,6 +876,43 @@ public class RaceControlHandler {
       ctx.status(200).result("OK");
     } catch (Exception e) {
       logger.error("Error finalizing modify heats", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  public void getStepResults(Context ctx) {
+    try {
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace(); // fqn-collision
+      if (race == null) {
+        ctx.status(404).result("No active race found");
+        return;
+      }
+      StepResults results = race.getCurrentStepResults();
+      if (results == null && race.getCurrentHeat() != null && race.getHeatManager() != null) {
+        results = race.getHeatManager().calculateStepResults(race.getCurrentHeat());
+      }
+      if (results != null) {
+        ctx.json(results);
+      } else {
+        ctx.status(404).result("No step results available");
+      }
+    } catch (Exception e) {
+      logger.error("Error retrieving step results", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  public void closeStepResults(Context ctx) {
+    try {
+      com.antigravity.race.Race race = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace(); // fqn-collision
+      if (race != null) {
+        race.setStepResultsDialogOpen(false);
+      }
+      ctx.status(200).result("OK");
+    } catch (Exception e) {
+      logger.error("Error closing step results dialog", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

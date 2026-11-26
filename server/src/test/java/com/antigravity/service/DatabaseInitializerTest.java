@@ -65,16 +65,18 @@ public class DatabaseInitializerTest {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(4, uis.size());
+    assertEquals(5, uis.size());
     for (CustomUI ui : uis) {
-      if (!CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
-        assertTrue(ui.getLayoutJson().contains("widget-countdown"));
-      } else {
+      if (CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
         assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
+      } else if (!CustomUI.STEP_RESULTS_UI_ID.equals(ui.getEntityId())) {
+        assertTrue(ui.getLayoutJson().contains("widget-countdown"));
       }
       assertFalse(CustomUI.hasLaneView(ui.getLayoutJson()));
       assertFalse(ui.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
-      assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
+      if (!CustomUI.STEP_RESULTS_UI_ID.equals(ui.getEntityId())) {
+        assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
+      }
     }
 
     SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
@@ -158,16 +160,18 @@ public class DatabaseInitializerTest {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(4, uis.size());
+    assertEquals(5, uis.size());
     for (CustomUI ui : uis) {
-      if (!CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
-        assertTrue(ui.getLayoutJson().contains("widget-countdown"));
-      } else {
+      if (CustomUI.DRIVER_STATION_UI_ID.equals(ui.getEntityId())) {
         assertTrue(ui.getLayoutJson().contains("widget-ds-flag"));
+      } else if (!CustomUI.STEP_RESULTS_UI_ID.equals(ui.getEntityId())) {
+        assertTrue(ui.getLayoutJson().contains("widget-countdown"));
       }
       assertFalse(CustomUI.hasLaneView(ui.getLayoutJson()));
       assertFalse(ui.getLayoutJson().contains("\"widgetType\":\"lane-view\""));
-      assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
+      if (!CustomUI.STEP_RESULTS_UI_ID.equals(ui.getEntityId())) {
+        assertTrue(ui.getLayoutJson().contains("\"widgetType\":\"lane-column\""));
+      }
     }
 
     initializer.resetThemes(context);
@@ -447,11 +451,12 @@ public class DatabaseInitializerTest {
     initializer.backfillCustomUIs(context);
 
     List<CustomUI> uis = uiRepo.findAll();
-    assertEquals(4, uis.size());
+    assertEquals(5, uis.size());
     assertNotNull(uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.FUEL_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID));
+    assertNotNull(uiRepo.findByEntityId(CustomUI.STEP_RESULTS_UI_ID));
   }
 
   @Test
@@ -660,14 +665,16 @@ public class DatabaseInitializerTest {
     initializer.resetCustomUIs(context);
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
-    assertEquals(4, uiRepo.findAll().size());
+    assertEquals(5, uiRepo.findAll().size());
 
     uiRepo.delete(CustomUI.PRACTICE_UI_ID);
     uiRepo.delete(CustomUI.FUEL_UI_ID);
     uiRepo.delete(CustomUI.DRIVER_STATION_UI_ID);
+    uiRepo.delete(CustomUI.STEP_RESULTS_UI_ID);
     context.markDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID);
     context.markDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID);
     context.markDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID);
+    context.markDefaultArtifactDeleted("custom_ui", CustomUI.STEP_RESULTS_UI_ID);
 
     initializer.backfillCustomUIs(context);
 

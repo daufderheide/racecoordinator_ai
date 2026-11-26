@@ -235,6 +235,7 @@ public class ThemeTaskHandler {
             uiId,
             Theme.DRIVER_STATION_THEME_ID,
             Theme.DRIVER_STATION_THEME_ID,
+            CustomUI.STEP_RESULTS_UI_ID,
             new ArrayList<>(DEFAULT_FACTORY_THEME_IDS),
             entityId,
             null);
@@ -457,6 +458,7 @@ public class ThemeTaskHandler {
         CustomUI.DEFAULT_UI_ID,
         Theme.DRIVER_STATION_THEME_ID,
         Theme.DRIVER_STATION_THEME_ID,
+        CustomUI.STEP_RESULTS_UI_ID,
         allIds,
         "new",
         null);
@@ -521,6 +523,7 @@ public class ThemeTaskHandler {
                 theme.getUiId(),
                 theme.getDriverStationThemeId(),
                 theme.getDriverViewThemeId(),
+                theme.getStepResultsUiId(),
                 theme.getCompanionThemeIds(),
                 nextId,
                 null);
@@ -547,6 +550,7 @@ public class ThemeTaskHandler {
                 theme.getUiId(),
                 theme.getDriverStationThemeId(),
                 theme.getDriverViewThemeId(),
+                theme.getStepResultsUiId(),
                 new ArrayList<>(updatedNewCompanionIds),
                 newThemeId,
                 theme.getId());
@@ -626,6 +630,9 @@ public class ThemeTaskHandler {
               theme.getDriverViewThemeId() != null
                   ? theme.getDriverViewThemeId()
                   : current.getDriverViewThemeId(),
+              theme.getStepResultsUiId() != null
+                  ? theme.getStepResultsUiId()
+                  : current.getStepResultsUiId(),
               theme.getCompanionThemeIds() != null
                   ? theme.getCompanionThemeIds()
                   : current.getCompanionThemeIds(),
@@ -775,6 +782,7 @@ public class ThemeTaskHandler {
               source.getUiId(),
               source.getDriverStationThemeId(),
               source.getDriverViewThemeId(),
+              source.getStepResultsUiId(),
               copyCompanionIds,
               nextId,
               null);
@@ -820,6 +828,7 @@ public class ThemeTaskHandler {
                   existing.getUiId(),
                   existing.getDriverStationThemeId(),
                   existing.getDriverViewThemeId(),
+                  existing.getStepResultsUiId(),
                   new ArrayList<>(updatedCompanionIds),
                   existing.getEntityId(),
                   existing.getId());

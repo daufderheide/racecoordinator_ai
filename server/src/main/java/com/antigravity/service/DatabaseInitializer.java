@@ -512,6 +512,7 @@ public class DatabaseInitializer {
     uiRepo.save(CustomUI.createPractice());
     uiRepo.save(CustomUI.createFuel());
     uiRepo.save(CustomUI.createDriverStation());
+    uiRepo.save(CustomUI.createStepResults());
     logger.info("Custom UIs reset.");
   }
 
@@ -668,7 +669,8 @@ public class DatabaseInitializer {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
-    boolean[] foundFlags = new boolean[4]; // [default, practice, fuel, driver_station]
+    boolean[] foundFlags =
+        new boolean[5]; // [default, practice, fuel, driver_station, step_results]
     for (CustomUI ui : uis) {
       backfillSingleCustomUi(ui, uiRepo, foundFlags);
     }
@@ -688,6 +690,11 @@ public class DatabaseInitializer {
         && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID)) {
       uiRepo.save(CustomUI.createDriverStation());
       logger.info("Backfilled driver station custom UI with ID {}", CustomUI.DRIVER_STATION_UI_ID);
+    }
+    if (!foundFlags[4]
+        && !context.isDefaultArtifactDeleted("custom_ui", CustomUI.STEP_RESULTS_UI_ID)) {
+      uiRepo.save(CustomUI.createStepResults());
+      logger.info("Backfilled step results custom UI with ID {}", CustomUI.STEP_RESULTS_UI_ID);
     }
     ensurePreMigrationBackups(context, uiRepo);
   }
@@ -780,7 +787,8 @@ public class DatabaseInitializer {
           || CustomUI.DEFAULT_UI_ID.equals(entityId)
           || CustomUI.PRACTICE_UI_ID.equals(entityId)
           || CustomUI.FUEL_UI_ID.equals(entityId)
-          || CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
+          || CustomUI.DRIVER_STATION_UI_ID.equals(entityId)
+          || CustomUI.STEP_RESULTS_UI_ID.equals(entityId)) {
         continue;
       }
 
@@ -858,6 +866,13 @@ public class DatabaseInitializer {
         updated = true;
       }
     }
+    if (CustomUI.STEP_RESULTS_UI_ID.equals(entityId)) {
+      foundFlags[4] = true;
+      if (CustomUI.isLegacyStepResultsName(name) && !CustomUI.STEP_RESULTS_UI_NAME.equals(name)) {
+        name = CustomUI.STEP_RESULTS_UI_NAME;
+        updated = true;
+      }
+    }
 
     String columnLayoutsJson = ui.getColumnLayoutsJson();
     if (columnLayoutsJson != null) {
@@ -870,25 +885,10 @@ public class DatabaseInitializer {
     }
 
     String layoutJson = ui.getLayoutJson();
-    if (layoutJson != null) {
-      String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
-      updatedLayoutJson = CustomUI.ensureAspectRatioAndDimensions(updatedLayoutJson);
-      updatedLayoutJson = CustomUI.ensureDriftIndicatorInsets(updatedLayoutJson);
-      if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
-        updatedLayoutJson = CustomUI.ensurePracticeTopRowCoordinates(updatedLayoutJson);
-      }
-      if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
-        if (updatedLayoutJson.contains("\"useLaneColors\":false")) {
-          updatedLayoutJson =
-              updatedLayoutJson.replace("\"useLaneColors\":false", "\"useLaneColors\":true");
-        }
-        updatedLayoutJson = CustomUI.ensureDriverStationLapHighlight(updatedLayoutJson);
-        updatedLayoutJson = CustomUI.ensureDriverStationProgressGaugeDefaults(updatedLayoutJson);
-      }
-      if (!updatedLayoutJson.equals(layoutJson)) {
-        layoutJson = updatedLayoutJson;
-        updated = true;
-      }
+    String updatedLayoutJson = backfillLayoutJson(entityId, layoutJson);
+    if (updatedLayoutJson != null && !updatedLayoutJson.equals(layoutJson)) {
+      layoutJson = updatedLayoutJson;
+      updated = true;
     }
 
     if (updated) {
@@ -907,6 +907,35 @@ public class DatabaseInitializer {
       uiRepo.save(updatedUi);
       logger.info("Backfilled custom UI '{}' ({})", updatedUi.getName(), updatedUi.getEntityId());
     }
+  }
+
+  private String backfillLayoutJson(String entityId, String layoutJson) {
+    if (layoutJson == null) {
+      return null;
+    }
+    String updated = CustomUI.ensureCountdownWidget(layoutJson);
+    updated = CustomUI.ensureAspectRatioAndDimensions(updated);
+    updated = CustomUI.ensureDriftIndicatorInsets(updated);
+    if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
+      updated = CustomUI.ensurePracticeTopRowCoordinates(updated);
+    }
+    if (CustomUI.DRIVER_STATION_UI_ID.equals(entityId)) {
+      if (updated.contains("\"useLaneColors\":false")) {
+        updated = updated.replace("\"useLaneColors\":false", "\"useLaneColors\":true");
+      }
+      updated = CustomUI.ensureDriverStationLapHighlight(updated);
+      updated = CustomUI.ensureDriverStationProgressGaugeDefaults(updated);
+    }
+    if (CustomUI.STEP_RESULTS_UI_ID.equals(entityId)) {
+      if (!updated.contains("\"step-badge\"")
+          || updated.contains("\"widgetType\":\"step-results\"")) {
+        String factoryLayout = CustomUI.createStepResults().getLayoutJson();
+        if (factoryLayout != null && !factoryLayout.equals(layoutJson)) {
+          updated = factoryLayout;
+        }
+      }
+    }
+    return updated;
   }
 
   private void backfillSingleTheme(

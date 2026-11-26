@@ -992,3 +992,42 @@ svg.lane-col-image {
   transform: rotate(45deg);
 }
 
+
+.raceday-lane-column-card.stepping-up {
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
+.lane-col-step-status-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.step-up-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.step-up-icon {
+  font-size: 1.1em;
+}
+
+.eliminated-badge {
+  display: inline-flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 0.85em;
+  font-style: italic;
+  white-space: nowrap;
+}

@@ -6,6 +6,8 @@ import com.antigravity.converters.HeatConverter;
 import com.antigravity.models.Car;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
+import com.antigravity.models.StepDriverResult;
+import com.antigravity.models.StepResults;
 import com.antigravity.models.Team;
 import com.antigravity.proto.ModifyHeatsRequest;
 import com.antigravity.proto.ModifyHeatsResponse;
@@ -756,6 +758,70 @@ public class RaceHeatManager {
     return null;
   }
 
+  public StepResults calculateStepResults(Heat completedHeat) {
+    if (completedHeat == null || !completedHeat.isStepUpBoundary()) {
+      return null;
+    }
+    int step = completedHeat.getStep();
+    int group = completedHeat.getGroup();
+    int nextStep = step + 1;
+
+    int maxNextStepUpIndex = getMaxStepUpIndexInStep(group, nextStep);
+    int stepUp = maxNextStepUpIndex > 0 ? maxNextStepUpIndex : this.race.getRaceModel().getStepUp();
+    if (stepUp <= 0) {
+      return null;
+    }
+
+    List<RaceParticipant> stepParticipants = getStepParticipants(group, step);
+    if (stepParticipants.isEmpty()) {
+      return null;
+    }
+
+    stepParticipants.sort(getStepComparator());
+
+    int advanceCount = Math.min(stepUp, stepParticipants.size());
+    List<StepDriverResult> driverResults = new ArrayList<>();
+    for (int i = 0; i < stepParticipants.size(); i++) {
+      RaceParticipant p = stepParticipants.get(i);
+      int rank = i + 1;
+      boolean isSteppingUp = (i < advanceCount);
+      int stepUpIndex = isSteppingUp ? (i + 1) : 0;
+      String driverId =
+          p.getDriver() != null && p.getDriver().getEntityId() != null
+              ? p.getDriver().getEntityId()
+              : p.getStableId();
+      String driverName = "";
+      if (p.isTeamParticipant()
+          && p.getTeam() != null
+          && p.getTeam().getName() != null
+          && !p.getTeam().getName().isEmpty()) {
+        driverName = p.getTeam().getName();
+      } else if (p.getDriver() != null) {
+        if (p.getDriver().getName() != null && !p.getDriver().getName().isEmpty()) {
+          driverName = p.getDriver().getName();
+        } else if (p.getDriver().getNickname() != null && !p.getDriver().getNickname().isEmpty()) {
+          driverName = p.getDriver().getNickname();
+        }
+      }
+      if (driverName.isEmpty() && driverId != null) {
+        driverName = driverId;
+      }
+      driverResults.add(
+          new StepDriverResult(
+              rank,
+              driverId,
+              driverName,
+              p.getTotalLaps(),
+              p.getTotalTime(),
+              p.getTotalPoints(),
+              p.getBestLapTime(),
+              isSteppingUp,
+              stepUpIndex));
+    }
+
+    return new StepResults(step, group, nextStep, stepUp, driverResults);
+  }
+
   public void handleStepUpAdvancement(Heat completedHeat) {
     if (completedHeat == null || !completedHeat.isStepUpBoundary()) {
       return;
@@ -770,34 +836,12 @@ public class RaceHeatManager {
       return;
     }
 
-    List<RaceParticipant> stepParticipants = new ArrayList<>();
-    Set<String> seenIds = new HashSet<>();
-    for (Heat h : this.race.getHeats()) {
-      if (h.getGroup() == group && h.getStep() == step) {
-        for (DriverHeatData dhd : h.getDrivers()) {
-          if (dhd.getDriver() != null
-              && !dhd.getDriver().isEmptyParticipant()
-              && !dhd.getDriver().isStepUpParticipant()) {
-            if (seenIds.add(dhd.getDriver().getStableId())) {
-              stepParticipants.add(dhd.getDriver());
-            }
-          }
-        }
-      }
-    }
-
+    List<RaceParticipant> stepParticipants = getStepParticipants(group, step);
     if (stepParticipants.isEmpty()) {
       return;
     }
 
-    Comparator<RaceParticipant> comparator =
-        new StandingsComparator(
-            HeatStandings.resolveOverallRankingMethod(
-                this.race.getRaceModel().getHeatScoring(),
-                this.race.getRaceModel().getOverallScoring()),
-            HeatStandings.resolveOverallTiebreakerMethod(
-                this.race.getRaceModel().getOverallScoring()));
-    stepParticipants.sort(comparator);
+    stepParticipants.sort(getStepComparator());
 
     int advanceCount = Math.min(stepUp, stepParticipants.size());
     List<RaceParticipant> advancing = new ArrayList<>();
@@ -809,6 +853,43 @@ public class RaceHeatManager {
 
     this.race.updateAndBroadcastOverallStandings();
     this.race.broadcast(this.race.createSnapshot());
+  }
+
+  private List<RaceParticipant> getStepParticipants(int group, int step) {
+    List<RaceParticipant> stepParticipants = new ArrayList<>();
+    Set<String> seenIds = new HashSet<>();
+    for (Heat h : this.race.getHeats()) {
+      if (h.getGroup() == group && h.getStep() == step) {
+        for (DriverHeatData dhd : h.getDrivers()) {
+          if (dhd.getDriver() != null
+              && !dhd.getDriver().isEmptyParticipant()
+              && !dhd.getDriver().isStepUpParticipant()) {
+            String stableId = dhd.getDriver().getStableId();
+            if (seenIds.add(stableId)) {
+              RaceParticipant canonical = null;
+              if (this.race.getDrivers() != null) {
+                canonical =
+                    this.race.getDrivers().stream()
+                        .filter(
+                            d -> d != null && stableId != null && stableId.equals(d.getStableId()))
+                        .findFirst()
+                        .orElse(null);
+              }
+              stepParticipants.add(canonical != null ? canonical : dhd.getDriver());
+            }
+          }
+        }
+      }
+    }
+    return stepParticipants;
+  }
+
+  private Comparator<RaceParticipant> getStepComparator() {
+    return new StandingsComparator(
+        HeatStandings.resolveOverallRankingMethod(
+            this.race.getRaceModel().getHeatScoring(),
+            this.race.getRaceModel().getOverallScoring()),
+        HeatStandings.resolveOverallTiebreakerMethod(this.race.getRaceModel().getOverallScoring()));
   }
 
   private int getMaxStepUpIndexInStep(int group, int targetStep) {

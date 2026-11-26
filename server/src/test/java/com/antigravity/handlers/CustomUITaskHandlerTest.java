@@ -268,8 +268,9 @@ public class CustomUITaskHandlerTest {
     assertNotNull(repo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNotNull(repo.findByEntityId(CustomUI.FUEL_UI_ID));
     assertNotNull(repo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID));
+    assertNotNull(repo.findByEntityId(CustomUI.STEP_RESULTS_UI_ID));
 
-    // Delete Practice and Fuel custom UIs
+    // Delete Practice, Fuel, Driver Station, and Step Results custom UIs
     when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.PRACTICE_UI_ID);
     handler.deleteCustomUI(ctx);
     verify(handler).setStatus(ctx, 204);
@@ -280,16 +281,21 @@ public class CustomUITaskHandlerTest {
     when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.DRIVER_STATION_UI_ID);
     handler.deleteCustomUI(ctx);
 
+    when(handler.getPathParam(ctx, "id")).thenReturn(CustomUI.STEP_RESULTS_UI_ID);
+    handler.deleteCustomUI(ctx);
+
     assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.PRACTICE_UI_ID));
     assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.FUEL_UI_ID));
     assertTrue(
         databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.DRIVER_STATION_UI_ID));
+    assertTrue(databaseContext.isDefaultArtifactDeleted("custom_ui", CustomUI.STEP_RESULTS_UI_ID));
 
     // Calling ensureDefaultCustomUIs() should NOT recreate them
     handler.ensureDefaultCustomUIs();
     assertNull(repo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNull(repo.findByEntityId(CustomUI.FUEL_UI_ID));
     assertNull(repo.findByEntityId(CustomUI.DRIVER_STATION_UI_ID));
+    assertNull(repo.findByEntityId(CustomUI.STEP_RESULTS_UI_ID));
 
     // Recreating custom UI with name restores/unmarks it
     CustomUI recreatedPractice =

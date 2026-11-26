@@ -487,6 +487,9 @@ describe("RacedayLayoutUtils", () => {
     expect(RacedayLayoutUtils.getLabelKeyForColumn("driverViewQrCode")).toBe(
       "RD_COL_DRIVER_VIEW_QR",
     );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("stepStatus")).toBe(
+      "RD_COL_STEP_STATUS",
+    );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("unknown_prop")).toBe(
       "UNKNOWN",
     );

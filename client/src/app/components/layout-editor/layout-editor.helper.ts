@@ -106,6 +106,17 @@ export function createFallbackDefaultLayouts(
       columnWidthsJson: JSON.stringify(defaultSettings.columnWidths),
       columnAnchorsJson: JSON.stringify(defaultSettings.columnAnchors),
     },
+    {
+      entity_id: "step_results_ui_layout_rc_ai",
+      name: "RC AI (Step Results)",
+      is_default: true,
+      layoutJson: JSON.stringify(Settings.DEFAULT_STEP_RESULTS_LAYOUT),
+      columnsJson: JSON.stringify([]),
+      columnLayoutsJson: JSON.stringify({}),
+      columnVisibilityJson: JSON.stringify({}),
+      columnWidthsJson: JSON.stringify({}),
+      columnAnchorsJson: JSON.stringify({}),
+    },
   ];
 }
 
@@ -247,6 +258,7 @@ export function buildLayoutTemplateOptions(
     "practice_ui_layout_rc_ai",
     "default_fuel_ui_layout_rc_ai",
     "driver_station_ui_layout_rc_ai",
+    "step_results_ui_layout_rc_ai",
   ];
   const options: LayoutTemplateOption[] = [];
   for (const id of defaultIds) {
@@ -260,6 +272,7 @@ export function buildLayoutTemplateOptions(
         practice_ui_layout_rc_ai: "UE_LABEL_DEFAULT_PRACTICE_UI",
         default_fuel_ui_layout_rc_ai: "UE_LABEL_DEFAULT_FUEL_UI",
         driver_station_ui_layout_rc_ai: "UE_LABEL_DEFAULT_DRIVER_STATION_UI",
+        step_results_ui_layout_rc_ai: "UE_LABEL_DEFAULT_STEP_RESULTS_UI",
       };
       displayName = translationService?.translate(keyMap[id]) || id;
     }
@@ -271,6 +284,35 @@ export function buildLayoutTemplateOptions(
   return options;
 }
 
+function buildDefaultTemplateSource(
+  entityId: string,
+  name: string,
+  isPractice = false,
+  isStation = false,
+  isFuel = false,
+  isStepResults = false,
+): CustomUI {
+  const resetData = getDefaultLayoutResetData(
+    isPractice,
+    undefined,
+    undefined,
+    isStation,
+    isFuel,
+    isStepResults,
+  );
+  return {
+    entity_id: entityId,
+    name,
+    is_default: true,
+    layoutJson: JSON.stringify(resetData.defaultLayout),
+    columnsJson: JSON.stringify(resetData.columns),
+    columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
+    columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
+    columnWidthsJson: JSON.stringify(resetData.columnWidths),
+    columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
+  };
+}
+
 export function resolveTemplateSource(
   templateId: string | undefined,
   allLayouts?: CustomUI[],
@@ -280,71 +322,41 @@ export function resolveTemplateSource(
   }
   const targetId = templateId || "default_ui_layout_rc_ai";
   if (targetId === "default_ui_layout_rc_ai") {
-    const resetData = getDefaultLayoutResetData(false);
-    return {
-      entity_id: "default_ui_layout_rc_ai",
-      name: "RC AI",
-      is_default: true,
-      layoutJson: JSON.stringify(resetData.defaultLayout),
-      columnsJson: JSON.stringify(resetData.columns),
-      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
-      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
-      columnWidthsJson: JSON.stringify(resetData.columnWidths),
-      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
-    };
+    return buildDefaultTemplateSource("default_ui_layout_rc_ai", "RC AI");
   }
   if (targetId === "practice_ui_layout_rc_ai") {
-    const resetData = getDefaultLayoutResetData(true);
-    return {
-      entity_id: "practice_ui_layout_rc_ai",
-      name: "RC AI (Practice)",
-      is_default: true,
-      layoutJson: JSON.stringify(resetData.defaultLayout),
-      columnsJson: JSON.stringify(resetData.columns),
-      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
-      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
-      columnWidthsJson: JSON.stringify(resetData.columnWidths),
-      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
-    };
+    return buildDefaultTemplateSource(
+      "practice_ui_layout_rc_ai",
+      "RC AI (Practice)",
+      true,
+    );
   }
   if (targetId === "driver_station_ui_layout_rc_ai") {
-    const resetData = getDefaultLayoutResetData(
+    return buildDefaultTemplateSource(
+      "driver_station_ui_layout_rc_ai",
+      "Driver Station",
       false,
-      undefined,
-      undefined,
       true,
     );
-    return {
-      entity_id: "driver_station_ui_layout_rc_ai",
-      name: "Driver Station",
-      is_default: true,
-      layoutJson: JSON.stringify(resetData.defaultLayout),
-      columnsJson: JSON.stringify(resetData.columns),
-      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
-      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
-      columnWidthsJson: JSON.stringify(resetData.columnWidths),
-      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
-    };
   }
   if (targetId === "default_fuel_ui_layout_rc_ai") {
-    const resetData = getDefaultLayoutResetData(
+    return buildDefaultTemplateSource(
+      "default_fuel_ui_layout_rc_ai",
+      "RC AI (Fuel)",
       false,
-      undefined,
-      undefined,
       false,
       true,
     );
-    return {
-      entity_id: "default_fuel_ui_layout_rc_ai",
-      name: "RC AI (Fuel)",
-      is_default: true,
-      layoutJson: JSON.stringify(resetData.defaultLayout),
-      columnsJson: JSON.stringify(resetData.columns),
-      columnLayoutsJson: JSON.stringify(resetData.columnLayouts),
-      columnVisibilityJson: JSON.stringify(resetData.columnVisibility),
-      columnWidthsJson: JSON.stringify(resetData.columnWidths),
-      columnAnchorsJson: JSON.stringify(resetData.columnAnchors),
-    };
+  }
+  if (targetId === "step_results_ui_layout_rc_ai") {
+    return buildDefaultTemplateSource(
+      "step_results_ui_layout_rc_ai",
+      "RC AI (Step Results)",
+      false,
+      false,
+      false,
+      true,
+    );
   }
   if (allLayouts && allLayouts.length > 0) {
     const found = allLayouts.find((u) => u.entity_id === targetId);

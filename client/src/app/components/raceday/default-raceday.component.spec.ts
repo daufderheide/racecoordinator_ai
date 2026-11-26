@@ -16654,4 +16654,87 @@ describe("DefaultRacedayComponent", () => {
       expect(mockRouter.navigate).not.toHaveBeenCalled();
     });
   });
+
+  describe("Step Results Dialog", () => {
+    it("should open step results dialog and fetch step results", () => {
+      const mockStepData = {
+        step: 1,
+        group: 1,
+        nextStep: 2,
+        stepUpCount: 2,
+        standings: [
+          {
+            rank: 1,
+            driverId: "d1",
+            driverName: "Ace",
+            totalLaps: 50,
+            totalTime: 120.0,
+            totalPoints: 25,
+            bestLapTime: 2.3,
+            steppingUp: true,
+            stepUpIndex: 0,
+          },
+        ],
+      };
+      mockDataService.getStepResults.and.returnValue(of(mockStepData));
+
+      component.openStepResultsDialog();
+
+      expect(mockDataService.getStepResults).toHaveBeenCalled();
+      expect(component.showStepResultsDialog).toBeTrue();
+      expect(component.currentStepResults).toEqual(mockStepData as any);
+    });
+
+    it("should close step results dialog and notify server", () => {
+      component.showStepResultsDialog = true;
+      component.currentStepResults = { step: 1, standings: [] } as any;
+
+      component.closeStepResultsDialog();
+
+      expect(component.showStepResultsDialog).toBeFalse();
+      expect(mockDataService.closeStepResults).toHaveBeenCalled();
+    });
+
+    it("should trigger openStepResultsDialog on HEAT_OVER when step_up > 0 and isStepUpBoundary is true", () => {
+      spyOn(component, "openStepResultsDialog");
+      component.race = { step_up: 2 } as any;
+      (component as any).currentHeat = { isStepUpBoundary: true } as any;
+      (component as any).raceState = RaceState.RACING;
+
+      (component as any).handleRaceStateChange(RaceState.HEAT_OVER);
+
+      expect(component.openStepResultsDialog).toHaveBeenCalled();
+    });
+
+    it("should not trigger openStepResultsDialog on HEAT_OVER when step_up is 0", () => {
+      spyOn(component, "openStepResultsDialog");
+      component.race = { step_up: 0 } as any;
+      (component as any).currentHeat = { isStepUpBoundary: true } as any;
+      (component as any).raceState = RaceState.RACING;
+
+      (component as any).handleRaceStateChange(RaceState.HEAT_OVER);
+
+      expect(component.openStepResultsDialog).not.toHaveBeenCalled();
+    });
+
+    it("should hide step results dialog when state leaves HEAT_OVER", () => {
+      component.showStepResultsDialog = true;
+      component.currentStepResults = { step: 1, standings: [] } as any;
+      (component as any).raceState = RaceState.HEAT_OVER;
+
+      (component as any).handleRaceStateChange(RaceState.STARTING);
+
+      expect(component.showStepResultsDialog).toBeFalse();
+      expect(component.currentStepResults).toBeNull();
+    });
+
+    it("should close step results dialog on onFileMenuSelect('CLOSE') when dialog is open", () => {
+      spyOn(component, "closeStepResultsDialog");
+      component.showStepResultsDialog = true;
+
+      component.onFileMenuSelect("CLOSE");
+
+      expect(component.closeStepResultsDialog).toHaveBeenCalled();
+    });
+  });
 });

@@ -13,11 +13,13 @@ public class CustomUI extends Model {
   public static final String PRACTICE_UI_ID = "practice_ui_layout_rc_ai";
   public static final String FUEL_UI_ID = "default_fuel_ui_layout_rc_ai";
   public static final String DRIVER_STATION_UI_ID = "driver_station_ui_layout_rc_ai";
+  public static final String STEP_RESULTS_UI_ID = "step_results_ui_layout_rc_ai";
 
   public static final String DEFAULT_UI_NAME = "RC AI";
   public static final String PRACTICE_UI_NAME = "RC AI (Practice)";
   public static final String FUEL_UI_NAME = "RC AI (Fuel)";
   public static final String DRIVER_STATION_UI_NAME = "RC AI (Driver Station)";
+  public static final String STEP_RESULTS_UI_NAME = "RC AI (Step Results)";
 
   public static boolean isLegacyDefaultName(String name) {
     if (name == null || name.trim().isEmpty()) {
@@ -72,6 +74,20 @@ public class CustomUI extends Model {
         || "default driver station ui layout".equals(n)
         || "racecoordinator ai (driver station)".equals(n)
         || "rc ai (driver station)".equals(n);
+  }
+
+  public static boolean isLegacyStepResultsName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "step results".equals(n)
+        || "step results ui".equals(n)
+        || "step results layout".equals(n)
+        || "step results ui layout".equals(n)
+        || "default step results ui layout".equals(n)
+        || "racecoordinator ai (step results)".equals(n)
+        || "rc ai (step results)".equals(n);
   }
 
   public static final String PRE_MIGRATION_BACKUP_SUFFIX = " (Pre-Migration Backup)";
@@ -283,6 +299,25 @@ public class CustomUI extends Model {
         "{}",
         "{}",
         DRIVER_STATION_UI_ID,
+        null);
+  }
+
+  public static CustomUI createStepResults() {
+    String layoutJson = loadResourceLayout("/defaults/step_results_ui_layout.json");
+    if (layoutJson == null) {
+      layoutJson =
+          "{\"widgets\":[],\"baseWidth\":1920,\"baseHeight\":1080,\"aspectRatio\":\"16:9\",\"scaleMode\":\"stretch\"}";
+    }
+    return new CustomUI(
+        STEP_RESULTS_UI_NAME,
+        true,
+        layoutJson,
+        "[]",
+        "{}",
+        "{}",
+        "{}",
+        "{}",
+        STEP_RESULTS_UI_ID,
         null);
   }
 

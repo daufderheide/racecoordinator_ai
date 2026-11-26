@@ -1,0 +1,114 @@
+<div
+  class="step-results-card"
+  [style.background-color]="effectiveBackgroundColor()"
+>
+  @if (effectiveStepResults(); as results) {
+    <div class="step-results-header-info">
+      <span class="step-badge">
+        {{ "RD_STEP" | translate }} {{ results.step }}
+      </span>
+      @if ((results.nextStep ?? results.next_step ?? 0) > results.step) {
+        <span class="step-advance-text">
+          <span class="material-icons advance-icon">arrow_forward</span>
+          {{ "RD_ADVANCING_TO_STEP" | translate }}
+          {{ results.nextStep ?? results.next_step }}
+        </span>
+      }
+    </div>
+
+    <div class="step-results-table-container">
+      <table class="step-results-table">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th class="col-driver">{{ "RD_DRIVER" | translate }}</th>
+            <th class="col-laps">{{ "RD_TOTAL_LAPS" | translate }}</th>
+            @if (showTotalTime()) {
+              <th class="col-time">{{ "RD_TOTAL_TIME" | translate }}</th>
+            }
+            @if (showBestLap()) {
+              <th class="col-best-lap">{{ "RD_BEST_LAP" | translate }}</th>
+            }
+            @if (showPoints()) {
+              <th class="col-points">{{ "RD_POINTS" | translate }}</th>
+            }
+            <th class="col-status">{{ "RD_STATUS" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of results.standings; track trackByDriver($index, row)) {
+            <tr
+              class="step-result-row"
+              [class.stepping-up]="row.steppingUp || row.is_stepping_up"
+            >
+              <td class="col-rank">
+                <span class="rank-number">{{ row.rank }}</span>
+              </td>
+              <td class="col-driver">
+                <span class="driver-name">{{
+                  row.driverName || row.driver_name
+                }}</span>
+              </td>
+              <td class="col-laps">
+                <span class="lap-count">{{
+                  row.totalLaps ?? row.total_laps
+                }}</span>
+              </td>
+              @if (showTotalTime()) {
+                <td class="col-time">
+                  <span class="total-time">
+                    {{
+                      (row.totalTime ?? row.total_time)
+                        ? (row.totalTime ?? row.total_time | number: "1.3-3") +
+                          "s"
+                        : "-"
+                    }}
+                  </span>
+                </td>
+              }
+              @if (showBestLap()) {
+                <td class="col-best-lap">
+                  <span class="best-lap">
+                    {{
+                      (row.bestLapTime ?? row.best_lap_time)
+                        ? (row.bestLapTime ?? row.best_lap_time
+                            | number: "1.3-3") + "s"
+                        : "-"
+                    }}
+                  </span>
+                </td>
+              }
+              @if (showPoints()) {
+                <td class="col-points">
+                  <span class="points-val">{{
+                    row.totalPoints ?? row.total_points
+                  }}</span>
+                </td>
+              }
+              <td class="col-status">
+                @if (row.steppingUp || row.is_stepping_up) {
+                  <span class="step-up-badge">
+                    <span class="material-icons step-up-icon"
+                      >arrow_upward</span
+                    >
+                    <span class="badge-text">{{
+                      "RD_STEPPING_UP" | translate
+                    }}</span>
+                  </span>
+                } @else {
+                  <span class="eliminated-badge">
+                    {{ "RD_ELIMINATED" | translate }}
+                  </span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div class="step-results-empty">
+      {{ "RD_STEP_RESULTS_TITLE" | translate }}
+    </div>
+  }
+</div>

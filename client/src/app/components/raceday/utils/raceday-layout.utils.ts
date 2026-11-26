@@ -510,6 +510,7 @@ export class RacedayLayoutUtils {
     overallGhostPacingLeaderAvg: "RD_COL_GHOST_PACING",
     overallGhostPacingLeaderMedian: "RD_COL_GHOST_PACING",
     overallGhostPacingLeaderBest: "RD_COL_GHOST_PACING",
+    stepStatus: "RD_COL_STEP_STATUS",
   };
 
   private static readonly COLUMN_WIDTHS: Record<string, number> = {
@@ -556,6 +557,7 @@ export class RacedayLayoutUtils {
     recordLapTime: 330,
     standardDeviation: 330,
     consistencyScore: 330,
+    stepStatus: 216,
     averageTop5: 330,
     averageTop10: 330,
     averageTop15: 330,

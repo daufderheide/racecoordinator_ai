@@ -1135,3 +1135,10 @@
   [visible]="showRaceHistoryDialog"
   (close)="showRaceHistoryDialog = false"
 ></app-race-history-dialog>
+
+<app-raceday-step-results-dialog
+  [visible]="showStepResultsDialog"
+  [stepResults]="currentStepResults"
+  [parentComponent]="this"
+  (close)="closeStepResultsDialog()"
+></app-raceday-step-results-dialog>

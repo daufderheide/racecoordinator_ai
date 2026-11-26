@@ -14,7 +14,7 @@ import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.OverallScoring.OverallRanking;
-import com.antigravity.models.RaceConfigDump;
+import com.antigravity.models.StepResults;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AlertType;
@@ -111,6 +111,8 @@ public class Race implements ProtocolListener {
   private Boolean[] lanePower;
   private volatile boolean stopped = false;
   private volatile boolean modifyHeatsOpen = false;
+  private volatile boolean stepResultsDialogOpen = false;
+  private volatile StepResults currentStepResults = null;
   private String historyRecordId;
 
   private HeatExecutionManager executionManager;
@@ -135,6 +137,22 @@ public class Race implements ProtocolListener {
 
   public void setModifyHeatsOpen(boolean modifyHeatsOpen) {
     this.modifyHeatsOpen = modifyHeatsOpen;
+  }
+
+  public boolean isStepResultsDialogOpen() {
+    return stepResultsDialogOpen;
+  }
+
+  public void setStepResultsDialogOpen(boolean stepResultsDialogOpen) {
+    this.stepResultsDialogOpen = stepResultsDialogOpen;
+  }
+
+  public StepResults getCurrentStepResults() {
+    return currentStepResults;
+  }
+
+  public void setCurrentStepResults(StepResults currentStepResults) {
+    this.currentStepResults = currentStepResults;
   }
 
   private Race(Builder builder) {
@@ -1964,34 +1982,7 @@ public class Race implements ProtocolListener {
   }
 
   public void dumpConfiguration() {
-    if (logger.isTraceEnabled()) {
-      try {
-        RaceConfigDump dump = new RaceConfigDump();
-        dump.setRace(model);
-        dump.setTrack(track);
-        dump.setDrivers(drivers);
-        dump.setCustomRotations(customRotations);
-        if (databaseContext != null && model != null && model.getEntityId() != null) {
-          DatabaseService dbService = DatabaseService.getInstance();
-          if (dbService != null) {
-            RecordData existingRecords =
-                dbService.getRaceRecords(
-                    this.databaseContext, this.model.getEntityId(), isDemoMode);
-            if (existingRecords != null) {
-              dump.setRecordDataBase64(
-                  java.util.Base64.getEncoder().encodeToString(existingRecords.toByteArray()));
-            }
-          }
-        }
-        com.fasterxml.jackson.databind.ObjectMapper mapper =
-            new com.fasterxml.jackson.databind.ObjectMapper();
-        mapper.configure(
-            com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        String json = mapper.writeValueAsString(dump);
-        logger.trace("RaceConfigDump: {}", json);
-      } catch (Exception e) {
-        logger.error("Failed to dump race configuration for log replay", e);
-      }
-    }
+    RaceConfigLogger.dumpConfiguration(
+        model, track, drivers, customRotations, databaseContext, isDemoMode);
   }
 }

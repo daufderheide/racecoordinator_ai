@@ -48,6 +48,7 @@ export class DriverHeatData {
   public dqScorePercentage: number = 100.0;
   public userLaps: number = 0;
   public userTime: number = 0;
+  public isSteppingUp: boolean = false;
   public autoCalculatedLaps: number = 0;
   private _adjustedLapCount: number | null = null;
   private _totalTime: number | null = null;

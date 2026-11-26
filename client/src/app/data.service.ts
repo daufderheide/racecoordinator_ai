@@ -16,6 +16,7 @@ import {
   RacePackageResult,
 } from "@app/models/race-package.model";
 import { Season, SeasonStandingItem } from "@app/models/season";
+import { StepResults } from "@app/models/step-results.model";
 import {
   ArduinoConfig,
   BartConfig,
@@ -25,36 +26,23 @@ import {
 } from "@app/models/track";
 import {
   IAssetMessage,
-  ICarData,
   ICarModel,
   ICustomRotation,
   IDemoConfig,
-  IGroupStandingsUpdate,
   IHeat,
-  IInterfaceEvent,
-  ILap,
   InitializeInterfaceResponse,
   InitializeRaceResponse,
-  IOverallStandingsUpdate,
   IPhidgetDeviceInfo,
-  IRace,
   IRaceParticipant,
-  IRaceTime,
-  IRecordData,
   IRgbLedState,
   ISaveAudioSetEntry,
   ISaveImageSetEntry,
-  ISegment,
-  IStandingsUpdate,
   IStartRaceResponse,
   ITeamModel,
   ModifyHeatsResponse,
-  RaceFlag,
-  RaceState,
   RegenerateHeatsResponse,
   SetInterfacePinStateResponse,
   SetInterfaceRgbLedStateResponse,
-  SystemState,
   UpdateInterfaceConfigResponse,
 } from "@app/proto/antigravity";
 import { DataAssetHelper } from "@app/services/data/data-asset.helper";
@@ -530,6 +518,14 @@ export class DataService {
     );
   }
 
+  public getStepResults(): Observable<StepResults> {
+    return this.raceControlHelper.getStepResults();
+  }
+
+  public closeStepResults(): Observable<any> {
+    return this.raceControlHelper.closeStepResults();
+  }
+
   getTeams(): Observable<ITeamModel[]> {
     return this.crudHelper.getTeams();
   }
@@ -603,36 +599,24 @@ export class DataService {
     return this.crudHelper.duplicateTheme(id, name);
   }
 
-  getDatabases(): Observable<any[]> {
-    return this.historyStatsHelper.getDatabases();
-  }
-  getCurrentDatabase(): Observable<any> {
-    return this.historyStatsHelper.getCurrentDatabase();
-  }
-  createDatabase(name: string): Observable<any> {
-    return this.historyStatsHelper.createDatabase(name);
-  }
-  switchDatabase(name: string): Observable<any> {
-    return this.historyStatsHelper.switchDatabase(name);
-  }
-  copyDatabase(name: string, source?: string): Observable<any> {
-    return this.historyStatsHelper.copyDatabase(name, source);
-  }
-  resetDatabase(name?: string): Observable<any> {
-    return this.historyStatsHelper.resetDatabase(name);
-  }
-  deleteDatabase(name: string): Observable<any> {
-    return this.historyStatsHelper.deleteDatabase(name);
-  }
-  exportDatabase(name: string): void {
+  getDatabases = () => this.historyStatsHelper.getDatabases();
+  getCurrentDatabase = () => this.historyStatsHelper.getCurrentDatabase();
+  createDatabase = (name: string) =>
+    this.historyStatsHelper.createDatabase(name);
+  switchDatabase = (name: string) =>
+    this.historyStatsHelper.switchDatabase(name);
+  copyDatabase = (name: string, source?: string) =>
+    this.historyStatsHelper.copyDatabase(name, source);
+  resetDatabase = (name?: string) =>
+    this.historyStatsHelper.resetDatabase(name);
+  deleteDatabase = (name: string) =>
+    this.historyStatsHelper.deleteDatabase(name);
+  exportDatabase = (name: string) =>
     this.historyStatsHelper.exportDatabase(name);
-  }
-  exportDatabaseBlob(name: string): Observable<Blob> {
-    return this.historyStatsHelper.exportDatabaseBlob(name);
-  }
-  importDatabase(name: string, file: File): Observable<any> {
-    return this.historyStatsHelper.importDatabase(name, file);
-  }
+  exportDatabaseBlob = (name: string) =>
+    this.historyStatsHelper.exportDatabaseBlob(name);
+  importDatabase = (name: string, file: File) =>
+    this.historyStatsHelper.importDatabase(name, file);
 
   get loadedAssets(): IAssetMessage[] {
     return this.assetHelper.loadedAssets;
@@ -814,51 +798,23 @@ export class DataService {
     this.disconnectFromInterfaceDataSocket();
     this.disconnectFromRaceDataSocket();
   }
-  public getRaceTime(): Observable<IRaceTime> {
-    return this.socketHelper.getRaceTime();
-  }
-  public getLaps(): Observable<ILap> {
-    return this.socketHelper.getLaps();
-  }
-  public getStandingsUpdate(): Observable<IStandingsUpdate> {
-    return this.socketHelper.getStandingsUpdate();
-  }
-  public getOverallStandingsUpdate(): Observable<IOverallStandingsUpdate> {
-    return this.socketHelper.getOverallStandingsUpdate();
-  }
-  public getGroupStandingsUpdate(): Observable<IGroupStandingsUpdate> {
-    return this.socketHelper.getGroupStandingsUpdate();
-  }
-  public getRaceUpdate(): Observable<IRace> {
-    return this.socketHelper.getRaceUpdate();
-  }
-  public getInterfaceEvents(): Observable<IInterfaceEvent> {
-    return this.socketHelper.getInterfaceEvents();
-  }
-  public getRaceState(): Observable<RaceState> {
-    return this.socketHelper.getRaceState();
-  }
-  public getRaceFlag(): Observable<RaceFlag> {
-    return this.socketHelper.getRaceFlag();
-  }
-  public getCarData(): Observable<ICarData> {
-    return this.socketHelper.getCarData();
-  }
-  public getSegments(): Observable<ISegment> {
-    return this.socketHelper.getSegments();
-  }
-  public getRecordData(): Observable<IRecordData> {
-    return this.socketHelper.getRecordData();
-  }
-  public getHeats(): Observable<IHeat> {
-    return this.socketHelper.getHeats();
-  }
-  public getSystemState(): Observable<SystemState | null> {
-    return this.socketHelper.getSystemState();
-  }
-  public getSystemStateValue(): SystemState | null {
-    return this.socketHelper.getSystemStateValue();
-  }
+  public getRaceTime = () => this.socketHelper.getRaceTime();
+  public getLaps = () => this.socketHelper.getLaps();
+  public getStandingsUpdate = () => this.socketHelper.getStandingsUpdate();
+  public getOverallStandingsUpdate = () =>
+    this.socketHelper.getOverallStandingsUpdate();
+  public getGroupStandingsUpdate = () =>
+    this.socketHelper.getGroupStandingsUpdate();
+  public getRaceUpdate = () => this.socketHelper.getRaceUpdate();
+  public getInterfaceEvents = () => this.socketHelper.getInterfaceEvents();
+  public getRaceState = () => this.socketHelper.getRaceState();
+  public getRaceFlag = () => this.socketHelper.getRaceFlag();
+  public getCarData = () => this.socketHelper.getCarData();
+  public getSegments = () => this.socketHelper.getSegments();
+  public getRecordData = () => this.socketHelper.getRecordData();
+  public getHeats = () => this.socketHelper.getHeats();
+  public getSystemState = () => this.socketHelper.getSystemState();
+  public getSystemStateValue = () => this.socketHelper.getSystemStateValue();
 
   public resetLaneHeatData(lane: number | string): Observable<boolean> {
     return this.raceControlHelper.resetLaneHeatData(lane);

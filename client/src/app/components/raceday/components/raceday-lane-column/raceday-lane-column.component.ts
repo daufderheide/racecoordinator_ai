@@ -716,7 +716,11 @@ export class RacedayLaneColumnComponent
       ? this.headerLabel
       : this.isDriftIndicatorColumn
         ? this.driftDisplayText
-        : this.formattedValue;
+        : this.isStepStatusColumn
+          ? this.isDriverSteppingUp
+            ? "Stepping Up"
+            : "Eliminated"
+          : this.formattedValue;
 
     this.fitHelper.fitContent(cardEl, force, this.buildFitContext());
   }
@@ -983,6 +987,23 @@ export class RacedayLaneColumnComponent
 
   get isDriftIndicatorColumn(): boolean {
     return isDriftIndicatorColumn(this.columnKey, this.widget());
+  }
+
+  get isStepStatusColumn(): boolean {
+    return (
+      this.columnKey === "stepStatus" ||
+      this.widget()?.widgetType === "step-status"
+    );
+  }
+
+  get isDriverSteppingUp(): boolean {
+    return Boolean(
+      this.targetDriver?.isSteppingUp ||
+      (this.targetDriver as any)?.steppingUp ||
+      this.targetDriver?.participant?.isStepUp ||
+      (this.targetDriver?.participant as any)?.isSteppingUp ||
+      (this.targetDriver?.participant as any)?.steppingUp,
+    );
   }
 
   isDriftIndicatorProperty(key: string | undefined): boolean {

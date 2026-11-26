@@ -120,6 +120,9 @@ describe("theme-editor.helper", () => {
         areThemesEqual(t1, { ...t1, driver_view_theme_id: "dv2" }),
       ).toBeFalse();
       expect(
+        areThemesEqual(t1, { ...t1, step_results_ui_id: "sr2" }),
+      ).toBeFalse();
+      expect(
         areThemesEqual(t1, { ...t1, companion_theme_ids: ["ct1"] }),
       ).toBeFalse();
     });
@@ -351,6 +354,7 @@ describe("theme-editor.helper", () => {
         uiId: "ui_default",
         driver_station_theme_id: "ds1",
         driver_view_theme_id: "dv1",
+        step_results_ui_id: "sr_default",
         companion_theme_ids: ["ct1", "ct2"],
         slots: { "flag.racing": "flag1" },
         audio_slots: { yellowflag: { type: "preset" } },
@@ -363,6 +367,7 @@ describe("theme-editor.helper", () => {
       expect(dup.uiId).toBe("ui_default");
       expect(dup.driver_station_theme_id).toBe("ds1");
       expect(dup.driver_view_theme_id).toBe("dv1");
+      expect(dup.step_results_ui_id).toBe("sr_default");
       expect(dup.companion_theme_ids).toEqual(["ct1", "ct2"]);
       expect(dup.companion_theme_ids).not.toBe(source.companion_theme_ids);
       expect(dup.slots).toEqual({ "flag.racing": "flag1" });

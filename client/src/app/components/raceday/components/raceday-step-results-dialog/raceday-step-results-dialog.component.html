@@ -1,0 +1,36 @@
+@if (visible()) {
+  <div class="step-results-dialog-backdrop" (click)="onBackdropClick($event)">
+    <div
+      class="step-results-dialog-container"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'RD_STEP_RESULTS_TITLE' | translate"
+    >
+      <button
+        type="button"
+        class="step-results-close-btn"
+        (click)="onClose()"
+        [attr.aria-label]="'CLOSE' | translate"
+      >
+        <span class="material-icons">close</span>
+      </button>
+
+      <div
+        class="step-results-canvas"
+        [style.aspect-ratio]="
+          (resolvedLayout().baseWidth || 1920) +
+          ' / ' +
+          (resolvedLayout().baseHeight || 1080)
+        "
+      >
+        @for (widget of resolvedLayout().widgets; track widget.id) {
+          <app-raceday-absolute-widget
+            [widget]="widget"
+            [parentComponent]="dialogParentComponent()"
+            [isCustomizing]="false"
+          ></app-raceday-absolute-widget>
+        }
+      </div>
+    </div>
+  </div>
+}

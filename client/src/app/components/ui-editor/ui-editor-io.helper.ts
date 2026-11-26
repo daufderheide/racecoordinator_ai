@@ -466,6 +466,7 @@ export function getDefaultLayoutResetData(
   windowInnerHeight?: number,
   isDriverStation?: boolean,
   isFuel?: boolean,
+  isStepResults?: boolean,
 ): {
   defaultLayout: LayoutConfig;
   columns: string[];
@@ -474,19 +475,21 @@ export function getDefaultLayoutResetData(
   columnWidths: any;
   columnAnchors: any;
 } {
-  const baseLayout = isDriverStation
-    ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
-    : isPractice
-      ? Settings.DEFAULT_PRACTICE_LAYOUT
-      : isFuel
-        ? Settings.DEFAULT_FUEL_LAYOUT
-        : Settings.DEFAULT_LAYOUT;
+  const baseLayout = isStepResults
+    ? Settings.DEFAULT_STEP_RESULTS_LAYOUT
+    : isDriverStation
+      ? Settings.DEFAULT_DRIVER_STATION_LAYOUT
+      : isPractice
+        ? Settings.DEFAULT_PRACTICE_LAYOUT
+        : isFuel
+          ? Settings.DEFAULT_FUEL_LAYOUT
+          : Settings.DEFAULT_LAYOUT;
   const defaultLayout =
     windowInnerWidth && windowInnerHeight
       ? computeScaledLayout(baseLayout, windowInnerWidth, windowInnerHeight)
       : JSON.parse(JSON.stringify(baseLayout));
 
-  if (isDriverStation) {
+  if (isDriverStation || isStepResults) {
     return {
       defaultLayout,
       columns: [],

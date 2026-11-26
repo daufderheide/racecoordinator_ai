@@ -202,7 +202,7 @@ public class DatabaseContextTest {
             databaseContext, "custom_uis", com.antigravity.models.CustomUI.class);
     java.util.List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
     assertNotNull(uis);
-    assertEquals(4, uis.size());
+    assertEquals(5, uis.size());
 
     com.antigravity.models.CustomUI defaultUi =
         uis.stream()
@@ -236,6 +236,14 @@ public class DatabaseContextTest {
             .orElse(null);
     assertNotNull(driverStationUi);
     assertEquals(com.antigravity.models.CustomUI.DRIVER_STATION_UI_NAME, driverStationUi.getName());
+
+    com.antigravity.models.CustomUI stepResultsUi =
+        uis.stream()
+            .filter(u -> com.antigravity.models.CustomUI.STEP_RESULTS_UI_ID.equals(u.getEntityId()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull(stepResultsUi);
+    assertEquals(com.antigravity.models.CustomUI.STEP_RESULTS_UI_NAME, stepResultsUi.getName());
   }
 
   @Test

@@ -10,7 +10,10 @@
     widget()?.customSettings?.['backgroundColor'] || 'rgba(15, 23, 42, 0.85)'
   "
   [style.font-weight]="
-    widget()?.customSettings?.['fontBold'] ? 'bold' : 'normal'
+    widget()?.customSettings?.['fontBold'] ||
+    widget()?.customSettings?.['isBold']
+      ? 'bold'
+      : 'normal'
   "
   [style.font-style]="
     widget()?.customSettings?.['fontItalic'] ? 'italic' : 'normal'
@@ -38,7 +41,5 @@
       : 'none'
   "
 >
-  <span class="label-widget-text">{{
-    widget()?.customSettings?.["text"] || ""
-  }}</span>
+  <span class="label-widget-text">{{ getRawText() | translate }}</span>
 </div>

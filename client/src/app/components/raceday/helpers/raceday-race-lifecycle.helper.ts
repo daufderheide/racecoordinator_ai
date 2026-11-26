@@ -243,9 +243,18 @@ export class RacedayRaceLifecycleHelper {
     if (previousState !== RaceState.UNKNOWN_STATE) {
       if (state === RaceState.HEAT_OVER) {
         host.playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER);
+        const stepUp = host.race?.step_up ?? (host.race as any)?.stepUp ?? 0;
+        if (stepUp > 0 && host.currentHeat?.isStepUpBoundary) {
+          host.openStepResultsDialog?.();
+        }
       } else if (state === RaceState.RACE_OVER) {
         host.playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER);
       }
+    }
+
+    if (state !== RaceState.HEAT_OVER && host.showStepResultsDialog) {
+      host.showStepResultsDialog = false;
+      host.currentStepResults = null;
     }
 
     if (state === RaceState.STARTING) {

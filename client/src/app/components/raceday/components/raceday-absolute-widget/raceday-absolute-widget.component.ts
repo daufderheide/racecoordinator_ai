@@ -38,6 +38,8 @@ import { RacedayRecordsComponent } from "@app/components/raceday/components/race
 import { RacedaySeasonLeaderboardComponent } from "@app/components/raceday/components/raceday-season-leaderboard/raceday-season-leaderboard.component";
 import { RacedaySeasonNameComponent } from "@app/components/raceday/components/raceday-season-name/raceday-season-name.component";
 import { RacedaySeasonRaceLeaderboardComponent } from "@app/components/raceday/components/raceday-season-race-leaderboard/raceday-season-race-leaderboard.component";
+import { RacedayStepBadgeComponent } from "@app/components/raceday/components/raceday-step-badge/raceday-step-badge.component";
+import { RacedayStepResultsComponent } from "@app/components/raceday/components/raceday-step-results/raceday-step-results.component";
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
 import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
@@ -83,6 +85,8 @@ import { shadowFor, withOpacity } from "@app/utils/widget-style.utils";
     RacedayGroupLeaderboardComponent,
     RacedaySeasonLeaderboardComponent,
     RacedaySeasonRaceLeaderboardComponent,
+    RacedayStepResultsComponent,
+    RacedayStepBadgeComponent,
     RacedayLaneViewComponent,
     RacedayLaneColumnComponent,
     RacedayOnDeckComponent,
@@ -965,7 +969,8 @@ export class RacedayAbsoluteWidgetComponent
     if (
       widget.widgetType === "lane-column" ||
       widget.widgetType === "average-score" ||
-      widget.widgetType === "drift-indicator"
+      widget.widgetType === "drift-indicator" ||
+      widget.widgetType === "step-status"
     )
       return true;
     if (this.isCustomWidget(widget.widgetType)) {

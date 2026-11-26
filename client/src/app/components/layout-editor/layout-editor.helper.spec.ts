@@ -266,13 +266,14 @@ describe("layout-editor.helper", () => {
         allLayouts,
         mockTranslationService,
       );
-      expect(options.length).toBe(5);
+      expect(options.length).toBe(6);
       expect(options[0].id).toBe("default_ui_layout_rc_ai");
       expect(options[1].id).toBe("practice_ui_layout_rc_ai");
       expect(options[2].id).toBe("default_fuel_ui_layout_rc_ai");
       expect(options[3].id).toBe("driver_station_ui_layout_rc_ai");
-      expect(options[4].id).toBe("empty");
-      expect(options[4].name).toBe("Empty Layout");
+      expect(options[4].id).toBe("step_results_ui_layout_rc_ai");
+      expect(options[5].id).toBe("empty");
+      expect(options[5].name).toBe("Empty Layout");
     });
 
     it("should resolve template source for empty and specific IDs using factory defaults", () => {
@@ -344,9 +345,9 @@ describe("layout-editor.helper", () => {
       expect(resolveTemplateSource("unknown_id", allLayouts)).toBeNull();
     });
 
-    it("should include 4 default layouts in createFallbackDefaultLayouts", () => {
+    it("should include 5 default layouts in createFallbackDefaultLayouts", () => {
       const fallbacks = createFallbackDefaultLayouts();
-      expect(fallbacks.length).toBe(4);
+      expect(fallbacks.length).toBe(5);
       expect(
         fallbacks.some((u) => u.entity_id === "default_ui_layout_rc_ai"),
       ).toBeTrue();
@@ -358,6 +359,9 @@ describe("layout-editor.helper", () => {
       ).toBeTrue();
       expect(
         fallbacks.some((u) => u.entity_id === "driver_station_ui_layout_rc_ai"),
+      ).toBeTrue();
+      expect(
+        fallbacks.some((u) => u.entity_id === "step_results_ui_layout_rc_ai"),
       ).toBeTrue();
     });
   });

@@ -1565,4 +1565,54 @@ public class ClientCommandTaskHandlerTest {
     assertEquals(5.0, data.getLapTime(), 0.001);
     assertEquals(2, data.getSegments().size());
   }
+
+  @Test
+  public void testStepResults_RoutesRegistered() {
+    verify(app).get(eq("/api/step-results"), any(), eq(com.antigravity.auth.Role.VIEWER));
+    verify(app).post(eq("/api/close-step-results"), any(), eq(com.antigravity.auth.Role.DIRECTOR));
+  }
+
+  @Test
+  public void testStepResults_Endpoints() throws Exception {
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> getCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .get(eq("/api/step-results"), getCaptor.capture(), eq(com.antigravity.auth.Role.VIEWER));
+    io.javalin.http.Handler getHandler = getCaptor.getValue();
+
+    org.mockito.ArgumentCaptor<io.javalin.http.Handler> postCaptor =
+        org.mockito.ArgumentCaptor.forClass(io.javalin.http.Handler.class);
+    verify(app)
+        .post(
+            eq("/api/close-step-results"),
+            postCaptor.capture(),
+            eq(com.antigravity.auth.Role.DIRECTOR));
+    io.javalin.http.Handler postHandler = postCaptor.getValue();
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.models.StepResults stepRes =
+        new com.antigravity.models.StepResults(1, 1, 2, 1, java.util.Collections.emptyList());
+    when(mockRace.getCurrentStepResults()).thenReturn(stepRes);
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    Context ctx = mock(Context.class);
+    when(ctx.json(any())).thenReturn(ctx);
+    when(ctx.status(anyInt())).thenReturn(ctx);
+    when(ctx.result(anyString())).thenReturn(ctx);
+
+    getHandler.handle(ctx);
+    verify(ctx).json(stepRes);
+
+    postHandler.handle(ctx);
+    verify(mockRace).setStepResultsDialogOpen(false);
+    verify(ctx).status(200);
+
+    // Test with no active race
+    ClientSubscriptionManager.getInstance().setRace(null);
+    Context noRaceCtx = mock(Context.class);
+    when(noRaceCtx.status(anyInt())).thenReturn(noRaceCtx);
+    when(noRaceCtx.result(anyString())).thenReturn(noRaceCtx);
+    getHandler.handle(noRaceCtx);
+    verify(noRaceCtx).status(404);
+  }
 }

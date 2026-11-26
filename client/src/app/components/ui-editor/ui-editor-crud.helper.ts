@@ -41,6 +41,15 @@ export const DEFAULT_DRIVER_STATION_UI_NAMES = new Set([
   "driver station ui layout",
 ]);
 
+export const DEFAULT_STEP_RESULTS_UI_NAMES = new Set([
+  "step results",
+  "step results ui",
+  "racecoordinator ai (step results)",
+  "rc ai (step results)",
+  "default step results ui layout",
+  "step results ui layout",
+]);
+
 export const DEFAULT_THEME_NAMES = new Set([
   "default",
   "racecoordinator ai",
@@ -172,6 +181,19 @@ export function getCustomUiDisplayNameKey(
     }
     return ui.name || "";
   }
+  if (entityId === "step_results_ui_layout_rc_ai") {
+    const translated = translationService
+      ?.translate("UE_LABEL_DEFAULT_STEP_RESULTS_UI")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_STEP_RESULTS_UI_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DEFAULT_STEP_RESULTS_UI";
+    }
+    return ui.name || "";
+  }
   return ui.name || "UE_LABEL_DEFAULT_UI";
 }
 
@@ -181,7 +203,8 @@ export function isCustomUiDefault(ui: CustomUI): boolean {
     ui.entity_id === "default_ui_layout_rc_ai" ||
     ui.entity_id === "practice_ui_layout_rc_ai" ||
     ui.entity_id === "default_fuel_ui_layout_rc_ai" ||
-    ui.entity_id === "driver_station_ui_layout_rc_ai"
+    ui.entity_id === "driver_station_ui_layout_rc_ai" ||
+    ui.entity_id === "step_results_ui_layout_rc_ai"
   );
 }
 

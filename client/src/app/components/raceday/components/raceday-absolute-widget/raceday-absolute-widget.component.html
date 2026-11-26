@@ -246,6 +246,20 @@
             [widget]="widget()"
           ></app-raceday-season-race-leaderboard>
         }
+        @case ("step-results") {
+          <app-raceday-step-results
+            [widget]="widget()"
+            [stepResults]="parentComponent().currentStepResults"
+            [parentComponent]="parentComponent()"
+          ></app-raceday-step-results>
+        }
+        @case ("step-badge") {
+          <app-raceday-step-badge
+            [widget]="widget()"
+            [parentComponent]="parentComponent()"
+            [stepResults]="parentComponent().currentStepResults"
+          ></app-raceday-step-badge>
+        }
         @case ("lane-view") {
           <app-raceday-lane-view
             [parent]="parentComponent()"

@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, computed, input, ViewEncapsulation } from "@angular/core";
 import { LaneGridLabelHelper } from "@app/components/raceday/utils/lane-grid-label.helper";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
@@ -9,7 +10,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
   templateUrl: "./raceday-label.component.html",
   styleUrls: ["./raceday-label.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
 })
 export class RacedayLabelComponent {
   widget = input<AbsoluteWidgetNode | null>(null);
@@ -28,13 +29,18 @@ export class RacedayLabelComponent {
     return w?.scaleMode === "auto";
   }
 
+  getRawText(): string {
+    const s = this.widget()?.customSettings;
+    return (s?.["text"] || s?.["labelText"] || "").toString();
+  }
+
   readonly effectiveFont = computed(() => {
     const w = this.widget();
     if (!w) {
       return { fontSize: 18, shouldWrap: false };
     }
     const isVert = this.isVertical();
-    const text = (w.customSettings?.["text"] || "").toString();
+    const text = this.getRawText();
     const bounds = {
       x: w.x || 0,
       y: w.y || 0,
@@ -44,7 +50,9 @@ export class RacedayLabelComponent {
     const position = isVert ? "left" : "top";
     const baseFontSize = Number(w.customSettings?.["fontSize"]) || 18;
     const fontFamily = (w.customSettings?.["fontFamily"] || "").toString();
-    const fontBold = Boolean(w.customSettings?.["fontBold"]);
+    const fontBold = Boolean(
+      w.customSettings?.["fontBold"] || w.customSettings?.["isBold"],
+    );
     const isScaleAuto = w.scaleMode === "auto";
 
     return LaneGridLabelHelper.computeEffectiveLabelFont(

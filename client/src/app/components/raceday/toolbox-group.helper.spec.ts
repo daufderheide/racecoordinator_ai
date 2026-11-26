@@ -32,16 +32,19 @@ describe("ToolboxGroupHelper", () => {
     const standingsSg = rcAiGroup.subgroups.find(
       (sg) => sg.id === "standings-heats",
     );
-    expect(standingsSg?.widgets.length).toBe(10);
+    expect(standingsSg?.widgets.length).toBe(12);
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("countdown");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("grid");
     expect(standingsSg?.widgets.map((w) => w.type)).not.toContain("lane-view");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("leaderboard");
+    expect(standingsSg?.widgets.map((w) => w.type)).toContain("step-results");
+    expect(standingsSg?.widgets.map((w) => w.type)).toContain("step-status");
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
-    expect(titlesSg?.widgets.length).toBe(8);
+    expect(titlesSg?.widgets.length).toBe(9);
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("timer");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("flag");
+    expect(titlesSg?.widgets.map((w) => w.type)).toContain("step-badge");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("heat-info");
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("label");
 
@@ -63,7 +66,7 @@ describe("ToolboxGroupHelper", () => {
       lapTimesSg?.widgets.find((w) => w.type === "lane-col:driftIndicator"),
     ).toBeDefined();
 
-    expect(rcAiGroup.totalCount).toBe(134);
+    expect(rcAiGroup.totalCount).toBe(138);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -84,7 +87,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       standingsSg?.widgets.find((w) => w.type === "leaderboard"),
     ).toBeDefined();
-    expect(standingsSg?.widgets.length).toBe(10);
+    expect(standingsSg?.widgets.length).toBe(12);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
     expect(
@@ -96,13 +99,13 @@ describe("ToolboxGroupHelper", () => {
     expect(
       titlesSg?.widgets.find((w) => w.type === "event-name"),
     ).toBeDefined();
-    expect(titlesSg?.widgets.length).toBe(8);
+    expect(titlesSg?.widgets.length).toBe(9);
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(134);
+    expect(rcAiGroup.totalCount).toBe(138);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {
@@ -401,6 +404,7 @@ describe("ToolboxGroupHelper", () => {
       UE_WIDGET_TYPE_HEAT_INFO: "Heat Info",
       UE_WIDGET_TYPE_RACE_NAME: "Race Name",
       UE_WIDGET_TYPE_SEASON_NAME: "Season Name",
+      UE_WIDGET_TYPE_STEP_BADGE: "Step Badge",
       UE_WIDGET_TYPE_TRACK_NAME: "Track Name",
       UE_WIDGET_TYPE_LABEL: "Title / Label",
     };
@@ -433,6 +437,7 @@ describe("ToolboxGroupHelper", () => {
       "Race Name",
       "Race State",
       "Season Name",
+      "Step Badge",
       "Timer",
       "Title / Label",
       "Track Name",

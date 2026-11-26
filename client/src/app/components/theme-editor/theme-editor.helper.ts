@@ -34,7 +34,8 @@ export function areThemesEqual(
     (a.is_default || false) !== (b.is_default || false) ||
     (a.uiId || "") !== (b.uiId || "") ||
     (a.driver_station_theme_id || "") !== (b.driver_station_theme_id || "") ||
-    (a.driver_view_theme_id || "") !== (b.driver_view_theme_id || "")
+    (a.driver_view_theme_id || "") !== (b.driver_view_theme_id || "") ||
+    (a.step_results_ui_id || "") !== (b.step_results_ui_id || "")
   ) {
     return false;
   }
@@ -214,6 +215,7 @@ export function buildDuplicateThemeTemplate(
     uiId: theme.uiId,
     driver_station_theme_id: theme.driver_station_theme_id,
     driver_view_theme_id: theme.driver_view_theme_id,
+    step_results_ui_id: theme.step_results_ui_id,
     companion_theme_ids: companionIds,
     slots: deepCopy(theme.slots || {}),
     audio_slots: deepCopy(theme.audio_slots || {}),

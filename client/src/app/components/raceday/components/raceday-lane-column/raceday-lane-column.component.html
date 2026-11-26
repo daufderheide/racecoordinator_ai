@@ -1,6 +1,7 @@
 <div
   #cardElement
   class="raceday-lane-column-card"
+  [class.stepping-up]="isDriverSteppingUp"
   [class.drift-inactive]="
     isDriftIndicatorColumn && !isDriftActive() && !settings.gridId
   "
@@ -885,6 +886,22 @@
                 >
               }
             }
+          } @else if (isStepStatusColumn) {
+            <!-- Step Status Column -->
+            <div class="lane-col-step-status-wrapper">
+              @if (isDriverSteppingUp) {
+                <span class="step-up-badge">
+                  <span class="material-icons step-up-icon">arrow_upward</span>
+                  <span class="badge-text">{{
+                    "RD_STEPPING_UP" | translate
+                  }}</span>
+                </span>
+              } @else {
+                <span class="eliminated-badge">
+                  {{ "RD_ELIMINATED" | translate }}
+                </span>
+              }
+            </div>
           } @else if (isImageProperty()) {
             <!-- Case 2: Images, Avatars, QR Codes, Flags -->
             <div class="lane-col-image-wrapper">

@@ -79,6 +79,10 @@ export const mockDataService = {
     "disconnectFromRaceDataSocket",
   ),
   disconnectAllSockets: jasmine.createSpy("disconnectAllSockets"),
+  getStepResults: jasmine.createSpy("getStepResults").and.returnValue(of(null)),
+  closeStepResults: jasmine
+    .createSpy("closeStepResults")
+    .and.returnValue(of(true)),
   getServerAnalyticsConfig: jasmine
     .createSpy("getServerAnalyticsConfig")
     .and.returnValue(of({ measurementId: "G-TEST", clientId: "test-client" })),
@@ -326,6 +330,8 @@ export function resetMocks() {
   mockDataService.getTracks.and.returnValue(of([]));
   mockDataService.socketConnected$ = of(true);
   mockDataService.saveCustomRotation.and.returnValue(of({}));
+  mockDataService.getStepResults.and.returnValue(of(null));
+  mockDataService.closeStepResults.and.returnValue(of(true));
   mockDataService.updateRaceSubscription.and.stub();
   mockDataService.connectToInterfaceDataSocket.and.stub();
   mockDataService.disconnectFromInterfaceDataSocket.and.stub();

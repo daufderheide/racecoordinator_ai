@@ -211,6 +211,16 @@ export class RacedayFormatUtils {
     if (baseKey === "driftIndicator") {
       return heatDriver.isLastLapDrift;
     }
+    if (baseKey === "stepStatus") {
+      return (
+        heatDriver.isSteppingUp ??
+        (heatDriver as any)?.steppingUp ??
+        heatDriver.participant?.isStepUp ??
+        (heatDriver.participant as any)?.isSteppingUp ??
+        (heatDriver.participant as any)?.steppingUp ??
+        false
+      );
+    }
     if (baseKey === "gap") {
       const config =
         anchor && anchor !== "center-center" && settings?.insetsConfig?.[anchor]
@@ -477,6 +487,54 @@ export class RacedayFormatUtils {
     return null;
   }
 
+  private static formatStepStatus(value: any, ctx: FormatContext): string {
+    const isUp = Boolean(value);
+    return isUp
+      ? ctx?.translate
+        ? ctx.translate("RD_STEPPING_UP")
+        : "RD_STEPPING_UP"
+      : ctx?.translate
+        ? ctx.translate("RD_ELIMINATED")
+        : "RD_ELIMINATED";
+  }
+
+  private static formatAverageScoreHelper(
+    value: any,
+    hd: DriverHeatData,
+    column: ColumnDefinition | undefined,
+    ctx: FormatContext,
+    timeDecimals: number,
+    lapDecimals: number,
+    timePlaceholder: string,
+    lapPlaceholder: string,
+    colKey: string,
+    isInset: boolean,
+    anchor?: string,
+  ): string {
+    let calcValue = value;
+    if (calcValue === null || calcValue === undefined) {
+      calcValue = RacedayAverageScoreUtils.calculateAverageScore(
+        hd,
+        ctx?.laneViewWidgetSettings,
+        anchor,
+        ctx,
+      );
+    }
+    return RacedayAverageScoreUtils.formatAverageScore(
+      calcValue,
+      hd,
+      column,
+      ctx,
+      timeDecimals,
+      lapDecimals,
+      timePlaceholder,
+      lapPlaceholder,
+      colKey,
+      isInset,
+      anchor,
+    );
+  }
+
   private static formatNonOverallValue(
     baseKey: string,
     propertyName: string,
@@ -498,18 +556,12 @@ export class RacedayFormatUtils {
     if (baseKey === "driftIndicator") {
       return this.formatDriftIndicator(hd, value, ctx, anchor);
     }
+    if (baseKey === "stepStatus") {
+      return this.formatStepStatus(value, ctx);
+    }
     if (baseKey === "averageScore") {
-      let calcValue = value;
-      if (calcValue === null || calcValue === undefined) {
-        calcValue = RacedayAverageScoreUtils.calculateAverageScore(
-          hd,
-          ctx?.laneViewWidgetSettings,
-          anchor,
-          ctx,
-        );
-      }
-      return RacedayAverageScoreUtils.formatAverageScore(
-        calcValue,
+      return this.formatAverageScoreHelper(
+        value,
         hd,
         column,
         ctx,

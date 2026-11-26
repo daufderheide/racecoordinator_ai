@@ -145,6 +145,13 @@ const WIDGET_BORDER_DEFAULTS_MAP: Record<string, WidgetBorderConfig> = {
     borderWidth: 1,
     borderRadius: 4,
   },
+  "step-badge": {
+    showBorder: false,
+    borderStyle: "solid",
+    borderColor: "",
+    borderWidth: 1,
+    borderRadius: 4,
+  },
 };
 
 const PANEL_CARD_WIDGET_TYPES = new Set([
@@ -153,6 +160,7 @@ const PANEL_CARD_WIDGET_TYPES = new Set([
   "group-leaderboard",
   "season-leaderboard",
   "season-race-leaderboard",
+  "step-results",
   "on-deck",
   "next-heat",
   "flag",

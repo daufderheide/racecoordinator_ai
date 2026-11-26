@@ -1,0 +1,20 @@
+<div class="step-badge-widget-container">
+  <span
+    class="step-badge-pill"
+    [style.font-size.px]="badgeFontSize()"
+    [style.color]="badgeTextColor()"
+    [style.border-color]="badgeTextColor()"
+    [style.background-color]="badgeBgColor()"
+  >
+    {{ "RD_STEP" | translate }} {{ stepNumber() }}
+  </span>
+  @if (showAdvance()) {
+    <span
+      class="step-advance-text"
+      [style.font-size.px]="badgeFontSize() * 0.9"
+    >
+      <span class="material-icons advance-icon">arrow_forward</span>
+      {{ "RD_ADVANCING_TO_STEP" | translate }} {{ nextStepNumber() }}
+    </span>
+  }
+</div>

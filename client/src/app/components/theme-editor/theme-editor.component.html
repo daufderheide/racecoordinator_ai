@@ -84,6 +84,24 @@
             </app-custom-select>
           </div>
 
+          <!-- Step Results UI Layout Selection -->
+          <div id="theme-step-results-ui-selector" class="theme-control-group">
+            <label class="theme-control-label">{{
+              "THM_STEP_RESULTS_UI_LAYOUT" | translate
+            }}</label>
+            <app-custom-select
+              [(ngModel)]="editingTheme.step_results_ui_id"
+              (ngModelChange)="captureState()"
+              [disabled]="!isEditMode"
+            >
+              @for (ui of displayCustomUIs; track ui.entity_id) {
+                <app-custom-option [value]="ui.entity_id">
+                  {{ getCustomUiDisplayNameKey(ui) | translate }}
+                </app-custom-option>
+              }
+            </app-custom-select>
+          </div>
+
           <!-- Driver Station Theme Selection -->
           <div id="theme-driver-station-theme" class="theme-control-group">
             <label class="theme-control-label">{{
