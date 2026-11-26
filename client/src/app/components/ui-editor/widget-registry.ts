@@ -1,3 +1,4 @@
+import { RACE_STANDINGS_OPTIONAL_COLUMNS } from "@app/components/race-results/race-standings-columns";
 import { getDefaultBorderConfigForWidget } from "@app/utils/widget-border.utils";
 export interface WidgetRegistryEntry {
   defaultSettings?: () => Record<string, any>;
@@ -84,6 +85,15 @@ function defaultActionSettings(widgetType: string): Record<string, any> {
 }
 
 export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
+  "race-results-standings": {
+    defaultSettings: () => ({
+      ...Object.fromEntries(
+        RACE_STANDINGS_OPTIONAL_COLUMNS.map(({ setting }) => [setting, true]),
+      ),
+      backgroundColor: "",
+      ...getDefaultBorderConfigForWidget("race-results-standings"),
+    }),
+  },
   "heat-results-selector": {
     defaultSettings: () => ({
       backgroundColor: "",

@@ -86,6 +86,12 @@
         [context]="parentComponent()?.heatResultsWidgetContext"
         [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
       />
+    } @else if (widget().widgetType === "race-results-standings") {
+      <app-race-standings-widget
+        [widget]="widget()"
+        [context]="parentComponent()?.raceStandingsWidgetContext"
+        [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
+      />
     } @else if (isCustomWidget(widget().widgetType)) {
       @if (getCustomWidgetComponent(widget().widgetType)) {
         <ng-container

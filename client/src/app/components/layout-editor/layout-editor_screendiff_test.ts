@@ -25,76 +25,96 @@ test.describe("Layout Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test("should create and reopen a saved Heat Results layout in the editor", async ({
-    page,
-  }) => {
-    const savedId = "club-heat-results";
-    let saved: CustomUI | undefined;
-    await page.route("**/api/custom-ui", async (route) => {
-      if (route.request().method() === "POST") {
-        saved = { ...route.request().postDataJSON(), entity_id: savedId };
-        await route.fulfill({ json: saved });
-      } else if (saved) {
-        await route.fulfill({ json: [saved] });
-      } else {
-        await route.fallback();
-      }
-    });
-    await page.route("**/api/custom-ui/club-heat-results", async (route) => {
-      if (route.request().method() === "PUT")
-        saved = route.request().postDataJSON();
-      await route.fulfill({ json: saved });
-    });
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/layout-editor"),
-    );
-    await page.locator("#add-item-btn").click();
-    await page
-      .locator('.template-option-btn[data-template-id="heat-results-template"]')
-      .click();
+  for (const kind of [
+    {
+      purpose: "heat-results",
+      label: "Heat Results",
+      table: "heat-standings-widget",
+    },
+    {
+      purpose: "race-results",
+      label: "Race Results",
+      table: "race-standings-widget",
+    },
+  ]) {
+    test(
+      "should create and reopen a saved " +
+        kind.label +
+        " layout in the editor",
+      async ({ page }) => {
+        const savedId = "club-" + kind.purpose;
+        let saved: CustomUI | undefined;
+        await page.route("**/api/custom-ui", async (route) => {
+          if (route.request().method() === "POST") {
+            saved = { ...route.request().postDataJSON(), entity_id: savedId };
+            await route.fulfill({ json: saved });
+          } else if (saved) {
+            await route.fulfill({ json: [saved] });
+          } else {
+            await route.fallback();
+          }
+        });
+        await page.route("**/api/custom-ui/" + savedId, async (route) => {
+          if (route.request().method() === "PUT")
+            saved = route.request().postDataJSON();
+          await route.fulfill({ json: saved });
+        });
+        await TestSetupHelper.waitForLocalization(
+          page,
+          "en",
+          page.goto("/layout-editor"),
+        );
+        await page.locator("#add-item-btn").click();
+        await page
+          .locator(
+            '.template-option-btn[data-template-id="' +
+              kind.purpose +
+              '-template"]',
+          )
+          .click();
 
-    const standings = page.locator(
-      ".raceday-preview-container .heat-standings-widget",
-    );
-    const average = page.locator(
-      'app-inspector-shell [data-field="showAverageLap"] [role="switch"]',
-    );
-    await standings
-      .getByRole("columnheader", { name: "Gap", exact: true })
-      .click();
-    await average.click();
-    const saveRequest = page.waitForResponse(
-      (response) =>
-        response.url().endsWith("/api/custom-ui/" + savedId) &&
-        response.request().method() === "PUT" &&
-        response.ok(),
-    );
-    await page.locator("#edit-track-btn").click();
-    await saveRequest;
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/layout-editor?id=" + savedId + "&edit=true"),
-    );
-    await standings
-      .getByRole("columnheader", { name: "Gap", exact: true })
-      .click();
-    await page
-      .locator(
-        'app-inspector-shell [data-field="showAverageLap"] [aria-checked="false"]',
-      )
-      .waitFor();
+        const standings = page.locator(
+          ".raceday-preview-container ." + kind.table,
+        );
+        const average = page.locator(
+          'app-inspector-shell [data-field="showAverageLap"] [role="switch"]',
+        );
+        await standings.getByRole("columnheader").last().click();
+        await average.click();
+        const saveRequest = page.waitForResponse(
+          (response) =>
+            response.url().endsWith("/api/custom-ui/" + savedId) &&
+            response.request().method() === "PUT" &&
+            response.ok(),
+        );
+        await page.locator("#edit-track-btn").click();
+        await saveRequest;
+        await TestSetupHelper.waitForLocalization(
+          page,
+          "en",
+          page.goto("/layout-editor?id=" + savedId + "&edit=true"),
+        );
+        await standings.getByRole("columnheader").last().click();
+        await page
+          .locator(
+            'app-inspector-shell [data-field="showAverageLap"] [aria-checked="false"]',
+          )
+          .waitFor();
 
-    await page
-      .locator(
-        'app-inspector-shell [data-field="useLaneColors"] [aria-checked="true"]',
-      )
-      .waitFor();
-    await page.mouse.move(0, 0);
-    await expect(page).toHaveScreenshot("layout-editor-heat-results.png");
-  });
+        if (kind.purpose === "heat-results") {
+          await page
+            .locator(
+              'app-inspector-shell [data-field="useLaneColors"] [aria-checked="true"]',
+            )
+            .waitFor();
+        }
+        await page.mouse.move(0, 0);
+        await expect(page).toHaveScreenshot(
+          "layout-editor-" + kind.purpose + ".png",
+        );
+      },
+    );
+  }
 
   test("should display default race layout in view mode", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(

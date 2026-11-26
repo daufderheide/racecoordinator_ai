@@ -1756,6 +1756,7 @@
   "HR_RESULTS_LAYOUT_DEFAULT": "Standardergebnisse",
   "UE_WIDGET_TYPE_HEAT_RESULTS_SELECTOR": "Laufauswahl",
   "UE_WIDGET_TYPE_HEAT_RESULTS_STANDINGS": "Laufergebnisse",
+  "UE_WIDGET_TYPE_RACE_RESULTS_STANDINGS": "Rennwertung",
   "HR_CURRENT_HEAT_BADGE": "Aktuell",
   "RR_BTN_ADD_LAP_SECTIONS": "Rundenabschnitte/Zeit anpassen",
   "RR_BTN_EXPORT_CSV": "CSV exportieren",

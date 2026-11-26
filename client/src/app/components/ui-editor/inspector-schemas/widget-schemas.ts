@@ -1,4 +1,5 @@
 import { HEAT_RESULTS_STANDINGS_COLUMNS } from "@app/components/heat-results/heat-results-layout.model";
+import { RACE_STANDINGS_OPTIONAL_COLUMNS } from "@app/components/race-results/race-standings-columns";
 import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 
 import { BATCH2_SCHEMAS } from "./batch2-schemas";
@@ -512,6 +513,29 @@ export const ACTION_BUTTON_LABEL_KEYS: Record<string, string> = {
 };
 
 export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
+  "race-results-standings": {
+    widgetType: "race-results-standings",
+    icon: "leaderboard",
+    folders: [
+      {
+        id: "content",
+        groups: [
+          {
+            fields: RACE_STANDINGS_OPTIONAL_COLUMNS.map(
+              ({ setting, labelKey }) => ({
+                id: setting,
+                type: "switch",
+                key: setting,
+                labelKey,
+              }),
+            ),
+          },
+        ],
+      },
+      frameFolder(),
+      layoutFolder(),
+    ],
+  },
   "heat-results-selector": {
     widgetType: "heat-results-selector",
     icon: "list_alt",

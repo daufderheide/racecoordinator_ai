@@ -102,7 +102,10 @@ export function toHeatResultsRows(
     TranslatePipe,
   ],
   templateUrl: "./heat-results-widget.component.html",
-  styleUrl: "./heat-results-widget.component.css",
+  styleUrls: [
+    "../shared/results-layout/results-standings.css",
+    "./heat-results-widget.component.css",
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeatResultsWidgetComponent {

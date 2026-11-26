@@ -70,7 +70,7 @@
           <span class="material-icons">tune</span>
         </button>
       </div>
-      @if (getLayout()?.purpose !== "heat-results") {
+      @if (!getLayout()?.purpose) {
         <button
           id="help-raceday-countdown-preview"
           type="button"
@@ -189,7 +189,7 @@
             </div>
           </div>
 
-          @if (getLayout()?.purpose !== "heat-results") {
+          @if (!getLayout()?.purpose) {
             <!-- Scale Mode Dropdown -->
             <div id="help-raceday-scale-mode" class="layout-control-group">
               <label class="layout-control-label">{{

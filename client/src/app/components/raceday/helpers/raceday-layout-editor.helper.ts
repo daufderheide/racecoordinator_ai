@@ -216,7 +216,10 @@ export class RacedayLayoutEditorHelper {
     if (draggedType === "heat-results-selector") {
       width = 460;
       height = 66;
-    } else if (draggedType === "heat-results-standings") {
+    } else if (
+      draggedType === "heat-results-standings" ||
+      draggedType === "race-results-standings"
+    ) {
       width = 850;
       height = 350;
     } else if (draggedType?.startsWith("custom:")) {

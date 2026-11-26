@@ -812,6 +812,7 @@
   "HR_RESULTS_LAYOUT_DEFAULT": "Résultats par défaut",
   "UE_WIDGET_TYPE_HEAT_RESULTS_SELECTOR": "Sélecteur de manche",
   "UE_WIDGET_TYPE_HEAT_RESULTS_STANDINGS": "Classement de la manche",
+  "UE_WIDGET_TYPE_RACE_RESULTS_STANDINGS": "Classement de la course",
   "HR_CURRENT_HEAT_BADGE": "Actuel",
   "HR_TITLE": "RÉSULTATS DE LA MANCHE {{heat}}",
   "HR_X_AXIS": "Temps de course absolu (Secondes)",

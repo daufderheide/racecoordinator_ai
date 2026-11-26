@@ -812,6 +812,7 @@
   "HR_RESULTS_LAYOUT_DEFAULT": "Resultados predeterminados",
   "UE_WIDGET_TYPE_HEAT_RESULTS_SELECTOR": "Selector de manga",
   "UE_WIDGET_TYPE_HEAT_RESULTS_STANDINGS": "Clasificación de la manga",
+  "UE_WIDGET_TYPE_RACE_RESULTS_STANDINGS": "Clasificación de la carrera",
   "HR_CURRENT_HEAT_BADGE": "Actual",
   "HR_TITLE": "RESULTADOS DE LA MANGA {{heat}}",
   "HR_X_AXIS": "Tiempo Absoluto de Carrera (Segundos)",

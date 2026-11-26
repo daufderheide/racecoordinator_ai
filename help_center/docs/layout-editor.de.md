@@ -22,6 +22,8 @@ Der Layout-Editor kann an mehreren Stellen in der Anwendung aufgerufen werden:
 
 Um die Laufergebnisansicht zu gestalten, erstellen Sie ein Layout mit der Vorlage **Laufergebnisse**. Verschieben oder skalieren Sie die Widgets für Laufauswahl und Ergebnisse. Wählen Sie unter **Inhalt** die Spalten und Spurfarben. Speichern Sie das Layout und wählen Sie es in der Laufergebnisansicht unter **Ergebnislayout** aus. Die Auswahl wird im Browser gespeichert und gilt auch für Rennen aus der Rennhistorie.
 
+Für die Gesamtwertung verwenden Sie die Vorlage **Rennergebnisse**. Verschieben oder skalieren Sie das Wertungswidget und wählen Sie die sichtbaren Spalten unter **Inhalt**. Speichern Sie das Layout und wählen Sie es unter **Ergebnislayout** in den Rennergebnissen aus. Es funktioniert bei laufenden Rennen und in der Rennhistorie.
+
 ---
 
 ## Symbolleisten-Aktionen

@@ -22,6 +22,8 @@ L'Éditeur de Dispositions est accessible depuis plusieurs emplacements dans l'a
 
 Pour personnaliser l’écran des résultats de manche, créez une disposition avec le modèle **Résultats de la manche**. Déplacez ou redimensionnez le sélecteur et le classement. Dans **Contenu**, choisissez les colonnes et les couleurs de voie. Enregistrez la disposition, puis sélectionnez-la dans **Disposition des résultats** sur l’écran des résultats. Le choix est enregistré dans votre navigateur et s’applique aussi aux courses de l’historique.
 
+Pour le classement général, utilisez le modèle **Résultats de la course**. Déplacez ou redimensionnez le classement et choisissez les colonnes dans **Contenu**. Enregistrez la disposition et sélectionnez-la dans **Disposition des résultats**, pour une course en direct ou dans l’historique.
+
 ---
 
 ## Actions de la Barre d'Outils

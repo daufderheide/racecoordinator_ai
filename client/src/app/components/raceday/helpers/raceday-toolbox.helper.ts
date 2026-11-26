@@ -1,9 +1,12 @@
-import { HEAT_RESULTS_WIDGETS } from "@app/components/heat-results/heat-results-layout.model";
 import {
   ToolboxGroup,
   ToolboxGroupHelper,
 } from "@app/components/raceday/toolbox-group.helper";
-import { WidgetType } from "@app/models/settings";
+import {
+  isResultsLayoutPurpose,
+  RESULTS_LAYOUTS,
+} from "@app/components/shared/results-layout/results-layout.model";
+import { ResultsLayoutPurpose, WidgetType } from "@app/models/settings";
 
 export class RacedayToolboxHelper {
   public static getWidgetTypeLabelKey(host: any, widgetType: string): string {
@@ -15,8 +18,9 @@ export class RacedayToolboxHelper {
   }
 
   public static getUnusedWidgets(host: any): WidgetType[] {
-    if (host.layout?.purpose === "heat-results") {
-      return HEAT_RESULTS_WIDGETS.map(({ type }) => type);
+    const purpose = host.layout?.purpose;
+    if (isResultsLayoutPurpose(purpose)) {
+      return RESULTS_LAYOUTS[purpose].widgets.map(({ type }) => type);
     }
     const allTypes: WidgetType[] = [
       "menu-bar",
@@ -215,8 +219,9 @@ export class RacedayToolboxHelper {
 
   public static getToolboxGroups(host: any): ToolboxGroup[] {
     RacedayToolboxHelper.ensureToolboxExpandedStatesLoaded(host);
-    if (host.layout?.purpose === "heat-results") {
-      return RacedayToolboxHelper.getHeatResultsToolbox(host);
+    const purpose = host.layout?.purpose;
+    if (isResultsLayoutPurpose(purpose)) {
+      return RacedayToolboxHelper.getResultsToolbox(host, purpose);
     }
     const used = new Set<string>(
       host.layout?.widgets?.map((w: any) => w.widgetType as string) || [],
@@ -234,9 +239,13 @@ export class RacedayToolboxHelper {
     );
   }
 
-  private static getHeatResultsToolbox(host: any): ToolboxGroup[] {
+  private static getResultsToolbox(
+    host: any,
+    purpose: ResultsLayoutPurpose,
+  ): ToolboxGroup[] {
     const query = host.toolboxSearchTerm?.trim().toLowerCase() || "";
-    const widgets = HEAT_RESULTS_WIDGETS.filter(({ type, labelKey }) =>
+    const definition = RESULTS_LAYOUTS[purpose];
+    const widgets = definition.widgets.filter(({ type, labelKey }) =>
       [type, host.translationService?.translate(labelKey) || labelKey].some(
         (label) => label.toLowerCase().includes(query),
       ),
@@ -244,15 +253,15 @@ export class RacedayToolboxHelper {
     return widgets.length
       ? [
           {
-            id: "heat-results",
-            nameKey: "RD_WIN_HEAT_RESULTS",
+            id: purpose,
+            nameKey: definition.labelKey,
             icon: "leaderboard",
             isBuiltIn: true,
             rootWidgets: widgets,
             subgroups: [],
             expanded:
               Boolean(query) ||
-              (host.toolboxGroupExpandedStates.get("heat-results") ?? true),
+              (host.toolboxGroupExpandedStates.get(purpose) ?? true),
             totalCount: widgets.length,
           },
         ]

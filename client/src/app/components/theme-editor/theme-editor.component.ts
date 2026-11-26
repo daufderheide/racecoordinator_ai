@@ -10,7 +10,6 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { catchError, firstValueFrom, of, Subscription } from "rxjs";
-import { readHeatResultsLayout } from "@app/components/heat-results/heat-results-layout.model";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
@@ -20,6 +19,7 @@ import {
 import { DriverAudioConfigComponent } from "@app/components/shared/driver-audio-config/driver-audio-config.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
+import { readResultsLayout } from "@app/components/shared/results-layout/results-layout.model";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { MAIN_AUDIO_SLOTS } from "@app/components/ui-editor/ui-editor-constants";
 import {
@@ -312,7 +312,7 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       const assetList: any[] = Array.isArray(rawAssets) ? rawAssets : [];
       this.allThemes = themes || [];
       this.displayCustomUIs = (uis || []).filter(
-        (ui) => !readHeatResultsLayout(ui),
+        (ui) => !readResultsLayout(ui),
       );
       this.assets = assetList.filter(
         (a: any) =>

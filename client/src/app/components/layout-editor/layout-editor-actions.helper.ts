@@ -1,12 +1,13 @@
 import { firstValueFrom } from "rxjs";
-import {
-  heatResultsLayoutTemplate,
-  readHeatResultsLayout,
-} from "@app/components/heat-results/heat-results-layout.model";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridRepairHelper } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
+import {
+  readResultsLayout,
+  RESULTS_LAYOUTS,
+  resultsLayoutTemplate,
+} from "@app/components/shared/results-layout/results-layout.model";
 import {
   handleBringGridToFront,
   handleDeleteGrid,
@@ -534,8 +535,9 @@ export function resetLayout(
   editingSettings: Settings,
   comp: any,
 ): void {
-  const layout = readHeatResultsLayout(ui)
-    ? readHeatResultsLayout(heatResultsLayoutTemplate())
+  const resultsLayout = readResultsLayout(ui);
+  const layout = resultsLayout
+    ? parseLayoutConfig(resultsLayoutTemplate(resultsLayout.purpose))
     : applyResetLayout(ui, editingSettings)?.defaultLayout;
   if (layout) {
     saveLayoutConfig(ui, layout);
@@ -555,7 +557,7 @@ export function clearLayout(
   editingSettings: Settings,
   comp: any,
 ): void {
-  const resultsLayout = readHeatResultsLayout(ui);
+  const resultsLayout = readResultsLayout(ui);
   const layout = resultsLayout
     ? { ...resultsLayout, widgets: [] }
     : applyClearLayout(ui, editingSettings);
@@ -707,13 +709,15 @@ export async function handleStartNewLayout(
   comp.isSaving = true;
   try {
     const templateSource = resolveTemplateSource(templateId, comp.allLayouts);
+    const resultsLayout =
+      templateSource && templateSource !== "empty"
+        ? readResultsLayout(templateSource)
+        : null;
+    const labelKey = resultsLayout
+      ? RESULTS_LAYOUTS[resultsLayout.purpose].labelKey
+      : "UE_DEFAULT_CUSTOM_UI_NAME";
     const template = buildNewLayoutTemplate(
-      (templateSource &&
-      templateSource !== "empty" &&
-      readHeatResultsLayout(templateSource)
-        ? comp.translationService.translate("RD_WIN_HEAT_RESULTS")
-        : comp.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME")) ||
-        "New UI Layout",
+      comp.translationService.translate(labelKey) || "New UI Layout",
       comp.allLayouts,
       templateSource,
     );

@@ -812,6 +812,7 @@
   "HR_RESULTS_LAYOUT_DEFAULT": "Standaardresultaten",
   "UE_WIDGET_TYPE_HEAT_RESULTS_SELECTOR": "Heatkiezer",
   "UE_WIDGET_TYPE_HEAT_RESULTS_STANDINGS": "Heatklassement",
+  "UE_WIDGET_TYPE_RACE_RESULTS_STANDINGS": "Raceklassement",
   "HR_CURRENT_HEAT_BADGE": "Huidig",
   "HR_TITLE": "HEAT {{heat}} RESULTATEN",
   "HR_X_AXIS": "Absolute Looptijd (Seconden)",

@@ -22,6 +22,8 @@ De Lay-out Editor is toegankelijk vanaf verschillende locaties binnen de applica
 
 Maak een indeling met de sjabloon **Heatresultaten** om het resultatenscherm te ontwerpen. Verplaats of vergroot de heatkiezer en het klassement. Kies onder **Inhoud** de kolommen en baankleuren. Sla de indeling op, open **Heatresultaten** en kies deze bij **Resultatenindeling**. Je browser onthoudt de keuze voor lopende races en races uit de racegeschiedenis.
 
+Gebruik de sjabloon **Raceresultaten** voor het algemeen klassement. Verplaats het klassement of pas het formaat aan en kies onder **Inhoud** de zichtbare kolommen. Sla de indeling op en kies deze bij **Resultatenindeling**, voor een lopende race of een race uit de racegeschiedenis.
+
 ---
 
 ## Werkbalkacties

@@ -22,6 +22,8 @@ L'Editor di Layout è accessibile da diverse posizioni all'interno dell'applicaz
 
 Per personalizzare la schermata dei risultati della manche, crea un layout dal modello **Risultati manche**. Sposta o ridimensiona il selettore e la classifica. In **Contenuto** puoi scegliere le colonne e i colori delle corsie. Salva il layout e scegli **Layout dei risultati** nella schermata dei risultati. La scelta viene salvata nel browser e vale anche per le gare aperte dalla cronologia.
 
+Per la classifica generale, usa il modello **Risultati gara**. Sposta o ridimensiona il widget e scegli le colonne in **Contenuto**. Salva il layout e selezionalo in **Layout dei risultati**, per una gara in corso o aperta dalla cronologia.
+
 ---
 
 ## Azioni della Barra degli Strumenti
