@@ -28,6 +28,10 @@ type TableRow = Pick<
 export interface RaceStandingsWidgetContext {
   rows: readonly TableRow[];
   scoreFormat: string;
+  driverNavigation?: {
+    getId: (driver: TableRow["driver"]) => string;
+    open: (driverId: string, event: MouseEvent) => void;
+  };
 }
 
 const SAMPLE: RaceStandingsWidgetContext = {

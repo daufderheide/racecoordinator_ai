@@ -9,6 +9,7 @@ import {
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import type { DriverResultsSections } from "@app/components/driver-results/driver-results-layout.model";
 import type { HeatResultsWidgetContext } from "@app/components/heat-results/heat-results-widget.component";
 import type { RaceStandingsWidgetContext } from "@app/components/race-results/race-standings-widget.component";
 import { RacedayAbsoluteWidgetComponent } from "@app/components/raceday/components/raceday-absolute-widget/raceday-absolute-widget.component";
@@ -25,7 +26,8 @@ import { readResultsLayout, RESULTS_LAYOUTS } from "./results-layout.model";
 
 export type ResultsWidgetContext =
   | { heatResultsWidgetContext: HeatResultsWidgetContext }
-  | { raceStandingsWidgetContext: RaceStandingsWidgetContext };
+  | { raceStandingsWidgetContext: RaceStandingsWidgetContext }
+  | { driverResultsSections: DriverResultsSections };
 
 @Component({
   selector: "app-results-layout",
@@ -53,6 +55,7 @@ export class ResultsLayoutComponent implements OnInit {
   private readonly selection = signal({
     heatResultsLayoutId: this.savedSettings?.heatResultsLayoutId || "",
     raceResultsLayoutId: this.savedSettings?.raceResultsLayoutId || "",
+    driverResultsLayoutId: this.savedSettings?.driverResultsLayoutId || "",
   });
   private readonly definition = computed(() => RESULTS_LAYOUTS[this.purpose()]);
   private readonly layoutId = computed(

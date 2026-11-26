@@ -24,6 +24,8 @@ To design the Heat Results screen, create a layout with the **Heat Results** tem
 
 For overall standings, use the **Race Results** template. Move or resize the standings widget and choose the visible columns under **Content**. Save the layout, open **Race Results**, and select it under **Results Layout** for live races or Race History.
 
+Use the **Driver Results** template to arrange Driver Statistics, Driver Standing, and Heat Participations. You can also add Prediction Performance, which shows when the race has prediction data. Save the layout, open a driver's results, and select it under **Results Layout**. This choice is independent of Heat Results and Race Results and also applies to races opened from Race History.
+
 ---
 
 ## Toolbar Actions

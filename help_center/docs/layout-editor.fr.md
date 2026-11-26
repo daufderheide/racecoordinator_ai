@@ -24,6 +24,8 @@ Pour personnaliser l’écran des résultats de manche, créez une disposition a
 
 Pour le classement général, utilisez le modèle **Résultats de la course**. Déplacez ou redimensionnez le classement et choisissez les colonnes dans **Contenu**. Enregistrez la disposition et sélectionnez-la dans **Disposition des résultats**, pour une course en direct ou dans l’historique.
 
+Utilisez le modèle **Résultats du pilote** pour disposer les statistiques, le classement et les participations aux manches. Vous pouvez aussi ajouter l’évaluation des prévisions, qui s’affiche si des données sont disponibles. Enregistrez la disposition, ouvrez les résultats d’un pilote, puis sélectionnez-la sous **Disposition des résultats**. Ce choix est indépendant et s’applique aussi aux courses de l’historique.
+
 ---
 
 ## Actions de la Barre d'Outils

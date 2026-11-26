@@ -303,6 +303,17 @@ describe("DefaultRaceResultsComponent", () => {
     ).toContain("32.75");
     expect(fixture.nativeElement.querySelector(".results-table")).toBeNull();
 
+    const driverLink: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      ".race-standings-widget [scope='row'] a",
+    );
+    expect(driverLink.getAttribute("href")).toBe("/driver-results/team-7");
+    const openWindow = spyOn(window, "open").and.returnValue(null);
+    driverLink.click();
+    expect(openWindow).toHaveBeenCalledOnceWith(
+      "/driver-results/team-7",
+      "_blank",
+    );
+
     component.onBeforePrint();
     expect(
       fixture.nativeElement.querySelector(".results-table"),

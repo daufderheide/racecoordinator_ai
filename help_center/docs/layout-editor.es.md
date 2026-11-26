@@ -24,6 +24,8 @@ Para diseñar la pantalla de resultados de manga, cree un diseño con la plantil
 
 Para la clasificación general, use la plantilla **Resultados de carrera**. Mueva o redimensione la clasificación y elija las columnas visibles en **Contenido**. Guarde el diseño y selecciónelo en **Diseño de resultados** en la página de resultados, tanto en directo como desde el historial.
 
+Usa la plantilla **Resultados del piloto** para organizar las estadísticas, la posición y las participaciones en mangas. También puedes añadir la evaluación de la predicción, que se muestra cuando hay datos. Guarda el diseño, abre los resultados de un piloto y selecciónalo en **Diseño de resultados**. La selección se guarda por separado y se aplica a las carreras del historial.
+
 ---
 
 ## Acciones de la Barra de Herramientas

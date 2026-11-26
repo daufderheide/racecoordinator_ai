@@ -266,15 +266,16 @@ describe("layout-editor.helper", () => {
         allLayouts,
         mockTranslationService,
       );
-      expect(options.length).toBe(7);
+      expect(options.length).toBe(8);
       expect(options[0].id).toBe("default_ui_layout_rc_ai");
       expect(options[1].id).toBe("practice_ui_layout_rc_ai");
       expect(options[2].id).toBe("default_fuel_ui_layout_rc_ai");
       expect(options[3].id).toBe("driver_station_ui_layout_rc_ai");
       expect(options[4].id).toBe("heat-results-template");
       expect(options[5].id).toBe("race-results-template");
-      expect(options[6].id).toBe("empty");
-      expect(options[6].name).toBe("Empty Layout");
+      expect(options[6].id).toBe("driver-results-template");
+      expect(options[7].id).toBe("empty");
+      expect(options[7].name).toBe("Empty Layout");
     });
 
     it("creates a distinct Race Results layout from the Race Results template", () => {
@@ -286,6 +287,29 @@ describe("layout-editor.helper", () => {
       expect(layout.purpose).toBe("race-results");
       expect(layout.widgets).toEqual([
         jasmine.objectContaining({ widgetType: "race-results-standings" }),
+      ]);
+    });
+
+    it("creates an editable Driver Results layout with three independent panels", () => {
+      const source = resolveTemplateSource("driver-results-template", []);
+      const saved = buildNewLayoutTemplate("Club driver profile", [], source);
+      const layout = JSON.parse(saved.layoutJson!);
+      expect(saved.name).toBe("Club driver profile");
+      expect(saved.is_default).toBeFalse();
+      expect(layout.purpose).toBe("driver-results");
+      expect(layout.widgets).toEqual([
+        jasmine.objectContaining({
+          id: "driver-stats",
+          widgetType: "driver-results-stats",
+        }),
+        jasmine.objectContaining({
+          id: "driver-standing",
+          widgetType: "driver-results-standing",
+        }),
+        jasmine.objectContaining({
+          id: "driver-heats",
+          widgetType: "driver-results-heats",
+        }),
       ]);
     });
 

@@ -24,6 +24,8 @@ Per personalizzare la schermata dei risultati della manche, crea un layout dal m
 
 Per la classifica generale, usa il modello **Risultati gara**. Sposta o ridimensiona il widget e scegli le colonne in **Contenuto**. Salva il layout e selezionalo in **Layout dei risultati**, per una gara in corso o aperta dalla cronologia.
 
+Usa il modello **Risultati del pilota** per disporre le statistiche, la posizione e le partecipazioni alle manche. Puoi aggiungere la valutazione delle previsioni, visibile quando i dati sono disponibili. Salva il layout, apri i risultati di un pilota e selezionalo in **Layout dei risultati**. La scelta è indipendente e si applica anche alle gare aperte dalla cronologia.
+
 ---
 
 ## Azioni della Barra degli Strumenti

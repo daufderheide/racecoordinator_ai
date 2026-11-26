@@ -1,0 +1,79 @@
+@if (sections()?.[section()]; as sectionTemplate) {
+  <ng-container
+    *ngTemplateOutlet="sectionTemplate; context: { custom: true }"
+  />
+} @else if (preview()) {
+  <div class="driver-results-preview">
+    @switch (section()) {
+      @case ("driver-results-stats") {
+        <h2>{{ "DR_STATS_HEADER" | translate }}</h2>
+        <dl>
+          <div>
+            <dt>{{ "DR_STATS_BEST_LAP_OVERALL" | translate }}</dt>
+            <dd>3.481 s</dd>
+          </div>
+          <div>
+            <dt>{{ "DR_STATS_BEST_LAPS_OVERALL" | translate }}</dt>
+            <dd>20.25</dd>
+          </div>
+          <div>
+            <dt>{{ "DR_LABEL_LANE" | translate: { lane: 1 } }}</dt>
+            <dd>3.481 s</dd>
+          </div>
+          <div>
+            <dt>{{ "DR_LABEL_LANE" | translate: { lane: 2 } }}</dt>
+            <dd>3.524 s</dd>
+          </div>
+        </dl>
+      }
+      @case ("driver-results-standing") {
+        <h2>{{ "OR_RANKINGS_HEADER" | translate }}</h2>
+        <dl>
+          <div>
+            <dt>{{ "RD_COL_RANK_OVERALL" | translate }}</dt>
+            <dd>2</dd>
+          </div>
+          <div>
+            <dt>{{ "DR_COL_SCORE" | translate }}</dt>
+            <dd>37</dd>
+          </div>
+          <div>
+            <dt>{{ "RD_COL_LAP" | translate }}</dt>
+            <dd>39.75</dd>
+          </div>
+          <div>
+            <dt>{{ "RD_COL_GAP_LEADER" | translate }}</dt>
+            <dd>−0.500</dd>
+          </div>
+        </dl>
+      }
+      @case ("driver-results-heats") {
+        <h2>{{ "DR_HEAT_PARTICIPATIONS" | translate }}</h2>
+        @for (heat of [1, 2]; track heat) {
+          <div class="heat-preview">
+            <span>{{ "RD_HEAT" | translate }} {{ heat }}</span>
+            <span>{{ "DR_LABEL_LANE" | translate: { lane: heat } }}</span>
+            <span class="material-icons" aria-hidden="true">expand_more</span>
+          </div>
+        }
+      }
+      @case ("driver-results-prediction") {
+        <h2>{{ "UE_WIDGET_TYPE_DRIVER_RESULTS_PREDICTION" | translate }}</h2>
+        <dl>
+          <div>
+            <dt>{{ "DR_PREDICTION_WIN_ODDS" | translate }}</dt>
+            <dd>44%</dd>
+          </div>
+          <div>
+            <dt>{{ "DR_PREDICTION_RANK" | translate }}</dt>
+            <dd>1 / 2</dd>
+          </div>
+          <div>
+            <dt>{{ "DR_PREDICTION_LAPS" | translate }}</dt>
+            <dd>40.25 / 39.75</dd>
+          </div>
+        </dl>
+      }
+    }
+  </div>
+}

@@ -24,6 +24,8 @@ Um die Laufergebnisansicht zu gestalten, erstellen Sie ein Layout mit der Vorlag
 
 Für die Gesamtwertung verwenden Sie die Vorlage **Rennergebnisse**. Verschieben oder skalieren Sie das Wertungswidget und wählen Sie die sichtbaren Spalten unter **Inhalt**. Speichern Sie das Layout und wählen Sie es unter **Ergebnislayout** in den Rennergebnissen aus. Es funktioniert bei laufenden Rennen und in der Rennhistorie.
 
+Für die **Fahrerergebnisse** gibt es eine eigene Vorlage. Verschiebe oder vergrößere die Fahrerstatistik, die Platzierung und die Laufteilnahmen. Bei Bedarf kannst du die Prognoseauswertung hinzufügen. Speichere das Layout und wähle es auf der Seite **Fahrerergebnisse** unter **Ergebnislayout**. Die Auswahl gilt unabhängig von den anderen Ergebnisseiten und funktioniert auch in der Rennhistorie.
+
 ---
 
 ## Symbolleisten-Aktionen

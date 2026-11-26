@@ -1,4 +1,5 @@
 import {
+  isResultsLayoutPurpose,
   RESULTS_LAYOUTS,
   resultsLayoutTemplate,
 } from "@app/components/shared/results-layout/results-layout.model";
@@ -286,12 +287,10 @@ export function resolveTemplateSource(
   templateId: string | undefined,
   allLayouts?: CustomUI[],
 ): CustomUI | "empty" | null {
-  if (templateId === RESULTS_LAYOUTS["heat-results"].templateId) {
-    return resultsLayoutTemplate("heat-results");
-  }
-  if (templateId === RESULTS_LAYOUTS["race-results"].templateId) {
-    return resultsLayoutTemplate("race-results");
-  }
+  const resultsPurpose = Object.keys(RESULTS_LAYOUTS)
+    .filter(isResultsLayoutPurpose)
+    .find((purpose) => RESULTS_LAYOUTS[purpose].templateId === templateId);
+  if (resultsPurpose) return resultsLayoutTemplate(resultsPurpose);
   if (templateId === "empty") {
     return "empty";
   }

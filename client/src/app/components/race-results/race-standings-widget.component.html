@@ -19,7 +19,20 @@
               @switch (column.key) {
                 @case ("driver") {
                   <th scope="row">
-                    {{ row.driver.nickname || row.driver.name }}
+                    @let navigation = view()?.driverNavigation;
+                    @let driverId = navigation?.getId(row.driver);
+                    @let driverName = row.driver.nickname || row.driver.name;
+                    @if (navigation && driverId) {
+                      <a
+                        [href]="'/driver-results/' + driverId"
+                        target="_blank"
+                        rel="noopener"
+                        (click)="navigation.open(driverId, $event)"
+                        >{{ driverName }}</a
+                      >
+                    } @else {
+                      {{ driverName }}
+                    }
                   </th>
                 }
                 @case ("score") {

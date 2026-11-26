@@ -1,20 +1,28 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute } from "@angular/router";
 import { BehaviorSubject, of, Subject } from "rxjs";
+import { CustomSelectComponent } from "@app/components/shared/custom-select/custom-select.component";
+import { resultsLayoutTemplate } from "@app/components/shared/results-layout/results-layout.model";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
+import { CustomUI } from "@app/models/custom-ui";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RacePredictionService } from "@app/services/race-prediction.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultDriverResultsComponent } from "./default-driver-results.component";
@@ -29,6 +37,8 @@ describe("DefaultDriverResultsComponent", () => {
   let mockTranslationService: any;
   let mockPrintService: any;
   let mockDataService: any;
+
+  let layouts: BehaviorSubject<CustomUI[]>;
 
   let paramsSubject: BehaviorSubject<any>;
   let participantsSubject: BehaviorSubject<RaceParticipant[]>;
@@ -107,6 +117,7 @@ describe("DefaultDriverResultsComponent", () => {
   };
 
   beforeEach(async () => {
+    layouts = new BehaviorSubject<CustomUI[]>([]);
     paramsSubject = new BehaviorSubject<any>({ driverId: "d1" });
     participantsSubject = new BehaviorSubject<RaceParticipant[]>([]);
     heatsSubject = new BehaviorSubject<Heat[]>([]);
@@ -153,6 +164,7 @@ describe("DefaultDriverResultsComponent", () => {
         .and.returnValue(of(null)),
     };
 
+    const settings = new Settings();
     await TestBed.configureTestingModule({
       imports: [DefaultDriverResultsComponent],
       providers: [
@@ -160,6 +172,21 @@ describe("DefaultDriverResultsComponent", () => {
         { provide: RaceService, useValue: mockRaceService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: PrintService, useValue: mockPrintService },
+        {
+          provide: CustomUiService,
+          useValue: {
+            isInitialized: () => true,
+            customUIs$: layouts.asObservable(),
+          },
+        },
+        { provide: CustomWidgetService, useValue: null },
+        {
+          provide: SettingsService,
+          useValue: {
+            getSettings: () => settings,
+            saveSettings: jasmine.createSpy("saveSettings"),
+          },
+        },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -188,6 +215,81 @@ describe("DefaultDriverResultsComponent", () => {
         },
       ],
     }).compileComponents();
+  });
+
+  function openDriverResultsLayout(): HTMLElement {
+    const layout = {
+      ...resultsLayoutTemplate("driver-results"),
+      entity_id: "driver-layout",
+    };
+    layouts.next([layout]);
+    fixture.detectChanges();
+    const picker = fixture.debugElement.query(
+      By.directive(CustomSelectComponent),
+    );
+    picker.componentInstance.onChange(layout.entity_id);
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector(".results-layout-canvas");
+  }
+
+  it("shows the routed driver's changing standings inside the custom layout", () => {
+    const alice = createDriver("d1", "Alice", "Ally");
+    const bob = createDriver("d2", "Bob", "Bobby");
+    const bobStanding = createParticipant(
+      "p2",
+      bob,
+      2,
+      18,
+      169,
+      9,
+      9.5,
+      9.5,
+      9,
+      0,
+    );
+    participantsSubject.next([
+      createParticipant("p1", alice, 1, 20.25, 180, 8, 9, 9, 11, 0),
+      bobStanding,
+    ]);
+    const canvas = openDriverResultsLayout();
+    expect(canvas.querySelector(".body-cell.col-laps")?.textContent).toContain(
+      "20.25",
+    );
+    participantsSubject.next([
+      createParticipant("p1", alice, 1, 22.25, 198, 8, 9, 9, 12, 0),
+      bobStanding,
+    ]);
+    fixture.detectChanges();
+    expect(canvas.querySelector(".body-cell.col-laps")?.textContent).toContain(
+      "22.25",
+    );
+
+    paramsSubject.next({ driverId: "d2" });
+    fixture.detectChanges();
+    expect(canvas.querySelector(".body-cell.col-laps")?.textContent).toContain(
+      "18.00",
+    );
+    expect(
+      fixture.nativeElement.querySelector(".page-title").textContent,
+    ).toContain("Bobby");
+  });
+
+  it("continues to show the built-in Driver Results in print mode", () => {
+    openDriverResultsLayout();
+    const wrapper = fixture.nativeElement.querySelector(
+      ".scrollable-container",
+    );
+    expect(
+      wrapper.querySelector(":scope > .heats-section-container"),
+    ).toBeNull();
+    component.onBeforePrint();
+    expect(
+      wrapper.querySelector(":scope > .heats-section-container"),
+    ).not.toBeNull();
+    component.onAfterPrint();
+    expect(
+      wrapper.querySelector(":scope > .heats-section-container"),
+    ).toBeNull();
   });
 
   beforeEach(async () => {

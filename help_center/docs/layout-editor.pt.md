@@ -24,6 +24,8 @@ Para personalizar o ecrã de resultados da manga, crie um esquema com o modelo *
 
 Para a classificação geral, use o modelo **Resultados da corrida**. Mova ou redimensione a classificação e escolha as colunas em **Conteúdo**. Guarde o esquema e escolha-o em **Esquema de resultados**, para uma corrida atual ou aberta a partir do histórico.
 
+Use o modelo **Resultados do piloto** para organizar as estatísticas, a posição e as participações em baterias. Também pode adicionar a avaliação da previsão, apresentada quando existem dados. Guarde o esquema, abra os resultados de um piloto e selecione-o em **Esquema de resultados**. A seleção é independente e aplica-se também às corridas abertas no histórico.
+
 ---
 
 ## Ações da Barra de Ferramentas

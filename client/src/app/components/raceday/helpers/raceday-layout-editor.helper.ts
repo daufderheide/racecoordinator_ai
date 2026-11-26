@@ -1,3 +1,7 @@
+import {
+  DRIVER_RESULTS_WIDGET_SIZES,
+  isDriverResultsWidget,
+} from "@app/components/driver-results/driver-results-layout.model";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridFactoryHelper } from "@app/components/raceday/utils/lane-grid-factory.helper";
 import { LaneGridHeaderHelper } from "@app/components/raceday/utils/lane-grid-header.helper";
@@ -213,7 +217,9 @@ export class RacedayLayoutEditorHelper {
     let width = 400;
     let height = 200;
 
-    if (draggedType === "heat-results-selector") {
+    if (isDriverResultsWidget(draggedType)) {
+      ({ width, height } = DRIVER_RESULTS_WIDGET_SIZES[draggedType]);
+    } else if (draggedType === "heat-results-selector") {
       width = 460;
       height = 66;
     } else if (

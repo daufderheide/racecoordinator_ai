@@ -92,6 +92,12 @@
         [context]="parentComponent()?.raceStandingsWidgetContext"
         [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
       />
+    } @else if (driverResultsSection) {
+      <app-driver-results-section-widget
+        [section]="driverResultsSection"
+        [sections]="parentComponent()?.driverResultsSections"
+        [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
+      />
     } @else if (isCustomWidget(widget().widgetType)) {
       @if (getCustomWidgetComponent(widget().widgetType)) {
         <ng-container

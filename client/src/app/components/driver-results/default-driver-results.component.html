@@ -41,373 +41,416 @@
       }
     </div>
 
-    <!-- Premium Cyberpunk Glassmorphic Statistics Dashboard -->
-    <div class="stats-dashboard-container section-container">
-      <h2 class="section-title">{{ "DR_STATS_HEADER" | translate }}</h2>
-      <div class="stats-grid">
-        <!-- Overall Highlights (Left Side) -->
-        <div class="stats-highlights-card">
-          <div class="highlight-item glow-cyan">
-            <span class="material-icons highlight-icon">timer</span>
-            <div class="highlight-info">
-              <span class="highlight-label">{{
-                "DR_STATS_BEST_LAP_OVERALL" | translate
-              }}</span>
-              <div class="highlight-val-container">
-                <span class="highlight-value text-best-lap">
-                  {{
-                    driverStats?.best_lap_time > 0 &&
-                    driverStats?.best_lap_time < 9999
-                      ? (driverStats?.best_lap_time | number: "1.3-3") + "s"
-                      : "--.---"
-                  }}
-                </span>
-                @if (driverStats?.best_lap_time_date) {
-                  <span class="highlight-date">{{
-                    driverStats.best_lap_time_date | localDate: "shortDate"
-                  }}</span>
-                }
-              </div>
-            </div>
-          </div>
+    <app-results-layout
+      #resultsLayout
+      class="no-print"
+      purpose="driver-results"
+      [context]="{
+        driverResultsSections: {
+          'driver-results-stats': statistics,
+          'driver-results-standing': standing,
+          'driver-results-prediction': prediction,
+          'driver-results-heats': heatParticipation,
+        },
+      }"
+    />
 
-          <div class="highlight-item glow-magenta">
-            <span class="material-icons highlight-icon">star</span>
-            <div class="highlight-info">
-              <span class="highlight-label">{{
-                "DR_STATS_BEST_LAPS_OVERALL" | translate
-              }}</span>
-              <div class="highlight-val-container">
-                <span class="highlight-value">
-                  {{
-                    driverStats?.best_lap_count > 0
-                      ? (driverStats?.best_lap_count | number: "1.2-2")
-                      : "--"
-                  }}
-                </span>
-                @if (driverStats?.best_lap_count_date) {
-                  <span class="highlight-date">{{
-                    driverStats.best_lap_count_date | localDate: "shortDate"
-                  }}</span>
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Per-Lane breakdown (Right Side) -->
-        <div class="stats-lanes-card">
-          <h3 class="lanes-title">{{ "DR_STATS_PER_LANE" | translate }}</h3>
-          <div class="lanes-list">
-            @for (lane of getLanes(); track $index; let i = $index) {
-              <div
-                class="lane-stat-row"
-                [style.border-left]="
-                  '4px solid ' +
-                  (race?.track?.lanes?.[i]?.background_color || '#333')
-                "
-              >
-                <div class="lane-name-col">
-                  <span
-                    class="lane-dot"
-                    [style.background-color]="
-                      race?.track?.lanes?.[i]?.background_color || '#333'
-                    "
-                  ></span>
-                  <span class="lane-name-text">{{
-                    "DR_LABEL_LANE" | translate: { lane: i + 1 }
-                  }}</span>
-                </div>
-                <div class="lane-metrics-col">
-                  <div class="lane-metric">
-                    <span class="metric-icon material-icons">timer</span>
-                    <div class="lane-val-group">
-                      <span class="metric-val text-best-lap">
-                        {{
-                          driverStats?.lane_best_lap_times?.[i] > 0 &&
-                          driverStats?.lane_best_lap_times?.[i] < 9999
-                            ? (driverStats?.lane_best_lap_times?.[i]
-                                | number: "1.3-3") + "s"
-                            : "--.---"
-                        }}
-                      </span>
-                      @if (driverStats?.lane_best_lap_times_dates?.[i]) {
-                        <span class="lane-metric-date">{{
-                          driverStats.lane_best_lap_times_dates[i]
-                            | localDate: "shortDate"
-                        }}</span>
-                      }
-                    </div>
-                  </div>
-                  <div class="lane-metric">
-                    <span class="metric-icon material-icons">star</span>
-                    <div class="lane-val-group">
-                      <span class="metric-val">
-                        {{
-                          driverStats?.lane_best_lap_counts?.[i] > 0
-                            ? (driverStats?.lane_best_lap_counts?.[i]
-                              | number: "1.2-2")
-                            : "--"
-                        }}
-                      </span>
-                      @if (driverStats?.lane_best_lap_counts_dates?.[i]) {
-                        <span class="lane-metric-date">{{
-                          driverStats.lane_best_lap_counts_dates[i]
-                            | localDate: "shortDate"
-                        }}</span>
-                      }
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Overall Standing Data Container -->
-    <div class="results-container section-container">
-      <div class="section-title-row">
-        <h2 class="section-title">{{ "OR_RANKINGS_HEADER" | translate }}</h2>
-        <button
-          type="button"
-          class="trajectory-btn no-print"
-          (click)="openOverallTrajectory()"
-          [title]="'GTD_TOOLTIP' | translate"
-        >
-          <span class="material-icons">insights</span>
-        </button>
-      </div>
-      <div class="results-table-wrapper">
-        <div class="results-table overall-table">
-          <div class="results-table-header overall-grid">
-            <div class="header-cell col-pos">
-              {{ "RD_COL_RANK_OVERALL" | translate }}
-            </div>
-            <div class="header-cell col-score">
-              {{ "DR_COL_SCORE" | translate }}
-            </div>
-            <div class="header-cell col-laps">
-              {{ "RD_COL_LAP" | translate }}
-            </div>
-            <div class="header-cell col-avg-lap">
-              {{ "RD_COL_AVG_LAP" | translate }}
-            </div>
-            <div class="header-cell col-median-lap">
-              {{ "RD_COL_MEDIAN_LAP" | translate }}
-            </div>
-            <div class="header-cell col-best-lap">
-              {{ "RD_COL_BEST_LAP" | translate }}
-            </div>
-            <div class="header-cell col-total-time">
-              {{ "RD_COL_TOTAL_TIME" | translate }}
-            </div>
-            <div class="header-cell col-gap-leader">
-              {{ "RD_COL_GAP_LEADER" | translate }}
-            </div>
-            <div class="header-cell col-gap-ahead">
-              {{ "RD_COL_GAP_POSITION" | translate }}
-            </div>
-          </div>
-          <div class="results-table-body">
-            @if (overallRow) {
-              <div class="driver-row static-row overall-grid">
-                <div class="body-cell col-pos">
-                  <div
-                    class="pos-badge"
-                    [class.podium-1]="overallRow.rank === 1"
-                    [class.podium-2]="overallRow.rank === 2"
-                    [class.podium-3]="overallRow.rank === 3"
-                  >
-                    {{ overallRow.rank }}
-                  </div>
-                </div>
-                <div class="body-cell col-score text-highlight">
-                  {{ overallRow.score | number: getScoreFormat() }}
-                </div>
-                <div class="body-cell col-laps">
-                  {{ overallRow.laps | number: "1.2-2" }}
-                </div>
-                <div class="body-cell col-avg-lap">
-                  {{
-                    overallRow.averageLapTime > 0
-                      ? (overallRow.averageLapTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <div class="body-cell col-median-lap">
-                  {{
-                    overallRow.medianLapTime > 0
-                      ? (overallRow.medianLapTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <div class="body-cell col-best-lap text-best-lap">
-                  {{
-                    overallRow.bestLapTime > 0
-                      ? (overallRow.bestLapTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <div class="body-cell col-total-time">
-                  {{
-                    overallRow.totalTime > 0
-                      ? (overallRow.totalTime | number: "1.3-3")
-                      : "--.---"
-                  }}
-                </div>
-                <div class="body-cell col-gap-leader text-gap">
-                  {{ formatGap(overallRow.gap1st) }}
-                </div>
-                <div class="body-cell col-gap-ahead text-gap">
-                  {{ formatGap(overallRow.gapAhead) }}
-                </div>
-              </div>
-            } @else {
-              <div class="no-data-row">
-                <div class="no-data-msg">
-                  <span>{{ "DR_NO_OVERALL_STANDINGS" | translate }}</span>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Prediction Performance Section -->
-    @if (driverPredictionEvaluation) {
-      <div class="stats-dashboard-container section-container">
-        <h2 class="section-title">PREDICTION PERFORMANCE</h2>
-        <div
-          class="global-records-grid"
-          style="
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            display: grid;
-            gap: 16px;
-          "
-        >
-          <div
-            class="record-card border-cyan"
-            style="
-              background: rgba(30, 41, 59, 0.6);
-              padding: 16px;
-              border-radius: 8px;
-              border-left: 4px solid #38bdf8;
-              display: flex;
-              align-items: center;
-              gap: 16px;
-            "
-          >
-            <div class="card-icon cyan-glow">
-              <span class="material-icons">query_stats</span>
-            </div>
-            <div class="card-content">
-              <div class="record-label" style="font-size: 12px; color: #94a3b8">
-                PRE-RACE WIN ODDS
-              </div>
-              <div
-                class="record-value cyan-text"
-                style="font-size: 20px; font-weight: 800; color: #38bdf8"
-              >
-                {{
-                  driverPredictionEvaluation.pre_race_win_prob * 100
-                    | number: "1.0-0"
-                }}%
-              </div>
-            </div>
-          </div>
-          <div
-            class="record-card border-gold"
-            style="
-              background: rgba(30, 41, 59, 0.6);
-              padding: 16px;
-              border-radius: 8px;
-              border-left: 4px solid #fbbf24;
-              display: flex;
-              align-items: center;
-              gap: 16px;
-            "
-          >
-            <div class="card-icon gold-glow">
-              <span class="material-icons">analytics</span>
-            </div>
-            <div class="card-content">
-              <div class="record-label" style="font-size: 12px; color: #94a3b8">
-                PROJ RANK vs ACTUAL
-              </div>
-              <div
-                class="record-value gold-text"
-                style="font-size: 20px; font-weight: 800; color: #fbbf24"
-              >
-                #{{ driverPredictionEvaluation.projected_rank }} / #{{
-                  driverPredictionEvaluation.actual_rank
-                }}
-              </div>
-            </div>
-          </div>
-          <div
-            class="record-card border-magenta"
-            style="
-              background: rgba(30, 41, 59, 0.6);
-              padding: 16px;
-              border-radius: 8px;
-              border-left: 4px solid #f43f5e;
-              display: flex;
-              align-items: center;
-              gap: 16px;
-            "
-          >
-            <div class="card-icon magenta-glow">
-              <span class="material-icons">speed</span>
-            </div>
-            <div class="card-content">
-              <div class="record-label" style="font-size: 12px; color: #94a3b8">
-                PROJ LAPS vs ACTUAL
-              </div>
-              <div
-                class="record-value magenta-text"
-                style="font-size: 20px; font-weight: 800; color: #f43f5e"
-              >
-                {{ driverPredictionEvaluation.projected_laps }} /
-                {{ driverPredictionEvaluation.actual_laps }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    @if (!resultsLayout.activeLayout() || isPrinting) {
+      <ng-container *ngTemplateOutlet="statistics" />
+      <ng-container *ngTemplateOutlet="standing" />
+      <ng-container *ngTemplateOutlet="prediction" />
+      <ng-container *ngTemplateOutlet="heatParticipation" />
     }
 
-    <!-- Heats Expanders -->
-    <div class="heats-section-container">
-      <h2 class="section-title">{{ "DR_HEAT_PARTICIPATIONS" | translate }}</h2>
+    <ng-template #statistics>
+      <div class="stats-dashboard-container section-container">
+        <h2 class="section-title">{{ "DR_STATS_HEADER" | translate }}</h2>
+        <div class="stats-grid">
+          <!-- Overall Highlights (Left Side) -->
+          <div class="stats-highlights-card">
+            <div class="highlight-item glow-cyan">
+              <span class="material-icons highlight-icon">timer</span>
+              <div class="highlight-info">
+                <span class="highlight-label">{{
+                  "DR_STATS_BEST_LAP_OVERALL" | translate
+                }}</span>
+                <div class="highlight-val-container">
+                  <span class="highlight-value text-best-lap">
+                    {{
+                      driverStats?.best_lap_time > 0 &&
+                      driverStats?.best_lap_time < 9999
+                        ? (driverStats?.best_lap_time | number: "1.3-3") + "s"
+                        : "--.---"
+                    }}
+                  </span>
+                  @if (driverStats?.best_lap_time_date) {
+                    <span class="highlight-date">{{
+                      driverStats.best_lap_time_date | localDate: "shortDate"
+                    }}</span>
+                  }
+                </div>
+              </div>
+            </div>
 
-      @if (driverHeats.length === 0) {
-        <div class="results-container no-heats-container">
-          <div class="no-data-row">
-            <div class="no-data-msg">
-              <i class="warning-icon">⚠️</i>
-              <span>{{ "DR_NO_HEAT_DATA" | translate }}</span>
+            <div class="highlight-item glow-magenta">
+              <span class="material-icons highlight-icon">star</span>
+              <div class="highlight-info">
+                <span class="highlight-label">{{
+                  "DR_STATS_BEST_LAPS_OVERALL" | translate
+                }}</span>
+                <div class="highlight-val-container">
+                  <span class="highlight-value">
+                    {{
+                      driverStats?.best_lap_count > 0
+                        ? (driverStats?.best_lap_count | number: "1.2-2")
+                        : "--"
+                    }}
+                  </span>
+                  @if (driverStats?.best_lap_count_date) {
+                    <span class="highlight-date">{{
+                      driverStats.best_lap_count_date | localDate: "shortDate"
+                    }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Per-Lane breakdown (Right Side) -->
+          <div class="stats-lanes-card">
+            <h3 class="lanes-title">{{ "DR_STATS_PER_LANE" | translate }}</h3>
+            <div class="lanes-list">
+              @for (lane of getLanes(); track $index; let i = $index) {
+                <div
+                  class="lane-stat-row"
+                  [style.border-left]="
+                    '4px solid ' +
+                    (race?.track?.lanes?.[i]?.background_color || '#333')
+                  "
+                >
+                  <div class="lane-name-col">
+                    <span
+                      class="lane-dot"
+                      [style.background-color]="
+                        race?.track?.lanes?.[i]?.background_color || '#333'
+                      "
+                    ></span>
+                    <span class="lane-name-text">{{
+                      "DR_LABEL_LANE" | translate: { lane: i + 1 }
+                    }}</span>
+                  </div>
+                  <div class="lane-metrics-col">
+                    <div class="lane-metric">
+                      <span class="metric-icon material-icons">timer</span>
+                      <div class="lane-val-group">
+                        <span class="metric-val text-best-lap">
+                          {{
+                            driverStats?.lane_best_lap_times?.[i] > 0 &&
+                            driverStats?.lane_best_lap_times?.[i] < 9999
+                              ? (driverStats?.lane_best_lap_times?.[i]
+                                  | number: "1.3-3") + "s"
+                              : "--.---"
+                          }}
+                        </span>
+                        @if (driverStats?.lane_best_lap_times_dates?.[i]) {
+                          <span class="lane-metric-date">{{
+                            driverStats.lane_best_lap_times_dates[i]
+                              | localDate: "shortDate"
+                          }}</span>
+                        }
+                      </div>
+                    </div>
+                    <div class="lane-metric">
+                      <span class="metric-icon material-icons">star</span>
+                      <div class="lane-val-group">
+                        <span class="metric-val">
+                          {{
+                            driverStats?.lane_best_lap_counts?.[i] > 0
+                              ? (driverStats?.lane_best_lap_counts?.[i]
+                                | number: "1.2-2")
+                              : "--"
+                          }}
+                        </span>
+                        @if (driverStats?.lane_best_lap_counts_dates?.[i]) {
+                          <span class="lane-metric-date">{{
+                            driverStats.lane_best_lap_counts_dates[i]
+                              | localDate: "shortDate"
+                          }}</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #standing let-custom="custom">
+      <div
+        class="results-container section-container"
+        [class.custom-standing]="custom"
+      >
+        <div class="section-title-row">
+          <h2 class="section-title">{{ "OR_RANKINGS_HEADER" | translate }}</h2>
+          <button
+            type="button"
+            class="trajectory-btn no-print"
+            (click)="openOverallTrajectory()"
+            [title]="'GTD_TOOLTIP' | translate"
+          >
+            <span class="material-icons">insights</span>
+          </button>
+        </div>
+        <div class="results-table-wrapper">
+          <div class="results-table overall-table">
+            <div class="results-table-header overall-grid">
+              <div class="header-cell col-pos">
+                {{ "RD_COL_RANK_OVERALL" | translate }}
+              </div>
+              <div class="header-cell col-score">
+                {{ "DR_COL_SCORE" | translate }}
+              </div>
+              <div class="header-cell col-laps">
+                {{ "RD_COL_LAP" | translate }}
+              </div>
+              <div class="header-cell col-avg-lap">
+                {{ "RD_COL_AVG_LAP" | translate }}
+              </div>
+              <div class="header-cell col-median-lap">
+                {{ "RD_COL_MEDIAN_LAP" | translate }}
+              </div>
+              <div class="header-cell col-best-lap">
+                {{ "RD_COL_BEST_LAP" | translate }}
+              </div>
+              <div class="header-cell col-total-time">
+                {{ "RD_COL_TOTAL_TIME" | translate }}
+              </div>
+              <div class="header-cell col-gap-leader">
+                {{ "RD_COL_GAP_LEADER" | translate }}
+              </div>
+              <div class="header-cell col-gap-ahead">
+                {{ "RD_COL_GAP_POSITION" | translate }}
+              </div>
+            </div>
+            <div class="results-table-body">
+              @if (overallRow) {
+                <div class="driver-row static-row overall-grid">
+                  <div class="body-cell col-pos">
+                    <div
+                      class="pos-badge"
+                      [class.podium-1]="overallRow.rank === 1"
+                      [class.podium-2]="overallRow.rank === 2"
+                      [class.podium-3]="overallRow.rank === 3"
+                    >
+                      {{ overallRow.rank }}
+                    </div>
+                  </div>
+                  <div class="body-cell col-score text-highlight">
+                    {{ overallRow.score | number: getScoreFormat() }}
+                  </div>
+                  <div class="body-cell col-laps">
+                    {{ overallRow.laps | number: "1.2-2" }}
+                  </div>
+                  <div class="body-cell col-avg-lap">
+                    {{
+                      overallRow.averageLapTime > 0
+                        ? (overallRow.averageLapTime | number: "1.3-3")
+                        : "--.---"
+                    }}
+                  </div>
+                  <div class="body-cell col-median-lap">
+                    {{
+                      overallRow.medianLapTime > 0
+                        ? (overallRow.medianLapTime | number: "1.3-3")
+                        : "--.---"
+                    }}
+                  </div>
+                  <div class="body-cell col-best-lap text-best-lap">
+                    {{
+                      overallRow.bestLapTime > 0
+                        ? (overallRow.bestLapTime | number: "1.3-3")
+                        : "--.---"
+                    }}
+                  </div>
+                  <div class="body-cell col-total-time">
+                    {{
+                      overallRow.totalTime > 0
+                        ? (overallRow.totalTime | number: "1.3-3")
+                        : "--.---"
+                    }}
+                  </div>
+                  <div class="body-cell col-gap-leader text-gap">
+                    {{ formatGap(overallRow.gap1st) }}
+                  </div>
+                  <div class="body-cell col-gap-ahead text-gap">
+                    {{ formatGap(overallRow.gapAhead) }}
+                  </div>
+                </div>
+              } @else {
+                <div class="no-data-row">
+                  <div class="no-data-msg">
+                    <span>{{ "DR_NO_OVERALL_STANDINGS" | translate }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #prediction>
+      @if (driverPredictionEvaluation) {
+        <div class="stats-dashboard-container section-container">
+          <h2 class="section-title">
+            {{
+              "UE_WIDGET_TYPE_DRIVER_RESULTS_PREDICTION" | translate | uppercase
+            }}
+          </h2>
+          <div
+            class="global-records-grid"
+            style="
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              display: grid;
+              gap: 16px;
+            "
+          >
+            <div
+              class="record-card border-cyan"
+              style="
+                background: rgba(30, 41, 59, 0.6);
+                padding: 16px;
+                border-radius: 8px;
+                border-left: 4px solid #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+              "
+            >
+              <div class="card-icon cyan-glow">
+                <span class="material-icons">query_stats</span>
+              </div>
+              <div class="card-content">
+                <div
+                  class="record-label"
+                  style="font-size: 12px; color: #94a3b8"
+                >
+                  {{ "DR_PREDICTION_WIN_ODDS" | translate | uppercase }}
+                </div>
+                <div
+                  class="record-value cyan-text"
+                  style="font-size: 20px; font-weight: 800; color: #38bdf8"
+                >
+                  {{
+                    driverPredictionEvaluation.pre_race_win_prob * 100
+                      | number: "1.0-0"
+                  }}%
+                </div>
+              </div>
+            </div>
+            <div
+              class="record-card border-gold"
+              style="
+                background: rgba(30, 41, 59, 0.6);
+                padding: 16px;
+                border-radius: 8px;
+                border-left: 4px solid #fbbf24;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+              "
+            >
+              <div class="card-icon gold-glow">
+                <span class="material-icons">analytics</span>
+              </div>
+              <div class="card-content">
+                <div
+                  class="record-label"
+                  style="font-size: 12px; color: #94a3b8"
+                >
+                  {{ "DR_PREDICTION_RANK" | translate | uppercase }}
+                </div>
+                <div
+                  class="record-value gold-text"
+                  style="font-size: 20px; font-weight: 800; color: #fbbf24"
+                >
+                  #{{ driverPredictionEvaluation.projected_rank }} / #{{
+                    driverPredictionEvaluation.actual_rank
+                  }}
+                </div>
+              </div>
+            </div>
+            <div
+              class="record-card border-magenta"
+              style="
+                background: rgba(30, 41, 59, 0.6);
+                padding: 16px;
+                border-radius: 8px;
+                border-left: 4px solid #f43f5e;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+              "
+            >
+              <div class="card-icon magenta-glow">
+                <span class="material-icons">speed</span>
+              </div>
+              <div class="card-content">
+                <div
+                  class="record-label"
+                  style="font-size: 12px; color: #94a3b8"
+                >
+                  {{ "DR_PREDICTION_LAPS" | translate | uppercase }}
+                </div>
+                <div
+                  class="record-value magenta-text"
+                  style="font-size: 20px; font-weight: 800; color: #f43f5e"
+                >
+                  {{ driverPredictionEvaluation.projected_laps }} /
+                  {{ driverPredictionEvaluation.actual_laps }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       }
+    </ng-template>
 
-      @for (dh of driverHeats; track dh.heat.objectId; let isFirst = $first) {
-        <app-heat-driver-expander
-          [heatData]="dh"
-          [isExpanded]="expandedHeats.has(dh.heat.objectId)"
-          [isTeam]="!!dh.heatDriver.participant.team"
-          [participants]="participants"
-          [allHeats]="heats"
-          [isGroupRace]="race?.group_options?.enabled ?? false"
-          [groupNames]="race?.group_options?.names ?? []"
-          (toggle)="toggleHeat(dh.heat.objectId)"
-          (openTrajectory)="openHeatTrajectory($event)"
-        ></app-heat-driver-expander>
-      }
-    </div>
+    <ng-template #heatParticipation>
+      <div class="heats-section-container">
+        <h2 class="section-title">
+          {{ "DR_HEAT_PARTICIPATIONS" | translate }}
+        </h2>
+
+        @if (driverHeats.length === 0) {
+          <div class="results-container no-heats-container">
+            <div class="no-data-row">
+              <div class="no-data-msg">
+                <i class="warning-icon">⚠️</i>
+                <span>{{ "DR_NO_HEAT_DATA" | translate }}</span>
+              </div>
+            </div>
+          </div>
+        }
+
+        @for (dh of driverHeats; track dh.heat.objectId; let isFirst = $first) {
+          <app-heat-driver-expander
+            [heatData]="dh"
+            [isExpanded]="expandedHeats.has(dh.heat.objectId)"
+            [isTeam]="!!dh.heatDriver.participant.team"
+            [participants]="participants"
+            [allHeats]="heats"
+            [isGroupRace]="race?.group_options?.enabled ?? false"
+            [groupNames]="race?.group_options?.names ?? []"
+            (toggle)="toggleHeat(dh.heat.objectId)"
+            (openTrajectory)="openHeatTrajectory($event)"
+          ></app-heat-driver-expander>
+        }
+      </div>
+    </ng-template>
   </div>
 </div>
 

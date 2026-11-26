@@ -25,12 +25,22 @@ describe("ResultsLayoutComponent on Race Results", () => {
     entity_id: "race",
   };
 
-  function open(): void {
+  const driverLayout = {
+    ...resultsLayoutTemplate("driver-results"),
+    entity_id: "driver",
+  };
+
+  function open(
+    purpose: "race-results" | "driver-results" = "race-results",
+  ): void {
     fixture = TestBed.createComponent(ResultsLayoutComponent);
-    fixture.componentRef.setInput("purpose", "race-results");
-    fixture.componentRef.setInput("context", {
-      raceStandingsWidgetContext: { rows: [], scoreFormat: "1.0-0" },
-    });
+    fixture.componentRef.setInput("purpose", purpose);
+    fixture.componentRef.setInput(
+      "context",
+      purpose === "race-results"
+        ? { raceStandingsWidgetContext: { rows: [], scoreFormat: "1.0-0" } }
+        : { driverResultsSections: {} },
+    );
     fixture.detectChanges();
   }
 
@@ -51,7 +61,7 @@ describe("ResultsLayoutComponent on Race Results", () => {
           provide: CustomUiService,
           useValue: {
             isInitialized: () => true,
-            customUIs$: of([heatLayout, raceLayout]),
+            customUIs$: of([heatLayout, raceLayout, driverLayout]),
           },
         },
         { provide: CustomWidgetService, useValue: null },
@@ -62,6 +72,24 @@ describe("ResultsLayoutComponent on Race Results", () => {
         { provide: TranslationService, useValue: mockTranslationService },
       ],
     });
+  });
+
+  it("remembers Driver Results separately from Heat Results and Race Results", () => {
+    settings.raceResultsLayoutId = raceLayout.entity_id;
+    open("driver-results");
+    expect(picker().customOptions.map((option) => option.value())).toEqual([
+      "",
+      driverLayout.entity_id,
+    ]);
+    picker().onChange(driverLayout.entity_id);
+    expect(settings.driverResultsLayoutId).toBe(driverLayout.entity_id);
+    expect(settings.raceResultsLayoutId).toBe(raceLayout.entity_id);
+    expect(settings.heatResultsLayoutId).toBe(heatLayout.entity_id);
+    fixture.destroy();
+    open("driver-results");
+    expect(fixture.componentInstance.activeLayout()?.purpose).toBe(
+      "driver-results",
+    );
   });
 
   it("selects and restores the Race Results layout independently from the Heat Results preference", () => {

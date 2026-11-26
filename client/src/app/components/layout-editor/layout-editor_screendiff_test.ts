@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type { CustomUI } from "@app/models/custom-ui";
+import type { LayoutConfig } from "@app/models/settings";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Layout Editor Visuals", () => {
@@ -35,6 +36,11 @@ test.describe("Layout Editor Visuals", () => {
       purpose: "race-results",
       label: "Race Results",
       table: "race-standings-widget",
+    },
+    {
+      purpose: "driver-results",
+      label: "Driver Results",
+      table: "",
     },
   ]) {
     test(
@@ -74,13 +80,39 @@ test.describe("Layout Editor Visuals", () => {
           .click();
 
         const standings = page.locator(
-          ".raceday-preview-container ." + kind.table,
+          ".raceday-preview-container ." +
+            (kind.table || "driver-results-preview"),
         );
-        const average = page.locator(
-          'app-inspector-shell [data-field="showAverageLap"] [role="switch"]',
-        );
-        await standings.getByRole("columnheader").last().click();
-        await average.click();
+        const standingsHeader = standings.getByRole("columnheader").last();
+        const driverStats = standings.getByRole("heading", {
+          name: "Driver Statistics",
+        });
+        if (kind.purpose === "driver-results") {
+          await driverStats.click();
+          const resize = page.locator(
+            ".widget-wrapper.selected .resize-handle.e",
+          );
+          await resize.scrollIntoViewIfNeeded();
+          const edge = await resize.boundingBox();
+          if (!edge)
+            throw new Error("Driver Statistics resize handle is unavailable");
+          await page.mouse.move(
+            edge.x + edge.width / 2,
+            edge.y + edge.height / 2,
+          );
+          await page.mouse.down();
+          await page.mouse.move(edge.x - 75, edge.y + edge.height / 2, {
+            steps: 5,
+          });
+          await page.mouse.up();
+        } else {
+          await standingsHeader.click();
+          await page
+            .locator(
+              'app-inspector-shell [data-field="showAverageLap"] [role="switch"]',
+            )
+            .click();
+        }
         const saveRequest = page.waitForResponse(
           (response) =>
             response.url().endsWith("/api/custom-ui/" + savedId) &&
@@ -88,18 +120,32 @@ test.describe("Layout Editor Visuals", () => {
             response.ok(),
         );
         await page.locator("#edit-track-btn").click();
-        await saveRequest;
+        const savedResponse = await saveRequest;
+        if (kind.purpose === "driver-results") {
+          const posted = savedResponse.request().postDataJSON() as CustomUI;
+          const layout = JSON.parse(posted.layoutJson || "{}") as LayoutConfig;
+          const stats = layout.widgets?.find(({ id }) => id === "driver-stats");
+          if (!stats || stats.width >= 1140) {
+            throw new Error(
+              "The resized Driver Statistics width was not saved",
+            );
+          }
+        }
         await TestSetupHelper.waitForLocalization(
           page,
           "en",
           page.goto("/layout-editor?id=" + savedId + "&edit=true"),
         );
-        await standings.getByRole("columnheader").last().click();
-        await page
-          .locator(
-            'app-inspector-shell [data-field="showAverageLap"] [aria-checked="false"]',
-          )
-          .waitFor();
+        if (kind.purpose === "driver-results") {
+          await driverStats.click();
+        } else {
+          await standingsHeader.click();
+          await page
+            .locator(
+              'app-inspector-shell [data-field="showAverageLap"] [aria-checked="false"]',
+            )
+            .waitFor();
+        }
 
         if (kind.purpose === "heat-results") {
           await page

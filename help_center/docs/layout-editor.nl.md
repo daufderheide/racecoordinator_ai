@@ -24,6 +24,8 @@ Maak een indeling met de sjabloon **Heatresultaten** om het resultatenscherm te 
 
 Gebruik de sjabloon **Raceresultaten** voor het algemeen klassement. Verplaats het klassement of pas het formaat aan en kies onder **Inhoud** de zichtbare kolommen. Sla de indeling op en kies deze bij **Resultatenindeling**, voor een lopende race of een race uit de racegeschiedenis.
 
+Gebruik de sjabloon **Rijdersresultaten** om de rijdersstatistieken, positie en heatdeelnames te rangschikken. Je kunt ook de evaluatie van voorspellingen toevoegen, die verschijnt zodra er gegevens zijn. Sla de indeling op, open de resultaten van een rijder en kies deze bij **Resultatenindeling**. De keuze staat los van andere resultatenindelingen en geldt ook voor races uit de racegeschiedenis.
+
 ---
 
 ## Werkbalkacties

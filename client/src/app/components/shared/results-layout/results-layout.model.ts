@@ -1,3 +1,7 @@
+import {
+  DRIVER_RESULTS_TEMPLATE_WIDGETS,
+  DRIVER_RESULTS_WIDGETS,
+} from "@app/components/driver-results/driver-results-layout.model";
 import { CustomUI } from "@app/models/custom-ui";
 import {
   AbsoluteWidgetNode,
@@ -44,6 +48,13 @@ export const RESULTS_LAYOUTS = {
       ...COMMON_WIDGETS,
     ],
   },
+  "driver-results": {
+    templateId: "driver-results-template",
+    name: "Driver Results",
+    labelKey: "LE_TEMPLATE_DRIVER_RESULTS",
+    preference: "driverResultsLayoutId",
+    widgets: [...DRIVER_RESULTS_WIDGETS, ...COMMON_WIDGETS],
+  },
 } as const satisfies Record<ResultsLayoutPurpose, object>;
 
 export type ResultsLayout = LayoutConfig & { purpose: ResultsLayoutPurpose };
@@ -51,7 +62,7 @@ export type ResultsLayout = LayoutConfig & { purpose: ResultsLayoutPurpose };
 export function isResultsLayoutPurpose(
   value: unknown,
 ): value is ResultsLayoutPurpose {
-  return value === "heat-results" || value === "race-results";
+  return typeof value === "string" && Object.hasOwn(RESULTS_LAYOUTS, value);
 }
 
 export function readResultsLayout(ui: CustomUI): ResultsLayout | null {
@@ -59,8 +70,7 @@ export function readResultsLayout(ui: CustomUI): ResultsLayout | null {
     const layout = JSON.parse(ui.layoutJson || "null") as LayoutConfig | null;
     if (
       layout &&
-      (layout.purpose === "heat-results" ||
-        layout.purpose === "race-results") &&
+      isResultsLayoutPurpose(layout.purpose) &&
       Array.isArray(layout.widgets)
     ) {
       return layout as ResultsLayout;
@@ -84,36 +94,39 @@ export function resultsLayoutTemplate(purpose: ResultsLayoutPurpose): CustomUI {
     fontSize: 18,
     scaleMode: "fixed",
   };
-  const widgets: AbsoluteWidgetNode[] =
-    purpose === "heat-results"
-      ? [
-          {
-            id: "heat-selector",
-            widgetType: "heat-results-selector",
-            x: 30,
-            y: 20,
-            width: 460,
-            height: 66,
-            zIndex: 2,
-            fontSize: 16,
-            scaleMode: "fixed",
-          },
-          {
-            ...standings,
-            id: "heat-standings",
-            widgetType: "heat-results-standings",
-            y: 102,
-            height: 412,
-          },
-        ]
-      : [standings];
+  const heatWidgets: AbsoluteWidgetNode[] = [
+    {
+      id: "heat-selector",
+      widgetType: "heat-results-selector",
+      x: 30,
+      y: 20,
+      width: 460,
+      height: 66,
+      zIndex: 2,
+      fontSize: 16,
+      scaleMode: "fixed",
+    },
+    {
+      ...standings,
+      id: "heat-standings",
+      widgetType: "heat-results-standings",
+      y: 102,
+      height: 412,
+    },
+  ];
+  const widgetsByPurpose = {
+    "heat-results": heatWidgets,
+    "race-results": [standings],
+    "driver-results": DRIVER_RESULTS_TEMPLATE_WIDGETS,
+  };
+  const baseHeight = purpose === "driver-results" ? 1000 : 540;
   const layout: ResultsLayout = {
     purpose,
     baseWidth: 1200,
-    baseHeight: 540,
-    aspectRatio: "1200:540",
+    baseHeight,
+    aspectRatio: `1200:${baseHeight}`,
     scaleMode: "fit-width",
-    widgets,
+    widgets: widgetsByPurpose[purpose],
   };
   return {
     entity_id: definition.templateId,

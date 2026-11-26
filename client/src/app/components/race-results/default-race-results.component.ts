@@ -62,6 +62,7 @@ import {
   StandingsRow,
 } from "./race-results.types";
 import { formatRaceResultsGap } from "./race-results-format";
+import type { RaceStandingsWidgetContext } from "./race-standings-widget.component";
 
 @Component({
   standalone: true,
@@ -262,6 +263,11 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     );
   }
 
+  protected readonly driverNavigation: RaceStandingsWidgetContext["driverNavigation"] =
+    {
+      getId: (driver) => this.getDriverId(driver),
+      open: (driverId, event) => this.openDriverResults(driverId, event),
+    };
   private driverResultsWindows: Window[] = [];
   protected isPrinting = false;
 
