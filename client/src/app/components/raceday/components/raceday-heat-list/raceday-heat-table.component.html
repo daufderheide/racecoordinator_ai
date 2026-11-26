@@ -1,0 +1,86 @@
+<table
+  class="heat-schedule"
+  [attr.aria-label]="'RM_HEADER_HEAT_LIST' | translate"
+>
+  <thead>
+    <tr>
+      <th scope="col">{{ "RD_HEAT" | translate }}</th>
+      @if (showStatus()) {
+        <th scope="col">{{ "GTD_TH_STATUS" | translate }}</th>
+      }
+      @if (showGroup()) {
+        <th scope="col">{{ "RE_GROUPS_LABEL" | translate }}</th>
+      }
+      @for (index of laneIndexes(); track index) {
+        <th scope="col" class="heat-lane-column">
+          {{ "RD_MENU_LANE" | translate: { lane: index + 1 } }}
+        </th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (heat of heats(); track heat.heatNumber) {
+      <tr
+        [attr.data-heat-number]="heat.heatNumber"
+        [class.is-current]="heat.isCurrent"
+        [attr.aria-current]="heat.isActive ? 'step' : null"
+      >
+        <th
+          scope="row"
+          [appPartTextStyle]="settings()"
+          partPrefix="heatNumber"
+          [style.font-family]="settings()?.['heatNumberFontFamily'] || null"
+          [style.font-size.px]="settings()?.['heatNumberFontSize'] || null"
+          [style.color]="settings()?.['heatNumberTextColor'] || null"
+        >
+          {{ heat.heatNumber }}
+        </th>
+        @if (showStatus()) {
+          <td class="heat-status" [class.is-active]="heat.isActive">
+            {{ statusKey(heat) | translate }}
+          </td>
+        }
+        @if (showGroup()) {
+          <td>
+            @if (heat.groupName) {
+              {{ heat.groupName }}
+            } @else if (heat.hasGroup) {
+              {{ "RE_GROUPS_LABEL" | translate }} {{ heat.group + 1 }}
+            }
+          </td>
+        }
+        @for (index of laneIndexes(); track index) {
+          @let lane = heat.lanes.at(index);
+          <td
+            class="heat-lane"
+            [style.--heat-lane-color]="
+              showLaneColors() ? lane?.backgroundColor : null
+            "
+            [appPartTextStyle]="settings()"
+            partPrefix="lane"
+            [style.font-family]="settings()?.['laneFontFamily'] || null"
+            [style.font-size.px]="settings()?.['laneFontSize'] || null"
+            [style.color]="settings()?.['laneTextColor'] || null"
+          >
+            @if (lane && lane.isOccupied) {
+              @if (lane.driverNickname) {
+                <span class="heat-driver" [title]="lane.driverNickname">{{
+                  lane.driverNickname
+                }}</span>
+              }
+              @if (lane.teamName) {
+                <span class="heat-team" [title]="lane.teamName">{{
+                  lane.teamName
+                }}</span>
+              }
+            } @else {
+              <span class="heat-lane-empty">{{
+                emptyLane("RD_EMPTY_LANE" | translate)
+              }}</span>
+            }
+          </td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>

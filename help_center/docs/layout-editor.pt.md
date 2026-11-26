@@ -56,6 +56,9 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 - As configurações de zoom são salvas localmente no navegador para cada layout.
 
 ### Biblioteca de widgets e controles de configuração {: #widget-panels }
+
+No widget **Lista de baterias**, abra **Conteúdo** e escolha **Tabela** em **Disposição** para mostrar uma linha por bateria. Pode mostrar o estado, os grupos e as atribuições de faixa. As atribuições usam os nomes atuais dos pilotos e das equipas. As cores das faixas podem ser desativadas separadamente. Escolha **Cartões** para usar os cartões e os resumos das baterias.
+
 Localizados na barra de ferramentas principal à esquerda do ícone de pré-visualização da contagem regressiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante. Um clique também a restaura se estiver minimizada ou fora da tela visível.
 - **Configuração de Widgets (<span class="material-icons">tune</span>)**: Alterna a visibilidade do painel lateral Configuração de Widgets. Quando oculto, a tela pode se estender por toda a largura da página se a proporção da tela permitir (assim como no modo somente leitura).

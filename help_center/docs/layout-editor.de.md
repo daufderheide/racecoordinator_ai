@@ -56,6 +56,9 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 - Zoom-Einstellungen werden im lokalen Browserspeicher pro Layout gespeichert.
 
 ### Widget-Bibliothek & Konfigurationssteuerung {: #widget-panels }
+
+Öffnen Sie im Widget **Laufliste** den Bereich **Inhalt** und wählen Sie unter **Layout** die Option **Tabelle**, um jeden Lauf in einer Zeile darzustellen. Legen Sie fest, ob Status, Gruppen und Spurbelegung angezeigt werden. Die Spurbelegung verwendet die aktuellen Fahrer- und Teamnamen. Spurfarben können unabhängig ausgeschaltet werden. Unter **Karten** stehen die Laufkarten und Zusammenfassungen zur Verfügung.
+
 In der Haupt-Symbolleiste links neben dem Countdown-Vorschausymbol angeordnet:
 - **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.
 - **Widget-Konfiguration (<span class="material-icons">tune</span>)**: Schaltet die Sichtbarkeit des Widget-Konfigurationspanels um. Wenn es ausgeblendet ist, kann sich die Arbeitsfläche über die gesamte Seitenbreite erstrecken, sofern es das Seitenverhältnis des Layouts erlaubt (wie im schreibgeschützten Modus).

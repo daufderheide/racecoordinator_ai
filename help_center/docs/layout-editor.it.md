@@ -56,6 +56,9 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 - Le impostazioni di zoom vengono memorizzate nel browser per ogni layout.
 
 ### Libreria dei widget e controlli di configurazione {: #widget-panels }
+
+Nel widget **Elenco manche**, apri **Contenuto** e scegli **Tabella** in **Layout** per mostrare una riga per manche. Puoi visualizzare stato, gruppi e assegnazioni di corsia. Le assegnazioni usano i nomi attuali di piloti e squadre. Puoi disattivare i colori delle corsie separatamente. Scegli **Schede** per visualizzare le schede e i riepiloghi delle manche.
+
 Posizionati sulla barra degli strumenti principale a sinistra dell'icona di anteprima conto alla rovescia:
 - **Libreria dei widget (<span class="material-icons">widgets</span>)**: Attiva/disattiva la visibilità della casella degli strumenti mobile. Un clic ripristina la casella se è ridotta a icona o posizionata fuori dallo schermo visibile.
 - **Configurazione Widget (<span class="material-icons">tune</span>)**: Attiva/disattiva la visibilità del pannello laterale Configurazione Widget. Quando è nascosto, il canvas può estendersi sull'intera larghezza della pagina se le proporzioni del layout lo consentono (proprio come in modalità di sola lettura).

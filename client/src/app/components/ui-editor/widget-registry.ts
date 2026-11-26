@@ -284,6 +284,11 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
   },
   "heat-list": {
     defaultSettings: () => ({
+      heatListLayout: "cards",
+      heatTableShowStatus: true,
+      heatTableShowGroup: true,
+      heatTableShowLanes: true,
+      heatTableShowLaneColors: true,
       showHeader: true,
       autoScrollToCurrent: true,
       highlightCurrentHeat: true,

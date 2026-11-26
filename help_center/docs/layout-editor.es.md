@@ -56,6 +56,9 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 - La configuración de zoom se almacena en el navegador por cada diseño.
 
 ### Biblioteca de widgets y controles de configuración {: #widget-panels }
+
+En el widget **Lista de mangas**, abra **Contenido** y elija **Tabla** en **Diseño** para mostrar una fila por manga. Puede mostrar el estado, los grupos y las asignaciones de carril. Las asignaciones usan los nombres actuales de pilotos y equipos. Los colores de carril se pueden desactivar de forma independiente. Elija **Tarjetas** para ver las tarjetas y los resúmenes de las mangas.
+
 Ubicados en la barra de herramientas principal a la izquierda del icono de vista previa de cuenta regresiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
 - **Configuración de Widgets (<span class="material-icons">tune</span>)**: Alterna la visibilidad del panel lateral de Configuración de Widgets. Cuando está oculto, el lienzo puede extenderse a lo largo de toda la página si la relación de aspecto del diseño lo permite (igual que en modo de solo lectura).

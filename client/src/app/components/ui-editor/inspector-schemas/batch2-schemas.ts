@@ -164,6 +164,9 @@ const DISPLAY_OPTIONS: InspectorOption[] = [
 ];
 
 const isSummary = (v: string) => v === "summary" || v === "summary_lane_colors";
+const isHeatTable = (s: Record<string, unknown>) =>
+  s["heatListLayout"] === "table";
+const isHeatCards = (s: Record<string, unknown>) => !isHeatTable(s);
 
 /**
  * How a group of heats is shown. Older layouts only have the show*Summary
@@ -184,6 +187,7 @@ function displayField(
     labelKey,
     options: DISPLAY_OPTIONS,
     touches: [summaryKey],
+    visibleWhen: isHeatCards,
     searchTerms: "summary lane colours colors heats display",
     read: (s) => heatDisplay(s, displayKey, summaryKey, summaryOnByDefault),
     write: (s, v) => {
@@ -225,6 +229,7 @@ function plainSummary(s: Record<string, any>): boolean {
 
 /** Some heats show a summary: the summary settings only matter then. */
 function anySummary(s: Record<string, any>): boolean {
+  if (isHeatTable(s)) return false;
   return (
     isSummary(heatDisplay(s, "activeHeatDisplay", "showActiveSummary", true)) ||
     isSummary(
@@ -251,6 +256,11 @@ const summaryColumn = (id: string, labelKey: string): InspectorField => ({
   visibleWhen: anySummary,
 });
 
+const tableColumn = (id: string, labelKey: string): InspectorField => ({
+  ...sw(id, labelKey, "schedule table column"),
+  visibleWhen: isHeatTable,
+});
+
 const heatListSchema: InspectorSchema = {
   widgetType: "heat-list",
   icon: "format_list_numbered",
@@ -261,6 +271,17 @@ const heatListSchema: InspectorSchema = {
         {
           titleKey: "UE_KIT_GROUP_DISPLAY",
           fields: [
+            {
+              id: "heatListLayout",
+              type: "segment",
+              key: "heatListLayout",
+              labelKey: "UE_KIT_FOLDER_LAYOUT",
+              options: [
+                { value: "cards", labelKey: "UE_INSPECTOR_HEAT_LIST_CARDS" },
+                { value: "table", labelKey: "UE_INSPECTOR_HEAT_LIST_TABLE" },
+              ],
+              searchTerms: "layout schedule grid table cards",
+            },
             sw(
               "showHeader",
               "UE_INSPECTOR_HEAT_LIST_SHOW_HEADER",
@@ -276,21 +297,56 @@ const heatListSchema: InspectorSchema = {
               "UE_INSPECTOR_HEAT_LIST_HIGHLIGHT_CURRENT",
               "highlight current",
             ),
-            sw(
-              "showCurrentHeatFlag",
-              "UE_INSPECTOR_HEAT_LIST_SHOW_CURRENT_FLAG",
-              "flag race state",
+            {
+              ...sw(
+                "showCurrentHeatFlag",
+                "UE_INSPECTOR_HEAT_LIST_SHOW_CURRENT_FLAG",
+                "flag race state",
+              ),
+              visibleWhen: isHeatCards,
+            },
+            {
+              ...sw(
+                "showCurrentHeatTime",
+                "UE_INSPECTOR_HEAT_LIST_SHOW_CURRENT_TIME",
+                "time clock",
+              ),
+              visibleWhen: isHeatCards,
+            },
+            {
+              ...sw(
+                "scaleToWindow",
+                "UE_INSPECTOR_HEAT_LIST_SCALE_TO_WINDOW",
+                "scale fit window",
+              ),
+              visibleWhen: isHeatCards,
+            },
+          ],
+        },
+        {
+          titleKey: "UE_INSPECTOR_HEAT_LIST_TABLE_COLUMNS",
+          fields: [
+            tableColumn(
+              "heatTableShowStatus",
+              "UE_INSPECTOR_HEAT_LIST_TABLE_STATUS",
             ),
-            sw(
-              "showCurrentHeatTime",
-              "UE_INSPECTOR_HEAT_LIST_SHOW_CURRENT_TIME",
-              "time clock",
+            tableColumn(
+              "heatTableShowGroup",
+              "UE_INSPECTOR_HEAT_LIST_TABLE_GROUP",
             ),
-            sw(
-              "scaleToWindow",
-              "UE_INSPECTOR_HEAT_LIST_SCALE_TO_WINDOW",
-              "scale fit window",
+            tableColumn(
+              "heatTableShowLanes",
+              "UE_INSPECTOR_HEAT_LIST_TABLE_LANES",
             ),
+            {
+              ...tableColumn(
+                "heatTableShowLaneColors",
+                "UE_INSPECTOR_HEAT_LIST_OPTION_LANE_COLORS",
+              ),
+              visibleWhen: (settings) =>
+                isHeatTable(settings) &&
+                settings["heatTableShowLanes"] !== false,
+            },
           ],
         },
         {
@@ -306,6 +362,7 @@ const heatListSchema: InspectorSchema = {
                 ...n(["1", "2", "3", "4"]),
               ],
               helpKey: "UE_INSPECTOR_HEAT_LIST_COLUMNS_AUTO",
+              visibleWhen: isHeatCards,
               searchTerms: "columns heats grid",
             },
             {
@@ -318,6 +375,7 @@ const heatListSchema: InspectorSchema = {
                 ...n(["1", "2", "3", "4"]),
               ],
               helpKey: "UE_INSPECTOR_HEAT_LIST_LANE_COLUMNS_AUTO",
+              visibleWhen: isHeatCards,
               searchTerms: "columns lanes",
             },
           ],
@@ -434,6 +492,9 @@ const heatListSchema: InspectorSchema = {
               sizeMin: 8,
               sizeMax: 48,
               sample: "Mario",
+              visibleWhen: (settings) =>
+                isHeatCards(settings) ||
+                settings["heatTableShowLanes"] !== false,
             }),
             textPart(
               "summaryHeader",
