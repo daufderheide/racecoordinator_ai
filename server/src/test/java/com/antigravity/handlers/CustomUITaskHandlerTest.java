@@ -241,7 +241,8 @@ public class CustomUITaskHandlerTest {
     String id = "record-label-layout";
     SqliteRepository<CustomUI> repository =
         new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
-    repository.save(new CustomUI("Record Board", false, "{}", null, null, null, null, null, id, null));
+    repository.save(
+        new CustomUI("Record Board", false, "{}", null, null, null, null, null, id, null));
 
     String layoutJson =
         "{\"widgets\":[{\"id\":\"record-label\",\"widgetType\":\"label\",\"customSettings\":{"
