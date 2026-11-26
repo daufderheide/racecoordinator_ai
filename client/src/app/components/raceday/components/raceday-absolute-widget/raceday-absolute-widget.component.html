@@ -296,7 +296,10 @@
           <app-raceday-image [widget]="widget()"></app-raceday-image>
         }
         @case ("label") {
-          <app-raceday-label [widget]="widget()"></app-raceday-label>
+          <app-raceday-label
+            [widget]="widget()"
+            [recordValue]="labelRecordValue"
+          ></app-raceday-label>
         }
         @case ("action-start-resume") {
           <app-raceday-action-button

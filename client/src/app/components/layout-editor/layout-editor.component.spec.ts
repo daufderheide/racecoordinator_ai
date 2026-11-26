@@ -14,7 +14,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
@@ -2502,6 +2502,43 @@ describe("LayoutEditorComponent", () => {
       await component.saveCurrentLayout();
       expect(mockCustomUiService.initialize).toHaveBeenCalled();
     });
+
+    it("saves a record formatting edit made while the binding is being saved", fakeAsync(() => {
+      component.selectLayoutById("custom_ui_1");
+      component.isEditMode = true;
+      const pending = new Subject<boolean>();
+      mockDataService.updateCustomUI.and.returnValues(pending, of(true));
+      const recordLayout = (recordDecimals: number) =>
+        JSON.stringify({
+          widgets: [
+            {
+              id: "record",
+              widgetType: "label",
+              customSettings: { recordField: "heatBestTime", recordDecimals },
+            },
+          ],
+        });
+
+      component.editingLayout!.layoutJson = recordLayout(3);
+      component.captureState();
+      expect(mockDataService.updateCustomUI).toHaveBeenCalledTimes(1);
+      const initialRequest: CustomUI =
+        mockDataService.updateCustomUI.calls.mostRecent().args[1];
+
+      component.editingLayout!.layoutJson = recordLayout(2);
+      component.captureState();
+      expect(mockDataService.updateCustomUI).toHaveBeenCalledTimes(1);
+      expect(initialRequest.layoutJson).toBe(recordLayout(3));
+
+      pending.next(true);
+      tick();
+      expect(mockDataService.updateCustomUI).toHaveBeenCalledTimes(2);
+      expect(
+        mockDataService.updateCustomUI.calls.mostRecent().args[1].layoutJson,
+      ).toBe(recordLayout(2));
+      expect(component.originalLayout?.layoutJson).toBe(recordLayout(2));
+      expect(component.isDirtyState()).toBeFalse();
+    }));
 
     it("should re-initialize CustomUiService when starting a new layout", async () => {
       mockCustomUiService.initialize.calls.reset();

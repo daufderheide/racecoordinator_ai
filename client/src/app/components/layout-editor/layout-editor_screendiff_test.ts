@@ -166,4 +166,52 @@ test.describe("Layout Editor Visuals", () => {
       animations: "disabled",
     });
   });
+
+  test("should display Record options for a bound Label", async ({ page }) => {
+    const layout = {
+      entity_id: "record-label-layout",
+      name: "Record Label Preview",
+      is_default: false,
+      layoutJson: JSON.stringify({
+        baseWidth: 1600,
+        baseHeight: 900,
+        widgets: [
+          {
+            id: "record-value",
+            widgetType: "label",
+            x: 180,
+            y: 180,
+            width: 200,
+            height: 60,
+            customSettings: {
+              recordField: "heatBestTime",
+              recordDecimals: 2,
+              emptyValueMode: "text",
+              emptyValueText: "Awaiting lap",
+            },
+          },
+        ],
+      }),
+    };
+    await TestSetupHelper.setupCustomUiMocks(page, [layout]);
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/layout-editor?id=record-label-layout"),
+    );
+    await page.locator("#edit-track-btn").click();
+    await page
+      .locator(".raceday-preview-container .widget-wrapper")
+      .first()
+      .dispatchEvent("pointerdown");
+    const inspector = page.locator(
+      ".widget-inspector-panel [data-folder='content']",
+    );
+    await inspector.locator("[data-field='emptyValueText'] input").waitFor();
+    await TestSetupHelper.blurActiveElement(page);
+    await page.mouse.move(0, 0);
+    await expect(inspector).toHaveScreenshot(
+      "layout-editor-record-label-inspector.png",
+    );
+  });
 });

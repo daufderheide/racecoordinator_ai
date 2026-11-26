@@ -86,6 +86,7 @@ describe("LayoutEditorHelpHelper", () => {
 
       const steps = LayoutEditorHelpHelper.getHelpSteps(realTranslationService);
       expect(steps.length).toBe(6);
+      expect(steps[4].content).toContain("Content source");
 
       for (const step of steps) {
         expect(step.title).not.toBe("");

@@ -56,6 +56,9 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 - Les paramètres de zoom sont conservés dans le stockage local du navigateur par disposition.
 
 ### Bibliothèque de widgets & contrôles de configuration {: #widget-panels }
+
+Pour créer un panneau de records, ajoutez des libellés et choisissez un détenteur ou une valeur sous **Source du contenu**. Les sources disponibles sont le meilleur tour historique, le meilleur score historique, le meilleur tour de la course en cours et le meilleur tour de la manche en cours. Les nombres acceptent de zéro à trois décimales. En l’absence de données, choisissez des tirets, un champ vide ou votre propre texte. Utilisez des libellés de texte pour les titres et placez chaque widget sur le canevas.
+
 Situés sur la barre d'outils principale à gauche de l'icône d'aperçu du compte à rebours :
 - **Bibliothèque de widgets (<span class="material-icons">widgets</span>)** : Bascule la visibilité de la boîte à outils flottante. Un clic la restaure également si elle est réduite ou hors de l'écran visible.
 - **Configuration de widgets (<span class="material-icons">tune</span>)** : Bascule la visibilité du panneau latéral de configuration des widgets. Lorsqu'il est masqué, le canevas peut s'étendre sur toute la largeur de la page si les proportions de la disposition le permettent (comme en mode lecture seule).

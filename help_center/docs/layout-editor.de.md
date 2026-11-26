@@ -56,6 +56,9 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 - Zoom-Einstellungen werden im lokalen Browserspeicher pro Layout gespeichert.
 
 ### Widget-Bibliothek & Konfigurationssteuerung {: #widget-panels }
+
+Fügen Sie für eine Rekordanzeige Beschriftungs-Widgets hinzu und wählen Sie unter **Inhaltsquelle** einen Rekordhalter oder einen Wert aus. Als Quellen stehen die Allzeit-Bestzeit, das Allzeit-Bestergebnis, die beste Runde des aktuellen Rennens und die beste Runde des aktuellen Laufs zur Verfügung. Für Zahlen können Sie null bis drei Nachkommastellen wählen. Bei fehlenden Daten stehen Striche, ein leeres Feld oder eigener Text zur Auswahl. Verwende normale Labels für Überschriften und positioniere jedes Widget auf der Arbeitsfläche.
+
 In der Haupt-Symbolleiste links neben dem Countdown-Vorschausymbol angeordnet:
 - **Widget-Bibliothek (<span class="material-icons">widgets</span>)**: Schaltet die Sichtbarkeit des frei schwebenden Widget-Bibliotheks-Werkzeugkastens um. Ein Klick stellt den Kasten wieder her, falls er minimiert oder außerhalb des sichtbaren Bildschirmbereichs verschoben wurde.
 - **Widget-Konfiguration (<span class="material-icons">tune</span>)**: Schaltet die Sichtbarkeit des Widget-Konfigurationspanels um. Wenn es ausgeblendet ist, kann sich die Arbeitsfläche über die gesamte Seitenbreite erstrecken, sofern es das Seitenverhältnis des Layouts erlaubt (wie im schreibgeschützten Modus).

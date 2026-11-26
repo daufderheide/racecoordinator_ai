@@ -154,21 +154,21 @@ function borderGroup(): InspectorGroup {
  * placeholder, nothing, or your own text; optionally the same for the
  * "Empty Lane" label. See utils/empty-value.utils.ts.
  */
-export function emptyStateFolder(
-  options: { lane?: boolean } = {},
-): InspectorFolder {
-  const pair = (
-    modeKey: string,
-    textKey: string,
-    labelKey: string,
-    ownLabelKey: string,
-  ): InspectorField[] => [
+function emptyStateFields(
+  modeKey: string,
+  textKey: string,
+  labelKey: string,
+  ownLabelKey: string,
+  visibleWhen?: (settings: Record<string, any>) => boolean,
+): InspectorField[] {
+  return [
     {
       id: modeKey,
       type: "segment",
       key: modeKey,
       labelKey,
       default: "",
+      visibleWhen,
       searchTerms: "empty no data dashes placeholder blank missing",
       options: [
         { value: "", labelKey: ownLabelKey },
@@ -184,23 +184,35 @@ export function emptyStateFolder(
       maxLength: 40,
       default: "",
       searchTerms: "empty text placeholder",
-      visibleWhen: (s) => s[modeKey] === "text",
+      visibleWhen: (s) => s[modeKey] === "text" && (visibleWhen?.(s) ?? true),
     },
   ];
+}
+
+export function emptyValueFields(
+  visibleWhen?: (settings: Record<string, any>) => boolean,
+): InspectorField[] {
+  return emptyStateFields(
+    "emptyValueMode",
+    "emptyValueText",
+    "UE_KIT_EMPTY_VALUE",
+    "UE_KIT_EMPTY_DASHES",
+    visibleWhen,
+  );
+}
+
+export function emptyStateFolder(
+  options: { lane?: boolean } = {},
+): InspectorFolder {
   return {
     id: "behaviour",
     groups: [
       {
         titleKey: "UE_KIT_EMPTY_STATES",
         fields: [
-          ...pair(
-            "emptyValueMode",
-            "emptyValueText",
-            "UE_KIT_EMPTY_VALUE",
-            "UE_KIT_EMPTY_DASHES",
-          ),
+          ...emptyValueFields(),
           ...(options.lane
-            ? pair(
+            ? emptyStateFields(
                 "emptyLaneMode",
                 "emptyLaneText",
                 "UE_KIT_EMPTY_LANE",
