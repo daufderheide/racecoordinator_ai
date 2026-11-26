@@ -32,3 +32,7 @@ El Editor de Temas es accesible desde varias ubicaciones clave:
 - **Eliminar tema**: Elimina el tema personalizado actual tras confirmación.
 - **Tour de ayuda**: Inicia una visita interactiva guiada.
 
+## Silenciar el audio del tema
+
+En el modo de edición, seleccione **Establecer todo en Ninguno** para silenciar todos los sonidos de la sección **Audio**, incluidos los sonidos predeterminados. Use **Deshacer** para recuperar la configuración anterior en un solo paso.
+

@@ -8,6 +8,7 @@
     [selectedId]="selectedThemeId"
     [isEditMode]="isEditMode"
     [showEdit]="true"
+    [disabledEdit]="isAutoSaving"
     [showExpandCollapse]="true"
     [allExpanded]="areAllSectionsExpanded()"
     [showAdd]="true"
@@ -311,6 +312,22 @@
           @if (sectionsExpanded.audio) {
             <div class="section-content">
               <div class="panel audio-panel">
+                @if (isEditMode) {
+                  <div class="audio-panel-actions">
+                    <button
+                      id="theme-set-all-audio-none"
+                      class="audio-panel-action"
+                      type="button"
+                      [disabled]="!canSetAllAudioToNone"
+                      (click)="onSetAllAudioToNone()"
+                    >
+                      <span class="material-icons" aria-hidden="true"
+                        >volume_off</span
+                      >
+                      {{ "THM_SET_ALL_AUDIO_NONE" | translate }}
+                    </button>
+                  </div>
+                }
                 <div class="panel-content audio-grid">
                   @for (slot of mainAudioSlots; track slot.key) {
                     <app-audio-selector
