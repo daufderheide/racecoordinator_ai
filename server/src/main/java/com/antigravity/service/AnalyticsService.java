@@ -1,10 +1,13 @@
 package com.antigravity.service;
 
 import com.antigravity.App;
+import com.antigravity.models.Car;
 import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.race.EventExecutionManager;
+import com.antigravity.race.ParticipantDriverCar;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceParticipant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -12,8 +15,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,6 +135,13 @@ public class AnalyticsService {
     if (hasCrashAndLearn) {
       sendPayload(createPayload("cnl_race_started", buildCnlParams(race)));
     }
+
+    // Slotcars (#1256): only for races with cars, so the race-start event stays under GA's
+    // 25-parameter limit. Races without cars are the backend_race_started events with car_count 0.
+    Map<String, Object> carParams = buildCarParams(race);
+    if ((Integer) carParams.get("car_count") > 0) {
+      sendPayload(createPayload("car_race_started", carParams));
+    }
   }
 
   /* package */ Map<String, Object> buildRaceStartParams(Race race) {
@@ -140,6 +152,7 @@ public class AnalyticsService {
             ? race.getTrack().getLanes().size()
             : 0);
     params.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
+    params.put("car_count", countCars(race, null));
     params.put("is_demo", race.isDemoMode());
     params.put(
         "heat_rotation_type",
@@ -216,6 +229,67 @@ public class AnalyticsService {
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());
     return params;
+  }
+
+  /** The slotcar parameters of a race start (#1256). */
+  /* package */ Map<String, Object> buildCarParams(Race race) {
+    Map<String, Object> params = new HashMap<>();
+    int[] entries = new int[2]; // [entries with a car, team entries with a car per driver]
+    params.put("car_count", countCars(race, entries));
+    params.put("entries_with_car", entries[0]);
+    params.put("driver_count", race.getDrivers() != null ? race.getDrivers().size() : 0);
+    params.put("cars_stay_in_lanes", race.isCarsStayInLanes());
+    params.put("car_per_driver_teams", entries[1]);
+    params.put(
+        "number_of_lanes",
+        race.getTrack() != null && race.getTrack().getLanes() != null
+            ? race.getTrack().getLanes().size()
+            : 0);
+    params.put("is_demo", race.isDemoMode());
+    params.put("engagement_time_msec", 1L);
+    params.put("session_id", System.currentTimeMillis());
+    return params;
+  }
+
+  /**
+   * The number of different slotcars in the race. With IROC the cars belong to the lanes, otherwise
+   * to the entries. When {@code entries} is given, it gets the entries with a car and the team
+   * entries with a car per driver.
+   */
+  private static int countCars(Race race, int[] entries) {
+    Set<String> carIds = new HashSet<>();
+    if (race.isCarsStayInLanes()) {
+      if (race.getLaneCars() != null) {
+        for (Car car : race.getLaneCars()) {
+          addCar(carIds, car);
+        }
+      }
+      return carIds.size();
+    }
+    if (race.getDrivers() == null) {
+      return 0;
+    }
+    for (RaceParticipant entry : race.getDrivers()) {
+      boolean hasCar = false;
+      if (entry.isCarPerDriver()) {
+        if (entries != null) entries[1]++;
+        for (ParticipantDriverCar dc : entry.getDriverCars()) {
+          hasCar |= addCar(carIds, dc.getCar());
+        }
+      } else {
+        hasCar = addCar(carIds, entry.getCar());
+      }
+      if (entries != null && hasCar) entries[0]++;
+    }
+    return carIds.size();
+  }
+
+  private static boolean addCar(Set<String> carIds, Car car) {
+    if (car == null || car.getEntityId() == null) {
+      return false;
+    }
+    carIds.add(car.getEntityId());
+    return true;
   }
 
   /* package */ Map<String, Object> buildCnlParams(Race race) {

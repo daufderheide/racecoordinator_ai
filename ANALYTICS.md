@@ -47,6 +47,7 @@ All server-side events automatically include the following parameters:
 1. **`backend_race_started`**: Triggers explicitly when the core `Race` object is initialized. Parameters captured:
    - `number_of_lanes`
    - `driver_count`
+   - `car_count` (numeric count of different slotcars in the race; 0 when the race runs without cars)
    - `is_demo` (true/false tracking)
    - `heat_rotation_type`
    - `heat_scoring_method`
@@ -81,7 +82,15 @@ All server-side events automatically include the following parameters:
    - `driver_count` (numeric)
    - `number_of_lanes` (numeric)
    - `is_demo` (true/false tracking)
-3. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
+3. **`car_race_started`**: Triggers together with `backend_race_started` whenever a race is started with at least one slotcar. It is a separate event because GA4 takes at most 25 parameters per event. Races without cars are the `backend_race_started` events with `car_count` 0. Parameters captured:
+   - `car_count` (numeric count of different slotcars in the race)
+   - `entries_with_car` (numeric count of drivers or teams with a car; 0 with `cars_stay_in_lanes`, where the cars belong to the lanes)
+   - `driver_count` (numeric count of drivers or teams in the race)
+   - `cars_stay_in_lanes` (true/false tracking, the IROC option)
+   - `car_per_driver_teams` (numeric count of teams with a car for each team driver)
+   - `number_of_lanes` (numeric)
+   - `is_demo` (true/false tracking)
+4. **`analytics_toggled`**: Fired exactly when the user clicks the option to enable or disable analytics routing on their local install. 
    - `analytics_enabled`: A boolean capturing whether they are actively enabling or disabling. 
    - *Note: This particular event intentionally bypasses the disabled check to reliably inform system metrics of uninstalls/opt-outs.*
 
@@ -183,6 +192,12 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `Is Demo`, Event parameter: `is_demo`
 - Dimension Name: `Driver Count`, Event parameter: `driver_count`
 - Dimension Name: `Number of Lanes`, Event parameter: `number_of_lanes`
+- Dimension Name: `Car Count`, Event parameter: `car_count`
+
+*For example, to map the slotcar parameters of `car_race_started`:*
+- Dimension Name: `Entries With Car`, Event parameter: `entries_with_car`
+- Dimension Name: `Cars Stay In Lanes`, Event parameter: `cars_stay_in_lanes`
+- Dimension Name: `Car Per Driver Teams`, Event parameter: `car_per_driver_teams`
 
 *For example, to map the Crash and Learn parameters:*
 - Dimension Name: `CnL Enabled`, Event parameter: `cnl_enabled`
@@ -287,7 +302,13 @@ To focus your charts on race data:
 - **Metric**: `Event count`.
 - Shows the proportion of races run with the points scoring system configured vs standard scoring methods.
 
-#### 7. Combined Race Overview Table
+#### 7. Races With and Without Slotcars (Donut / Pie Chart or Bar Chart)
+- **Chart Type**: Pie chart or Donut chart, filtered to `backend_race_started`.
+- **Dimension**: custom formula `IF(Car Count = "0", "No Cars", "With Cars")`. Use `Car Count` itself as the dimension of a bar chart to see how many cars races use.
+- **Metric**: `Event count`.
+- Shows how many races are run with slotcars. For details such as IROC, filter to `car_race_started` and use `Cars Stay In Lanes`.
+
+#### 8. Combined Race Overview Table
 - **Chart Type**: Table.
 - **Dimensions**: `Date`, `Hardware Interface`, `Fuel System`, `Groups Enabled`, `Has Season`, `Is Event`, `Has Step-Ups`, `Step-Up Count`, `Has Points Scoring`, `Points Scoring Enabled`.
 - **Metric**: `Event count`, `Total users`.

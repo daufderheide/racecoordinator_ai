@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.App;
+import com.antigravity.models.Car;
 import com.antigravity.models.CrashAndLearnOptions;
 import com.antigravity.models.Event;
 import com.antigravity.models.FuelOptions;
@@ -18,9 +19,13 @@ import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Track;
 import com.antigravity.race.EventExecutionManager;
+import com.antigravity.race.ParticipantDriverCar;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceParticipant;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -902,5 +907,87 @@ public class AnalyticsServiceTest {
     Thread.sleep(100);
 
     enabledField.set(service, originalEnabled);
+  }
+
+  // --- Slotcars (#1256) ---
+
+  private static Car car(String id) {
+    return new Car.Builder().withName("Car " + id).withEntityId(id).build();
+  }
+
+  private static RaceParticipant entry(Car car) {
+    RaceParticipant p = mock(RaceParticipant.class);
+    when(p.getCar()).thenReturn(car);
+    when(p.getDriverCars()).thenReturn(Collections.<ParticipantDriverCar>emptyList());
+    return p;
+  }
+
+  private static RaceParticipant teamWithCarPerDriver(Car... cars) {
+    RaceParticipant p = mock(RaceParticipant.class);
+    List<ParticipantDriverCar> driverCars = new ArrayList<>();
+    for (int i = 0; i < cars.length; i++) {
+      driverCars.add(new ParticipantDriverCar("d" + i, cars[i]));
+    }
+    when(p.isCarPerDriver()).thenReturn(true);
+    when(p.getDriverCars()).thenReturn(driverCars);
+    return p;
+  }
+
+  private static Race raceWith(RaceParticipant... entries) {
+    Race race = mock(Race.class);
+    when(race.getDrivers()).thenReturn(new ArrayList<>(Arrays.asList(entries)));
+    when(race.getLaneCars()).thenReturn(Collections.<Car>emptyList());
+    return race;
+  }
+
+  @Test
+  public void testCarParams_CountsDifferentCarsAndEntriesWithACar() {
+    Car audi = car("1");
+    Race race =
+        raceWith(
+            entry(audi),
+            entry(audi), // the same car twice counts once
+            entry(car("2")),
+            entry(null),
+            teamWithCarPerDriver(car("3"), null));
+
+    Map<String, Object> params = service.buildCarParams(race);
+    assertEquals(3, params.get("car_count"));
+    assertEquals(4, params.get("entries_with_car"));
+    assertEquals(5, params.get("driver_count"));
+    assertEquals(1, params.get("car_per_driver_teams"));
+    assertEquals(false, params.get("cars_stay_in_lanes"));
+    assertEquals(3, service.buildRaceStartParams(race).get("car_count"));
+  }
+
+  @Test
+  public void testCarParams_RaceWithoutCars() {
+    Race race = raceWith(entry(null), entry(null));
+    assertEquals(0, service.buildRaceStartParams(race).get("car_count"));
+    Map<String, Object> params = service.buildCarParams(race);
+    assertEquals(0, params.get("car_count"));
+    assertEquals(0, params.get("entries_with_car"));
+
+    Race noDrivers = mock(Race.class);
+    assertEquals(0, service.buildCarParams(noDrivers).get("car_count"));
+  }
+
+  @Test
+  public void testCarParams_IrocCountsTheLaneCars() {
+    Race race = raceWith(entry(car("9")));
+    when(race.isCarsStayInLanes()).thenReturn(true);
+    when(race.getLaneCars()).thenReturn(Arrays.asList(car("1"), null, car("2"), car("1")));
+
+    Map<String, Object> params = service.buildCarParams(race);
+    assertEquals(2, params.get("car_count"));
+    assertEquals(true, params.get("cars_stay_in_lanes"));
+  }
+
+  @Test
+  public void testEventsStayWithinTheGa4ParameterLimit() {
+    // GA4's Measurement Protocol takes at most 25 parameters per event.
+    Race race = raceWith(entry(car("1")));
+    assertTrue(service.buildRaceStartParams(race).size() <= 25);
+    assertTrue(service.buildCarParams(race).size() <= 25);
   }
 }
