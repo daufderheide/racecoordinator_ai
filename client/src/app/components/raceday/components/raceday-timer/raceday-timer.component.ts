@@ -20,7 +20,10 @@ import { PartTextStyleDirective } from "@app/directives/part-text-style.directiv
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceTimeService } from "@app/services/race-time.service";
-import { formatTimerDisplay } from "@app/utils/timer-format.utils";
+import {
+  formatTimerDisplay,
+  TIMER_PREVIEW_SECONDS,
+} from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -67,7 +70,7 @@ export class RacedayTimerComponent implements AfterViewInit, OnDestroy {
     if (custom) return custom;
     if (this.isEditor()) {
       const s = this.widget()?.customSettings;
-      return formatTimerDisplay(123.45, {
+      return formatTimerDisplay(TIMER_PREVIEW_SECONDS, {
         format: s?.["timeDisplayFormat"] || "dynamic",
         subsecondMode: s?.["timeSubsecondMode"] || "threshold",
         subsecondThreshold: s?.["timeSubsecondThreshold"] ?? 10,

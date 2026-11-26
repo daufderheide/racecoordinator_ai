@@ -59,6 +59,8 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 
 Para montar um painel de recordes, adicione rótulos e escolha um detentor ou valor em **Fonte do conteúdo**. As fontes disponíveis são a melhor volta de sempre, a melhor pontuação de sempre, a melhor volta da corrida atual e a melhor volta da bateria atual. Os números aceitam de zero a três casas decimais. Quando faltarem dados, escolha traços, um campo vazio ou um texto próprio. Use etiquetas de texto para os títulos e posicione cada widget na área de trabalho.
 
+Para posicionar o relógio separadamente, escolha **Cronómetro de corrida** em **Fonte do conteúdo**. O rótulo segue o cronómetro integrado, incluindo as contagens decrescentes automáticas. O editor mostra um tempo de exemplo para facilitar o posicionamento. Adicione um rótulo de texto separado para o título.
+
 Localizados na barra de ferramentas principal à esquerda do ícone de pré-visualização da contagem regressiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna a visibilidade da caixa de ferramentas flutuante. Um clique também a restaura se estiver minimizada ou fora da tela visível.
 - **Configuração de Widgets (<span class="material-icons">tune</span>)**: Alterna a visibilidade do painel lateral Configuração de Widgets. Quando oculto, a tela pode se estender por toda a largura da página se a proporção da tela permitir (assim como no modo somente leitura).

@@ -1,3 +1,5 @@
+export const RACE_TIMER_LABEL_SOURCE = "raceTimer";
+
 export const RECORD_LABEL_FIELDS = [
   {
     key: "raceRecordLapNickname",
@@ -27,4 +29,10 @@ export const RECORD_LABEL_FIELDS = [
 
 export function getRecordLabelField(key: unknown) {
   return RECORD_LABEL_FIELDS.find((field) => field.key === key);
+}
+
+export function getLabelSource(settings?: Record<string, unknown>) {
+  return settings?.["labelSource"] === RACE_TIMER_LABEL_SOURCE
+    ? RACE_TIMER_LABEL_SOURCE
+    : (getRecordLabelField(settings?.["recordField"])?.key ?? "");
 }
