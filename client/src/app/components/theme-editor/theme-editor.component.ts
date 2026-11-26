@@ -10,6 +10,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { catchError, firstValueFrom, of, Subscription } from "rxjs";
+import { readHeatResultsLayout } from "@app/components/heat-results/heat-results-layout.model";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import {
@@ -310,7 +311,9 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
       const assetList: any[] = Array.isArray(rawAssets) ? rawAssets : [];
       this.allThemes = themes || [];
-      this.displayCustomUIs = uis || [];
+      this.displayCustomUIs = (uis || []).filter(
+        (ui) => !readHeatResultsLayout(ui),
+      );
       this.assets = assetList.filter(
         (a: any) =>
           a.type === "image" ||

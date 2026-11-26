@@ -84,6 +84,25 @@ function defaultActionSettings(widgetType: string): Record<string, any> {
 }
 
 export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
+  "heat-results-selector": {
+    defaultSettings: () => ({
+      backgroundColor: "",
+      ...getDefaultBorderConfigForWidget("heat-results-selector"),
+    }),
+  },
+  "heat-results-standings": {
+    defaultSettings: () => ({
+      showPosition: true,
+      showLane: true,
+      showLaps: true,
+      showBestLap: true,
+      showAverageLap: true,
+      showGap: true,
+      useLaneColors: true,
+      backgroundColor: "",
+      ...getDefaultBorderConfigForWidget("heat-results-standings"),
+    }),
+  },
   leaderboard: {
     defaultSettings: () => ({
       decimalPlaces: 3,

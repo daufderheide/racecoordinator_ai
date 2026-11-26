@@ -213,7 +213,13 @@ export class RacedayLayoutEditorHelper {
     let width = 400;
     let height = 200;
 
-    if (draggedType?.startsWith("custom:")) {
+    if (draggedType === "heat-results-selector") {
+      width = 460;
+      height = 66;
+    } else if (draggedType === "heat-results-standings") {
+      width = 850;
+      height = 350;
+    } else if (draggedType?.startsWith("custom:")) {
       const def = host.customWidgetService?.getWidgetDefinition(draggedType);
       width = def?.manifest?.defaultWidth || 400;
       height = def?.manifest?.defaultHeight || 250;

@@ -1,0 +1,68 @@
+@let model = view();
+@if (widget().widgetType === "heat-results-selector") {
+  <div class="heat-selector-widget">
+    <span>{{ "HR_SELECT_HEAT" | translate }}</span>
+    <app-custom-select
+      [attr.aria-label]="'HR_SELECT_HEAT' | translate"
+      [ngModel]="model?.selectedIndex"
+      (ngModelChange)="model?.selectHeat($event)"
+      [disabled]="!model?.choices?.length"
+      [fitWidestOption]="true"
+    >
+      @for (choice of model?.choices; track choice.index) {
+        <app-custom-option [value]="choice.index">
+          {{ "HR_TITLE" | translate: { heat: choice.number } }}
+          @if (choice.isCurrent) {
+            ({{ "HR_CURRENT_HEAT_BADGE" | translate }})
+          }
+        </app-custom-option>
+      }
+    </app-custom-select>
+  </div>
+} @else if (model?.rows?.length) {
+  <div class="heat-standings-widget">
+    <table
+      [attr.aria-label]="'UE_WIDGET_TYPE_HEAT_RESULTS_STANDINGS' | translate"
+    >
+      <thead>
+        <tr>
+          @for (column of columns(); track column.key) {
+            <th scope="col" [class.numeric]="column.key !== 'driver'">
+              {{ column.labelKey | translate }}
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of model?.rows; track row.id) {
+          <tr>
+            @for (column of columns(); track column.key) {
+              @if (column.key === "driver") {
+                <th
+                  scope="row"
+                  class="driver"
+                  [style.--heat-result-lane-color]="
+                    widget().customSettings?.['useLaneColors'] === false
+                      ? null
+                      : row.laneColor
+                  "
+                >
+                  {{ row.driver }}
+                </th>
+              } @else {
+                <td class="numeric">
+                  {{
+                    (numericValue(row, column.key) | number: column.format) ??
+                      "—"
+                  }}
+                </td>
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <p class="heat-results-empty">{{ "HR_NO_HEAT_DATA" | translate }}</p>
+}
