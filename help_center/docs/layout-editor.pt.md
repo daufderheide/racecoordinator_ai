@@ -57,6 +57,8 @@ Selecione uma predefinição de proporção de tela (**16:9**, **16:10**, **4:3*
 
 ### Biblioteca de widgets e controles de configuração {: #widget-panels }
 
+No widget **Lista de baterias**, abra **Conteúdo** e escolha **Tabela** em **Disposição** para mostrar uma linha por bateria. Pode mostrar o estado, os grupos e as atribuições de faixa. As atribuições usam os nomes atuais dos pilotos e das equipas. As cores das faixas podem ser desativadas separadamente. Escolha **Cartões** para usar os cartões e os resumos das baterias.
+
 Para montar um painel de recordes, adicione rótulos e escolha um detentor ou valor em **Fonte do conteúdo**. As fontes disponíveis são a melhor volta de sempre, a melhor pontuação de sempre, a melhor volta da corrida atual e a melhor volta da bateria atual. Os números aceitam de zero a três casas decimais. Quando faltarem dados, escolha traços, um campo vazio ou um texto próprio. Use etiquetas de texto para os títulos e posicione cada widget na área de trabalho.
 
 Localizados na barra de ferramentas principal à esquerda do ícone de pré-visualização da contagem regressiva:

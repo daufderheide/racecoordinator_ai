@@ -1,0 +1,74 @@
+:host {
+  display: block;
+}
+
+.heat-schedule {
+  width: 100%;
+  color: var(--text-color, #f1f5f9);
+  font-size: 13px;
+  text-align: start;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.heat-schedule th,
+.heat-schedule td {
+  padding: 7px 10px;
+  text-align: start;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  vertical-align: middle;
+}
+
+.heat-schedule thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+  color: #bae6fd;
+  background: #1e293b;
+}
+
+.heat-schedule tbody tr:nth-child(odd) {
+  background: rgba(15, 23, 42, 0.26);
+}
+
+.heat-schedule tbody tr.is-current {
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.heat-schedule tbody th {
+  color: #bae6fd;
+}
+
+.heat-status {
+  white-space: nowrap;
+}
+
+.heat-status.is-active {
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.heat-lane-column {
+  min-width: 96px;
+}
+
+.heat-lane {
+  border-inline-start: 3px solid var(--heat-lane-color, transparent);
+}
+
+.heat-driver,
+.heat-team,
+.heat-lane-empty {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heat-team,
+.heat-lane-empty {
+  opacity: 0.72;
+}

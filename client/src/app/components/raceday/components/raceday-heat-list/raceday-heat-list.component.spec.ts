@@ -3,6 +3,7 @@ import { BehaviorSubject } from "rxjs";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { RaceState } from "@app/proto/antigravity";
 import { Heat } from "@app/race/heat";
 import { RaceFlagService } from "@app/services/race-flag.service";
 import { RaceTimeService } from "@app/services/race-time.service";
@@ -145,6 +146,35 @@ describe("RacedayHeatListComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("updates schedule status when the current heat changes and when the race ends", () => {
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      customSettings: { heatListLayout: "table", highlightCurrentHeat: false },
+    });
+    fixture.componentRef.setInput("heats", [...mockHeats, { heatNumber: 3 }]);
+    fixture.componentRef.setInput("raceState", RaceState.RACING);
+    fixture.detectChanges();
+
+    const status = (number: number) =>
+      fixture.nativeElement
+        .querySelector(`[data-heat-number="${number}"] .heat-status`)
+        .textContent.trim();
+    expect(status(1)).toBe("HR_CURRENT_HEAT_BADGE");
+    expect(status(2)).toBe("HL_TABLE_UPCOMING");
+    expect(fixture.nativeElement.querySelector("tr.is-current")).toBeNull();
+
+    fixture.componentRef.setInput("currentHeat", { heatNumber: 2 });
+    fixture.detectChanges();
+    expect(status(1)).toBe("HL_TABLE_COMPLETED");
+    expect(status(2)).toBe("HR_CURRENT_HEAT_BADGE");
+    expect(status(3)).toBe("HL_TABLE_UPCOMING");
+
+    fixture.componentRef.setInput("raceState", RaceState.RACE_OVER);
+    fixture.detectChanges();
+    expect(status(2)).toBe("HL_TABLE_COMPLETED");
+    expect(status(3)).toBe("HL_TABLE_UPCOMING");
   });
 
   it("should process heats and map driver nickname (never driver full name)", () => {

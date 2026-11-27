@@ -57,6 +57,8 @@ Selezionare un formato preimpostato (**16:9**, **16:10**, **4:3**, **21:9**, **P
 
 ### Libreria dei widget e controlli di configurazione {: #widget-panels }
 
+Nel widget **Elenco manche**, apri **Contenuto** e scegli **Tabella** in **Layout** per mostrare una riga per manche. Puoi visualizzare stato, gruppi e assegnazioni di corsia. Le assegnazioni usano i nomi attuali di piloti e squadre. Puoi disattivare i colori delle corsie separatamente. Scegli **Schede** per visualizzare le schede e i riepiloghi delle manche.
+
 Per creare un pannello dei record, aggiungi etichette e scegli un detentore o un valore in **Origine del contenuto**. Puoi usare il miglior giro assoluto, il miglior punteggio assoluto, il giro più veloce della gara in corso e quello della manche in corso. I numeri possono avere da zero a tre decimali. Quando mancano i dati, scegli trattini, uno spazio vuoto o un testo personalizzato. Usa le etichette di testo per i titoli e posiziona ogni widget nell’area di lavoro.
 
 Posizionati sulla barra degli strumenti principale a sinistra dell'icona di anteprima conto alla rovescia:

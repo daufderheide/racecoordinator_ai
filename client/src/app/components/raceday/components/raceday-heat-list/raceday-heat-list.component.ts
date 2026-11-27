@@ -32,6 +32,7 @@ import {
   calculateOptimalSummaryHeaderFontSize,
   calculateOptimalSummaryRowFontSize,
 } from "./raceday-heat-list-scaler";
+import { RacedayHeatTableComponent } from "./raceday-heat-table.component";
 
 export interface ProcessedHeatLane {
   laneNumber: number;
@@ -60,6 +61,7 @@ export interface ProcessedHeat {
   group: number;
   groupName: string;
   hasGroup: boolean;
+  isActive: boolean;
   isCurrent: boolean;
   isCompleted: boolean;
   showSummary: boolean;
@@ -74,13 +76,19 @@ export interface ProcessedHeat {
   styleUrls: ["./raceday-heat-list.component.css"],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PartTextStyleDirective, CommonModule, TranslatePipe],
+  imports: [
+    PartTextStyleDirective,
+    CommonModule,
+    TranslatePipe,
+    RacedayHeatTableComponent,
+  ],
 })
 export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
   widget = input<AbsoluteWidgetNode | null>(null);
   track = input<Track | undefined>(undefined);
   race = input<any>(undefined);
   currentHeat = input<Heat | undefined>(undefined);
+  raceState = input<RaceState>();
   heats = input<any[]>([]);
   parent = input<any>(undefined);
   currentFlagUrl = input<string>("");
@@ -141,9 +149,15 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     return this.widget()?.customSettings?.["highlightCurrentHeat"] !== false;
   });
 
-  scaleToWindow = computed(() => {
-    return this.widget()?.customSettings?.["scaleToWindow"] === true;
-  });
+  tableLayout = computed(
+    () => this.widget()?.customSettings?.["heatListLayout"] === "table",
+  );
+
+  scaleToWindow = computed(
+    () =>
+      !this.tableLayout() &&
+      this.widget()?.customSettings?.["scaleToWindow"] === true,
+  );
 
   heatColumnsSetting = computed(() => {
     return this.widget()?.customSettings?.["heatColumns"] || "auto";
@@ -264,7 +278,8 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
     const curHeatNum = cur?.heatNumber ?? -1;
     const trackObj = this.track();
     const raceObj = this.race() ?? this.parent()?.race;
-    const isRaceOver = this.parent()?.raceState === RaceState.RACE_OVER;
+    const isRaceOver =
+      (this.raceState() ?? this.parent()?.raceState) === RaceState.RACE_OVER;
 
     return rawHeats.map((h, idx) =>
       this.buildProcessedHeat(
@@ -331,6 +346,7 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
       group: groupNum,
       groupName,
       hasGroup,
+      isActive,
       isCurrent,
       isCompleted,
       showSummary,
@@ -812,22 +828,26 @@ export class RacedayHeatListComponent implements AfterViewInit, OnDestroy {
   });
 
   constructor() {
-    effect(() => {
+    effect((onCleanup) => {
       const cur = this.currentHeat();
+      const table = this.tableLayout();
       const shouldAutoScroll =
-        this.autoScrollToCurrent() && !this.scaleToWindow();
+        this.autoScrollToCurrent() && (table || !this.scaleToWindow());
       if (!cur || !shouldAutoScroll) return;
 
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const container = this.scrollContainer()?.nativeElement;
         if (!container) return;
         const activeCard = container.querySelector(
-          `#heat-card-${cur.heatNumber}`,
+          table
+            ? `[data-heat-number="${cur.heatNumber}"]`
+            : `#heat-card-${cur.heatNumber}`,
         ) as HTMLElement;
         if (activeCard) {
           activeCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }, 50);
+      onCleanup(() => clearTimeout(timer));
     });
   }
 

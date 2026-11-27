@@ -237,6 +237,30 @@ public class CustomUITaskHandlerTest {
   }
 
   @Test
+  public void testHeatListTableSettingsSurviveLayoutUpdateAndRead() {
+    String id = "heat-list-table-layout";
+    SqliteRepository<CustomUI> repository =
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
+    repository.save(
+        new CustomUI("Heat Schedule", false, "{}", null, null, null, null, null, id, null));
+    String layoutJson =
+        "{\"widgets\":[{\"id\":\"heats\",\"widgetType\":\"heat-list\",\"customSettings\":{"
+            + "\"heatListLayout\":\"table\",\"heatTableShowStatus\":false,"
+            + "\"heatTableShowLaneColors\":false}}]}";
+    CustomUI edited =
+        new CustomUI("Heat Schedule", false, layoutJson, null, null, null, null, null, id, null);
+    when(handler.getPathParam(ctx, "id")).thenReturn(id);
+    when(handler.getBody(ctx, CustomUI.class)).thenReturn(edited);
+    handler.updateCustomUI(ctx);
+
+    org.mockito.Mockito.clearInvocations(handler);
+    handler.getCustomUI(ctx);
+    ArgumentCaptor<CustomUI> restored = ArgumentCaptor.forClass(CustomUI.class);
+    verify(handler).setJson(eq(ctx), restored.capture());
+    assertEquals(layoutJson, restored.getValue().getLayoutJson());
+  }
+
+  @Test
   public void testRecordLabelSettingsSurviveLayoutUpdateAndRead() {
     String id = "record-label-layout";
     SqliteRepository<CustomUI> repository =
