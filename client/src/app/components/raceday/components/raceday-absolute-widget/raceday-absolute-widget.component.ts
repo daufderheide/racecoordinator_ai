@@ -14,6 +14,10 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { Subscription } from "rxjs";
+import { isDriverResultsWidget } from "@app/components/driver-results/driver-results-layout.model";
+import { DriverResultsSectionWidgetComponent } from "@app/components/driver-results/driver-results-section-widget.component";
+import { HeatResultsWidgetComponent } from "@app/components/heat-results/heat-results-widget.component";
+import { RaceStandingsWidgetComponent } from "@app/components/race-results/race-standings-widget.component";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
 import { RacedayCountdownComponent } from "@app/components/raceday/components/raceday-countdown/raceday-countdown.component";
@@ -88,6 +92,9 @@ import { shadowFor, withOpacity } from "@app/utils/widget-style.utils";
     RacedayLaneColumnComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
+    HeatResultsWidgetComponent,
+    RaceStandingsWidgetComponent,
+    DriverResultsSectionWidgetComponent,
     RacedayHeatListComponent,
     RacedayImageComponent,
     RacedayLabelComponent,
@@ -368,6 +375,11 @@ export class RacedayAbsoluteWidgetComponent
       return LIFTED_Z + (w.zIndex || 100);
     }
     return w.zIndex || 100;
+  }
+
+  get driverResultsSection() {
+    const type = this.widget().widgetType;
+    return isDriverResultsWidget(type) ? type : null;
   }
 
   get widgetLabel(): string {

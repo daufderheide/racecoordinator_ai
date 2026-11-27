@@ -20,6 +20,12 @@ L'Editor di Layout è accessibile da diverse posizioni all'interno dell'applicaz
 - **Annulla Modifiche**: Uscire o navigare verso un'altra schermata con modifiche non salvate mostra il consueto modale di conferma per l'annullamento, proteggendo dalla perdita di dati.
 - **Annulla / Ripeti**: Pienamente integrato con le scorciatoie da tastiera standard (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> e <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).
 
+Per personalizzare la schermata dei risultati della manche, crea un layout dal modello **Risultati manche**. Sposta o ridimensiona il selettore e la classifica. In **Contenuto** puoi scegliere le colonne e i colori delle corsie. Salva il layout e scegli **Layout dei risultati** nella schermata dei risultati. La scelta viene salvata nel browser e vale anche per le gare aperte dalla cronologia.
+
+Per la classifica generale, usa il modello **Risultati gara**. Sposta o ridimensiona il widget e scegli le colonne in **Contenuto**. Salva il layout e selezionalo in **Layout dei risultati**, per una gara in corso o aperta dalla cronologia.
+
+Usa il modello **Risultati del pilota** per disporre le statistiche, la posizione e le partecipazioni alle manche. Puoi aggiungere la valutazione delle previsioni, visibile quando i dati sono disponibili. Salva il layout, apri i risultati di un pilota e selezionalo in **Layout dei risultati**. La scelta è indipendente e si applica anche alle gare aperte dalla cronologia.
+
 ---
 
 ## Azioni della Barra degli Strumenti

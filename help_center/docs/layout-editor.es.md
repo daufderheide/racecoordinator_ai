@@ -20,6 +20,12 @@ Se puede acceder al Editor de Diseños desde varias ubicaciones de la aplicació
 - **Descartar Cambios**: Al salir o navegar hacia otra página con cambios no guardados, se muestra el modal estándar de confirmación de descarte, protegiendo contra la pérdida de datos.
 - **Deshacer / Rehacer**: Totalmente integrado con los controles estándar (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> y <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).
 
+Para diseñar la pantalla de resultados de manga, cree un diseño con la plantilla **Resultados de manga**. Mueva o cambie el tamaño del selector y la clasificación. Use **Contenido** para elegir las columnas y los colores de carril. Guarde el diseño y selecciónelo en la pantalla de resultados en **Diseño de resultados**. La selección se guarda en el navegador y también se aplica a carreras del historial.
+
+Para la clasificación general, use la plantilla **Resultados de carrera**. Mueva o redimensione la clasificación y elija las columnas visibles en **Contenido**. Guarde el diseño y selecciónelo en **Diseño de resultados** en la página de resultados, tanto en directo como desde el historial.
+
+Usa la plantilla **Resultados del piloto** para organizar las estadísticas, la posición y las participaciones en mangas. También puedes añadir la evaluación de la predicción, que se muestra cuando hay datos. Guarda el diseño, abre los resultados de un piloto y selecciónalo en **Diseño de resultados**. La selección se guarda por separado y se aplica a las carreras del historial.
+
 ---
 
 ## Acciones de la Barra de Herramientas

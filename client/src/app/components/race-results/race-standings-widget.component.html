@@ -1,0 +1,66 @@
+@if (rows().length) {
+  <div class="race-standings-widget standings-widget">
+    <table
+      [attr.aria-label]="'UE_WIDGET_TYPE_RACE_RESULTS_STANDINGS' | translate"
+    >
+      <thead>
+        <tr>
+          @for (column of columns(); track column.key) {
+            <th scope="col" [class.numeric]="column.key !== 'driver'">
+              {{ column.labelKey | translate }}
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.driver.entity_id || row.visualIndex) {
+          <tr>
+            @for (column of columns(); track column.key) {
+              @switch (column.key) {
+                @case ("driver") {
+                  <th scope="row">
+                    @let navigation = view()?.driverNavigation;
+                    @let driverId = navigation?.getId(row.driver);
+                    @let driverName = row.driver.nickname || row.driver.name;
+                    @if (navigation && driverId) {
+                      <a
+                        [href]="'/driver-results/' + driverId"
+                        target="_blank"
+                        rel="noopener"
+                        (click)="navigation.open(driverId, $event)"
+                        >{{ driverName }}</a
+                      >
+                    } @else {
+                      {{ driverName }}
+                    }
+                  </th>
+                }
+                @case ("score") {
+                  <td class="numeric">
+                    {{ row.score | number: view()?.scoreFormat }}
+                  </td>
+                }
+                @case ("gap1st") {
+                  <td class="numeric">
+                    {{ formatGap(row.gap1st, row.rank === 1) || "—" }}
+                  </td>
+                }
+                @default {
+                  <td class="numeric">
+                    {{
+                      row[column.key] > 0 || column.key === "laps"
+                        ? (row[column.key] | number: column.format)
+                        : "—"
+                    }}
+                  </td>
+                }
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <p>{{ "RD_ERROR_NO_DRIVERS" | translate }}</p>
+}

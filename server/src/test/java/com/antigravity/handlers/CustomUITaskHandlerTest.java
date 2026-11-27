@@ -527,6 +527,42 @@ public class CustomUITaskHandlerTest {
   }
 
   @Test
+  public void testHeatResultsLayoutPersistsPurposeAndWidgetSettings() {
+    assertResultsLayoutPersists("heat-results");
+  }
+
+  @Test
+  public void testRaceResultsLayoutPersistsPurposeAndWidgetSettings() {
+    assertResultsLayoutPersists("race-results");
+  }
+
+  private void assertResultsLayoutPersists(String purpose) {
+    String id = "custom-" + purpose + "-layout";
+    SqliteRepository<CustomUI> repository =
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
+    repository.save(
+        new CustomUI("Club Results", false, "{}", null, null, null, null, null, id, null));
+    String layoutJson =
+        "{\"purpose\":\""
+            + purpose
+            + "\",\"widgets\":[{\"id\":\"standings\","
+            + "\"widgetType\":\""
+            + purpose
+            + "-standings\",\"customSettings\":{\"showGap\":false}}]}";
+    CustomUI edited =
+        new CustomUI("Club Results", false, layoutJson, null, null, null, null, null, id, null);
+    when(handler.getPathParam(ctx, "id")).thenReturn(id);
+    when(handler.getBody(ctx, CustomUI.class)).thenReturn(edited);
+    handler.updateCustomUI(ctx);
+
+    org.mockito.Mockito.clearInvocations(handler);
+    handler.getCustomUI(ctx);
+    ArgumentCaptor<CustomUI> restored = ArgumentCaptor.forClass(CustomUI.class);
+    verify(handler).setJson(eq(ctx), restored.capture());
+    assertEquals(layoutJson, restored.getValue().getLayoutJson());
+  }
+
+  @Test
   public void testEnsureDefaultCustomUIs_MigratesLegacyFuelId2() {
     SqliteRepository<CustomUI> repo =
         new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);

@@ -1,9 +1,13 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of, Subject } from "rxjs";
+import { CustomSelectComponent } from "@app/components/shared/custom-select/custom-select.component";
+import { resultsLayoutTemplate } from "@app/components/shared/results-layout/results-layout.model";
 import { DataService } from "@app/data.service";
 import { Car } from "@app/models/car";
+import { CustomUI } from "@app/models/custom-ui";
 import { Driver } from "@app/models/driver";
 import { HeatRanking } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
@@ -12,6 +16,8 @@ import { Role } from "@app/models/role";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
+import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -44,6 +50,7 @@ describe("DefaultRaceResultsComponent", () => {
   let mockRouter: any;
   let mockDataService: any;
   let mockAuthService: any;
+  let customLayouts: BehaviorSubject<CustomUI[]>;
 
   // Reusable test helpers
   const createDriver = (id: string, name: string, nickname: string): Driver => {
@@ -110,6 +117,7 @@ describe("DefaultRaceResultsComponent", () => {
   };
 
   beforeEach(async () => {
+    customLayouts = new BehaviorSubject<CustomUI[]>([]);
     participantsSubject = new BehaviorSubject<RaceParticipant[]>([]);
     heatsSubject = new BehaviorSubject<Heat[]>([]);
     selectedRaceSubject = new BehaviorSubject<Race | undefined>(undefined);
@@ -213,6 +221,11 @@ describe("DefaultRaceResultsComponent", () => {
         { provide: PrintService, useValue: mockPrintService },
         { provide: TranslationService, useValue: mockTranslationService },
         {
+          provide: CustomUiService,
+          useValue: { isInitialized: () => true, customUIs$: customLayouts },
+        },
+        { provide: CustomWidgetService, useValue: null },
+        {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
@@ -251,6 +264,66 @@ describe("DefaultRaceResultsComponent", () => {
 
   afterEach(() => {
     fixture.destroy();
+  });
+
+  it("uses the selected layout with archived race standings and keeps the standard print view available", () => {
+    const saved = {
+      ...resultsLayoutTemplate("race-results"),
+      entity_id: "history-layout",
+    };
+    customLayouts.next([saved]);
+    const historyRace = {
+      name: "Club Final",
+      historyRecordId: "history-1",
+    } as unknown as Race;
+    selectedRaceSubject.next(historyRace);
+    const team = createDriver("team-7", "Red Team", "");
+    participantsSubject.next([
+      createParticipant("p-7", team, 1, 32.75, 15, 4.5, 5, 5, 27, 1),
+    ]);
+    fixture.detectChanges();
+
+    const picker = fixture.debugElement.query(
+      By.css(".results-layout-picker app-custom-select"),
+    ).componentInstance as CustomSelectComponent;
+    picker.onChange(saved.entity_id);
+    fixture.detectChanges();
+    expect(component.isReviewingPastRace).toBeTrue();
+    expect(
+      fixture.nativeElement.querySelector(".review-past-race-banner")
+        .textContent,
+    ).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector(".race-standings-widget table")
+        .textContent,
+    ).toContain("Red Team");
+    expect(
+      fixture.nativeElement.querySelector(".race-standings-widget table")
+        .textContent,
+    ).toContain("32.75");
+    expect(fixture.nativeElement.querySelector(".results-table")).toBeNull();
+
+    const driverLink: HTMLAnchorElement = fixture.nativeElement.querySelector(
+      ".race-standings-widget [scope='row'] a",
+    );
+    expect(driverLink.getAttribute("href")).toBe("/driver-results/team-7");
+    const openWindow = spyOn(window, "open").and.returnValue(null);
+    driverLink.click();
+    expect(openWindow).toHaveBeenCalledOnceWith(
+      "/driver-results/team-7",
+      "_blank",
+    );
+
+    component.onBeforePrint();
+    expect(
+      fixture.nativeElement.querySelector(".results-table"),
+    ).not.toBeNull();
+    component.onAfterPrint();
+    picker.onChange("");
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector(".race-standings-widget"),
+    ).toBeNull();
   });
 
   it("should create", () => {

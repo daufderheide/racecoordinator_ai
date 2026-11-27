@@ -878,6 +878,26 @@
   margin-bottom: 0;
 }
 
+.custom-standing {
+  padding: 18px;
+}
+
+.custom-standing .overall-table {
+  min-width: 884px;
+}
+
+.custom-standing .overall-grid {
+  grid-template-columns: repeat(9, minmax(96px, 1fr));
+}
+
+.custom-standing .header-cell {
+  padding: 10px 6px;
+}
+
+.custom-standing .driver-row {
+  height: 60px;
+}
+
 .trajectory-btn {
   background: rgba(56, 189, 248, 0.12);
   border: 1px solid rgba(56, 189, 248, 0.3);

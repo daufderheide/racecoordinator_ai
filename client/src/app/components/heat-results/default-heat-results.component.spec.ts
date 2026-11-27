@@ -8,6 +8,7 @@ import { CustomSelectComponent } from "@app/components/shared/custom-select/cust
 import { HeatDriverExpanderComponent } from "@app/components/shared/heat-driver-expander/heat-driver-expander.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
+import { CustomUI } from "@app/models/custom-ui";
 import { Driver } from "@app/models/driver";
 import { Race } from "@app/models/race";
 import { Role } from "@app/models/role";
@@ -15,6 +16,8 @@ import { RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
+import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -23,6 +26,7 @@ import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultHeatResultsComponent } from "./default-heat-results.component";
+import { heatResultsLayoutTemplate } from "./heat-results-layout.model";
 import { HeatResultsHarness } from "./testing/heat-results.harness";
 
 @Pipe({ name: "translate" })
@@ -46,6 +50,7 @@ describe("DefaultHeatResultsComponent", () => {
   let mockTranslationService: any;
   let mockDataService: any;
   let mockAuthService: any;
+  let customLayouts: BehaviorSubject<CustomUI[]>;
 
   beforeEach(async () => {
     mockRouter = {
@@ -156,6 +161,7 @@ describe("DefaultHeatResultsComponent", () => {
       currentRole: Role.VIEWER,
     };
 
+    customLayouts = new BehaviorSubject<CustomUI[]>([]);
     await TestBed.configureTestingModule({
       imports: [DefaultHeatResultsComponent, MockTranslatePipe],
       providers: [
@@ -174,6 +180,11 @@ describe("DefaultHeatResultsComponent", () => {
           useValue: mockAuthService,
         },
         { provide: Router, useValue: mockRouter },
+        {
+          provide: CustomUiService,
+          useValue: { customUIs$: customLayouts, isInitialized: () => true },
+        },
+        { provide: CustomWidgetService, useValue: null },
       ],
     }).compileComponents();
   });
@@ -186,6 +197,54 @@ describe("DefaultHeatResultsComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("shows the selected saved heat in the custom layout during Race History review", () => {
+    const previous = mockRaceService.getCurrentHeat() as Heat;
+    const second = new Heat(
+      "saved-h2",
+      2,
+      [previous.heatDrivers[1]],
+      ["hd2"],
+      true,
+    );
+    mockRaceService.getHeats.and.returnValue([previous, second]);
+    mockRaceService.getRace.and.returnValue({
+      ...mockRaceService.getRace(),
+      historyRecordId: "saved-race",
+    });
+    component["loadRaceData"]();
+    const saved = {
+      ...heatResultsLayoutTemplate(),
+      entity_id: "test-results-layout",
+      name: "Club Results",
+    };
+    customLayouts.next([saved]);
+    fixture.detectChanges();
+    const layoutSelect = fixture.debugElement.query(
+      By.css(".results-layout-picker app-custom-select"),
+    ).componentInstance as CustomSelectComponent;
+    layoutSelect.onChange(saved.entity_id);
+    fixture.detectChanges();
+    const heatSelect = fixture.debugElement.query(
+      By.css(".heat-selector-widget app-custom-select"),
+    ).componentInstance as CustomSelectComponent;
+    heatSelect.onChange(1);
+    fixture.detectChanges();
+
+    expect(component.isReviewingPastRace).toBeTrue();
+    expect(component.selectedHeatIndex).toBe(1);
+    const table = (fixture.nativeElement as HTMLElement).querySelector(
+      ".heat-standings-widget table",
+    );
+    expect(table?.textContent).toContain("Bobby");
+    expect(table?.textContent).not.toContain("Ally");
+
+    layoutSelect.onChange("");
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector(".heat-standings-widget"),
+    ).toBeNull();
   });
 
   it("should render dual graph containers in stacked layout with axis titles and dual legends", () => {

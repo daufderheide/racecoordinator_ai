@@ -45,6 +45,10 @@ export type WidgetType =
   | "on-deck"
   | "next-heat"
   | "heat-list"
+  | "heat-results-selector"
+  | "heat-results-standings"
+  | "race-results-standings"
+  | DriverResultsWidgetType
   | "image"
   | "label"
   | "grid"
@@ -238,7 +242,19 @@ export interface LaneColumnWidgetSettings {
 
 export type LayoutScaleMode = "letterbox" | "stretch" | "fit-width";
 
+export type DriverResultsWidgetType =
+  | "driver-results-stats"
+  | "driver-results-standing"
+  | "driver-results-heats"
+  | "driver-results-prediction";
+
+export type ResultsLayoutPurpose =
+  | "heat-results"
+  | "race-results"
+  | "driver-results";
+
 export interface LayoutConfig {
+  purpose?: ResultsLayoutPurpose;
   widgets: AbsoluteWidgetNode[];
   baseWidth?: number;
   baseHeight?: number;
@@ -347,6 +363,9 @@ export class Settings {
   customExportTemplatePath?: string;
 
   // Theme system
+  heatResultsLayoutId?: string;
+  raceResultsLayoutId?: string;
+  driverResultsLayoutId?: string;
   activeThemeId?: string; // entity_id of the active theme (server-side)
   raceThemeOverrides: { [raceId: string]: string } = {}; // race entity_id → theme entity_id
 

@@ -4,6 +4,11 @@ import { LaneGridRepairHelper } from "@app/components/raceday/utils/lane-grid-re
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
 import {
+  readResultsLayout,
+  RESULTS_LAYOUTS,
+  resultsLayoutTemplate,
+} from "@app/components/shared/results-layout/results-layout.model";
+import {
   handleBringGridToFront,
   handleDeleteGrid,
   handleDetachGrid,
@@ -530,10 +535,13 @@ export function resetLayout(
   editingSettings: Settings,
   comp: any,
 ): void {
-  const data = applyResetLayout(ui, editingSettings);
-  if (data?.defaultLayout) {
-    saveLayoutConfig(ui, data.defaultLayout);
-    comp.syncRacedayPreview?.(data.defaultLayout);
+  const resultsLayout = readResultsLayout(ui);
+  const layout = resultsLayout
+    ? parseLayoutConfig(resultsLayoutTemplate(resultsLayout.purpose))
+    : applyResetLayout(ui, editingSettings)?.defaultLayout;
+  if (layout) {
+    saveLayoutConfig(ui, layout);
+    comp.syncRacedayPreview?.(layout);
   }
   comp.selectedWidgetId = null;
   comp.activeGridSession = null;
@@ -549,7 +557,10 @@ export function clearLayout(
   editingSettings: Settings,
   comp: any,
 ): void {
-  const layout = applyClearLayout(ui, editingSettings);
+  const resultsLayout = readResultsLayout(ui);
+  const layout = resultsLayout
+    ? { ...resultsLayout, widgets: [] }
+    : applyClearLayout(ui, editingSettings);
   saveLayoutConfig(ui, layout);
   comp.selectedWidgetId = null;
   comp.activeGridSession = null;
@@ -698,9 +709,15 @@ export async function handleStartNewLayout(
   comp.isSaving = true;
   try {
     const templateSource = resolveTemplateSource(templateId, comp.allLayouts);
+    const resultsLayout =
+      templateSource && templateSource !== "empty"
+        ? readResultsLayout(templateSource)
+        : null;
+    const labelKey = resultsLayout
+      ? RESULTS_LAYOUTS[resultsLayout.purpose].labelKey
+      : "UE_DEFAULT_CUSTOM_UI_NAME";
     const template = buildNewLayoutTemplate(
-      comp.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME") ||
-        "New UI Layout",
+      comp.translationService.translate(labelKey) || "New UI Layout",
       comp.allLayouts,
       templateSource,
     );

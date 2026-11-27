@@ -1,15 +1,160 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { HeatResultsHelper } from "@app/components/heat-results/testing/heat-results_helper";
+import { CustomSelectHarnessE2e } from "@app/components/shared/custom-select/testing/custom-select.harness.e2e";
+import { resultsLayoutTemplate } from "@app/components/shared/results-layout/results-layout.model";
+import { RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { RaceResultsHarnessE2e } from "./testing/race-results.harness.e2e";
 import { RaceResultsHelper } from "./testing/race-results_helper";
 
+const savedLayout = {
+  ...resultsLayoutTemplate("race-results"),
+  entity_id: "club-standings",
+  name: "Club Race Results",
+};
+
+async function openSavedRaceResults(page: Page) {
+  await TestSetupHelper.waitForLocalization(
+    page,
+    "en",
+    page.goto("/race-results"),
+  );
+  const picker = new CustomSelectHarnessE2e(
+    page.locator(".results-layout-picker app-custom-select"),
+  );
+  await picker.toggle();
+  await picker.selectOptionByValue(savedLayout.entity_id);
+  return page.locator(".race-standings-widget table");
+}
+
 test.describe("Race Results Visuals", () => {
   test.beforeEach(async ({ page }) => {
-    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.setupStandardMocks(page, {
+      skipIntro: true,
+      walkthroughSeen: true,
+    });
     await TestSetupHelper.disableAnimations(page);
     await page.setViewportSize({ width: 1600, height: 900 });
+  });
+
+  test("should update the custom Race Results standings from a live race", async ({
+    page,
+  }) => {
+    const layout = JSON.parse(savedLayout.layoutJson!);
+    layout.widgets[0].customSettings = { showAverageLap: false };
+    await TestSetupHelper.setupCustomUiMocks(page, [
+      { ...savedLayout, layoutJson: JSON.stringify(layout) },
+    ]);
+    const mockData = RaceResultsHelper.createMockRaceData();
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+    const table = await openSavedRaceResults(page);
+    await table
+      .getByRole("rowheader", { name: "Alice", exact: true })
+      .waitFor();
+
+    const [alice, bob, charlie] = mockData.race.drivers;
+    await TestSetupHelper.mockRaceData(page, {
+      overallStandingsUpdate: {
+        participants: [
+          {
+            ...bob,
+            rank: 1,
+            rankValue: 110,
+            totalLaps: 5.25,
+            bestLapTime: 9.871,
+          },
+          { ...alice, rank: 2, gapLeader: 1.125 },
+          charlie,
+        ],
+      },
+    });
+    await table
+      .getByRole("row")
+      .nth(1)
+      .getByText("5.25", { exact: true })
+      .waitFor();
+    await page.mouse.move(0, 0);
+    await expect(page.locator("app-race-results")).toHaveScreenshot(
+      "race-results-custom-live.png",
+      {
+        mask: [page.locator(".header-time")],
+        maskColor: "#0d1724",
+      },
+    );
+  });
+
+  test("should show archived standings in the custom Race Results layout from Race History", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupCustomUiMocks(page, [savedLayout]);
+    const raceName = "Daytona 500 Championship";
+    const archive = RaceResultsHelper.createMockRaceData();
+    archive.race.race.name = raceName;
+    archive.race.drivers[0].totalLaps = 43.75;
+    archive.race.drivers[0].driver.name = "Archived Alice";
+    archive.race.drivers[0].driver.nickname = "Archived Alice";
+    const completedHeat = {
+      ...archive.race.currentHeat,
+      completed: true,
+      heatDrivers: archive.race.currentHeat.heatDrivers.map((entry, index) => {
+        const participant = archive.race.drivers[index];
+        const driverReference = { model: participant.driver.model };
+        return {
+          ...entry,
+          driver: { ...participant, driver: driverReference },
+          actualDriver: driverReference,
+        };
+      }),
+    };
+
+    await page.route("**/api/history/races/hist_off1/load", async (route) => {
+      // Publish the restored race with matching totals in its heat driver references.
+      await RaceResultsHelper.injectMockRaceData(page, {
+        ...archive,
+        race: {
+          ...archive.race,
+          state: RaceState.RACE_OVER,
+          heats: [completedHeat],
+          currentHeat: completedHeat,
+        },
+        raceState: RaceState.RACE_OVER,
+        heat: completedHeat,
+      });
+      await route.fulfill({ status: 200, body: "Race loaded" });
+    });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/raceday-setup"),
+    );
+    await page.locator(".setup-menu-item").first().click();
+    await page.locator(".setup-menu-dropdown-item").nth(1).click();
+    const raceCard = page
+      .locator("app-race-history-dialog .race-card")
+      .filter({ hasText: raceName });
+    const load = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/history/races/hist_off1/load") &&
+        response.request().method() === "POST" &&
+        response.ok(),
+    );
+    await raceCard.locator(".btn-open-race").click();
+    await load;
+    await page.waitForURL(/\/raceday(?:\?|$)/);
+    const table = await openSavedRaceResults(page);
+    await table
+      .getByRole("rowheader", { name: "Archived Alice", exact: true })
+      .waitFor();
+    await table.getByText("43.75", { exact: true }).waitFor();
+    await page.mouse.move(0, 0);
+    await expect(page.locator("app-race-results")).toHaveScreenshot(
+      "race-results-custom-history.png",
+      {
+        mask: [page.locator(".header-time")],
+        maskColor: "#0d1724",
+      },
+    );
   });
 
   test("should render initial standings table and SVG graphs", async ({

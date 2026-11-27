@@ -61,6 +61,7 @@ import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { ResultsLayoutComponent } from "@app/components/shared/results-layout/results-layout.component";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { SettingsService } from "@app/services/settings.service";
 
@@ -80,6 +81,7 @@ import { SettingsService } from "@app/services/settings.service";
     RouterModule,
     PdfExportDialogComponent,
     BrowserNavigationComponent,
+    ResultsLayoutComponent,
   ],
 })
 export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
@@ -115,6 +117,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
 
   private settingsService = inject(SettingsService);
   protected showPdfExportDialog = false;
+  protected isPrinting = false;
   protected defaultIncludeBackground = true;
 
   constructor(
@@ -271,6 +274,18 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
   @HostListener("window:pagehide")
   onPageHide() {
     this.raceConnectionService.disconnect();
+  }
+
+  @HostListener("window:beforeprint")
+  onBeforePrint(): void {
+    this.isPrinting = true;
+    this.cdr.detectChanges();
+  }
+
+  @HostListener("window:afterprint")
+  onAfterPrint(): void {
+    this.isPrinting = false;
+    this.cdr.detectChanges();
   }
 
   protected getScoreFormat(): string {

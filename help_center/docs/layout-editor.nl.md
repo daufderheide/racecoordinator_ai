@@ -20,6 +20,12 @@ De Lay-out Editor is toegankelijk vanaf verschillende locaties binnen de applica
 - **Wijzigingen Verwerpen**: Bij het verlaten of navigeren met niet-opgeslagen wijzigingen verschijnt het standaard bevestigingsvenster om gegevensverlies te voorkomen.
 - **Ongedaan Maken / Opnieuw**: Volledig geïntegreerd met standaardsneltoetsen (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> en <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).
 
+Maak een indeling met de sjabloon **Heatresultaten** om het resultatenscherm te ontwerpen. Verplaats of vergroot de heatkiezer en het klassement. Kies onder **Inhoud** de kolommen en baankleuren. Sla de indeling op, open **Heatresultaten** en kies deze bij **Resultatenindeling**. Je browser onthoudt de keuze voor lopende races en races uit de racegeschiedenis.
+
+Gebruik de sjabloon **Raceresultaten** voor het algemeen klassement. Verplaats het klassement of pas het formaat aan en kies onder **Inhoud** de zichtbare kolommen. Sla de indeling op en kies deze bij **Resultatenindeling**, voor een lopende race of een race uit de racegeschiedenis.
+
+Gebruik de sjabloon **Rijdersresultaten** om de rijdersstatistieken, positie en heatdeelnames te rangschikken. Je kunt ook de evaluatie van voorspellingen toevoegen, die verschijnt zodra er gegevens zijn. Sla de indeling op, open de resultaten van een rijder en kies deze bij **Resultatenindeling**. De keuze staat los van andere resultatenindelingen en geldt ook voor races uit de racegeschiedenis.
+
 ---
 
 ## Werkbalkacties

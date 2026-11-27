@@ -1,6 +1,7 @@
 import { forkJoin, of } from "rxjs";
 import { catchError } from "rxjs/operators";
 import { LaneViewMigrationHelper } from "@app/components/raceday/utils/lane-view-migration.helper";
+import { readResultsLayout } from "@app/components/shared/results-layout/results-layout.model";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -825,7 +826,11 @@ export function refreshUiEditorDisplayProperties(comp: any): void {
   comp.parsedLayouts?.clear();
   comp.displayThemes = sortThemesForDisplay(comp.editingState.themes);
   comp.displayCustomUIs = sortCustomUisForDisplay(
-    comp.editingState.customUIs || comp.customUiService?.getCustomUIs() || [],
+    (
+      comp.editingState.customUIs ||
+      comp.customUiService?.getCustomUIs() ||
+      []
+    ).filter((ui: CustomUI) => !readResultsLayout(ui)),
   );
   comp.displayColumnSlots = buildDisplayColumnSlots(
     comp.editingSettings?.racedayColumns,

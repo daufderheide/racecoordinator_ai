@@ -77,6 +77,27 @@
         [parent]="parentComponent()"
         [widget]="widget()"
       ></app-raceday-lane-column>
+    } @else if (
+      widget().widgetType === "heat-results-selector" ||
+      widget().widgetType === "heat-results-standings"
+    ) {
+      <app-heat-results-widget
+        [widget]="widget()"
+        [context]="parentComponent()?.heatResultsWidgetContext"
+        [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
+      />
+    } @else if (widget().widgetType === "race-results-standings") {
+      <app-race-standings-widget
+        [widget]="widget()"
+        [context]="parentComponent()?.raceStandingsWidgetContext"
+        [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
+      />
+    } @else if (driverResultsSection) {
+      <app-driver-results-section-widget
+        [section]="driverResultsSection"
+        [sections]="parentComponent()?.driverResultsSections"
+        [preview]="parentComponent()?.isUIEditorMode?.() ?? false"
+      />
     } @else if (isCustomWidget(widget().widgetType)) {
       @if (getCustomWidgetComponent(widget().widgetType)) {
         <ng-container
