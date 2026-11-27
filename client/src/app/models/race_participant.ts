@@ -42,6 +42,7 @@ export class RaceParticipant {
     public totalHeats: number = 0,
     public isStepUp: boolean = false,
     public stepUpIndex: number = 0,
+    public stepUpStatus: string = "",
   ) {}
 
   /** Slotcar for this race (#1210): a solo driver's car or a team's shared car. */

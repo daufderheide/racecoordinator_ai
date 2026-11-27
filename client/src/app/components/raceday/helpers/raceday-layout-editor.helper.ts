@@ -248,13 +248,16 @@ export class RacedayLayoutEditorHelper {
     const isLaneColumn =
       draggedType?.startsWith("lane-col:") ||
       draggedType === "drift-indicator" ||
-      draggedType === "average-score";
+      draggedType === "average-score" ||
+      draggedType === "step-up-status";
     let laneColumnKey: string | undefined = undefined;
     if (isLaneColumn) {
       if (draggedType === "drift-indicator") {
         laneColumnKey = "driftIndicator";
       } else if (draggedType === "average-score") {
         laneColumnKey = "averageScore";
+      } else if (draggedType === "step-up-status") {
+        laneColumnKey = "stepUpStatus";
       } else {
         laneColumnKey = draggedType?.substring("lane-col:".length);
       }
@@ -289,6 +292,11 @@ export class RacedayLayoutEditorHelper {
         const avgRegistry = WIDGET_REGISTRY["average-score"];
         newWidget.customSettings = avgRegistry?.defaultSettings
           ? avgRegistry.defaultSettings()
+          : {};
+      } else if (laneColumnKey === "stepUpStatus") {
+        const stepUpRegistry = WIDGET_REGISTRY["step-up-status"];
+        newWidget.customSettings = stepUpRegistry?.defaultSettings
+          ? stepUpRegistry.defaultSettings()
           : {};
       } else {
         const registryEntry = WIDGET_REGISTRY["lane-column"];

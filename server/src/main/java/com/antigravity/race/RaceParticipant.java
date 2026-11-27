@@ -44,6 +44,7 @@ public class RaceParticipant extends ServerToClientObject
   private int stepUpIndex = 0;
   private int crashes = 0;
   private boolean isDisqualified = false;
+  private String stepUpStatus = "";
   // Slotcar for this race (#1210): a solo driver's car or a team's shared car.
   private Car car;
   // A team with a car per driver uses driverCars instead of car.
@@ -132,6 +133,14 @@ public class RaceParticipant extends ServerToClientObject
 
   public void setStepUpIndex(int stepUpIndex) {
     this.stepUpIndex = stepUpIndex;
+  }
+
+  public String getStepUpStatus() {
+    return stepUpStatus != null ? stepUpStatus : "";
+  }
+
+  public void setStepUpStatus(String stepUpStatus) {
+    this.stepUpStatus = stepUpStatus != null ? stepUpStatus : "";
   }
 
   public static RaceParticipant createStepUpParticipant(int index) {

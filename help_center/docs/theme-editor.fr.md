@@ -32,3 +32,7 @@ L'Éditeur de Thèmes est accessible depuis plusieurs emplacements :
 - **Supprimer un thème** : Supprime le thème personnalisé actuel après confirmation.
 - **Visite guidée** : Lance une visite guidée interactive.
 
+## Couper le son du thème
+
+En mode édition, sélectionnez **Tout régler sur Aucun** pour couper tous les sons de la section **Audio**, y compris les sons par défaut. Utilisez **Annuler** pour rétablir les réglages précédents en une seule étape.
+

@@ -268,5 +268,18 @@ describe("DriverHeatData", () => {
       expect(heatData.userTime).toBe(0);
       expect(heatData.totalTime).toBe(0);
     });
+
+    it("should get and set stepUpStatus with fallback to participant and reset", () => {
+      expect(heatData.stepUpStatus).toBe("");
+
+      (participant as any).stepUpStatus = "Active";
+      expect(heatData.stepUpStatus).toBe("Active");
+
+      heatData.stepUpStatus = "Stepping up";
+      expect(heatData.stepUpStatus).toBe("Stepping up");
+
+      heatData.reset();
+      expect(heatData.stepUpStatus).toBe("Active");
+    });
   });
 });

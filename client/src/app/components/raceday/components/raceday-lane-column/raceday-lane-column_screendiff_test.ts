@@ -127,6 +127,28 @@ test.describe("Raceday Lane Column Standalone Widget Visuals", () => {
               lastLapsBestLapFontWeight: "bold",
             },
           },
+          {
+            id: "w-col-step-up",
+            widgetType: "lane-column",
+            x: 440,
+            y: 320,
+            width: 320,
+            height: 160,
+            zIndex: 1,
+            customSettings: {
+              columnKey: "stepUpStatus",
+              laneIndex: 0,
+              showHeader: true,
+              showBorder: true,
+              borderWidth: 2,
+              borderRadius: 8,
+              backgroundColor: "#1e293b",
+              headerBackgroundColor: "#0f172a",
+              headerTextColor: "#94a3b8",
+              valueTextColor: "#38bdf8",
+              valueFontSize: 32,
+            },
+          },
         ],
       },
     });
@@ -162,8 +184,16 @@ test.describe("Raceday Lane Column Standalone Widget Visuals", () => {
           },
         },
         drivers: [
-          { objectId: "rp1", driver: { name: "Alice" } },
-          { objectId: "rp2", driver: { name: "Bob" } },
+          {
+            objectId: "rp1",
+            stepUpStatus: "Active",
+            driver: { name: "Alice", stepUpStatus: "Active" },
+          },
+          {
+            objectId: "rp2",
+            stepUpStatus: "Pending",
+            driver: { name: "Bob", stepUpStatus: "Pending" },
+          },
         ],
         currentHeat: {
           objectId: "h1",
@@ -175,8 +205,13 @@ test.describe("Raceday Lane Column Standalone Widget Visuals", () => {
               lapCount: 14,
               lastLapTime: 5.421,
               bestLapTime: 5.123,
+              stepUpStatus: "Active",
               lapTimes: [5.601, 5.432, 5.21, 5.123, 5.34, 5.421],
-              driver: { objectId: "rp1", driver: { name: "Alice" } },
+              driver: {
+                objectId: "rp1",
+                stepUpStatus: "Active",
+                driver: { name: "Alice", stepUpStatus: "Active" },
+              },
             },
             {
               objectId: "hd2",
@@ -184,8 +219,13 @@ test.describe("Raceday Lane Column Standalone Widget Visuals", () => {
               lapCount: 12,
               lastLapTime: 5.689,
               bestLapTime: 5.25,
+              stepUpStatus: "Pending",
               lapTimes: [5.8, 5.5, 5.25, 5.689],
-              driver: { objectId: "rp2", driver: { name: "Bob" } },
+              driver: {
+                objectId: "rp2",
+                stepUpStatus: "Pending",
+                driver: { name: "Bob", stepUpStatus: "Pending" },
+              },
             },
           ],
         },
@@ -242,6 +282,26 @@ test.describe("Raceday Lane Column Standalone Widget Visuals", () => {
 
     await expect(columnCard).toHaveScreenshot(
       "raceday-lane-column-last-laps-box.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display standalone step-up status lane column widget", async ({
+    page,
+  }) => {
+    await setupRacedayWithHeat(page);
+
+    const columnCard = page.locator("app-raceday-lane-column").filter({
+      has: page.locator(".lane-col-header", { hasText: "STEP UP STATUS" }),
+    });
+    await columnCard.waitFor({ state: "visible" });
+
+    await expect(columnCard).toHaveScreenshot(
+      "raceday-lane-column-step-up-status.png",
       {
         maxDiffPixelRatio: 0.05,
         maxDiffPixels: 5000,

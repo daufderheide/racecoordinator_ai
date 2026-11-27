@@ -75,6 +75,7 @@ export class RaceParticipantConverter {
         proto.totalHeats || 0,
         proto.isStepUp || false,
         proto.stepUpIndex || 0,
+        proto.stepUpStatus || "",
       );
     });
     if (proto.driver) this.applyCars(created, proto);
@@ -126,6 +127,7 @@ export class RaceParticipantConverter {
       proto.totalHeats || 0,
       proto.isStepUp || false,
       proto.stepUpIndex || 0,
+      proto.stepUpStatus || "",
     );
     const cached = this.cache.get(id);
     if (cached && proto.rank !== undefined && proto.rank !== null) {
@@ -230,6 +232,8 @@ export class RaceParticipantConverter {
       cached.isStepUp = proto.isStepUp;
     if (proto.stepUpIndex !== undefined && proto.stepUpIndex !== null)
       cached.stepUpIndex = proto.stepUpIndex;
+    if (proto.stepUpStatus !== undefined && proto.stepUpStatus !== null)
+      cached.stepUpStatus = proto.stepUpStatus;
 
     if (proto.team) {
       cached.team = TeamConverter.fromProto(proto.team);

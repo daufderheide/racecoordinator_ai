@@ -797,4 +797,170 @@ test.describe("Raceday Lane Grid Widget Columns Visuals", () => {
       },
     );
   });
+
+  test("should display lane grid with step up status column", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayColumns: ["laneNumber", "driver.name", "lapCount", "stepUpStatus"],
+      columnLayouts: {
+        laneNumber: { "center-center": "laneNumber" },
+        "driver.name": { "center-center": "driver.name" },
+        lapCount: { "center-center": "lapCount" },
+        stepUpStatus: { "center-center": "stepUpStatus" },
+      },
+      columnAnchors: {
+        laneNumber: "center-center",
+        "driver.name": "center-center",
+        lapCount: "center-center",
+        stepUpStatus: "center-center",
+      },
+      columnWidths: {
+        laneNumber: 70,
+        "driver.name": 220,
+        lapCount: 100,
+        stepUpStatus: 160,
+      },
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+
+    const raceData = {
+      race: {
+        race: {
+          model: { entityId: "r1" },
+          name: "Step Up Status Grid Race",
+          track: {
+            lanes: [
+              {
+                objectId: "l1",
+                backgroundColor: "#ef4444",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l2",
+                backgroundColor: "#ffffff",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+              {
+                objectId: "l3",
+                backgroundColor: "#3b82f6",
+                foregroundColor: "#ffffff",
+                length: 10,
+              },
+              {
+                objectId: "l4",
+                backgroundColor: "#eab308",
+                foregroundColor: "#000000",
+                length: 10,
+              },
+            ],
+          },
+        },
+        drivers: [
+          {
+            objectId: "rp1",
+            stepUpStatus: "Active",
+            driver: { name: "Driver 1" },
+          },
+          {
+            objectId: "rp2",
+            stepUpStatus: "Stepping up",
+            driver: { name: "Driver 2" },
+          },
+          {
+            objectId: "rp3",
+            stepUpStatus: "Eliminated",
+            driver: { name: "Driver 3" },
+          },
+          {
+            objectId: "rp4",
+            stepUpStatus: "Pending",
+            driver: { name: "Driver 4" },
+          },
+        ],
+        currentHeat: {
+          objectId: "h1",
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              objectId: "hd1",
+              laneIndex: 0,
+              lapCount: 12,
+              stepUpStatus: "Active",
+              driver: {
+                objectId: "rp1",
+                stepUpStatus: "Active",
+                driver: { name: "Driver 1" },
+              },
+            },
+            {
+              objectId: "hd2",
+              laneIndex: 1,
+              lapCount: 11,
+              stepUpStatus: "Stepping up",
+              driver: {
+                objectId: "rp2",
+                stepUpStatus: "Stepping up",
+                driver: { name: "Driver 2" },
+              },
+            },
+            {
+              objectId: "hd3",
+              laneIndex: 2,
+              lapCount: 10,
+              stepUpStatus: "Eliminated",
+              driver: {
+                objectId: "rp3",
+                stepUpStatus: "Eliminated",
+                driver: { name: "Driver 3" },
+              },
+            },
+            {
+              objectId: "hd4",
+              laneIndex: 3,
+              lapCount: 0,
+              stepUpStatus: "Pending",
+              driver: {
+                objectId: "rp4",
+                stepUpStatus: "Pending",
+                driver: { name: "Driver 4" },
+              },
+            },
+          ],
+        },
+      },
+    };
+
+    await TestSetupHelper.mockRaceData(page, raceData);
+    await page
+      .locator(".raceday-lane-column-card, .table-row")
+      .first()
+      .waitFor({ state: "visible" });
+
+    const laneView = page.locator(
+      ".raceday-grid-container, app-raceday-lane-view",
+    );
+    await laneView.waitFor({ state: "visible" });
+
+    await page.addStyleTag({
+      content:
+        "* { caret-color: transparent !important; } .blink { animation: none !important; }",
+    });
+
+    await expect(laneView).toHaveScreenshot(
+      "raceday-lane-grid-step-up-status.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
 });

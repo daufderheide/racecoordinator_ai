@@ -1584,6 +1584,7 @@ public class Race implements ProtocolListener {
             this.heats != null ? new ArrayList<>(this.heats) : null,
             this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null,
             completedDriverParticipantId);
+        StepUpStatusCalculator.calculateStepUpStatuses(this);
       }
     }
   }
@@ -1618,33 +1619,32 @@ public class Race implements ProtocolListener {
   }
 
   private GroupStandingsUpdate buildGroupStandingsUpdate() {
-    if (this.model.getGroupOptions() != null
-        && this.model.getGroupOptions().isEnabled()
-        && this.currentHeat != null) {
-      int currentGroup = this.currentHeat.getGroup();
-      Map<String, Integer> driverToGroup = getDriverToGroup();
-      List<com.antigravity.proto.RaceParticipant> groupParticipants = // fqn-collision
-          new ArrayList<>();
-      int groupRank = 1;
-      synchronized (this.drivers) {
-        for (RaceParticipant driver : this.drivers) {
-          if (driver.getDriver() != Driver.EMPTY_DRIVER) {
-            Integer g = driverToGroup.get(driver.getStableId());
-            if (g != null && g == currentGroup) {
-              com.antigravity.proto.RaceParticipant.Builder builder = // fqn-collision
-                  RaceParticipantConverter.toProto(driver, new HashSet<>()).toBuilder();
-              builder.setRank(groupRank++);
-              groupParticipants.add(builder.build());
-            }
+    if (this.model.getGroupOptions() == null
+        || !this.model.getGroupOptions().isEnabled()
+        || this.currentHeat == null) {
+      return null;
+    }
+    int currentGroup = this.currentHeat.getGroup();
+    Map<String, Integer> driverToGroup = getDriverToGroup();
+    List<com.antigravity.proto.RaceParticipant> groupParticipants = // fqn-collision
+        new ArrayList<>();
+    int groupRank = 1;
+    synchronized (this.drivers) {
+      for (RaceParticipant driver : this.drivers) {
+        if (driver.getDriver() != Driver.EMPTY_DRIVER) {
+          Integer g = driverToGroup.get(driver.getStableId());
+          if (g != null && g == currentGroup) {
+            com.antigravity.proto.RaceParticipant.Builder b = // fqn-collision
+                RaceParticipantConverter.toProto(driver, new HashSet<>()).toBuilder();
+            groupParticipants.add(b.setRank(groupRank++).build());
           }
         }
       }
-      return GroupStandingsUpdate.newBuilder()
-          .setGroup(currentGroup)
-          .addAllParticipants(groupParticipants)
-          .build();
     }
-    return null;
+    return GroupStandingsUpdate.newBuilder()
+        .setGroup(currentGroup)
+        .addAllParticipants(groupParticipants)
+        .build();
   }
 
   private Map<String, Integer> getDriverToGroup() {

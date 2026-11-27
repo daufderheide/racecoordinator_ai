@@ -112,6 +112,7 @@ describe("ui-editor-theme-assets.helper", () => {
     );
     expect(minLapConfig.type).toBe("tts");
     expect(minLapConfig.text).toBe("Min lap time for {driver.nickname}");
+    expect(emptyTheme.audio_slots).toEqual({});
   });
 
   it("should resolve audio url from theme slot or assets", () => {

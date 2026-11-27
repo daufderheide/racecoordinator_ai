@@ -652,7 +652,7 @@ export class LayoutEditorComponent
       undoManager: this.undoManager,
       hasChanges: () => this.isDirtyState(),
       isSaveValid: () => this.isConfigValid(),
-      isSaving: () => this.isSaving,
+      isSaving: () => this.isSaving || this.isAutoSaving,
       onAutoSave: () => this.saveCurrentLayout(true),
       autoSaveOnDiscard: true,
       logger: this.logger,
@@ -882,7 +882,7 @@ export class LayoutEditorComponent
     }
   }
 
-  onToggleEditMode(): void {
+  async onToggleEditMode(): Promise<void> {
     if (!this.isEditMode) {
       this.isEditMode = true;
       this.isWidgetLibraryVisible = true;
@@ -923,7 +923,13 @@ export class LayoutEditorComponent
     }
 
     if (this.isSaving) return;
-
+    if (this.isAutoSaving) {
+      const layoutId = this.editingLayout?.entity_id;
+      await this.lifecycle.activeSavePromise?.catch(() => undefined);
+      if (!this.isEditMode || this.editingLayout?.entity_id !== layoutId)
+        return;
+      if (this.isSaving || this.isAutoSaving) return this.onToggleEditMode();
+    }
     if (this.isDirtyState()) {
       if (!this.isConfigValid()) {
         alert(this.translationService.translate("LE_ERROR_NAME_INVALID"));
@@ -993,8 +999,8 @@ export class LayoutEditorComponent
   }
 
   async saveCurrentLayout(isAutoSave = false): Promise<any> {
-    if (!this.editingLayout) return;
-    if (this.isSaving) return;
+    if (!this.editingLayout || this.isSaving || this.isAutoSaving) return;
+    const sentLayout = cloneLayout(this.editingLayout);
     if (isAutoSave) {
       this.isAutoSaving = true;
     } else {
@@ -1010,45 +1016,35 @@ export class LayoutEditorComponent
           this.racedayComp.layoutEditorPosition?.y ?? 0;
       }
       const saved = await firstValueFrom(
-        this.dataService.updateCustomUI(
-          this.editingLayout.entity_id,
-          this.editingLayout,
-        ),
+        this.dataService.updateCustomUI(sentLayout.entity_id, sentLayout),
       );
       if (saved) {
-        if (this.editingLayout.entity_id === "default_ui_layout_rc_ai") {
-          this.editingSettings.racedayLayout = parseLayoutConfig(
-            this.editingLayout,
-          );
-          this.settingsService.saveSettings(this.editingSettings);
-        } else if (
-          this.editingLayout.entity_id === "practice_ui_layout_rc_ai"
-        ) {
-          this.editingSettings.practiceRacedayLayout = parseLayoutConfig(
-            this.editingLayout,
-          );
-          this.settingsService.saveSettings(this.editingSettings);
-        } else {
-          this.settingsService.saveSettings(this.editingSettings);
+        if (sentLayout.entity_id === "default_ui_layout_rc_ai") {
+          this.editingSettings.racedayLayout = parseLayoutConfig(sentLayout);
+        } else if (sentLayout.entity_id === "practice_ui_layout_rc_ai") {
+          this.editingSettings.practiceRacedayLayout =
+            parseLayoutConfig(sentLayout);
         }
+        this.settingsService.saveSettings(this.editingSettings);
         this.customUiService?.initialize();
-        setLastEditedLayoutId(
-          this.editingLayout.entity_id,
-          this.navigationService,
-        );
         const index = this.allLayouts.findIndex(
-          (u) => u.entity_id === this.editingLayout!.entity_id,
+          (u) => u.entity_id === sentLayout.entity_id,
         );
         if (index >= 0) {
-          this.allLayouts[index] = cloneLayout(this.editingLayout);
+          this.allLayouts[index] = cloneLayout(sentLayout);
         }
-        this.originalLayout = cloneLayout(this.editingLayout);
-        if (isAutoSave) {
-          this.undoManager.resetTracking(this.editingLayout);
-        } else {
-          this.undoManager.initialize(this.editingLayout);
-          this.isEditMode = false;
-          this.isWidgetConfigVisible = true;
+        if (this.editingLayout?.entity_id === sentLayout.entity_id) {
+          setLastEditedLayoutId(sentLayout.entity_id, this.navigationService);
+          this.originalLayout = cloneLayout(sentLayout);
+          if (areLayoutsEqual(this.editingLayout, sentLayout)) {
+            if (isAutoSave) {
+              this.undoManager.resetTracking(sentLayout);
+            } else {
+              this.undoManager.initialize(sentLayout);
+              this.isEditMode = false;
+              this.isWidgetConfigVisible = true;
+            }
+          }
         }
       }
       return saved;

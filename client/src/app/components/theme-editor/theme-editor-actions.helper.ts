@@ -10,6 +10,7 @@ import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
 
 import {
   addThemeToThemesWithAllSelected,
+  areThemesEqual,
   buildDuplicateThemeTemplate,
   buildNewThemeTemplate,
   cloneTheme,
@@ -107,8 +108,8 @@ export async function handleSaveCurrentTheme(
   comp: any,
   isAutoSave = false,
 ): Promise<any> {
-  if (!comp.editingTheme) return;
-  if (comp.isSaving) return;
+  const sentTheme = cloneTheme(comp.editingTheme);
+  if (!sentTheme || comp.isSaving) return;
 
   if (isAutoSave) {
     comp.isAutoSaving = true;
@@ -118,25 +119,24 @@ export async function handleSaveCurrentTheme(
 
   try {
     const saved = await firstValueFrom(
-      comp.dataService.updateTheme(
-        comp.editingTheme.entity_id,
-        comp.editingTheme,
-      ),
+      comp.dataService.updateTheme(sentTheme.entity_id, sentTheme),
     );
     if (saved) {
       comp.themeService?.initialize();
-      setLastEditedThemeId(comp.editingTheme.entity_id, comp.navigationService);
       const index = comp.allThemes.findIndex(
-        (t: Theme) => t.entity_id === comp.editingTheme.entity_id,
+        (t: Theme) => t.entity_id === sentTheme.entity_id,
       );
       if (index >= 0) {
-        comp.allThemes[index] = cloneTheme(comp.editingTheme);
+        comp.allThemes[index] = cloneTheme(sentTheme);
       }
-      comp.originalTheme = cloneTheme(comp.editingTheme);
-      comp.undoManager?.resetTracking(comp.editingTheme);
-
-      if (!isAutoSave) {
-        comp.isEditMode = false;
+      if (comp.editingTheme?.entity_id === sentTheme.entity_id) {
+        setLastEditedThemeId(sentTheme.entity_id, comp.navigationService);
+        comp.originalTheme = cloneTheme(sentTheme);
+        // Keep pending edits and Undo history ready for the next auto-save.
+        if (areThemesEqual(comp.editingTheme, sentTheme)) {
+          comp.undoManager?.resetTracking(sentTheme);
+          if (!isAutoSave) comp.isEditMode = false;
+        }
       }
     }
   } catch (err) {

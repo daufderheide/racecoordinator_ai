@@ -374,11 +374,13 @@ function createMockHeatDrivers(
       (hd.participant as any).overallMedianLapTime = medianLap;
       (hd.participant as any).totalLaps = p.totalLaps ?? p.lap_count;
       (hd.participant as any).totalTime = p.totalTime ?? p.total_time;
+      (hd.participant as any).stepUpStatus = p.stepUpStatus;
     }
 
     (hd as any).rankHeat = p.rank;
     (hd as any).rankOverall = p.rank;
     (hd as any).overallRank = p.rank;
+    (hd as any).stepUpStatus = p.stepUpStatus;
     (hd as any).speedMph = 15.5;
     (hd as any).speedKph = 25.0;
     (hd as any).speedFph = 80000;
@@ -408,6 +410,7 @@ function createMockNextHeatDrivers(): DriverHeatData[] {
     (hd as any).rankHeat = p.rank;
     (hd as any).rankOverall = p.rank;
     (hd as any).overallRank = p.rank;
+    (hd as any).stepUpStatus = p.stepUpStatus;
 
     const bestLap = (p as any).bestLapTime || (p as any).best_lap_time || 2.4;
     const avgLap =
@@ -436,6 +439,7 @@ function createMockNextHeatDrivers(): DriverHeatData[] {
       (hd.participant as any).overallBestLapTime = bestLap;
       (hd.participant as any).overallAverageLapTime = avgLap;
       (hd.participant as any).overallMedianLapTime = medianLap;
+      (hd.participant as any).stepUpStatus = p.stepUpStatus;
     }
     return hd;
   });
@@ -652,6 +656,9 @@ function createMockRaceParticipants(): RaceParticipant[] {
       gap_leader: index === 0 ? 0 : index * 1.5,
       gap_position: index === 0 ? 0 : 1.5,
       fuelLevel: Math.max(0, 100 - index * 4),
+      stepUpStatus: ["Stepping up", "Active", "Eliminated", "Pending"][
+        index % 4
+      ],
       seed: rank,
       team: char.team
         ? {
@@ -749,6 +756,9 @@ function createMockNextHeatParticipants(): RaceParticipant[] {
       gap_leader: 0,
       gap_position: 0,
       fuelLevel: 100,
+      stepUpStatus: ["Pending", "Active", "Stepping up", "Eliminated"][
+        index % 4
+      ],
       seed: char.rank,
       team: char.team,
     } as unknown as RaceParticipant;

@@ -32,3 +32,7 @@ De Thema-editor is toegankelijk vanaf verschillende belangrijke locaties:
 - **Thema verwijderen**: Verwijdert het huidige aangepaste thema na bevestiging. Standaardthema's zijn beveiligd en kunnen niet worden verwijderd.
 - **Interactieve rondleiding**: Start een interactieve rondleiding.
 
+## Themageluiden dempen
+
+Kies in de bewerkingsmodus **Alles op Geen zetten** om alle geluiden in het onderdeel **Audio** te dempen, inclusief de ingebouwde standaardgeluiden. Met **Ongedaan maken** herstel je de vorige instellingen in één stap.
+
