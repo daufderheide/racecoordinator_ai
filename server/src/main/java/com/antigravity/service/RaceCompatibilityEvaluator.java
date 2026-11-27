@@ -81,6 +81,8 @@ public class RaceCompatibilityEvaluator {
                   "restartRandomizer",
                   "restart_delay",
                   "restartDelay",
+                  "hot_yellow_restart_countdown",
+                  "hotYellowRestartCountdown",
                   "solo_lane_index",
                   "soloLaneIndex",
                   "custom_rotation_sequence",

@@ -226,6 +226,19 @@ public class RaceCompatibilityEvaluatorTest {
   }
 
   @Test
+  public void testHotYellowRestartCountdownRaceIsCompatible() throws Exception {
+    Race race =
+        new Race.Builder()
+            .withName("Hot Yellow GP")
+            .withHotYellowEnabled(true)
+            .withHotYellowRestartCountdown(true)
+            .build();
+    String rawJson = objectMapper.writeValueAsString(race);
+
+    assertEquals(Status.COMPATIBLE, evaluator.evaluate(race, rawJson).getStatus());
+  }
+
+  @Test
   public void testUnsupportedTiebreakerProducesIncompatible() {
     Race race = new Race.Builder().withName("Fixed Distance").withEntityId("2").build();
     String rawJson =
