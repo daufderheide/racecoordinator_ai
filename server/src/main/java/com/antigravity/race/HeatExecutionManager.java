@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,9 +49,9 @@ public class HeatExecutionManager {
             t.setDaemon(true);
             return t;
           });
-  private static final AtomicReference<PendingPredictionData> pendingPrediction =
-      new AtomicReference<>();
-  private static final AtomicBoolean predictionScheduled = new AtomicBoolean(false);
+  private static final PredictionQueue sharedPredictionQueue =
+      new PredictionQueue(predictionExecutor::submit);
+  private final PredictionQueue predictionQueue;
   private Race race;
 
   // Transient heat execution state
@@ -67,7 +68,16 @@ public class HeatExecutionManager {
   private boolean partialLapTimesCaptured = false;
 
   public HeatExecutionManager(Race race) {
+    this(race, sharedPredictionQueue);
+  }
+
+  HeatExecutionManager(Race race, Executor executor) {
+    this(race, new PredictionQueue(executor));
+  }
+
+  private HeatExecutionManager(Race race, PredictionQueue predictionQueue) {
     this.race = race;
+    this.predictionQueue = predictionQueue;
   }
 
   public void setRace(Race race) {
@@ -88,8 +98,7 @@ public class HeatExecutionManager {
 
   public void initialize(int laneCount) {
     this.finishedLanes.clear();
-    pendingPrediction.set(null);
-    predictionScheduled.set(false);
+    predictionQueue.reset();
     this.refuelDelayRemaining = new double[laneCount];
     this.isRefueling = new boolean[laneCount];
     this.accumulatedRefuelTime = new double[laneCount];
@@ -1753,36 +1762,57 @@ public class HeatExecutionManager {
               heatIdx,
               actualDriverStates,
               demoMode);
-      pendingPrediction.set(data);
-
-      if (predictionScheduled.compareAndSet(false, true)) {
-        predictionExecutor.submit(HeatExecutionManager::processPendingPrediction);
-      }
+      predictionQueue.schedule(data);
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);
     }
   }
 
-  private static void processPendingPrediction() {
-    PendingPredictionData data = pendingPrediction.getAndSet(null);
-    predictionScheduled.set(false);
-    if (data != null) {
-      try {
-        data.predictionService.updateRealtimePrediction(
-            data.dbCtx,
-            data.raceId,
-            data.raceModel,
-            data.drivers,
-            data.heats,
-            data.heatIdx,
-            data.actualDriverStates,
-            data.demoMode);
-      } catch (Exception e) {
-        logger.error("Error updating realtime prediction on lap in background", e);
+  private static class PredictionQueue {
+    private final Executor executor;
+    private final AtomicReference<PendingPredictionData> pendingPrediction =
+        new AtomicReference<>();
+    private final AtomicBoolean predictionScheduled = new AtomicBoolean(false);
+
+    private PredictionQueue(Executor executor) {
+      this.executor = executor;
+    }
+
+    private void reset() {
+      pendingPrediction.set(null);
+      predictionScheduled.set(false);
+    }
+
+    private void schedule(PendingPredictionData data) {
+      pendingPrediction.set(data);
+      schedulePending();
+    }
+
+    private void schedulePending() {
+      if (predictionScheduled.compareAndSet(false, true)) {
+        executor.execute(this::processPending);
       }
     }
-    if (pendingPrediction.get() != null && predictionScheduled.compareAndSet(false, true)) {
-      predictionExecutor.submit(HeatExecutionManager::processPendingPrediction);
+
+    private void processPending() {
+      PendingPredictionData data = pendingPrediction.getAndSet(null);
+      predictionScheduled.set(false);
+      if (data != null) {
+        try {
+          data.predictionService.updateRealtimePrediction(
+              data.dbCtx,
+              data.raceId,
+              data.raceModel,
+              data.drivers,
+              data.heats,
+              data.heatIdx,
+              data.actualDriverStates,
+              data.demoMode);
+        } catch (Exception e) {
+          logger.error("Error updating realtime prediction on lap in background", e);
+        }
+      }
+      if (pendingPrediction.get() != null) schedulePending();
     }
   }
 
