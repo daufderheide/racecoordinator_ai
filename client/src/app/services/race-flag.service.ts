@@ -154,6 +154,7 @@ export class RaceFlagService implements OnDestroy {
     if (f === RaceFlag.BLACK) return THEME_SLOT_KEYS.FLAG_PENALTY;
     if (f === RaceFlag.GREEN_YELLOW) return THEME_SLOT_KEYS.FLAG_WARMUP;
     if (f === RaceFlag.WHITE) return THEME_SLOT_KEYS.FLAG_ONE_LAP_TO_GO;
+    if (f === RaceFlag.HOT_YELLOW) return THEME_SLOT_KEYS.FLAG_HEAT_PAUSED;
 
     if (this.currentState === RaceState.PAUSED) {
       return THEME_SLOT_KEYS.FLAG_HEAT_PAUSED;
@@ -211,6 +212,13 @@ export class RaceFlagService implements OnDestroy {
    */
   getFlagType(): BehavioralFlagKey {
     return this.getBehavioralFlagKey();
+  }
+
+  get isHotYellow(): boolean {
+    return (
+      this.currentState === RaceState.RACING &&
+      this.currentFlag === RaceFlag.HOT_YELLOW
+    );
   }
 
   /**
@@ -328,6 +336,7 @@ export class RaceFlagService implements OnDestroy {
       case RaceFlag.GREEN_YELLOW:
         return "green";
       case RaceFlag.YELLOW:
+      case RaceFlag.HOT_YELLOW:
         return "yellow";
       case RaceFlag.WHITE:
         return "white";

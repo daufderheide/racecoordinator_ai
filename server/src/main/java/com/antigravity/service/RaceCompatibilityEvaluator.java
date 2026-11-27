@@ -99,6 +99,8 @@ public class RaceCompatibilityEvaluator {
                   "reverseHeats",
                   "hot_start",
                   "hotStart",
+                  "hot_yellow_enabled",
+                  "hotYellowEnabled",
                   "start_at_current",
                   "startAtCurrent",
                   "restart_on_false_start",

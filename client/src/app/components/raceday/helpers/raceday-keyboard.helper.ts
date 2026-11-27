@@ -31,7 +31,9 @@ export class RacedayKeyboardHelper {
       }
     } else {
       if (!host.isPauseDisabled) {
-        host.onMenuSelect("PAUSE");
+        host.onMenuSelect(
+          host.race?.hot_yellow_enabled ? "TRACK_CALL" : "PAUSE",
+        );
       }
     }
   }
@@ -340,7 +342,11 @@ export class RacedayKeyboardHelper {
         if (!host.isStartResumeDisabled) host.onMenuSelect("START_RESUME");
         break;
       case "action-pause":
-        if (!host.isPauseDisabled) host.onMenuSelect("PAUSE");
+        if (!host.isPauseDisabled) {
+          host.onMenuSelect(
+            host.race?.hot_yellow_enabled ? "TRACK_CALL" : "PAUSE",
+          );
+        }
         break;
       case "action-next-heat":
         if (!host.isNextHeatDisabled) host.onMenuSelect("NEXT_HEAT");

@@ -35,9 +35,15 @@ public class Racing implements IRaceState {
   private int[] previousFuelLevels;
   private double previousHeatProgress = -1.0;
   private RaceFlag previousFlag = RaceFlag.UNKNOWN_FLAG;
+  private volatile boolean hotYellow;
+
+  public boolean isHotYellow() {
+    return hotYellow;
+  }
 
   @Override
   public RaceFlag getFlagType(Race race) {
+    if (isHotYellow()) return RaceFlag.HOT_YELLOW;
     if (race == null || race.getRaceModel() == null) return RaceFlag.GREEN;
 
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
@@ -218,7 +224,7 @@ public class Racing implements IRaceState {
     syncRefuelingState();
     syncFuelLevels();
 
-    boolean autoCrashDetected = executionManager.checkAutomatedCrashes(delta);
+    boolean autoCrashDetected = !isHotYellow() && executionManager.checkAutomatedCrashes(delta);
     if (autoCrashDetected
         && race.isCnlEnabled()
         && race.getCrashAndLearnOptions().isPauseHeatOnCrash()) {
@@ -230,6 +236,16 @@ public class Racing implements IRaceState {
     boolean allFinished =
         checkFinishConditions(scoring, isTimed, isInfiniteTimed, allowFinish, limit);
 
+    if (!allFinished && isHotYellow()) {
+      synchronized (race) {
+        if (race.getState() != this || race.isStopped()) return;
+        if (isHotYellow()
+            && (!race.isMainPower() || !race.getHardwareManager().isHotYellowOutputAvailable())) {
+          pause(race);
+          return;
+        }
+      }
+    }
     updateHeatProgress(scoring, isInfiniteTimed);
     updateFlagAndBroadcast();
 
@@ -364,6 +380,13 @@ public class Racing implements IRaceState {
 
   @Override
   public void exit(Race race) {
+    if (isHotYellow()) {
+      // Cut power before releasing the caution output when a heat pauses or ends.
+      race.setMainPower(false);
+      race.setLanePower(false, -1);
+      race.getHardwareManager().setHotYellowOutput(false);
+      hotYellow = false;
+    }
     if (timerHandle != null) {
       timerHandle.cancel(false);
     }
@@ -534,10 +557,36 @@ public class Racing implements IRaceState {
 
   @Override
   public void onCallbutton(Race race, int lane) {
-    logger.info("Racing.onCallbutton() called. Pausing race.");
+    if (isHotYellow() && lane < 0) {
+      if (race.getHardwareManager().setHotYellowOutput(false)) {
+        hotYellow = false;
+        updateFlagAndBroadcast();
+      } else {
+        pause(race);
+      }
+      return;
+    }
+
     race.recordTrackCall(lane);
     if (race.isCnlEnabled() && lane >= 0) {
       race.recordCrash(lane);
+    }
+    // A second driver calling for help must not release the caution.
+    if (isHotYellow()) return;
+
+    if (race.getRaceModel() != null
+        && race.getRaceModel().isHotYellowEnabled()
+        && race.isMainPower()
+        && race.getHardwareManager().isHotYellowOutputAvailable()) {
+      if (race.getHardwareManager().setHotYellowOutput(true)) {
+        hotYellow = true;
+        race.getStatistics().incrementYellowFlagCount();
+        updateFlagAndBroadcast();
+        return;
+      }
+      pause(race);
+      race.getHardwareManager().setHotYellowOutput(false);
+      return;
     }
     pause(race);
   }

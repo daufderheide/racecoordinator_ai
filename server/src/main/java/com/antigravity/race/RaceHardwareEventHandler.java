@@ -15,6 +15,19 @@ public class RaceHardwareEventHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(RaceHardwareEventHandler.class);
 
+  public static void handleTrackCall(Race race) {
+    synchronized (race) {
+      if (race.isStopped()) return;
+      if (race.getState() instanceof Racing
+          && race.getRaceModel() != null
+          && race.getRaceModel().isHotYellowEnabled()) {
+        race.getState().onCallbutton(race, -1);
+      } else {
+        race.pauseRace();
+      }
+    }
+  }
+
   public static void handleStartTimer(Race race, int interfaceIndex) {
     if (race.isStopped()) {
       return;

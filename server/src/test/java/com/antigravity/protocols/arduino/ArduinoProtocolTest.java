@@ -2265,6 +2265,41 @@ public class ArduinoProtocolTest {
   }
 
   @Test
+  public void testHotYellowOutputWritesOnlyTheConfiguredPin() {
+    config.digitalIds =
+        new ArrayList<>(Collections.nCopies(10, PinBehavior.BEHAVIOR_UNUSED.getNumber()));
+    config.digitalIds.set(4, PinBehavior.BEHAVIOR_RELAY_VALUE);
+    config.digitalIds.set(5, PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT_VALUE);
+    protocol = new TestableArduinoProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+    assertFalse(protocol.isHotYellowOutputReady());
+    serialConnection.injectData(new byte[] {0x56, 2, 1, 0, 0, 0x3B});
+    assertTrue(protocol.isHotYellowOutputReady());
+    serialConnection.allWrittenData.clear();
+
+    assertTrue(protocol.setHotYellowOutput(true));
+    assertTrue(protocol.setHotYellowOutput(false));
+    assertEquals(2, serialConnection.allWrittenData.size());
+    assertArrayEquals(new byte[] {0x4F, 0x44, 5, 1, 0x3B}, serialConnection.allWrittenData.get(0));
+    assertArrayEquals(new byte[] {0x4F, 0x44, 5, 0, 0x3B}, serialConnection.allWrittenData.get(1));
+  }
+
+  @Test
+  public void testHotYellowReportsCautionAndThenNormalRacing() {
+    protocol.open();
+    serialConnection.injectData(new byte[] {0x56, 2, 1, 0, 0, 0x3B});
+    serialConnection.allWrittenData.clear();
+
+    protocol.setRaceState(RaceState.RACING, RaceFlag.HOT_YELLOW, 0);
+    protocol.setRaceState(RaceState.RACING, RaceFlag.HOT_YELLOW, 0);
+    protocol.setRaceState(RaceState.RACING, RaceFlag.GREEN, 0);
+
+    assertEquals(2, serialConnection.allWrittenData.size());
+    assertArrayEquals(new byte[] {0x45, 0, 9, 0, 0x3B}, serialConnection.allWrittenData.get(0));
+    assertArrayEquals(new byte[] {0x45, 0, 4, 0, 0x3B}, serialConnection.allWrittenData.get(1));
+  }
+
+  @Test
   public void testSetRaceState_SendsCorrectMessages() {
     protocol.open();
     // Verify version to allow sending commands

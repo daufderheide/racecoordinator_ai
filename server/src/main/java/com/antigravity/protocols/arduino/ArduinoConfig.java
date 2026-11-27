@@ -56,6 +56,7 @@ public class ArduinoConfig {
   static {
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber(), PinMode.READ);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_RELAY.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT.getNumber(), PinMode.WRITE);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber(), PinMode.WRITE);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG.getNumber(), PinMode.WRITE);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG.getNumber(), PinMode.WRITE);

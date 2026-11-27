@@ -1,7 +1,11 @@
 package com.antigravity.race.states;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -20,7 +24,9 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.HeatStandings;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceHardwareManager;
 import com.antigravity.race.RaceParticipant;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
 
 public class RacingTest {
 
@@ -83,6 +90,92 @@ public class RacingTest {
     Driver d = new Driver(name, name, id, "1");
     RaceParticipant p = new RaceParticipant(d, id);
     return new DriverHeatData(p);
+  }
+
+  private RaceHardwareManager configureHotYellow() {
+    racing.exit(race);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .from(race.getRaceModel())
+            .withHotYellowEnabled(true)
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+    when(race.getState()).thenReturn(racing);
+    when(race.getRaceTime()).thenReturn(30f);
+    when(race.isMainPower()).thenReturn(true);
+    RaceHardwareManager hardware = mock(RaceHardwareManager.class);
+    when(race.getHardwareManager()).thenReturn(hardware);
+    when(hardware.isHotYellowOutputAvailable()).thenReturn(true);
+    when(hardware.setHotYellowOutput(true)).thenReturn(true);
+    when(hardware.setHotYellowOutput(false)).thenReturn(true);
+    clearInvocations(race);
+    return hardware;
+  }
+
+  private void tickAt(long now) throws Exception {
+    Method tick = Racing.class.getDeclaredMethod("executeTick", long.class, float.class);
+    tick.setAccessible(true);
+    tick.invoke(racing, now, 0.1f);
+  }
+
+  @Test
+  public void testLaneCallKeepsClockAndScoringRunningUntilMainCallReturnsToGreen()
+      throws Exception {
+    RaceHardwareManager hardware = configureHotYellow();
+    racing.onCallbutton(race, 0);
+    assertEquals(RaceFlag.HOT_YELLOW, racing.getFlagType(race));
+    verify(race).recordTrackCall(0);
+    when(executionManager.onLap(0, 12.5, 0, false, true, false)).thenReturn(true);
+    assertTrue(racing.onLap(0, 12.5, 0, false));
+    tickAt(System.nanoTime() + 60_000_000_000L);
+    verify(race).addRaceTime(-0.1f);
+
+    racing.onCallbutton(race, 1);
+    assertTrue(racing.isHotYellow());
+    verify(race).recordTrackCall(1);
+    verify(hardware, never()).setHotYellowOutput(false);
+
+    racing.onCallbutton(race, -1);
+    assertFalse(racing.isHotYellow());
+    verify(race).broadcastFlag(RaceFlag.GREEN);
+    verify(hardware).setHotYellowOutput(false);
+  }
+
+  @Test
+  public void testMainCallStartsCautionAndPauseCutsPowerBeforeReleasingOutput() {
+    RaceHardwareManager hardware = configureHotYellow();
+    racing.onCallbutton(race, -1);
+    assertTrue(racing.isHotYellow());
+    racing.pause(race);
+    verify(race).changeState(any(Paused.class));
+    racing.exit(race);
+
+    InOrder order = inOrder(race, hardware);
+    order.verify(race).setMainPower(false);
+    order.verify(race).setLanePower(false, -1);
+    order.verify(hardware).setHotYellowOutput(false);
+    assertFalse(racing.isHotYellow());
+  }
+
+  @Test
+  public void testFailedCautionReleaseRequestsAFullPause() {
+    RaceHardwareManager hardware = configureHotYellow();
+    racing.onCallbutton(race, -1);
+    when(hardware.setHotYellowOutput(false)).thenReturn(false);
+    racing.onCallbutton(race, -1);
+
+    verify(race).changeState(any(Paused.class));
+    verify(race, never()).broadcastFlag(RaceFlag.GREEN);
+  }
+
+  @Test
+  public void testTrackCallUsesPauseWithoutAReadyHotYellowOutput() {
+    RaceHardwareManager hardware = configureHotYellow();
+    when(hardware.isHotYellowOutputAvailable()).thenReturn(false);
+    racing.onCallbutton(race, -1);
+    assertFalse(racing.isHotYellow());
+    verify(race).changeState(any(Paused.class));
+    verify(hardware, never()).setHotYellowOutput(true);
   }
 
   @Test

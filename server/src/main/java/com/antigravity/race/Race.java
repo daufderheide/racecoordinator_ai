@@ -1719,7 +1719,8 @@ public class Race implements ProtocolListener {
   }
 
   @Override
-  public void onCallbutton(int lane, int idx) {
+  public synchronized void onCallbutton(int lane, int idx) {
+    if (stopped) return;
     state.onCallbutton(this, lane);
     ClientSubscriptionManager.getInstance()
         .broadcastInterfaceEvent(

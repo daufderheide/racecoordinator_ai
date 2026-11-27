@@ -83,6 +83,7 @@ public class RaceConverter {
       builder.setRestartTime(race.getRestartTime());
       builder.setStartRandomizer(race.getStartRandomizer());
       builder.setRestartRandomizer(race.getRestartRandomizer());
+      builder.setHotYellowEnabled(race.isHotYellowEnabled());
       if (race.getHeatRotationType() != null) {
         String rotationName =
             race.getHeatRotationType().name().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();

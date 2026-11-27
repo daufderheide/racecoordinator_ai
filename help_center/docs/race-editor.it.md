@@ -272,6 +272,8 @@ La sezione Gruppi e fasi separa i piloti in gruppi distinti che non gareggiano d
 
 ## Metodi di partenza {: #start-methods }
 
+Attiva **Bandiera gialla in movimento** per iniziare la fase di cautela con il pulsante principale, un pulsante di corsia, il widget Track Call o la barra spaziatrice. Il cronometro e il conteggio dei giri continuano. Usa il pulsante principale, il widget o la barra spaziatrice per tornare al verde. Usa **Pausa** nel menu della direzione di gara per interrompere l’alimentazione. Assegna un pin digitale Arduino all’uscita della bandiera gialla e usa un regolatore di potenza esterno.
+
 La sezione Metodi di partenza imposta l'avvio delle manche, il posizionamento in pista e le penalità di partenza:
 
 - **Tempo di partenza / ripartenza (s)**: Durata del conto alla rovescia prima di avviare o riprendere una manche.

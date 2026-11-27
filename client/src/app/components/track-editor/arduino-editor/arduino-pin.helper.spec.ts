@@ -78,6 +78,29 @@ describe("arduino-pin.helper", () => {
     expect(isOutputPinBehavior(PinBehavior.BEHAVIOR_LAP_BASE)).toBeFalse();
   });
 
+  it("maps Hot Yellow to a selectable digital output", () => {
+    const behavior = PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT;
+    const groups = createPinGroups(lanes, false, translationService);
+    const config = { hardwareType: 0 } as ArduinoConfig;
+    const filterActions = (isDigital: boolean) =>
+      filterPinActions(
+        groups,
+        isDigital,
+        2,
+        config,
+        true,
+        "",
+        translationService,
+      )
+        .flatMap((group) => group.actions)
+        .map((action) => action.value);
+    expect(isOutputPinBehavior(behavior)).toBeTrue();
+    expect(parsePinAction("hot_yellow_output")).toBe(behavior);
+    expect(getPinAction(behavior)).toBe("hot_yellow_output");
+    expect(filterActions(true)).toContain("hot_yellow_output");
+    expect(filterActions(false)).not.toContain("hot_yellow_output");
+  });
+
   it("createPinGroups builds digital and analog groups", () => {
     const digitalGroups = createPinGroups(lanes, false, translationService);
     expect(digitalGroups.length).toBeGreaterThan(0);

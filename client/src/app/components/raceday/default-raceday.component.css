@@ -1337,3 +1337,19 @@ app-default-raceday.driver-view-host:not(.driver-station-host) {
   color: #e2e8f0;
   font: 600 13px/1.4 var(--app-font-family);
 }
+.hot-yellow-banner {
+  position: absolute;
+  z-index: 60;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
+  color: #fef3c7;
+  background: #2e210b;
+  pointer-events: none;
+}

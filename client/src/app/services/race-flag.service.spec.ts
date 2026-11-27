@@ -77,6 +77,18 @@ describe("RaceFlagService", () => {
     expect(service.getFlagColor()).toBe("red");
   });
 
+  it("displays a Hot Yellow caution during the racing state", () => {
+    raceStateSubject.next(RaceState.RACING);
+    raceFlagSubject.next(RaceFlag.HOT_YELLOW);
+    expect(service.isHotYellow).toBeTrue();
+    expect(service.getFlagType()).toBe("flag.heat_paused");
+    expect(service.getFlagColor()).toBe("yellow");
+
+    raceStateSubject.next(RaceState.PAUSED);
+    raceFlagSubject.next(RaceFlag.YELLOW);
+    expect(service.isHotYellow).toBeFalse();
+  });
+
   it("should update behavioral flag type and color when RaceConnectionService emits", () => {
     raceStateSubject.next(RaceState.RACING);
     raceFlagSubject.next(RaceFlag.GREEN);

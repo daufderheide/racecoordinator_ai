@@ -185,6 +185,8 @@ export class RaceEditorNormalizationHelper {
       step_up: Number(race.step_up ?? race.stepUp ?? 0),
       driver_lane_selection:
         race.driver_lane_selection ?? race.driverLaneSelection ?? "NONE",
+      hot_yellow_enabled:
+        race.hot_yellow_enabled ?? race.hotYellowEnabled ?? false,
       group_options: race.group_options || {
         enabled: false,
         max_groups: 2,
@@ -319,6 +321,7 @@ export class RaceEditorNormalizationHelper {
       theme_id: themeId,
       step_up: 0,
       driver_lane_selection: "NONE",
+      hot_yellow_enabled: false,
       heat_rotation_type: "RoundRobin",
       heat_scoring: this.normalizeHeatScoring(null),
       overall_scoring: {

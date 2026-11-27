@@ -31,6 +31,18 @@ public interface IProtocol {
 
   void setLanePower(boolean on, int lane);
 
+  default boolean hasHotYellowOutput() {
+    return false;
+  }
+
+  default boolean isHotYellowOutputReady() {
+    return hasHotYellowOutput() && isHealthy();
+  }
+
+  default boolean setHotYellowOutput(boolean active) {
+    return false;
+  }
+
   // TODO(aufderheide): Think about getting rid of this and
   // getting it from somewhere else as needed.
   int getNumLanes();

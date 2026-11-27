@@ -489,7 +489,8 @@ public abstract class DefaultProtocol implements IProtocol {
       isGreenFlagOn = true;
       isYellowFlagOn = false;
       for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
-    } else if (currentRaceState == RaceState.PAUSED && currentRaceFlag == RaceFlag.YELLOW) {
+    } else if ((currentRaceState == RaceState.PAUSED && currentRaceFlag == RaceFlag.YELLOW)
+        || currentRaceFlag == RaceFlag.HOT_YELLOW) {
       isGreenFlagOn = false;
       isYellowFlagOn = true;
       for (int i = 0; i < 5; i++) isCountdownOn[i] = false;

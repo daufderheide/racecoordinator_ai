@@ -24,6 +24,26 @@ public class ProtocolDelegate implements IProtocol {
   private PitManager pitManager;
   private ProtocolListener listener;
 
+  @Override
+  public boolean hasHotYellowOutput() {
+    return protocols.stream().filter(IProtocol::hasHotYellowOutput).count() == 1;
+  }
+
+  @Override
+  public boolean isHotYellowOutputReady() {
+    return hasHotYellowOutput() && protocols.stream().anyMatch(IProtocol::isHotYellowOutputReady);
+  }
+
+  @Override
+  public boolean setHotYellowOutput(boolean active) {
+    if (!hasHotYellowOutput()) return false;
+    return protocols.stream()
+        .filter(IProtocol::hasHotYellowOutput)
+        .findFirst()
+        .map(protocol -> protocol.setHotYellowOutput(active))
+        .orElse(false);
+  }
+
   public ProtocolDelegate(List<IProtocol> protocols) {
     this(protocols, null, (Supplier<ScheduledExecutorService>) null);
   }

@@ -187,8 +187,10 @@ export class DataRaceControlHelper {
       );
   }
 
-  pauseRace(): Observable<boolean> {
-    const request = PauseRaceRequest.create({});
+  pauseRace(trackCall = false): Observable<boolean> {
+    const request = PauseRaceRequest.create(
+      trackCall ? { trackCall: true } : {},
+    );
     const buffer = PauseRaceRequest.encode(request).finish();
 
     const headers = new HttpHeaders({
