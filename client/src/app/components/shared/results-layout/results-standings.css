@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  font-size: var(--widget-font-size, 16px);
+}
+
+.standings-widget {
+  height: 100%;
+  overflow: auto;
+}
+
+.standings-widget table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.standings-widget thead th {
+  position: sticky;
+  top: 0;
+  background: var(--heat-results-header, #24384c);
+}
+
+.standings-widget th,
+.standings-widget td {
+  padding: 0.45em 0.65em;
+  text-align: start;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.standings-widget .numeric {
+  text-align: end;
+  white-space: nowrap;
+}

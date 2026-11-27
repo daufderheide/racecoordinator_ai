@@ -20,6 +20,10 @@ O Editor de Layouts pode ser acessado de vários locais no aplicativo:
 - **Descartar Alterações**: Sair ou navegar para outra tela com edições não salvas exibe o modal padrão de confirmação de descarte, prevenindo perda de dados.
 - **Desfazer / Refazer**: Totalmente integrado com os atalhos de teclado padrão (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> e <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).
 
+Para personalizar o ecrã de resultados da manga, crie um esquema com o modelo **Resultados da manga**. Mova ou redimensione o seletor e a classificação. Em **Conteúdo**, escolha as colunas e as cores das pistas. Guarde o esquema e escolha-o em **Esquema de resultados** no ecrã de resultados. O navegador guarda a escolha para corridas atuais e para corridas abertas a partir do histórico.
+
+Para a classificação geral, use o modelo **Resultados da corrida**. Mova ou redimensione a classificação e escolha as colunas em **Conteúdo**. Guarde o esquema e escolha-o em **Esquema de resultados**, para uma corrida atual ou aberta a partir do histórico.
+
 ---
 
 ## Ações da Barra de Ferramentas

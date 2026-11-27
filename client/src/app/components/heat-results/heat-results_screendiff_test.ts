@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { CustomSelectHarnessE2e } from "@app/components/shared/custom-select/testing/custom-select.harness.e2e";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
+import { heatResultsLayoutTemplate } from "./heat-results-layout.model";
 import { HeatResultsHarnessE2e } from "./testing/heat-results.harness.e2e";
 import { HeatResultsHelper } from "./testing/heat-results_helper";
 
@@ -10,6 +11,56 @@ test.describe("Heat Results Visuals", () => {
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.disableAnimations(page);
     await page.setViewportSize({ width: 1600, height: 900 });
+  });
+
+  test("should display saved Heat Results widgets and select another live heat", async ({
+    page,
+  }) => {
+    const ui = {
+      ...heatResultsLayoutTemplate(),
+      entity_id: "club-heat-results",
+      name: "Club Heat Results",
+    };
+    const layout = JSON.parse(ui.layoutJson!);
+    layout.widgets[1].customSettings = { showAverageLap: false };
+    ui.layoutJson = JSON.stringify(layout);
+    await TestSetupHelper.setupCustomUiMocks(page, [ui]);
+
+    const mock = HeatResultsHelper.createMockHeatData();
+    const first = mock.race.heats[0];
+    const second = {
+      ...first,
+      objectId: "h2",
+      heatNumber: 2,
+      heatDrivers: first.heatDrivers.slice(0, 2),
+      standings: first.standings.slice(0, 2),
+    };
+    mock.race.heats = [first, second];
+    mock.race.currentHeat = second;
+    await HeatResultsHelper.injectMockRaceData(page, mock);
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/heat-results"),
+    );
+
+    const picker = new CustomSelectHarnessE2e(
+      page.locator(".results-layout-picker app-custom-select"),
+    );
+    await picker.toggle();
+    await picker.selectOptionByValue(ui.entity_id);
+    const canvas = page.locator(".results-layout-canvas");
+    const selector = new CustomSelectHarnessE2e(
+      canvas.locator(".heat-selector-widget app-custom-select"),
+    );
+    await selector.toggle();
+    await selector.selectOptionByValue("1");
+    await canvas.getByText("Bobby", { exact: true }).waitFor();
+    await page.mouse.move(0, 0);
+    await expect(page.locator("app-heat-results")).toHaveScreenshot(
+      "heat-results-custom-layout.png",
+      { mask: [page.locator(".header-time")], maskColor: "#0d1724" },
+    );
   });
 
   test("should display dual charts for heat results", async ({ page }) => {

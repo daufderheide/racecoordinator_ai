@@ -14,6 +14,8 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { Subscription } from "rxjs";
+import { HeatResultsWidgetComponent } from "@app/components/heat-results/heat-results-widget.component";
+import { RaceStandingsWidgetComponent } from "@app/components/race-results/race-standings-widget.component";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
 import { RacedayCountdownComponent } from "@app/components/raceday/components/raceday-countdown/raceday-countdown.component";
@@ -88,6 +90,8 @@ import { shadowFor, withOpacity } from "@app/utils/widget-style.utils";
     RacedayLaneColumnComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
+    HeatResultsWidgetComponent,
+    RaceStandingsWidgetComponent,
     RacedayHeatListComponent,
     RacedayImageComponent,
     RacedayLabelComponent,

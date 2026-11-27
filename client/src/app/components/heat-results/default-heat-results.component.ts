@@ -52,6 +52,8 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
+import { HeatResultsLayoutComponent } from "./heat-results-layout.component";
+
 @Component({
   standalone: true,
   selector: "app-default-heat-results",
@@ -70,6 +72,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
     CustomSelectComponent,
     CustomOptionComponent,
     AddLapSectionsDialogComponent,
+    HeatResultsLayoutComponent,
   ],
 })
 export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
@@ -132,6 +135,10 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
       (h) => h.heatNumber <= currHeat.heatNumber,
     );
     return filtered.length > 0 ? filtered : allHeats;
+  }
+
+  get currentSelectableHeat(): Heat | undefined {
+    return this.selectableHeats.find((heat) => this.isCurrentHeat(heat));
   }
 
   isCurrentHeat(h: Heat): boolean {

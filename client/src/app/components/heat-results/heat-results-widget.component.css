@@ -1,0 +1,21 @@
+.heat-selector-widget {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  min-height: 100%;
+  padding: 4px 8px;
+}
+
+.heat-selector-widget app-custom-select {
+  flex: 1 1 9em;
+  min-width: 0;
+}
+
+.driver {
+  border-inline-start: 3px solid var(--heat-result-lane-color, transparent);
+}
+
+.heat-results-empty {
+  padding: 0.5em;
+}

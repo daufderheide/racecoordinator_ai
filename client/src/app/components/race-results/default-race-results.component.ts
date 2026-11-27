@@ -16,6 +16,7 @@ import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { ResultsLayoutComponent } from "@app/components/shared/results-layout/results-layout.component";
 import { TwinGraphsComponent } from "@app/components/shared/twin-graphs/twin-graphs.component";
 import { DataService } from "@app/data.service";
 import { Car } from "@app/models/car";
@@ -60,6 +61,7 @@ import {
   NEON_COLORS,
   StandingsRow,
 } from "./race-results.types";
+import { formatRaceResultsGap } from "./race-results-format";
 
 @Component({
   standalone: true,
@@ -68,6 +70,7 @@ import {
   styleUrls: ["./default-race-results.component.css"],
   imports: [
     TwinGraphsComponent,
+    ResultsLayoutComponent,
     CommonModule,
     DecimalPipe,
     TranslatePipe,
@@ -727,12 +730,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   protected formatGap(value: number | null, isLeader?: boolean): string {
-    if (value === null || value === undefined) return isLeader ? "--.---" : "";
-    if (isNaN(value)) return "--.---";
-    if (isLeader || (isLeader === undefined && value === 0)) return "--.---";
-    if (value === 0) return "0.000";
-    const sign = value > 0 ? "+" : "";
-    return sign + value.toFixed(3);
+    return formatRaceResultsGap(value, isLeader);
   }
 
   protected getScoreFormat(): string {

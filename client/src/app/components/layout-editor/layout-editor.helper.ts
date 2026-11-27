@@ -1,3 +1,7 @@
+import {
+  RESULTS_LAYOUTS,
+  resultsLayoutTemplate,
+} from "@app/components/shared/results-layout/results-layout.model";
 import { BASE_AVAILABLE_COLUMNS } from "@app/components/ui-editor/ui-editor-constants";
 import {
   generateUniqueCustomUiName,
@@ -267,6 +271,13 @@ export function buildLayoutTemplateOptions(
   }
   const emptyName =
     translationService?.translate("LE_TEMPLATE_EMPTY") || "Empty Layout";
+  for (const definition of Object.values(RESULTS_LAYOUTS)) {
+    options.push({
+      id: definition.templateId,
+      name:
+        translationService?.translate(definition.labelKey) || definition.name,
+    });
+  }
   options.push({ id: "empty", name: emptyName });
   return options;
 }
@@ -275,6 +286,12 @@ export function resolveTemplateSource(
   templateId: string | undefined,
   allLayouts?: CustomUI[],
 ): CustomUI | "empty" | null {
+  if (templateId === RESULTS_LAYOUTS["heat-results"].templateId) {
+    return resultsLayoutTemplate("heat-results");
+  }
+  if (templateId === RESULTS_LAYOUTS["race-results"].templateId) {
+    return resultsLayoutTemplate("race-results");
+  }
   if (templateId === "empty") {
     return "empty";
   }

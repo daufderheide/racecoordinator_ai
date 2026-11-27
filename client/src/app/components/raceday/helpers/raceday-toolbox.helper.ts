@@ -2,7 +2,11 @@ import {
   ToolboxGroup,
   ToolboxGroupHelper,
 } from "@app/components/raceday/toolbox-group.helper";
-import { WidgetType } from "@app/models/settings";
+import {
+  isResultsLayoutPurpose,
+  RESULTS_LAYOUTS,
+} from "@app/components/shared/results-layout/results-layout.model";
+import { ResultsLayoutPurpose, WidgetType } from "@app/models/settings";
 
 export class RacedayToolboxHelper {
   public static getWidgetTypeLabelKey(host: any, widgetType: string): string {
@@ -14,6 +18,10 @@ export class RacedayToolboxHelper {
   }
 
   public static getUnusedWidgets(host: any): WidgetType[] {
+    const purpose = host.layout?.purpose;
+    if (isResultsLayoutPurpose(purpose)) {
+      return RESULTS_LAYOUTS[purpose].widgets.map(({ type }) => type);
+    }
     const allTypes: WidgetType[] = [
       "menu-bar",
       "race-name",
@@ -211,6 +219,10 @@ export class RacedayToolboxHelper {
 
   public static getToolboxGroups(host: any): ToolboxGroup[] {
     RacedayToolboxHelper.ensureToolboxExpandedStatesLoaded(host);
+    const purpose = host.layout?.purpose;
+    if (isResultsLayoutPurpose(purpose)) {
+      return RacedayToolboxHelper.getResultsToolbox(host, purpose);
+    }
     const used = new Set<string>(
       host.layout?.widgets?.map((w: any) => w.widgetType as string) || [],
     );
@@ -225,6 +237,35 @@ export class RacedayToolboxHelper {
       undefined,
       host.translationService,
     );
+  }
+
+  private static getResultsToolbox(
+    host: any,
+    purpose: ResultsLayoutPurpose,
+  ): ToolboxGroup[] {
+    const query = host.toolboxSearchTerm?.trim().toLowerCase() || "";
+    const definition = RESULTS_LAYOUTS[purpose];
+    const widgets = definition.widgets.filter(({ type, labelKey }) =>
+      [type, host.translationService?.translate(labelKey) || labelKey].some(
+        (label) => label.toLowerCase().includes(query),
+      ),
+    );
+    return widgets.length
+      ? [
+          {
+            id: purpose,
+            nameKey: definition.labelKey,
+            icon: "leaderboard",
+            isBuiltIn: true,
+            rootWidgets: widgets,
+            subgroups: [],
+            expanded:
+              Boolean(query) ||
+              (host.toolboxGroupExpandedStates.get(purpose) ?? true),
+            totalCount: widgets.length,
+          },
+        ]
+      : [];
   }
 
   public static toggleToolboxGroup(host: any, groupId: string): void {

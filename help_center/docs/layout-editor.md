@@ -20,6 +20,10 @@ The Layout Editor is accessible from several locations across the application:
 - **Discard Changes**: Exiting or navigating away with unsaved edits displays the standard discard confirmation modal, protecting against data loss.
 - **Undo / Redo**: Fully integrated with standard undo/redo controls (<kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> and <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).
 
+To design the Heat Results screen, create a layout with the **Heat Results** template. Move or resize the heat selector and standings widgets, and use the standings widget's **Content** settings to choose which columns and lane colours to display. Save the layout, open **Heat Results**, and select it under **Results Layout**. This selection is saved in your browser and works for both current races and races opened from Race History.
+
+For overall standings, use the **Race Results** template. Move or resize the standings widget and choose the visible columns under **Content**. Save the layout, open **Race Results**, and select it under **Results Layout** for live races or Race History.
+
 ---
 
 ## Toolbar Actions
