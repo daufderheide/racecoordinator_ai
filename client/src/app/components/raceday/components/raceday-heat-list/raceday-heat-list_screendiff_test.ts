@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
@@ -242,6 +242,63 @@ const MOCK_HEAT_LIST_RACE_DATA = {
   },
 };
 
+async function openHeatSchedule(page: Page, expandable = false) {
+  await TestSetupHelper.setupSettings(page, {
+    racedayLayout: {
+      widgets: [
+        {
+          id: "widget-heat-list-table",
+          widgetType: "heat-list",
+          x: 50,
+          y: 50,
+          width: 900,
+          height: expandable ? 440 : 295,
+          zIndex: 10,
+          scaleMode: "fixed",
+          customSettings: {
+            heatListLayout: "table",
+            heatTableShowDetails: expandable,
+            autoScrollToCurrent: false,
+          },
+        },
+      ],
+    },
+  });
+  await TestSetupHelper.waitForLocalization(
+    page,
+    "en",
+    page.goto("/default-raceday"),
+  );
+  await page.locator(".dashboard-wrapper").waitFor();
+  const scheduledRace = MOCK_HEAT_LIST_RACE_DATA.race;
+  const track = scheduledRace.race.track;
+  await TestSetupHelper.mockRaceData(page, {
+    race: {
+      ...scheduledRace,
+      race: {
+        ...scheduledRace.race,
+        track: {
+          ...track,
+          lanes: track.lanes.map(
+            ({ background_color, foreground_color, ...lane }) => ({
+              ...lane,
+              backgroundColor: background_color,
+              foregroundColor: foreground_color,
+            }),
+          ),
+        },
+      },
+    },
+  });
+  await TestSetupHelper.sendRaceState(page, RaceState.RACING);
+  const widget = page.locator("app-raceday-heat-list");
+  await widget
+    .locator('[data-heat-number="2"][aria-current="step"]')
+    .getByText("Green Dino", { exact: true })
+    .waitFor();
+  return widget;
+}
+
 test.describe("Raceday Heat List Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
@@ -350,59 +407,62 @@ test.describe("Raceday Heat List Visuals", () => {
   test("should render the heat schedule table with live lane assignments", async ({
     page,
   }) => {
-    await TestSetupHelper.setupSettings(page, {
-      racedayLayout: {
-        widgets: [
-          {
-            id: "widget-heat-list-table",
-            widgetType: "heat-list",
-            x: 50,
-            y: 50,
-            width: 900,
-            height: 295,
-            zIndex: 10,
-            scaleMode: "fixed",
-            customSettings: {
-              heatListLayout: "table",
-              autoScrollToCurrent: false,
-            },
-          },
-        ],
-      },
-    });
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/default-raceday"),
+    await expect(await openHeatSchedule(page)).toHaveScreenshot(
+      "raceday-heat-list-table.png",
     );
-    await page.locator(".dashboard-wrapper").waitFor();
-    const scheduledRace = MOCK_HEAT_LIST_RACE_DATA.race;
-    const track = scheduledRace.race.track;
+  });
+
+  test("should render updated live timing in expanded heat details", async ({
+    page,
+  }) => {
+    const widget = await openHeatSchedule(page, true);
+    const button = widget.getByRole("button", {
+      name: "Details for heat 2",
+      exact: true,
+    });
+    await button.focus();
+    await button.press("Space");
     await TestSetupHelper.mockRaceData(page, {
-      race: {
-        ...scheduledRace,
-        race: {
-          ...scheduledRace.race,
-          track: {
-            ...track,
-            lanes: track.lanes.map(
-              ({ background_color, foreground_color, ...lane }) => ({
-                ...lane,
-                backgroundColor: background_color,
-                foregroundColor: foreground_color,
-              }),
-            ),
-          },
-        },
+      lap: {
+        objectId: "hd2_1",
+        driverId: "d5",
+        lapNumber: 13,
+        adjustedLapCount: 13,
+        lapTime: 4.875,
+        averageLapTime: 5.665,
+        medianLapTime: 5.58,
+        bestLapTime: 4.875,
+        countTowardsRecords: true,
       },
     });
-    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
-    const heatList = page.locator("app-raceday-heat-list");
-    await heatList
-      .locator('[data-heat-number="2"][aria-current="step"]')
-      .getByText("Green Dino", { exact: true })
+    await widget.getByText("4.875", { exact: true }).waitFor();
+    await button.blur();
+    await expect(widget).toHaveScreenshot("raceday-heat-details-live.png");
+  });
+
+  test("should render results in expanded details for a completed heat", async ({
+    page,
+  }) => {
+    const widget = await openHeatSchedule(page, true);
+    await widget
+      .getByRole("button", { name: "Details for heat 1", exact: true })
+      .click();
+    await widget.getByText("5.421", { exact: true }).waitFor();
+    await expect(widget).toHaveScreenshot("raceday-heat-details-results.png");
+  });
+
+  test("should render the lineup in expanded details for an upcoming heat", async ({
+    page,
+  }) => {
+    const widget = await openHeatSchedule(page, true);
+    await widget
+      .getByRole("button", { name: "Details for heat 3", exact: true })
+      .click();
+    await widget
+      .locator(".heat-details")
+      .getByText("King Koopa", { exact: true })
       .waitFor();
-    await expect(heatList).toHaveScreenshot("raceday-heat-list-table.png");
+    await expect(widget).toHaveScreenshot("raceday-heat-details-lineup.png");
   });
 
   test("should render heat list widget empty state", async ({ page }) => {

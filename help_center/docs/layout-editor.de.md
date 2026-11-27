@@ -57,7 +57,7 @@ Wählen Sie ein Seitenverhältnis-Preset (**16:9**, **16:10**, **4:3**, **21:9**
 
 ### Widget-Bibliothek & Konfigurationssteuerung {: #widget-panels }
 
-Öffnen Sie im Widget **Laufliste** den Bereich **Inhalt** und wählen Sie unter **Layout** die Option **Tabelle**, um jeden Lauf in einer Zeile darzustellen. Legen Sie fest, ob Status, Gruppen und Spurbelegung angezeigt werden. Die Spurbelegung verwendet die aktuellen Fahrer- und Teamnamen. Spurfarben können unabhängig ausgeschaltet werden. Unter **Karten** stehen die Laufkarten und Zusammenfassungen zur Verfügung.
+Öffnen Sie im Widget **Laufliste** den Bereich **Inhalt** und wählen Sie unter **Layout** die Option **Tabelle**, um jeden Lauf in einer Zeile darzustellen. Legen Sie fest, ob Status, Gruppen und Spurbelegung angezeigt werden. Die Spurbelegung verwendet die aktuellen Fahrer- und Teamnamen. Spurfarben können unabhängig ausgeschaltet werden. Unter **Karten** stehen die Laufkarten und Zusammenfassungen zur Verfügung. Aktivieren Sie **Ausklappbare Laufdetails** und wählen Sie eine Laufnummer, um die Spurbelegung, Live-Zeiten oder Ergebnisse zu sehen.
 
 Fügen Sie für eine Rekordanzeige Beschriftungs-Widgets hinzu und wählen Sie unter **Inhaltsquelle** einen Rekordhalter oder einen Wert aus. Als Quellen stehen die Allzeit-Bestzeit, das Allzeit-Bestergebnis, die beste Runde des aktuellen Rennens und die beste Runde des aktuellen Laufs zur Verfügung. Für Zahlen können Sie null bis drei Nachkommastellen wählen. Bei fehlenden Daten stehen Striche, ein leeres Feld oder eigener Text zur Auswahl. Verwende normale Labels für Überschriften und positioniere jedes Widget auf der Arbeitsfläche.
 

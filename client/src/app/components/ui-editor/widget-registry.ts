@@ -295,6 +295,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
     defaultSettings: () => ({
       heatListLayout: "cards",
       heatTableShowStatus: true,
+      heatTableShowDetails: false,
       heatTableShowGroup: true,
       heatTableShowLanes: true,
       heatTableShowLaneColors: true,

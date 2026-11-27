@@ -246,7 +246,7 @@ public class CustomUITaskHandlerTest {
     String layoutJson =
         "{\"widgets\":[{\"id\":\"heats\",\"widgetType\":\"heat-list\",\"customSettings\":{"
             + "\"heatListLayout\":\"table\",\"heatTableShowStatus\":false,"
-            + "\"heatTableShowLaneColors\":false}}]}";
+            + "\"heatTableShowLaneColors\":false,\"heatTableShowDetails\":true}}]}";
     CustomUI edited =
         new CustomUI("Heat Schedule", false, layoutJson, null, null, null, null, null, id, null);
     when(handler.getPathParam(ctx, "id")).thenReturn(id);

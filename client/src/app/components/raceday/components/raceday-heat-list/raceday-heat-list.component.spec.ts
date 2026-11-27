@@ -177,6 +177,35 @@ describe("RacedayHeatListComponent", () => {
     expect(status(3)).toBe("HL_TABLE_UPCOMING");
   });
 
+  it("shows results as soon as the open current heat finishes", () => {
+    fixture.componentRef.setInput("widget", {
+      ...mockWidget,
+      customSettings: { heatListLayout: "table", heatTableShowDetails: true },
+    });
+    fixture.componentRef.setInput("raceState", RaceState.RACING);
+    fixture.detectChanges();
+
+    const root: HTMLElement = fixture.nativeElement;
+    root
+      .querySelector<HTMLButtonElement>('[data-heat-number="1"] button')!
+      .click();
+    fixture.detectChanges();
+    expect(root.querySelector("caption")?.textContent?.trim()).toBe(
+      "HL_TABLE_LIVE_TIMING",
+    );
+
+    fixture.componentRef.setInput("raceState", RaceState.HEAT_OVER);
+    fixture.detectChanges();
+    expect(root.querySelector("caption")?.textContent?.trim()).toBe(
+      "RD_WIN_HEAT_RESULTS",
+    );
+    expect(
+      root
+        .querySelector('[data-heat-number="1"] .heat-status')
+        ?.textContent?.trim(),
+    ).toBe("HL_TABLE_COMPLETED");
+  });
+
   it("should process heats and map driver nickname (never driver full name)", () => {
     const processed = component.processedHeats();
     expect(processed.length).toBe(2);

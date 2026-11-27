@@ -57,7 +57,7 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 
 ### Widgetbibliotheek & configuratieknoppen {: #widget-panels }
 
-Open **Inhoud** in de widget **Heatlijst** en kies bij **Indeling** voor **Tabel** om één rij per heat te tonen. Je kunt de status, groepen en baantoewijzingen tonen. De baantoewijzingen gebruiken de actuele namen van rijders en teams. Baankleuren zijn apart uit te schakelen. Kies **Kaarten** om de heatkaarten en samenvattingen te gebruiken.
+Open **Inhoud** in de widget **Heatlijst** en kies bij **Indeling** voor **Tabel** om één rij per heat te tonen. Je kunt de status, groepen en baantoewijzingen tonen. De baantoewijzingen gebruiken de actuele namen van rijders en teams. Baankleuren zijn apart uit te schakelen. Kies **Kaarten** om de heatkaarten en samenvattingen te gebruiken. Schakel **Uitklapbare heatdetails** in en kies een heatnummer om de baanindeling, live timing of uitslag te bekijken.
 
 Voeg voor een recordpaneel labels toe en kies onder **Inhoudsbron** een recordhouder of waarde. Je kunt kiezen uit de beste rondetijd ooit, de beste score ooit, de snelste ronde van de huidige race en de snelste ronde van de huidige heat. Voor getallen kies je nul tot drie decimalen. Voor ontbrekende gegevens kies je streepjes, een lege waarde of eigen tekst. Gebruik gewone tekstlabels voor koppen en plaats elke widget op het canvas.
 

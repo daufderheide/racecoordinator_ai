@@ -1,0 +1,69 @@
+<table class="heat-details">
+  <caption>
+    {{
+      titleKey() | translate
+    }}
+  </caption>
+  <thead>
+    <tr>
+      <th scope="col">{{ "RD_LANE" | translate }}</th>
+      <th scope="col">{{ "HL_SUMMARY_DRIVER" | translate }}</th>
+      @if (showTiming()) {
+        <th scope="col" class="metric">{{ "HL_SUMMARY_POS" | translate }}</th>
+        <th scope="col" class="metric">{{ "HL_SUMMARY_LAPS" | translate }}</th>
+        <th scope="col" class="metric">
+          {{ "HL_SUMMARY_BEST_LAP" | translate }}
+        </th>
+        <th scope="col" class="metric">{{ "HL_SUMMARY_GAP" | translate }}</th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (index of laneIndexes(); track index) {
+      @let lane = heat().lanes.at(index);
+      <tr>
+        <th
+          scope="row"
+          class="lane-number"
+          [style.--heat-lane-color]="
+            useLaneColors() ? lane?.backgroundColor : null
+          "
+        >
+          {{ lane?.laneNumber ?? index + 1 }}
+        </th>
+        <td
+          [appPartTextStyle]="settings()"
+          partPrefix="lane"
+          [style.font-family]="settings()?.['laneFontFamily'] || null"
+          [style.font-size.px]="settings()?.['laneFontSize'] || null"
+          [style.color]="settings()?.['laneTextColor'] || null"
+        >
+          @if (lane && lane.isOccupied) {
+            @if (lane.driverNickname) {
+              <span>{{ lane.driverNickname }}</span>
+            }
+            @if (lane.teamName) {
+              <span class="team-name">{{ lane.teamName }}</span>
+            }
+          } @else {
+            <span class="empty-lane">{{
+              emptyLane("RD_EMPTY_LANE" | translate)
+            }}</span>
+          }
+        </td>
+        @if (showTiming()) {
+          <td class="metric">{{ lane?.formattedRank ?? emptyMetric() }}</td>
+          <td class="metric">{{ lane?.formattedLaps ?? emptyMetric() }}</td>
+          <td class="metric">{{ lane?.formattedBestLap ?? emptyMetric() }}</td>
+          <td class="metric">{{ lane?.formattedGap ?? emptyMetric() }}</td>
+        }
+      </tr>
+    } @empty {
+      <tr>
+        <td [attr.colspan]="showTiming() ? 6 : 2">
+          {{ emptyLane("RD_EMPTY_LANE" | translate) }}
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
