@@ -296,6 +296,9 @@ export class RacedayLaneColumnComponent
     if (type === "drift-indicator" || type === "driftIndicator") {
       return "driftIndicator";
     }
+    if (type === "step-up-status" || type === "stepUpStatus") {
+      return "stepUpStatus";
+    }
     if (type && isCustomWidgetKey(type)) {
       return type;
     }

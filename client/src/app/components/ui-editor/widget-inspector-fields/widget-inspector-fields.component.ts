@@ -90,7 +90,8 @@ export class WidgetInspectorFieldsComponent {
     if (
       widget.widgetType === "lane-column" ||
       widget.widgetType === "average-score" ||
-      widget.widgetType === "drift-indicator"
+      widget.widgetType === "drift-indicator" ||
+      widget.widgetType === "step-up-status"
     )
       return true;
     if (widget.customSettings?.["gridId"]) return true;

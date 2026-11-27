@@ -34,6 +34,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "laneNumber",
       "flag",
       "seed",
+      "stepUpStatus",
     ],
   },
   {

@@ -90,6 +90,8 @@ Customize system-wide sound effects, uploaded audio files, or synthesized speech
 - **Heat Over & Race Over**: Finish horns or celebration audio cues.
 - **Minimum Lap Time**: Violation alert tones.
 
+In edit mode, select **Set All to None** to silence every slot in the **Audio** section, including sounds that would otherwise use a built-in default. Use **Undo** to restore the previous settings in one step.
+
 ### Driver Audio Overrides
 
 Themes can selectively override driver-level audio settings across all participants while the theme is active. By default, each driver's individual configuration (set in the [Driver Editor](driver-editor.md)) is played. Enabling an override on the theme forces that sound, speech phrase, or silence (**None**) across all drivers running under the theme.

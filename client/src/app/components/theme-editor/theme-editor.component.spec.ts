@@ -6,7 +6,7 @@ import {
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject, of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { CustomUI } from "@app/models/custom-ui";
 import { Settings } from "@app/models/settings";
@@ -601,6 +601,115 @@ describe("ThemeEditorComponent", () => {
       );
       expect(component.isDirtyState()).toBeTrue();
     });
+
+    it("should mute every main audio slot in one undoable edit", fakeAsync(() => {
+      const customTheme = component.allThemes[1];
+      customTheme.slots["audio.countdown"] = "legacy_countdown";
+      customTheme.audio_slots = {
+        "audio.yellowflag": { type: "preset", url: "sound1" },
+        "audio.min_lap_time": { type: "tts", text: "Lap too fast" },
+        "audio.race_over": { type: "none" },
+      };
+      customTheme.driver_audio_overrides = {
+        d1: { type: "tts", text: "Driver One" },
+      };
+      component.selectThemeById(customTheme.entity_id);
+      component.sectionsExpanded.audio = true;
+      fixture.detectChanges();
+
+      const selectButton = (): HTMLButtonElement | null =>
+        fixture.nativeElement.querySelector("#theme-set-all-audio-none");
+      expect(selectButton()).toBeNull();
+      component.onSetAllAudioToNone();
+      expect(mockDataService.updateTheme).not.toHaveBeenCalled();
+
+      component.isEditMode = true;
+      fixture.detectChanges();
+      const undoCount = component.undoManager.undoStackCount;
+      expect(selectButton()?.disabled).toBeFalse();
+      selectButton()!.click();
+      tick();
+      fixture.detectChanges();
+
+      expect(selectButton()?.disabled).toBeTrue();
+      const activeAudioOptions = fixture.nativeElement.querySelectorAll(
+        "#theme-audio-section .toggle-group .active",
+      ) as NodeListOf<HTMLElement>;
+      expect(
+        Array.from(activeAudioOptions, (option) => option.textContent?.trim()),
+      ).toEqual(component.mainAudioSlots.map(() => "AS_OPTION_NONE"));
+      expect(component.undoManager.undoStackCount).toBe(undoCount + 1);
+      expect(mockDataService.updateTheme).toHaveBeenCalledTimes(1);
+      const muted = mockDataService.updateTheme.calls.mostRecent()
+        .args[1] as Theme;
+      for (const { key } of component.mainAudioSlots) {
+        expect(muted.audio_slots[key]?.type).withContext(key).toBe("none");
+      }
+      expect(muted.audio_slots["audio.countdown"].url).toBe("legacy_countdown");
+      expect(muted.audio_slots["audio.yellowflag"].url).toBe("sound1");
+      expect(muted.audio_slots["audio.min_lap_time"].text).toBe("Lap too fast");
+      expect(muted.slots).toEqual(customTheme.slots);
+      expect(muted.driver_audio_overrides).toEqual(
+        customTheme.driver_audio_overrides,
+      );
+      expect(component.allThemes[0].audio_slots).toEqual(
+        testThemes[0].audio_slots,
+      );
+
+      component.onSetAllAudioToNone();
+      expect(mockDataService.updateTheme).toHaveBeenCalledTimes(1);
+
+      component.undoManager.undo();
+      tick();
+      expect(component.editingTheme?.audio_slots).toEqual(
+        customTheme.audio_slots,
+      );
+      fixture.detectChanges();
+      expect(selectButton()?.disabled).toBeFalse();
+
+      component.undoManager.redo();
+      tick();
+      expect(component.editingTheme?.audio_slots).toEqual(muted.audio_slots);
+    }));
+
+    it("should save the previous audio configuration when undo runs during auto-save", fakeAsync(() => {
+      const pendingSave = new Subject<Theme>();
+      const customTheme = component.allThemes[1];
+      customTheme.audio_slots = {
+        "audio.yellowflag": { type: "preset", url: "sound1" },
+      };
+      component.selectThemeById(customTheme.entity_id);
+      component.isEditMode = true;
+      mockDataService.updateTheme.and.callFake((_id: string, theme: Theme) =>
+        mockDataService.updateTheme.calls.count() === 1
+          ? pendingSave
+          : of(theme),
+      );
+
+      component.onSetAllAudioToNone();
+      const firstSave = mockDataService.updateTheme.calls.mostRecent()
+        .args[1] as Theme;
+      expect(component.isAutoSaving).toBeTrue();
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeTrue();
+      expect(mockDataService.updateTheme).toHaveBeenCalledTimes(1);
+
+      component.undoManager.undo();
+      expect(mockDataService.updateTheme).toHaveBeenCalledTimes(1);
+      expect(firstSave.audio_slots["audio.yellowflag"].type).toBe("none");
+
+      pendingSave.next(firstSave);
+      tick();
+
+      expect(mockDataService.updateTheme).toHaveBeenCalledTimes(2);
+      const restored = mockDataService.updateTheme.calls.mostRecent()
+        .args[1] as Theme;
+      expect(restored.audio_slots).toEqual(customTheme.audio_slots);
+      expect(component.originalTheme?.audio_slots).toEqual(
+        restored.audio_slots,
+      );
+      expect(component.isDirtyState()).toBeFalse();
+    }));
 
     it("onDriverAudioOverrideChange should set and remove driver overrides", () => {
       component.isEditMode = true;

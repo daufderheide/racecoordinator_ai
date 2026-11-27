@@ -822,6 +822,12 @@ export class RacedayFormatUtils {
       return "0";
     }
     if (baseKey === "laneNumber") return String((hd?.laneIndex ?? 0) + 1);
+    if (baseKey === "stepUpStatus" || baseKey === "step-up-status") {
+      if (this.isEmptyDriver(hd)) return "";
+      const status =
+        value ?? hd?.stepUpStatus ?? hd?.participant?.stepUpStatus ?? "";
+      return this.formatStepUpStatus(status, ctx);
+    }
     const driverVal = RacedayDriverFormatUtils.formatDriverOrTeamValue(
       baseKey,
       propertyName,
@@ -907,5 +913,30 @@ export class RacedayFormatUtils {
       ctx,
       anchor,
     );
+  }
+
+  static formatStepUpStatus(status: any, ctx?: FormatContext): string {
+    if (!status || typeof status !== "string") return "";
+    if (status === "Active") {
+      return ctx?.translate
+        ? ctx.translate("RD_STEP_UP_STATUS_ACTIVE")
+        : "Active";
+    }
+    if (status === "Stepping up") {
+      return ctx?.translate
+        ? ctx.translate("RD_STEP_UP_STATUS_STEPPING_UP")
+        : "Stepping up";
+    }
+    if (status === "Eliminated") {
+      return ctx?.translate
+        ? ctx.translate("RD_STEP_UP_STATUS_ELIMINATED")
+        : "Eliminated";
+    }
+    if (status === "Pending") {
+      return ctx?.translate
+        ? ctx.translate("RD_STEP_UP_STATUS_PENDING")
+        : "Pending";
+    }
+    return status;
   }
 }

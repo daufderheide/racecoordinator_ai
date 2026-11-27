@@ -32,3 +32,7 @@ L'Editor di Temi è accessibile da diverse posizioni all'interno dell'applicazio
 - **Elimina Tema**: Elimina il tema personalizzato corrente previa conferma. I temi di sistema predefiniti sono protetti e non possono essere eliminati.
 - **Tour Guidato**: Avvia una visita interattiva guidata.
 
+## Silenziare l'audio del tema
+
+In modalità modifica, seleziona **Imposta tutto su Nessuno** per silenziare tutti i suoni della sezione **Audio**, inclusi quelli predefiniti. Usa **Annulla** per ripristinare le impostazioni precedenti in un solo passaggio.
+

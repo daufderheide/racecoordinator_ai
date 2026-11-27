@@ -48,6 +48,7 @@ import {
   movableIds,
   moveGroup,
 } from "@app/components/ui-editor/multi-select.utils";
+import { getRecordLabelField } from "@app/models/record-label-field";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -121,6 +122,13 @@ export class RacedayAbsoluteWidgetComponent
 
   get isSelected(): boolean {
     return this.selectedWidgetId() === this.widget().id;
+  }
+
+  get labelRecordValue(): string | number | undefined {
+    const field = getRecordLabelField(
+      this.widget().customSettings?.["recordField"],
+    );
+    return field ? this.parentComponent()?.[field.key] : undefined;
   }
 
   /** Selected along with others, but not the main widget (phase 4c-1). */
@@ -965,7 +973,8 @@ export class RacedayAbsoluteWidgetComponent
     if (
       widget.widgetType === "lane-column" ||
       widget.widgetType === "average-score" ||
-      widget.widgetType === "drift-indicator"
+      widget.widgetType === "drift-indicator" ||
+      widget.widgetType === "step-up-status"
     )
       return true;
     if (this.isCustomWidget(widget.widgetType)) {

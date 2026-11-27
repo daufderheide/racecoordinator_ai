@@ -3892,4 +3892,99 @@ describe("RacedayFormatUtils", () => {
       ).toBe("--");
     });
   });
+
+  describe("formatValue - stepUpStatus", () => {
+    it("formats Active, Stepping up, Eliminated, and Pending using translation", () => {
+      const mockCtx: any = {
+        translate: (key: string) => {
+          if (key === "RD_STEP_UP_STATUS_ACTIVE") return "Active";
+          if (key === "RD_STEP_UP_STATUS_STEPPING_UP") return "Stepping up";
+          if (key === "RD_STEP_UP_STATUS_ELIMINATED") return "Eliminated";
+          if (key === "RD_STEP_UP_STATUS_PENDING") return "Pending";
+          return key;
+        },
+      };
+
+      const hdActive: any = {
+        participant: { stepUpStatus: "Active", driver: { name: "Josh" } },
+        driver: { name: "Josh" },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "stepUpStatus",
+          undefined,
+          hdActive,
+          undefined,
+          mockCtx,
+        ),
+      ).toBe("Active");
+
+      const hdSteppingUp: any = {
+        participant: {
+          stepUpStatus: "Stepping up",
+          driver: { name: "Josh" },
+        },
+        driver: { name: "Josh" },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "stepUpStatus",
+          undefined,
+          hdSteppingUp,
+          undefined,
+          mockCtx,
+        ),
+      ).toBe("Stepping up");
+
+      const hdEliminated: any = {
+        participant: {
+          stepUpStatus: "Eliminated",
+          driver: { name: "Josh" },
+        },
+        driver: { name: "Josh" },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "stepUpStatus",
+          undefined,
+          hdEliminated,
+          undefined,
+          mockCtx,
+        ),
+      ).toBe("Eliminated");
+
+      const hdPending: any = {
+        participant: {
+          stepUpStatus: "Pending",
+          driver: { name: "Josh" },
+        },
+        driver: { name: "Josh" },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "stepUpStatus",
+          undefined,
+          hdPending,
+          undefined,
+          mockCtx,
+        ),
+      ).toBe("Pending");
+    });
+
+    it("returns empty string for empty driver", () => {
+      const emptyHd: any = {
+        isEmptyLane: true,
+        participant: { stepUpStatus: "Active" },
+      };
+      expect(
+        RacedayFormatUtils.formatValue(
+          "stepUpStatus",
+          undefined,
+          emptyHd,
+          undefined,
+          ctx,
+        ),
+      ).toBe("");
+    });
+  });
 });

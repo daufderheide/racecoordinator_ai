@@ -32,11 +32,12 @@ describe("ToolboxGroupHelper", () => {
     const standingsSg = rcAiGroup.subgroups.find(
       (sg) => sg.id === "standings-heats",
     );
-    expect(standingsSg?.widgets.length).toBe(10);
+    expect(standingsSg?.widgets.length).toBe(11);
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("countdown");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("grid");
     expect(standingsSg?.widgets.map((w) => w.type)).not.toContain("lane-view");
     expect(standingsSg?.widgets.map((w) => w.type)).toContain("leaderboard");
+    expect(standingsSg?.widgets.map((w) => w.type)).toContain("step-up-status");
 
     const titlesSg = rcAiGroup.subgroups.find((sg) => sg.id === "titles-info");
     expect(titlesSg?.widgets.length).toBe(8);
@@ -63,7 +64,7 @@ describe("ToolboxGroupHelper", () => {
       lapTimesSg?.widgets.find((w) => w.type === "lane-col:driftIndicator"),
     ).toBeDefined();
 
-    expect(rcAiGroup.totalCount).toBe(134);
+    expect(rcAiGroup.totalCount).toBe(137);
   });
 
   it("should keep used widgets in root and subgroups so they can be placed multiple times", () => {
@@ -84,7 +85,7 @@ describe("ToolboxGroupHelper", () => {
     expect(
       standingsSg?.widgets.find((w) => w.type === "leaderboard"),
     ).toBeDefined();
-    expect(standingsSg?.widgets.length).toBe(10);
+    expect(standingsSg?.widgets.length).toBe(11);
 
     const actionsSg = rcAiGroup.subgroups.find((sg) => sg.id === "actions");
     expect(
@@ -102,7 +103,7 @@ describe("ToolboxGroupHelper", () => {
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeDefined();
     expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(134);
+    expect(rcAiGroup.totalCount).toBe(137);
   });
 
   it("should exclude used widgets if explicitly configured as singleton in SINGLETON_WIDGET_TYPES", () => {

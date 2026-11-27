@@ -59,6 +59,8 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 
 In the **Heat List** widget, open **Content** and change **Layout** to **Table** to show one row per heat. Choose whether to display status, groups and lane assignments. Lane assignments use the current driver and team names, and lane colours can be switched off independently. Choose **Cards** to use the heat card and summary options.
 
+To build a Records panel, add Label widgets and choose a record holder or value under **Content source**. The possible sources are the all-time best lap, the all-time best score, the fastest lap of the current race, and the fastest lap of the current heat. Number labels can use zero to three decimal places. Choose dashes, a blank, or your own text for missing data. Use ordinary Labels for headings and position each widget on the canvas.
+
 Located on the main toolbar to the left of the countdown preview icon:
 - **Widget Library (<span class="material-icons">widgets</span>)**: Toggles visibility of the floating Widget Library toolbox. Clicking also unminimizes the toolbox and ensures it is clamped within the visible screen area if previously moved off-screen.
 - **Widget Configuration (<span class="material-icons">tune</span>)**: Toggles visibility of the Widget Configuration sidebar panel. When hidden, the canvas can extend across the full width of the page if it makes sense for the layout's aspect ratio (just like in read-only mode).

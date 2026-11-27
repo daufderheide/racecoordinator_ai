@@ -26,6 +26,7 @@ import {
   getThemeDisplayNameKey,
   isThemeDefault,
 } from "@app/components/ui-editor/ui-editor-crud.helper";
+import { applyAudioConfigUpdate } from "@app/components/ui-editor/ui-editor-theme.helper";
 import {
   getThemeAudioConfigForSlot,
   getThemeAudioUrl,
@@ -283,7 +284,7 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       undoManager: this.undoManager,
       hasChanges: () => this.isDirtyState(),
       isSaveValid: () => this.isConfigValid(),
-      isSaving: () => this.isSaving,
+      isSaving: () => this.isSaving || this.isAutoSaving,
       onAutoSave: () => this.saveCurrentTheme(true),
       autoSaveOnDiscard: true,
       logger: this.logger,
@@ -429,7 +430,7 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       return;
     }
 
-    if (this.isSaving) return;
+    if (this.isSaving || this.isAutoSaving) return;
 
     if (this.isDirtyState()) {
       if (!this.isConfigValid()) {
@@ -574,6 +575,31 @@ export class ThemeEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     value: any,
   ): void {
     handleThemeAudioChange(this, slot, field, value);
+  }
+
+  get canSetAllAudioToNone(): boolean {
+    const theme = this.editingTheme;
+    return (
+      this.isEditMode &&
+      !this.isSaving &&
+      !this.isAutoSaving &&
+      !!theme &&
+      this.mainAudioSlots.some(
+        ({ key }) => theme.audio_slots?.[key]?.type !== "none",
+      )
+    );
+  }
+
+  onSetAllAudioToNone(): void {
+    const theme = this.editingTheme;
+    if (!theme || !this.canSetAllAudioToNone) return;
+
+    for (const { key } of this.mainAudioSlots) {
+      if (theme.audio_slots?.[key]?.type !== "none") {
+        applyAudioConfigUpdate(theme, key, "type", "none");
+      }
+    }
+    this.captureState();
   }
 
   onAudioAssetSelected(slot: string, asset: any): void {

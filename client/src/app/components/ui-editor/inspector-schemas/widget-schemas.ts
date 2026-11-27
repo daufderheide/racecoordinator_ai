@@ -1,9 +1,11 @@
 import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
+import { getRecordLabelField } from "@app/models/record-label-field";
 
 import { BATCH2_SCHEMAS } from "./batch2-schemas";
 import { BATCH3_SCHEMAS } from "./batch3-schemas";
 import {
   emptyStateFolder,
+  emptyValueFields,
   frameFolder,
   laneColourField,
   layoutFolder,
@@ -11,6 +13,7 @@ import {
 } from "./common";
 import { LANE_COLUMN_SCHEMAS } from "./lane-column-schema";
 import { laneViewSchema } from "./lane-view-schema";
+import { RecordLabelSourceComponent } from "./record-label-source.component";
 
 /**
  * Widgets that use the redesigned panel. Every other widget keeps its
@@ -376,13 +379,41 @@ const labelSchema: InspectorSchema = {
         {
           fields: [
             {
+              id: "recordField",
+              type: "embed",
+              component: RecordLabelSourceComponent,
+              labelKey: "UE_INSPECTOR_LABEL_SOURCE",
+              touches: ["recordField"],
+              searchTerms: "record live data source holder value lap score",
+            },
+            {
               id: "text",
               type: "text",
               key: "text",
               labelKey: "UE_INSPECTOR_LABEL_TEXT",
               maxLength: 120,
               searchTerms: "text caption title words",
+              visibleWhen: (settings) =>
+                !getRecordLabelField(settings["recordField"]),
             },
+            {
+              id: "recordDecimals",
+              type: "segment",
+              key: "recordDecimals",
+              labelKey: "UE_KIT_DECIMALS",
+              default: 3,
+              options: [0, 1, 2, 3].map((value) => ({
+                value,
+                label: String(value),
+              })),
+              visibleWhen: (settings) => {
+                const source = getRecordLabelField(settings["recordField"]);
+                return !!source && source.kind !== "holder";
+              },
+            },
+            ...emptyValueFields(
+              (settings) => !!getRecordLabelField(settings["recordField"]),
+            ),
           ],
         },
       ],

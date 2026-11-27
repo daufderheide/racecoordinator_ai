@@ -219,6 +219,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
   label: {
     defaultSettings: () => ({
       text: "Label",
+      recordField: "",
       fontSize: 18,
       fontFamily: "",
       textColor: "#ffffff",
@@ -255,6 +256,13 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       backgroundColor: "#ef4444",
       textColor: "#ffffff",
       ...getDefaultBorderConfigForWidget("drift-indicator"),
+    }),
+  },
+  "step-up-status": {
+    defaultSettings: () => ({
+      ...defaultLaneColumnSettings(),
+      columnKey: "stepUpStatus",
+      ...getDefaultBorderConfigForWidget("step-up-status"),
     }),
   },
   "on-deck": {

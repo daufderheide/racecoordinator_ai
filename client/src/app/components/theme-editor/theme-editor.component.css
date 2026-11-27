@@ -245,6 +245,40 @@ button {
   padding: 10px 0;
 }
 
+.audio-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.audio-panel-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #bae6fd;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.audio-panel-action:not(:disabled):hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.audio-panel-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.audio-panel-action .material-icons {
+  font-size: 18px;
+}
+
 .audio-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

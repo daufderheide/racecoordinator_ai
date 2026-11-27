@@ -94,11 +94,13 @@ public class RaceParticipantConverterTest {
         new com.antigravity.race.RaceParticipant(driver, "p3");
     participant.setCrashes(6);
     participant.setDisqualified(true);
+    participant.setStepUpStatus("Stepping up");
 
     RaceParticipant proto = RaceParticipantConverter.toProto(participant, new HashSet<>());
 
     assertNotNull(proto);
     assertEquals(6, proto.getCrashes());
     assertEquals(true, proto.getIsDisqualified());
+    assertEquals("Stepping up", proto.getStepUpStatus());
   }
 }

@@ -50,6 +50,9 @@ describe("LaneViewColumnGroupHelper", () => {
       expect(LaneViewColumnGroupHelper.getGroupIdForColumn("laneNumber")).toBe(
         "driver-team",
       );
+      expect(
+        LaneViewColumnGroupHelper.getGroupIdForColumn("stepUpStatus"),
+      ).toBe("driver-team");
     });
 
     it("should return laps-standings for lap count and ranking columns", () => {

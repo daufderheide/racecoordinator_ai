@@ -59,6 +59,8 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 
 Open **Inhoud** in de widget **Heatlijst** en kies bij **Indeling** voor **Tabel** om één rij per heat te tonen. Je kunt de status, groepen en baantoewijzingen tonen. De baantoewijzingen gebruiken de actuele namen van rijders en teams. Baankleuren zijn apart uit te schakelen. Kies **Kaarten** om de heatkaarten en samenvattingen te gebruiken.
 
+Voeg voor een recordpaneel labels toe en kies onder **Inhoudsbron** een recordhouder of waarde. Je kunt kiezen uit de beste rondetijd ooit, de beste score ooit, de snelste ronde van de huidige race en de snelste ronde van de huidige heat. Voor getallen kies je nul tot drie decimalen. Voor ontbrekende gegevens kies je streepjes, een lege waarde of eigen tekst. Gebruik gewone tekstlabels voor koppen en plaats elke widget op het canvas.
+
 Gelegen op de hoofdwerkbalk links van het startlichten-voorvertoningspictogram:
 - **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit. Een klik herstelt de gereedschapskist ook als deze geminimaliseerd is of buiten het zichtbare scherm is verplaatst.
 - **Widget-configuratie (<span class="material-icons">tune</span>)**: Schakelt de weergave van het zijpaneel Widget-configuratie in of uit. Wanneer het verborgen is, kan het canvas zich over de volledige breedte van de pagina uitstrekken als de beeldverhouding van de lay-out dit toelaat (net als in de alleen-lezen-modus).
