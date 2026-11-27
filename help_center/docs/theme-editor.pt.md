@@ -32,3 +32,7 @@ O Editor de Temas pode ser acessado de vários locais principais:
 - **Excluir Tema**: Exclui o tema personalizado atual após confirmação. Temas padrão do sistema são protegidos e não podem ser excluídos.
 - **Tour de Ajuda**: Inicia um tour guiado interativo.
 
+## Silenciar o áudio do tema
+
+No modo de edição, selecione **Definir tudo como Nenhum** para silenciar todos os sons da seção **Áudio**, incluindo os sons padrão. Use **Desfazer** para restaurar as configurações anteriores em uma única etapa.
+
