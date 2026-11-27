@@ -20,6 +20,8 @@ Der Layout-Editor kann an mehreren Stellen in der Anwendung aufgerufen werden:
 - **Änderungen verwerfen**: Beim Verlassen oder Navigieren mit ungespeicherten Änderungen wird das standardmäßige Bestätigungs-Modal angezeigt, um Datenverlust zu verhindern.
 - **Rückgängig / Wiederholen**: Vollständig integriert mit Standard-Tastenkombinationen (<kbd>Strg</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> und <kbd>Strg</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>).
 
+Um die Laufergebnisansicht zu gestalten, erstellen Sie ein Layout mit der Vorlage **Laufergebnisse**. Verschieben oder skalieren Sie die Widgets für Laufauswahl und Ergebnisse. Wählen Sie unter **Inhalt** die Spalten und Spurfarben. Speichern Sie das Layout und wählen Sie es in der Laufergebnisansicht unter **Ergebnislayout** aus. Die Auswahl wird im Browser gespeichert und gilt auch für Rennen aus der Rennhistorie.
+
 ---
 
 ## Symbolleisten-Aktionen

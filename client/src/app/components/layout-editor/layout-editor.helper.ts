@@ -1,3 +1,7 @@
+import {
+  HEAT_RESULTS_LAYOUT_TEMPLATE,
+  heatResultsLayoutTemplate,
+} from "@app/components/heat-results/heat-results-layout.model";
 import { BASE_AVAILABLE_COLUMNS } from "@app/components/ui-editor/ui-editor-constants";
 import {
   generateUniqueCustomUiName,
@@ -267,6 +271,11 @@ export function buildLayoutTemplateOptions(
   }
   const emptyName =
     translationService?.translate("LE_TEMPLATE_EMPTY") || "Empty Layout";
+  options.push({
+    id: HEAT_RESULTS_LAYOUT_TEMPLATE,
+    name:
+      translationService?.translate("RD_WIN_HEAT_RESULTS") || "Heat Results",
+  });
   options.push({ id: "empty", name: emptyName });
   return options;
 }
@@ -275,6 +284,9 @@ export function resolveTemplateSource(
   templateId: string | undefined,
   allLayouts?: CustomUI[],
 ): CustomUI | "empty" | null {
+  if (templateId === HEAT_RESULTS_LAYOUT_TEMPLATE) {
+    return heatResultsLayoutTemplate();
+  }
   if (templateId === "empty") {
     return "empty";
   }

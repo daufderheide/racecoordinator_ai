@@ -1,0 +1,37 @@
+@if (layouts().length) {
+  <div class="results-layout-picker no-print">
+    <span>{{ "HR_RESULTS_LAYOUT" | translate }}</span>
+    <app-custom-select
+      [attr.aria-label]="'HR_RESULTS_LAYOUT' | translate"
+      [ngModel]="selectedLayoutId()"
+      (ngModelChange)="selectLayout($event)"
+      [fitWidestOption]="true"
+    >
+      <app-custom-option value="">{{
+        "HR_RESULTS_LAYOUT_DEFAULT" | translate
+      }}</app-custom-option>
+      @for (layout of layouts(); track layout.id) {
+        <app-custom-option [value]="layout.id">{{
+          layout.name
+        }}</app-custom-option>
+      }
+    </app-custom-select>
+  </div>
+}
+@if (activeLayout(); as layout) {
+  <div class="results-layout-viewport">
+    <div
+      class="results-layout-canvas"
+      [style.aspect-ratio]="
+        (layout.baseWidth || 1920) + ' / ' + (layout.baseHeight || 1080)
+      "
+    >
+      @for (widget of visibleWidgets(); track widget.id) {
+        <app-raceday-absolute-widget
+          [widget]="widget"
+          [parentComponent]="widgetHost()"
+        />
+      }
+    </div>
+  </div>
+}

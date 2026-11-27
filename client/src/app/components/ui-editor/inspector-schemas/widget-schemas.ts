@@ -1,3 +1,4 @@
+import { HEAT_RESULTS_STANDINGS_COLUMNS } from "@app/components/heat-results/heat-results-layout.model";
 import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
 import { getLabelSource, getRecordLabelField } from "@app/models/label-source";
 
@@ -542,6 +543,43 @@ export const ACTION_BUTTON_LABEL_KEYS: Record<string, string> = {
 };
 
 export const WIDGET_SCHEMAS: Record<string, InspectorSchema> = {
+  "heat-results-selector": {
+    widgetType: "heat-results-selector",
+    icon: "list_alt",
+    folders: [frameFolder(), layoutFolder()],
+  },
+  "heat-results-standings": {
+    widgetType: "heat-results-standings",
+    icon: "leaderboard",
+    folders: [
+      {
+        id: "content",
+        groups: [
+          {
+            fields: [
+              ...HEAT_RESULTS_STANDINGS_COLUMNS.map(
+                ({ setting, labelKey }) => ({
+                  id: setting,
+                  key: setting,
+                  labelKey,
+                  type: "switch" as const,
+                }),
+              ),
+              {
+                id: "useLaneColors",
+                key: "useLaneColors",
+                type: "switch",
+                labelKey: "UE_INSPECTOR_HEAT_LIST_OPTION_LANE_COLORS",
+                default: true,
+              },
+            ],
+          },
+        ],
+      },
+      frameFolder(),
+      layoutFolder(),
+    ],
+  },
   records: recordsSchema,
   timer: timerSchema,
   "heat-info": textInfoSchema("heat-info", "flag"),

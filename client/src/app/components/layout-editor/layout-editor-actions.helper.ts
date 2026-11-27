@@ -1,4 +1,8 @@
 import { firstValueFrom } from "rxjs";
+import {
+  heatResultsLayoutTemplate,
+  readHeatResultsLayout,
+} from "@app/components/heat-results/heat-results-layout.model";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { LaneGridRepairHelper } from "@app/components/raceday/utils/lane-grid-repair.helper";
 import { LaneReplicationOptions } from "@app/components/raceday/utils/lane-replication.helper";
@@ -530,10 +534,12 @@ export function resetLayout(
   editingSettings: Settings,
   comp: any,
 ): void {
-  const data = applyResetLayout(ui, editingSettings);
-  if (data?.defaultLayout) {
-    saveLayoutConfig(ui, data.defaultLayout);
-    comp.syncRacedayPreview?.(data.defaultLayout);
+  const layout = readHeatResultsLayout(ui)
+    ? readHeatResultsLayout(heatResultsLayoutTemplate())
+    : applyResetLayout(ui, editingSettings)?.defaultLayout;
+  if (layout) {
+    saveLayoutConfig(ui, layout);
+    comp.syncRacedayPreview?.(layout);
   }
   comp.selectedWidgetId = null;
   comp.activeGridSession = null;
@@ -549,7 +555,10 @@ export function clearLayout(
   editingSettings: Settings,
   comp: any,
 ): void {
-  const layout = applyClearLayout(ui, editingSettings);
+  const resultsLayout = readHeatResultsLayout(ui);
+  const layout = resultsLayout
+    ? { ...resultsLayout, widgets: [] }
+    : applyClearLayout(ui, editingSettings);
   saveLayoutConfig(ui, layout);
   comp.selectedWidgetId = null;
   comp.activeGridSession = null;
@@ -699,7 +708,11 @@ export async function handleStartNewLayout(
   try {
     const templateSource = resolveTemplateSource(templateId, comp.allLayouts);
     const template = buildNewLayoutTemplate(
-      comp.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME") ||
+      (templateSource &&
+      templateSource !== "empty" &&
+      readHeatResultsLayout(templateSource)
+        ? comp.translationService.translate("RD_WIN_HEAT_RESULTS")
+        : comp.translationService.translate("UE_DEFAULT_CUSTOM_UI_NAME")) ||
         "New UI Layout",
       comp.allLayouts,
       templateSource,

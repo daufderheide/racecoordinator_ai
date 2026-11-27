@@ -1,0 +1,24 @@
+:host {
+  display: contents;
+}
+
+.results-layout-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  position: relative;
+  z-index: 2;
+  margin: 12px 0;
+}
+
+.results-layout-viewport {
+  overflow-x: auto;
+  container-type: inline-size;
+}
+
+.results-layout-canvas {
+  position: relative;
+  isolation: isolate;
+  min-inline-size: 420px;
+}

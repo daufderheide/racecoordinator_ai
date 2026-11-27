@@ -1,3 +1,4 @@
+import { HEAT_RESULTS_WIDGETS } from "@app/components/heat-results/heat-results-layout.model";
 import {
   ToolboxGroup,
   ToolboxGroupHelper,
@@ -14,6 +15,9 @@ export class RacedayToolboxHelper {
   }
 
   public static getUnusedWidgets(host: any): WidgetType[] {
+    if (host.layout?.purpose === "heat-results") {
+      return HEAT_RESULTS_WIDGETS.map(({ type }) => type);
+    }
     const allTypes: WidgetType[] = [
       "menu-bar",
       "race-name",
@@ -211,6 +215,9 @@ export class RacedayToolboxHelper {
 
   public static getToolboxGroups(host: any): ToolboxGroup[] {
     RacedayToolboxHelper.ensureToolboxExpandedStatesLoaded(host);
+    if (host.layout?.purpose === "heat-results") {
+      return RacedayToolboxHelper.getHeatResultsToolbox(host);
+    }
     const used = new Set<string>(
       host.layout?.widgets?.map((w: any) => w.widgetType as string) || [],
     );
@@ -225,6 +232,31 @@ export class RacedayToolboxHelper {
       undefined,
       host.translationService,
     );
+  }
+
+  private static getHeatResultsToolbox(host: any): ToolboxGroup[] {
+    const query = host.toolboxSearchTerm?.trim().toLowerCase() || "";
+    const widgets = HEAT_RESULTS_WIDGETS.filter(({ type, labelKey }) =>
+      [type, host.translationService?.translate(labelKey) || labelKey].some(
+        (label) => label.toLowerCase().includes(query),
+      ),
+    );
+    return widgets.length
+      ? [
+          {
+            id: "heat-results",
+            nameKey: "RD_WIN_HEAT_RESULTS",
+            icon: "leaderboard",
+            isBuiltIn: true,
+            rootWidgets: widgets,
+            subgroups: [],
+            expanded:
+              Boolean(query) ||
+              (host.toolboxGroupExpandedStates.get("heat-results") ?? true),
+            totalCount: widgets.length,
+          },
+        ]
+      : [];
   }
 
   public static toggleToolboxGroup(host: any, groupId: string): void {

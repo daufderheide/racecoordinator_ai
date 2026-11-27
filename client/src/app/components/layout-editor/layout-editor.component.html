@@ -70,29 +70,31 @@
           <span class="material-icons">tune</span>
         </button>
       </div>
-      <button
-        id="help-raceday-countdown-preview"
-        type="button"
-        class="layout-title-btn"
-        [class.active]="isCountdownPreviewActive()"
-        (click)="toggleCountdownPreview()"
-        [title]="
-          (isCountdownPreviewActive()
-            ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
-            : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
-          ) | translate
-        "
-        [attr.aria-label]="
-          (isCountdownPreviewActive()
-            ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
-            : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
-          ) | translate
-        "
-      >
-        <span class="material-icons">{{
-          isCountdownPreviewActive() ? "visibility" : "visibility_off"
-        }}</span>
-      </button>
+      @if (getLayout()?.purpose !== "heat-results") {
+        <button
+          id="help-raceday-countdown-preview"
+          type="button"
+          class="layout-title-btn"
+          [class.active]="isCountdownPreviewActive()"
+          (click)="toggleCountdownPreview()"
+          [title]="
+            (isCountdownPreviewActive()
+              ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+              : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+            ) | translate
+          "
+          [attr.aria-label]="
+            (isCountdownPreviewActive()
+              ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+              : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+            ) | translate
+          "
+        >
+          <span class="material-icons">{{
+            isCountdownPreviewActive() ? "visibility" : "visibility_off"
+          }}</span>
+        </button>
+      }
       <input
         #layoutFileInput
         type="file"
@@ -187,29 +189,31 @@
             </div>
           </div>
 
-          <!-- Scale Mode Dropdown -->
-          <div id="help-raceday-scale-mode" class="layout-control-group">
-            <label class="layout-control-label">{{
-              "UI_EDITOR_LAYOUT_SCALE_MODE" | translate
-            }}</label>
-            <div class="control-select-scale-mode">
-              <app-custom-select
-                [value]="getLayoutScaleMode()"
-                [disabled]="!isEditMode"
-                (change)="setLayoutScaleMode($event)"
-              >
-                <app-custom-option value="letterbox">
-                  {{ "UI_EDITOR_SCALE_MODE_LETTERBOX" | translate }}
-                </app-custom-option>
-                <app-custom-option value="fit-width">
-                  {{ "UI_EDITOR_SCALE_MODE_FIT_WIDTH" | translate }}
-                </app-custom-option>
-                <app-custom-option value="stretch">
-                  {{ "UI_EDITOR_SCALE_MODE_STRETCH" | translate }}
-                </app-custom-option>
-              </app-custom-select>
+          @if (getLayout()?.purpose !== "heat-results") {
+            <!-- Scale Mode Dropdown -->
+            <div id="help-raceday-scale-mode" class="layout-control-group">
+              <label class="layout-control-label">{{
+                "UI_EDITOR_LAYOUT_SCALE_MODE" | translate
+              }}</label>
+              <div class="control-select-scale-mode">
+                <app-custom-select
+                  [value]="getLayoutScaleMode()"
+                  [disabled]="!isEditMode"
+                  (change)="setLayoutScaleMode($event)"
+                >
+                  <app-custom-option value="letterbox">
+                    {{ "UI_EDITOR_SCALE_MODE_LETTERBOX" | translate }}
+                  </app-custom-option>
+                  <app-custom-option value="fit-width">
+                    {{ "UI_EDITOR_SCALE_MODE_FIT_WIDTH" | translate }}
+                  </app-custom-option>
+                  <app-custom-option value="stretch">
+                    {{ "UI_EDITOR_SCALE_MODE_STRETCH" | translate }}
+                  </app-custom-option>
+                </app-custom-select>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Select Widget Dropdown -->
           <div id="help-raceday-widget-selector" class="layout-control-group">

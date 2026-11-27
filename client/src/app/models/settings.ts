@@ -45,6 +45,8 @@ export type WidgetType =
   | "on-deck"
   | "next-heat"
   | "heat-list"
+  | "heat-results-selector"
+  | "heat-results-standings"
   | "image"
   | "label"
   | "grid"
@@ -239,6 +241,7 @@ export interface LaneColumnWidgetSettings {
 export type LayoutScaleMode = "letterbox" | "stretch" | "fit-width";
 
 export interface LayoutConfig {
+  purpose?: "heat-results";
   widgets: AbsoluteWidgetNode[];
   baseWidth?: number;
   baseHeight?: number;
@@ -347,6 +350,7 @@ export class Settings {
   customExportTemplatePath?: string;
 
   // Theme system
+  heatResultsLayoutId?: string;
   activeThemeId?: string; // entity_id of the active theme (server-side)
   raceThemeOverrides: { [raceId: string]: string } = {}; // race entity_id → theme entity_id
 
