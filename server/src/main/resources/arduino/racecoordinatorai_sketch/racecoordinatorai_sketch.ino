@@ -102,6 +102,7 @@ const byte digitalRequest = 0x44;       // D
 const byte extendedRequest = 0x45; // E
 // Extended protocol sub-commands
 const byte extRaceState = 0;
+const byte raceStateHotYellow = 9;
 const byte extHeatLeader = 1;
 const byte extHeatStandings = 2;
 const byte extFuel = 3;
@@ -1103,6 +1104,12 @@ void processExtendedRequest() {
 
     case 8:
       // RC is closing
+      break;
+
+    case raceStateHotYellow:
+      // Heat is running under caution. Track power is controlled by the
+      // output pin configured in RC AI.
+      SERIAL_PRINTLN(F("Heat is running under yellow"));
       break;
     }
     break;
