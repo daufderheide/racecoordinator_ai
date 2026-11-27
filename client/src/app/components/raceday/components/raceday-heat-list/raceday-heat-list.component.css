@@ -40,6 +40,9 @@
 .heat-list-scroll-view::-webkit-scrollbar {
   width: 8px;
 }
+.heat-list-scroll-view.heat-table-scroll-view {
+  overflow-x: auto;
+}
 
 .heat-list-scroll-view::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.5);

@@ -32,3 +32,7 @@ Der Theme-Editor ist von mehreren Stellen aus zugänglich:
 - **Theme löschen**: Löscht das ausgewählte benutzerdefinierte Theme nach Bestätigung.
 - **Hilfetour**: Startet eine interaktive geführte Tour.
 
+## Theme-Audio stummschalten
+
+Wählen Sie im Bearbeitungsmodus **Alle auf „Keine“ setzen**, um alle Audioquellen im Abschnitt **Audio** stummzuschalten, einschließlich der integrierten Standardtöne. Mit **Rückgängig** stellen Sie die vorherigen Einstellungen in einem Schritt wieder her.
+

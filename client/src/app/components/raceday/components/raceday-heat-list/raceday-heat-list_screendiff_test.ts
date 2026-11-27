@@ -347,6 +347,64 @@ test.describe("Raceday Heat List Visuals", () => {
     );
   });
 
+  test("should render the heat schedule table with live lane assignments", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, {
+      racedayLayout: {
+        widgets: [
+          {
+            id: "widget-heat-list-table",
+            widgetType: "heat-list",
+            x: 50,
+            y: 50,
+            width: 900,
+            height: 295,
+            zIndex: 10,
+            scaleMode: "fixed",
+            customSettings: {
+              heatListLayout: "table",
+              autoScrollToCurrent: false,
+            },
+          },
+        ],
+      },
+    });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+    const scheduledRace = MOCK_HEAT_LIST_RACE_DATA.race;
+    const track = scheduledRace.race.track;
+    await TestSetupHelper.mockRaceData(page, {
+      race: {
+        ...scheduledRace,
+        race: {
+          ...scheduledRace.race,
+          track: {
+            ...track,
+            lanes: track.lanes.map(
+              ({ background_color, foreground_color, ...lane }) => ({
+                ...lane,
+                backgroundColor: background_color,
+                foregroundColor: foreground_color,
+              }),
+            ),
+          },
+        },
+      },
+    });
+    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
+    const heatList = page.locator("app-raceday-heat-list");
+    await heatList
+      .locator('[data-heat-number="2"][aria-current="step"]')
+      .getByText("Green Dino", { exact: true })
+      .waitFor();
+    await expect(heatList).toHaveScreenshot("raceday-heat-list-table.png");
+  });
+
   test("should render heat list widget empty state", async ({ page }) => {
     await TestSetupHelper.setupSettings(page, {
       racedayLayout: {

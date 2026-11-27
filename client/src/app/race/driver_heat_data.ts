@@ -51,6 +51,7 @@ export class DriverHeatData {
   public autoCalculatedLaps: number = 0;
   private _adjustedLapCount: number | null = null;
   private _totalTime: number | null = null;
+  private _stepUpStatus?: string;
   public isRefueling: boolean = false;
   public canRefuel: boolean = false;
   public currentLocation: number = -1;
@@ -86,6 +87,14 @@ export class DriverHeatData {
     return this.actualDriver ?? this.participant?.driver;
   }
 
+  get stepUpStatus(): string {
+    return this._stepUpStatus ?? this.participant?.stepUpStatus ?? "";
+  }
+
+  set stepUpStatus(value: string) {
+    this._stepUpStatus = value;
+  }
+
   get hasSegments(): boolean {
     return (
       (this.userLaps !== undefined && this.userLaps !== 0) ||
@@ -119,6 +128,7 @@ export class DriverHeatData {
     this.userLaps = 0;
     this.userTime = 0;
     this.autoCalculatedLaps = 0;
+    this._stepUpStatus = undefined;
     this._adjustedLapCount = null;
     this._totalTime = null;
     this.isRefueling = false;

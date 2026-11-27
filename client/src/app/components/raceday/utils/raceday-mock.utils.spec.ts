@@ -55,6 +55,14 @@ describe("raceday-mock.utils", () => {
       expect((firstHd.participant as any).overallMedianLapTime).toBeGreaterThan(
         0,
       );
+
+      // Verify stepUpStatus is populated across participants and heat drivers
+      expect((leader as any).stepUpStatus).toBe("Stepping up");
+      expect((data.participants[1] as any).stepUpStatus).toBe("Active");
+      expect((data.participants[2] as any).stepUpStatus).toBe("Eliminated");
+      expect((data.participants[3] as any).stepUpStatus).toBe("Pending");
+      expect((firstHd as any).stepUpStatus).toBe("Stepping up");
+      expect((firstHd.participant as any).stepUpStatus).toBe("Stepping up");
     });
 
     it("should populate next heat drivers with overall benchmark data", () => {
@@ -68,10 +76,12 @@ describe("raceday-mock.utils", () => {
       expect((nextHd as any).overallAverageLapTime).toBeGreaterThan(0);
       expect((nextHd as any).overallMedianLapTime).toBeGreaterThan(0);
       expect((nextHd as any).currentLapTime).toBeGreaterThan(0);
+      expect((nextHd as any).stepUpStatus).toBe("Pending");
       expect(nextHd.participant).toBeDefined();
       expect(nextHd.participant.bestLapTime).toBeGreaterThan(0);
       expect(nextHd.participant.averageLapTime).toBeGreaterThan(0);
       expect(nextHd.participant.medianLapTime).toBeGreaterThan(0);
+      expect((nextHd.participant as any).stepUpStatus).toBe("Pending");
     });
   });
 

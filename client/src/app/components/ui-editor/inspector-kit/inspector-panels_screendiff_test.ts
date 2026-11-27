@@ -117,6 +117,22 @@ test.describe("Widget Configuration panel: more widget types", () => {
     });
   });
 
+  test("shows the Heat List table options", async ({ page }) => {
+    await openEditor(page);
+    await selectWidget(page, "w-heat-list");
+    const kit = new InspectorKitHarnessE2e(page);
+    await kit.waitForForm();
+    await kit.panel
+      .locator('[data-field="heatListLayout"]')
+      .getByRole("radio", { name: "Table", exact: true })
+      .click();
+    await kit.panel.locator('[data-field="heatTableShowLaneColors"]').waitFor();
+    await kit.settle();
+    await expect(kit.panel).toHaveScreenshot("panel-heat-list-table.png", {
+      animations: "disabled",
+    });
+  });
+
   test("shows the panel in the dark theme", async ({ page }) => {
     await openEditor(page);
     await selectWidget(page, "w-label");

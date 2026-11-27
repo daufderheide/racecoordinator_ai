@@ -57,6 +57,8 @@ Seleccione un preajuste de relación de aspecto (**16:9**, **16:10**, **4:3**, *
 
 ### Biblioteca de widgets y controles de configuración {: #widget-panels }
 
+En el widget **Lista de mangas**, abra **Contenido** y elija **Tabla** en **Diseño** para mostrar una fila por manga. Puede mostrar el estado, los grupos y las asignaciones de carril. Las asignaciones usan los nombres actuales de pilotos y equipos. Los colores de carril se pueden desactivar de forma independiente. Elija **Tarjetas** para ver las tarjetas y los resúmenes de las mangas.
+
 Para crear un panel de récords, añada etiquetas y elija un titular o un valor en **Origen del contenido**. Puede usar la mejor vuelta histórica, la mejor puntuación histórica, la mejor vuelta de la carrera actual y la mejor vuelta de la tanda actual. Los números admiten de cero a tres decimales. Para datos ausentes elija guiones, un espacio en blanco o su propio texto. Usa etiquetas de texto para los encabezados y coloca cada widget en el lienzo.
 
 Para colocar el reloj por separado, elija **Cronómetro de carrera** en **Origen del contenido**. La etiqueta sigue el cronómetro integrado, incluidas las cuentas atrás automáticas. El editor muestra un tiempo de ejemplo para facilitar la colocación. Añada otra etiqueta de texto para el encabezado.

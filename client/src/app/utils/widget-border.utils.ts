@@ -82,6 +82,13 @@ const WIDGET_BORDER_DEFAULTS_MAP: Record<string, WidgetBorderConfig> = {
     borderWidth: 1,
     borderRadius: 8,
   },
+  "step-up-status": {
+    showBorder: true,
+    borderStyle: "solid",
+    borderColor: "",
+    borderWidth: 1,
+    borderRadius: 8,
+  },
   image: {
     showBorder: true,
     borderStyle: "solid",

@@ -973,7 +973,8 @@ export class RacedayAbsoluteWidgetComponent
     if (
       widget.widgetType === "lane-column" ||
       widget.widgetType === "average-score" ||
-      widget.widgetType === "drift-indicator"
+      widget.widgetType === "drift-indicator" ||
+      widget.widgetType === "step-up-status"
     )
       return true;
     if (this.isCustomWidget(widget.widgetType)) {

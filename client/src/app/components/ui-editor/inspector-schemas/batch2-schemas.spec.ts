@@ -2,6 +2,7 @@ import {
   allFields,
   InspectorField,
   isFieldChanged,
+  isFieldVisible,
   registryDefaults,
   resetField,
 } from "@app/components/ui-editor/inspector-kit/inspector-schema";
@@ -17,6 +18,24 @@ describe("batch 2 schemas", () => {
   describe("Heat List display", () => {
     const active = () => field("heat-list", "activeHeatDisplay");
     const future = () => field("heat-list", "futureHeatsDisplay");
+
+    it("keeps cards as the default and shows the relevant options for each layout", () => {
+      const table = { heatListLayout: "table" };
+      const status = field("heat-list", "heatTableShowStatus");
+      const colors = field("heat-list", "heatTableShowLaneColors");
+      expect(registryDefaults("heat-list")["heatListLayout"]).toBe("cards");
+      expect(isFieldVisible(status, {})).toBeFalse();
+      expect(isFieldVisible(active(), {})).toBeTrue();
+      expect(isFieldVisible(status, table)).toBeTrue();
+      expect(isFieldVisible(active(), table)).toBeFalse();
+      expect(
+        isFieldVisible(field("heat-list", "summaryShowDriver"), table),
+      ).toBeFalse();
+      expect(isFieldVisible(colors, table)).toBeTrue();
+      expect(
+        isFieldVisible(colors, { ...table, heatTableShowLanes: false }),
+      ).toBeFalse();
+    });
 
     it("reads older layouts from the summary flags like the old inspector", () => {
       expect(active().read!({})).toBe("summary_lane_colors");

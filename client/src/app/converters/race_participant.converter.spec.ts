@@ -190,22 +190,26 @@ describe("RaceParticipantConverter", () => {
       driver: { model: { entityId: "STEP_UP_1" }, name: "Step-Up 1" },
       isStepUp: true,
       stepUpIndex: 0,
+      stepUpStatus: "Active",
     };
 
     const p1 = RaceParticipantConverter.fromProto(proto1);
     expect(p1.isStepUp).toBeTrue();
     expect(p1.stepUpIndex).toBe(0);
+    expect(p1.stepUpStatus).toBe("Active");
 
     const proto2: IRaceParticipant = {
       objectId: "p-step",
       driver: { model: { entityId: "STEP_UP_1" }, name: "Step-Up 1" },
       isStepUp: true,
       stepUpIndex: 1,
+      stepUpStatus: "Stepping up",
     };
 
     const p2 = RaceParticipantConverter.fromProto(proto2);
     expect(p2).toBe(p1);
     expect(p1.stepUpIndex).toBe(1);
+    expect(p1.stepUpStatus).toBe("Stepping up");
   });
 
   describe("slotcars (#1210)", () => {

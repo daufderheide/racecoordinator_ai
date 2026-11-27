@@ -263,6 +263,11 @@ export class ToolboxGroupHelper {
           icon: "",
           labelKey: "UE_WIDGET_TYPE_SEASON_RACE_LEADERBOARD",
         },
+        {
+          type: "step-up-status",
+          icon: "trending_up",
+          labelKey: "UE_WIDGET_TYPE_STEP_UP_STATUS",
+        },
       ],
     },
     {

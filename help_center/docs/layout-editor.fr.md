@@ -57,6 +57,8 @@ Sélectionnez un préréglage de format d'image (**16:9**, **16:10**, **4:3**, *
 
 ### Bibliothèque de widgets & contrôles de configuration {: #widget-panels }
 
+Dans le widget **Liste des manches**, ouvrez **Contenu** et choisissez **Tableau** sous **Disposition** pour afficher une ligne par manche. Choisissez d’afficher l’état, les groupes et les affectations de voie. Les affectations utilisent les noms actuels des pilotes et des équipes. Vous pouvez désactiver les couleurs de voie indépendamment. Choisissez **Cartes** pour afficher les cartes et les résumés des manches.
+
 Pour créer un panneau de records, ajoutez des libellés et choisissez un détenteur ou une valeur sous **Source du contenu**. Les sources disponibles sont le meilleur tour historique, le meilleur score historique, le meilleur tour de la course en cours et le meilleur tour de la manche en cours. Les nombres acceptent de zéro à trois décimales. En l’absence de données, choisissez des tirets, un champ vide ou votre propre texte. Utilisez des libellés de texte pour les titres et placez chaque widget sur le canevas.
 
 Pour placer l’horloge séparément, choisissez **Chronomètre de course** dans **Source du contenu**. Le libellé suit le chronomètre intégré, y compris les comptes à rebours automatiques. L’éditeur affiche un temps d’exemple pour faciliter le placement. Ajoutez un libellé de texte séparé pour le titre.

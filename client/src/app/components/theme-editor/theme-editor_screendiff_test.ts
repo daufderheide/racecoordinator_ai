@@ -211,6 +211,26 @@ test.describe("Theme Editor Visuals", () => {
     );
   });
 
+  test("should display the bulk audio action in edit mode", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/theme-editor?id=custom_theme_1&edit=true"),
+    );
+
+    const audioSection = page.locator("#theme-audio-section");
+    await audioSection.locator(".section-header").click();
+    const setAllButton = audioSection.getByRole("button", {
+      name: "Set All to None",
+    });
+    await setAllButton.waitFor({ state: "visible" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.mouse.move(0, 0);
+    await expect(audioSection).toHaveScreenshot("theme-editor-audio-edit.png");
+  });
+
   test("should display driver audio overrides section", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

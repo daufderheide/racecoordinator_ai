@@ -42,6 +42,7 @@ export const BASE_AVAILABLE_COLUMNS: readonly {
   { key: "crashes", label: "UI_EDITOR_COL_HEAT_CRASHES" },
   { key: "crashPenalty", label: "UI_EDITOR_COL_HEAT_CRASH_PENALTY" },
   { key: "seed", label: "RD_COL_SEED" },
+  { key: "stepUpStatus", label: "RD_COL_STEP_UP_STATUS" },
   { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
   { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },
   { key: "rankGroup", label: "RD_COL_RANK_GROUP" },

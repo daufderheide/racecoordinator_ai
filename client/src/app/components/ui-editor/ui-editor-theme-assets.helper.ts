@@ -133,11 +133,10 @@ export function getThemeAudioConfigForSlot(
   slot: string,
   theme: Theme,
 ): AudioConfig {
-  if (!theme.audio_slots) theme.audio_slots = {};
-  const config = theme.audio_slots[slot];
+  const config = theme.audio_slots?.[slot];
   if (config && config.type) return config;
 
-  // Fallback: If it's in the old slots map or missing, convert/default on the fly
+  // Resolve legacy and default sounds without changing the saved theme.
   const legacyAssetId = theme.slots?.[slot];
   const isSet =
     slot === "audio.countdown" ||
@@ -147,12 +146,10 @@ export function getThemeAudioConfigForSlot(
     slot === "audio.auto_advance";
 
   if (slot === "audio.min_lap_time") {
-    const ttsConfig: AudioConfig = {
+    return {
       type: "tts",
       text: "Min lap time for {driver.nickname}",
     };
-    theme.audio_slots[slot] = ttsConfig;
-    return ttsConfig;
   }
 
   let defaultAssetId: string | undefined;
@@ -172,13 +169,10 @@ export function getThemeAudioConfigForSlot(
     else if (slot === "audio.race_over") defaultAssetId = "default_race_over";
   }
 
-  const fallbackConfig: AudioConfig = {
+  return {
     type: isSet ? "audio_set" : "preset",
     url: legacyAssetId || defaultAssetId,
   };
-
-  theme.audio_slots[slot] = fallbackConfig;
-  return fallbackConfig;
 }
 
 export function getThemeAudioUrl(

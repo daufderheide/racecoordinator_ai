@@ -187,6 +187,7 @@ describe("ThemeEditorHelpHelper", () => {
     expect(steps[6].content).toContain("help-section-fuel-gauge");
     expect(steps[7].content).toContain("help-article-themes");
     expect(steps[7].content).toContain("help-section-audio");
+    expect(steps[7].content).toContain("Set All to None");
     expect(steps[8].content).toContain("help-article-themes");
     expect(steps[8].content).toContain("help-section-driver-audio-overrides");
   });

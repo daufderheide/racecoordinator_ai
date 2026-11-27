@@ -57,6 +57,8 @@ Select an aspect ratio preset (**16:9**, **16:10**, **4:3**, **21:9**, **Custom*
 
 ### Widget Library & Configuration Controls {: #widget-panels }
 
+In the **Heat List** widget, open **Content** and change **Layout** to **Table** to show one row per heat. Choose whether to display status, groups and lane assignments. Lane assignments use the current driver and team names, and lane colours can be switched off independently. Choose **Cards** to use the heat card and summary options.
+
 To build a Records panel, add Label widgets and choose a record holder or value under **Content source**. The possible sources are the all-time best lap, the all-time best score, the fastest lap of the current race, and the fastest lap of the current heat. Number labels can use zero to three decimal places. Choose dashes, a blank, or your own text for missing data. Use ordinary Labels for headings and position each widget on the canvas.
 
 To place the race clock on its own, choose **Race Timer** under **Content source**. The label follows the built-in timer’s display, including automatic countdowns. The editor shows a sample time for positioning. Add a separate text label for a caption.
