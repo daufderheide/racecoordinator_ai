@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday Label Widget Visuals", () => {
@@ -74,6 +75,23 @@ test.describe("Raceday Label Widget Visuals", () => {
               backgroundColor: "#0f172a",
             },
           },
+          {
+            id: "w-label-timer",
+            widgetType: "label",
+            x: 100,
+            y: 300,
+            width: 240,
+            height: 70,
+            zIndex: 1,
+            customSettings: {
+              labelSource: "raceTimer",
+              fontFamily: "monospace",
+              fontBold: true,
+              fontSize: 42,
+              backgroundColor: "#0f172a",
+              textColor: "#38bdf8",
+            },
+          },
         ],
       },
     });
@@ -137,5 +155,19 @@ test.describe("Raceday Label Widget Visuals", () => {
         animations: "disabled",
       },
     );
+  });
+
+  test("should display the live race timer in a Label", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    const timerLabel = page.locator("app-raceday-label").nth(3);
+    await timerLabel.waitFor();
+    await TestSetupHelper.mockRaceData(page, { raceState: RaceState.PAUSED });
+    await TestSetupHelper.mockRaceData(page, { raceTime: { time: 83.25 } });
+    await timerLabel.getByText("1:23", { exact: true }).waitFor();
+    await expect(timerLabel).toHaveScreenshot("raceday-label-race-timer.png");
   });
 });

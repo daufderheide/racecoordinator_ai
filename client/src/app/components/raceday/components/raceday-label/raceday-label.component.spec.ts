@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { BehaviorSubject } from "rxjs";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
@@ -8,14 +10,20 @@ import { RacedayLabelComponent } from "./raceday-label.component";
 describe("RacedayLabelComponent", () => {
   let component: RacedayLabelComponent;
   let fixture: ComponentFixture<RacedayLabelComponent>;
+  let clock: BehaviorSubject<string>;
 
   beforeEach(async () => {
+    clock = new BehaviorSubject("--");
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
       imports: [RacedayLabelComponent],
       providers: [
         { provide: TranslationService, useValue: mockTranslationService },
+        {
+          provide: RaceTimeService,
+          useValue: { interpolatedFormattedTime$: clock.asObservable() },
+        },
       ],
     }).compileComponents();
 
@@ -81,6 +89,46 @@ describe("RacedayLabelComponent", () => {
     expect(component.displayText()).toBe("Records");
     setLabelSettings({ text: "Records", recordField: "unknownFutureField" });
     expect(component.displayText()).toBe("Records");
+  });
+
+  it("follows the interpolated clock only while the live timer source is selected", () => {
+    setLabelSettings({ text: "Clock" });
+    fixture.detectChanges();
+    expect(clock.observed).toBeFalse();
+
+    setLabelSettings({ text: "Clock", labelSource: "raceTimer" });
+    fixture.detectChanges();
+    expect(clock.observed).toBeTrue();
+    expect(component.displayText()).toBe("--");
+
+    for (const time of ["1:23", "9.87", "0"]) {
+      clock.next(time);
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector(".label-widget-text").textContent,
+      ).toBe(time);
+    }
+
+    setLabelSettings({ text: "Clock" });
+    fixture.detectChanges();
+    expect(clock.observed).toBeFalse();
+    expect(component.displayText()).toBe("Clock");
+  });
+
+  it("shows sample time in the editor and releases a live subscription on destroy", () => {
+    setLabelSettings({ labelSource: "raceTimer" });
+    fixture.componentRef.setInput("isEditor", true);
+    fixture.detectChanges();
+    clock.next("0:08.42");
+    expect(clock.observed).toBeFalse();
+    expect(component.displayText()).toBe("2:03");
+
+    fixture.componentRef.setInput("isEditor", false);
+    fixture.detectChanges();
+    expect(clock.observed).toBeTrue();
+    expect(component.displayText()).toBe("0:08.42");
+    fixture.destroy();
+    expect(clock.observed).toBeFalse();
   });
 
   it("should return correct flex alignment for getJustify", () => {
