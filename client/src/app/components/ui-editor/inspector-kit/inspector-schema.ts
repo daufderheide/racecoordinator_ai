@@ -298,8 +298,9 @@ export function fieldKeys(field: InspectorField): string[] {
   switch (field.type) {
     case "textPart":
       return Object.values(field.keys).filter((k): k is string => !!k);
-    case "geometry":
     case "embed":
+      return field.touches ?? [];
+    case "geometry":
     case "buttons":
     case "note":
       return [];

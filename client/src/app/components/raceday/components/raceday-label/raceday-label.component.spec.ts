@@ -27,6 +27,62 @@ describe("RacedayLabelComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  function setLabelSettings(customSettings: Record<string, unknown>): void {
+    fixture.componentRef.setInput("widget", {
+      id: "record-label",
+      widgetType: "label",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 40,
+      zIndex: 1,
+      customSettings,
+    } satisfies AbsoluteWidgetNode);
+  }
+
+  it("renders an updated live record holder and displays the configured empty value", () => {
+    setLabelSettings({
+      recordField: "raceRecordScoreNickname",
+      emptyValueMode: "text",
+      emptyValueText: "Awaiting record",
+    });
+    fixture.detectChanges();
+    const text: HTMLElement =
+      fixture.nativeElement.querySelector(".label-widget-text");
+    expect(text.textContent).toBe("Awaiting record");
+
+    fixture.componentRef.setInput("recordValue", "Team Orange");
+    fixture.detectChanges();
+    expect(text.textContent).toBe("Team Orange");
+
+    fixture.componentRef.setInput("recordValue", "---");
+    fixture.detectChanges();
+    expect(text.textContent).toBe("Awaiting record");
+  });
+
+  it("formats live numeric values and uses the Records placeholder for missing data", () => {
+    setLabelSettings({ recordField: "heatBestTime", recordDecimals: 2 });
+    fixture.componentRef.setInput("recordValue", 4.217);
+    expect(component.displayText()).toBe("4.22");
+    fixture.componentRef.setInput("recordValue", 0);
+    expect(component.displayText()).toBe("--.---");
+    fixture.componentRef.setInput("recordValue", 1_000_000);
+    expect(component.displayText()).toBe("--.---");
+
+    setLabelSettings({ recordField: "raceRecordScore", recordDecimals: 0 });
+    fixture.componentRef.setInput("recordValue", 100.5);
+    expect(component.displayText()).toBe("101");
+    fixture.componentRef.setInput("recordValue", 0);
+    expect(component.displayText()).toBe("--");
+  });
+
+  it("retains ordinary label text for layouts without a recognized source", () => {
+    setLabelSettings({ text: "Records" });
+    expect(component.displayText()).toBe("Records");
+    setLabelSettings({ text: "Records", recordField: "unknownFutureField" });
+    expect(component.displayText()).toBe("Records");
+  });
+
   it("should return correct flex alignment for getJustify", () => {
     expect(component.getJustify("left")).toBe("flex-start");
     expect(component.getJustify("start")).toBe("flex-start");

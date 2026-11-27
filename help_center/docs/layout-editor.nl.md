@@ -56,6 +56,9 @@ Kies een beeldverhouding (**16:9**, **16:10**, **4:3**, **21:9**, **Aangepast**)
 - Zoominstellingen worden per lay-out lokaal in de browser opgeslagen.
 
 ### Widgetbibliotheek & configuratieknoppen {: #widget-panels }
+
+Voeg voor een recordpaneel labels toe en kies onder **Inhoudsbron** een recordhouder of waarde. Je kunt kiezen uit de beste rondetijd ooit, de beste score ooit, de snelste ronde van de huidige race en de snelste ronde van de huidige heat. Voor getallen kies je nul tot drie decimalen. Voor ontbrekende gegevens kies je streepjes, een lege waarde of eigen tekst. Gebruik gewone tekstlabels voor koppen en plaats elke widget op het canvas.
+
 Gelegen op de hoofdwerkbalk links van het startlichten-voorvertoningspictogram:
 - **Widgetbibliotheek (<span class="material-icons">widgets</span>)**: Schakelt de weergave van de zwevende gereedschapskist in of uit. Een klik herstelt de gereedschapskist ook als deze geminimaliseerd is of buiten het zichtbare scherm is verplaatst.
 - **Widget-configuratie (<span class="material-icons">tune</span>)**: Schakelt de weergave van het zijpaneel Widget-configuratie in of uit. Wanneer het verborgen is, kan het canvas zich over de volledige breedte van de pagina uitstrekken als de beeldverhouding van de lay-out dit toelaat (net als in de alleen-lezen-modus).

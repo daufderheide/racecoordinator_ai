@@ -57,6 +57,23 @@ test.describe("Raceday Label Widget Visuals", () => {
               borderRadius: 6,
             },
           },
+          {
+            id: "w-label-record",
+            widgetType: "label",
+            x: 100,
+            y: 225,
+            width: 220,
+            height: 62,
+            zIndex: 1,
+            customSettings: {
+              recordField: "heatBestTime",
+              recordDecimals: 2,
+              fontBold: true,
+              fontSize: 28,
+              textColor: "#38bdf8",
+              backgroundColor: "#0f172a",
+            },
+          },
         ],
       },
     });
@@ -78,6 +95,27 @@ test.describe("Raceday Label Widget Visuals", () => {
       maxDiffPixels: 5000,
       animations: "disabled",
     });
+  });
+
+  test("should display a live lap record in a Label", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    const liveLabel = page.locator("app-raceday-label").nth(2);
+    await liveLabel
+      .locator(".label-widget-text", { hasText: "--.---" })
+      .waitFor();
+    await TestSetupHelper.mockRaceData(page, {
+      recordData: {
+        current: { heatFastestLap: { value: 4.127, holderNickname: "Mario" } },
+      },
+    });
+    await liveLabel
+      .locator(".label-widget-text", { hasText: "4.13" })
+      .waitFor();
+    await expect(liveLabel).toHaveScreenshot("raceday-label-record.png");
   });
 
   test("should display vertical orientation label widget", async ({ page }) => {

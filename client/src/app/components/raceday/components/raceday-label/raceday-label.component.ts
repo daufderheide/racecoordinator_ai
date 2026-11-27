@@ -1,7 +1,16 @@
-import { CommonModule } from "@angular/common";
-import { Component, computed, input, ViewEncapsulation } from "@angular/core";
+import { CommonModule, formatNumber } from "@angular/common";
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  LOCALE_ID,
+  ViewEncapsulation,
+} from "@angular/core";
 import { LaneGridLabelHelper } from "@app/components/raceday/utils/lane-grid-label.helper";
+import { getRecordLabelField } from "@app/models/record-label-field";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { emptyValue } from "@app/utils/empty-value.utils";
 
 @Component({
   standalone: true,
@@ -13,6 +22,37 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 })
 export class RacedayLabelComponent {
   widget = input<AbsoluteWidgetNode | null>(null);
+  recordValue = input<string | number>();
+  private readonly locale = inject(LOCALE_ID);
+
+  readonly displayText = computed(() => {
+    const settings = this.widget()?.customSettings;
+    const field = getRecordLabelField(settings?.["recordField"]);
+    if (!field) return String(settings?.["text"] || "");
+
+    const value = this.recordValue();
+    if (field.kind === "holder") {
+      return typeof value === "string" && value.trim() && value !== "---"
+        ? value
+        : emptyValue(settings, "---");
+    }
+
+    if (
+      typeof value !== "number" ||
+      !Number.isFinite(value) ||
+      value <= 0 ||
+      (field.kind === "lap" && value >= 1000000)
+    ) {
+      return emptyValue(settings, field.kind === "lap" ? "--.---" : "--");
+    }
+
+    const precision = Number(settings?.["recordDecimals"] ?? 3);
+    const decimals =
+      Number.isInteger(precision) && precision >= 0 && precision <= 3
+        ? precision
+        : 3;
+    return formatNumber(value, this.locale, `1.${decimals}-${decimals}`);
+  });
 
   isVertical(): boolean {
     const w = this.widget();
@@ -34,7 +74,7 @@ export class RacedayLabelComponent {
       return { fontSize: 18, shouldWrap: false };
     }
     const isVert = this.isVertical();
-    const text = (w.customSettings?.["text"] || "").toString();
+    const text = this.displayText();
     const bounds = {
       x: w.x || 0,
       y: w.y || 0,
