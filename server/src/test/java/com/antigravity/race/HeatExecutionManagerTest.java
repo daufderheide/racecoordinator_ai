@@ -5,9 +5,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.antigravity.models.AnalogFuelOptions;
@@ -28,14 +35,18 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.NotStarted;
+import com.antigravity.service.RacePredictionService;
 import com.google.protobuf.GeneratedMessageV3;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
 
 public class HeatExecutionManagerTest {
 
@@ -2361,12 +2372,13 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
-  public void testUpdateRealtimePredictionCoalescing() throws Exception {
-    executionManager.initialize(2);
+  public void testUpdateRealtimePredictionCoalescing() {
+    Queue<Runnable> jobs = new ArrayDeque<>();
+    HeatExecutionManager manager = new HeatExecutionManager(race, jobs::add);
+    manager.initialize(2);
 
-    // Set a high lap limit so the heat does not end and trigger HeatOver during the test
     race.setRaceModel(
-        new com.antigravity.models.Race.Builder()
+        new Race.Builder()
             .from(race.getRaceModel())
             .withHeatScoring(
                 new HeatScoring(
@@ -2377,85 +2389,38 @@ public class HeatExecutionManagerTest {
                     HeatScoring.AllowFinish.None))
             .build());
 
-    com.antigravity.service.RacePredictionService mockService =
-        org.mockito.Mockito.mock(com.antigravity.service.RacePredictionService.class);
-
-    java.util.concurrent.CountDownLatch firstInvocationStarted =
-        new java.util.concurrent.CountDownLatch(1);
-    java.util.concurrent.CountDownLatch releaseWorker = new java.util.concurrent.CountDownLatch(1);
-
-    // Hold the worker deterministically during the first invocation so all subsequent laps
-    // arrive while the worker is actively processing, guaranteeing coalescing.
-    org.mockito.Mockito.doAnswer(
+    RacePredictionService predictionService = mock(RacePredictionService.class);
+    doAnswer(
             invocation -> {
-              firstInvocationStarted.countDown();
-              releaseWorker.await(5, java.util.concurrent.TimeUnit.SECONDS);
+              // Add laps while the first prediction is in progress.
+              for (int i = 1; i < 6; i++) {
+                manager.onLap(i % 2, 10.0 + i, 1, false, true, false);
+              }
               return null;
             })
-        .when(mockService)
+        .doReturn(null)
+        .when(predictionService)
         .updateRealtimePrediction(
-            org.mockito.ArgumentMatchers.any(),
-            org.mockito.ArgumentMatchers.anyString(),
-            org.mockito.ArgumentMatchers.any(),
-            org.mockito.ArgumentMatchers.any(),
-            org.mockito.ArgumentMatchers.any(),
-            org.mockito.ArgumentMatchers.anyInt(),
-            org.mockito.ArgumentMatchers.any(),
-            org.mockito.ArgumentMatchers.anyBoolean());
+            any(), anyString(), any(), any(), any(), anyInt(), any(), anyBoolean());
 
-    try (org.mockito.MockedStatic<com.antigravity.service.RacePredictionService> mockedStatic =
-        org.mockito.Mockito.mockStatic(com.antigravity.service.RacePredictionService.class)) {
-      mockedStatic
-          .when(com.antigravity.service.RacePredictionService::getInstance)
-          .thenReturn(mockService);
+    try (MockedStatic<RacePredictionService> mockedService =
+        mockStatic(RacePredictionService.class)) {
+      mockedService.when(RacePredictionService::getInstance).thenReturn(predictionService);
+      manager.onLap(0, 1.0, 1, false, true, false);
+      manager.onLap(1, 1.0, 1, false, true, false);
+      assertTrue(jobs.isEmpty());
 
-      // Initial reaction times (reaction times do not trigger prediction updates)
-      executionManager.onLap(0, 1.0, 1, false, true, false);
-      executionManager.onLap(1, 1.0, 1, false, true, false);
+      manager.onLap(0, 10.0, 1, false, true, false);
+      assertEquals(1, jobs.size());
+      jobs.remove().run();
 
-      // First actual lap triggers background prediction
-      executionManager.onLap(0, 10.0, 1, false, true, false);
+      assertEquals(1, jobs.size());
+      jobs.remove().run();
 
-      // Wait until the worker has actively entered updateRealtimePrediction
-      org.junit.Assert.assertTrue(
-          "Worker did not start first prediction in time",
-          firstInvocationStarted.await(5, java.util.concurrent.TimeUnit.SECONDS));
-
-      // Fire subsequent laps while the worker is actively blocked
-      for (int i = 1; i < 6; i++) {
-        executionManager.onLap(i % 2, 10.0 + i, 1, false, true, false);
-      }
-
-      // Release worker so the first prediction completes and the coalesced task runs
-      releaseWorker.countDown();
-
-      HeatExecutionManager.flushPredictions();
-
-      // Because the subsequent 7 laps arrived while the worker was processing,
-      // they must coalesce into a single follow-up invocation (at most 2 total for 8 laps)
-      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.atMost(2))
+      assertTrue(jobs.isEmpty());
+      verify(predictionService, times(2))
           .updateRealtimePrediction(
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.anyString(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.anyInt(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.anyBoolean());
-
-      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.atLeastOnce())
-          .updateRealtimePrediction(
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.anyString(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.anyInt(),
-              org.mockito.ArgumentMatchers.any(),
-              org.mockito.ArgumentMatchers.anyBoolean());
-    } catch (org.mockito.exceptions.base.MockitoException e) {
-      System.out.println("mockStatic not supported, skipping coalescing strict verification.");
+              any(), anyString(), any(), any(), any(), anyInt(), any(), anyBoolean());
     }
   }
 

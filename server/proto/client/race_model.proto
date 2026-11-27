@@ -162,6 +162,8 @@ message RaceModel {
   // IROC: the slotcars stay in their lanes and the drivers rotate (#1210).
   bool cars_stay_in_lanes = 40;
   DriverLaneSelection driver_lane_selection = 41;
+  bool hot_yellow_enabled = 42;
+  bool hot_yellow_restart_countdown = 43;
 }
 
 message CrashAndLearnOptions {

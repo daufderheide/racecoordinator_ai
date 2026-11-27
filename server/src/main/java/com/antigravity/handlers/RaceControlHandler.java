@@ -19,6 +19,7 @@ import com.antigravity.proto.ModifyHeatsRequest;
 import com.antigravity.proto.ModifyHeatsResponse;
 import com.antigravity.proto.NextHeatResponse;
 import com.antigravity.proto.ParticipantCarChoice;
+import com.antigravity.proto.PauseRaceRequest;
 import com.antigravity.proto.PauseRaceResponse;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RegenerateHeatsRequest;
@@ -29,6 +30,7 @@ import com.antigravity.proto.SkipRaceResponse;
 import com.antigravity.proto.StartRaceResponse;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Heat;
+import com.antigravity.race.RaceHardwareEventHandler;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.RaceOver;
@@ -531,14 +533,20 @@ public class RaceControlHandler {
       }
 
       try {
-        race.pauseRace();
+        byte[] body = ctx.bodyAsBytes();
+        boolean trackCall = body != null && PauseRaceRequest.parseFrom(body).getTrackCall();
+        if (trackCall) {
+          RaceHardwareEventHandler.handleTrackCall(race);
+        } else {
+          race.pauseRace();
+        }
 
         PauseRaceResponse response =
             PauseRaceResponse.newBuilder()
                 .setSuccess(true)
-                .setMessage("Race paused successfully")
+                .setMessage(trackCall ? "Track call processed" : "Race paused successfully")
                 .build();
-        ReplayLogger.logReplayCommand("pauseRace", null);
+        ReplayLogger.logReplayCommand(trackCall ? "trackCall" : "pauseRace", null);
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
         PauseRaceResponse response =

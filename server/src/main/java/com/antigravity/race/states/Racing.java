@@ -4,6 +4,7 @@ import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.HeatScoring.FinishMethod;
+import com.antigravity.proto.HotYellowRestartCountdown;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
@@ -35,9 +36,26 @@ public class Racing implements IRaceState {
   private int[] previousFuelLevels;
   private double previousHeatProgress = -1.0;
   private RaceFlag previousFlag = RaceFlag.UNKNOWN_FLAG;
+  private volatile boolean hotYellow;
+  private volatile StartCountdown hotYellowRestart;
+
+  public boolean isHotYellow() {
+    return hotYellow;
+  }
+
+  public HotYellowRestartCountdown getHotYellowRestartCountdown() {
+    StartCountdown countdown = hotYellowRestart;
+    return countdown == null
+        ? null
+        : HotYellowRestartCountdown.newBuilder()
+            .setDuration(countdown.duration())
+            .setRemaining(countdown.remaining(System.nanoTime()))
+            .build();
+  }
 
   @Override
   public RaceFlag getFlagType(Race race) {
+    if (isHotYellow()) return RaceFlag.HOT_YELLOW;
     if (race == null || race.getRaceModel() == null) return RaceFlag.GREEN;
 
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
@@ -218,7 +236,7 @@ public class Racing implements IRaceState {
     syncRefuelingState();
     syncFuelLevels();
 
-    boolean autoCrashDetected = executionManager.checkAutomatedCrashes(delta);
+    boolean autoCrashDetected = !isHotYellow() && executionManager.checkAutomatedCrashes(delta);
     if (autoCrashDetected
         && race.isCnlEnabled()
         && race.getCrashAndLearnOptions().isPauseHeatOnCrash()) {
@@ -230,6 +248,12 @@ public class Racing implements IRaceState {
     boolean allFinished =
         checkFinishConditions(scoring, isTimed, isInfiniteTimed, allowFinish, limit);
 
+    if (!allFinished && isHotYellow()) {
+      synchronized (race) {
+        if (race.getState() != this || race.isStopped()) return;
+        if (isHotYellow() && !advanceHotYellow(now)) return;
+      }
+    }
     updateHeatProgress(scoring, isInfiniteTimed);
     updateFlagAndBroadcast();
 
@@ -364,6 +388,14 @@ public class Racing implements IRaceState {
 
   @Override
   public void exit(Race race) {
+    if (isHotYellow()) {
+      // Cut power before releasing the caution output when a heat pauses or ends.
+      race.setMainPower(false);
+      race.setLanePower(false, -1);
+      race.getHardwareManager().setHotYellowOutput(false);
+      hotYellowRestart = null;
+      hotYellow = false;
+    }
     if (timerHandle != null) {
       timerHandle.cancel(false);
     }
@@ -534,12 +566,70 @@ public class Racing implements IRaceState {
 
   @Override
   public void onCallbutton(Race race, int lane) {
-    logger.info("Racing.onCallbutton() called. Pausing race.");
+    if (isHotYellow() && lane < 0) {
+      requestHotYellowRestart(race);
+      return;
+    }
+
     race.recordTrackCall(lane);
     if (race.isCnlEnabled() && lane >= 0) {
       race.recordCrash(lane);
     }
+    // A second driver calling for help must not release the caution.
+    if (isHotYellow()) return;
+
+    if (race.getRaceModel() != null
+        && race.getRaceModel().isHotYellowEnabled()
+        && race.isMainPower()
+        && race.getHardwareManager().isHotYellowOutputAvailable()) {
+      if (race.getHardwareManager().setHotYellowOutput(true)) {
+        hotYellow = true;
+        race.getStatistics().incrementYellowFlagCount();
+        updateFlagAndBroadcast();
+        return;
+      }
+      pause(race);
+      race.getHardwareManager().setHotYellowOutput(false);
+      return;
+    }
     pause(race);
+  }
+
+  private void requestHotYellowRestart(Race race) {
+    if (hotYellowRestart != null) return;
+    if (race.getRaceModel().isHotYellowRestartCountdown()) {
+      long now = System.nanoTime();
+      StartCountdown countdown =
+          new StartCountdown(
+              now,
+              race.getRaceModel().getRestartTime(),
+              race.getRaceModel().getRestartRandomizer());
+      if (!countdown.hasFinished(now)) {
+        hotYellowRestart = countdown;
+        race.broadcastTime();
+        return;
+      }
+    }
+    if (releaseHotYellow(race)) updateFlagAndBroadcast();
+  }
+
+  private boolean advanceHotYellow(long now) {
+    if (!race.isMainPower() || !race.getHardwareManager().isHotYellowOutputAvailable()) {
+      pause(race);
+      return false;
+    }
+    StartCountdown countdown = hotYellowRestart;
+    return countdown == null || !countdown.hasFinished(now) || releaseHotYellow(race);
+  }
+
+  private boolean releaseHotYellow(Race race) {
+    if (!race.getHardwareManager().setHotYellowOutput(false)) {
+      pause(race);
+      return false;
+    }
+    hotYellowRestart = null;
+    hotYellow = false;
+    return true;
   }
 
   void calculateAutoSegments() {

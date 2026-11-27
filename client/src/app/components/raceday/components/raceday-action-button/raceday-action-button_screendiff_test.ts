@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { RaceState } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday Action Button Visuals", () => {
@@ -56,6 +56,23 @@ test.describe("Raceday Action Button Visuals", () => {
         ],
       },
     });
+  });
+
+  test("should display the Hot Yellow caution on Race Day", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
+    await TestSetupHelper.sendRaceFlag(page, RaceFlag.HOT_YELLOW);
+    await TestSetupHelper.sendRaceTime(page, { time: 32 });
+    await expect(page.locator(".hot-yellow-banner")).toHaveScreenshot(
+      "raceday-hot-yellow.png",
+    );
   });
 
   test("should display action buttons correctly based on race state", async ({

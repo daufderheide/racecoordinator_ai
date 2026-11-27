@@ -32,7 +32,6 @@ import com.antigravity.proto.OverallStandingsUpdate;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
-import com.antigravity.proto.RaceTime;
 import com.antigravity.proto.RecordData;
 import com.antigravity.proto.RegenerateHeatsRequest;
 import com.antigravity.proto.RegenerateHeatsResponse;
@@ -1016,13 +1015,7 @@ public class Race implements ProtocolListener {
   }
 
   public void broadcastTime() {
-    RaceTime msg =
-        RaceTime.newBuilder()
-            .setTime(getRaceTime())
-            .setAutoStartRemaining(getAutoStartRemaining())
-            .setAutoAdvanceRemaining(getAutoAdvanceRemaining())
-            .build();
-    broadcast(RaceData.newBuilder().setRaceTime(msg).build());
+    broadcast(RaceData.newBuilder().setRaceTime(RaceConverter.toRaceTime(this)).build());
   }
 
   public void broadcast(GeneratedMessageV3 message) {
@@ -1719,7 +1712,8 @@ public class Race implements ProtocolListener {
   }
 
   @Override
-  public void onCallbutton(int lane, int idx) {
+  public synchronized void onCallbutton(int lane, int idx) {
+    if (stopped) return;
     state.onCallbutton(this, lane);
     ClientSubscriptionManager.getInstance()
         .broadcastInterfaceEvent(
@@ -1850,12 +1844,7 @@ public class Race implements ProtocolListener {
     RaceData.Builder builder =
         RaceData.newBuilder()
             .setRace(RaceConverter.toProto(this, sentIds))
-            .setRaceTime(
-                com.antigravity.proto.RaceTime.newBuilder() // fqn-collision
-                    .setTime(accumulatedRaceTime)
-                    .setAutoStartRemaining(getAutoStartRemaining())
-                    .setAutoAdvanceRemaining(getAutoAdvanceRemaining())
-                    .build())
+            .setRaceTime(RaceConverter.toRaceTime(this))
             .setRecordData(getRecordData());
 
     if (state != null) {

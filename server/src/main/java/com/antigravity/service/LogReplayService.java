@@ -11,6 +11,7 @@ import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceHardwareEventHandler;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.RaceOver;
@@ -270,6 +271,9 @@ public class LogReplayService {
     switch (command) {
       case "startRace":
         race.startRace();
+        break;
+      case "trackCall":
+        RaceHardwareEventHandler.handleTrackCall(race);
         break;
       case "pauseRace":
         race.pauseRace();

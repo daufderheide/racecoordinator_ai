@@ -171,7 +171,8 @@ export class RacedayActionsMenuHelper {
 
   static onMenuSelect(host: any, action: string): void {
     if (action === "START_RESUME" && host.isStartResumeDisabled) return;
-    if (action === "PAUSE" && host.isPauseDisabled) return;
+    if ((action === "PAUSE" || action === "TRACK_CALL") && host.isPauseDisabled)
+      return;
     if (action === "NEXT_HEAT" && host.isNextHeatDisabled) return;
     if (action === "RESTART_HEAT" && host.isRestartHeatDisabled) return;
     if (action === "SKIP_HEAT" && host.isSkipHeatDisabled) return;
@@ -292,7 +293,11 @@ export class RacedayActionsMenuHelper {
     }
     if (action === "START_RESUME") {
       RacedayActionsMenuHelper.handleStartResumeAction(host);
-    } else if (action === "PAUSE" || action === "ABORT_TIMERS") {
+    } else if (
+      action === "PAUSE" ||
+      action === "TRACK_CALL" ||
+      action === "ABORT_TIMERS"
+    ) {
       RacedayActionsMenuHelper.executePauseOrAbort(host, action);
     } else if (action === "NEXT_HEAT") {
       RacedayActionsMenuHelper.handleNextHeatAction(host);
@@ -334,7 +339,9 @@ export class RacedayActionsMenuHelper {
     const obs =
       effectiveAction === "ABORT_TIMERS"
         ? host.dataService.abortTimers()
-        : host.dataService.pauseRace();
+        : effectiveAction === "TRACK_CALL"
+          ? host.dataService.pauseRace(true)
+          : host.dataService.pauseRace();
 
     obs.subscribe(
       (success: any) => {

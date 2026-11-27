@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { RaceState } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday Countdown Widget Visuals", () => {
@@ -47,6 +47,25 @@ test.describe("Raceday Countdown Widget Visuals", () => {
         ],
       },
     });
+  });
+
+  test("should display the Hot Yellow restart lamps before returning to green", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor();
+    await TestSetupHelper.sendRaceState(page, RaceState.RACING);
+    await TestSetupHelper.sendRaceFlag(page, RaceFlag.HOT_YELLOW);
+    await TestSetupHelper.sendRaceTime(page, {
+      time: 32,
+      hotYellowRestart: { duration: 3, remaining: 2 },
+    });
+    await page.locator(".hot-yellow-banner").waitFor();
+    const countdown = page.locator("app-raceday-countdown").first();
+    await countdown.locator(".start-lamp.on").nth(1).waitFor();
+    await expect(countdown).toHaveScreenshot("raceday-hot-yellow-restart-lamps.png");
   });
 
   test("should display horizontal countdown lamps widget", async ({ page }) => {

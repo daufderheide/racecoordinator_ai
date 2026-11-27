@@ -30,6 +30,24 @@ describe("RaceConverter", () => {
     expect(result.fuel_options.capacity).toBe(120);
   });
 
+  it("defaults Hot Yellow off and loads it when enabled", () => {
+    const base: IRaceModel = {
+      model: { entityId: "r1" },
+      name: "Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+    };
+    const defaults = RaceConverter.fromProto(base);
+    expect(defaults.hot_yellow_enabled).toBeFalse();
+    expect(defaults.hot_yellow_restart_countdown).toBeFalse();
+    const enabled = RaceConverter.fromProto({
+      ...base,
+      hotYellowEnabled: true,
+      hotYellowRestartCountdown: true,
+    });
+    expect(enabled.hot_yellow_enabled).toBeTrue();
+    expect(enabled.hot_yellow_restart_countdown).toBeTrue();
+  });
+
   it("should handle missing fuel options", () => {
     const mockProto: IRaceModel = {
       model: { entityId: "r2" },

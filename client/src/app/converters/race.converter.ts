@@ -89,6 +89,7 @@ export class RaceConverter {
     const crashAndLearnOptions = this.parseCrashAndLearnOptions(
       p.crashAndLearnOptions || p.crash_and_learn_options,
     );
+    const customRotationAssetName = this.getCustomRotationAssetName(p);
 
     return new Race(
       objectId || "",
@@ -138,10 +139,7 @@ export class RaceConverter {
       p.customRotationSequence || p.custom_rotation_sequence || [],
       p.customRotationAssetId ||
         p.custom_rotation_asset_id ||
-        p.customRotationAssetName ||
-        p.custom_rotation_asset_name ||
-        p.customRotationName ||
-        p.custom_rotation_name,
+        customRotationAssetName,
       p.customRotations || p.custom_rotations || [],
       p.heatTimesThrough || p.heat_times_through || 1,
       p.reverseHeats || p.reverse_heats || false,
@@ -158,11 +156,7 @@ export class RaceConverter {
       p.themeId || p.theme_id || undefined,
       p.seasonScoring || p.season_scoring || undefined,
       p.startTimeMillis || p.start_time_millis || undefined,
-      p.customRotationAssetName ||
-        p.custom_rotation_asset_name ||
-        p.customRotationName ||
-        p.custom_rotation_name ||
-        undefined,
+      customRotationAssetName || undefined,
       p.stepUp ?? p.step_up ?? (proto as any).stepUp ?? 0,
       this.parsePointsScoring(p.pointsScoring || p.points_scoring),
       undefined,
@@ -170,6 +164,17 @@ export class RaceConverter {
       this.parseDriverLaneSelection(
         p.driverLaneSelection ?? p.driver_lane_selection,
       ),
+      p.hotYellowEnabled ?? p.hot_yellow_enabled ?? false,
+      p.hotYellowRestartCountdown ?? p.hot_yellow_restart_countdown ?? false,
+    );
+  }
+
+  private static getCustomRotationAssetName(p: any): string | undefined {
+    return (
+      p.customRotationAssetName ||
+      p.custom_rotation_asset_name ||
+      p.customRotationName ||
+      p.custom_rotation_name
     );
   }
 

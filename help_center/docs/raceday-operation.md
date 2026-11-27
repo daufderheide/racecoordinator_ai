@@ -64,6 +64,10 @@ When clicking on a clickable lap count cell:
 When a race is run with **Crash and Learn (CNL)** enabled, Race Coordinator AI actively tracks driver deslots (crashes), enforces crash limits, applies automated penalties, and manages driver disqualifications in real time.
 
 ### Deslot Detection & Call Buttons
+
+With **Hot Yellow** enabled and supported hardware configured, any main or lane call button can start a rolling caution during a running heat. Use the main Track Call, its Race Day widget, or Spacebar again to return to green. The heat clock and laps continue under yellow. **Pause** in the Race Director menu still cuts track power.
+
+With **Hot Yellow restart countdown** enabled, the same manual return control starts the existing restart lights and sounds. Track power stays reduced until green. A full pause or the end of the heat cancels the countdown.
 - **Automated Crash Detection**: If configured in the race profile, when a car's lap time exceeds the **Automated Crash Time** threshold, the system automatically detects a deslot and credits a crash to that driver.
 - **Automated Yellow Flags**: If **Pause Heat on Crash** is enabled, an automated crash immediately triggers a track call (yellow flag pause) and de-energizes track power so marshals can retrieve the car.
 - **Multiple Crashes Per Lap**: If **Allow Multiple Crashes Per Lap** is enabled, a driver who remains off-track will accumulate an additional crash each time the automated crash time threshold elapses without completing a lap.

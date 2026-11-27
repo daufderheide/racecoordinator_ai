@@ -1,7 +1,10 @@
 import * as QRCode from "qrcode";
+import { distinctUntilChanged } from "rxjs";
+import { RacedayRaceLifecycleHelper } from "@app/components/raceday/helpers/raceday-race-lifecycle.helper";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { HighlightLapStyle } from "@app/models/settings";
-import { LapType, RaceState } from "@app/proto/antigravity";
+import { THEME_SLOT_KEYS } from "@app/models/theme";
+import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { AudioAssociation } from "@app/services/audio.service";
 import { createTTSContext, getEffectiveDriver } from "@app/utils/audio";
@@ -87,6 +90,20 @@ export class RacedaySubscriptionsHelper {
         RacedaySubscriptionsHelper.checkDriverLaneSelection(host);
       }),
     );
+
+    if (host.raceConnectionService.raceFlag$) {
+      host.subscriptions.push(
+        host.raceConnectionService.raceFlag$
+          .pipe(distinctUntilChanged())
+          .subscribe((flag: RaceFlag) => {
+            RacedayRaceLifecycleHelper.endHotYellowRestart(host, flag);
+            if (flag === RaceFlag.HOT_YELLOW) {
+              host.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+            }
+            host.cdr?.markForCheck();
+          }),
+      );
+    }
 
     host.raceConnectionService.connect();
   }
@@ -187,6 +204,7 @@ export class RacedaySubscriptionsHelper {
     }
 
     RacedaySubscriptionsHelper.updateAutoStartAndAdvance(host, raceTime);
+    RacedayRaceLifecycleHelper.updateHotYellowRestart(host, raceTime.hotYellowRestart);
     const time = RacedaySubscriptionsHelper.computeDisplayRaceTime(
       host,
       raceTime,
@@ -274,7 +292,7 @@ export class RacedaySubscriptionsHelper {
       time = host.autoAdvanceRemaining;
     }
 
-    if (host.showCountdownOverlay) {
+    if (host.showCountdownOverlay && !host.hotYellowRestartActive) {
       const countdownVal =
         host.autoStartRemaining > 0 ? host.autoStartRemaining : time;
       if (host.countdownTotalLamps === 0 && countdownVal > 0) {
@@ -290,6 +308,7 @@ export class RacedaySubscriptionsHelper {
       time === 0 &&
       host.previousTime > 0 &&
       host.showCountdownOverlay &&
+      !host.hotYellowRestartActive &&
       host.autoStartRemaining <= 0 &&
       host.autoAdvanceRemaining <= 0
     ) {

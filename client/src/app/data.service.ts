@@ -461,8 +461,10 @@ export class DataService {
   endRace(): Observable<boolean> {
     return this.raceControlHelper.endRace();
   }
-  pauseRace(): Observable<boolean> {
-    return this.raceControlHelper.pauseRace();
+  pauseRace(trackCall = false): Observable<boolean> {
+    return trackCall
+      ? this.raceControlHelper.pauseRace(true)
+      : this.raceControlHelper.pauseRace();
   }
   abortTimers(): Observable<boolean> {
     return this.raceControlHelper.abortTimers();

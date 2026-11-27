@@ -272,6 +272,10 @@ L'accordéon Groupes et étapes sépare les pilotes en groupes distincts qui ne 
 
 ## Méthodes de départ {: #start-methods }
 
+Activez **Neutralisation en piste** pour lancer une neutralisation avec le bouton principal, un bouton de voie, le widget Track Call ou la barre d’espace. Le chronomètre et le comptage des tours continuent. Utilisez le bouton principal, le widget ou la barre d’espace pour revenir au vert. Choisissez **Pause** dans le menu de direction de course pour couper l’alimentation. Affectez une broche numérique Arduino à la sortie de neutralisation et utilisez un contrôleur de puissance externe.
+
+Activez le **Compte à rebours de reprise après neutralisation** pour que le retour manuel au vert lance les feux et les sons de reprise. La durée et le délai aléatoire de reprise configurés s’appliquent. Le chronomètre et les tours continuent.
+
 L'accordéon Méthodes de départ configure le début des manches, le positionnement sur la piste et les pénalités de départ :
 
 - **Délai de départ / redémarrage (s)** : Durée du compte à rebours avant de démarrer ou relancer une manche.

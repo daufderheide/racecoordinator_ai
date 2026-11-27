@@ -113,6 +113,33 @@ test.describe("Race Editor Visuals", () => {
     });
   });
 
+  test("should show Hot Yellow controls in the race editor", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await enterEditMode(page);
+    const section = page.locator("#start-method-section");
+    if (
+      await section
+        .locator(".expander-icon")
+        .evaluate((icon) => icon.classList.contains("collapsed"))
+    ) {
+      await section.locator(".section-header").click();
+    }
+    const options = section.locator("#hot-yellow-settings");
+    await options.getByText("Hot Yellow", { exact: true }).click();
+    await options
+      .getByText("Hot Yellow restart countdown", { exact: true })
+      .click();
+    await TestSetupHelper.blurActiveElement(page);
+    await page.mouse.move(0, 0);
+    await expect(options).toHaveScreenshot("race-editor-hot-yellow.png");
+  });
+
   test("should display race editor in read-only mode", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

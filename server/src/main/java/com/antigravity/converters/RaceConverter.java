@@ -10,8 +10,12 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
+import com.antigravity.proto.HotYellowRestartCountdown;
 import com.antigravity.proto.LaneCar;
+import com.antigravity.proto.RaceTime;
 import com.antigravity.proto.SeasonStanding;
+import com.antigravity.race.states.IRaceState;
+import com.antigravity.race.states.Racing;
 import com.antigravity.util.SeasonPointsCalculator;
 import com.antigravity.util.SeasonPointsCalculator.DriverRaceScoreDetail;
 import com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding;
@@ -21,6 +25,20 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RaceConverter {
+
+  public static RaceTime toRaceTime(com.antigravity.race.Race race) { // fqn-collision
+    RaceTime.Builder time =
+        RaceTime.newBuilder()
+            .setTime(race.getRaceTime())
+            .setAutoStartRemaining(race.getAutoStartRemaining())
+            .setAutoAdvanceRemaining(race.getAutoAdvanceRemaining());
+    IRaceState state = race.getState();
+    if (state instanceof Racing) {
+      HotYellowRestartCountdown countdown = ((Racing) state).getHotYellowRestartCountdown();
+      if (countdown != null) time.setHotYellowRestart(countdown);
+    }
+    return time.build();
+  }
 
   public static com.antigravity.proto.RaceModel toProto( // fqn-collision
       Race race, Track track, Set<String> sentObjectIds) { // fqn-collision
@@ -83,6 +101,8 @@ public class RaceConverter {
       builder.setRestartTime(race.getRestartTime());
       builder.setStartRandomizer(race.getStartRandomizer());
       builder.setRestartRandomizer(race.getRestartRandomizer());
+      builder.setHotYellowEnabled(race.isHotYellowEnabled());
+      builder.setHotYellowRestartCountdown(race.isHotYellowRestartCountdown());
       if (race.getHeatRotationType() != null) {
         String rotationName =
             race.getHeatRotationType().name().replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase();

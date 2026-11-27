@@ -118,6 +118,24 @@ public class RaceTest {
   }
 
   @Test
+  public void testHotYellowRestartCountdownIsOffByDefaultAndSurvivesCopyAndJson() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    Race legacy = mapper.readValue("{\"@id\":1,\"name\":\"Old race\"}", Race.class);
+    assertFalse(legacy.isHotYellowRestartCountdown());
+
+    Race configured =
+        new Race.Builder()
+            .from(legacy)
+            .withHotYellowEnabled(true)
+            .withHotYellowRestartCountdown(true)
+            .build();
+    assertTrue(new Race.Builder().from(configured).build().isHotYellowRestartCountdown());
+    String json = mapper.writeValueAsString(configured);
+    assertTrue(json.contains("\"hot_yellow_restart_countdown\":true"));
+    assertTrue(mapper.readValue(json, Race.class).isHotYellowRestartCountdown());
+  }
+
+  @Test
   public void testDriverLaneSelectionDefaultsAndSurvivesCopyAndJson() throws Exception {
     Race defaultRace = new Race.Builder().withName("Default").build();
     assertEquals(DriverLaneSelection.NONE, defaultRace.getDriverLaneSelection());

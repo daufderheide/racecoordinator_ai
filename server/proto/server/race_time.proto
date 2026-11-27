@@ -9,4 +9,10 @@ message RaceTime {
   double time = 1;
   double auto_start_remaining = 2;
   double auto_advance_remaining = 3;
+  HotYellowRestartCountdown hot_yellow_restart = 4;
+}
+
+message HotYellowRestartCountdown {
+  double duration = 1;
+  double remaining = 2;
 }

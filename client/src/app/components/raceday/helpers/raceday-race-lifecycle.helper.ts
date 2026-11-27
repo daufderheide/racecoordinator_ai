@@ -1,10 +1,16 @@
 import { THEME_SLOT_KEYS } from "@app/models/theme";
-import { FinishMethod, RaceState } from "@app/proto/antigravity";
+import {
+  FinishMethod,
+  IRaceTime,
+  RaceFlag,
+  RaceState,
+} from "@app/proto/antigravity";
 
 export class RacedayRaceLifecycleHelper {
   public static handleRaceEndedState(host: any): void {
     host.raceHasEnded = true;
     host.raceState = RaceState.RACE_OVER;
+    RacedayRaceLifecycleHelper.endHotYellowRestart(host, RaceFlag.UNKNOWN_FLAG);
     host.autoStartRemaining = 0;
     host.autoAdvanceRemaining = 0;
     host.time = 0;
@@ -180,6 +186,9 @@ export class RacedayRaceLifecycleHelper {
       state,
     );
     host.raceState = state;
+    if (state !== RaceState.RACING) {
+      RacedayRaceLifecycleHelper.endHotYellowRestart(host, RaceFlag.UNKNOWN_FLAG);
+    }
 
     if (state === RaceState.RACE_OVER) {
       host.raceHasEnded = true;
@@ -269,6 +278,42 @@ export class RacedayRaceLifecycleHelper {
     }
   }
 
+  public static updateHotYellowRestart(
+    host: any,
+    restart: IRaceTime["hotYellowRestart"],
+  ): void {
+    if (!restart || host.raceState !== RaceState.RACING) return;
+    if (!host.hotYellowRestartActive) {
+      if (host.countdownOverlayTimeout) {
+        clearTimeout(host.countdownOverlayTimeout);
+        host.countdownOverlayTimeout = null;
+      }
+      host.hotYellowRestartActive = true;
+      host.showCountdownOverlay = true;
+      host.audioService.stopVoice();
+      host.lastPlayedCountdownSecond = -1;
+      host.lastCountdownSoundTime = -1;
+      host.countdownTotalLamps = Math.min(
+        RacedayRaceLifecycleHelper.getCountdownMaxLamps(host),
+        Math.ceil(restart.duration ?? 0),
+      );
+    }
+    RacedayRaceLifecycleHelper.updateCountdownLamps(host, restart.remaining ?? 0);
+  }
+
+  public static endHotYellowRestart(host: any, flag: RaceFlag): void {
+    if (!host.hotYellowRestartActive || flag === RaceFlag.HOT_YELLOW) return;
+    host.hotYellowRestartActive = false;
+    if (
+      host.raceState === RaceState.RACING &&
+      (flag === RaceFlag.GREEN || flag === RaceFlag.WHITE)
+    ) {
+      RacedayRaceLifecycleHelper.handleRacingState(host, RaceState.RACING);
+    } else {
+      host.showCountdownOverlay = false;
+    }
+  }
+
   public static getCountdownMaxLamps(host: any): number {
     const countdownWidget = host.layout?.widgets?.find(
       (w: any) => w.widgetType === "countdown",
@@ -286,7 +331,7 @@ export class RacedayRaceLifecycleHelper {
 
     // If we've reached RACING state, but the overlay hasn't hidden yet,
     // ensure we stay in the "GO!" state with all green lamps.
-    if (host.raceState === RaceState.RACING) {
+    if (host.raceState === RaceState.RACING && !host.hotYellowRestartActive) {
       if (host.setAllLampsGo) {
         host.setAllLampsGo();
       } else {
@@ -305,7 +350,8 @@ export class RacedayRaceLifecycleHelper {
     }
 
     const displayTime =
-      host.raceState === RaceState.STARTING && currentTime <= 0
+      (host.raceState === RaceState.STARTING || host.hotYellowRestartActive) &&
+      currentTime <= 0
         ? 1
         : currentTime;
 
