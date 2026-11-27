@@ -42,6 +42,14 @@ public class RaceCompatibilityEvaluatorTest {
   }
 
   @Test
+  public void testHotYellowRaceIsCompatible() throws Exception {
+    Race race = new Race.Builder().withName("Hot Yellow GP").withHotYellowEnabled(true).build();
+    String rawJson = objectMapper.writeValueAsString(race);
+
+    assertEquals(Status.COMPATIBLE, evaluator.evaluate(race, rawJson).getStatus());
+  }
+
+  @Test
   public void testStepUpRaceIsCompatibleInV120_AndAttachesAdvisoryMetadata() throws Exception {
     Race race = new Race.Builder().withName("Grand Prix").withStepUp(2).withEntityId("1").build();
     String rawJson = objectMapper.writeValueAsString(race);
