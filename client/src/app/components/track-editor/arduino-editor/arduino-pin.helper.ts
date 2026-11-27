@@ -19,6 +19,7 @@ export interface PinGroup {
 export function isOutputPinBehavior(behavior: number): boolean {
   return (
     behavior === PinBehavior.BEHAVIOR_RELAY ||
+    behavior === PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT ||
     (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE &&
       behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000) ||
     behavior === PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG ||
@@ -36,6 +37,8 @@ export function getPinAction(val: number): string {
   if (val === PinBehavior.BEHAVIOR_RESERVED) return "reserved";
   if (val === PinBehavior.BEHAVIOR_CALL_BUTTON) return "master_call";
   if (val === PinBehavior.BEHAVIOR_RELAY) return "master_relay";
+  if (val === PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT)
+    return "hot_yellow_output";
 
   if (
     val >= PinBehavior.BEHAVIOR_LAP_BASE &&
@@ -123,6 +126,8 @@ export function parsePinAction(action: string): number {
     return PinBehavior.BEHAVIOR_CALL_BUTTON;
   } else if (action === "master_relay") {
     return PinBehavior.BEHAVIOR_RELAY;
+  } else if (action === "hot_yellow_output") {
+    return PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT;
   } else if (action.startsWith("lap_")) {
     const laneIndex = parseInt(action.split("_")[1], 10);
     return PinBehavior.BEHAVIOR_LAP_BASE + laneIndex;
@@ -411,6 +416,10 @@ export function buildOtherPinGroup(
         label: translationService.translate("AE_PIN_LED_RGB_STRING"),
         value: "led_string",
       },
+      {
+        label: translationService.translate("AE_PIN_HOT_YELLOW_OUTPUT"),
+        value: "hot_yellow_output",
+      },
     ],
   };
 }
@@ -488,8 +497,16 @@ export function filterPinActions(
   }
 
   let filtered = groups;
+  if (!isDigital) {
+    filtered = filtered.map((group) => ({
+      ...group,
+      actions: group.actions.filter(
+        (action) => action.value !== "hot_yellow_output",
+      ),
+    }));
+  }
   if (!canLed && currentAction !== "led_string") {
-    filtered = groups
+    filtered = filtered
       .map((g) => ({
         ...g,
         actions: g.actions.filter((a) => a.value !== "led_string"),

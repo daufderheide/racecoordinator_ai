@@ -117,6 +117,7 @@ public class RaceHardwareManager {
 
   private boolean calculateBasePowerForFlag(RaceFlag flag) {
     if (race.getState() instanceof Racing) {
+      if (((Racing) race.getState()).isHotYellow()) return true;
       if (flag == RaceFlag.GREEN || flag == RaceFlag.GREEN_YELLOW || flag == RaceFlag.WHITE) {
         return true;
       }
@@ -135,6 +136,20 @@ public class RaceHardwareManager {
       default:
         return false;
     }
+  }
+
+  public boolean isHotYellowOutputAvailable() {
+    return race.isDemoMode()
+        || (protocols != null
+            && protocols.isHotYellowOutputReady()
+            && (protocols.hasMainRelay() || protocols.hasPerLaneRelays())
+            && protocols.isHealthy());
+  }
+
+  public boolean setHotYellowOutput(boolean active) {
+    if (race.isDemoMode()) return true;
+    if (protocols == null || (active && !isHotYellowOutputAvailable())) return false;
+    return protocols.setHotYellowOutput(active);
   }
 
   private boolean evaluateHotStartPower(boolean basePower, List<Integer> coldLanes) {

@@ -1,7 +1,9 @@
 import * as QRCode from "qrcode";
+import { distinctUntilChanged } from "rxjs";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { HighlightLapStyle } from "@app/models/settings";
-import { LapType, RaceState } from "@app/proto/antigravity";
+import { THEME_SLOT_KEYS } from "@app/models/theme";
+import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { AudioAssociation } from "@app/services/audio.service";
 import { createTTSContext, getEffectiveDriver } from "@app/utils/audio";
@@ -87,6 +89,19 @@ export class RacedaySubscriptionsHelper {
         RacedaySubscriptionsHelper.checkDriverLaneSelection(host);
       }),
     );
+
+    if (host.raceConnectionService.raceFlag$) {
+      host.subscriptions.push(
+        host.raceConnectionService.raceFlag$
+          .pipe(distinctUntilChanged())
+          .subscribe((flag: RaceFlag) => {
+            if (flag === RaceFlag.HOT_YELLOW) {
+              host.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+            }
+            host.cdr?.markForCheck();
+          }),
+      );
+    }
 
     host.raceConnectionService.connect();
   }

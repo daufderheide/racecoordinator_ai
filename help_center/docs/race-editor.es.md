@@ -278,6 +278,8 @@ El expansor de Grupos y etapas separa a los pilotos en grupos diferenciados que 
 
 ## Métodos de salida {: #start-methods }
 
+Active **Bandera amarilla en marcha** para iniciar una neutralización con el botón principal, cualquier botón de carril, el widget Track Call o la barra espaciadora. El reloj y el recuento de vueltas continúan. Use el botón principal, el widget o la barra espaciadora para volver a verde. Use **Pausa** en el menú de dirección de carrera para cortar la alimentación. Asigne un pin digital de Arduino a la salida de bandera amarilla y utilice un controlador de potencia externo.
+
 El expansor de Métodos de salida configura el inicio de las tandas, la posición de los coches en la pista y las penalizaciones:
 
 - **Tiempo de salida / reinicio (s)**: Duración de la cuenta atrás antes de iniciar o reiniciar una tanda.

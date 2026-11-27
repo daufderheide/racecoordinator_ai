@@ -159,6 +159,9 @@ public class Race extends Model {
   @JsonAlias({"driverLaneSelection", "lane_selection", "laneSelection"})
   private final DriverLaneSelection driverLaneSelection;
 
+  @JsonProperty("hot_yellow_enabled")
+  private final boolean hotYellowEnabled;
+
   @JsonProperty("_compat_meta")
   @JsonAlias({"compatMeta", "_compatMeta"})
   @com.fasterxml.jackson.annotation.JsonInclude(
@@ -229,6 +232,7 @@ public class Race extends Model {
       @JsonProperty("driver_lane_selection")
           @JsonAlias({"driverLaneSelection", "lane_selection", "laneSelection"})
           DriverLaneSelection driverLaneSelection,
+      @JsonProperty("hot_yellow_enabled") @JsonAlias("hotYellowEnabled") Boolean hotYellowEnabled,
       @JsonProperty("_compat_meta") @JsonAlias({"compatMeta", "_compatMeta", "compat_meta"})
           Map<String, Object> compatMeta,
       @JsonProperty("entity_id") String entityId,
@@ -293,6 +297,7 @@ public class Race extends Model {
     this.stepUp = stepUp != null ? stepUp : 0;
     this.driverLaneSelection =
         driverLaneSelection != null ? driverLaneSelection : DriverLaneSelection.NONE;
+    this.hotYellowEnabled = Boolean.TRUE.equals(hotYellowEnabled);
     this.compatMeta = syncCompatMeta(compatMeta, this.stepUp, this.overallScoring);
   }
 
@@ -339,6 +344,7 @@ public class Race extends Model {
     private String themeId = Theme.DEFAULT_THEME_ID;
     private int stepUp = 0;
     private DriverLaneSelection driverLaneSelection = DriverLaneSelection.NONE;
+    private boolean hotYellowEnabled;
     private Map<String, Object> compatMeta;
     private String entityId;
     private String id;
@@ -385,6 +391,7 @@ public class Race extends Model {
       this.themeId = other.getThemeId();
       this.stepUp = other.getStepUp();
       this.driverLaneSelection = other.getDriverLaneSelection();
+      this.hotYellowEnabled = other.isHotYellowEnabled();
       this.compatMeta = other.getCompatMeta();
       this.entityId = other.getEntityId();
       this.id = other.getId();
@@ -591,6 +598,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withHotYellowEnabled(boolean hotYellowEnabled) {
+      this.hotYellowEnabled = hotYellowEnabled;
+      return this;
+    }
+
     public Builder withDriverLaneSelection(DriverLaneSelection driverLaneSelection) {
       this.driverLaneSelection =
           driverLaneSelection != null ? driverLaneSelection : DriverLaneSelection.NONE;
@@ -656,10 +668,15 @@ public class Race extends Model {
           themeId,
           stepUp,
           driverLaneSelection,
+          hotYellowEnabled,
           compatMeta,
           entityId,
           id);
     }
+  }
+
+  public boolean isHotYellowEnabled() {
+    return hotYellowEnabled;
   }
 
   public static Map<String, Object> syncCompatMeta(

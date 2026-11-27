@@ -272,6 +272,8 @@ Het uitklapgedeelte Groepen en fases scheidt coureurs in afzonderlijke groepen d
 
 ## Startmethoden {: #start-methods }
 
+Schakel **Hot Yellow** in om met de hoofdtaster, een baanknop, de Track Call-widget of de spatiebalk een rijdende neutralisatie te starten. De wedstrijdklok en rondetelling lopen door. Gebruik de hoofdtaster, de widget of de spatiebalk om terug te keren naar groen. Kies **Pauze** in het wedstrijdleidingsmenu om de baanstroom uit te schakelen. Wijs een digitale Arduino-pin toe aan de **Hot Yellow-uitgang** en gebruik een externe vermogensregelaar.
+
 Het uitklapgedeelte Startmethoden regelt de start van heats, autoposities op de baan en startstraffen:
 
 - **Start- / herstarttijd (s)**: Aftelduur voordat een heat start of herstart na een onderbreking.

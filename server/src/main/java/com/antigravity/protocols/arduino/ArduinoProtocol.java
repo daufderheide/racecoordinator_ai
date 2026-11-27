@@ -630,7 +630,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         valueVal = Math.max(0, (int) Math.ceil(countdown));
         break;
       case RACING:
-        stateVal = 4;
+        stateVal = flag == RaceFlag.HOT_YELLOW ? 9 : 4;
         break;
       case PAUSED:
         stateVal = 5;
@@ -1096,12 +1096,41 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   }
 
   private void syncPower() {
+    if (hasHotYellowOutput()) {
+      setHotYellowOutput(hotYellowOutputActive);
+    }
     if (lastMainPower != null) {
       setMainPower(lastMainPower);
     }
     for (Map.Entry<Integer, Boolean> entry : lastLanePower.entrySet()) {
       setLanePower(entry.getValue(), entry.getKey());
     }
+  }
+
+  private volatile boolean hotYellowOutputActive;
+
+  @Override
+  public boolean hasHotYellowOutput() {
+    return config != null
+        && config.digitalIds != null
+        && config.digitalIds.contains(PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT_VALUE);
+  }
+
+  @Override
+  public boolean isHotYellowOutputReady() {
+    return hasHotYellowOutput() && versionVerified && !writeFailed && isHealthy();
+  }
+
+  @Override
+  public boolean setHotYellowOutput(boolean active) {
+    hotYellowOutputActive = active;
+    if (!hasHotYellowOutput() || !versionVerified || !isConnected() || writeFailed) return false;
+    for (int pin = 0; pin < config.digitalIds.size(); pin++) {
+      if (getPinBehavior(true, pin) == PinBehavior.BEHAVIOR_HOT_YELLOW_OUTPUT_VALUE) {
+        writePhysicalPinState(true, pin, active);
+      }
+    }
+    return !writeFailed;
   }
 
   @Override

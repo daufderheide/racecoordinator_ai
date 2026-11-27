@@ -200,6 +200,10 @@ export class DefaultRacedayComponent
   public participants: RaceParticipant[] = [];
   private raceTimeService = inject(RaceTimeService, { optional: true });
 
+  get isHotYellow(): boolean {
+    return this.raceFlagService.isHotYellow;
+  }
+
   // Countdown Overlay state
   showCountdownOverlay: boolean = false;
   countdownOverlayTimeout: any = null;

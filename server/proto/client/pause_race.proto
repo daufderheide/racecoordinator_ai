@@ -6,6 +6,7 @@ option java_multiple_files = true;
 option java_outer_classname = "PauseRaceProto";
 
 message PauseRaceRequest {
+  bool track_call = 1;
   // Empty message to trigger the pause
 }
 

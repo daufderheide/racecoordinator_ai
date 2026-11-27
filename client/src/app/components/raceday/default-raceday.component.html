@@ -62,6 +62,13 @@
   >
   </app-raceday-modals>
 
+  @if (isHotYellow && !isUIEditorMode()) {
+    <div class="hot-yellow-banner no-print" role="status">
+      <span class="material-icons" aria-hidden="true">flag</span>
+      {{ "RE_HOT_YELLOW" | translate }}
+    </div>
+  }
+
   @if (showHardwareAlertBanner && currentHardwareAlert) {
     <div
       class="hardware-alert-banner no-print"
