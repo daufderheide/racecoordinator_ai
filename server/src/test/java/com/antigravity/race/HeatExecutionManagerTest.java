@@ -2364,6 +2364,19 @@ public class HeatExecutionManagerTest {
   public void testUpdateRealtimePredictionCoalescing() throws Exception {
     executionManager.initialize(2);
 
+    // Set a high lap limit so the heat does not end and trigger HeatOver during the test
+    race.setRaceModel(
+        new com.antigravity.models.Race.Builder()
+            .from(race.getRaceModel())
+            .withHeatScoring(
+                new HeatScoring(
+                    HeatScoring.FinishMethod.Lap,
+                    100L,
+                    HeatScoring.HeatRanking.LAP_COUNT,
+                    HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+                    HeatScoring.AllowFinish.None))
+            .build());
+
     com.antigravity.service.RacePredictionService mockService =
         org.mockito.Mockito.mock(com.antigravity.service.RacePredictionService.class);
 
