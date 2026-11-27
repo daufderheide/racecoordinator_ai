@@ -1760,6 +1760,7 @@
   "RE_HELP_EXPANDER_SEASON_POINTS_TITLE": "Seizoenspunten",
   "RE_HELP_EXPANDER_START_METHOD_CONTENT": "Configureer hoe elke heat start door de start-/herstarttijd te bepalen, waar de auto's op de baan starten en hoe vliegende starts worden afgehandeld. Bij Hot Yellow blijven de auto's rijden. De wedstrijdklok en rondetelling lopen door. Hiervoor is een Arduino-uitgang met een externe vermogensregelaar nodig.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-race-editor help-section-start-methods\">Meer informatie over startmethoden</a>",
   "RE_HOT_YELLOW": "Hot Yellow",
+  "RE_HOT_YELLOW_RESTART_COUNTDOWN": "Aftellen voor herstart na Hot Yellow",
   "AE_PIN_HOT_YELLOW_OUTPUT": "Hot Yellow-uitgang",
   "RE_HELP_EXPANDER_START_METHOD_TITLE": "Startmethoden",
   "RE_HELP_EXPANDER_TEAM_OPTIONS_CONTENT": "Activeer team-enduranceraces, wisselregels voor coureurs, heat-limieten per coureur en pitstopvereisten.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-race-editor help-section-team-racing\">Meer informatie over teamraces</a>",

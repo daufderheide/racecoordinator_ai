@@ -54,6 +54,7 @@ export class Race implements Model {
   readonly cars_stay_in_lanes: boolean;
   readonly driver_lane_selection: DriverLaneSelection;
   readonly hot_yellow_enabled: boolean;
+  readonly hot_yellow_restart_countdown: boolean;
   readonly theme_id?: string;
   readonly start_time_millis?: number;
   readonly step_up: number;
@@ -116,6 +117,7 @@ export class Race implements Model {
     cars_stay_in_lanes: boolean = false,
     driver_lane_selection: DriverLaneSelection = "NONE",
     hot_yellow_enabled = false,
+    hot_yellow_restart_countdown = false,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -165,6 +167,7 @@ export class Race implements Model {
     this.cars_stay_in_lanes = cars_stay_in_lanes;
     this.driver_lane_selection = driver_lane_selection;
     this.hot_yellow_enabled = hot_yellow_enabled;
+    this.hot_yellow_restart_countdown = hot_yellow_restart_countdown;
   }
 
   get objectId(): string {

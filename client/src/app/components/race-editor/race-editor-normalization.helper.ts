@@ -187,6 +187,8 @@ export class RaceEditorNormalizationHelper {
         race.driver_lane_selection ?? race.driverLaneSelection ?? "NONE",
       hot_yellow_enabled:
         race.hot_yellow_enabled ?? race.hotYellowEnabled ?? false,
+      hot_yellow_restart_countdown:
+        race.hot_yellow_restart_countdown ?? race.hotYellowRestartCountdown ?? false,
       group_options: race.group_options || {
         enabled: false,
         max_groups: 2,
@@ -322,6 +324,7 @@ export class RaceEditorNormalizationHelper {
       step_up: 0,
       driver_lane_selection: "NONE",
       hot_yellow_enabled: false,
+      hot_yellow_restart_countdown: false,
       heat_rotation_type: "RoundRobin",
       heat_scoring: this.normalizeHeatScoring(null),
       overall_scoring: {

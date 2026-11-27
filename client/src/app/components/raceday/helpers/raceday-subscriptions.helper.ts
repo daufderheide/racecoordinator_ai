@@ -1,5 +1,6 @@
 import * as QRCode from "qrcode";
 import { distinctUntilChanged } from "rxjs";
+import { RacedayRaceLifecycleHelper } from "@app/components/raceday/helpers/raceday-race-lifecycle.helper";
 import { LaneGridAnimationHelper } from "@app/components/raceday/utils/lane-grid-animation.helper";
 import { HighlightLapStyle } from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
@@ -95,6 +96,7 @@ export class RacedaySubscriptionsHelper {
         host.raceConnectionService.raceFlag$
           .pipe(distinctUntilChanged())
           .subscribe((flag: RaceFlag) => {
+            RacedayRaceLifecycleHelper.endHotYellowRestart(host, flag);
             if (flag === RaceFlag.HOT_YELLOW) {
               host.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
             }
@@ -202,6 +204,7 @@ export class RacedaySubscriptionsHelper {
     }
 
     RacedaySubscriptionsHelper.updateAutoStartAndAdvance(host, raceTime);
+    RacedayRaceLifecycleHelper.updateHotYellowRestart(host, raceTime.hotYellowRestart);
     const time = RacedaySubscriptionsHelper.computeDisplayRaceTime(
       host,
       raceTime,
@@ -289,7 +292,7 @@ export class RacedaySubscriptionsHelper {
       time = host.autoAdvanceRemaining;
     }
 
-    if (host.showCountdownOverlay) {
+    if (host.showCountdownOverlay && !host.hotYellowRestartActive) {
       const countdownVal =
         host.autoStartRemaining > 0 ? host.autoStartRemaining : time;
       if (host.countdownTotalLamps === 0 && countdownVal > 0) {
@@ -305,6 +308,7 @@ export class RacedaySubscriptionsHelper {
       time === 0 &&
       host.previousTime > 0 &&
       host.showCountdownOverlay &&
+      !host.hotYellowRestartActive &&
       host.autoStartRemaining <= 0 &&
       host.autoAdvanceRemaining <= 0
     ) {

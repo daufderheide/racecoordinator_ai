@@ -274,6 +274,8 @@ Der Bereich Gruppen & Stufen teilt Fahrer in getrennte Gruppen ein, die auf der 
 
 Aktivieren Sie **Hot Yellow**, um mit dem Haupttaster, einem Bahntaster, dem Track-Call-Widget oder der Leertaste eine rollende Gelbphase auszulösen. Rennzeit und Rundenzählung laufen weiter. Mit dem Haupttaster, dem Widget oder der Leertaste wird das Rennen wieder freigegeben. Für eine Pause mit Stromabschaltung wählen Sie **Pause** im Rennleitungsmenü. Richten Sie einen digitalen Arduino-Pin als **Hot-Yellow-Ausgang** für eine externe Leistungssteuerung ein.
 
+Aktivieren Sie **Neustart-Countdown bei Hot Yellow**, damit die manuelle Freigabe den konfigurierten Neustart mit Ampel und Ton einleitet. Neustartzeit und Zufallsverzögerung gelten auch hier. Rennzeit und Rundenzählung laufen weiter.
+
 Der Bereich Startmethoden konfiguriert den Start von Läufen, die Fahrzeugpositionierung auf der Strecke und Startstrafen:
 
 - **Start- / Neustartzeit (s)**: Countdown-Dauer vor Beginn oder Wiederaufnahme eines Laufs.

@@ -2,12 +2,14 @@ package com.antigravity.race.states;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -93,11 +95,18 @@ public class RacingTest {
   }
 
   private RaceHardwareManager configureHotYellow() {
+    return configureHotYellow(false);
+  }
+
+  private RaceHardwareManager configureHotYellow(boolean restartCountdown) {
     racing.exit(race);
     com.antigravity.models.Race model =
         new com.antigravity.models.Race.Builder()
             .from(race.getRaceModel())
             .withHotYellowEnabled(true)
+            .withHotYellowRestartCountdown(restartCountdown)
+            .withRestartTime(3)
+            .withRestartRandomizer(0)
             .build();
     when(race.getRaceModel()).thenReturn(model);
     when(race.getState()).thenReturn(racing);
@@ -165,6 +174,48 @@ public class RacingTest {
     racing.onCallbutton(race, -1);
 
     verify(race).changeState(any(Paused.class));
+    verify(race, never()).broadcastFlag(RaceFlag.GREEN);
+  }
+
+  @Test
+  public void testManualCountdownKeepsScoringAndPowerUnderYellowUntilGreen() throws Exception {
+    RaceHardwareManager hardware = configureHotYellow(true);
+    racing.onCallbutton(race, 0);
+    tickAt(System.nanoTime() + 10_000_000_000L);
+    assertNull(racing.getHotYellowRestartCountdown());
+    assertTrue(racing.isHotYellow());
+
+    racing.onCallbutton(race, -1);
+    long now = System.nanoTime();
+    assertEquals(3, racing.getHotYellowRestartCountdown().getDuration(), 0);
+    racing.onCallbutton(race, -1);
+    when(executionManager.onLap(0, 11, 0, false, true, false)).thenReturn(true);
+    assertTrue(racing.onLap(0, 11, 0, false));
+    tickAt(now + 1_000_000_000L);
+    assertEquals(RaceFlag.HOT_YELLOW, racing.getFlagType(race));
+    verify(race, times(2)).addRaceTime(-0.1f);
+    verify(hardware, never()).setHotYellowOutput(false);
+
+    tickAt(now + 3_000_000_000L);
+    assertNull(racing.getHotYellowRestartCountdown());
+    assertEquals(RaceFlag.GREEN, racing.getFlagType(race));
+    verify(hardware).setHotYellowOutput(false);
+    verify(race).broadcastFlag(RaceFlag.GREEN);
+  }
+
+  @Test
+  public void testEndingTheHeatCancelsTheCountdownAndCutsPowerFirst() {
+    RaceHardwareManager hardware = configureHotYellow(true);
+    racing.onCallbutton(race, -1);
+    racing.onCallbutton(race, -1);
+    assertTrue(racing.isHotYellow());
+    racing.exit(race);
+
+    assertNull(racing.getHotYellowRestartCountdown());
+    InOrder order = inOrder(race, hardware);
+    order.verify(race).setMainPower(false);
+    order.verify(race).setLanePower(false, -1);
+    order.verify(hardware).setHotYellowOutput(false);
     verify(race, never()).broadcastFlag(RaceFlag.GREEN);
   }
 

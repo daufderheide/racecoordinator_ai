@@ -38,11 +38,14 @@ describe("RaceConverter", () => {
     };
     const defaults = RaceConverter.fromProto(base);
     expect(defaults.hot_yellow_enabled).toBeFalse();
+    expect(defaults.hot_yellow_restart_countdown).toBeFalse();
     const enabled = RaceConverter.fromProto({
       ...base,
       hotYellowEnabled: true,
+      hotYellowRestartCountdown: true,
     });
     expect(enabled.hot_yellow_enabled).toBeTrue();
+    expect(enabled.hot_yellow_restart_countdown).toBeTrue();
   });
 
   it("should handle missing fuel options", () => {

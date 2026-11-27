@@ -4,6 +4,7 @@ import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.HeatScoring.FinishMethod;
+import com.antigravity.proto.HotYellowRestartCountdown;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
@@ -36,9 +37,20 @@ public class Racing implements IRaceState {
   private double previousHeatProgress = -1.0;
   private RaceFlag previousFlag = RaceFlag.UNKNOWN_FLAG;
   private volatile boolean hotYellow;
+  private volatile StartCountdown hotYellowRestart;
 
   public boolean isHotYellow() {
     return hotYellow;
+  }
+
+  public HotYellowRestartCountdown getHotYellowRestartCountdown() {
+    StartCountdown countdown = hotYellowRestart;
+    return countdown == null
+        ? null
+        : HotYellowRestartCountdown.newBuilder()
+            .setDuration(countdown.duration())
+            .setRemaining(countdown.remaining(System.nanoTime()))
+            .build();
   }
 
   @Override
@@ -239,11 +251,7 @@ public class Racing implements IRaceState {
     if (!allFinished && isHotYellow()) {
       synchronized (race) {
         if (race.getState() != this || race.isStopped()) return;
-        if (isHotYellow()
-            && (!race.isMainPower() || !race.getHardwareManager().isHotYellowOutputAvailable())) {
-          pause(race);
-          return;
-        }
+        if (isHotYellow() && !advanceHotYellow(now)) return;
       }
     }
     updateHeatProgress(scoring, isInfiniteTimed);
@@ -385,6 +393,7 @@ public class Racing implements IRaceState {
       race.setMainPower(false);
       race.setLanePower(false, -1);
       race.getHardwareManager().setHotYellowOutput(false);
+      hotYellowRestart = null;
       hotYellow = false;
     }
     if (timerHandle != null) {
@@ -558,12 +567,7 @@ public class Racing implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     if (isHotYellow() && lane < 0) {
-      if (race.getHardwareManager().setHotYellowOutput(false)) {
-        hotYellow = false;
-        updateFlagAndBroadcast();
-      } else {
-        pause(race);
-      }
+      requestHotYellowRestart(race);
       return;
     }
 
@@ -589,6 +593,43 @@ public class Racing implements IRaceState {
       return;
     }
     pause(race);
+  }
+
+  private void requestHotYellowRestart(Race race) {
+    if (hotYellowRestart != null) return;
+    if (race.getRaceModel().isHotYellowRestartCountdown()) {
+      long now = System.nanoTime();
+      StartCountdown countdown =
+          new StartCountdown(
+              now,
+              race.getRaceModel().getRestartTime(),
+              race.getRaceModel().getRestartRandomizer());
+      if (!countdown.hasFinished(now)) {
+        hotYellowRestart = countdown;
+        race.broadcastTime();
+        return;
+      }
+    }
+    if (releaseHotYellow(race)) updateFlagAndBroadcast();
+  }
+
+  private boolean advanceHotYellow(long now) {
+    if (!race.isMainPower() || !race.getHardwareManager().isHotYellowOutputAvailable()) {
+      pause(race);
+      return false;
+    }
+    StartCountdown countdown = hotYellowRestart;
+    return countdown == null || !countdown.hasFinished(now) || releaseHotYellow(race);
+  }
+
+  private boolean releaseHotYellow(Race race) {
+    if (!race.getHardwareManager().setHotYellowOutput(false)) {
+      pause(race);
+      return false;
+    }
+    hotYellowRestart = null;
+    hotYellow = false;
+    return true;
   }
 
   void calculateAutoSegments() {

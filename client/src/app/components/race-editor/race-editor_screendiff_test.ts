@@ -132,6 +132,9 @@ test.describe("Race Editor Visuals", () => {
     }
     const options = section.locator("#hot-yellow-settings");
     await options.getByText("Hot Yellow", { exact: true }).click();
+    await options
+      .getByText("Hot Yellow restart countdown", { exact: true })
+      .click();
     await TestSetupHelper.blurActiveElement(page);
     await page.mouse.move(0, 0);
     await expect(options).toHaveScreenshot("race-editor-hot-yellow.png");

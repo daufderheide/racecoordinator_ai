@@ -165,6 +165,7 @@ export class RaceConverter {
         p.driverLaneSelection ?? p.driver_lane_selection,
       ),
       p.hotYellowEnabled ?? p.hot_yellow_enabled ?? false,
+      p.hotYellowRestartCountdown ?? p.hot_yellow_restart_countdown ?? false,
     );
   }
 

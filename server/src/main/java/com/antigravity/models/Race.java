@@ -162,6 +162,9 @@ public class Race extends Model {
   @JsonProperty("hot_yellow_enabled")
   private final boolean hotYellowEnabled;
 
+  @JsonProperty("hot_yellow_restart_countdown")
+  private final boolean hotYellowRestartCountdown;
+
   @JsonProperty("_compat_meta")
   @JsonAlias({"compatMeta", "_compatMeta"})
   @com.fasterxml.jackson.annotation.JsonInclude(
@@ -233,6 +236,8 @@ public class Race extends Model {
           @JsonAlias({"driverLaneSelection", "lane_selection", "laneSelection"})
           DriverLaneSelection driverLaneSelection,
       @JsonProperty("hot_yellow_enabled") @JsonAlias("hotYellowEnabled") Boolean hotYellowEnabled,
+      @JsonProperty("hot_yellow_restart_countdown") @JsonAlias("hotYellowRestartCountdown")
+          Boolean hotYellowRestartCountdown,
       @JsonProperty("_compat_meta") @JsonAlias({"compatMeta", "_compatMeta", "compat_meta"})
           Map<String, Object> compatMeta,
       @JsonProperty("entity_id") String entityId,
@@ -298,6 +303,7 @@ public class Race extends Model {
     this.driverLaneSelection =
         driverLaneSelection != null ? driverLaneSelection : DriverLaneSelection.NONE;
     this.hotYellowEnabled = Boolean.TRUE.equals(hotYellowEnabled);
+    this.hotYellowRestartCountdown = Boolean.TRUE.equals(hotYellowRestartCountdown);
     this.compatMeta = syncCompatMeta(compatMeta, this.stepUp, this.overallScoring);
   }
 
@@ -345,6 +351,7 @@ public class Race extends Model {
     private int stepUp = 0;
     private DriverLaneSelection driverLaneSelection = DriverLaneSelection.NONE;
     private boolean hotYellowEnabled;
+    private boolean hotYellowRestartCountdown;
     private Map<String, Object> compatMeta;
     private String entityId;
     private String id;
@@ -392,6 +399,7 @@ public class Race extends Model {
       this.stepUp = other.getStepUp();
       this.driverLaneSelection = other.getDriverLaneSelection();
       this.hotYellowEnabled = other.isHotYellowEnabled();
+      this.hotYellowRestartCountdown = other.isHotYellowRestartCountdown();
       this.compatMeta = other.getCompatMeta();
       this.entityId = other.getEntityId();
       this.id = other.getId();
@@ -603,6 +611,11 @@ public class Race extends Model {
       return this;
     }
 
+    public Builder withHotYellowRestartCountdown(boolean enabled) {
+      this.hotYellowRestartCountdown = enabled;
+      return this;
+    }
+
     public Builder withDriverLaneSelection(DriverLaneSelection driverLaneSelection) {
       this.driverLaneSelection =
           driverLaneSelection != null ? driverLaneSelection : DriverLaneSelection.NONE;
@@ -669,6 +682,7 @@ public class Race extends Model {
           stepUp,
           driverLaneSelection,
           hotYellowEnabled,
+          hotYellowRestartCountdown,
           compatMeta,
           entityId,
           id);
@@ -677,6 +691,10 @@ public class Race extends Model {
 
   public boolean isHotYellowEnabled() {
     return hotYellowEnabled;
+  }
+
+  public boolean isHotYellowRestartCountdown() {
+    return hotYellowRestartCountdown;
   }
 
   public static Map<String, Object> syncCompatMeta(

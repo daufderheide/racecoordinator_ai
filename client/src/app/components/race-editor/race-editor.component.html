@@ -1446,6 +1446,26 @@
                     }}</span>
                   </label>
                 </div>
+                @if (editingRace.hot_yellow_enabled) {
+                  <div class="config-section checkbox-section">
+                    <label
+                      class="checkbox-container"
+                      [class.disabled]="!isEditMode"
+                    >
+                      <input
+                        id="hot-yellow-restart-countdown"
+                        type="checkbox"
+                        [(ngModel)]="editingRace.hot_yellow_restart_countdown"
+                        (ngModelChange)="captureState()"
+                        [disabled]="!isEditMode"
+                      />
+                      <span class="checkmark"></span>
+                      <span class="checkbox-label">{{
+                        "RE_HOT_YELLOW_RESTART_COUNTDOWN" | translate
+                      }}</span>
+                    </label>
+                  </div>
+                }
               </div>
               <div class="config-row">
                 <div class="config-section checkbox-section">

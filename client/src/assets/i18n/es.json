@@ -1760,6 +1760,7 @@
   "RE_HELP_EXPANDER_SEASON_POINTS_TITLE": "Puntuación de Temporada",
   "RE_HELP_EXPANDER_START_METHOD_CONTENT": "Configure cómo comienza cada tanda controlando el tiempo de salida/reinicio, dónde comienzan los coches en la pista y cómo deben gestionarse las salidas lanzadas. La bandera amarilla en marcha permite seguir rodando. El reloj y el recuento de vueltas continúan. Requiere una salida Arduino conectada a un controlador de potencia externo.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-race-editor help-section-start-methods\">Más información sobre métodos de salida</a>",
   "RE_HOT_YELLOW": "Bandera amarilla en marcha",
+  "RE_HOT_YELLOW_RESTART_COUNTDOWN": "Cuenta atrás tras la bandera amarilla",
   "AE_PIN_HOT_YELLOW_OUTPUT": "Salida de bandera amarilla en marcha",
   "RE_HELP_EXPANDER_START_METHOD_TITLE": "Métodos de Salida",
   "RE_HELP_EXPANDER_TEAM_OPTIONS_CONTENT": "Active carreras de resistencia por equipos, configure relevos de pilotos, límites de mangas y paradas obligatorias en boxes.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-race-editor help-section-team-racing\">Más información sobre carreras por equipos</a>",

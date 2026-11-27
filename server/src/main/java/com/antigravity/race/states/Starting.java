@@ -78,16 +78,13 @@ public class Starting implements IRaceState {
             ? race.getRaceModel().getRestartRandomizer()
             : race.getRaceModel().getStartRandomizer();
 
-    final int randomTicks =
-        delayLimitVal > 0 ? new java.util.Random().nextInt((int) (delayLimitVal * 10)) + 1 : 0;
-    final double randomDelaySeconds = randomTicks / 10.0;
-    final double totalDurationSeconds = startTimeVal + randomDelaySeconds;
+    StartCountdown countdown = new StartCountdown(System.nanoTime(), startTimeVal, delayLimitVal);
 
     logger.info(
         "Starting countdown: {}s + {}s random delay (total {}s)",
-        startTimeVal,
-        randomDelaySeconds,
-        totalDurationSeconds);
+        countdown.duration(),
+        countdown.randomDelay(),
+        countdown.duration() + countdown.randomDelay());
 
     if (scheduler != null) {
       scheduler.shutdown();
@@ -100,7 +97,6 @@ public class Starting implements IRaceState {
               return t;
             });
 
-    final long startNanoTime = System.nanoTime();
     final Runnable ticker =
         new Runnable() {
           private long lastTickNano = 0;
@@ -121,10 +117,9 @@ public class Starting implements IRaceState {
                 lastTickNano = tickStartNano;
               }
 
-              double elapsed = (tickStartNano - startNanoTime) / 1_000_000_000.0;
-              float displayTime = (float) Math.max(0.0, startTimeVal - elapsed);
+              float displayTime = (float) countdown.remaining(tickStartNano);
 
-              if (elapsed >= totalDurationSeconds) {
+              if (countdown.hasFinished(tickStartNano)) {
                 race.setAutoStartRemaining(0.0f);
                 race.syncRaceState();
                 race.broadcastTime();

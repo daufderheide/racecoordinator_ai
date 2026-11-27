@@ -280,6 +280,8 @@ O acordeão de Grupos e etapas separa os pilotos em grupos distintos que não co
 
 Ative **Bandeira amarela em movimento** para iniciar uma neutralização com o botão principal, qualquer botão de pista, o widget Track Call ou a barra de espaço. O cronômetro e a contagem de voltas continuam. Use o botão principal, o widget ou a barra de espaço para voltar à bandeira verde. Use **Pausa** no menu da direção de corrida para cortar a alimentação. Atribua um pino digital do Arduino à saída de bandeira amarela e use um controlador de potência externo.
 
+Ative **Contagem decrescente após bandeira amarela** para que o retorno manual à bandeira verde acione as luzes e os sons de reinício. São usados o tempo de reinício e o atraso aleatório configurados. O cronômetro e a contagem de voltas continuam.
+
 O acordeão de Métodos de largada configura o início das baterias, posicionamento dos carros na pista e penalidades:
 
 - **Tempo de largada / reinício (s)**: Duração da contagem regressiva antes de iniciar ou reiniciar uma bateria.

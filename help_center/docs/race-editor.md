@@ -299,6 +299,8 @@ The Groups & Stages expander separates drivers into distinct groups that do not 
 
 Enable **Hot Yellow** to start a rolling caution from the main or any individual lane call button, the Race Day Track Call widget, or Spacebar. The heat clock and laps continue. Use the main Track Call, its Race Day widget, or Spacebar again to return to green. Lane buttons can still report an incident while the caution is active. Use **Pause** in the Race Director menu for a full power-cut pause.
 
+Enable **Hot Yellow restart countdown** to have the manual return-to-green control start the configured restart lights and sounds. The countdown uses the existing restart time and randomizer, and the clock and lap scoring continue through green.
+
 Assign an Arduino digital pin to **Hot Yellow output** and connect it to a compatible external reduced-power controller. The output is high during caution. The controller supplies the reduced power level. Configure a main or per-lane power relay so RCAI can also cut track power. Demo mode simulates the signal. On a real track with no ready caution output, Track Call uses the ordinary pause.
 
 The Arduino extended race-state message reports Hot Yellow as state `9`. Returning to green sends the regular racing state `4`.

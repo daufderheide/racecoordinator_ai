@@ -207,6 +207,7 @@ export class DefaultRacedayComponent
   // Countdown Overlay state
   showCountdownOverlay: boolean = false;
   countdownOverlayTimeout: any = null;
+  hotYellowRestartActive = false;
   countdownLamps: any[] = [];
   countdownText: string = "";
   protected showModifyHeatsModal: boolean = false;
