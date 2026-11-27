@@ -84,6 +84,7 @@ public class Common {
       race.setAutoStartFired(false);
       race.setAutoAdvanceFired(false);
       race.changeState(new NotStarted());
+      race.updateAndBroadcastOverallStandings();
 
       // Optimized update: send currentHeat and all heats
       Set<String> sentObjectIds = new HashSet<>();

@@ -41,6 +41,7 @@ export type WidgetType =
   | "lane-column"
   | "average-score"
   | "drift-indicator"
+  | "step-up-status"
   | "on-deck"
   | "next-heat"
   | "heat-list"

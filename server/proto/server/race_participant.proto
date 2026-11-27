@@ -55,6 +55,7 @@ message RaceParticipant {
   CarModel car = 40;
   bool car_per_driver = 41;
   repeated ParticipantDriverCar driver_cars = 42;
+  string step_up_status = 43;
 }
 
 message ParticipantDriverCar {

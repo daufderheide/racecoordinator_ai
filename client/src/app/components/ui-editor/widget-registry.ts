@@ -258,6 +258,13 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       ...getDefaultBorderConfigForWidget("drift-indicator"),
     }),
   },
+  "step-up-status": {
+    defaultSettings: () => ({
+      ...defaultLaneColumnSettings(),
+      columnKey: "stepUpStatus",
+      ...getDefaultBorderConfigForWidget("step-up-status"),
+    }),
+  },
   "on-deck": {
     defaultSettings: () => ({
       titleFontFamily: "",

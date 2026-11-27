@@ -230,6 +230,14 @@ export class RacedayOverallFormatUtils {
       case "totalHeats":
       case "overallTotalHeats":
         return p?.totalHeats ?? hd?.totalHeats ?? hd?.overallTotalHeats;
+      case "stepUpStatus":
+      case "step-up-status":
+        return (
+          p?.stepUpStatus ??
+          hd?.stepUpStatus ??
+          hd?.participant?.stepUpStatus ??
+          ""
+        );
       default:
         return undefined;
     }
@@ -305,6 +313,10 @@ export class RacedayOverallFormatUtils {
       return this.formatOverallHeatsValue(baseKey, hd, ctx, column);
     }
 
+    if (baseKey === "stepUpStatus" || baseKey === "step-up-status") {
+      return RacedayFormatUtils.formatStepUpStatus(value, ctx);
+    }
+
     return null;
   }
 
@@ -324,6 +336,9 @@ export class RacedayOverallFormatUtils {
       baseKey === "heatsRemaining"
     ) {
       return "--";
+    }
+    if (baseKey === "stepUpStatus" || baseKey === "step-up-status") {
+      return "";
     }
     if (baseKey === "overallGap") {
       const s = ctx?.laneViewWidgetSettings;

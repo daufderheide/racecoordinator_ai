@@ -80,6 +80,7 @@ public class RaceParticipantConverter {
         .setTotalHeats(participant.getTotalHeats())
         .setIsStepUp(participant.isStepUpParticipant())
         .setStepUpIndex(participant.getStepUpIndex())
+        .setStepUpStatus(participant.getStepUpStatus() != null ? participant.getStepUpStatus() : "")
         .setCrashes(participant.getCrashes())
         .setIsDisqualified(participant.isDisqualified())
         .build();

@@ -12,6 +12,7 @@ describe("WIDGET_REGISTRY", () => {
     expect(keys).toContain("lane-view");
     expect(keys).toContain("lane-column");
     expect(keys).toContain("drift-indicator");
+    expect(keys).toContain("step-up-status");
     expect(keys).toContain("on-deck");
     expect(keys).toContain("next-heat");
     expect(keys).toContain("heat-list");

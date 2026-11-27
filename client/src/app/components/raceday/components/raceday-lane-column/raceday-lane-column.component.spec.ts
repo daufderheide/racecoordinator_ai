@@ -4529,6 +4529,24 @@ describe("RacedayLaneColumnComponent", () => {
       expect(component.hasInset("top-right")).toBeTrue();
     });
 
+    it("should resolve stepUpStatus columnKey for step-up-status widgetType", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput("widget", {
+        id: "w-step-up",
+        widgetType: "step-up-status",
+        scaleMode: "fixed",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 1,
+        customSettings: {} as any,
+      });
+      fixture.detectChanges();
+
+      expect(component.columnKey).toBe("stepUpStatus");
+    });
+
     it("should generate and cache synthetic inputs for custom widget as main", () => {
       fixture.componentRef.setInput("parent", mockParent);
       fixture.componentRef.setInput("widget", {

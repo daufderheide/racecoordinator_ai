@@ -83,4 +83,5 @@ export const LANE_COLUMN_SCHEMAS: Record<string, InspectorSchema> = {
   "lane-column": laneColumnSchema("lane-column", "view_column"),
   "average-score": laneColumnSchema("average-score", "functions"),
   "drift-indicator": laneColumnSchema("drift-indicator", "drive_eta"),
+  "step-up-status": laneColumnSchema("step-up-status", "trending_up"),
 };

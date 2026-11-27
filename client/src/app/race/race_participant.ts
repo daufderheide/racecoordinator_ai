@@ -45,6 +45,7 @@ export class RaceParticipant {
     public totalHeats: number = 0,
     public isStepUp: boolean = false,
     public stepUpIndex: number = 0,
+    public stepUpStatus: string = "",
   ) {
     this.driver = driver;
     this.objectId = objectId;
