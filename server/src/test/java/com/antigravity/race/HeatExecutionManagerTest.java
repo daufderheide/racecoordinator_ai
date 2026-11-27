@@ -2367,11 +2367,16 @@ public class HeatExecutionManagerTest {
     com.antigravity.service.RacePredictionService mockService =
         org.mockito.Mockito.mock(com.antigravity.service.RacePredictionService.class);
 
-    // Make updateRealtimePrediction take 25ms to simulate realistic work and allow subsequent laps
-    // to coalesce
+    java.util.concurrent.CountDownLatch firstInvocationStarted =
+        new java.util.concurrent.CountDownLatch(1);
+    java.util.concurrent.CountDownLatch releaseWorker = new java.util.concurrent.CountDownLatch(1);
+
+    // Hold the worker deterministically during the first invocation so all subsequent laps
+    // arrive while the worker is actively processing, guaranteeing coalescing.
     org.mockito.Mockito.doAnswer(
             invocation -> {
-              Thread.sleep(25);
+              firstInvocationStarted.countDown();
+              releaseWorker.await(5, java.util.concurrent.TimeUnit.SECONDS);
               return null;
             })
         .when(mockService)
@@ -2391,20 +2396,31 @@ public class HeatExecutionManagerTest {
           .when(com.antigravity.service.RacePredictionService::getInstance)
           .thenReturn(mockService);
 
-      // Initial reaction times
+      // Initial reaction times (reaction times do not trigger prediction updates)
       executionManager.onLap(0, 1.0, 1, false, true, false);
       executionManager.onLap(1, 1.0, 1, false, true, false);
 
-      // Fire 6 consecutive laps in rapid succession
-      for (int i = 0; i < 6; i++) {
+      // First actual lap triggers background prediction
+      executionManager.onLap(0, 10.0, 1, false, true, false);
+
+      // Wait until the worker has actively entered updateRealtimePrediction
+      org.junit.Assert.assertTrue(
+          "Worker did not start first prediction in time",
+          firstInvocationStarted.await(5, java.util.concurrent.TimeUnit.SECONDS));
+
+      // Fire subsequent laps while the worker is actively blocked
+      for (int i = 1; i < 6; i++) {
         executionManager.onLap(i % 2, 10.0 + i, 1, false, true, false);
       }
 
+      // Release worker so the first prediction completes and the coalesced task runs
+      releaseWorker.countDown();
+
       HeatExecutionManager.flushPredictions();
 
-      // Because the laps were submitted rapidly while the worker was processing,
-      // the tasks should be coalesced to significantly fewer invocations than the 8 total laps
-      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.atMost(3))
+      // Because the subsequent 7 laps arrived while the worker was processing,
+      // they must coalesce into a single follow-up invocation (at most 2 total for 8 laps)
+      org.mockito.Mockito.verify(mockService, org.mockito.Mockito.atMost(2))
           .updateRealtimePrediction(
               org.mockito.ArgumentMatchers.any(),
               org.mockito.ArgumentMatchers.anyString(),
