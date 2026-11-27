@@ -261,7 +261,7 @@ public class CustomUITaskHandlerTest {
   }
 
   @Test
-  public void testRecordLabelSettingsSurviveLayoutUpdateAndRead() {
+  public void testLiveLabelSourcesSurviveLayoutUpdateAndRead() {
     String id = "record-label-layout";
     SqliteRepository<CustomUI> repository =
         new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
@@ -271,7 +271,9 @@ public class CustomUITaskHandlerTest {
     String layoutJson =
         "{\"widgets\":[{\"id\":\"record-label\",\"widgetType\":\"label\",\"customSettings\":{"
             + "\"recordField\":\"heatBestTime\",\"recordDecimals\":2,"
-            + "\"emptyValueMode\":\"text\",\"emptyValueText\":\"Awaiting lap\"}}]}";
+            + "\"emptyValueMode\":\"text\",\"emptyValueText\":\"Awaiting lap\"}},"
+            + "{\"id\":\"clock-label\",\"widgetType\":\"label\",\"customSettings\":{"
+            + "\"labelSource\":\"raceTimer\",\"fontSize\":42}}]}";
     CustomUI edited =
         new CustomUI("Record Board", false, layoutJson, null, null, null, null, null, id, null);
     when(handler.getPathParam(ctx, "id")).thenReturn(id);

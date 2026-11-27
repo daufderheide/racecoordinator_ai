@@ -48,7 +48,7 @@ import {
   movableIds,
   moveGroup,
 } from "@app/components/ui-editor/multi-select.utils";
-import { getRecordLabelField } from "@app/models/record-label-field";
+import { getLabelSource, getRecordLabelField } from "@app/models/label-source";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -126,7 +126,7 @@ export class RacedayAbsoluteWidgetComponent
 
   get labelRecordValue(): string | number | undefined {
     const field = getRecordLabelField(
-      this.widget().customSettings?.["recordField"],
+      getLabelSource(this.widget().customSettings),
     );
     return field ? this.parentComponent()?.[field.key] : undefined;
   }

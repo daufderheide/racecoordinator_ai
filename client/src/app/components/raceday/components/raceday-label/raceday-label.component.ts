@@ -2,15 +2,27 @@ import { CommonModule, formatNumber } from "@angular/common";
 import {
   Component,
   computed,
+  effect,
   inject,
+  Injector,
   input,
   LOCALE_ID,
+  signal,
   ViewEncapsulation,
 } from "@angular/core";
 import { LaneGridLabelHelper } from "@app/components/raceday/utils/lane-grid-label.helper";
-import { getRecordLabelField } from "@app/models/record-label-field";
+import {
+  getLabelSource,
+  getRecordLabelField,
+  RACE_TIMER_LABEL_SOURCE,
+} from "@app/models/label-source";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { RaceTimeService } from "@app/services/race-time.service";
 import { emptyValue } from "@app/utils/empty-value.utils";
+import {
+  formatTimerDisplay,
+  TIMER_PREVIEW_SECONDS,
+} from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -23,11 +35,24 @@ import { emptyValue } from "@app/utils/empty-value.utils";
 export class RacedayLabelComponent {
   widget = input<AbsoluteWidgetNode | null>(null);
   recordValue = input<string | number>();
+  isEditor = input(false);
   private readonly locale = inject(LOCALE_ID);
+  private readonly injector = inject(Injector);
+  private readonly timerText = signal("--");
+  private readonly source = computed(() =>
+    getLabelSource(this.widget()?.customSettings),
+  );
 
   readonly displayText = computed(() => {
     const settings = this.widget()?.customSettings;
-    const field = getRecordLabelField(settings?.["recordField"]);
+    const source = this.source();
+    if (source === RACE_TIMER_LABEL_SOURCE) {
+      return this.isEditor()
+        ? formatTimerDisplay(TIMER_PREVIEW_SECONDS)
+        : this.timerText();
+    }
+
+    const field = getRecordLabelField(source);
     if (!field) return String(settings?.["text"] || "");
 
     const value = this.recordValue();
@@ -53,6 +78,19 @@ export class RacedayLabelComponent {
         : 3;
     return formatNumber(value, this.locale, `1.${decimals}-${decimals}`);
   });
+
+  constructor() {
+    effect((onCleanup) => {
+      if (this.source() !== RACE_TIMER_LABEL_SOURCE || this.isEditor()) return;
+
+      // Use the same interpolated stream as the built-in timer.
+      const clock = this.injector.get(RaceTimeService, null);
+      const subscription = clock?.interpolatedFormattedTime$?.subscribe(
+        (value) => this.timerText.set(value),
+      );
+      onCleanup(() => subscription?.unsubscribe());
+    });
+  }
 
   isVertical(): boolean {
     const w = this.widget();

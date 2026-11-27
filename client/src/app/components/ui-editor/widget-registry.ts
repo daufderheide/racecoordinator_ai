@@ -220,6 +220,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
     defaultSettings: () => ({
       text: "Label",
       recordField: "",
+      labelSource: "",
       fontSize: 18,
       fontFamily: "",
       textColor: "#ffffff",

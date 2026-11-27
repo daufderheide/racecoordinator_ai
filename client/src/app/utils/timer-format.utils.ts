@@ -7,6 +7,8 @@ export type TimerDisplayFormat =
 
 export type TimerSubsecondMode = "threshold" | "always" | "never";
 
+export const TIMER_PREVIEW_SECONDS = 123.45;
+
 export interface TimerFormatOptions {
   format?: TimerDisplayFormat;
   subsecondMode?: TimerSubsecondMode;

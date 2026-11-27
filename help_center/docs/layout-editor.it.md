@@ -61,6 +61,8 @@ Nel widget **Elenco manche**, apri **Contenuto** e scegli **Tabella** in **Layou
 
 Per creare un pannello dei record, aggiungi etichette e scegli un detentore o un valore in **Origine del contenuto**. Puoi usare il miglior giro assoluto, il miglior punteggio assoluto, il giro più veloce della gara in corso e quello della manche in corso. I numeri possono avere da zero a tre decimali. Quando mancano i dati, scegli trattini, uno spazio vuoto o un testo personalizzato. Usa le etichette di testo per i titoli e posiziona ogni widget nell’area di lavoro.
 
+Per collocare il tempo di gara separatamente, scegli **Cronometro di gara** in **Origine del contenuto**. L’etichetta segue il cronometro integrato, inclusi i conti alla rovescia automatici. L’editor mostra un tempo di esempio per aiutarti a posizionarla. Aggiungi un’etichetta di testo separata per il titolo.
+
 Posizionati sulla barra degli strumenti principale a sinistra dell'icona di anteprima conto alla rovescia:
 - **Libreria dei widget (<span class="material-icons">widgets</span>)**: Attiva/disattiva la visibilità della casella degli strumenti mobile. Un clic ripristina la casella se è ridotta a icona o posizionata fuori dallo schermo visibile.
 - **Configurazione Widget (<span class="material-icons">tune</span>)**: Attiva/disattiva la visibilità del pannello laterale Configurazione Widget. Quando è nascosto, il canvas può estendersi sull'intera larghezza della pagina se le proporzioni del layout lo consentono (proprio come in modalità di sola lettura).

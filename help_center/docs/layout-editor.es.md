@@ -61,6 +61,8 @@ En el widget **Lista de mangas**, abra **Contenido** y elija **Tabla** en **Dise
 
 Para crear un panel de récords, añada etiquetas y elija un titular o un valor en **Origen del contenido**. Puede usar la mejor vuelta histórica, la mejor puntuación histórica, la mejor vuelta de la carrera actual y la mejor vuelta de la tanda actual. Los números admiten de cero a tres decimales. Para datos ausentes elija guiones, un espacio en blanco o su propio texto. Usa etiquetas de texto para los encabezados y coloca cada widget en el lienzo.
 
+Para colocar el reloj por separado, elija **Cronómetro de carrera** en **Origen del contenido**. La etiqueta sigue el cronómetro integrado, incluidas las cuentas atrás automáticas. El editor muestra un tiempo de ejemplo para facilitar la colocación. Añada otra etiqueta de texto para el encabezado.
+
 Ubicados en la barra de herramientas principal a la izquierda del icono de vista previa de cuenta regresiva:
 - **Biblioteca de widgets (<span class="material-icons">widgets</span>)**: Alterna la visibilidad del cuadro flotante de herramientas de widgets. Al hacer clic, también se desminimiza y se asegura de que quede dentro de la pantalla visible si se movió fuera de los límites.
 - **Configuración de Widgets (<span class="material-icons">tune</span>)**: Alterna la visibilidad del panel lateral de Configuración de Widgets. Cuando está oculto, el lienzo puede extenderse a lo largo de toda la página si la relación de aspecto del diseño lo permite (igual que en modo de solo lectura).

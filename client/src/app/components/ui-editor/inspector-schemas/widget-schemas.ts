@@ -1,5 +1,5 @@
 import { InspectorSchema } from "@app/components/ui-editor/inspector-kit/inspector-schema";
-import { getRecordLabelField } from "@app/models/record-label-field";
+import { getLabelSource, getRecordLabelField } from "@app/models/label-source";
 
 import { BATCH2_SCHEMAS } from "./batch2-schemas";
 import { BATCH3_SCHEMAS } from "./batch3-schemas";
@@ -11,9 +11,9 @@ import {
   layoutFolder,
   textPart,
 } from "./common";
+import { LabelSourceComponent } from "./label-source.component";
 import { LANE_COLUMN_SCHEMAS } from "./lane-column-schema";
 import { laneViewSchema } from "./lane-view-schema";
-import { RecordLabelSourceComponent } from "./record-label-source.component";
 
 /**
  * Widgets that use the redesigned panel. Every other widget keeps its
@@ -379,12 +379,13 @@ const labelSchema: InspectorSchema = {
         {
           fields: [
             {
-              id: "recordField",
+              id: "labelSource",
               type: "embed",
-              component: RecordLabelSourceComponent,
+              component: LabelSourceComponent,
               labelKey: "UE_INSPECTOR_LABEL_SOURCE",
-              touches: ["recordField"],
-              searchTerms: "record live data source holder value lap score",
+              touches: ["labelSource", "recordField"],
+              searchTerms:
+                "timer clock record live data source holder value lap score",
             },
             {
               id: "text",
@@ -393,8 +394,7 @@ const labelSchema: InspectorSchema = {
               labelKey: "UE_INSPECTOR_LABEL_TEXT",
               maxLength: 120,
               searchTerms: "text caption title words",
-              visibleWhen: (settings) =>
-                !getRecordLabelField(settings["recordField"]),
+              visibleWhen: (settings) => getLabelSource(settings) === "",
             },
             {
               id: "recordDecimals",
@@ -407,12 +407,12 @@ const labelSchema: InspectorSchema = {
                 label: String(value),
               })),
               visibleWhen: (settings) => {
-                const source = getRecordLabelField(settings["recordField"]);
+                const source = getRecordLabelField(getLabelSource(settings));
                 return !!source && source.kind !== "holder";
               },
             },
             ...emptyValueFields(
-              (settings) => !!getRecordLabelField(settings["recordField"]),
+              (settings) => !!getRecordLabelField(getLabelSource(settings)),
             ),
           ],
         },
